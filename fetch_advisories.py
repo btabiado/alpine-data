@@ -235,15 +235,46 @@ SLUG_OVERRIDES.update({
 })
 
 
+def _apostrophe_fold(s: str) -> str:
+    """Fold the apostrophe variants to ASCII ' for KEY MATCHING only.
+
+    U+2019 RIGHT SINGLE QUOTATION MARK, U+2018, and U+02BC MODIFIER LETTER
+    APOSTROPHE all render as an apostrophe and all appear in country names.
+    """
+    return (s.replace("’", "'")
+             .replace("‘", "'")
+             .replace("ʼ", "'"))
+
+
+# Keyed by apostrophe-folded name so a lookup matches whichever variant the
+# feed emits. Built once at import.
+#
+# WHY THIS EXISTS: the override keys are spelled with straight apostrophes
+# ("North Korea (Democratic People's Republic of Korea)"). Decoding entities at
+# the source — the right fix for the &#8220; garbage in the bulletins — means
+# U+2019 now reaches this function for real, so `name in SLUG_OVERRIDES` began
+# missing. North Korea then fell through to the naive transform and produced
+# `north-korea-democratic-peoples-republic-of-korea` instead of the override's
+# `korea-democratic-peoples-republic-of-korea-`, i.e. a dead advisory link.
+# Côte d'Ivoire survived only by luck: the fallback strips the apostrophe and
+# happens to land on the same slug the override specifies.
+_SLUG_OVERRIDES_FOLDED = {_apostrophe_fold(k): v for k, v in SLUG_OVERRIDES.items()}
+assert len(_SLUG_OVERRIDES_FOLDED) == len(SLUG_OVERRIDES), (
+    "two SLUG_OVERRIDES keys collide once apostrophes are folded; "
+    "disambiguate them rather than letting one silently win")
+
+
 def slugify_country(name: str) -> str:
     """Build the per-country page slug for travel.state.gov URLs.
 
-    Honors SLUG_OVERRIDES first, then falls back to a conservative
-    transform: lowercase, strip diacritics, drop apostrophes, replace
-    everything non-alphanumeric with hyphens, collapse runs, strip ends.
+    Honors SLUG_OVERRIDES first — matched apostrophe-insensitively, see
+    _SLUG_OVERRIDES_FOLDED — then falls back to a conservative transform:
+    lowercase, strip diacritics, drop apostrophes, replace everything
+    non-alphanumeric with hyphens, collapse runs, strip ends.
     """
-    if name in SLUG_OVERRIDES:
-        return SLUG_OVERRIDES[name]
+    folded = _apostrophe_fold(name)
+    if folded in _SLUG_OVERRIDES_FOLDED:
+        return _SLUG_OVERRIDES_FOLDED[folded]
     # Best-effort diacritic strip — keep this dependency-free.
     import unicodedata
     nfkd = unicodedata.normalize("NFKD", name)

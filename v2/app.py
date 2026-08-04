@@ -878,8 +878,130 @@ HTML_TEMPLATE = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <title>BDT Dashboards — Crypto, Markets &amp; Macro</title>
+<!-- No maximum-scale / user-scalable=no. Pinch-zoom stays available; the iOS
+     focus-zoom problem is fixed by sizing the INPUTS >=16px on coarse
+     pointers (see the `@media (pointer:coarse)` block below), not by
+     disabling zoom for everyone. -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
+<!-- Chart.js is the ONE third-party request this page ever makes. V2 has no
+     map and no webfont, so cdn.jsdelivr.net is the whole of its third-party
+     surface — nothing else gets (or needs) a connection hint. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<!-- ===================================================================== -->
+<!-- NON-BLOCKING CHART.JS LOADER                                          -->
+<!-- ===================================================================== -->
+<!-- This used to be a plain `script src="https://cdn.jsdelivr.net/..."` tag right here
+     in <head>: parser-blocking, third-party, and therefore able to hold
+     domInteractive/DOMContentLoaded hostage for as long as the CDN felt like
+     taking. Measured on the BUILT V2 page over a harness that held the CDN
+     and then answered: 13,000ms stall -> domInteractive 13,239ms, DCL
+     13,239ms, FCP 13,172ms; 6,000ms stall -> 6,224 / 6,224 / 6,156. The
+     document itself was ready in ~240ms (measured with the CDN refused
+     outright) and then simply sat waiting on somebody else's server —
+     including, on V2, the FIRST PAINT.
+
+     A dynamically inserted script element is async by definition: it is not in
+     the parser's path and is NOT in the "scripts that will execute when the
+     document has finished parsing" list, so it cannot delay DOMContentLoaded.
+     `defer` would NOT have been enough — deferred scripts still run before
+     DCL fires and would have kept the 13.2s.
+
+     The cost of async is that `Chart` is no longer guaranteed to exist when
+     the first renderer runs, so the boot render goes through whenChartsReady()
+     which resolves on load, on error, or when a short budget expires —
+     whichever is first. Nothing on the page waits on the CDN indefinitely.
+     SRI + crossorigin are carried over unchanged; the pin still applies.
+
+     Byte-for-byte the same loader V1 carries (app.py), with ONE deliberate
+     divergence, marked below: V1's late-arrival recovery reads `window.state`,
+     and `state` is a top-level `const`, which lives in the global LEXICAL
+     environment and is therefore never a property of `window`. That test is
+     permanently false, so V1's recovery never fires. -->
+<script>
+(function(){
+  var CDN = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+  var SRI = 'sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g';
+  // How long the FIRST render is willing to wait for the chart library before
+  // it paints anyway. Healthy jsDelivr answers in well under this; a stalled
+  // or blocked CDN therefore costs the reader ~1.2s of chart area, not 12.8s
+  // of a blank document. A late arrival is still adopted (see below).
+  var BUDGET_MS = 1200;
+  var queue = [], settled = false, domDone = false, libDone = false, expired = false;
+  window.__chartCdn = { src: CDN, state: 'loading' };
+
+  function flush(){
+    if (settled) return;
+    // The fallback stub is defined in the body (it has to sit next to the
+    // renderers it protects), so never resolve before the body has parsed —
+    // otherwise there would be nothing to install.
+    if (!domDone) return;
+    if (!libDone && !expired) return;
+    settled = true;
+    var have = (typeof window.Chart !== 'undefined');
+    window.__chartCdn.state = have ? 'loaded' : (libDone ? 'failed' : 'timeout');
+    if (!have && typeof window.__installChartFallback === 'function'){
+      window.__installChartFallback();
+    }
+    var cbs = queue; queue = [];
+    for (var i = 0; i < cbs.length; i++){
+      try { cbs[i](); } catch (e) { console.error(e); }
+    }
+  }
+  // Run cb once the chart library has resolved one way or the other.
+  window.whenChartsReady = function(cb){
+    if (typeof cb !== 'function') return;
+    if (settled){ try { cb(); } catch (e) { console.error(e); } return; }
+    queue.push(cb); flush();
+  };
+
+  var s = document.createElement('script');
+  s.src = CDN; s.integrity = SRI; s.crossOrigin = 'anonymous'; s.async = true;
+  s.onload = function(){
+    var late = settled;
+    libDone = true; flush();
+    // Arrived AFTER we gave up and painted with the no-op stub: the UMD
+    // bundle has just overwritten window.Chart with the real thing, so
+    // repaint the active tab and the charts appear without a reload.
+    //
+    // The guard used to read `window.state`. That check could never pass:
+    // the dashboard's `state` is declared as a top-level `const state = {…}`
+    // in a CLASSIC script, and a top-level const/let/class lives in the
+    // global LEXICAL environment, never on the global OBJECT. `window.state`
+    // was therefore permanently undefined and this whole recovery branch was
+    // dead code — a slow CDN that finally answered repainted nothing, and
+    // the reader kept the empty chart frames until they touched a tab.
+    // The binding IS reachable by bare name from any later classic script,
+    // so that is what we read. By the time this branch can run, `late` is
+    // true, which means flush() already settled, which means domDone was
+    // true, which means DOMContentLoaded fired and every classic script has
+    // executed — so `state` is initialised and out of its temporal dead
+    // zone. The try/catch stays as a belt-and-braces guard in case an
+    // earlier script threw before reaching the declaration.
+    if (late && typeof window.Chart === 'function' && !window.Chart.__unavailable){
+      window.__chartCdn.state = 'loaded-late';
+      try {
+        // ONE line V1 does not have yet. See __clearChartFallbackNotes()
+        // next to the stub: without it, a late arrival repaints working
+        // charts while the stub's "Chart library unavailable" sentence is
+        // still sitting under one of them. Measured on the built V2 page
+        // with a 3,000ms arrival: 1 such note visible on the active tab.
+        // Latent in V1 only because V1's default tab draws no chart — V1
+        // should take both pieces verbatim.
+        if (typeof window.__clearChartFallbackNotes === 'function') window.__clearChartFallbackNotes();
+        if (typeof selectTab === 'function' && typeof state === 'object'
+            && state && state.tab) selectTab(state.tab);
+      } catch (e) { console.error(e); }
+    }
+  };
+  s.onerror = function(){ libDone = true; flush(); };
+  (document.head || document.documentElement).appendChild(s);
+
+  setTimeout(function(){ expired = true; flush(); }, BUDGET_MS);
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ domDone = true; flush(); });
+  } else { domDone = true; flush(); }
+})();
+</script>
 <style>
 :root{
   --bg:#0b0d12; --panel:#141821; --panel2:#1b2030; --border:#252b3a;
@@ -937,13 +1059,76 @@ HTML_TEMPLATE = r"""<!doctype html>
 .v2-freshstrip.v2-freshstrip--bad {border-color:var(--v2-bad-bd); background:var(--v2-bad-bg)}
 /* Card-level stamp sits directly under the card's subline. */
 .v2-card__head .v2-fresh{margin-top:2px}
+/* ---- S2: a freshness chip that CARRIES an explanation must look like it,
+   and must be operable by finger and by keyboard. Everything below keys off
+   the `title` ATTRIBUTE rather than a class, because paintFreshness() rewrites
+   className and textContent on every repaint — an added class or an appended
+   marker node would be wiped, while the attribute (and the ::after that hangs
+   off it) survives. Chips with no explanation are untouched and stay plain
+   text: the affordance only appears where there is something to reveal. */
+.v2-fresh[title]{cursor:pointer;border-bottom:1px dotted currentColor;
+  padding-bottom:1px;-webkit-tap-highlight-color:rgba(167,139,250,.25)}
+.v2-fresh[title]::after{content:"\00a0\24D8";font-size:.95em;opacity:.75}
+.v2-fresh[title]:hover{opacity:.85}
+.v2-fresh[title]:focus-visible{outline:2px solid var(--purple);outline-offset:3px;
+  border-radius:4px}
+/* The tab strip's chip is the whole row's point, so give it the full 44px
+   touch target there rather than a 15px line of text. */
+.v2-freshstrip{min-height:44px}
+.v2-freshstrip .v2-fresh[title]{display:inline-flex;align-items:center;min-height:32px}
+/* The revealed note. Fixed-position so it escapes card overflow, clamped by
+   JS to the viewport, dismissible by its own button, by Escape, and by a tap
+   anywhere outside. Deliberately NOT alert(): an alert blocks the page, can't
+   be styled, and reads as an error rather than an explanation. */
+.v2-freshnote{position:fixed;z-index:400;max-width:min(340px,calc(100vw - 16px));
+  background:var(--panel2);color:var(--text);border:1px solid var(--border);
+  border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.5);padding:12px 13px;
+  font-size:12.5px;line-height:1.5}
+.v2-freshnote__body{overflow-wrap:anywhere}
+.v2-freshnote__x{margin-top:10px;min-height:44px;width:100%;cursor:pointer;
+  background:var(--panel);color:var(--text);border:1px solid var(--border);
+  border-radius:8px;font:inherit;font-size:12px}
+.v2-freshnote__x:hover{background:#222838}
+.v2-freshnote__x:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+@media (pointer:coarse),(max-width:640px){
+  /* Finger-sized target for the chip itself, not just the note. */
+  .v2-fresh[title]{display:inline-flex;align-items:center;min-height:32px;
+    padding:4px 2px}
+}
+/* --- VISIBLE FOCUS ON THE TWO TEXT INPUTS (audit V2-E) ------------------
+   Every other interactive element on the page has a focus ring; these two
+   were the exceptions (both set outline:none — #symbolSearchInput inline,
+   #chatInput via .chat-form input), so a keyboard user lost their place the
+   moment they tabbed into search or chat. `!important` is required to beat
+   the inline `outline:none` on #symbolSearchInput. */
+#symbolSearchInput:focus-visible,
+.chat-form input#chatInput:focus-visible{
+  outline:2px solid var(--v2-ai) !important;outline-offset:1px;
+  border-color:var(--v2-ai) !important}
+/* --- EMPTY STATE: ABSENT vs WARMING (audit V2-B) ------------------------
+   `.v2-empty--warm` is a PROMISE ("refresh in a moment"). It is only honest
+   while a fetch is genuinely in flight. A feed that is inlined at build
+   time, or whose sidecar already resolved, is not warming up — it is absent
+   for this build, and reloading serves the same bytes. Absence gets its own
+   tint so the two states are not one look. */
+.v2-empty.v2-empty--absent{border-style:solid;border-color:var(--v2-warn-bd);
+  background:var(--v2-warn-bg)}
+.v2-empty.v2-empty--absent .v2-empty__title{color:var(--v2-warn)}
+.v2-empty__note{font-size:11px;color:var(--muted);line-height:1.5;
+  max-width:46ch;overflow-wrap:anywhere}
 /* --- V2 PREVIEW BANNER ---------------------------------------------------
    Sticky at the very top of the page so anyone landing on /v2/ sees they
    are NOT looking at production. Solid contrasting bar with a link back to
    the production URL — keeps the user one click away from the canonical
    experience while the cleanup sprint stabilises. */
 .v2-banner{position:sticky;top:0;z-index:50;
-  background:linear-gradient(90deg,var(--v2-ai-bg),var(--v2-info-bg));
+  /* Both tint tokens are 14%-alpha rgba and the shorthand left the base
+     colour transparent, so this sticky bar had NO opaque backing: on the
+     Travel tab (13.6k px of scroll) the advisory text ran straight through
+     the words "PRODUCTION DASHBOARD IS UNCHANGED". A banner that is
+     unreadable over the page it is disclaiming is not a disclaimer.
+     Keep the tint, put --panel underneath it. */
+  background:linear-gradient(90deg,var(--v2-ai-bg),var(--v2-info-bg)),var(--panel);
   border-bottom:1px solid var(--v2-ai-bd);
   color:var(--text);font-size:12px;font-weight:600;letter-spacing:.04em;
   text-transform:uppercase;padding:8px 16px;text-align:center}
@@ -1095,6 +1280,35 @@ header .meta{color:var(--muted);font-size:12px}
 .btn.active.eth{background:var(--eth);color:#fff;border-color:var(--eth)}
 .btn.active.link{background:var(--link);color:#fff;border-color:var(--link)}
 .lbl{font-size:11px;color:var(--muted);align-self:center;margin:0 4px;letter-spacing:.04em;text-transform:uppercase}
+/* ===== iOS FOCUS-ZOOM: EVERY TEXT-ENTRY CONTROL, NOT JUST THE TWO =========
+   Mobile Safari zooms the viewport whenever a focused form control's font is
+   under 16px, and leaves the reader pinched in and scrolled sideways with no
+   way back except a manual pinch-out. V2 used to raise exactly two controls
+   (#symbolSearchInput, #chatInput) and left the rest, so the fix held on the
+   two fields it had been demonstrated against and nowhere else.
+
+   Measured on the BUILT V2 page in headless Chromium at 360x740 with a coarse
+   pointer, computed font-size per control — EIGHT still zoomed:
+     · #shareHost           11px      · #travelSearch    12px
+     · #shareNewUrl         11px      · #travelSort      12px
+     · #shareLabel          12px      · #shareDays       13.33px
+     · #pasteText           12px      · #pasteAsset      13.33px
+   Two were already compliant (#symbolSearchInput, #chatInput at 16px).
+
+   So the rule is now blanket rather than a list of two, and it is the same
+   blanket rule V1 ships (app.py). `pointer:coarse` is the real signal (a
+   touchscreen at any width); the max-width arm is a belt-and-braces fallback
+   for touch devices that report a fine pointer. !important is required
+   because several of these fields carry an inline `font:12px …` shorthand,
+   which no plain rule can beat. Checkboxes/radios are excluded — they have
+   no text and no zoom trigger. The viewport meta is deliberately NOT touched:
+   maximum-scale / user-scalable=no would trade one person's zoom-in for
+   everyone's zoom-out, and modern iOS ignores it anyway. */
+@media (pointer:coarse),(max-width:640px){
+  input[type="text"],input[type="search"],input[type="email"],input[type="url"],
+  input[type="number"],input[type="tel"],input[type="password"],input[type="date"],
+  input:not([type]),textarea,select{font-size:16px !important}
+}
 .container{padding:18px 24px;display:grid;gap:18px;max-width:1600px;margin:0 auto}
 /* ===== HORIZONTAL-OVERFLOW GUARD (the phone bug) ==========================
    `.container` is display:grid with no grid-template-columns, so its single
@@ -1487,14 +1701,31 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     white-space:nowrap;
     -webkit-overflow-scrolling:touch;
     scrollbar-width:none;
-    /* Fade-right affordance so users see there's more content to scroll —
-       without this, "Research" / "Whale Activity" looked like they didn't
-       exist because they sit off-screen past 390px. */
+    /* Snap so a flick lands on a tab boundary instead of mid-label.
+       `proximity`, not `mandatory`: mandatory + centre alignment can make
+       the first and last tabs unreachable at these widths. */
+    scroll-snap-type:x proximity;
+    scroll-padding-inline:8px;
+  }
+  /* Edge fade is DIRECTIONAL and class-driven (see updateTabScrollAffordance).
+     The old rule faded the right edge unconditionally, which kept claiming
+     "more tabs this way" after the user had already scrolled to the end —
+     an affordance that lies is worse than none. No class ⇒ no mask. */
+  .tabs.v2-tabs--more-right{
     -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);
             mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);
   }
+  .tabs.v2-tabs--more-left{
+    -webkit-mask-image:linear-gradient(to right,transparent,#000 28px);
+            mask-image:linear-gradient(to right,transparent,#000 28px);
+  }
+  .tabs.v2-tabs--more-left.v2-tabs--more-right{
+    -webkit-mask-image:linear-gradient(to right,transparent,#000 28px,#000 calc(100% - 28px),transparent);
+            mask-image:linear-gradient(to right,transparent,#000 28px,#000 calc(100% - 28px),transparent);
+  }
   .tabs::-webkit-scrollbar{display:none}
-  .tab{padding:9px 12px;font-size:13px;flex:0 0 auto;min-height:44px;display:inline-flex;align-items:center}
+  .tab{padding:9px 12px;font-size:13px;flex:0 0 auto;min-height:44px;display:inline-flex;align-items:center;
+       scroll-snap-align:center}
 
   /* --- Period/timeframe controls row below tabs (smaller buttons) --- */
   .controls{padding:8px 12px;gap:5px}
@@ -1863,6 +2094,58 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   .travel-search{flex:1 1 100%;font-size:12px;padding:7px 10px}
   .travel-count{flex:1 1 100%;margin-left:0;text-align:right}
   .travel-grid{grid-template-columns:1fr;gap:8px}
+}
+
+/* ===================== TOUCH BLOCK (site audit S1 / S3 / V2-C) ===========
+   Deliberately LAST in the sheet so these win on source order without
+   needing !important anywhere except against the two inline `style=`
+   attributes. Gated on a coarse pointer OR a phone-width viewport: the
+   desktop sizes above are untouched. */
+@media (pointer:coarse),(max-width:860px){
+  /* S1 — iOS Safari zooms the page whenever a focused input renders under
+     16px, and leaves the user pinched in and horizontally scrolled with no
+     way back. Measured: #symbolSearchInput 12px, #chatInput 13px.
+     The fix is to raise the INPUTS. It is explicitly NOT to add
+     maximum-scale=1 / user-scalable=no to the viewport meta — that kills
+     pinch-zoom for everyone (an accessibility regression) and modern iOS
+     ignores it anyway. #symbolSearchInput carries its size in an inline
+     style attribute, so only !important can reach it. */
+  header #symbolSearchInput{font-size:16px !important}
+  .chat-form input#chatInput{font-size:16px !important}
+  /* The 84px mobile width was budgeted around an 11px font, so 16px text
+     fits fewer characters in it. Widening the field is NOT the answer: the
+     header title is already truncated at 360px (57px of the 166px it wants)
+     and the user has already called this area squished once. Claw the
+     characters back from the horizontal padding instead, so the header
+     geometry is unchanged and only the type gets bigger. */
+  header #symbolSearchInput{padding:8px 6px}
+
+  /* S3 — .v2-histbtn measured 186x22; the floor is 44. This is the only
+     entry point to the composite history charts. The CTA row is the card's
+     LAST child in normal flow, so growing it cannot reflow the card header
+     at 360px — it only extends the card downward. */
+  .v2-histbtn{min-height:44px;padding:8px 12px}
+
+  /* V2-C — Travel sub-view buttons measured 69x28. */
+  .travel-subtab{min-height:44px;padding-top:0;padding-bottom:0}
+  /* ...and the sub-nav scrolled off the top of a 13,635px tab and never
+     came back. Stick it under the preview banner (itself position:sticky;
+     top:0, and 45px tall at 360px because the disclaimer wraps to two
+     lines) so the five sub-views stay reachable for the whole scroll. The
+     45px fallback matches that measurement; syncBannerHeight() replaces it
+     with the real height on load and on every resize. */
+  .travel-subtabs{position:sticky;top:var(--v2-banner-h,45px);z-index:6;
+    background:var(--bg);margin-left:-2px;margin-right:-2px;
+    padding-left:2px;padding-right:2px;
+    overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  .travel-subtabs::-webkit-scrollbar{display:none}
+  .travel-subtab{flex:0 0 auto}
+  /* The freshness chip's tap target is NOT sized here any more. It moved
+     into the shared `@media (pointer:coarse),(max-width:640px)` block up top
+     (`.v2-fresh[title]{display:inline-flex;min-height:32px;padding:4px 2px}`)
+     when V2 adopted V1's disclosure, so both frontends size it identically.
+     Re-adding a rule here would land LATER in the sheet and quietly beat the
+     shared one at 360px. */
 }
 </style>
 </head>
@@ -3725,7 +4008,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
            user still sees an explanation instead of a blank tab. -->
       <div id="cpiEmpty" class="v2-card v2-card--info" style="margin-bottom:12px">
         <div class="v2-card__body">
-          <div class="v2-empty v2-empty--warm">
+          <!-- A missing API key is a hard, standing failure, not a warm-up.
+               --warm is reserved for fetches genuinely in flight. -->
+          <div class="v2-empty v2-empty--absent">
             <div class="v2-empty__icon">&#128202;</div>
             <div class="v2-empty__title">CPI data unavailable</div>
             <div class="v2-empty__sub" id="cpiEmptySub">FRED_API_KEY is not set on the server.</div>
@@ -4088,6 +4373,19 @@ window.addEventListener('error', e => {
 // A stamp that is missing is as dishonest as a stamp that lies, so charts are
 // downgraded to a no-op rather than allowed to take the page down with them.
 // Real Chart.js, when it loads, is left completely untouched.
+//
+// Byte-for-byte the same stub V1 carries (app.py). If you change one, change
+// both — a fix that lands in only one frontend is a half fix.
+//
+// WHAT CHANGED WHEN CHART.JS STOPPED BLOCKING THE PARSER: this test used to
+// run right here, at parse time, when a synchronous script-src tag in <head>
+// guaranteed the answer was already final. With the loader now async, "Chart
+// is undefined at parse time" no longer means "Chart failed" — it usually
+// just means "still in flight". So the identical check is wrapped in a
+// function and called by whenChartsReady() (see <head>) at the one moment the
+// answer IS final: load, error, or budget expiry. Installing it any earlier
+// would paint "Chart library unavailable" over charts that were about to work.
+window.__installChartFallback = function(){
 if (typeof window.Chart === 'undefined'){
   window.Chart = function ChartUnavailable(canvas){
     try {
@@ -4095,7 +4393,10 @@ if (typeof window.Chart === 'undefined'){
       if (wrap && !wrap.dataset.chartFailed){
         wrap.dataset.chartFailed = '1';
         const note = document.createElement('div');
-        note.className = 'sub';
+        // Classed so the late-arrival recovery can find and remove it. Without
+        // a handle the caption "Chart library unavailable" stayed on screen
+        // underneath charts that had, by then, drawn perfectly well.
+        note.className = 'sub chart-unavailable-note';
         note.style.cssText = 'padding:10px;color:var(--muted);font-size:12px';
         note.textContent = 'Chart library unavailable — the numbers and '
           + 'freshness stamps below are unaffected.';
@@ -4110,6 +4411,36 @@ if (typeof window.Chart === 'undefined'){
   };
   window.Chart.__unavailable = true;
 }
+};
+
+// Undo of the above, for the one case that needs it: Chart.js arrived AFTER
+// the budget expired, so the stub already wrote "Chart library unavailable"
+// into some chart wrappers, and the loader is about to repaint those very
+// charts for real. The stub marks each wrapper `data-chart-failed` so it
+// only writes once — leave the marker up and the sentence stays on screen
+// underneath a chart that has just drawn correctly. Measured on the built
+// V2 page with a 3,000ms CDN arrival: 1 such note visible on the active tab.
+// A caption that lies and a stamp that lies are the same defect.
+//
+// V1 (app.py) needs this too; it is latent there only because V1's default
+// tab instantiates no Chart, so the stub never writes anything before the
+// recovery runs. Copy this function and the single call in the <head> loader.
+// Called by the CDN loader when Chart.js arrives AFTER the fallback stub has
+// already painted. Without it a late arrival repaints working charts while the
+// stub's "Chart library unavailable" caption is still sitting under one of
+// them — telling the reader the opposite of what they can see.
+//
+// Selects on the class rather than matching the caption text: the wording is
+// user-facing copy and a future edit to it would silently orphan every note.
+window.__clearChartFallbackNotes = function(){
+  var notes = document.querySelectorAll('.chart-unavailable-note');
+  for (var i = 0; i < notes.length; i++){
+    if (notes[i].parentNode) notes[i].parentNode.removeChild(notes[i]);
+  }
+  // Clear the guard too, so a genuine later failure can re-announce itself.
+  var wraps = document.querySelectorAll('[data-chart-failed]');
+  for (var j = 0; j < wraps.length; j++) wraps[j].removeAttribute('data-chart-failed');
+};
 
 const DATA = __DATA_JSON__;
 const SHARE_TOKEN = __SHARE_TOKEN__;  // string when viewing via /share/<token>, else null
@@ -4929,7 +5260,8 @@ function renderCoinbaseIntlPerps(){
   const shorts = perps.filter(p => p && typeof p.funding_rate === 'number' && p.funding_rate < 0)
                       .sort((a,b) => a.funding_rate - b.funding_rate)
                       .slice(0, 6);
-  const emptyRow = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">No perpetuals data — wait for next refresh</td></tr>';
+  const emptyRow = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">'
+    + 'No perpetuals in this build\u2019s payload \u2014 an absence, not a reading of zero.</td></tr>';
 
   function rowFor(p){
     const ratePct = (p.funding_rate * 100).toFixed(4) + '%';
@@ -4964,7 +5296,7 @@ function renderCadliChart(){
   const series = (bars || [])
     .filter(b => b && b.date && b.close != null)
     .map(b => ({date: b.date, value: b.close}));
-  if (!chartOrEmpty('cadliBtcChart', series.length > 0, 'No CADLI BTC reference data — wait for next refresh.')) {
+  if (!chartOrEmpty('cadliBtcChart', series.length > 0, 'No CADLI BTC reference series in this build\u2019s payload \u2014 an absence, not a reading of zero.')) {
     destroy('cadliBtc');
     return;
   }
@@ -5458,11 +5790,9 @@ function renderTop20Signals(){
     .slice().sort((a,b) => (b.score||0) - (a.score||0))
     .slice(0, 25);
   if (!all.length){
-    host.innerHTML = V2.empty({
-      icon: '📡',
-      title: 'Signals warming up',
-      sub: 'No top-20 signals yet — refresh in a moment.',
-      warm: true,
+    host.innerHTML = V2.feedEmpty({
+      icon: '📡', what: 'Top-20 signals', source: 'the per-coin signal set',
+      freshness: (typeof signalsTop20Freshness === 'function') ? signalsTop20Freshness : null,
     });
     return;
   }
@@ -5583,11 +5913,9 @@ function renderPerCoinSignalList(){
     .sort((a,b) => (a.rank||999) - (b.rank||999))
     .slice(0, 25);
   if (!top25.length){
-    host.innerHTML = V2.empty({
-      icon: '📡',
-      title: 'Per-coin signals warming up',
-      sub: 'No top-25 signals yet — refresh in a moment.',
-      warm: true,
+    host.innerHTML = V2.feedEmpty({
+      icon: '📡', what: 'Top-25 signals', source: 'the per-coin signal set',
+      freshness: (typeof pocTopFreshness === 'function') ? pocTopFreshness : null,
     });
     return;
   }
@@ -6462,11 +6790,13 @@ function renderWhaleEth(){
         <span style="color:var(--muted)"> in a single transaction</span><br>
         <a href="https://etherscan.io/tx/${hash}" target="_blank" rel="noopener" style="color:var(--v2-ai);text-decoration:none">${shortHash} ↗</a>`;
     } else {
-      ltBox.innerHTML = V2.empty({
-        icon: '🐋',
-        title: 'No single-largest transaction',
-        sub: 'Blockchair fetch may have failed — retry on next refresh.',
-        warm: true,
+      // "may have failed ... retry on next refresh" guessed at a cause and
+      // promised a fix. State what is known: nothing came through.
+      ltBox.innerHTML = V2.feedEmpty({
+        icon: '🐋', what: 'Single-largest transaction',
+        source: 'the Blockchair large-transaction feed',
+        freshness: (typeof whaleFreshness === 'function')
+          ? (() => whaleFreshness(state.asset)) : null,
       });
     }
   }
@@ -7193,7 +7523,7 @@ function renderInsights(){
   // Overview keep their own inline insight surfaces via renderInsightsFor()).
   if (host) {
     if (!list.length){
-      const empty = TAB_EMPTY[tab] || 'Nothing unusual right now. Load more data or wait for the next refresh.';
+      const empty = TAB_EMPTY[tab] || 'No rule fired on the data in this build. That is a result, not a delay.';
       host.innerHTML = V2.empty({ icon: '📡', title: 'Insights warming up', sub: empty, warm: true });
     } else {
       host.innerHTML = list.map(i => V2.insightCard(i)).join('');
@@ -7329,6 +7659,209 @@ function freshnessHtml(isoDate, opts){
   return '<div class="v2-fresh v2-fresh--' + f.tone + '"' + title + '>'
        + escapeHtml(f.text) + '</div>';
 }
+
+// ===========================================================================
+// S2 — THE HONESTY STORY MUST BE REACHABLE WITHOUT A MOUSE
+// ===========================================================================
+// Every explanation of a freshness stamp — why a date is what it is, what the
+// amber/red tint means, how much of a list the minimum actually covers, and
+// above all why something reads "as of —" — lived in a `title=` attribute.
+// A title attribute has NO activation on a touchscreen. On the phone this
+// dashboard is mostly read on, the tersest, most alarming states were
+// therefore the least explainable: a red chip, or Aviation's bare "as of —"
+// whose whole justification (the FAA feeds ship a prose vintage, so no single
+// observation date can be computed, so we refuse to invent one) was hover-only
+// and thus invisible. A refusal nobody can read is indistinguishable from a
+// bug — the honesty contract says the date must be explained, not just
+// withheld.
+//
+// This is done ONCE here rather than at the 30-odd call sites, and it is
+// deliberately attached to the RENDERED CHIP rather than edited into
+// freshnessHtml()/paintFreshness(): those two are byte-for-byte parity-locked
+// against v2/app.py (tests/test_v1_freshness.py::test_helper_is_byte_identical_
+// to_v2) and V2 is not this lane's to change. Working on `.v2-fresh[title]`
+// also catches the chips paintFreshness() writes, the tab strips, and the
+// header stamp — every chip on the page, from one place.
+//
+// The `title` stays exactly where it was, so desktop hover is untouched.
+(function freshnessNotes(){
+  var open = null;      // {note, chip}
+  // The affordance + focusability are attributes, not classes, because
+  // paintFreshness() reassigns el.className and el.textContent on every
+  // repaint — an added class or an appended marker node would be wiped.
+  // role/tabindex/title all survive that, and the ⓘ marker is a ::after.
+  function enhanceFreshnessChips(){
+    var els = document.querySelectorAll('.v2-fresh[title]:not([data-fx])');
+    for (var i = 0; i < els.length; i++){
+      var el = els[i];
+      el.setAttribute('data-fx', '1');
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('aria-expanded', 'false');
+    }
+  }
+  function close(refocus){
+    if (!open) return;
+    var chip = open.chip;
+    if (open.note && open.note.parentNode) open.note.parentNode.removeChild(open.note);
+    if (chip){
+      chip.setAttribute('aria-expanded', 'false');
+      chip.removeAttribute('aria-describedby');
+      if (refocus) { try { chip.focus(); } catch (_) {} }
+    }
+    open = null;
+  }
+  // ---- OWNER LIFECYCLE (audit B6) -----------------------------------------
+  // The note is position:fixed and lives on <body>, so nothing in normal flow
+  // can take it away. That is what made it survive tab navigation: open a
+  // note on #etf, let the hash change to #social (a deep link, an in-page
+  // anchor, the browser Back button, or a plain tab click), and the note
+  // stayed on screen — floating over the nav at z-index 400 — while the chip
+  // that owns it sat inside a panel that was now display:none. A disclosure
+  // outliving the thing it discloses is a lie about what the reader is
+  // looking at.
+  //
+  // These two predicates are the whole fix. `ownerLive` answers "does the
+  // chip still exist AND still render?" — a chip inside a display:none panel
+  // has a zero-size box, so this catches tab switches, re-renders that
+  // replace the chip's DOM, and modal bodies being torn down, without the
+  // note needing to know which of those happened. `ownerOnScreen` answers
+  // "is the chip still in the viewport?", which is what makes scrolling the
+  // owner away dismiss the note instead of dragging it along.
+  function ownerLive(chip){
+    if (!chip || !chip.getBoundingClientRect) return false;
+    if (!document.contains(chip)) return false;
+    var r = chip.getBoundingClientRect();
+    return (r.width > 0 || r.height > 0);
+  }
+  function ownerOnScreen(chip){
+    var r = chip.getBoundingClientRect();
+    return r.bottom > 0 && r.top < window.innerHeight
+        && r.right > 0 && r.left < window.innerWidth;
+  }
+  // Two separate tests, because they answer different questions and the
+  // wrong one fires at the wrong time. `closeIfDead` is for DOM churn: the
+  // owner is gone or no longer renders, so the note is orphaned no matter
+  // where the page is scrolled to. `closeIfOffScreen` is for scrolling: the
+  // owner still exists, it has just left the viewport. Folding the viewport
+  // test into the DOM-churn path would close a note the instant any renderer
+  // touched the page while its chip happened to be just off-screen.
+  function closeIfDead(){
+    if (open && !ownerLive(open.chip)) close(false);
+  }
+  function closeIfOffScreen(){
+    if (open && (!ownerLive(open.chip) || !ownerOnScreen(open.chip))) close(false);
+  }
+  // selectTab() calls this directly, so a programmatic tab change (deep link
+  // on boot, the Chart.js late-arrival repaint, a "show me on the X tab"
+  // link) tears the note down even when no event the reader generated fires.
+  window.__closeFreshnessNote = function(){ close(false); };
+  function place(note, chip){
+    var r = chip.getBoundingClientRect();
+    var w = note.offsetWidth, h = note.offsetHeight;
+    var left = Math.min(Math.max(8, r.left), Math.max(8, window.innerWidth - w - 8));
+    // Prefer below the chip; flip above when there is no room, so the note is
+    // never pushed off the bottom of a phone screen.
+    var top = r.bottom + 6;
+    if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+    note.style.left = Math.round(left) + 'px';
+    note.style.top  = Math.round(top) + 'px';
+  }
+  function show(chip){
+    var text = chip.getAttribute('title') || '';
+    if (!text) return;
+    if (open && open.chip === chip){ close(true); return; }
+    close(false);
+    var note = document.createElement('div');
+    note.className = 'v2-freshnote';
+    note.id = 'v2-freshnote';
+    note.setAttribute('role', 'dialog');
+    note.setAttribute('aria-label', 'What this freshness stamp means');
+    var body = document.createElement('div');
+    body.className = 'v2-freshnote__body';
+    // textContent, not innerHTML: the title strings are built from source
+    // names and dates and are never trusted as markup.
+    body.textContent = text;
+    var x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'v2-freshnote__x';
+    x.textContent = 'Got it';
+    note.appendChild(body); note.appendChild(x);
+    document.body.appendChild(note);
+    open = {note: note, chip: chip};
+    chip.setAttribute('aria-expanded', 'true');
+    chip.setAttribute('aria-describedby', 'v2-freshnote');
+    place(note, chip);
+    // Not an alert(): an alert blocks the page, cannot be styled, and reads
+    // as an error rather than an explanation.
+    x.addEventListener('click', function(e){ e.stopPropagation(); close(true); });
+    try { x.focus({preventScroll:true}); } catch (_) { try { x.focus(); } catch (_2) {} }
+  }
+  document.addEventListener('click', function(e){
+    var chip = e.target && e.target.closest ? e.target.closest('.v2-fresh[title]') : null;
+    if (chip){ e.preventDefault(); e.stopPropagation(); show(chip); return; }
+    if (open && !(e.target.closest && e.target.closest('.v2-freshnote'))) close(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape'){ close(true); return; }
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    var chip = e.target && e.target.closest ? e.target.closest('.v2-fresh[title]') : null;
+    if (!chip) return;
+    e.preventDefault();
+    show(chip);
+  });
+  window.addEventListener('resize', function(){
+    if (!open) return;
+    closeIfDead();
+    if (open) place(open.note, open.chip);
+  });
+  // Scroll used to unconditionally re-place the note, which is precisely how
+  // it stayed glued to the screen after its chip had scrolled away. Now the
+  // owner has to still be on screen to keep it.
+  window.addEventListener('scroll', function(){
+    if (!open) return;
+    closeIfOffScreen();
+    if (open) place(open.note, open.chip);
+  }, {passive:true});
+  // The dashboard routes on the hash. A deep link, an in-page anchor and the
+  // browser Back/Forward buttons all land here without any click we could
+  // have seen, so this is the event that has to catch them.
+  window.addEventListener('hashchange', function(){ close(false); });
+  window.addEventListener('popstate', function(){ close(false); });
+  // A tab that goes to the background can come back much later on a
+  // different hash; nothing about the old note is still true by then.
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) close(false);
+  });
+
+  // Chips are painted by a dozen renderers at unpredictable times (tab
+  // switch, sidecar arrival, modal open), so rather than teach each one to
+  // call the enhancer, watch for them. Debounced to one pass per frame, and
+  // childList-only so setting our own attributes cannot re-trigger it.
+  var pending = false;
+  function schedule(){
+    if (pending) return;
+    pending = true;
+    (window.requestAnimationFrame || window.setTimeout)(function(){
+      pending = false;
+      enhanceFreshnessChips();
+      // Same pass doubles as the liveness check: any render that removed or
+      // hid the owning chip has just mutated the DOM, so this is the first
+      // moment we could possibly know the note has been orphaned. This is
+      // what catches a tab switch that leaves the hash alone, and a renderer
+      // replacing the chip's DOM out from under an open note.
+      closeIfDead();
+    }, 16);
+  }
+  function boot(){
+    enhanceFreshnessChips();
+    try {
+      new MutationObserver(schedule).observe(document.body, {childList:true, subtree:true});
+    } catch (_) { /* no MutationObserver: the initial pass still ran */ }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
 
 // --- date plumbing ---------------------------------------------------------
 // fDay: normalise anything date-ish to 'YYYY-MM-DD' (or null). Everything
@@ -7980,15 +8513,87 @@ const V2 = (function(){
   }
 
   // --- empty / fallback state --------------------------------------------
+  // `warm` is the "still arriving" look. `absent` is the "this did not
+  // arrive" look — see feedEmpty() below for why they must not be the same
+  // element. `note` takes trusted HTML (a freshness stamp), everything else
+  // is escaped.
   function empty(opts){
     const o = opts || {};
     const cls = ['v2-empty'];
-    if (o.warm) cls.push('v2-empty--warm');
+    if (o.warm)   cls.push('v2-empty--warm');
+    if (o.absent) cls.push('v2-empty--absent');
     return '<div class="' + cls.join(' ') + '">' +
              (o.icon  ? '<div class="v2-empty__icon">'  + escapeHtml(o.icon)  + '</div>' : '') +
              (o.title ? '<div class="v2-empty__title">' + escapeHtml(o.title) + '</div>' : '') +
              (o.sub   ? '<div class="v2-empty__sub">'   + escapeHtml(o.sub)   + '</div>' : '') +
+             (o.note  ? '<div class="v2-empty__note">'  + o.note              + '</div>' : '') +
            '</div>';
+  }
+
+  // --- absence is not a delay (audit V2-B) --------------------------------
+  // "Headlines warming up / No top news yet — refresh in a moment" is a
+  // PROMISE. It is only true while a fetch is genuinely in flight. Every
+  // feed inlined into the page at build time is already final by the time
+  // the user reads it: reloading serves the same bytes, and a feed that is
+  // hard-failing upstream can sit on that copy indefinitely. Telling the
+  // user to wait for something that will never come is the same class of
+  // dishonesty as stamping stale data fresh — transient copy over a
+  // possibly permanent absence.
+  //
+  // So: only claim "loading" when there is an in-flight sidecar backing the
+  // claim. Otherwise say the feed delivered nothing, and — where a
+  // freshness resolver already knows how old the payload behind it is —
+  // say that instead of promising a refresh.
+  //
+  // This never reports 0 as a reading. "delivered no items" is the absence
+  // of a measurement, not a measurement of zero.
+  //   o.sidecar   : sidecar name whose in-flight state licenses "loading"
+  //   o.what      : subject, e.g. 'Headlines'
+  //   o.source    : where it comes from, e.g. 'the market news feed'
+  //   o.freshness : () => {date,...}|null — the resolver for that surface
+  function feedEmpty(o){
+    const opts = o || {};
+    const what = opts.what || 'Data';
+    const source = opts.source || 'this feed';
+    const sc = opts.sidecar;
+    const scState = (sc && typeof SIDECAR_STATE !== 'undefined') ? SIDECAR_STATE[sc] : null;
+    // undefined = the fetch has not been kicked off yet (tab not entered);
+    // 'loading' = genuinely in flight. Both are honest "wait" states.
+    const inFlight = !!sc && (scState === undefined || scState === 'loading');
+    if (inFlight){
+      return empty({ icon: opts.icon || '📡',
+                     title: what + ' loading',
+                     sub: 'Fetching ' + source + '…',
+                     warm: true });
+    }
+    // Not in flight ⇒ this is what the build got. Attach the age of the
+    // payload the empty feed arrived with, when a resolver knows it — that
+    // is the number that tells the user whether "empty" means "quiet today"
+    // or "nothing has come through in eleven weeks".
+    let note = '';
+    try {
+      const f = (typeof opts.freshness === 'function') ? opts.freshness() : null;
+      if (f && typeof freshnessHtml === 'function'){
+        note = freshnessHtml(f.date, {
+          label: opts.ageLabel || 'payload it arrived with, as of',
+          stale: f.stale, total: f.total,
+          title: 'Age of the surrounding payload this empty ' + source
+               + ' was delivered in. It is NOT a date for the missing items —'
+               + ' there are none to date.',
+        });
+      }
+    } catch (_) {}
+    return empty({
+      icon: opts.icon || '🚫',
+      title: opts.absentTitle || (what + ' not delivered'),
+      sub: opts.absentSub
+        || ('This build received nothing from ' + source
+            + '. That is an absence, not a count of zero, and it will not'
+            + ' change until the next successful fetch — reloading serves'
+            + ' the same page.'),
+      note: note,
+      absent: true,
+    });
   }
 
   // --- insight card (one entry from DATA.insights, or fallback) ----------
@@ -7996,7 +8601,7 @@ const V2 = (function(){
     if (!i) {
       return '<div class="v2-insight">' +
                '<div class="v2-insight__head">Insight unavailable</div>' +
-               '<div class="v2-insight__detail">Data warming — refresh in a moment.</div>' +
+               '<div class="v2-insight__detail">No detail carried with this insight.</div>' +
              '</div>';
     }
     const sev = sevClass(i.severity, i.kind);
@@ -8024,10 +8629,13 @@ const V2 = (function(){
       ? document.getElementById(hostElOrId) : hostElOrId;
     if (!host) return;
     if (!list.length){
+      // The insights list is derived from data already inlined in the page,
+      // so an empty result is a finding ("no rule fired"), not a wait.
       host.innerHTML = empty({
-        icon: '📡', title: 'Insights warming up',
-        sub: o.emptySub || 'No notable signals from this tab\'s rules yet — refresh in a moment.',
-        warm: true,
+        icon: '📭', title: 'No insights for this tab',
+        sub: o.emptySub || 'None of this tab\'s rules fired on the data in this'
+           + ' build. That is a result, not a delay — the rules ran.',
+        absent: true,
       });
       return;
     }
@@ -8057,7 +8665,7 @@ const V2 = (function(){
                  '</li>';
         }).join('') +
         '</ul>'
-      : '<div class="v2-ai-take__empty">No major moves on this tab right now — check back after the next refresh.</div>';
+      : '<div class="v2-ai-take__empty">No rule fired on this tab\u2019s data in this build \u2014 a result, not a delay.</div>';
     // The band is titled "Today's AI Take", which asserts a date. V2 dropped
     // the global insights bar, so THIS is the live insight surface — and it
     // was carrying the same implicit build-time claim the bar's explicit
@@ -8079,7 +8687,7 @@ const V2 = (function(){
   }
 
   return {
-    sevClass, sevIcon, card, chip, metric, skel, empty,
+    sevClass, sevIcon, card, chip, metric, skel, empty, feedEmpty,
     insightCard, renderInsightsFor, aiTake,
   };
 })();
@@ -8104,11 +8712,9 @@ function renderGeckoTerminalPools(){
     const tbody = document.querySelector(tbodySel);
     if (!tbody) return;
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="padding:0">' + V2.empty({
-        icon: '📊',
-        title: 'Pools warming up',
-        sub: 'No DEX pool data yet — wait for the next refresh.',
-        warm: true,
+      tbody.innerHTML = '<tr><td colspan="6" style="padding:0">' + V2.feedEmpty({
+        icon: '📊', what: 'DEX pools', source: 'the GeckoTerminal pool feed',
+        freshness: (typeof overviewFreshness === 'function') ? overviewFreshness : null,
       }) + '</td></tr>';
       return;
     }
@@ -8180,13 +8786,19 @@ function renderDefiSpotlight(){
   const hasAny = (llama && (llama.stablecoin_mcap_usd != null || llama.dex_volume_24h_usd != null))
               || (Array.isArray(yields) && yields.length);
   if (!hasAny){
-    host.innerHTML = V2.card({
-      title: 'Top DeFi signals',
-      severity: 'info',
-      body: '<div class="v2-card__metric-row">'
-          + V2.skel('metric') + V2.skel('metric') + V2.skel('metric')
-          + '</div>',
-    });
+    // A shimmering skeleton says "arriving". Only show one while something
+    // is actually arriving — otherwise it sat above the tab's own
+    // "not delivered" notice, contradicting it.
+    const stillComing = SIDECAR_STATE.defi === 'loading' || SIDECAR_STATE.defi === undefined;
+    host.innerHTML = stillComing
+      ? V2.card({
+          title: 'Top DeFi signals',
+          severity: 'info',
+          body: '<div class="v2-card__metric-row">'
+              + V2.skel('metric') + V2.skel('metric') + V2.skel('metric')
+              + '</div>',
+        })
+      : '';
     return;
   }
   const stableMcap = llama.stablecoin_mcap_usd;
@@ -8412,11 +9024,9 @@ function renderNews(){
   const host = document.getElementById('newsFeed');
   if (!host) return;
   if (!news.length) {
-    host.innerHTML = V2.empty({
-      icon: '📰',
-      title: 'News feed warming up',
-      sub: 'No headlines have landed yet — check back after the next refresh.',
-      warm: true,
+    host.innerHTML = V2.feedEmpty({
+      icon: '📰', what: 'News feed', source: 'the market news feed',
+      freshness: (typeof overviewFreshness === 'function') ? overviewFreshness : null,
     });
     return;
   }
@@ -9121,11 +9731,13 @@ function renderOverviewNews(){
   const host = document.getElementById('overviewNews');
   if (host){
     if (!news.length){
-      host.innerHTML = V2.empty({
-        icon: '📰',
-        title: 'Headlines warming up',
-        sub: 'No top news yet — refresh in a moment.',
-        warm: true,
+      // market.news is INLINED at build time — there is no sidecar and no
+      // fetch to wait for, so "refresh in a moment" was a promise nothing
+      // could keep. Say what actually happened and stamp the age of the
+      // market payload the empty feed came in.
+      host.innerHTML = V2.feedEmpty({
+        icon: '📰', what: 'Headlines', source: 'the market news feed',
+        freshness: (typeof overviewFreshness === 'function') ? overviewFreshness : null,
       });
     } else {
       host.innerHTML = news.slice(0,4).map(n =>
@@ -9145,12 +9757,21 @@ function renderOverviewNews(){
   if (bottom){
     const more = news.slice(4, 14);
     if (!more.length){
-      bottom.innerHTML = V2.empty({
-        icon: '📰',
-        title: 'No additional headlines',
-        sub: 'The feed has 4 or fewer items right now — all shown in the top teaser.',
-        warm: true,
-      });
+      // Two different facts wore one message here. With 1-4 headlines the
+      // teaser really has shown everything; with ZERO the feed delivered
+      // nothing at all, and "the feed has 4 or fewer items" dressed that up
+      // as an ordinary quiet day.
+      bottom.innerHTML = news.length
+        ? V2.empty({
+            icon: '📰',
+            title: 'No additional headlines',
+            sub: 'The feed carries ' + news.length + ' item'
+               + (news.length === 1 ? '' : 's') + ' — all shown in the top teaser.',
+          })
+        : V2.feedEmpty({
+            icon: '📰', what: 'Headlines', source: 'the market news feed',
+            freshness: (typeof overviewFreshness === 'function') ? overviewFreshness : null,
+          });
       return;
     }
     bottom.innerHTML = more.map(n =>
@@ -9167,11 +9788,14 @@ function renderOverviewInsights(){
   const host = document.getElementById('overviewInsights');
   if (!host) return;
   if (!all.length){
+    // DATA.insights is inlined at build time; an empty list means no rule
+    // fired on this build's data, not that results are still on their way.
     host.innerHTML = V2.empty({
-      icon: '📡',
-      title: 'Top insights warming up',
-      sub: 'No notable cross-tab signals yet — they will appear here after the next refresh.',
-      warm: true,
+      icon: '📭',
+      title: 'No cross-tab insights',
+      sub: 'No rule fired on the data in this build. That is a result, not a'
+         + ' delay — reloading serves the same page.',
+      absent: true,
     });
     return;
   }
@@ -9608,9 +10232,10 @@ function renderStocksTab(){
   if (!Array.isArray(rows) || rows.length === 0){
     grid.innerHTML = V2.empty({
       icon: '📡',
-      title: 'Stock signals warming up',
-      sub: 'Run python app.py --fetch-market to populate top-50 equity signals.',
-      warm: true,
+      title: 'No stock signals in this build',
+      sub: 'Nothing to warm up — stocks_signals is absent from the payload.'
+         + ' Locally, run python app.py --fetch-market to populate it.',
+      absent: true,
     });
     return;
   }
@@ -12226,11 +12851,9 @@ function renderAiNewsTab(){
       return (db||0) - (da||0);
     }).slice(0, 30);
     if (!items.length){
-      feed.innerHTML = V2.empty({
-        icon: '📰',
-        title: 'AI news warming up',
-        sub: 'No AI-related articles yet — wait for the next refresh.',
-        warm: true,
+      feed.innerHTML = V2.feedEmpty({
+        icon: '📰', what: 'AI news', source: 'the AI headline feed',
+        freshness: (typeof aiNewsFreshness === 'function') ? aiNewsFreshness : null,
       });
     } else {
       feed.innerHTML = items.map(n => {
@@ -12320,11 +12943,9 @@ function renderAiNewsTab(){
       .map(([src, r]) => ({src, ...r, net: r.positive - r.negative}))
       .sort((a,b)=> b.total - a.total || b.net - a.net);
     if (!rows.length){
-      srcHost.innerHTML = V2.empty({
-        icon: '📰',
-        title: 'Source breakdown unavailable',
-        sub: 'No per-source headline data — refresh in a moment.',
-        warm: true,
+      srcHost.innerHTML = V2.feedEmpty({
+        icon: '📰', what: 'Source breakdown', source: 'the AI headline feed',
+        freshness: (typeof aiNewsFreshness === 'function') ? aiNewsFreshness : null,
       });
     } else {
       srcHost.innerHTML = `<table style="width:100%;font-size:12px;border-collapse:collapse">
@@ -12399,11 +13020,8 @@ function renderAiInvestmentKpis(){
   if (!host) return;
   const kpis = (((DATA.market||{}).ai_curated||{}).investment_kpis) || [];
   if (!Array.isArray(kpis) || !kpis.length){
-    host.innerHTML = '<div style="grid-column:1/-1">' + V2.empty({
-      icon: '⏳',
-      title: 'Investment KPIs warming up',
-      sub: 'No KPI data yet — refresh in a moment.',
-      warm: true,
+    host.innerHTML = '<div style="grid-column:1/-1">' + V2.feedEmpty({
+      icon: '📭', what: 'Investment KPIs', source: 'the AI-curated KPI set',
     }) + '</div>';
     return;
   }
@@ -12605,11 +13223,8 @@ function renderAiWhitepaperKpis(){
   if (!host) return;
   const kpis = (((DATA.market||{}).ai_curated||{}).whitepaper_kpis) || [];
   if (!Array.isArray(kpis) || !kpis.length){
-    host.innerHTML = '<div style="grid-column:1/-1">' + V2.empty({
-      icon: '⏳',
-      title: 'Research benchmarks warming up',
-      sub: 'No benchmark data yet — refresh in a moment.',
-      warm: true,
+    host.innerHTML = '<div style="grid-column:1/-1">' + V2.feedEmpty({
+      icon: '📭', what: 'Research benchmarks', source: 'the AI-curated whitepaper set',
     }) + '</div>';
     return;
   }
@@ -12823,7 +13438,7 @@ function openTickerModal(symbol){
     // Ticker not in current stocks_signals — likely an index symbol or a
     // ticker that scrolled off the top-50. Surface a graceful fallback so
     // the click never feels broken.
-    body.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px 4px;font-size:12px">No signal data available for this ticker in the current snapshot. The top-50 most-active US equities are scored by fetch_market.py — refresh in a moment or try a different symbol.</div>';
+    body.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px 4px;font-size:12px">No signal data for this ticker in this build\u2019s snapshot. Only the top-50 most-active US equities are scored by fetch_market.py, so this is most likely out of scope rather than late \u2014 try a different symbol.</div>';
     modal.classList.remove('hidden');
     return;
   }
@@ -13086,9 +13701,10 @@ function renderBreadthChart(canvasId, breadth, title){
     if (wrap){
       wrap.innerHTML = V2.empty({
         icon: '📊',
-        title: 'Breadth data warming up',
-        sub: 'No signal history yet — run --fetch-market to populate.',
-        warm: true,
+        title: 'No breadth history in this build',
+        sub: 'Nothing to warm up — no signal history is present. Locally, run'
+           + ' --fetch-market to populate it.',
+        absent: true,
       });
     }
     return;
@@ -13579,7 +14195,24 @@ function compositeHistoryChart(points){
   if (x1 === x0){ x0 -= dayMs; x1 += dayMs; }         // single point → centre it
   const vs = points.map(p => Number(p.score)).filter(v => isFinite(v));
   let y0 = Math.min.apply(null, vs), y1 = Math.max.apply(null, vs);
-  const span = (y1 - y0) || Math.max(2, Math.abs(y1) * 0.2 || 2);
+  // AXIS FLOOR. Every index charted here is a BOUNDED score — roughly
+  // -100..+100, or 0..100. Fitting the axis to the observed range alone
+  // means a composite that crept from 51 to 53 gets redrawn across the full
+  // chart height and reads as a dramatic swing. That is not a cosmetic
+  // complaint: an axis that exaggerates is a chart that lies, and this chart
+  // exists specifically to stop the archive being over-read.
+  //
+  // 20 points is a tenth of the ±100 domain, so a 2-point move occupies
+  // under a tenth of the plot and looks like what it is. A genuinely wide
+  // series is unaffected — the floor only ever widens the domain, never
+  // narrows it, so no real movement is ever compressed out of view.
+  const MIN_SPAN = 20;
+  if (y1 - y0 < MIN_SPAN){
+    const mid = (y0 + y1) / 2;
+    y0 = mid - MIN_SPAN / 2;
+    y1 = mid + MIN_SPAN / 2;
+  }
+  const span = y1 - y0;
   y0 -= span * 0.15; y1 += span * 0.15;
   const X = ms => PL + ((ms - x0) / (x1 - x0)) * iw;
   const Y = v  => PT + (1 - (v - y0) / (y1 - y0)) * ih;
@@ -13854,6 +14487,32 @@ function closeCompositeHistory(){
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeCompositeHistory();
+  });
+  // FOCUS TRAP (audit V2-E). The modal already declared role="dialog"
+  // aria-modal="true", moved focus to its close button on open and restored
+  // it on close — but nothing kept focus INSIDE. One Tab put a keyboard or
+  // screen-reader user back on the page behind a dialog their AT was
+  // treating as modal, with no way to tell they had left. aria-modal is a
+  // promise to the AT; the trap is what makes it true.
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Tab') return;
+    const modal = document.getElementById('compositeHistoryModal');
+    if (!modal || modal.classList.contains('hidden')) return;
+    const items = Array.prototype.filter.call(
+      modal.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]),'
+        + ' select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+      el => el.offsetWidth > 0 || el.offsetHeight > 0 || el === document.activeElement);
+    if (!items.length){ e.preventDefault(); return; }
+    const first = items[0], last = items[items.length - 1];
+    // Focus outside the dialog entirely (it escaped earlier, or the user
+    // tabbed in from the address bar) → pull it back to the near edge.
+    if (!modal.contains(document.activeElement)){
+      e.preventDefault();
+      (e.shiftKey ? last : first).focus();
+      return;
+    }
+    if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
   });
 })();
 // Given a composite net score in [-100,+100], plus an array of normalized
@@ -14321,9 +14980,10 @@ function renderPocTopCards(){
   if (!Array.isArray(list) || list.length === 0){
     host.innerHTML = '<div style="grid-column:1/-1">' + V2.empty({
       icon: '📊',
-      title: 'POC data warming up',
-      sub: 'Run python app.py --fetch-market and reload to populate volume-profile data.',
-      warm: true,
+      title: 'No volume-profile data in this build',
+      sub: 'Nothing to warm up — poc_top is absent from the payload. Locally,'
+         + ' run python app.py --fetch-market and reload to populate it.',
+      absent: true,
     }) + '</div>';
     if (featuredHost) featuredHost.innerHTML = '';
     return;
@@ -15245,8 +15905,8 @@ function renderTopNewsSentiment(){
     host.innerHTML = V2.empty({
       icon: '📰',
       title: 'No top-25 mentions',
-      sub: 'No news headlines reference top-25 coins in the current window.',
-      warm: true,
+      sub: 'No news headlines reference top-25 coins in the current window.'
+         + ' That is a result over the headlines present, not a wait.',
     });
     return;
   }
@@ -15260,8 +15920,8 @@ function renderTopNewsSentiment(){
     host.innerHTML = V2.empty({
       icon: '📰',
       title: 'No top-25 mentions',
-      sub: 'No news headlines reference top-25 coins in the current window.',
-      warm: true,
+      sub: 'No news headlines reference top-25 coins in the current window.'
+         + ' That is a result over the headlines present, not a wait.',
     });
     return;
   }
@@ -15312,11 +15972,9 @@ function renderResearchNews(){
   if (!host) return;
   const news = ((DATA.market || {}).news) || [];
   if (!news.length) {
-    host.innerHTML = V2.empty({
-      icon: '📰',
-      title: 'Research news warming up',
-      sub: 'No notable headlines yet — refresh in a moment.',
-      warm: true,
+    host.innerHTML = V2.feedEmpty({
+      icon: '📰', what: 'Research news', source: 'the market news feed',
+      freshness: (typeof overviewFreshness === 'function') ? overviewFreshness : null,
     });
     return;
   }
@@ -15599,7 +16257,9 @@ function renderCpiCard(s){
           '<span class="v2-chip v2-chip--warn cpi-mini__chip">unavailable</span>' +
         '</div>' +
         '<div class="v2-card__body">' +
-          '<div class="v2-empty v2-empty--warm" style="padding:8px 0">' +
+          // A fetch error is not a warm-up. --warm is the "still arriving"
+          // tint; this series is not arriving.
+          '<div class="v2-empty v2-empty--absent" style="padding:8px 0">' +
             '<div class="v2-empty__sub" style="font-size:11px">' + err + '</div>' +
           '</div>' +
         '</div>' +
@@ -15904,8 +16564,9 @@ function renderAll(){
     const defiLoading = document.getElementById('defiLoading');
     const defiContent = document.getElementById('defiContent');
     const defiLoadingActive = SIDECAR_STATE.defi === 'loading';
+    const defiFailed = sidecarFailed('defi');
     if (defiLoading) {
-      defiLoading.classList.toggle('hidden', !defiLoadingActive);
+      defiLoading.classList.toggle('hidden', !defiLoadingActive && !defiFailed);
       if (defiLoadingActive) {
         defiLoading.innerHTML = V2.empty({
           icon: '⏳',
@@ -15913,14 +16574,16 @@ function renderAll(){
           sub: 'Fetching TVL, stablecoin, and yield data — usually under a second.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      } else if (defiFailed) {
+        defiLoading.innerHTML = sidecarFailureHtml('defi');
       }
     }
-    if (defiContent) defiContent.classList.toggle('hidden', defiLoadingActive);
+    if (defiContent) defiContent.classList.toggle('hidden', defiLoadingActive || defiFailed);
     // Wave-3c — spotlight row stays above the loading state so the top of
     // the tab is consistent (skeleton metrics → real metrics) regardless of
     // sidecar status.
     renderDefiSpotlight();
-    if (!defiLoadingActive) renderDefi();
+    if (!defiLoadingActive && !defiFailed) renderDefi();
   }
   if (state.tab === 'trading' && !trEmpty){
     renderNews();
@@ -15951,8 +16614,9 @@ function renderAll(){
     const travelLoading = document.getElementById('travelLoading');
     const travelContent = document.getElementById('travelContent');
     const travelLoadingActive = !DATA.travel && SIDECAR_STATE.travel === 'loading';
+    const travelFailed = sidecarFailed('travel');
     if (travelLoading) {
-      travelLoading.classList.toggle('hidden', !travelLoadingActive);
+      travelLoading.classList.toggle('hidden', !travelLoadingActive && !travelFailed);
       if (travelLoadingActive) {
         travelLoading.innerHTML = V2.empty({
           icon: '🌎',
@@ -15960,10 +16624,12 @@ function renderAll(){
           sub: 'Fetching State Dept advisory levels for ~190 destinations.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      } else if (travelFailed) {
+        travelLoading.innerHTML = sidecarFailureHtml('travel');
       }
     }
-    if (travelContent) travelContent.classList.toggle('hidden', travelLoadingActive);
-    if (!travelLoadingActive) renderTravel();
+    if (travelContent) travelContent.classList.toggle('hidden', travelLoadingActive || travelFailed);
+    if (!travelLoadingActive && !travelFailed) renderTravel();
   }
   if (state.tab === 'cpi'){
     // Lazy-load gate (mirrors travel/defi): show the placeholder while the
@@ -15971,8 +16637,9 @@ function renderAll(){
     const cpiLoading = document.getElementById('cpiLoading');
     const cpiContent = document.getElementById('cpiContent');
     const cpiLoadingActive = !DATA.cpi && SIDECAR_STATE.cpi === 'loading';
+    const cpiFailed = sidecarFailed('cpi');
     if (cpiLoading) {
-      cpiLoading.classList.toggle('hidden', !cpiLoadingActive);
+      cpiLoading.classList.toggle('hidden', !cpiLoadingActive && !cpiFailed);
       if (cpiLoadingActive) {
         cpiLoading.innerHTML = V2.empty({
           icon: '📊',
@@ -15980,10 +16647,12 @@ function renderAll(){
           sub: 'Fetching FRED Consumer Price Index series.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      } else if (cpiFailed) {
+        cpiLoading.innerHTML = sidecarFailureHtml('cpi');
       }
     }
-    if (cpiContent) cpiContent.classList.toggle('hidden', cpiLoadingActive);
-    if (!cpiLoadingActive) renderCpi();
+    if (cpiContent) cpiContent.classList.toggle('hidden', cpiLoadingActive || cpiFailed);
+    if (!cpiLoadingActive && !cpiFailed) renderCpi();
   }
   if (state.tab === 'supplies'){
     // Mirror the travel lazy-load pattern: while the sidecar is in flight we
@@ -15993,8 +16662,9 @@ function renderAll(){
     const suppliesLoading = document.getElementById('suppliesLoading');
     const suppliesContent = document.getElementById('suppliesContent');
     const suppliesLoadingActive = !DATA.supplies && SIDECAR_STATE.supplies === 'loading';
+    const suppliesFailed = sidecarFailed('supplies');
     if (suppliesLoading) {
-      suppliesLoading.classList.toggle('hidden', !suppliesLoadingActive);
+      suppliesLoading.classList.toggle('hidden', !suppliesLoadingActive && !suppliesFailed);
       if (suppliesLoadingActive) {
         suppliesLoading.innerHTML = V2.empty({
           icon: '🚢',
@@ -16002,10 +16672,12 @@ function renderAll(){
           sub: 'Fetching port TEU, inventory ratio, and NY Fed GSCPI.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      } else if (suppliesFailed) {
+        suppliesLoading.innerHTML = sidecarFailureHtml('supplies');
       }
     }
-    if (suppliesContent) suppliesContent.classList.toggle('hidden', suppliesLoadingActive);
-    if (!suppliesLoadingActive) renderSupplies();
+    if (suppliesContent) suppliesContent.classList.toggle('hidden', suppliesLoadingActive || suppliesFailed);
+    if (!suppliesLoadingActive && !suppliesFailed) renderSupplies();
   }
   if (state.tab === 'metals'){
     // Same lazy-load pattern as travel/defi/whale: show a placeholder while
@@ -16014,8 +16686,9 @@ function renderAll(){
     const metalsLoading = document.getElementById('metalsLoading');
     const metalsContent = document.getElementById('metalsContent');
     const metalsLoadingActive = !DATA.metals && SIDECAR_STATE.metals === 'loading';
+    const metalsFailed = sidecarFailed('metals');
     if (metalsLoading) {
-      metalsLoading.classList.toggle('hidden', !metalsLoadingActive);
+      metalsLoading.classList.toggle('hidden', !metalsLoadingActive && !metalsFailed);
       if (metalsLoadingActive) {
         metalsLoading.innerHTML = V2.empty({
           icon: '🥇',
@@ -16023,10 +16696,12 @@ function renderAll(){
           sub: 'Gold/silver prices + central-bank gold + gold/silver mine production.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      } else if (metalsFailed) {
+        metalsLoading.innerHTML = sidecarFailureHtml('metals');
       }
     }
-    if (metalsContent) metalsContent.classList.toggle('hidden', metalsLoadingActive);
-    if (!metalsLoadingActive) renderMetals();
+    if (metalsContent) metalsContent.classList.toggle('hidden', metalsLoadingActive || metalsFailed);
+    if (!metalsLoadingActive && !metalsFailed) renderMetals();
   }
   if (state.tab === 'mufon'){
     // Same lazy-load pattern as the other sidecar-backed tabs: while the
@@ -16041,8 +16716,9 @@ function renderAll(){
     const mufonTrendLoading = document.getElementById('mufonTrendLoading');
     const mufonTrendContent = document.getElementById('mufonTrendContent');
     const mufonLoadingActive = !DATA.mufon && SIDECAR_STATE.mufon === 'loading';
+    const mufonFailed = sidecarFailed('mufon');
     if (mufonLoading) {
-      mufonLoading.classList.toggle('hidden', !mufonLoadingActive);
+      mufonLoading.classList.toggle('hidden', !mufonLoadingActive && !mufonFailed);
       if (mufonLoadingActive) {
         mufonLoading.innerHTML = V2.empty({
           icon: '🛸',
@@ -16050,14 +16726,19 @@ function renderAll(){
           sub: 'Fetching NUFORC eyewitness reports — aggregated by state.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      } else if (mufonFailed) {
+        mufonLoading.innerHTML = sidecarFailureHtml('mufon');
       }
     }
-    if (mufonContent) mufonContent.classList.toggle('hidden', mufonLoadingActive);
+    if (mufonContent) mufonContent.classList.toggle('hidden', mufonLoadingActive || mufonFailed);
     // Trend card shares the same sidecar — hide it while the fetch is in
     // flight to avoid flashing an "empty" state before data lands.
-    if (mufonTrendLoading) mufonTrendLoading.classList.toggle('hidden', !mufonLoadingActive);
-    if (mufonTrendContent) mufonTrendContent.classList.toggle('hidden', mufonLoadingActive);
-    if (!mufonLoadingActive) { renderMufonTrend(); renderMufonMap(); renderMufonShapes(); }
+    if (mufonTrendLoading) mufonTrendLoading.classList.toggle('hidden', !mufonLoadingActive && !mufonFailed);
+    if (mufonTrendContent) mufonTrendContent.classList.toggle('hidden', mufonLoadingActive || mufonFailed);
+    if (mufonTrendLoading && !mufonLoadingActive && mufonFailed){
+      mufonTrendLoading.innerHTML = sidecarFailureHtml('mufon');
+    }
+    if (!mufonLoadingActive && !mufonFailed) { renderMufonTrend(); renderMufonMap(); renderMufonShapes(); }
   }
   renderCoverage();
   // Freshness AGAIN (it was already painted at the top of renderAll): every
@@ -16098,11 +16779,25 @@ function selectTab(t){
   // tab's empty-state handles that), then re-runs once the fetch lands.
   const _sc = SIDECAR_FOR_TAB[t];
   if (_sc && (SIDECARS||{})[_sc] && SIDECAR_STATE[_sc] !== 'loaded'){
-    loadSidecar(_sc).then(loaded => { if (state.tab === t && loaded) renderAll(); });
+    // Re-render on FAILURE as well as success. Gating this on `loaded` meant
+    // a sidecar that 404'd or threw left the DOM exactly as the in-flight
+    // pass had painted it — i.e. "Loading DeFi data… usually under a second"
+    // sitting there permanently, with no further render to take it down.
+    // That is the audit's V2-B defect at its purest: transient copy over a
+    // permanent absence, and the state where the user is owed the most
+    // explanation was the one that gave them a spinner forever.
+    loadSidecar(_sc).then(() => { if (state.tab === t) renderAll(); });
   }
   // Close any open detail modals when switching tabs — leaving a POC or
   // Stocks modal floating over an unrelated tab is disorienting.
   document.querySelectorAll('.modal-bg').forEach(m => m.classList.add('hidden'));
+  // Same reasoning, and the same bug class, for the freshness explanation
+  // popover and the composite-history dialog: both are position:fixed, so
+  // neither is taken away by the panel that owned it going display:none.
+  // A stamp's explanation is about THIS tab's data; carrying it onto the
+  // next tab states something false about what is on screen.
+  try { if (window.__closeFreshnessNote) window.__closeFreshnessNote(); } catch (_) {}
+  try { if (typeof closeCompositeHistory === 'function') closeCompositeHistory(); } catch (_) {}
   // Whale Activity is BTC-only (free on-chain proxies from blockchain.info).
   // Force the asset to BTC so the page renders something useful instead of
   // the "switch to BTC" empty state when the user is on ETH or LINK.
@@ -16136,6 +16831,13 @@ function selectTab(t){
   if (_activeTab && _activeTab.scrollIntoView){
     try { _activeTab.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'}); }
     catch(_){ _activeTab.scrollIntoView(); }
+    // Repaint the edge fades once the smooth scroll settles — a smooth
+    // scroll that ends exactly at either end fires no further scroll event
+    // in some engines, which would leave a fade pointing at nothing.
+    if (typeof updateTabScrollAffordance === 'function'){
+      updateTabScrollAffordance();
+      setTimeout(updateTabScrollAffordance, 400);
+    }
   }
   document.querySelectorAll('.tab').forEach(el => {
     const isActive = el.dataset.tab === t;
@@ -16603,7 +17305,130 @@ document.querySelectorAll('.tab').forEach(b => {
       selectTab(b.dataset.tab);
     }
   });
+  // Keyboard focus moving along the strip must drag the strip with it, or a
+  // Tab-key user focuses a tab that is scrolled off-screen. Instant, not
+  // smooth: a focus ring that arrives before the element does is worse than
+  // no animation.
+  b.addEventListener('focus', () => {
+    try { b.scrollIntoView({inline:'nearest', block:'nearest'}); } catch(_){}
+    updateTabScrollAffordance();
+  });
 });
+
+// --- Two standing a11y gaps the audit measured (V2-E, "also note") --------
+//   * 20 role="tab" elements and ZERO role="tabpanel" / aria-controls, so
+//     the tab pattern announced as a list of buttons with nothing attached.
+//   * 34 of 34 <canvas> charts with no accessible name at all — a screen
+//     reader passed over every chart on the page in silence.
+// Both are wired here rather than in markup so adding a tab or a chart
+// cannot silently reintroduce the gap.
+//
+// Honest scope note: an accessible NAME is not a text alternative for the
+// data in a chart. It tells a screen-reader user the chart exists and what
+// it is about; it does not read them the series. The tables and freshness
+// stamps beside these charts remain the only textual route to the numbers.
+function wireChartAndPanelSemantics(){
+  document.querySelectorAll('.tab[data-tab]').forEach(tab => {
+    const name = tab.dataset.tab;
+    const panel = document.getElementById('tab-' + name);
+    if (!panel) return;
+    if (!tab.id) tab.id = 'tabbtn-' + name;
+    tab.setAttribute('aria-controls', panel.id);
+    panel.setAttribute('role', 'tabpanel');
+    panel.setAttribute('aria-labelledby', tab.id);
+  });
+  // Name each canvas from the nearest card/section heading above it. A
+  // canvas we cannot name is left alone rather than given a made-up label.
+  document.querySelectorAll('canvas').forEach(cv => {
+    if (cv.getAttribute('aria-label') || cv.getAttribute('aria-labelledby')) return;
+    let host = cv.closest('.v2-card, .chart-card, .card, section');
+    let title = null;
+    for (let i = 0; i < 3 && host && !title; i++){
+      const h = host.querySelector('.v2-card__title, h2, h3, .card-title');
+      if (h && h.textContent.trim()) title = h.textContent.trim();
+      else host = host.parentElement ? host.parentElement.closest('.v2-card, .chart-card, .card, section') : null;
+    }
+    if (!title) return;
+    cv.setAttribute('role', 'img');
+    cv.setAttribute('aria-label', title.replace(/\s+/g, ' ').slice(0, 120) + ' — chart');
+  });
+}
+
+// --- V2-A: honest scroll affordance on the 15-tab strip -------------------
+// At 360px the strip is 1214px wide inside a 360px box: ~4.5 of 15 tabs are
+// visible. The fade tells the user which direction still has tabs in it —
+// and, just as importantly, stops claiming there are more once there aren't.
+// Both classes are removed on a wide viewport where nothing overflows.
+// A sidecar that fails is not a sidecar that is slow (audit V2-B).
+// SIDECAR_STATE goes 'loading' -> 'loaded' | 'error'; the six lazy tabs used
+// to key their placeholder on 'loading' alone, so 'error' fell through to a
+// blank tab (or, before the selectTab fix above, to a permanent spinner).
+// This paints the honest version: what did not arrive, and — because the
+// page itself is a build artifact — that reloading will not change it.
+const SIDECAR_LABELS = {
+  defi:       { what: 'DeFi data',          source: 'the DefiLlama sidecar' },
+  travel:     { what: 'Travel advisories',  source: 'the State Dept advisory sidecar' },
+  cpi:        { what: 'CPI series',         source: 'the FRED CPI sidecar' },
+  supplies:   { what: 'Global supplies',    source: 'the port/GSCPI sidecar' },
+  metals:     { what: 'Metals data',        source: 'the metals sidecar' },
+  mufon:      { what: 'UAP sightings',      source: 'the NUFORC sidecar' },
+  whale:      { what: 'Whale activity',     source: 'the on-chain proxy sidecar' },
+  stockprices:{ what: 'Stock prices',       source: 'the stock-price sidecar' },
+};
+function sidecarFailed(name){
+  if (SIDECAR_STATE[name] !== 'error') return false;
+  const d = DATA[name];
+  if (!d) return true;
+  // loadSidecar leaves an EMPTY object behind on some failure paths, and a
+  // truthy `{}` is not data. Treating it as data is how a hard failure ends
+  // up rendering as a wall of em-dashes with nothing saying why — dashes
+  // that a reader can easily take for measured nulls.
+  if (Array.isArray(d)) return d.length === 0;
+  if (typeof d === 'object') return Object.keys(d).length === 0;
+  return false;
+}
+function sidecarFailureHtml(name){
+  const l = SIDECAR_LABELS[name] || { what: 'Data', source: 'this sidecar' };
+  return V2.feedEmpty({
+    icon: '\u26a0\ufe0f', what: l.what, source: l.source,
+    absentSub: l.source.charAt(0).toUpperCase() + l.source.slice(1)
+      + ' did not load for this page. That is a'
+      + ' failed fetch, not a slow one \u2014 nothing further is on its way,'
+      + ' and reloading serves the same build. Nothing below is a reading of'
+      + ' zero; there is simply no reading.',
+  });
+}
+
+function updateTabScrollAffordance(){
+  const tabs = document.querySelector('.tabs');
+  if (!tabs) return;
+  const max = tabs.scrollWidth - tabs.clientWidth;
+  const x = tabs.scrollLeft;
+  const overflows = max > 2;
+  tabs.classList.toggle('v2-tabs--more-left',  overflows && x > 2);
+  tabs.classList.toggle('v2-tabs--more-right', overflows && x < max - 2);
+}
+(function wireTabScrollAffordance(){
+  const tabs = document.querySelector('.tabs');
+  if (!tabs) return;
+  tabs.addEventListener('scroll', updateTabScrollAffordance, {passive:true});
+  window.addEventListener('resize', updateTabScrollAffordance);
+  // The Travel sub-nav sticks below the preview banner, which is itself
+  // position:sticky. Measure the banner instead of guessing, so the sub-nav
+  // never hides under it (or floats below it with a gap).
+  const syncBannerHeight = () => {
+    const b = document.querySelector('.v2-banner');
+    const h = b ? Math.round(b.getBoundingClientRect().height) : 0;
+    document.documentElement.style.setProperty('--v2-banner-h', h + 'px');
+  };
+  syncBannerHeight();
+  window.addEventListener('resize', syncBannerHeight);
+  updateTabScrollAffordance();
+  wireChartAndPanelSemantics();
+  // Charts are created lazily as tabs are first rendered, so re-run once the
+  // deferred renders have landed.
+  setTimeout(wireChartAndPanelSemantics, 1500);
+})();
 
 // ---------- live refresh (server mode only) ----------
 // /api/refresh is now ASYNC server-side — it kicks off a background fetch
@@ -18496,12 +19321,20 @@ function _tabFromHash(){
     el => el.dataset.tab === h
   ) ? h : null;
 }
-selectTab(_tabFromHash() || 'overview');
+// The FIRST paint of a tab is the only render that can race the async
+// Chart.js loader, so it is the only one that waits for it. whenChartsReady
+// resolves on load, on error, or after a 1.2s budget — never indefinitely —
+// and DOMContentLoaded has already fired by then either way. Every later
+// render (tab click, hashchange, sidecar arrival) runs unconditionally
+// because the library has long since resolved.
+whenChartsReady(function(){
+  selectTab(_tabFromHash() || 'overview');
+  renderAll();
+});
 window.addEventListener('hashchange', () => {
   const h = _tabFromHash();
   if (h && h !== state.tab) selectTab(h);
 });
-renderAll();
 </script>
 </body>
 </html>

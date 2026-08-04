@@ -383,6 +383,87 @@ def test_flat_series_does_not_divide_by_zero(chart_ctx):
     assert "NaN" not in out and "Infinity" not in out
 
 
+# ----------------------------- the y-axis floor (audit B1) ------------------
+#
+# Every index plotted here is a BOUNDED score, roughly -100..+100 or 0..100.
+# Fitting the axis to the observed range alone meant a composite that crept
+# from 51 to 53 was redrawn across the whole plot: measured at 127.6px of
+# swing in a 166px plot, PIXEL-IDENTICAL to a -80 -> +75 series. A two-point
+# move rendered as a crash. An axis that exaggerates is a chart that lies,
+# and this chart exists specifically to stop the archive being over-read.
+
+PLOT_H = 210 - 14 - 30          # H - PT - PB, the drawable height in px
+
+
+def _cys(svg: str):
+    return [float(v) for v in re.findall(r'cy="([-\d.]+)"', svg)]
+
+
+def _swing(svg: str) -> float:
+    cy = _cys(svg)
+    return round(max(cy) - min(cy), 2) if cy else 0.0
+
+
+def test_a_two_point_move_does_not_fill_the_plot(chart_ctx):
+    """51 -> 52 -> 53 used to swing 127.6px of a 166px plot."""
+    out = svg_for(chart_ctx, [_pt("2026-07-01", 51), _pt("2026-07-02", 52),
+                              _pt("2026-07-03", 53)])
+    swing = _swing(out)
+    assert swing < PLOT_H * 0.1, (
+        f"a 2-point move occupies {swing}px of a {PLOT_H}px plot")
+    assert swing == 12.8, swing
+
+
+def test_a_small_move_no_longer_looks_like_a_huge_one(chart_ctx):
+    """The exact defect: two series an order of magnitude apart in real
+    movement must not render identically."""
+    small = svg_for(chart_ctx, [_pt("2026-07-01", 51), _pt("2026-07-02", 52),
+                                _pt("2026-07-03", 53)])
+    huge = svg_for(chart_ctx, [_pt("2026-07-01", -80), _pt("2026-07-02", -2),
+                               _pt("2026-07-03", 75)])
+    assert _swing(small) != _swing(huge)
+    assert _swing(huge) > _swing(small) * 5
+
+
+def test_the_floor_only_ever_widens_the_domain(chart_ctx):
+    """A genuinely wide series must be untouched — the floor may not compress
+    real movement out of view. -80..+75 spans 155 points, well over the 20
+    point floor, so its geometry is exactly what it was before the floor
+    existed."""
+    out = svg_for(chart_ctx, [_pt("2026-07-01", -80), _pt("2026-07-02", -2),
+                              _pt("2026-07-03", 75)])
+    assert _swing(out) == 127.6, _swing(out)
+
+
+def test_identical_values_render_on_one_flat_line(chart_ctx):
+    """The degenerate case the old `|| Math.max(2, …)` fallback existed for:
+    it must still not divide by zero, and must not invent movement."""
+    out = svg_for(chart_ctx, [_pt("2026-07-01", 33), _pt("2026-07-02", 33),
+                              _pt("2026-07-03", 33)])
+    assert "NaN" not in out and "Infinity" not in out
+    assert _swing(out) == 0.0
+    assert len(set(_cys(out))) == 1
+
+
+def test_axis_floor_is_identical_to_v2(v1_js):
+    """One dialect, two frontends. If the floors drift, the same archive
+    reads as two different pictures depending on which URL you opened."""
+    if not V2_APP.exists():  # pragma: no cover - repo layout guard
+        pytest.skip("v2/app.py not present")
+    src = V2_APP.read_text(encoding="utf-8")
+    v2_js = src[src.index('HTML_TEMPLATE = r"""') + len('HTML_TEMPLATE = r"""'):]
+    v1_fn = strip_comments(extract_function(v1_js, "compositeHistoryChart"))
+    v2_fn = strip_comments(extract_function(v2_js, "compositeHistoryChart"))
+
+    def axis_block(fn: str) -> str:
+        i = fn.index("const MIN_SPAN")
+        j = fn.index("const X = ms =>", i)
+        return "\n".join(l.strip() for l in fn[i:j].splitlines() if l.strip())
+
+    assert axis_block(v1_fn) == axis_block(v2_fn), (
+        "the composite-history y-axis floor has drifted between V1 and V2")
+
+
 def test_point_text_is_escaped(chart_ctx):
     out = svg_for(chart_ctx, [_pt("2026-07-01", 1, label="<script>x</script>")])
     assert "<script>" not in out

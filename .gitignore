@@ -28,6 +28,11 @@ dashboard.html
 # serves "/" by live-rendering via dash.render_html(). Ignore so a local
 # copy is never recommitted.
 index.html
+# The Pages staging tree. pages.yml's "Stage site directory" step builds this
+# and hands it to upload-pages-artifact; nothing in it is source. Reproducing
+# the staging locally to measure the artifact leaves ~679MB of copied data
+# here (data/lthcs alone is staged twice), so it must never be commit-able.
+_site/
 # Lazy-loaded sidecar payloads (whale, etc.) — written by app.py next to
 # dashboard.html on every build. Same lifecycle as the HTML itself.
 data-*.json

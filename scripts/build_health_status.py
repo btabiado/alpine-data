@@ -54,6 +54,23 @@ THRESHOLDS: dict[str, Threshold] = {
     # equity ETF flows only move on TRADING days, so Friday's row is already
     # ~3 days old by Monday morning and ~4 across a Monday holiday.
     "equity_etf_flows.csv": Threshold(96, 168),
+    # data-city.json is judged on cities[].data_health.last_updated (see
+    # NESTED_DATE_PATHS), which is the oldest MONTHLY municipal series behind a
+    # city — 311 calls, crime reports, building permits. Those publish a month
+    # at a time and several lag a further month, so the newest COMPLETE month a
+    # healthy city can offer is 28-60 days old depending on where in the month
+    # you look. Under the inherited DEFAULT (6h/24h) this feed is unsatisfiable
+    # BY CONSTRUCTION: it can never be green, no matter how well the pipeline
+    # runs. A permanently red light is how the genuinely dead TSA feed sat
+    # unnoticed for 45 days, which is the failure this table exists to prevent.
+    #
+    # 62d/100d: a one-month-lagging series' month-start sits 59-92 days back,
+    # plus cron slack. This deliberately does NOT turn the feed green today —
+    # Miami reads 976d because Miami-Dade publishes County 311 only as frozen
+    # per-year snapshots and the newest is 2023. That one is a real dead
+    # upstream and it SHOULD stay red; the point of this entry is that when it
+    # is red, it is red for a true reason.
+    "data-city.json": Threshold(62 * 24, 100 * 24),
     # real_estate.json is a once-a-day cron; 12h old is normal, not "stale".
     "real_estate.json": Threshold(30, 48),
     # metro_coords.json is STATIC reference data — Census CBSA gazetteer
