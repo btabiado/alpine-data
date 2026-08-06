@@ -1,11 +1,11 @@
 {
- "generated_utc": "2026-08-05T10:04:02.771927+00:00",
+ "generated_utc": "2026-08-06T10:05:35.965173+00:00",
  "source": "USAspending.gov Search API \u2014 spending_over_time",
  "note": "Published from GitHub Actions (clean egress) because the USAspending API blocks/525s Cloudflare datacenter IPs. Consumed by ADW-441 (grants) and ADW-444 (dod_contracts).",
  "grants": {
   "window": [
-   "2024-08-05",
-   "2026-08-05"
+   "2024-08-06",
+   "2026-08-06"
   ],
   "award_type_codes": [
    "02",
@@ -17,11 +17,11 @@
   "series": [
    {
     "period": "2024-08",
-    "obligated": 69988848814.28
+    "obligated": 68222106323.17
    },
    {
     "period": "2024-09",
-    "obligated": 99740056360.22
+    "obligated": 99739821545.8
    },
    {
     "period": "2024-10",
@@ -29,11 +29,11 @@
    },
    {
     "period": "2024-11",
-    "obligated": 32075522035.26
+    "obligated": 32075521464.99
    },
    {
     "period": "2024-12",
-    "obligated": 53582364076.81
+    "obligated": 53582364033.18
    },
    {
     "period": "2025-01",
@@ -49,11 +49,11 @@
    },
    {
     "period": "2025-04",
-    "obligated": 187040111743.78
+    "obligated": 187040111657.85
    },
    {
     "period": "2025-05",
-    "obligated": 25093813280.74
+    "obligated": 25093813203.52
    },
    {
     "period": "2025-06",
@@ -61,11 +61,11 @@
    },
    {
     "period": "2025-07",
-    "obligated": 236178666525.78
+    "obligated": 236178791043.05
    },
    {
     "period": "2025-08",
-    "obligated": 44708626945.14
+    "obligated": 44708576945.14
    },
    {
     "period": "2025-09",
@@ -93,11 +93,11 @@
    },
    {
     "period": "2026-03",
-    "obligated": 21174131844.73
+    "obligated": 21175949070.73
    },
    {
     "period": "2026-04",
-    "obligated": 203991915809.79
+    "obligated": 203991638847.97
    },
    {
     "period": "2026-05",
@@ -105,22 +105,22 @@
    },
    {
     "period": "2026-06",
-    "obligated": 31039345810.92
+    "obligated": 31081615040.8
    },
    {
     "period": "2026-07",
-    "obligated": 212039831195.77
+    "obligated": 239260079671.92
    },
    {
     "period": "2026-08",
-    "obligated": 898342.93
+    "obligated": 549614043.44
    }
   ]
  },
  "dod_contracts": {
   "window": [
    "2025-07-01",
-   "2026-08-05"
+   "2026-08-06"
   ],
   "award_type_codes": [
    "A",
@@ -138,8 +138,8 @@
    },
    {
     "month": "2025-08",
-    "awards": 43062218234,
-    "totalAmount": 43062218234.32
+    "awards": 43062001469,
+    "totalAmount": 43062001468.94
    },
    {
     "month": "2025-09",
@@ -148,43 +148,43 @@
    },
    {
     "month": "2025-10",
-    "awards": 13326161948,
-    "totalAmount": 13326161947.76
+    "awards": 13326446088,
+    "totalAmount": 13326446087.53
    },
    {
     "month": "2025-11",
-    "awards": 28072623495,
-    "totalAmount": 28072623495.06
+    "awards": 28073772661,
+    "totalAmount": 28073772661.3
    },
    {
     "month": "2025-12",
-    "awards": 48846240742,
-    "totalAmount": 48846240741.92
+    "awards": 48846230149,
+    "totalAmount": 48846230149.25
    },
    {
     "month": "2026-01",
-    "awards": 35492410141,
-    "totalAmount": 35492410141.08
+    "awards": 35492478176,
+    "totalAmount": 35492478176.24
    },
    {
     "month": "2026-02",
-    "awards": 27125073853,
-    "totalAmount": 27125073853.33
+    "awards": 27125146909,
+    "totalAmount": 27125146908.76
    },
    {
     "month": "2026-03",
-    "awards": 68503348140,
-    "totalAmount": 68503348139.56
+    "awards": 68453361728,
+    "totalAmount": 68453361728.13
    },
    {
     "month": "2026-04",
-    "awards": 51827598716,
-    "totalAmount": 51827598716.22
+    "awards": 51815725488,
+    "totalAmount": 51815725487.94
    },
    {
     "month": "2026-05",
-    "awards": 4488938524,
-    "totalAmount": 4488938523.58
+    "awards": 8966164246,
+    "totalAmount": 8966164245.94
    },
    {
     "month": "2026-06",
@@ -198,8 +198,8 @@
    },
    {
     "month": "2026-08",
-    "awards": 8440129,
-    "totalAmount": 8440128.57
+    "awards": 8442907,
+    "totalAmount": 8442907.32
    }
   ]
  }
