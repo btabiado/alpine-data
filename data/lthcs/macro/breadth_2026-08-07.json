@@ -10,14 +10,14 @@
     "sources_ok": 4
   },
   "hy_oas": {
-    "change_30d_bp": 8.0,
-    "current": 2.75,
-    "percentile_2y": 0.23091603053435114
+    "change_30d_bp": 1.0,
+    "current": 2.71,
+    "percentile_2y": 0.15428571428571428
   },
   "ig_oas": {
     "change_30d_bp": 2.0,
     "current": 0.78,
-    "percentile_2y": 0.26003824091778205
+    "percentile_2y": 0.26145038167938933
   },
   "regime_flags": {
     "curve_inverted": false,
@@ -25,8 +25,8 @@
     "hy_stress": false
   },
   "yield_curve_2s10s": {
-    "change_30d_bp": 9.0,
-    "current": 0.44,
+    "change_30d_bp": 8.0,
+    "current": 0.46,
     "inverted": false
   }
 }

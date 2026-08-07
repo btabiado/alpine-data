@@ -4,10 +4,10 @@
   "color": "#E27A5C",
   "components": [
     {
-      "delta": -28,
+      "delta": -29,
       "name": "Band lean (bullish % minus bearish %)",
       "read": "universe distributing",
-      "value": "-93.5%"
+      "value": "-95.4%"
     },
     {
       "delta": 0,
@@ -60,5 +60,5 @@
   ],
   "label": "LTHCS WEAKENING",
   "note": "Aggregate of 216-ticker LTHCS universe. Directional read, not a trading signal.",
-  "score": -33
+  "score": -34
 }
