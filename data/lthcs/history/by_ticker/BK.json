@@ -3,6 +3,18 @@
   "model_version": "v1.1.0",
   "history": [
     {
+      "date": "2026-08-06",
+      "score": 59.6,
+      "band": "weakening",
+      "synthetic": true
+    },
+    {
+      "date": "2026-08-05",
+      "score": 59.6,
+      "band": "weakening",
+      "synthetic": true
+    },
+    {
       "date": "2026-08-04",
       "score": 59.6,
       "band": "weakening",
