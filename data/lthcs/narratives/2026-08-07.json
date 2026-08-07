@@ -1580,7 +1580,7 @@
     },
     {
       "ticker": "NOC",
-      "todays_take": "NOC requires Structural Review at 39.0 (+0.2 over 30 days), supported by Thesis Integrity at 58.8.",
+      "todays_take": "NOC requires Structural Review at 39.0 (+0.2 over 30 days), supported by Demand Environment at 51.3.",
       "why_changed": "Score is at 39.0 (drift over 1d +0.4); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Institutional Confidence at 4.7 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
