@@ -1390,8 +1390,8 @@
       "ticker": "CMI",
       "todays_take": "CMI is showing Weakening at 54.2 (-1.6 over 30 days), supported by Institutional Confidence at 65.4.",
       "why_changed": "Score is at 54.2 (drift over 1d +0.1); no prior snapshot available for component-delta analysis.",
-      "why_not_to_sell": "Structural concerns: Thesis Integrity at 45.0 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
-      "what_would_break": "A sustained drop in Thesis Integrity below 35, or a Structural Review composite move below 50, would force a structural review.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
       "confidence_level": "medium"
     },
     {
