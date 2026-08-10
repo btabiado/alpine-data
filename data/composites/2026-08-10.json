@@ -1,6 +1,6 @@
 {
   "as_of": "2026-08-10",
-  "generated_at": "2026-08-10T22:46:52Z",
+  "generated_at": "2026-08-10T23:41:42Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-08-10",
@@ -10,7 +10,7 @@
       "stale": true
     },
     "lthcs_composite": {
-      "as_of": "2026-08-09",
+      "as_of": "2026-08-10",
       "label": "LTHCS WEAKENING",
       "note": null,
       "score": -33,
@@ -18,9 +18,9 @@
     },
     "money_flow_index": {
       "as_of": "2026-08-10",
-      "label": "Neutral",
+      "label": "Inflow",
       "note": null,
-      "score": 27.46,
+      "score": 32.89,
       "stale": false
     },
     "poc_signal_breadth": null,
