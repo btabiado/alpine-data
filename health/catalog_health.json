@@ -1,19 +1,18 @@
 {
-  "checked_at": "2026-08-03T11:37:13+00:00",
+  "checked_at": "2026-08-10T09:42:23+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1933,
-    "gated": 163,
-    "dead": 19,
-    "unreachable": 77
+    "ok": 1931,
+    "gated": 164,
+    "dead": 18,
+    "unreachable": 79
   },
   "dead": [
     {
-      "url": "https://developer.ieee.org/",
+      "url": "https://bible.helloao.org/",
       "code": 404,
       "services": [
-        "IEEE Xplore Metadata API",
-        "IEEE Xplore Metadata API"
+        "Free Use Bible API (AO Lab)"
       ]
     },
     {
@@ -21,13 +20,6 @@
       "code": 404,
       "services": [
         "STRATZ (Dota 2)"
-      ]
-    },
-    {
-      "url": "https://openrouter.ai/docs/api/api-reference/models/get-models",
-      "code": 404,
-      "services": [
-        "OpenRouter Models API"
       ]
     },
     {
@@ -168,20 +160,6 @@
       ]
     },
     {
-      "url": "https://api.archives-ouvertes.fr/docs",
-      "code": null,
-      "services": [
-        "HAL API (Archives Ouvertes)"
-      ]
-    },
-    {
-      "url": "https://api.archives-ouvertes.fr/docs/search",
-      "code": null,
-      "services": [
-        "HAL Theses API (CCSD/CNRS)"
-      ]
-    },
-    {
       "url": "https://api.fatcat.wiki/",
       "code": null,
       "services": [
@@ -196,13 +174,6 @@
       ]
     },
     {
-      "url": "https://api.math.tools/",
-      "code": null,
-      "services": [
-        "Math Tools API (api.math.tools)"
-      ]
-    },
-    {
       "url": "https://api.pharmgkb.org/swagger/",
       "code": null,
       "services": [
@@ -214,6 +185,13 @@
       "code": null,
       "services": [
         "ITA Consolidated Screening List (CSL) API (Commerce)"
+      ]
+    },
+    {
+      "url": "https://armstransfers.sipri.org/",
+      "code": null,
+      "services": [
+        "SIPRI Arms Transfers Database"
       ]
     },
     {
@@ -253,10 +231,10 @@
       ]
     },
     {
-      "url": "https://correlatesofwar.org/data-sets/",
+      "url": "https://d-place.org/",
       "code": null,
       "services": [
-        "Correlates of War (COW) Project datasets"
+        "D-PLACE (Database of Places, Language, Culture, Environment)"
       ]
     },
     {
@@ -352,18 +330,21 @@
       ]
     },
     {
+      "url": "https://europepmc.org/RestfulWebService",
+      "code": null,
+      "services": [
+        "Europe PMC API",
+        "Europe PMC API",
+        "Europe PMC RESTful Web Service",
+        "Europe PMC RESTful API",
+        "Europe PMC RESTful API"
+      ]
+    },
+    {
       "url": "https://fatcat.wiki/",
       "code": null,
       "services": [
         "Internet Archive Scholar / Fatcat API"
-      ]
-    },
-    {
-      "url": "https://firms.modaps.eosdis.nasa.gov/api/",
-      "code": null,
-      "services": [
-        "NASA FIRMS (Fire Information for Resource Management)",
-        "NASA FIRMS Active Fire API"
       ]
     },
     {
@@ -412,26 +393,10 @@
       ]
     },
     {
-      "url": "https://guides.dataverse.org/en/latest/api/",
+      "url": "https://gwosc.org/api/v1/docs/",
       "code": null,
       "services": [
-        "Harvard Dataverse API"
-      ]
-    },
-    {
-      "url": "https://guides.dataverse.org/en/latest/api/native-api.html",
-      "code": null,
-      "services": [
-        "Dataverse Native/Search API",
-        "Dataverse Native API",
-        "Harvard Dataverse Native + Search API"
-      ]
-    },
-    {
-      "url": "https://guides.dataverse.org/en/latest/api/search.html",
-      "code": null,
-      "services": [
-        "Harvard Dataverse Search API"
+        "GWOSC (Gravitational Wave Open Science Center)"
       ]
     },
     {
@@ -442,31 +407,10 @@
       ]
     },
     {
-      "url": "https://hexdb.io/",
-      "code": null,
-      "services": [
-        "hexdb.io (Mode-S / ICAO hex API)"
-      ]
-    },
-    {
-      "url": "https://iiif.bodleian.ox.ac.uk/iiif/",
-      "code": null,
-      "services": [
-        "Digital Bodleian / Oxford IIIF (added in verify)"
-      ]
-    },
-    {
       "url": "https://jrct.niph.go.jp/",
       "code": null,
       "services": [
         "jRCT / JPRN (Japan Registry of Clinical Trials)"
-      ]
-    },
-    {
-      "url": "https://legacy.openfmri.org/",
-      "code": null,
-      "services": [
-        "OpenfMRI (legacy)"
       ]
     },
     {
@@ -512,18 +456,33 @@
       ]
     },
     {
-      "url": "https://ndltd.org/thesis-resources/global-etd-search/",
-      "code": null,
-      "services": [
-        "NDLTD Global ETD Search"
-      ]
-    },
-    {
       "url": "https://neuroquery.org/",
       "code": null,
       "services": [
         "NeuroQuery API",
         "NeuroQuery"
+      ]
+    },
+    {
+      "url": "https://nomad-lab.eu/prod/v1/api/v1/",
+      "code": null,
+      "services": [
+        "NOMAD (FAIRmat)"
+      ]
+    },
+    {
+      "url": "https://oqmd.org/",
+      "code": 502,
+      "services": [
+        "OQMD (Open Quantum Materials Database)"
+      ]
+    },
+    {
+      "url": "https://oqmd.org/api/",
+      "code": 502,
+      "services": [
+        "OQMD (Open Quantum Materials Database) API",
+        "OQMD (Open Quantum Materials Database)"
       ]
     },
     {
@@ -538,6 +497,13 @@
       "code": null,
       "services": [
         "PlayHT (Play.ht) TTS API"
+      ]
+    },
+    {
+      "url": "https://podaac.jpl.nasa.gov/",
+      "code": null,
+      "services": [
+        "NASA PO.DAAC Earthdata"
       ]
     },
     {
@@ -562,6 +528,13 @@
       ]
     },
     {
+      "url": "https://roar.eprints.org/",
+      "code": null,
+      "services": [
+        "ROAR (Registry of Open Access Repositories)"
+      ]
+    },
+    {
       "url": "https://sanskritwordnet.chs.harvard.edu/api",
       "code": null,
       "services": [
@@ -577,7 +550,7 @@
     },
     {
       "url": "https://scholia.toolforge.org/",
-      "code": null,
+      "code": 503,
       "services": [
         "Scholia"
       ]
@@ -594,13 +567,6 @@
       "code": null,
       "services": [
         "SNOMED CT Snowstorm public training FHIR API"
-      ]
-    },
-    {
-      "url": "https://splatalogue.online/",
-      "code": null,
-      "services": [
-        "Splatalogue (NRAO Spectral Line Catalog)"
       ]
     },
     {
@@ -660,6 +626,13 @@
       ]
     },
     {
+      "url": "https://www.mousemine.org/mousemine/",
+      "code": null,
+      "services": [
+        "Mouse Genome Informatics (MGI / MouseMine)"
+      ]
+    },
+    {
       "url": "https://www.nrcs.usda.gov/resources/data-and-reports/web-soil-survey",
       "code": null,
       "services": [
@@ -674,6 +647,37 @@
       ]
     },
     {
+      "url": "https://www.scrapindex.com/historic.html",
+      "code": null,
+      "services": [
+        "ScrapIndex.com (historical scrap commodity prices)"
+      ]
+    },
+    {
+      "url": "https://www.sipri.org/databases/armsindustry",
+      "code": null,
+      "services": [
+        "SIPRI Arms Industry Database (Top 100)"
+      ]
+    },
+    {
+      "url": "https://www.sipri.org/databases/armstransfers",
+      "code": null,
+      "services": [
+        "SIPRI Arms Transfers Database"
+      ]
+    },
+    {
+      "url": "https://www.sipri.org/databases/milex",
+      "code": null,
+      "services": [
+        "SIPRI Military Expenditure Database",
+        "SIPRI Military Expenditure Database",
+        "SIPRI Military Expenditure Database (MILEX)",
+        "SIPRI Military Expenditure Database"
+      ]
+    },
+    {
       "url": "https://www.transitland.org/documentation/",
       "code": null,
       "services": [
@@ -685,6 +689,13 @@
       "code": 520,
       "services": [
         "Understanding Society (UK Household Longitudinal Study)"
+      ]
+    },
+    {
+      "url": "https://www.worldtides.info/apidocs",
+      "code": null,
+      "services": [
+        "WorldTides API"
       ]
     },
     {
