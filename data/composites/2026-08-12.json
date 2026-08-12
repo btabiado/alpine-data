@@ -1,6 +1,6 @@
 {
   "as_of": "2026-08-12",
-  "generated_at": "2026-08-12T21:55:07Z",
+  "generated_at": "2026-08-12T22:51:07Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-08-10",
@@ -20,7 +20,7 @@
       "as_of": "2026-08-12",
       "label": "Inflow",
       "note": null,
-      "score": 33.81,
+      "score": 38.94,
       "stale": false
     },
     "poc_signal_breadth": null,
