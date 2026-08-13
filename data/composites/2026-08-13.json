@@ -1,13 +1,13 @@
 {
   "as_of": "2026-08-13",
-  "generated_at": "2026-08-13T04:58:43Z",
+  "generated_at": "2026-08-13T06:24:37Z",
   "indexes": {
     "crypto_signal_sentiment": {
-      "as_of": "2026-08-10",
+      "as_of": "2026-08-13",
       "label": null,
-      "note": "38 coins; 6 buy+, 11 sell+; 38 of 38 cached",
-      "score": -13,
-      "stale": true
+      "note": "38 coins; 5 buy+, 8 sell+",
+      "score": -8,
+      "stale": false
     },
     "lthcs_composite": {
       "as_of": "2026-08-12",
