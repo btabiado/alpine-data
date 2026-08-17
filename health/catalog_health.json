@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-08-10T09:42:23+00:00",
+  "checked_at": "2026-08-17T08:53:33+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1931,
-    "gated": 164,
+    "ok": 1940,
+    "gated": 158,
     "dead": 18,
-    "unreachable": 79
+    "unreachable": 76
   },
   "dead": [
     {
@@ -188,10 +188,18 @@
       ]
     },
     {
-      "url": "https://armstransfers.sipri.org/",
-      "code": null,
+      "url": "https://archive.org/developers/",
+      "code": 502,
       "services": [
-        "SIPRI Arms Transfers Database"
+        "Internet Archive (Advanced Search / Metadata / Wayback APIs)",
+        "Internet Archive APIs (archive.org)"
+      ]
+    },
+    {
+      "url": "https://archive.org/developers/metadata.html",
+      "code": 502,
+      "services": [
+        "Internet Archive Metadata API"
       ]
     },
     {
@@ -231,10 +239,24 @@
       ]
     },
     {
-      "url": "https://d-place.org/",
+      "url": "https://collection.cooperhewitt.org/api",
       "code": null,
       "services": [
-        "D-PLACE (Database of Places, Language, Culture, Environment)"
+        "Cooper Hewitt Collections API (Smithsonian Design)"
+      ]
+    },
+    {
+      "url": "https://collection.cooperhewitt.org/api/",
+      "code": null,
+      "services": [
+        "Cooper Hewitt Smithsonian Design Museum API"
+      ]
+    },
+    {
+      "url": "https://data.bts.gov/",
+      "code": null,
+      "services": [
+        "BTS Open Data Platform (USDOT)"
       ]
     },
     {
@@ -330,21 +352,18 @@
       ]
     },
     {
-      "url": "https://europepmc.org/RestfulWebService",
-      "code": null,
-      "services": [
-        "Europe PMC API",
-        "Europe PMC API",
-        "Europe PMC RESTful Web Service",
-        "Europe PMC RESTful API",
-        "Europe PMC RESTful API"
-      ]
-    },
-    {
       "url": "https://fatcat.wiki/",
       "code": null,
       "services": [
         "Internet Archive Scholar / Fatcat API"
+      ]
+    },
+    {
+      "url": "https://firms.modaps.eosdis.nasa.gov/api/",
+      "code": null,
+      "services": [
+        "NASA FIRMS (Fire Information for Resource Management)",
+        "NASA FIRMS Active Fire API"
       ]
     },
     {
@@ -385,18 +404,19 @@
       ]
     },
     {
+      "url": "https://geonames.nga.mil/gns/html/gns_services.html",
+      "code": null,
+      "services": [
+        "NGA Geographic Names Server (GNS) - foreign GEOINT toponyms",
+        "NGA Geographic Names Server (GNS) - GEOINT toponyms"
+      ]
+    },
+    {
       "url": "https://gssdataexplorer.norc.org/",
       "code": null,
       "services": [
         "GSS Data Explorer (NORC General Social Survey)",
         "GSS Data Explorer (NORC, General Social Survey)"
-      ]
-    },
-    {
-      "url": "https://gwosc.org/api/v1/docs/",
-      "code": null,
-      "services": [
-        "GWOSC (Gravitational Wave Open Science Center)"
       ]
     },
     {
@@ -464,10 +484,11 @@
       ]
     },
     {
-      "url": "https://nomad-lab.eu/prod/v1/api/v1/",
+      "url": "https://openlibrary.org/developers/api",
       "code": null,
       "services": [
-        "NOMAD (FAIRmat)"
+        "Open Library API (Internet Archive)",
+        "Open Library API"
       ]
     },
     {
@@ -500,13 +521,6 @@
       ]
     },
     {
-      "url": "https://podaac.jpl.nasa.gov/",
-      "code": null,
-      "services": [
-        "NASA PO.DAAC Earthdata"
-      ]
-    },
-    {
       "url": "https://prime-numbers-api.com/",
       "code": null,
       "services": [
@@ -528,10 +542,25 @@
       ]
     },
     {
-      "url": "https://roar.eprints.org/",
-      "code": null,
+      "url": "https://rest.ensembl.org",
+      "code": 500,
       "services": [
-        "ROAR (Registry of Open Access Repositories)"
+        "Ensembl REST API"
+      ]
+    },
+    {
+      "url": "https://rest.ensembl.org/",
+      "code": 500,
+      "services": [
+        "Ensembl REST API",
+        "Ensembl REST API"
+      ]
+    },
+    {
+      "url": "https://rest.ensembl.org/documentation/info/vep_hgvs_get",
+      "code": 500,
+      "services": [
+        "Ensembl VEP (via REST)"
       ]
     },
     {
@@ -546,13 +575,6 @@
       "code": null,
       "services": [
         "AGNTCY — Open Agentic Schema Framework (OASF)"
-      ]
-    },
-    {
-      "url": "https://scholia.toolforge.org/",
-      "code": 503,
-      "services": [
-        "Scholia"
       ]
     },
     {
@@ -598,13 +620,6 @@
       ]
     },
     {
-      "url": "https://wordbank.stanford.edu/",
-      "code": null,
-      "services": [
-        "Wordbank (wordbankr)"
-      ]
-    },
-    {
       "url": "https://www.2dmatpedia.org/",
       "code": null,
       "services": [
@@ -626,10 +641,10 @@
       ]
     },
     {
-      "url": "https://www.mousemine.org/mousemine/",
+      "url": "https://www.clinicalstudydatarequest.com/",
       "code": null,
       "services": [
-        "Mouse Genome Informatics (MGI / MouseMine)"
+        "ClinicalStudyDataRequest.com (CSDR)"
       ]
     },
     {
@@ -654,48 +669,10 @@
       ]
     },
     {
-      "url": "https://www.sipri.org/databases/armsindustry",
-      "code": null,
-      "services": [
-        "SIPRI Arms Industry Database (Top 100)"
-      ]
-    },
-    {
-      "url": "https://www.sipri.org/databases/armstransfers",
-      "code": null,
-      "services": [
-        "SIPRI Arms Transfers Database"
-      ]
-    },
-    {
-      "url": "https://www.sipri.org/databases/milex",
-      "code": null,
-      "services": [
-        "SIPRI Military Expenditure Database",
-        "SIPRI Military Expenditure Database",
-        "SIPRI Military Expenditure Database (MILEX)",
-        "SIPRI Military Expenditure Database"
-      ]
-    },
-    {
       "url": "https://www.transitland.org/documentation/",
       "code": null,
       "services": [
         "Transitland (Interline)"
-      ]
-    },
-    {
-      "url": "https://www.understandingsociety.ac.uk/documentation/access-data/",
-      "code": 520,
-      "services": [
-        "Understanding Society (UK Household Longitudinal Study)"
-      ]
-    },
-    {
-      "url": "https://www.worldtides.info/apidocs",
-      "code": null,
-      "services": [
-        "WorldTides API"
       ]
     },
     {

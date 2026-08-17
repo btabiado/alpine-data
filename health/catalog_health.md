@@ -1,7 +1,7 @@
-# Catalog link health — 2026-08-10T09:42:23+00:00
+# Catalog link health — 2026-08-17T08:53:33+00:00
 
 - **Total URLs:** 2192
-- ✅ ok: 1931  ·  🔒 gated (exists, auth/bot-walled): 164  ·  ❌ dead (404/410): 18  ·  ⚠️ unreachable (timeout/5xx): 79
+- ✅ ok: 1940  ·  🔒 gated (exists, auth/bot-walled): 158  ·  ❌ dead (404/410): 18  ·  ⚠️ unreachable (timeout/5xx): 76
 
 ## ❌ Dead (404/410) — review/remove
 - `404` https://bible.helloao.org/ — Free Use Bible API (AO Lab)
@@ -31,13 +31,16 @@
 - `None` https://api.fatcat.wiki/redoc — Fatcat / Internet Archive Scholar API
 - `None` https://api.pharmgkb.org/swagger/ — PharmGKB REST API
 - `None` https://api.trade.gov/console/ — ITA Consolidated Screening List (CSL) API (Commerce)
-- `None` https://armstransfers.sipri.org/ — SIPRI Arms Transfers Database
+- `502` https://archive.org/developers/ — Internet Archive (Advanced Search / Metadata / Wayback APIs), Internet Archive APIs (archive.org)
+- `502` https://archive.org/developers/metadata.html — Internet Archive Metadata API
 - `None` https://assignment-api.uspto.gov/ — USPTO Patent Assignment Search API
 - `None` https://bcl.nrel.gov/api/ — NREL/NLR Building Component Library API
 - `502` https://biolincc.nhlbi.nih.gov/ — NHLBI BioLINCC (Biologic Specimen and Data Repository)
 - `None` https://clinical-information.canada.ca/ — Health Canada Clinical Information Portal (Public Release of Clinical Information, PRCI), Health Canada Public Release of Clinical Information (PRCI) portal
 - `None` https://collection.britishmuseum.org/ — British Museum Collection (SPARQL/LOD)
-- `None` https://d-place.org/ — D-PLACE (Database of Places, Language, Culture, Environment)
+- `None` https://collection.cooperhewitt.org/api — Cooper Hewitt Collections API (Smithsonian Design)
+- `None` https://collection.cooperhewitt.org/api/ — Cooper Hewitt Smithsonian Design Museum API
+- `None` https://data.bts.gov/ — BTS Open Data Platform (USDOT)
 - `None` https://developer.boeing.com/apis/notams-3/ — DTN NOTAMs API / Boeing (Jeppesen) NOTAMs API
 - `None` https://developer.freightos.com/apis — Freightos Terminal / FBX API
 - `None` https://developer.nrel.gov/docs/ — NREL Developer Network (PVWatts, Utility Rates, OpenEI), NREL Developer Network APIs (PVWatts, solar, electricity)
@@ -51,15 +54,15 @@
 - `None` https://ecos.fws.gov/ecp/services — USFWS ECOS Data Services (Environmental Conservation Online System)
 - `None` https://elexicon.wustl.edu/ — English Lexicon Project (ELP)
 - `None` https://en.wikichip.org/ — WikiChip
-- `None` https://europepmc.org/RestfulWebService — Europe PMC API, Europe PMC API, Europe PMC RESTful Web Service, Europe PMC RESTful API, Europe PMC RESTful API
 - `None` https://fatcat.wiki/ — Internet Archive Scholar / Fatcat API
+- `None` https://firms.modaps.eosdis.nasa.gov/api/ — NASA FIRMS (Fire Information for Resource Management), NASA FIRMS Active Fire API
 - `None` https://fred.stlouisfed.org/categories/32217 — FRED (commodity & metals price series)
 - `None` https://fred.stlouisfed.org/docs/api/fred/ — FRED — Federal Reserve Economic Data API, FRED (Federal Reserve Bank of St. Louis), FRED API (manufacturing/IP indicators)
 - `None` https://fred.stlouisfed.org/series/WPU03 — FRED Textile & Apparel Price Indexes
 - `None` https://fred.stlouisfed.org/series/WPU081 — FRED - Lumber & Wood Products PPI (St. Louis Fed)
 - `503` https://gazetteer.dainst.org/ — iDAI.gazetteer / iDAI.world (DAI)
+- `None` https://geonames.nga.mil/gns/html/gns_services.html — NGA Geographic Names Server (GNS) - foreign GEOINT toponyms, NGA Geographic Names Server (GNS) - GEOINT toponyms
 - `None` https://gssdataexplorer.norc.org/ — GSS Data Explorer (NORC General Social Survey), GSS Data Explorer (NORC, General Social Survey)
-- `None` https://gwosc.org/api/v1/docs/ — GWOSC (Gravitational Wave Open Science Center)
 - `None` https://hemp.ams.usda.gov/s/PublicSearchTool — USDA Hemp eManagement Platform (HeMP) Public/LE Search Tool
 - `None` https://jrct.niph.go.jp/ — jRCT / JPRN (Japan Registry of Clinical Trials)
 - `500` https://llama.developer.meta.com/ — Meta Llama API (llama.developer.meta.com)
@@ -69,37 +72,31 @@
 - `None` https://mymarketnews.ams.usda.gov/mars-api/getting-started — USDA AMS My Market News (MARS API)
 - `None` https://nassgeodata.gmu.edu/CropScape/ — USDA CropScape / Cropland Data Layer
 - `None` https://neuroquery.org/ — NeuroQuery API, NeuroQuery
-- `None` https://nomad-lab.eu/prod/v1/api/v1/ — NOMAD (FAIRmat)
+- `None` https://openlibrary.org/developers/api — Open Library API (Internet Archive), Open Library API
 - `502` https://oqmd.org/ — OQMD (Open Quantum Materials Database)
 - `502` https://oqmd.org/api/ — OQMD (Open Quantum Materials Database) API, OQMD (Open Quantum Materials Database)
 - `None` https://platform.docs.opentargets.org/data-access/graphql-api — Open Targets Platform GraphQL API
 - `None` https://play.ht/ — PlayHT (Play.ht) TTS API
-- `None` https://podaac.jpl.nasa.gov/ — NASA PO.DAAC Earthdata
 - `None` https://prime-numbers-api.com/ — Prime Numbers API (prime-numbers-api.com)
 - `None` https://rawg.io/apidocs — RAWG Video Games Database
 - `None` https://rctportal.niph.go.jp/en — JPRN / NIPH Clinical Trials Search Portal (Japan)
-- `None` https://roar.eprints.org/ — ROAR (Registry of Open Access Repositories)
+- `500` https://rest.ensembl.org — Ensembl REST API
+- `500` https://rest.ensembl.org/ — Ensembl REST API, Ensembl REST API
+- `500` https://rest.ensembl.org/documentation/info/vep_hgvs_get — Ensembl VEP (via REST)
 - `None` https://sanskritwordnet.chs.harvard.edu/api — Sanskrit WordNet API (CHS Harvard)
 - `None` https://schema.oasf.agntcy.org/ — AGNTCY — Open Agentic Schema Framework (OASF)
-- `503` https://scholia.toolforge.org/ — Scholia
 - `None` https://search.patentsview.org/docs/ — PatentsView PatentSearch API
 - `None` https://snowstorm-training.snomedtools.org/fhir/metadata — SNOMED CT Snowstorm public training FHIR API
 - `None` https://stats.un.org/SDGAPI/swagger/ — SDMX Global Registry / UNdata2 (added in verify)
 - `None` https://trialstreamer.robotreviewer.net/ — Trialstreamer
 - `None` https://water.weather.gov/ahps/ — NWS / NOAA Advanced Hydrologic Prediction Service (AHPS)
 - `None` https://web.plant.id/plant-identification-api/ — Plant.id (Kindwise)
-- `None` https://wordbank.stanford.edu/ — Wordbank (wordbankr)
 - `None` https://www.2dmatpedia.org/ — 2DMatPedia
 - `None` https://www.acq.osd.mil/eie/imr/rpid/library.html — DoD RPID / Base Structure Report (real-property footprint)
 - `None` https://www.brocade.io/ — Brocade.io
-- `None` https://www.mousemine.org/mousemine/ — Mouse Genome Informatics (MGI / MouseMine)
+- `None` https://www.clinicalstudydatarequest.com/ — ClinicalStudyDataRequest.com (CSDR)
 - `None` https://www.nrcs.usda.gov/resources/data-and-reports/web-soil-survey — USDA NRCS Web Soil Survey / spatial WMS-WFS
 - `None` https://www.nvr.navy.mil/ — Naval Vessel Register (NVR)
 - `None` https://www.scrapindex.com/historic.html — ScrapIndex.com (historical scrap commodity prices)
-- `None` https://www.sipri.org/databases/armsindustry — SIPRI Arms Industry Database (Top 100)
-- `None` https://www.sipri.org/databases/armstransfers — SIPRI Arms Transfers Database
-- `None` https://www.sipri.org/databases/milex — SIPRI Military Expenditure Database, SIPRI Military Expenditure Database, SIPRI Military Expenditure Database (MILEX), SIPRI Military Expenditure Database
 - `None` https://www.transitland.org/documentation/ — Transitland (Interline)
-- `520` https://www.understandingsociety.ac.uk/documentation/access-data/ — Understanding Society (UK Household Longitudinal Study)
-- `None` https://www.worldtides.info/apidocs — WorldTides API
 - `None` https://yeastmine.yeastgenome.org/yeastmine/ — Saccharomyces Genome Database (YeastMine)
