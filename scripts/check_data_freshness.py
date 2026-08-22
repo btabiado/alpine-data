@@ -44,9 +44,22 @@ from build_health_status import (  # noqa: E402  (path set above)
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 # Feeds this watchdog is responsible for, and who refreshes them. Only files
-# whose refresher COMMITS back to the repo belong here — anything regenerated
-# at deploy time (market.json, whale.json, ...) is fresh by construction on
-# the live site and would false-positive against the committed placeholder.
+# whose refresher COMMITS back to the repo belong here — this job runs off a
+# plain checkout, so a deploy-time file (market.json, whale.json, ...) either
+# is not present at all or is a committed placeholder, and either way it would
+# false-positive here.
+#
+# That exclusion is a checkout constraint, NOT a clean bill of health. It was
+# previously written down as "fresh by construction on the live site", which is
+# false: those files are restored from the Actions cache, so a failed upstream
+# fetch silently reproduces the previous run's file. market.json rode that gap
+# for 16 days with a frozen BTC price while this watchdog stayed green, because
+# it was never in scope to look.
+#
+# Deploy-time feeds are monitored inside pages.yml instead, where the file
+# actually exists: build_health_status.py scores them (using per-row `as_of`,
+# since their envelope stamp is rewritten every run) and alert_stale_feeds.py
+# raises the annotation. Add deploy-time feeds THERE, not here.
 #
 # `owner` is printed in the alert so the fix path is obvious rather than
 # something to go re-derive at 2am.

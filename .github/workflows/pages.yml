@@ -108,6 +108,13 @@ jobs:
           #   ETHERSCAN       90-day ETH blocks-per-day chart on the Whale-tab
           #                   ETH panel (free tier — synthesized from
           #                   getblocknobytime since dailytx is Pro-only)
+          #   COINGECKO       raises the CoinGecko limit from ~30 req/min to
+          #                   ~500. This one is NOT cosmetic: keyless, the
+          #                   top-50 sweep in fetch_trading 429s routinely,
+          #                   and a 429 returns [] which sends markets_top
+          #                   down the stale-keep path. Unset = keyless, which
+          #                   still works but re-opens that failure mode.
+          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
           CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
@@ -151,6 +158,20 @@ jobs:
         # Failure must NOT break the deploy: production at `/` is the source
         # of truth; /health/ is observability-only.
         run: python scripts/build_health_status.py || echo "[health] generator failed; continuing"
+        continue-on-error: true
+
+      - name: Alert on stale headline feeds
+        # /health/ has reported per-feed freshness for a while, but reading it
+        # meant opening the page, and nobody did — a frozen crypto feed sat on
+        # the front page for 16 days behind a green build. This surfaces the
+        # same rows as run annotations, so staleness shows up where failures
+        # are already being read.
+        #
+        # NOT --strict here, and continue-on-error for the same reason the
+        # generator above is: production at `/` is the source of truth and a
+        # stale feed must not block the deploy of everything else. The
+        # annotation is the alarm; the deploy still ships.
+        run: python scripts/alert_stale_feeds.py
         continue-on-error: true
 
       - name: Snapshot composite indexes (daily time series)
