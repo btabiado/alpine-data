@@ -108,6 +108,13 @@ jobs:
           #   ETHERSCAN       90-day ETH blocks-per-day chart on the Whale-tab
           #                   ETH panel (free tier — synthesized from
           #                   getblocknobytime since dailytx is Pro-only)
+          #   COINGECKO       raises the CoinGecko limit from ~30 req/min to
+          #                   ~500. This one is NOT cosmetic: keyless, the
+          #                   top-50 sweep in fetch_trading 429s routinely,
+          #                   and a 429 returns [] which sends markets_top
+          #                   down the stale-keep path. Unset = keyless, which
+          #                   still works but re-opens that failure mode.
+          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
           CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}

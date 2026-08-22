@@ -5027,10 +5027,24 @@ function whaleFreshness(asset){
 // daily observation dates. signals_top20 is deliberately absent (rule 2).
 function overviewFreshness(){
   const m = DATA.market || {};
-  const parts = [fLast((m.btc || {}).price), fLast((m.eth || {}).price),
-                 fLast(m.fear_greed)].filter(Boolean);
-  if (!parts.length) return null;
-  return { date: fMin(parts), stale: 0, total: parts.length };
+  // Rule 4: stale entries must be COUNTED and DISCLOSED. This used to return a
+  // hardcoded `stale: 0`, so the "N of M cached" disclosure could never fire
+  // for the one strip labeled "crypto prices" — a BTC price served from cache
+  // for 16 days rendered with no cache note at all.
+  //
+  // btc/eth carry `stale:true` when fetch_market served them from its cache
+  // (see fetch_market._stale_flags). fear_greed is a LIST, and _stale_load
+  // only tags dicts, so it can contribute to the total but never to the
+  // cached count — counting it as fresh would be its own small lie, so it is
+  // simply not counted either way.
+  const series = [
+    { date: fLast((m.btc || {}).price), src: m.btc },
+    { date: fLast((m.eth || {}).price), src: m.eth },
+    { date: fLast(m.fear_greed),        src: null },
+  ].filter(s => s.date);
+  if (!series.length) return null;
+  const staleCount = series.filter(s => s.src && s.src.stale === true).length;
+  return { date: fMin(series.map(s => s.date)), stale: staleCount, total: series.length };
 }
 
 // DeFi: as_of is stamped by fetch_market.defi_provenance(), with a
