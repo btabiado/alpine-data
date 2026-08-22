@@ -210,9 +210,21 @@ def _content_age_h(path: Path, now_ts: float) -> "float | None":
             # "YYYY-MM-DD HH:MM UTC", which fails fromisoformat and lands on
             # the date-only fallback below; day granularity is fine for a
             # freshness check.
+            # `compiled_at` (ai_curated) was missing here, which mattered: with
+            # no recognized key the file fell through to the mtime path, and a
+            # stateless CI checkout makes mtime look fresh on every run. That
+            # hid a feed whose compiled_at reads 2026-05-15 — 100 days stale —
+            # behind a green /health/ row. This is the same mtime false-green
+            # this function was written to catch, reached through a key it
+            # simply did not know about.
+            #
+            # NOT added: data-aviation.json's `asOf`, which is prose
+            # ("FAA airman data Dec 31 2025 · ... late May 2026"). Listing it
+            # would not parse and would only look like coverage; that feed
+            # needs a machine-readable date emitted upstream first.
             for k in ("generated_at", "last_date", "as_of", "generated",
                       "generated_utc", "fetched_at", "updated_at", "saved_at",
-                      "tstr"):
+                      "compiled_at", "tstr"):
                 v = data.get(k)
                 if not isinstance(v, str) or not v.strip():
                     continue
