@@ -20,12 +20,25 @@ permissions:
   actions: read   # build_backfill_jobs.py reads r2-backfill workflow run history
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  # Renamed from "pages" to escape a wedged run in the OLD group: run 844
+  # (2026-08-18T15:37Z) sat status=queued for days still holding "pages", and
+  # because cancel-in-progress was false every subsequent hourly run queued
+  # behind it and was superseded -> cancelled with zero jobs. Net effect: no
+  # deploy at all for 3+ days while the data crons kept committing happily.
+  # A new group name abandons that stuck slot without needing actions:write.
+  group: pages-deploy
+  # Newest-wins. This job republishes the whole site from committed data, so a
+  # superseded run loses nothing -- the next run redoes it. Crucially it also
+  # means a future stuck run can no longer wedge the pipeline indefinitely.
+  # Safe for the commit-back: api-commit.sh publishes via a final PATCH of the
+  # ref, so interrupting before it writes nothing and after it the commit has
+  # already landed; orphaned blobs/trees are unreferenced and get GC'd.
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
@@ -757,6 +770,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
