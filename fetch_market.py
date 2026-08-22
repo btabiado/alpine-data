@@ -372,6 +372,12 @@ def coingecko_top_markets(per_page: int = 50) -> list[dict]:
     return out
 
 
+# How long a carried-forward markets_top row may keep being served. Matches the
+# 7d bound already used for poc_top; a crypto price older than a week is not a
+# price, and the hourly cron means 7d == ~168 consecutive failed fetches.
+MARKETS_TOP_STALE_MAX_DAYS = 7
+
+
 def stale_keep_markets_top() -> list[dict]:
     """Previous ``markets_top`` list, flagged, for when CoinGecko returns [].
 
@@ -386,6 +392,17 @@ def stale_keep_markets_top() -> list[dict]:
     instead of printing one confident date over a cache-served list. There
     is deliberately no clock in this function.
 
+    BOUNDED, for the same reason ``poc_top`` is (see ``stale_keep_poc_top``).
+    market.json is never committed — it is restored from the Actions cache on
+    every run — so an unbounded carry-forward re-serves the same prices
+    indefinitely. That is not hypothetical: BTC sat at its 2026-08-06 price
+    for 16 days while the page looked live, because this function had no
+    expiry and every row was copied forward on each failed fetch.
+
+    Past ``MARKETS_TOP_STALE_MAX_DAYS`` a row is dropped rather than re-served.
+    A coin missing from the table is visible; a confidently-rendered stale
+    price is not.
+
     Returns ``[]`` when there is nothing to carry forward.
     """
     path = CACHE / "market.json"
@@ -396,9 +413,45 @@ def stale_keep_markets_top() -> list[dict]:
     except Exception as e:
         print(f"  [stale-keep] failed to read previous markets_top: {e}", file=sys.stderr)
         return []
-    kept = [{**r, "stale": True} for r in prev if isinstance(r, dict)]
+
+    now = datetime.now(timezone.utc)
+
+    def _age_days(row: dict) -> "float | None":
+        """Age of a row's ORIGINAL observation, from its frozen ``as_of``.
+
+        ``as_of`` is pinned when the row is first fetched and is never advanced
+        by a carry-forward, so it keeps ageing across runs. A row with no
+        ``as_of`` (CoinGecko omitted ``last_updated``) has no provable
+        observation date and is treated as expired — an unprovable price is
+        exactly what should not be re-served.
+        """
+        iso = row.get("as_of")
+        if not isinstance(iso, str) or not iso.strip():
+            return None
+        try:
+            d = datetime.strptime(iso.strip()[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+        return (now - d).total_seconds() / 86400.0
+
+    kept: list[dict] = []
+    expired = 0
+    for r in prev:
+        if not isinstance(r, dict):
+            continue
+        age = _age_days(r)
+        if age is None or age > MARKETS_TOP_STALE_MAX_DAYS:
+            expired += 1
+            continue
+        kept.append({**r, "stale": True, "stale_age_days": round(age, 2)})
+
     if kept:
         print(f"  [stale-keep] markets_top empty from API; kept {len(kept)} from previous fetch")
+    if expired:
+        print(f"  [stale-keep] dropped {expired} markets_top row"
+              f"{'' if expired == 1 else 's'} with no as_of or older than "
+              f"{MARKETS_TOP_STALE_MAX_DAYS}d - refusing to re-serve them as live",
+              file=sys.stderr)
     return kept
 
 

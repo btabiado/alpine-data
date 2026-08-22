@@ -118,6 +118,69 @@ def humanize_age(age_h: float) -> str:
     return f"{age_h / 24:.1f}d"
 
 
+# --- row-level freshness -----------------------------------------------------
+# Some feeds rewrite their top-level timestamp on EVERY run even when the data
+# inside was carried forward from the Actions cache. market.json is the case
+# that burned us: fetch_market.py stamps the envelope unconditionally, so
+# `generated_at` said "0h old" while every markets_top row was a stale-keep
+# copy of a 16-day-old CoinGecko response. The envelope described the run, not
+# the data, and /health/ reported green the whole time.
+#
+# For these files the only honest age is the age of the newest row that was
+# actually observed upstream, taken from the per-row `as_of` that stale-keep
+# deliberately never advances.
+
+
+def _newest_row_age_h(rows: list, now_ts: float) -> "float | None":
+    """Age (hours) of the most recently OBSERVED row in a list of records.
+
+    Uses each row's frozen `as_of`. Rows without one are ignored — they carry
+    no provable observation date. Returns None if no row has a usable `as_of`,
+    so the caller falls back to the envelope rather than inventing a number.
+
+    `as_of` is DAY-GRANULAR (fetch_market.py truncates CoinGecko's
+    `last_updated` to 10 chars), so age is measured in whole days against
+    today's UTC date: observed today = 0h, yesterday = 24h. Subtracting a
+    date-only stamp from the wall clock instead would report a feed fetched
+    20 minutes ago as ~20h old at 20:00 UTC and turn the health page red every
+    evening — a watchdog that cries wolf daily is one everybody mutes.
+    """
+    today = datetime.fromtimestamp(now_ts, timezone.utc).date()
+    newest_days = None
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        iso = r.get("as_of")
+        if not isinstance(iso, str) or not iso.strip():
+            continue
+        try:
+            d = datetime.strptime(iso.strip()[:10], "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        days = (today - d).days
+        if newest_days is None or days < newest_days:
+            newest_days = days
+    if newest_days is None:
+        return None
+    return max(0.0, newest_days * 24.0)
+
+
+# filename -> key holding the row list whose `as_of` defines real freshness.
+ROW_FRESHNESS_SOURCES: dict[str, str] = {
+    "market.json": "markets_top",
+}
+
+
+def _row_content_age_h(name: str, data: dict, now_ts: float) -> "float | None":
+    key = ROW_FRESHNESS_SOURCES.get(name)
+    if not key:
+        return None
+    rows = data.get(key)
+    if not isinstance(rows, list) or not rows:
+        return None
+    return _newest_row_age_h(rows, now_ts)
+
+
 def _content_age_h(path: Path, now_ts: float) -> "float | None":
     """Best-effort age (hours) from a file's INTERNAL freshness signal — the last
     data row's date for CSVs, or a generated_at/last_date/as_of/... field for JSON.
@@ -136,6 +199,10 @@ def _content_age_h(path: Path, now_ts: float) -> "float | None":
             data = json.loads(path.read_text())
             if not isinstance(data, dict):
                 return None
+            # Row-level age wins where the envelope stamp is known to lie.
+            _row = _row_content_age_h(path.name, data, now_ts)
+            if _row is not None:
+                return _row
             # `generated_utc` (cfpb, usaspending) and `tstr` (opensky) were
             # missing here, so those three feeds fell through to the mtime
             # path — which a stateless CI checkout always makes look fresh.

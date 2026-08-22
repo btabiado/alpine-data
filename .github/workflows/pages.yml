@@ -153,6 +153,20 @@ jobs:
         run: python scripts/build_health_status.py || echo "[health] generator failed; continuing"
         continue-on-error: true
 
+      - name: Alert on stale headline feeds
+        # /health/ has reported per-feed freshness for a while, but reading it
+        # meant opening the page, and nobody did — a frozen crypto feed sat on
+        # the front page for 16 days behind a green build. This surfaces the
+        # same rows as run annotations, so staleness shows up where failures
+        # are already being read.
+        #
+        # NOT --strict here, and continue-on-error for the same reason the
+        # generator above is: production at `/` is the source of truth and a
+        # stale feed must not block the deploy of everything else. The
+        # annotation is the alarm; the deploy still ships.
+        run: python scripts/alert_stale_feeds.py
+        continue-on-error: true
+
       - name: Snapshot composite indexes (daily time series)
         # Persists Whale Sentiment (BTC+ETH), Money Flow Index, Crypto Signal
         # Sentiment and POC breadth to data/composites/<date>.json, mirroring
