@@ -66,6 +66,7 @@ jobs:
           path: |
             data/market.json
             data/whale.json
+            data/.stale/
             snowflake_summit/.enrich_cache.json
           key: fetched-data-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
