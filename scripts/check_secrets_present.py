@@ -51,6 +51,12 @@ KEYS: list[tuple[str, str, str]] = [
     ("AIRNOW_API_KEY",        "City: AirNow air quality",                       "city-daily"),
     ("FRED_API_KEY",          "Macro overlay, CPI, metals, real estate",        "pages, lthcs-daily, real-estate-daily"),
     ("CRYPTOCOMPARE_API_KEY", "Per-coin OHLCV -> POC + signal-breadth chart",   "pages, lthcs-crypto-daily"),
+    # Highest-impact entry in this table. Keyless CoinGecko is ~30 req/min; the
+    # top-50 sweep in fetch_trading exceeds that, and a 429 returns [] which
+    # sends markets_top down stale-keep. This key was missing from the audit
+    # entirely, so "no CoinGecko key" was unreportable while it froze the
+    # front-page BTC price for 16 days.
+    ("COINGECKO_API_KEY",     "Crypto prices/markets_top - lifts 30 req/min",   "pages, lthcs-crypto-daily"),
     ("GLASSNODE_API_KEY",     "True BTC whale-cohort metrics",                  "pages"),
     ("COINMETRICS_API_KEY",   "ETH whale series on the Whale tab",              "pages"),
     ("ETHERSCAN_API_KEY",     "ETH blocks/day chart on the Whale tab",          "pages"),
