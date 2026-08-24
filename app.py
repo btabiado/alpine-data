@@ -1389,6 +1389,23 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   .tabgroup-menu,.tabgroup:last-child .tabgroup-menu{left:10px;right:10px;min-width:0}
   .tabs::-webkit-scrollbar{display:none}
   .tab{padding:9px 12px;font-size:13px;flex:0 0 auto;min-height:44px;display:inline-flex;align-items:center}
+  /* .tabgroup-btn is the OTHER half of this nav -- the four dropdown triggers
+     (Crypto/Markets/Macro/Explore). It was never given the mobile treatment
+     that .tab above gets, which had two consequences:
+
+       1. It kept desktop padding (11px 16px vs 9px 12px), so the four widest
+          items in the bar were the four that were never shrunk -- measured
+          83/91/81/89px against 67/70/74px for same-length leaf tabs. That
+          surplus is what tipped 375px from one row into two.
+       2. It never got min-height:44px, so the triggers measured 39px tall at
+          320px -- under the 44px touch-target floor. At 375/414 they only
+          reached 44px by accident, because .tabgroup{align-items:stretch}
+          stretched them against the 44px solo tab that happened to share
+          their flex line. Remove that neighbour and they silently drop back.
+
+     Matching .tab here narrows the bar and makes every row a uniform height,
+     so the wrapped rows read as one control instead of a ragged block. */
+  .tabgroup-btn{padding:9px 12px;font-size:13px;min-height:44px;box-sizing:border-box}
 
   /* --- Period/timeframe controls row below tabs (smaller buttons) --- */
   .controls{padding:8px 12px;gap:5px}
@@ -14535,7 +14552,17 @@ document.querySelectorAll('.tabgroup-btn').forEach(btn=>{
   });
 });
 document.addEventListener('click', e=>{ if(!e.target.closest('.tabgroup')) closeTabMenus(); });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeTabMenus(); });
+document.addEventListener('keydown', e=>{
+    if(e.key!=='Escape') return;
+    // Focus may be INSIDE the menu we are about to display:none. Closing
+    // without moving focus first drops it to <body>, so the next Tab restarts
+    // from the top of the page. The button-scoped handler above only covers
+    // the case where focus never left the trigger.
+    var g = e.target && e.target.closest ? e.target.closest('.tabgroup') : null;
+    closeTabMenus();
+    var b = g && g.querySelector('.tabgroup-btn');
+    if (b) b.focus();
+  });
 syncTabGroups();
 // The Summit tab opens the Competitive Landscape (Summit is now integrated
 // there as tabs) instead of the standalone /summit/ or an in-dashboard gateway

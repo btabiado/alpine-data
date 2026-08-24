@@ -2807,8 +2807,13 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
     """Fetch market_chart and compute multi-timeframe POC + migration + naked
     POCs for the top `n` coins by market cap. Used by the "Top 25 POC" UI.
 
-    Calls `coingecko_market(coin_id, days)` per coin with CG_PACE spacing so
-    we don't trip CoinGecko's free-tier rate limit (~30 calls/min). Skips
+    Calls `cryptocompare_market(symbol, days)` per coin -- NOT CoinGecko.
+    This docstring said CoinGecko for a long time after the implementation had
+    already moved, which matters: it is the only high-volume coin loop in the
+    file, so anyone budgeting CoinGecko quota from this line over-counts by
+    roughly 4x. CoinGecko is called exactly 4 times in this module
+    (market_chart x4 assets, global, coins/markets, search/trending ~= 7 calls
+    per run), comfortably inside the ~30/min free tier. Skips
     coins whose price/volume series come back empty or whose POC compute
     yields nothing usable.
 
