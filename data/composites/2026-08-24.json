@@ -1,13 +1,13 @@
 {
   "as_of": "2026-08-24",
-  "generated_at": "2026-08-24T19:35:18Z",
+  "generated_at": "2026-08-24T20:38:45Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-08-24",
       "label": null,
-      "note": "40 coins; 31 buy+, 0 sell+; 40 of 40 cached",
-      "score": 78,
-      "stale": true
+      "note": "40 coins; 33 buy+, 1 sell+",
+      "score": 80,
+      "stale": false
     },
     "lthcs_composite": {
       "as_of": "2026-08-23",
@@ -20,7 +20,7 @@
       "as_of": "2026-08-24",
       "label": "Neutral",
       "note": null,
-      "score": -6.48,
+      "score": -6.62,
       "stale": false
     },
     "poc_signal_breadth": null,
