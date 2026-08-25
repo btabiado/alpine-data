@@ -200,12 +200,48 @@ def _require_csrf_header():
     return jsonify({"error": "missing X-Requested-With header"}), 403
 
 
+# The bookmarklet is the ONLY cross-origin caller. It runs in the context of
+# whatever page the user is on (Farside, SoSoValue, or any page with a flow
+# table -- see /bookmarklet) and POSTs a scraped CSV to /api/upload-csv, so an
+# origin allowlist is not workable here.
+#
+# What IS workable is scoping. This used to be a blanket after_request that put
+# Access-Control-Allow-Origin: * on EVERY response, which had two effects the
+# comment above it did not mention:
+#
+#   1. It made every read endpoint cross-origin readable -- /api/data,
+#      /api/export/csv, /data-<key>.json, /api/share (the live share-token
+#      list), /api/symbol/<sym>. Since AUTH_ENABLED defaults to False when
+#      DASH_USER/DASH_PASS are unset, that is the DEFAULT configuration: any
+#      page the operator visits could read the whole dashboard off
+#      localhost:8765. (With auth ON this was mostly inert -- ACAO:* without
+#      Allow-Credentials means the browser withholds credentials -- so the
+#      exposure was specifically the wide-open default, not the keyed setup.)
+#   2. It advertised X-Requested-With as an allowed header on every route,
+#      which is what let any origin satisfy the CSRF guard in
+#      _require_csrf_header above. The guard's premise -- "browsers will not
+#      add this header cross-origin" -- is only true while CORS does not
+#      grant it. It was granting it, globally.
+#
+# Scoping to /api/upload-csv keeps the bookmarklet working exactly as before
+# and removes both. Residual risk, stated plainly: a hostile page can still
+# POST a CSV to an auth-disabled local server. That is bounded (the handler
+# allowlists asset=btc|eth and the body cap is 5MB) and is the price of the
+# bookmarklet working from arbitrary origins.
+_CORS_PATHS = {"/api/upload-csv"}
+
+
 @flask_app.after_request
 def _cors(resp):
-    """Allow the bookmarklet on third-party pages (Farside, SoSoValue) to POST CSVs here."""
+    """CORS for the bookmarklet's CSV upload only -- not a site-wide policy."""
+    if request.path not in _CORS_PATHS:
+        return resp
     resp.headers["Access-Control-Allow-Origin"] = "*"
     resp.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Requested-With"
-    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    resp.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+    # The response now varies by path-matched policy rather than being uniform;
+    # keep caches from reusing a CORS-bearing response for a different origin.
+    resp.headers["Vary"] = (resp.headers.get("Vary") + ", Origin") if resp.headers.get("Vary") else "Origin"
     return resp
 
 
@@ -448,7 +484,11 @@ def api_share_revoke(token: str) -> Response:
     return jsonify({"ok": True, "removed": removed})
 
 
-@flask_app.route("/api/refresh", methods=["POST", "GET"])
+# GET removed: _require_csrf_header only guards POST/DELETE, so a GET here
+# skipped the CSRF check entirely -- and this endpoint kicks off a full
+# fetch_all(). A bare <img src="http://127.0.0.1:8765/api/refresh"> on any page
+# was enough to trigger it.
+@flask_app.route("/api/refresh", methods=["POST"])
 def api_refresh() -> Response:
     """Trigger a fresh fetch_all() in the background.
 
@@ -1107,7 +1147,37 @@ def api_status_page() -> Response:
         return Response("status page not found", status=404, mimetype="text/plain")
 
 
+def _loopback(host: str) -> bool:
+    """True if `host` only accepts connections from this machine."""
+    h = (host or "").strip().strip("[]").lower()
+    return h in {"127.0.0.1", "localhost", "::1", ""} or h.startswith("127.")
+
+
 def main() -> int:
+    # Running wide-open is fine on loopback and is the documented local-dev
+    # default. Running wide-open on an interface other people can reach is a
+    # different thing: README documents HOST=0.0.0.0 for Tailscale access, and
+    # in that mode an unauthenticated server exposes /api/share (mint and list
+    # share tokens), /api/chat (spends ANTHROPIC_API_KEY), /api/upload-csv
+    # (overwrites the ETF CSVs) and the full dataset to anyone on the network.
+    #
+    # Refuse rather than warn -- a warning in a scrollback nobody reads is how
+    # this stays live for months. DASH_ALLOW_INSECURE=1 is the deliberate
+    # override for a trusted private network.
+    if not AUTH_ENABLED and not _loopback(HOST) and os.environ.get("DASH_ALLOW_INSECURE") != "1":
+        print(
+            f"REFUSING TO START: HOST={HOST!r} is not loopback and auth is disabled.\n"
+            "  Anyone able to reach this port could read the full dataset, mint share\n"
+            "  tokens, spend your ANTHROPIC_API_KEY via /api/chat and overwrite the ETF\n"
+            "  CSVs.\n\n"
+            "  Fix, in order of preference:\n"
+            "    1. export DASH_USER=... DASH_PASS=...      (enable Basic Auth)\n"
+            "    2. unset HOST                              (bind loopback only)\n"
+            "    3. export DASH_ALLOW_INSECURE=1            (trusted private net; you own this)",
+            file=sys.stderr, flush=True,
+        )
+        return 2
+
     # Drop any expired share tokens left over from previous runs.
     pruned = shares.prune_expired()
     if pruned:
