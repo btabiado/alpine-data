@@ -1,6 +1,6 @@
 {
   "as_of": "2026-08-26",
-  "generated_at": "2026-08-26T03:13:04Z",
+  "generated_at": "2026-08-26T04:48:22Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-08-26",
@@ -20,7 +20,7 @@
       "as_of": "2026-08-26",
       "label": "Neutral",
       "note": null,
-      "score": 8.48,
+      "score": 8.5,
       "stale": false
     },
     "poc_signal_breadth": null,
