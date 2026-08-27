@@ -20,12 +20,25 @@ permissions:
   actions: read   # build_backfill_jobs.py reads r2-backfill workflow run history
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  # Renamed from "pages" to escape a wedged run in the OLD group: run 844
+  # (2026-08-18T15:37Z) sat status=queued for days still holding "pages", and
+  # because cancel-in-progress was false every subsequent hourly run queued
+  # behind it and was superseded -> cancelled with zero jobs. Net effect: no
+  # deploy at all for 3+ days while the data crons kept committing happily.
+  # A new group name abandons that stuck slot without needing actions:write.
+  group: pages-deploy
+  # Newest-wins. This job republishes the whole site from committed data, so a
+  # superseded run loses nothing -- the next run redoes it. Crucially it also
+  # means a future stuck run can no longer wedge the pipeline indefinitely.
+  # Safe for the commit-back: api-commit.sh publishes via a final PATCH of the
+  # ref, so interrupting before it writes nothing and after it the commit has
+  # already landed; orphaned blobs/trees are unreferenced and get GC'd.
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
@@ -53,6 +66,7 @@ jobs:
           path: |
             data/market.json
             data/whale.json
+            data/.stale/
             snowflake_summit/.enrich_cache.json
           key: fetched-data-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
@@ -95,6 +109,13 @@ jobs:
           #   ETHERSCAN       90-day ETH blocks-per-day chart on the Whale-tab
           #                   ETH panel (free tier — synthesized from
           #                   getblocknobytime since dailytx is Pro-only)
+          #   COINGECKO       raises the CoinGecko limit from ~30 req/min to
+          #                   ~500. This one is NOT cosmetic: keyless, the
+          #                   top-50 sweep in fetch_trading 429s routinely,
+          #                   and a 429 returns [] which sends markets_top
+          #                   down the stale-keep path. Unset = keyless, which
+          #                   still works but re-opens that failure mode.
+          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
           CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
@@ -138,6 +159,20 @@ jobs:
         # Failure must NOT break the deploy: production at `/` is the source
         # of truth; /health/ is observability-only.
         run: python scripts/build_health_status.py || echo "[health] generator failed; continuing"
+        continue-on-error: true
+
+      - name: Alert on stale headline feeds
+        # /health/ has reported per-feed freshness for a while, but reading it
+        # meant opening the page, and nobody did — a frozen crypto feed sat on
+        # the front page for 16 days behind a green build. This surfaces the
+        # same rows as run annotations, so staleness shows up where failures
+        # are already being read.
+        #
+        # NOT --strict here, and continue-on-error for the same reason the
+        # generator above is: production at `/` is the source of truth and a
+        # stale feed must not block the deploy of everything else. The
+        # annotation is the alarm; the deploy still ships.
+        run: python scripts/alert_stale_feeds.py
         continue-on-error: true
 
       - name: Snapshot composite indexes (daily time series)
@@ -1020,6 +1055,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

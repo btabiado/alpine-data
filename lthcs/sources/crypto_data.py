@@ -41,7 +41,15 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from urllib.error import URLError
 from urllib.parse import urlencode
+from urllib.parse import urlsplit
 from urllib.request import Request, urlopen
+
+# Demo and Pro are different hosts AND different header names; keying off the
+# host avoids sending a Demo key to the Pro endpoint (a 401) or vice versa.
+_COINGECKO_KEY_HEADERS = {
+    "api.coingecko.com": "x-cg-demo-api-key",
+    "pro-api.coingecko.com": "x-cg-pro-api-key",
+}
 
 from lthcs.sources._cache import FileCache
 
@@ -280,13 +288,20 @@ def _http_get(url: str, *, timeout: float = _HTTP_TIMEOUT) -> Optional[bytes]:
 
     Polite ``User-Agent``; small timeout; never raises.
     """
-    req = Request(
-        url,
-        headers={
-            "User-Agent": "lthcs-crypto/1.0 (+https://github.com/alpine-data)",
-            "Accept": "application/json",
-        },
-    )
+    headers = {
+        "User-Agent": "lthcs-crypto/1.0 (+https://github.com/alpine-data)",
+        "Accept": "application/json",
+    }
+    # lthcs-crypto-daily.yml has mapped COINGECKO_API_KEY into this job's env
+    # for a long time, but nothing ever read it, so every call went out keyless
+    # against a ~30 req/min limit. Attached per-host: this helper is generic and
+    # a credential must not ride along to a host that did not issue it.
+    _cg_key = os.environ.get("COINGECKO_API_KEY", "").strip()
+    if _cg_key:
+        _cg_header = _COINGECKO_KEY_HEADERS.get((urlsplit(url).hostname or "").lower())
+        if _cg_header:
+            headers[_cg_header] = _cg_key
+    req = Request(url, headers=headers)
     try:
         with urlopen(req, timeout=timeout) as resp:
             return resp.read()

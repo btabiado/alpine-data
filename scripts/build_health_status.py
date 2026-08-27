@@ -268,6 +268,70 @@ def _scan_for_date_keys(obj: object, prefix: str = "", depth: int = 0,
     return out
 
 
+# --- row-level freshness -----------------------------------------------------
+# Some feeds rewrite their top-level timestamp on EVERY run even when the data
+# inside was carried forward from the Actions cache. market.json is the case
+# that burned us: fetch_market.py stamps the envelope unconditionally, so
+# `generated_at` said "0h old" while every markets_top row was a stale-keep
+# copy of a 16-day-old CoinGecko response. The envelope described the run, not
+# the data, and /health/ reported green the whole time.
+#
+# This is a different failure from allowlist drift. Drift is "we did not know
+# the key"; this is "the key is present, recent, and describing the wrong
+# thing". No ordering of _DATE_KEYS can catch it, which is why row age is
+# consulted BEFORE that scan rather than ranked inside it.
+
+
+def _newest_row_age_h(rows: list, now_ts: float) -> "float | None":
+    """Age (hours) of the most recently OBSERVED row in a list of records.
+
+    Uses each row's frozen `as_of`. Rows without one are ignored — they carry
+    no provable observation date. Returns None if no row has a usable `as_of`,
+    so the caller falls back to the envelope rather than inventing a number.
+
+    `as_of` is DAY-GRANULAR (fetch_market.py truncates CoinGecko's
+    `last_updated` to 10 chars), so age is measured in whole days against
+    today's UTC date: observed today = 0h, yesterday = 24h. Subtracting a
+    date-only stamp from the wall clock instead would report a feed fetched
+    20 minutes ago as ~20h old at 20:00 UTC and turn the health page red every
+    evening — a watchdog that cries wolf daily is one everybody mutes.
+    """
+    today = datetime.fromtimestamp(now_ts, timezone.utc).date()
+    newest_days = None
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        iso = r.get("as_of")
+        if not isinstance(iso, str) or not iso.strip():
+            continue
+        try:
+            d = datetime.strptime(iso.strip()[:10], "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        days = (today - d).days
+        if newest_days is None or days < newest_days:
+            newest_days = days
+    if newest_days is None:
+        return None
+    return max(0.0, newest_days * 24.0)
+
+
+# filename -> key holding the row list whose `as_of` defines real freshness.
+ROW_FRESHNESS_SOURCES: dict[str, str] = {
+    "market.json": "markets_top",
+}
+
+
+def _row_content_age_h(name: str, data: dict, now_ts: float) -> "float | None":
+    key = ROW_FRESHNESS_SOURCES.get(name)
+    if not key:
+        return None
+    rows = data.get(key)
+    if not isinstance(rows, list) or not rows:
+        return None
+    return _newest_row_age_h(rows, now_ts)
+
+
 def _content_age_probe(path: Path, now_ts: float) -> AgeProbe:
     """Age (hours) from a file's INTERNAL freshness signal — the last data row's
     date for CSVs, or a generated_at/compiled_at/asOf/... field for JSON.
@@ -294,6 +358,18 @@ def _content_age_probe(path: Path, now_ts: float) -> AgeProbe:
         data = json.loads(path.read_text())
         if not isinstance(data, dict):
             return AgeProbe(note="top level is not a JSON object")
+
+        # Row-level age wins over ANY envelope key, so this runs before the
+        # _DATE_KEYS scan below. For the files in ROW_FRESHNESS_SOURCES the
+        # envelope describes the RUN, not the data: fetch_market.py stamps
+        # market.json's `generated_at` unconditionally, so it read "0h old"
+        # while every markets_top row was a stale-keep copy of a 16-day-old
+        # CoinGecko response. A key-priority ranking cannot fix that — the
+        # envelope key is genuinely present and genuinely recent; it is just
+        # describing something other than the data.
+        row_age = _row_content_age_h(path.name, data, now_ts)
+        if row_age is not None:
+            return AgeProbe(age_h=row_age, key="newest row `as_of`")
 
         # One pass to build the normalised lookup, so camelCase and snake_case
         # spellings of the same key resolve identically.

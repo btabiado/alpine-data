@@ -86,8 +86,11 @@ KEYS: list[tuple[str, str, str]] = [
     ("FRED_API_KEY",          "Macro overlay, CPI, metals, real estate",        "pages, lthcs-daily, real-estate-daily"),
     # Was annotated "pages, lthcs-crypto-daily". lthcs-crypto-daily.yml passed it
     # alongside COINGECKO_API_KEY as a placeholder for a future on-chain upgrade,
-    # and the crypto pipeline read neither; both mappings are gone, so the claim
-    # is now just "pages" (V1 fetch, V2 build, and the api-status probe).
+    # and the crypto pipeline read neither, so both mappings were removed. Unlike
+    # COINGECKO_API_KEY below, this one has NOT been un-retired: verified against
+    # this branch, nothing under lthcs/ or in scripts/lthcs_crypto_daily.py reads
+    # CRYPTOCOMPARE_API_KEY. The claim is therefore just "pages" (V1 fetch, V2
+    # build, and the api-status probe).
     ("CRYPTOCOMPARE_API_KEY", "Per-coin OHLCV -> POC + signal-breadth chart",   "pages"),
     ("GLASSNODE_API_KEY",     "True BTC whale-cohort metrics",                  "pages"),
     ("COINMETRICS_API_KEY",   "ETH whale series on the Whale tab",              "pages"),
@@ -104,11 +107,16 @@ KEYS: list[tuple[str, str, str]] = [
     ("FINNHUB_API_KEY",       "LTHCS thesis pillar",                            "pages"),
     ("R2_ACCESS_KEY_ID",      "R2 warehouse archive upload",                    "pages, r2-backfill"),
     # --- previously unaudited; every one is referenced by a real workflow ----
-    ("COINGECKO_API_KEY",     "NOTHING. It was passed by lthcs-crypto-daily but "
-                              "no Python reads it; crypto_data.py calls CoinGecko "
-                              "keyless, so the rate limit it was meant to lift "
-                              "still binds",
-                                                                                "(retired — never read)"),
+    # Was "(retired — never read)": passed by lthcs-crypto-daily while no Python
+    # read it. It has since completed the un-retirement sequence this file's own
+    # comment prescribes — crypto_data.py and fetch_market.py now read it and
+    # send x-cg-demo-api-key (host-matched), and both pages.yml and
+    # lthcs-crypto-daily.yml map it — so the annotation is live again. A retired
+    # label on a working key is as misleading as a workflow label on a dead one:
+    # it tells the reader to stop waiting for something that is already running.
+    ("COINGECKO_API_KEY",     "Crypto prices/markets_top - lifts the keyless "
+                              "~30 req/min CoinGecko limit",
+                                                                                "pages, lthcs-crypto-daily"),
     ("REDDIT_CLIENT_ID",      "Reddit OAuth for the research/sentiment pull",   "pages"),
     ("REDDIT_CLIENT_SECRET",  "Reddit OAuth (pairs with REDDIT_CLIENT_ID)",     "pages"),
     ("OPENSKY_CLIENT_ID",     "OpenSky OAuth2 - higher limits for the hourly flight snapshot",

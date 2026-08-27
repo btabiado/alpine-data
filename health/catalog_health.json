@@ -1,13 +1,27 @@
 {
-  "checked_at": "2026-07-27T11:34:33+00:00",
+  "checked_at": "2026-08-24T08:57:54+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1942,
-    "gated": 160,
-    "dead": 17,
-    "unreachable": 73
+    "ok": 1938,
+    "gated": 161,
+    "dead": 22,
+    "unreachable": 71
   },
   "dead": [
+    {
+      "url": "http://numbersapi.com/",
+      "code": 404,
+      "services": [
+        "Numbers API (numbersapi.com)"
+      ]
+    },
+    {
+      "url": "https://bible.helloao.org/",
+      "code": 404,
+      "services": [
+        "Free Use Bible API (AO Lab)"
+      ]
+    },
     {
       "url": "https://docs.stratz.com/",
       "code": 404,
@@ -16,10 +30,17 @@
       ]
     },
     {
-      "url": "https://openrouter.ai/docs/api/api-reference/models/get-models",
+      "url": "https://efile.fara.gov/api",
       "code": 404,
       "services": [
-        "OpenRouter Models API"
+        "FARA eFile API (DOJ Foreign Agents Registration)"
+      ]
+    },
+    {
+      "url": "https://help.overton.io/faq/",
+      "code": 404,
+      "services": [
+        "Overton API"
       ]
     },
     {
@@ -48,6 +69,13 @@
       "code": 404,
       "services": [
         "Anaconda.org (conda) API"
+      ]
+    },
+    {
+      "url": "https://www.ebi.ac.uk/jdispatcher/docs/webservices/",
+      "code": 404,
+      "services": [
+        "EMBL-EBI Job Dispatcher (sequence tools)"
       ]
     },
     {
@@ -102,6 +130,13 @@
       ]
     },
     {
+      "url": "https://www.first.org/epss/api",
+      "code": 404,
+      "services": [
+        "EPSS API (FIRST.org)"
+      ]
+    },
+    {
       "url": "https://www.gmicloud.ai/en/models",
       "code": 404,
       "services": [
@@ -146,20 +181,6 @@
       ]
     },
     {
-      "url": "https://api.acaps.org/",
-      "code": null,
-      "services": [
-        "ACAPS API (INFORM Severity, Humanitarian Access)"
-      ]
-    },
-    {
-      "url": "https://api.clearlydefined.io/api-docs/",
-      "code": null,
-      "services": [
-        "ClearlyDefined API"
-      ]
-    },
-    {
       "url": "https://api.fatcat.wiki/",
       "code": null,
       "services": [
@@ -181,19 +202,10 @@
       ]
     },
     {
-      "url": "https://api.protectedplanet.net/",
+      "url": "https://api.trade.gov/console/",
       "code": null,
       "services": [
-        "Protected Planet / WDPA API"
-      ]
-    },
-    {
-      "url": "https://api.protectedplanet.net/documentation",
-      "code": null,
-      "services": [
-        "Protected Planet API (WDPA, UNEP-WCMC)",
-        "Protected Planet WDPA API",
-        "Protected Planet API (WDPA/WDPCA, UNEP-WCMC & IUCN)"
+        "ITA Consolidated Screening List (CSL) API (Commerce)"
       ]
     },
     {
@@ -218,6 +230,13 @@
       ]
     },
     {
+      "url": "https://cartblanche.docking.org/",
+      "code": null,
+      "services": [
+        "ZINC (CartBlanche) API"
+      ]
+    },
+    {
       "url": "https://clinical-information.canada.ca/",
       "code": null,
       "services": [
@@ -233,17 +252,25 @@
       ]
     },
     {
-      "url": "https://correlatesofwar.org/data-sets/",
+      "url": "https://cris.nih.go.kr/",
       "code": null,
       "services": [
-        "Correlates of War (COW) Project datasets"
+        "CRiS (Korea Clinical Research Information Service)"
       ]
     },
     {
-      "url": "https://datahelpdesk.worldbank.org/knowledgebase/articles/889392-about-the-indicators-api-documentation",
-      "code": 502,
+      "url": "https://data.cdc.gov/",
+      "code": null,
       "services": [
-        "World Bank Indicators API (v2)"
+        "CDC NCHS via data.cdc.gov (Socrata SODA API)"
+      ]
+    },
+    {
+      "url": "https://data.cityofnewyork.us/Health/DOHMH-New-York-City-Restaurant-Inspection-Results/43nn-pn8j",
+      "code": null,
+      "services": [
+        "NYC Open Data - DOHMH Restaurant Inspections (Socrata)",
+        "NYC DOHMH Restaurant Inspections (Socrata)"
       ]
     },
     {
@@ -318,13 +345,6 @@
       ]
     },
     {
-      "url": "https://ecos.fws.gov/ecp/services",
-      "code": null,
-      "services": [
-        "USFWS ECOS Data Services (Environmental Conservation Online System)"
-      ]
-    },
-    {
       "url": "https://elexicon.wustl.edu/",
       "code": null,
       "services": [
@@ -343,6 +363,14 @@
       "code": null,
       "services": [
         "Internet Archive Scholar / Fatcat API"
+      ]
+    },
+    {
+      "url": "https://firms.modaps.eosdis.nasa.gov/api/",
+      "code": null,
+      "services": [
+        "NASA FIRMS (Fire Information for Resource Management)",
+        "NASA FIRMS Active Fire API"
       ]
     },
     {
@@ -455,10 +483,26 @@
       ]
     },
     {
-      "url": "https://nmrshiftdb.nmr.uni-koeln.de/",
+      "url": "https://ntrs.nasa.gov/citations/20250003355",
       "code": null,
       "services": [
-        "nmrshiftdb2"
+        "NASA NOTAM API (FAA SWIM redistribution, via NASA DIP catalog)",
+        "NASA NOTAM API (SWIM redistribution)"
+      ]
+    },
+    {
+      "url": "https://oqmd.org/",
+      "code": null,
+      "services": [
+        "OQMD (Open Quantum Materials Database)"
+      ]
+    },
+    {
+      "url": "https://oqmd.org/api/",
+      "code": null,
+      "services": [
+        "OQMD (Open Quantum Materials Database) API",
+        "OQMD (Open Quantum Materials Database)"
       ]
     },
     {
@@ -539,6 +583,13 @@
       ]
     },
     {
+      "url": "https://v6.db.transport.rest/",
+      "code": null,
+      "services": [
+        "Deutsche Bahn transport.rest (v6.db)"
+      ]
+    },
+    {
       "url": "https://water.weather.gov/ahps/",
       "code": null,
       "services": [
@@ -550,13 +601,6 @@
       "code": null,
       "services": [
         "Plant.id (Kindwise)"
-      ]
-    },
-    {
-      "url": "https://wordbank.stanford.edu/",
-      "code": null,
-      "services": [
-        "Wordbank (wordbankr)"
       ]
     },
     {
@@ -574,13 +618,6 @@
       ]
     },
     {
-      "url": "https://www.bailii.org/",
-      "code": null,
-      "services": [
-        "BAILII (British and Irish Legal Information Institute)"
-      ]
-    },
-    {
       "url": "https://www.brocade.io/",
       "code": null,
       "services": [
@@ -588,24 +625,17 @@
       ]
     },
     {
-      "url": "https://www.buycott.com/api",
+      "url": "https://www.clinicalstudydatarequest.com/",
       "code": null,
       "services": [
-        "Buycott UPC/Barcode API"
+        "ClinicalStudyDataRequest.com (CSDR)"
       ]
     },
     {
-      "url": "https://www.colourlovers.com/api",
+      "url": "https://www.mousemine.org/mousemine/",
       "code": null,
       "services": [
-        "COLOURlovers API"
-      ]
-    },
-    {
-      "url": "https://www.crystallography.net/",
-      "code": null,
-      "services": [
-        "Crystallography Open Database (COD)"
+        "Mouse Genome Informatics (MGI / MouseMine)"
       ]
     },
     {
@@ -623,10 +653,10 @@
       ]
     },
     {
-      "url": "https://www.rcaap.pt/",
+      "url": "https://www.scrapindex.com/historic.html",
       "code": null,
       "services": [
-        "RCAAP — Repositório Científico de Acesso Aberto de Portugal"
+        "ScrapIndex.com (historical scrap commodity prices)"
       ]
     },
     {
@@ -634,13 +664,6 @@
       "code": null,
       "services": [
         "Transitland (Interline)"
-      ]
-    },
-    {
-      "url": "https://www.understandingsociety.ac.uk/documentation/access-data/",
-      "code": 520,
-      "services": [
-        "Understanding Society (UK Household Longitudinal Study)"
       ]
     },
     {

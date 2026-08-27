@@ -15,16 +15,52 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Awaitable, Callable
+from urllib.parse import urlsplit
 
 import requests
 
 UA = "Mozilla/5.0 (compatible; etf-flow-dashboard/1.0)"
 H = {"User-Agent": UA}
+
+# CoinGecko's free tier is free but REGISTERED. Keyless callers get ~30 req/min;
+# a Demo key raises that roughly 10x. fetch_trading sweeps the top 50 coins on
+# top of everything else in this file, so keyless runs 429 routinely — and a 429
+# returns an empty list, which is exactly what drives the stale-keep path in
+# `stale_keep_markets_top`. That is how the front-page BTC price sat frozen at
+# its 2026-08-06 value for 16 days.
+#
+# The secret was already plumbed into CI (lthcs-crypto-daily.yml) but NOTHING
+# read it — no Python file in the repo referenced COINGECKO_API_KEY at all, so
+# every request still went out unauthenticated. Keyless remains a supported
+# mode: an unset secret degrades to the old behaviour rather than breaking.
+COINGECKO_API_KEY = os.environ.get("COINGECKO_API_KEY", "").strip()
+
+# Demo and Pro are different hosts AND different header names; sending the wrong
+# pair is a 401, so key off the host we are actually calling.
+_COINGECKO_KEY_HEADERS = {
+    "api.coingecko.com": "x-cg-demo-api-key",
+    "pro-api.coingecko.com": "x-cg-pro-api-key",
+}
+
+
+def _headers_for(url: str) -> dict:
+    """Request headers for `url`, adding the CoinGecko key only for CoinGecko.
+
+    `_get` is the shared helper for ~45 different upstreams. Putting the key in
+    the module-level `H` would ship it to every one of them, so it is attached
+    per-host here instead — a credential must never ride along to a host that
+    did not issue it.
+    """
+    if not COINGECKO_API_KEY:
+        return H
+    header = _COINGECKO_KEY_HEADERS.get((urlsplit(url).hostname or "").lower())
+    return {**H, header: COINGECKO_API_KEY} if header else H
 ROOT = Path(__file__).parent
 CACHE = ROOT / "data"
 CACHE.mkdir(exist_ok=True)
@@ -34,7 +70,7 @@ CACHE.mkdir(exist_ok=True)
 
 def _get(url: str, params: dict | None = None, timeout: int = 25) -> dict | list | None:
     try:
-        r = requests.get(url, params=params, headers=H, timeout=timeout)
+        r = requests.get(url, params=params, headers=_headers_for(url), timeout=timeout)
         if r.status_code != 200:
             print(f"  [skip] {url} -> {r.status_code}", file=sys.stderr)
             return None
@@ -372,6 +408,12 @@ def coingecko_top_markets(per_page: int = 50) -> list[dict]:
     return out
 
 
+# How long a carried-forward markets_top row may keep being served. Matches the
+# 7d bound already used for poc_top; a crypto price older than a week is not a
+# price, and the hourly cron means 7d == ~168 consecutive failed fetches.
+MARKETS_TOP_STALE_MAX_DAYS = 7
+
+
 def stale_keep_markets_top() -> list[dict]:
     """Previous ``markets_top`` list, flagged, for when CoinGecko returns [].
 
@@ -386,6 +428,17 @@ def stale_keep_markets_top() -> list[dict]:
     instead of printing one confident date over a cache-served list. There
     is deliberately no clock in this function.
 
+    BOUNDED, for the same reason ``poc_top`` is (see ``stale_keep_poc_top``).
+    market.json is never committed — it is restored from the Actions cache on
+    every run — so an unbounded carry-forward re-serves the same prices
+    indefinitely. That is not hypothetical: BTC sat at its 2026-08-06 price
+    for 16 days while the page looked live, because this function had no
+    expiry and every row was copied forward on each failed fetch.
+
+    Past ``MARKETS_TOP_STALE_MAX_DAYS`` a row is dropped rather than re-served.
+    A coin missing from the table is visible; a confidently-rendered stale
+    price is not.
+
     Returns ``[]`` when there is nothing to carry forward.
     """
     path = CACHE / "market.json"
@@ -396,9 +449,45 @@ def stale_keep_markets_top() -> list[dict]:
     except Exception as e:
         print(f"  [stale-keep] failed to read previous markets_top: {e}", file=sys.stderr)
         return []
-    kept = [{**r, "stale": True} for r in prev if isinstance(r, dict)]
+
+    now = datetime.now(timezone.utc)
+
+    def _age_days(row: dict) -> "float | None":
+        """Age of a row's ORIGINAL observation, from its frozen ``as_of``.
+
+        ``as_of`` is pinned when the row is first fetched and is never advanced
+        by a carry-forward, so it keeps ageing across runs. A row with no
+        ``as_of`` (CoinGecko omitted ``last_updated``) has no provable
+        observation date and is treated as expired — an unprovable price is
+        exactly what should not be re-served.
+        """
+        iso = row.get("as_of")
+        if not isinstance(iso, str) or not iso.strip():
+            return None
+        try:
+            d = datetime.strptime(iso.strip()[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+        return (now - d).total_seconds() / 86400.0
+
+    kept: list[dict] = []
+    expired = 0
+    for r in prev:
+        if not isinstance(r, dict):
+            continue
+        age = _age_days(r)
+        if age is None or age > MARKETS_TOP_STALE_MAX_DAYS:
+            expired += 1
+            continue
+        kept.append({**r, "stale": True, "stale_age_days": round(age, 2)})
+
     if kept:
         print(f"  [stale-keep] markets_top empty from API; kept {len(kept)} from previous fetch")
+    if expired:
+        print(f"  [stale-keep] dropped {expired} markets_top row"
+              f"{'' if expired == 1 else 's'} with no as_of or older than "
+              f"{MARKETS_TOP_STALE_MAX_DAYS}d - refusing to re-serve them as live",
+              file=sys.stderr)
     return kept
 
 
@@ -1673,6 +1762,32 @@ def _stale_load(funcname: str):
         return None
 
 
+def _stale_flags(src) -> dict:
+    """Re-surface a stale-fallback tag from a fetcher result onto a payload block.
+
+    `coingecko_market()` returns a cache-served dict already tagged
+    `{"stale": True, "stale_age_sec": N}` by `_stale_load`. But `fetch_trading`
+    rebuilds each per-asset block key by key (`"price": btc_mkt["price"]`, ...),
+    which dropped the tag before it ever reached the browser.
+
+    That mattered: the dashboard's freshness strip counts entries flagged
+    `stale` to render "N of M cached" (see `freshness()` in app.py, rule 4).
+    With the tag lost in transit, crypto prices could only ever report zero
+    cached — so a BTC price served from cache for 16 days displayed with no
+    cache disclosure at all, next to a date that looked current.
+
+    Returns `{}` for anything not flagged, so it is safe to `**`-splat
+    unconditionally.
+    """
+    if not isinstance(src, dict) or src.get("stale") is not True:
+        return {}
+    out: dict = {"stale": True}
+    age = src.get("stale_age_sec")
+    if isinstance(age, int):
+        out["stale_age_sec"] = age
+    return out
+
+
 def _is_empty_result(value) -> bool:
     """Heuristic for 'fetcher returned nothing useful'. Dicts that only carry
     timestamp/availability flags count as empty so we'd rather serve stale."""
@@ -2692,8 +2807,13 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
     """Fetch market_chart and compute multi-timeframe POC + migration + naked
     POCs for the top `n` coins by market cap. Used by the "Top 25 POC" UI.
 
-    Calls `coingecko_market(coin_id, days)` per coin with CG_PACE spacing so
-    we don't trip CoinGecko's free-tier rate limit (~30 calls/min). Skips
+    Calls `cryptocompare_market(symbol, days)` per coin -- NOT CoinGecko.
+    This docstring said CoinGecko for a long time after the implementation had
+    already moved, which matters: it is the only high-volume coin loop in the
+    file, so anyone budgeting CoinGecko quota from this line over-counts by
+    roughly 4x. CoinGecko is called exactly 4 times in this module
+    (market_chart x4 assets, global, coins/markets, search/trending ~= 7 calls
+    per run), comfortably inside the ~30/min free tier. Skips
     coins whose price/volume series come back empty or whose POC compute
     yields nothing usable.
 
@@ -5130,6 +5250,7 @@ async def _fetch_trading_async() -> dict:
             "open_interest_usd": okx_oi_btc,
             "long_short_ratio": okx_ls_btc,
             "dvol": dvol_btc,
+            **_stale_flags(btc_mkt),
         },
         "eth": {
             "price": eth_mkt["price"],
@@ -5139,6 +5260,7 @@ async def _fetch_trading_async() -> dict:
             "open_interest_usd": okx_oi_eth,
             "long_short_ratio": okx_ls_eth,
             "dvol": dvol_eth,
+            **_stale_flags(eth_mkt),
         },
         "link": {
             "price": link_mkt["price"],
@@ -5148,6 +5270,7 @@ async def _fetch_trading_async() -> dict:
             "open_interest_usd": okx_oi_link,
             "long_short_ratio": okx_ls_link,
             "dvol": [],
+            **_stale_flags(link_mkt),
         },
         "ltc": {
             "price": ltc_mkt["price"],
@@ -5157,6 +5280,7 @@ async def _fetch_trading_async() -> dict:
             "open_interest_usd": okx_oi_ltc,
             "long_short_ratio": okx_ls_ltc,
             "dvol": [],
+            **_stale_flags(ltc_mkt),
         },
         "global": glob,
         "coinbase": cb_spot,

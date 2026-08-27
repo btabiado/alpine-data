@@ -49,40 +49,28 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run LTHCS crypto daily pipeline
-        # NO `env:` KEY BLOCK, AND THAT IS THE FIX, NOT AN OMISSION.
-        #
         # This step used to hand the job three secrets — COINGECKO_API_KEY,
-        # CRYPTOCOMPARE_API_KEY and GLASSNODE_API_KEY — described in a comment
-        # as lifting CoinGecko's rate limit and reserving an on-chain upgrade
-        # path. An audit of the actual code found that this pipeline reads NONE
-        # of them. `scripts/lthcs_crypto_daily.py` and everything it imports
-        # touch exactly one environment variable, LTHCS_CACHE_DIR, and
-        # `lthcs/sources/crypto_data.py::fetch_coingecko_markets` builds its URL
-        # with no key parameter and sends no auth header, so the rate limit the
-        # key was supposedly lifting has been binding this whole time. Every
-        # spelling was grepped: x-cg-, x_cg_, cg_demo, cg_pro, CG_API. Nothing.
+        # CRYPTOCOMPARE_API_KEY and GLASSNODE_API_KEY. An audit found the
+        # pipeline read NONE of them: a secret passed to code that cannot read
+        # it is worse than no secret, because it reads as working plumbing in
+        # the workflow, in the audit report, and to anyone debugging a throttled
+        # run. All three were removed, with the ordering for restoring one
+        # written down: add the header in crypto_data.py FIRST, then re-add the
+        # secret here, then fix its row in check_secrets_present.py.
         #
-        # A secret passed to code that cannot read it is worse than no secret:
-        # it reads as working plumbing in the workflow, in the audit report and
-        # to anyone debugging a throttled run, and it is none of those things.
-        # So it is removed rather than left in place looking functional.
+        # COINGECKO_API_KEY has since completed that sequence.
+        # lthcs/sources/crypto_data.py now reads it and sends x-cg-demo-api-key
+        # (host-matched, so the credential never rides along to a host that did
+        # not issue it), so it is restored here — the key now has a reader, and
+        # withholding it would put the pipeline back on the keyless ~30 req/min
+        # limit the key exists to lift.
         #
-        # WHY REMOVE RATHER THAN WIRE IT UP. Wiring is the better fix only when
-        # there is something to gain, and here there is not much: this job pulls
-        # one /coins/markets page for three assets, once a day, against a free
-        # tier that allows ~30 calls a minute. The throttle is not what is
-        # limiting this pipeline and never was. Wiring it also means editing
-        # lthcs/sources/crypto_data.py (thread a `headers` argument through
-        # _http_get/_cached_json and send `x-cg-demo-api-key`), which is a
-        # different file with different owners and different tests — a change
-        # worth making deliberately, if the call volume ever grows, and not
-        # worth smuggling in as a side effect of an honesty pass.
-        #
-        # If that day comes: add the header in crypto_data.py FIRST, then
-        # re-add COINGECKO_API_KEY here, then flip its row in
-        # scripts/check_secrets_present.py back from "(retired…)" to
-        # "lthcs-crypto-daily". The audit test enforces that ordering.
-        #
+        # CRYPTOCOMPARE_API_KEY and GLASSNODE_API_KEY are deliberately still
+        # absent: verified against this branch, nothing under lthcs/ or in
+        # scripts/lthcs_crypto_daily.py reads either name. Do not re-add them
+        # until a reader exists, for the same reason they were removed.
+        env:
+          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
         # --force: re-running on a date that already has a snapshot is OK
         # (e.g. a manually dispatched run on the same UTC date as the cron).
         run: python scripts/lthcs_crypto_daily.py --force --verbose

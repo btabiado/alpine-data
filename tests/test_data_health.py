@@ -657,7 +657,18 @@ def test_wiring_scan_ignores_comments_but_not_code():
     still SEE a real mapping, or the annotation test passes vacuously."""
     assert "pages" in _workflows_wiring("FRED_API_KEY")
     # And a key named only in prose is not counted as wired.
-    assert _workflows_wiring("COINGECKO_API_KEY") == set()
+    #
+    # This used to assert COINGECKO_API_KEY was wired NOWHERE, which stopped
+    # being true once it was genuinely wired into pages.yml and
+    # lthcs-crypto-daily.yml. CRYPTOCOMPARE_API_KEY is the live example of the
+    # same property, and a sharper one: lthcs-crypto-daily.yml names it in the
+    # comment explaining why it was removed, while mapping it nowhere. So the
+    # scanner must report `pages` (where it IS mapped) and must NOT report
+    # lthcs-crypto-daily — proving it reads the env block, not the prose above
+    # it, within a single file.
+    cryptocompare = _workflows_wiring("CRYPTOCOMPARE_API_KEY")
+    assert "pages" in cryptocompare
+    assert "lthcs-crypto-daily" not in cryptocompare
 
 
 def test_secret_workflow_annotations_match_reality(secrets_mod):
@@ -693,8 +704,18 @@ def test_retired_keys_are_labelled_retired_not_pending(secrets_mod):
     lthcs-crypto-daily.yml to code that reads no env var at all, and the two ETF
     keys point at a fallback path and a decommissioned host. Mislabelling a dead
     key as pending is how a user keeps a useless secret rotated for years.
+
+    COINGECKO_API_KEY is deliberately NOT in the list below any more. It was
+    genuinely dead when this test was written; it has since been wired for real
+    — crypto_data.py and fetch_market.py read it and send x-cg-demo-api-key, and
+    both pages.yml and lthcs-crypto-daily.yml map it. Un-retirement is the one
+    legitimate way off this list, and it is a code change, not a relabel:
+    test_secret_workflow_annotations_match_reality re-derives the column from
+    the workflow files, so a key cannot claim a workflow that does not map it.
+    The mirror-image error is now the live risk — leaving a working key labelled
+    dead tells the reader to stop waiting for something already running.
     """
-    for name in ("COINGECKO_API_KEY", "COINGLASS_API_KEY", "SOSOVALUE_API_KEY"):
+    for name in ("COINGLASS_API_KEY", "SOSOVALUE_API_KEY"):
         where = next(w for n, _, w in secrets_mod.KEYS if n == name)
         assert where.startswith("(retired"), (
             f"{name} is a dead key and must be annotated '(retired…)', not "

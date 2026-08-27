@@ -22,6 +22,8 @@ import json
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
+import pytest
+
 import fetch_market
 import fetch_stock_money_flow as sf
 import signals
@@ -29,6 +31,16 @@ import signals
 
 TODAY = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 LONG_AGO = "2026-06-09"  # the date the breadth chart actually froze at
+
+# stale_keep_markets_top() now drops rows older than MARKETS_TOP_STALE_MAX_DAYS,
+# so any fixture that must SURVIVE the carry-forward has to be dated relative to
+# now. LONG_AGO is a wall-clock literal and silently aged past the bound, which
+# turned a passing test into an IndexError months after it was written; these
+# two are computed so they cannot drift.
+RECENT = (datetime.now(timezone.utc)
+          - timedelta(days=2)).strftime("%Y-%m-%d")
+PAST_BOUND = (datetime.now(timezone.utc)
+              - timedelta(days=fetch_market.MARKETS_TOP_STALE_MAX_DAYS + 1)).strftime("%Y-%m-%d")
 
 
 # ============================================================================
@@ -160,13 +172,45 @@ def test_markets_top_stale_keep_flags_rows_and_freezes_dates(tmp_path, monkeypat
     from them must inherit both."""
     monkeypatch.setattr(fetch_market, "CACHE", tmp_path)
     (tmp_path / "market.json").write_text(json.dumps({"markets_top": [
-        {"symbol": "BTC", "as_of": LONG_AGO, "price_usd": 1.0},
+        {"symbol": "BTC", "as_of": RECENT, "price_usd": 1.0},
     ]}))
     carried = fetch_market.stale_keep_markets_top()
-    assert carried[0]["as_of"] == LONG_AGO
+    assert carried[0]["as_of"] == RECENT
     assert carried[0]["stale"] is True
     sig = signals.compute_signal_simple(_coin(**carried[0]))
-    assert sig["as_of"] == LONG_AGO and sig["stale"] is True
+    assert sig["as_of"] == RECENT and sig["stale"] is True
+
+
+def test_stale_keep_markets_top_drops_rows_past_the_bound(tmp_path, monkeypatch):
+    """Carry-forward is bounded: riding out a transient 429 is the point, but
+    re-serving a price for weeks is not. A row past MARKETS_TOP_STALE_MAX_DAYS
+    is DROPPED, not carried — a coin missing from the table is visible, a
+    confidently-rendered stale price is not.
+
+    This is the bug that froze the front-page BTC price at its 2026-08-06
+    value for 16 days.
+    """
+    monkeypatch.setattr(fetch_market, "CACHE", tmp_path)
+    (tmp_path / "market.json").write_text(json.dumps({"markets_top": [
+        {"symbol": "BTC", "as_of": PAST_BOUND, "price_usd": 1.0},
+        {"symbol": "ETH", "as_of": RECENT, "price_usd": 2.0},
+    ]}))
+    carried = fetch_market.stale_keep_markets_top()
+    assert [r["symbol"] for r in carried] == ["ETH"]
+    assert carried[0]["stale"] is True
+    assert carried[0]["stale_age_days"] == pytest.approx(2, abs=1)
+
+
+def test_stale_keep_markets_top_drops_rows_with_no_as_of(tmp_path, monkeypatch):
+    """A row with no as_of has no provable observation date, so its age cannot
+    be bounded. Re-serving it is exactly the unprovable-price case the bound
+    exists to prevent, so it is dropped rather than carried."""
+    monkeypatch.setattr(fetch_market, "CACHE", tmp_path)
+    (tmp_path / "market.json").write_text(json.dumps({"markets_top": [
+        {"symbol": "USDT", "price_usd": 1.0},
+        {"symbol": "BTC", "as_of": RECENT, "price_usd": 2.0},
+    ]}))
+    assert [r["symbol"] for r in fetch_market.stale_keep_markets_top()] == ["BTC"]
 
 
 def test_stale_keep_markets_top_no_cache_returns_empty(tmp_path, monkeypatch):

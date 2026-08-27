@@ -3,6 +3,133 @@
   "model_version": "v1.1.0",
   "history": [
     {
+      "date": "2026-08-27",
+      "score": 45.4,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-26",
+      "score": 46.5,
+      "band": "review",
+      "synthetic": true
+    },
+    {
+      "date": "2026-08-25",
+      "score": 46.5,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-24",
+      "score": 46.1,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-23",
+      "score": 47.9,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-22",
+      "score": 47.6,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-21",
+      "score": 47.9,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-20",
+      "score": 48.4,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-19",
+      "score": 48.4,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-18",
+      "score": 42.0,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-17",
+      "score": 40.0,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-16",
+      "score": 40.6,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-15",
+      "score": 41.3,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-14",
+      "score": 41.8,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-13",
+      "score": 40.2,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-12",
+      "score": 39.6,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-11",
+      "score": 40.0,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-10",
+      "score": 40.5,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-09",
+      "score": 35.6,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-08",
+      "score": 40.1,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-07",
+      "score": 40.1,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-06",
+      "score": 39.6,
+      "band": "review",
+      "synthetic": true
+    },
+    {
+      "date": "2026-08-05",
+      "score": 39.6,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-04",
+      "score": 39.7,
+      "band": "review"
+    },
+    {
+      "date": "2026-08-03",
+      "score": 36.8,
+      "band": "review"
+    },
+    {
       "date": "2026-08-02",
       "score": 34.9,
       "band": "review"
