@@ -799,10 +799,29 @@ def test_remediation_refuses_to_guess_a_refresher(dh):
 
 def test_remediation_records_a_failed_retry_instead_of_swallowing_it(dh,
                                                                     monkeypatch):
-    monkeypatch.setitem(dh.MANIFEST, "data-tsa.json",
-                        dh.Feed(dh.COMMITTED, "test", "exit 7"))
+    # A real executable, not the shell builtin `exit` this used to use:
+    # remediate() runs refreshers WITHOUT a shell, so a builtin is not
+    # runnable. Every refresher in MANIFEST is a plain argv line, so this
+    # fixture now matches how they are actually invoked.
+    monkeypatch.setitem(
+        dh.MANIFEST, "data-tsa.json",
+        dh.Feed(dh.COMMITTED, "test", f"{sys.executable} -c 'import sys; sys.exit(7)'"))
     notes = dh.remediate([dh.Result("data-tsa.json", dh.STALE, 999.0, 24.0)])
     assert any("rc=7" in n for n in notes)
+
+
+def test_remediation_survives_a_refresher_that_cannot_start(dh, monkeypatch):
+    """An unrunnable refresher must be reported, not raised.
+
+    With no shell, a missing binary raises FileNotFoundError instead of
+    returning rc=127. Uncaught, that would abort the entire health run — so
+    one feed with a typo'd refresher would mean no report at all, which is
+    precisely the silence this monitor exists to end.
+    """
+    monkeypatch.setitem(dh.MANIFEST, "data-tsa.json",
+                        dh.Feed(dh.COMMITTED, "test", "definitely-not-a-real-binary-xyz"))
+    notes = dh.remediate([dh.Result("data-tsa.json", dh.STALE, 999.0, 24.0)])
+    assert any("could not start" in n for n in notes), notes
 
 
 def test_remediation_ignores_healthy_and_suppressed_feeds(dh):

@@ -97,6 +97,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shlex
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -622,12 +623,35 @@ def remediate(results: list[Result]) -> list[str]:
             notes.append(f"{r.path}: no safe automatic retry; needs a human.")
             continue
         notes.append(f"{r.path}: retrying `{feed.refresher}` ...")
+        # No shell. Every refresher in MANIFEST is a plain argv line
+        # ("python fetch_tsa.py") — none uses a pipe, redirect, glob or any
+        # other shell feature — so shell=True bought nothing and cost the
+        # usual thing: this function runs in CI and executes commands, which
+        # makes it the last place worth keeping an interpreter that turns a
+        # stray metacharacter in a future MANIFEST entry into arbitrary
+        # execution. shlex.split gives the same argv the shell would have
+        # produced for these strings, and CodeQL/bandit stop flagging it.
+        argv = shlex.split(feed.refresher)
+        if not argv:
+            notes.append(f"{r.path}: refresher is empty after parsing; skipped.")
+            continue
         try:
             proc = subprocess.run(
-                feed.refresher, shell=True, cwd=REPO_ROOT,
+                argv, cwd=REPO_ROOT,
                 capture_output=True, text=True, timeout=600)
         except subprocess.TimeoutExpired:
             notes.append(f"{r.path}: retry TIMED OUT after 600s.")
+            continue
+        except OSError as exc:
+            # Without a shell, an unrunnable refresher RAISES rather than
+            # coming back as rc=127, and an uncaught FileNotFoundError here
+            # would abort the whole health run — turning "one feed has a bad
+            # refresher" into "the monitor produced no report at all". A
+            # monitor that dies on the way to telling you something is wrong
+            # is the failure mode this file exists to remove, so record it
+            # like any other failed retry and keep going.
+            notes.append(f"{r.path}: retry could not start "
+                         f"({type(exc).__name__}: {exc}).")
             continue
         if proc.returncode == 0:
             notes.append(f"{r.path}: retry exited 0 — re-checking.")
