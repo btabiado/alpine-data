@@ -236,7 +236,7 @@
     },
     {
       "ticker": "CAT",
-      "todays_take": "CAT requires Structural Review at 45.6 (-6.2 over 30 days), supported by Thesis Integrity at 58.8.",
+      "todays_take": "CAT requires Structural Review at 45.6 (-6.2 over 30 days), supported by Demand Environment at 51.1.",
       "why_changed": "Score is at 45.6 (drift over 1d -0.6); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Institutional Confidence at 34.3 is well below the universe median, and Adoption Momentum at 47.6 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
