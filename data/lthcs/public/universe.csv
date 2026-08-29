@@ -1,216 +1,216 @@
 ticker,calc_date,lthcs_score,band,confidence_level,adoption_momentum,institutional_confidence,financial_evolution,thesis_integrity,des,dropped_pillars,data_quality_flags,drift_1d,drift_7d,drift_30d,drift_90d,sector,maturity_stage
-AAPL,2026-08-28,56.4,weakening,medium,60.8,68.5,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,-1.3,-4.0,-3.0,Technology,mature_compounder
-ABBV,2026-08-28,54.9,weakening,medium,38.7,86.4,50.0,50.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,0.7,-0.1,4.2,Health Care,mature_compounder
-ABNB,2026-08-28,59.6,weakening,medium,51.1,87.9,50.0,55.0,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-1.1,0.2,9.6,7.8,Consumer Discretionary,standard_compounder
-ABT,2026-08-28,53.1,weakening,medium,39.7,80.8,50.0,50.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.9,1.8,9.1,9.2,Health Care,standard_compounder
-ACN,2026-08-28,38.1,review,medium,35.5,24.3,50.0,50.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,1.9,0.7,5.9,-0.5,Technology,standard_compounder
-ADBE,2026-08-28,53.7,weakening,medium,50.0,68.4,50.0,50.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,2.6,0.3,7.8,3.5,Technology,mature_compounder
-ADI,2026-08-28,40.0,review,medium,40.8,25.0,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.7,-3.9,-8.1,-29.2,Technology,standard_compounder
-ADP,2026-08-28,62.1,monitor,medium,54.7,92.5,50.0,50.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,0.4,6.2,15.4,Industrials,mature_compounder
-ADSK,2026-08-28,48.3,review,medium,39.2,60.4,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,3.2,1.2,9.3,-6.6,Technology,standard_compounder
-AEP,2026-08-28,38.9,review,medium,49.7,16.4,50.0,45.0,39.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,3.6,-0.9,-15.0,Utilities,standard_compounder
-AMAT,2026-08-28,51.1,weakening,medium,37.1,80.6,50.0,55.0,48.9,thesis_integrity,sec_unavailable;thesis_unavailable,1.0,-0.9,2.0,-8.6,Technology,mature_compounder
-AMD,2026-08-28,62.5,monitor,medium,65.0,94.2,50.0,55.0,48.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,0.3,1.3,-5.5,Technology,growth_compounder
-AMGN,2026-08-28,53.0,weakening,medium,37.6,83.0,50.0,58.8,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,-0.4,5.6,3.6,Health Care,standard_compounder
-AMT,2026-08-28,38.4,review,medium,38.2,27.9,50.0,58.8,40.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.9,-2.2,-2.0,-21.1,Real Estate,standard_compounder
-AMZN,2026-08-28,50.3,weakening,medium,61.8,40.2,50.0,58.8,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-0.1,1.2,0.4,-18.5,Consumer Discretionary,mature_compounder
-ANET,2026-08-28,56.1,weakening,medium,50.0,78.0,50.0,58.8,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.8,-0.4,3.6,-10.1,Technology,growth_compounder
-APH,2026-08-28,47.5,review,medium,50.0,43.7,50.0,58.8,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.9,0.9,-3.7,-14.1,Technology,standard_compounder
-ARM,2026-08-28,51.2,weakening,medium,36.6,87.0,50.0,58.8,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.1,-0.2,-5.5,-1.6,Technology,growth_compounder
-ASML,2026-08-28,50.6,weakening,medium,35.0,74.8,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.8,0.1,-5.4,-16.8,Technology,standard_compounder
-AVGO,2026-08-28,40.1,review,medium,50.0,11.4,50.0,50.0,48.9,thesis_integrity,sec_unavailable;thesis_unavailable,1.4,-0.9,-12.4,-37.5,Technology,mature_compounder
-AXP,2026-08-28,46.3,review,medium,41.3,30.0,50.0,50.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.7,1.1,-11.6,-6.8,Financials,mature_compounder
-AZN,2026-08-28,32.3,review,medium,36.1,2.1,50.0,55.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.2,-3.5,-9.7,-26.2,Health Care,standard_compounder
-BA,2026-08-28,44.8,review,medium,50.0,20.9,50.0,41.2,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,0.1,-4.5,-10.7,Industrials,recovery_stabilization
-BAC,2026-08-28,57.8,weakening,medium,52.9,64.3,50.0,55.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-1.2,0.0,-5.5,6.8,Financials,mature_compounder
-BIIB,2026-08-28,57.2,weakening,medium,54.7,78.5,50.0,58.8,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-1.7,-0.6,4.6,7.4,Health Care,standard_compounder
-BKNG,2026-08-28,48.5,review,medium,50.3,44.2,50.0,55.0,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-2.1,-6.8,-5.9,-0.4,Consumer Discretionary,standard_compounder
-BKR,2026-08-28,46.5,review,medium,42.4,46.7,50.0,58.8,48.8,thesis_integrity,sec_unavailable;thesis_unavailable,0.8,0.5,-0.8,-6.2,Energy,standard_compounder
-BLK,2026-08-28,56.9,weakening,medium,53.9,58.6,50.0,55.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.1,3.6,0.2,-0.7,Financials,standard_compounder
-BMY,2026-08-28,53.7,weakening,medium,51.8,67.8,50.0,58.8,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,-1.7,0.9,9.3,Health Care,standard_compounder
-BRK.B,2026-08-28,53.0,weakening,medium,51.1,47.0,50.0,58.8,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.3,4.3,2.1,11.2,Financials,mature_compounder
-BSX,2026-08-28,38.7,review,medium,50.0,10.3,50.0,55.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.1,0.0,0.7,-11.9,Health Care,standard_compounder
-BX,2026-08-28,56.8,weakening,medium,50.0,63.4,50.0,58.8,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.4,-0.7,-0.4,0.0,Financials,financial
-C,2026-08-28,45.4,review,medium,41.8,25.8,50.0,58.8,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.7,-1.1,-11.2,-11.3,Financials,mature_compounder
-CAT,2026-08-28,45.6,review,medium,47.6,34.3,50.0,58.8,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,-1.7,-6.2,-8.0,Industrials,standard_compounder
-CB,2026-08-28,50.2,weakening,medium,50.0,36.7,50.0,55.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,-1.2,-5.0,0.0,Financials,financial
-CCEP,2026-08-28,50.2,weakening,medium,43.9,62.1,50.0,41.2,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,-1.6,-3.8,5.4,Consumer Staples,standard_compounder
-CDNS,2026-08-28,48.2,review,medium,43.2,55.1,50.0,50.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,0.4,1.4,-4.2,-17.4,Technology,standard_compounder
-CDW,2026-08-28,50.5,weakening,medium,44.5,62.5,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,1.2,2.2,-7.1,5.5,Technology,standard_compounder
-CEG,2026-08-28,44.9,review,medium,59.7,28.0,50.0,58.8,39.6,thesis_integrity,sec_unavailable;thesis_unavailable,2.1,5.5,8.9,-16.9,Utilities,standard_compounder
-CHTR,2026-08-28,40.7,review,medium,53.4,10.5,50.0,55.0,47.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,4.4,1.3,8.9,Communication Services,standard_compounder
-CI,2026-08-28,43.0,review,medium,50.0,27.4,50.0,50.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,-0.4,-6.7,-5.9,Health Care,mature_compounder
-CL,2026-08-28,48.4,review,medium,45.5,53.1,50.0,55.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,1.9,0.2,1.4,Consumer Staples,standard_compounder
-CMCSA,2026-08-28,41.6,review,medium,56.6,10.1,50.0,55.0,47.9,thesis_integrity,sec_unavailable;thesis_unavailable,-1.4,3.4,3.2,2.4,Communication Services,standard_compounder
-CME,2026-08-28,46.6,review,medium,50.0,22.6,50.0,50.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.2,3.0,3.6,0.0,Financials,financial
-CMI,2026-08-28,40.4,review,medium,50.0,10.6,50.0,45.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,-0.6,-10.6,-1.3,Industrials,standard_compounder
-COF,2026-08-28,55.4,weakening,medium,57.1,48.6,50.0,58.8,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,3.5,-3.4,-1.6,Financials,standard_compounder
-COP,2026-08-28,55.0,weakening,medium,58.7,60.5,50.0,58.8,48.8,thesis_integrity,sec_unavailable;thesis_unavailable,-1.1,3.4,14.6,-6.3,Energy,standard_compounder
-COST,2026-08-28,39.3,review,medium,46.1,14.8,50.0,50.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,-1.4,-0.6,-3.0,-10.8,Consumer Staples,mature_compounder
-CRM,2026-08-28,57.3,weakening,medium,50.0,94.7,50.0,58.8,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,3.1,-0.6,14.5,4.8,Technology,mature_compounder
-CRWD,2026-08-28,61.0,monitor,medium,64.5,95.1,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-2.6,-0.6,1.6,-3.6,Technology,mature_compounder
-CSCO,2026-08-28,61.9,monitor,medium,63.9,87.4,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.7,0.3,2.3,2.0,Technology,mature_compounder
-CSGP,2026-08-28,38.1,review,medium,43.2,9.8,50.0,58.8,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,-3.4,-1.5,-13.9,Industrials,standard_compounder
-CSX,2026-08-28,58.3,weakening,medium,50.0,82.2,50.0,55.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,-0.8,-3.4,8.0,Industrials,mature_compounder
-CTAS,2026-08-28,57.4,weakening,medium,60.3,65.7,50.0,50.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.9,3.1,2.2,12.6,Industrials,standard_compounder
-CTSH,2026-08-28,48.9,review,medium,48.2,51.4,50.0,50.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,3.5,1.0,12.6,9.9,Technology,standard_compounder
-CVS,2026-08-28,60.7,monitor,medium,63.4,79.7,50.0,58.8,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,0.5,4.0,1.5,1.0,Consumer Staples,standard_compounder
-CVX,2026-08-28,54.5,weakening,medium,59.2,57.7,50.0,55.0,48.8,thesis_integrity,sec_unavailable;thesis_unavailable,0.2,0.2,12.8,1.3,Energy,standard_compounder
-DASH,2026-08-28,57.6,weakening,medium,55.5,74.3,50.0,50.0,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-2.2,-0.3,3.5,15.4,Consumer Discretionary,growth_compounder
-DDOG,2026-08-28,59.2,weakening,medium,56.1,94.7,50.0,58.8,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,1.3,-1.3,-8.2,Technology,growth_compounder
-DE,2026-08-28,47.3,review,medium,46.6,42.4,50.0,55.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-3.1,-1.9,-1.0,1.0,Industrials,standard_compounder
-DHR,2026-08-28,52.4,weakening,medium,58.2,54.8,50.0,55.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,2.5,7.9,9.0,9.2,Health Care,standard_compounder
-DIS,2026-08-28,45.9,review,medium,50.0,35.5,50.0,58.8,47.9,thesis_integrity,sec_unavailable;thesis_unavailable,-1.3,-2.2,2.5,2.3,Communication Services,mature_compounder
-DUK,2026-08-28,42.9,review,medium,61.3,18.0,50.0,55.0,39.6,thesis_integrity,sec_unavailable;thesis_unavailable,2.8,2.6,2.5,-20.3,Utilities,standard_compounder
-DXCM,2026-08-28,59.4,weakening,medium,52.4,90.2,50.0,58.8,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.2,-1.5,10.0,-4.5,Health Care,standard_compounder
-ECL,2026-08-28,49.1,review,medium,50.0,47.1,50.0,50.0,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,-1.5,1.6,-2.1,11.8,Materials,mature_compounder
-ELV,2026-08-28,55.9,weakening,medium,50.0,79.0,50.0,58.8,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,-0.2,-0.1,-1.6,Health Care,mature_compounder
-EMR,2026-08-28,52.8,weakening,medium,57.6,50.7,50.0,50.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,2.3,5.0,1.9,5.6,Industrials,standard_compounder
-EOG,2026-08-28,52.2,weakening,medium,50.0,60.0,50.0,50.0,48.8,thesis_integrity,sec_unavailable;thesis_unavailable,-0.8,-1.4,4.9,-2.0,Energy,standard_compounder
-EQIX,2026-08-28,41.3,review,medium,50.0,24.6,50.0,55.0,40.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,-0.2,-1.2,-16.9,Real Estate,standard_compounder
-ETN,2026-08-28,46.7,review,medium,50.0,35.8,50.0,50.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.1,-0.8,2.7,-19.4,Industrials,standard_compounder
-EXC,2026-08-28,44.1,review,medium,62.4,21.5,50.0,45.0,39.6,thesis_integrity,sec_unavailable;thesis_unavailable,4.0,5.8,3.8,-5.4,Utilities,standard_compounder
-F,2026-08-28,56.4,weakening,medium,62.9,60.3,50.0,58.8,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,4.3,-1.4,-2.9,6.6,Consumer Discretionary,standard_compounder
-FANG,2026-08-28,50.8,weakening,medium,49.2,55.3,50.0,55.0,48.8,thesis_integrity,sec_unavailable;thesis_unavailable,-0.9,-4.1,4.5,-21.4,Energy,standard_compounder
-FAST,2026-08-28,53.3,weakening,medium,47.1,65.9,50.0,50.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.7,-0.8,4.4,-0.7,Industrials,standard_compounder
-FCX,2026-08-28,53.1,weakening,medium,50.0,63.1,50.0,58.8,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,0.6,1.4,11.5,Materials,standard_compounder
-FDX,2026-08-28,47.9,review,medium,50.0,40.5,50.0,55.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-1.7,-1.9,0.1,-0.5,Industrials,mature_compounder
-FTNT,2026-08-28,60.9,monitor,medium,48.7,98.6,50.0,58.8,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,-2.1,-0.1,-9.0,Technology,mature_compounder
-GD,2026-08-28,54.1,weakening,medium,50.0,65.2,50.0,55.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.3,3.1,5.3,3.0,Industrials,standard_compounder
-GE,2026-08-28,54.1,weakening,medium,50.0,65.4,50.0,55.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-2.1,-1.2,-2.1,-8.3,Industrials,recovery_rerating
-GEHC,2026-08-28,44.6,review,medium,50.0,33.7,50.0,55.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,-1.3,-1.3,6.4,Health Care,standard_compounder
-GEV,2026-08-28,42.4,review,medium,50.0,18.4,50.0,41.2,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.7,0.8,0.5,-1.4,Industrials,growth_compounder
-GFS,2026-08-28,38.0,review,medium,50.0,5.7,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,2.5,-5.6,-7.5,-19.2,Technology,standard_compounder
-GILD,2026-08-28,49.9,review,medium,50.0,54.9,50.0,55.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,1.3,-0.6,10.7,3.0,Health Care,standard_compounder
-GLW,2026-08-28,36.4,review,medium,50.0,11.0,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,2.3,0.6,-29.3,Technology,standard_compounder
-GM,2026-08-28,49.5,review,medium,50.0,48.9,50.0,58.8,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,0.6,0.1,-5.5,13.2,Consumer Discretionary,standard_compounder
-GOOG,2026-08-28,44.5,review,medium,50.0,29.2,50.0,58.8,48.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.7,-4.1,-4.0,-26.6,Communication Services,mature_compounder
-GOOGL,2026-08-28,45.1,review,medium,50.0,31.6,50.0,58.8,48.9,thesis_integrity,sec_unavailable;thesis_unavailable,1.1,-3.6,-3.1,-26.6,Communication Services,mature_compounder
-GS,2026-08-28,55.3,weakening,medium,50.0,57.2,50.0,58.8,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,-1.5,-5.0,0.0,Financials,mature_compounder
-HCA,2026-08-28,38.7,review,medium,50.0,10.3,50.0,50.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.1,1.2,1.1,1.6,Health Care,mature_compounder
-HD,2026-08-28,41.9,review,medium,50.0,18.2,50.0,55.0,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-1.5,-3.4,-3.6,9.8,Consumer Discretionary,mature_compounder
-HLT,2026-08-28,42.2,review,medium,50.0,19.6,50.0,50.0,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-1.6,-0.5,-5.6,-15.5,Consumer Discretionary,standard_compounder
-HON,2026-08-28,41.4,review,medium,50.0,14.5,50.0,55.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.6,3.3,-3.5,-12.3,Industrials,standard_compounder
-HWM,2026-08-28,47.8,review,medium,50.0,40.0,50.0,55.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,-0.1,-6.2,-3.5,Industrials,growth_compounder
-IBM,2026-08-28,41.1,review,medium,50.0,18.0,50.0,50.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,1.6,5.1,5.6,-9.9,Technology,mature_compounder
-ICE,2026-08-28,48.4,review,medium,50.0,29.7,50.0,55.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.4,0.9,1.5,0.0,Financials,financial
-IDXX,2026-08-28,40.3,review,medium,50.0,16.8,50.0,55.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,0.4,-1.3,-4.8,Health Care,standard_compounder
-ILMN,2026-08-28,59.6,weakening,medium,50.0,93.7,50.0,55.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.2,-3.8,0.5,14.2,Health Care,standard_compounder
-INTC,2026-08-28,53.7,weakening,medium,50.0,89.1,50.0,58.8,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,0.8,0.5,-0.8,10.4,Technology,recovery_stabilization
-INTU,2026-08-28,39.7,review,medium,50.0,12.3,50.0,58.8,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,-4.6,2.1,-11.3,Technology,mature_compounder
-ISRG,2026-08-28,37.0,review,medium,50.0,3.3,50.0,58.8,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,0.2,0.5,-18.2,Health Care,mature_compounder
-ITW,2026-08-28,48.2,review,medium,50.0,41.6,50.0,50.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-1.1,0.6,-4.3,6.9,Industrials,mature_compounder
-JCI,2026-08-28,45.8,review,medium,50.0,32.0,50.0,55.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,1.6,-0.5,-0.4,Industrials,standard_compounder
-JNJ,2026-08-28,54.4,weakening,medium,50.0,72.9,50.0,50.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,2.9,4.4,9.9,Health Care,mature_compounder
-JPM,2026-08-28,56.1,weakening,medium,50.0,60.6,50.0,55.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-1.7,-0.4,-4.0,13.6,Financials,mature_compounder
-KDP,2026-08-28,56.4,weakening,medium,50.0,79.4,50.0,55.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,-0.7,2.5,6.0,Consumer Staples,standard_compounder
-KHC,2026-08-28,55.2,weakening,medium,50.0,74.6,50.0,55.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,1.6,-0.8,-3.6,15.8,Consumer Staples,standard_compounder
-KKR,2026-08-28,52.6,weakening,medium,50.0,46.3,50.0,58.8,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.8,-1.2,-1.5,0.0,Financials,financial
-KLAC,2026-08-28,45.8,review,medium,50.0,34.4,50.0,55.0,48.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,0.9,-2.1,-10.9,Technology,growth_compounder
-KMI,2026-08-28,45.0,review,medium,50.0,31.3,50.0,58.8,48.8,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,1.1,2.4,-23.6,Energy,standard_compounder
-KO,2026-08-28,54.7,weakening,medium,50.0,72.7,50.0,55.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,-0.2,1.3,15.5,Consumer Staples,mature_compounder
-LCID,2026-08-28,36.1,review,medium,50.0,6.9,50.0,41.2,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,0.7,0.0,-2.6,Consumer Discretionary,pre_profit_growth
-LIN,2026-08-28,42.9,review,medium,50.0,22.2,50.0,50.0,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,-0.9,1.0,-3.1,-8.8,Materials,standard_compounder
-LLY,2026-08-28,57.1,weakening,medium,50.0,83.9,50.0,58.8,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,-0.1,-0.4,1.2,Health Care,growth_compounder
-LMT,2026-08-28,44.3,review,medium,50.0,26.2,50.0,58.8,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,1.0,3.8,4.0,4.0,Industrials,standard_compounder
-LOW,2026-08-28,38.7,review,medium,50.0,5.6,50.0,55.0,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,-0.2,-2.4,1.0,Consumer Discretionary,standard_compounder
-LRCX,2026-08-28,52.5,weakening,medium,50.0,73.0,50.0,55.0,48.9,thesis_integrity,sec_unavailable;thesis_unavailable,1.3,3.3,9.1,-3.8,Technology,growth_compounder
-LULU,2026-08-28,38.7,review,medium,50.0,5.4,50.0,50.0,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,0.2,0.6,2.9,Consumer Discretionary,standard_compounder
-MA,2026-08-28,57.3,weakening,medium,50.0,65.2,50.0,55.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,1.0,0.2,-2.8,Financials,mature_compounder
-MAR,2026-08-28,40.1,review,medium,50.0,11.3,50.0,55.0,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-0.8,-0.6,-12.6,-12.8,Consumer Discretionary,standard_compounder
-MCD,2026-08-28,39.4,review,medium,50.0,8.4,50.0,50.0,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,0.2,0.3,1.0,Consumer Discretionary,mature_compounder
-MCHP,2026-08-28,40.6,review,medium,50.0,16.2,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,2.9,-0.4,-9.7,-17.0,Technology,standard_compounder
-MCK,2026-08-28,45.7,review,medium,50.0,38.1,50.0,55.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.8,3.9,4.4,-0.9,Health Care,mature_compounder
-MCO,2026-08-28,56.4,weakening,medium,50.0,61.7,50.0,58.8,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-1.1,-1.7,1.2,0.0,Financials,financial
-MDB,2026-08-28,57.6,weakening,medium,50.0,95.8,50.0,58.8,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,0.5,-3.0,3.3,26.6,Technology,growth_compounder
-MDLZ,2026-08-28,50.0,weakening,medium,50.0,54.0,50.0,55.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,-0.9,-0.8,-2.5,1.4,Consumer Staples,standard_compounder
-MDT,2026-08-28,48.8,review,medium,50.0,50.5,50.0,50.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,1.2,4.7,15.9,Health Care,standard_compounder
-MELI,2026-08-28,48.8,review,medium,50.0,45.7,50.0,55.0,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,0.3,-2.8,-7.5,Consumer Discretionary,growth_compounder
-MET,2026-08-28,61.6,monitor,medium,50.0,82.5,50.0,55.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.2,-0.2,-2.9,-0.8,Financials,standard_compounder
-META,2026-08-28,39.2,review,medium,50.0,7.9,50.0,41.2,48.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.3,0.9,-2.9,-29.5,Communication Services,mature_compounder
-MMM,2026-08-28,56.8,weakening,medium,50.0,76.2,50.0,55.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.4,0.8,-1.4,14.9,Industrials,mature_compounder
-MNST,2026-08-28,32.8,review,medium,50.0,-3.1,50.0,50.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,0.2,-24.6,-27.3,Consumer Staples,standard_compounder
-MO,2026-08-28,48.1,review,medium,50.0,46.1,50.0,50.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,-1.7,4.4,-5.4,7.5,Consumer Staples,standard_compounder
-MPC,2026-08-28,60.5,monitor,medium,50.0,93.3,50.0,58.8,48.8,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,0.3,1.6,12.9,Energy,standard_compounder
-MPWR,2026-08-28,38.3,review,medium,50.0,6.7,50.0,58.8,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,-1.6,-9.5,-23.4,Technology,growth_compounder
-MRK,2026-08-28,58.2,weakening,medium,50.0,88.3,50.0,58.8,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,0.7,6.6,19.8,Health Care,mature_compounder
-MRVL,2026-08-28,56.7,weakening,medium,50.0,92.3,50.0,50.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,0.0,-0.4,-17.2,Technology,growth_compounder
-MS,2026-08-28,57.0,weakening,medium,50.0,63.8,50.0,58.8,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,-2.4,-5.6,-1.8,Financials,mature_compounder
-MSFT,2026-08-28,56.2,weakening,medium,50.0,75.9,50.0,58.8,48.9,thesis_integrity,sec_unavailable;thesis_unavailable,1.2,-0.4,13.1,-2.0,Technology,mature_compounder
-MU,2026-08-28,58.0,weakening,medium,50.0,95.1,50.0,58.8,48.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,0.0,0.7,-21.9,Technology,growth_compounder
-NEE,2026-08-28,38.4,review,medium,50.0,14.0,50.0,55.0,39.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,1.1,-1.0,-4.8,Utilities,standard_compounder
-NEM,2026-08-28,54.6,weakening,medium,50.0,69.0,50.0,55.0,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,1.4,4.1,14.5,-9.6,Materials,standard_compounder
-NFLX,2026-08-28,37.7,review,medium,50.0,3.0,50.0,50.0,47.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.2,1.4,0.8,-20.7,Communication Services,standard_compounder
-NKE,2026-08-28,39.0,review,medium,50.0,6.5,50.0,58.8,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,-1.0,0.8,19.9,Consumer Discretionary,standard_compounder
-NOC,2026-08-28,39.3,review,medium,50.0,6.1,50.0,58.8,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.2,0.7,1.0,2.1,Industrials,mature_compounder
-NOW,2026-08-28,55.5,weakening,medium,50.0,87.7,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-2.7,-3.0,12.1,-3.8,Technology,mature_compounder
-NSC,2026-08-28,55.5,weakening,medium,50.0,71.0,50.0,55.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-1.0,-0.7,-0.9,9.8,Industrials,mature_compounder
-NVDA,2026-08-28,52.2,weakening,medium,50.0,60.0,50.0,55.0,48.9,thesis_integrity,sec_unavailable;thesis_unavailable,5.9,3.5,6.0,-24.9,Technology,growth_compounder
-NXPI,2026-08-28,46.1,review,medium,50.0,37.9,50.0,50.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.1,-2.4,-11.1,1.0,Technology,standard_compounder
-ODFL,2026-08-28,39.8,review,medium,50.0,8.2,50.0,55.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.8,-2.5,-16.5,-16.7,Industrials,standard_compounder
-ON,2026-08-28,37.5,review,medium,50.0,3.8,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,-6.0,-17.0,-10.5,Technology,standard_compounder
-ORCL,2026-08-28,39.5,review,medium,50.0,8.9,50.0,55.0,48.9,thesis_integrity,sec_unavailable;thesis_unavailable,3.3,3.1,1.5,-20.5,Technology,mature_compounder
-ORLY,2026-08-28,41.0,review,medium,50.0,14.7,50.0,50.0,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,1.3,-3.3,-1.7,Consumer Discretionary,standard_compounder
-PANW,2026-08-28,63.2,monitor,medium,50.0,106.5,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,0.2,0.4,-10.0,Technology,mature_compounder
-PAYX,2026-08-28,59.9,weakening,medium,50.0,88.6,50.0,50.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.1,0.4,0.1,12.6,Industrials,standard_compounder
-PCAR,2026-08-28,45.1,review,medium,50.0,29.4,50.0,55.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-2.1,-3.4,-10.7,13.7,Industrials,standard_compounder
-PDD,2026-08-28,37.8,review,medium,50.0,1.7,50.0,55.0,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,-0.1,-1.0,-16.9,Consumer Discretionary,standard_compounder
-PEP,2026-08-28,39.5,review,medium,50.0,11.7,50.0,50.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,-0.2,-1.3,9.9,Consumer Staples,mature_compounder
-PFE,2026-08-28,47.4,review,medium,50.0,44.9,50.0,58.8,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.8,-0.3,7.2,13.3,Health Care,mature_compounder
-PG,2026-08-28,44.2,review,medium,50.0,30.8,50.0,50.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,0.3,-0.1,9.6,Consumer Staples,mature_compounder
-PGR,2026-08-28,53.0,weakening,medium,50.0,47.9,50.0,50.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-1.6,-2.5,0.1,0.0,Financials,financial
-PH,2026-08-28,46.9,review,medium,50.0,36.4,50.0,58.8,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-2.1,1.6,-0.7,13.6,Industrials,mature_compounder
-PLD,2026-08-28,42.3,review,medium,50.0,28.5,50.0,58.8,40.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,-1.2,-5.6,-15.5,Real Estate,standard_compounder
-PM,2026-08-28,56.8,weakening,medium,50.0,80.8,50.0,55.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,1.6,0.8,9.7,Consumer Staples,standard_compounder
-PNC,2026-08-28,53.7,weakening,medium,50.0,50.7,50.0,55.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.7,-1.3,-8.1,0.0,Financials,financial
-PSX,2026-08-28,59.8,weakening,medium,50.0,90.4,50.0,58.8,48.8,thesis_integrity,sec_unavailable;thesis_unavailable,-0.1,0.1,6.2,18.0,Energy,standard_compounder
-PWR,2026-08-28,43.6,review,medium,50.0,35.3,50.0,58.8,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,1.0,-2.0,1.6,-20.9,Industrials,growth_compounder
-PYPL,2026-08-28,60.1,monitor,medium,50.0,76.6,50.0,55.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.8,-3.1,-4.5,22.1,Financials,mature_compounder
-QCOM,2026-08-28,56.0,weakening,medium,50.0,77.6,50.0,50.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,0.1,1.4,-4.8,Technology,mature_compounder
-REGN,2026-08-28,49.5,review,medium,50.0,53.3,50.0,58.8,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,-0.7,9.8,18.5,Health Care,standard_compounder
-ROP,2026-08-28,56.4,weakening,medium,50.0,74.3,50.0,50.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,1.4,1.1,2.5,2.4,Industrials,standard_compounder
-ROST,2026-08-28,44.8,review,medium,50.0,30.1,50.0,58.8,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-1.6,-3.0,-9.5,-13.4,Consumer Discretionary,standard_compounder
-RTX,2026-08-28,51.7,weakening,medium,50.0,55.6,50.0,58.8,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.5,4.3,3.4,5.5,Industrials,standard_compounder
-SBUX,2026-08-28,51.0,weakening,medium,50.0,54.5,50.0,58.8,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,1.0,3.0,7.1,Consumer Discretionary,standard_compounder
-SCHW,2026-08-28,58.6,weakening,medium,50.0,70.4,50.0,55.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,1.6,4.1,-0.6,Financials,standard_compounder
-SHW,2026-08-28,45.3,review,medium,50.0,31.6,50.0,55.0,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,0.3,-1.1,-4.7,14.8,Materials,standard_compounder
-SLB,2026-08-28,48.5,review,medium,50.0,45.1,50.0,55.0,48.8,thesis_integrity,sec_unavailable;thesis_unavailable,3.4,1.0,3.0,3.9,Energy,standard_compounder
-SMCI,2026-08-28,55.9,weakening,medium,50.0,89.3,50.0,58.8,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,0.3,20.8,-4.1,Technology,growth_compounder
-SNPS,2026-08-28,44.9,review,medium,50.0,33.2,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,5.0,4.9,6.4,1.2,Technology,standard_compounder
-SO,2026-08-28,40.1,review,medium,50.0,20.8,50.0,58.8,39.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,2.7,-0.8,-16.0,Utilities,standard_compounder
-SPG,2026-08-28,47.8,review,medium,50.0,50.5,50.0,58.8,40.6,thesis_integrity,sec_unavailable;thesis_unavailable,-1.8,-1.3,-8.7,-6.4,Real Estate,standard_compounder
-STX,2026-08-28,56.3,weakening,medium,50.0,90.9,50.0,58.8,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,0.3,-0.3,-20.0,Technology,standard_compounder
-SYK,2026-08-28,40.5,review,medium,50.0,17.6,50.0,55.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,1.3,-3.8,3.2,Health Care,mature_compounder
-T,2026-08-28,43.0,review,medium,50.0,24.1,50.0,58.8,47.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,0.0,4.5,-7.0,Communication Services,mature_compounder
-TEAM,2026-08-28,57.6,weakening,medium,50.0,96.0,50.0,58.8,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,0.2,2.3,1.9,Technology,standard_compounder
-TGT,2026-08-28,58.8,weakening,medium,50.0,85.8,50.0,58.8,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,0.2,1.7,16.5,Consumer Discretionary,standard_compounder
-TJX,2026-08-28,39.2,review,medium,50.0,7.5,50.0,58.8,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,0.2,-6.9,-8.6,Consumer Discretionary,mature_compounder
-TMO,2026-08-28,55.4,weakening,medium,50.0,77.1,50.0,55.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,0.5,-0.4,20.1,Health Care,standard_compounder
-TMUS,2026-08-28,39.4,review,medium,50.0,9.6,50.0,58.8,47.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,-1.4,1.0,-18.5,Communication Services,standard_compounder
-TRV,2026-08-28,61.0,monitor,medium,50.0,80.2,50.0,58.8,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.4,0.5,-2.4,10.5,Financials,mature_compounder
-TSLA,2026-08-28,39.6,review,medium,50.0,9.1,50.0,41.2,49.3,thesis_integrity,sec_unavailable;thesis_unavailable,0.9,-2.8,2.8,8.2,Consumer Discretionary,standard_compounder
-TT,2026-08-28,42.0,review,medium,50.0,17.1,50.0,50.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-1.4,0.7,-4.7,-8.8,Industrials,standard_compounder
-TTD,2026-08-28,33.2,review,medium,50.0,-3.0,50.0,41.2,47.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,0.0,-4.1,-16.2,Communication Services,standard_compounder
-TTWO,2026-08-28,49.2,review,medium,50.0,48.8,50.0,58.8,47.9,thesis_integrity,sec_unavailable;thesis_unavailable,-1.4,-4.7,-5.8,-0.5,Communication Services,standard_compounder
-TXN,2026-08-28,53.1,weakening,medium,50.0,66.1,50.0,58.8,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.1,-2.3,-5.6,-8.7,Technology,mature_compounder
-UBER,2026-08-28,43.8,review,medium,50.0,23.9,50.0,58.8,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.8,-4.5,3.9,4.6,Industrials,growth_compounder
-UNH,2026-08-28,55.7,weakening,medium,50.0,78.2,50.0,58.8,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,-0.2,-3.0,-5.6,Health Care,standard_compounder
-UNP,2026-08-28,57.2,weakening,medium,50.0,77.8,50.0,55.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,0.3,-0.1,8.4,Industrials,standard_compounder
-UPS,2026-08-28,47.0,review,medium,50.0,36.9,50.0,55.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.3,1.5,-3.0,11.1,Industrials,standard_compounder
-USB,2026-08-28,55.0,weakening,medium,50.0,55.9,50.0,55.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,-0.4,-6.6,14.4,Financials,standard_compounder
-V,2026-08-28,60.1,monitor,medium,50.0,76.4,50.0,50.0,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.4,0.6,-0.9,-4.1,Financials,mature_compounder
-VLO,2026-08-28,59.9,weakening,medium,50.0,90.9,50.0,58.8,48.8,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,0.2,2.4,0.4,Energy,standard_compounder
-VRSK,2026-08-28,49.4,review,medium,50.0,46.5,50.0,50.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.8,-1.1,2.4,7.9,Industrials,standard_compounder
-VRTX,2026-08-28,57.3,weakening,medium,50.0,84.6,50.0,50.0,44.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.4,0.8,11.7,3.6,Health Care,standard_compounder
-VZ,2026-08-28,49.8,review,medium,50.0,51.2,50.0,50.0,47.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,-0.4,8.1,-2.2,Communication Services,mature_compounder
-WBD,2026-08-28,47.3,review,medium,50.0,41.3,50.0,58.8,47.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.7,1.6,8.2,20.9,Communication Services,standard_compounder
-WDAY,2026-08-28,57.0,weakening,medium,50.0,93.5,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,-0.4,2.8,17.2,Technology,standard_compounder
-WDC,2026-08-28,52.2,weakening,medium,50.0,81.1,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,0.2,-1.6,-22.6,Technology,recovery_stabilization
-WELL,2026-08-28,52.8,weakening,medium,50.0,70.6,50.0,41.2,40.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,2.2,1.2,-19.6,Real Estate,standard_compounder
-WFC,2026-08-28,51.2,weakening,medium,50.0,40.9,50.0,58.8,64.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,1.2,-2.7,21.3,Financials,mature_compounder
-WM,2026-08-28,44.0,review,medium,50.0,24.8,50.0,50.0,51.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.8,0.5,-1.1,-10.7,Industrials,mature_compounder
-WMB,2026-08-28,47.6,review,medium,50.0,41.8,50.0,50.0,48.8,thesis_integrity,sec_unavailable;thesis_unavailable,0.3,5.3,6.3,-26.1,Energy,standard_compounder
-WMT,2026-08-28,36.9,review,medium,50.0,1.2,50.0,55.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,0.0,-2.7,-1.6,Consumer Staples,mature_compounder
-XEL,2026-08-28,40.8,review,medium,50.0,23.4,50.0,58.8,39.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,1.9,0.0,-8.8,Utilities,standard_compounder
-XOM,2026-08-28,49.5,review,medium,50.0,49.3,50.0,58.8,48.8,thesis_integrity,sec_unavailable;thesis_unavailable,-1.0,-2.0,6.0,7.9,Energy,standard_compounder
-ZS,2026-08-28,58.4,weakening,medium,50.0,87.1,50.0,55.0,46.4,thesis_integrity,sec_unavailable;thesis_unavailable,1.2,-0.1,17.2,30.2,Technology,growth_compounder
+AAPL,2026-08-29,57.3,weakening,medium,59.5,72.9,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.9,-0.3,-2.6,-2.2,Technology,mature_compounder
+ABBV,2026-08-29,53.8,weakening,medium,38.0,82.3,50.0,50.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-1.1,-0.3,-0.4,3.1,Health Care,mature_compounder
+ABNB,2026-08-29,59.1,weakening,medium,48.7,87.9,50.0,55.0,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,-0.2,10.4,7.1,Consumer Discretionary,standard_compounder
+ABT,2026-08-29,54.5,weakening,medium,38.8,87.1,50.0,50.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,1.4,3.2,10.8,10.5,Health Care,standard_compounder
+ACN,2026-08-29,38.9,review,medium,35.4,27.0,50.0,50.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.8,1.5,7.5,0.2,Technology,standard_compounder
+ADBE,2026-08-29,53.8,weakening,medium,50.0,68.3,50.0,50.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,0.4,12.3,3.9,Technology,mature_compounder
+ADI,2026-08-29,38.1,review,medium,39.6,18.7,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-1.9,-5.6,-10.7,-31.1,Technology,standard_compounder
+ADP,2026-08-29,61.9,monitor,medium,54.2,91.5,50.0,50.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,0.3,7.4,15.2,Industrials,mature_compounder
+ADSK,2026-08-29,45.0,review,medium,38.4,47.4,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-3.3,-2.1,8.4,-9.9,Technology,standard_compounder
+AEP,2026-08-29,38.6,review,medium,47.7,17.7,50.0,45.0,39.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,3.4,-1.2,-15.4,Utilities,standard_compounder
+AMAT,2026-08-29,47.9,review,medium,36.7,67.2,50.0,55.0,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,-3.2,-4.0,-4.4,-11.9,Technology,mature_compounder
+AMD,2026-08-29,61.9,monitor,medium,64.6,92.0,50.0,55.0,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,-0.3,0.9,-6.2,Technology,growth_compounder
+AMGN,2026-08-29,52.5,weakening,medium,37.1,81.4,50.0,58.8,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,-0.7,5.7,3.1,Health Care,standard_compounder
+AMT,2026-08-29,41.1,review,medium,37.5,39.0,50.0,58.8,41.1,thesis_integrity,sec_unavailable;thesis_unavailable,2.7,0.6,0.8,-18.5,Real Estate,standard_compounder
+AMZN,2026-08-29,51.8,weakening,medium,60.4,46.8,50.0,58.8,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,1.5,2.7,0.0,-17.1,Consumer Discretionary,mature_compounder
+ANET,2026-08-29,49.2,review,medium,50.0,50.0,50.0,58.8,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-6.9,-7.3,-8.3,-17.0,Technology,growth_compounder
+APH,2026-08-29,48.2,review,medium,50.0,46.0,50.0,58.8,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.7,1.6,-7.2,-13.4,Technology,standard_compounder
+ARM,2026-08-29,50.3,weakening,medium,36.3,83.4,50.0,58.8,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.9,-1.0,-6.1,-2.6,Technology,growth_compounder
+ASML,2026-08-29,48.9,review,medium,35.0,67.4,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-1.7,-1.4,-11.7,-18.7,Technology,standard_compounder
+AVGO,2026-08-29,39.9,review,medium,50.0,10.2,50.0,50.0,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,-1.1,-15.8,-37.7,Technology,mature_compounder
+AXP,2026-08-29,45.4,review,medium,40.1,26.6,50.0,50.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.9,0.2,-11.9,-7.8,Financials,mature_compounder
+AZN,2026-08-29,32.2,review,medium,35.8,2.0,50.0,55.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-0.1,-3.5,-9.8,-26.3,Health Care,standard_compounder
+BA,2026-08-29,45.9,review,medium,50.0,26.3,50.0,41.2,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,1.1,1.2,-5.3,-9.6,Industrials,recovery_stabilization
+BAC,2026-08-29,58.2,weakening,medium,51.5,66.5,50.0,55.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.4,0.5,-5.9,7.1,Financials,mature_compounder
+BIIB,2026-08-29,55.2,weakening,medium,54.2,70.9,50.0,58.8,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-2.0,-2.4,4.3,5.4,Health Care,standard_compounder
+BKNG,2026-08-29,49.1,review,medium,48.1,48.8,50.0,55.0,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.6,-6.0,-0.2,0.2,Consumer Discretionary,standard_compounder
+BKR,2026-08-29,44.1,review,medium,40.9,38.3,50.0,58.8,49.6,thesis_integrity,sec_unavailable;thesis_unavailable,-2.4,-1.7,-4.2,-8.6,Energy,standard_compounder
+BLK,2026-08-29,56.6,weakening,medium,53.2,57.7,50.0,55.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,3.4,-1.0,-1.2,Financials,standard_compounder
+BMY,2026-08-29,51.7,weakening,medium,49.8,62.4,50.0,58.8,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-2.0,-3.6,-2.4,7.3,Health Care,standard_compounder
+BRK.B,2026-08-29,52.8,weakening,medium,48.7,47.4,50.0,58.8,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,4.1,2.3,11.0,Financials,mature_compounder
+BSX,2026-08-29,50.7,weakening,medium,50.0,58.0,50.0,55.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,12.0,12.0,12.8,0.1,Health Care,standard_compounder
+BX,2026-08-29,53.0,weakening,medium,50.0,47.0,50.0,58.8,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,-3.8,-4.5,-4.0,0.0,Financials,financial
+C,2026-08-29,46.2,review,medium,40.5,29.5,50.0,58.8,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.8,-0.3,-12.0,-10.5,Financials,mature_compounder
+CAT,2026-08-29,43.7,review,medium,46.0,27.9,50.0,58.8,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,-1.9,-3.5,-9.3,-9.9,Industrials,standard_compounder
+CB,2026-08-29,53.0,weakening,medium,50.0,47.0,50.0,55.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,2.8,1.6,0.8,0.0,Financials,financial
+CCEP,2026-08-29,50.4,weakening,medium,42.2,65.2,50.0,41.2,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,0.2,-1.4,-4.4,5.5,Consumer Staples,standard_compounder
+CDNS,2026-08-29,44.2,review,medium,41.5,40.4,50.0,50.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-4.0,-2.5,-7.4,-21.7,Technology,standard_compounder
+CDW,2026-08-29,46.1,review,medium,42.6,46.8,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-4.4,-2.2,-9.5,0.9,Technology,standard_compounder
+CEG,2026-08-29,45.4,review,medium,58.7,31.2,50.0,58.8,39.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.5,6.2,7.6,-16.6,Utilities,standard_compounder
+CHTR,2026-08-29,40.6,review,medium,52.7,10.7,50.0,55.0,48.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.1,4.5,1.4,8.8,Communication Services,standard_compounder
+CI,2026-08-29,47.9,review,medium,50.0,47.0,50.0,50.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,4.9,4.5,1.7,-1.0,Health Care,mature_compounder
+CL,2026-08-29,48.5,review,medium,43.5,55.9,50.0,55.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,2.0,2.4,1.2,Consumer Staples,standard_compounder
+CMCSA,2026-08-29,43.5,review,medium,56.1,17.9,50.0,55.0,48.4,thesis_integrity,sec_unavailable;thesis_unavailable,1.9,5.5,5.8,4.1,Communication Services,standard_compounder
+CME,2026-08-29,52.7,weakening,medium,50.0,46.0,50.0,50.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,6.1,9.1,9.2,0.0,Financials,financial
+CMI,2026-08-29,49.8,review,medium,50.0,47.0,50.0,45.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,9.4,8.8,-3.2,8.1,Industrials,standard_compounder
+COF,2026-08-29,55.3,weakening,medium,56.5,48.2,50.0,58.8,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.1,3.6,-2.2,-2.0,Financials,standard_compounder
+COP,2026-08-29,52.3,weakening,medium,57.8,49.9,50.0,58.8,49.6,thesis_integrity,sec_unavailable;thesis_unavailable,-2.7,0.8,11.8,-9.3,Energy,standard_compounder
+COST,2026-08-29,38.9,review,medium,44.1,15.4,50.0,50.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,-1.0,-2.0,-11.2,Consumer Staples,mature_compounder
+CRM,2026-08-29,57.5,weakening,medium,50.0,95.1,50.0,58.8,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.2,-0.4,17.0,5.0,Technology,mature_compounder
+CRWD,2026-08-29,60.5,monitor,medium,63.7,93.2,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,-0.9,1.6,-4.1,Technology,mature_compounder
+CSCO,2026-08-29,60.1,monitor,medium,62.0,81.6,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-1.8,-1.4,0.8,0.1,Technology,mature_compounder
+CSGP,2026-08-29,38.2,review,medium,41.5,11.3,50.0,58.8,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,-3.1,-1.1,-13.2,Industrials,standard_compounder
+CSX,2026-08-29,52.2,weakening,medium,50.0,57.0,50.0,55.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,-6.1,-6.9,-9.1,1.9,Industrials,mature_compounder
+CTAS,2026-08-29,56.6,weakening,medium,59.1,63.0,50.0,50.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.8,2.5,5.5,11.8,Industrials,standard_compounder
+CTSH,2026-08-29,47.5,review,medium,46.4,47.5,50.0,50.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-1.4,-0.1,12.2,8.2,Technology,standard_compounder
+CVS,2026-08-29,59.3,weakening,medium,61.6,76.4,50.0,58.8,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,-1.4,2.7,0.4,-0.6,Consumer Staples,standard_compounder
+CVX,2026-08-29,53.2,weakening,medium,58.2,53.0,50.0,55.0,49.6,thesis_integrity,sec_unavailable;thesis_unavailable,-1.3,-1.1,11.7,-0.1,Energy,standard_compounder
+DASH,2026-08-29,58.7,weakening,medium,55.3,78.1,50.0,50.0,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,1.1,0.9,4.0,16.2,Consumer Discretionary,growth_compounder
+DDOG,2026-08-29,58.9,weakening,medium,55.7,93.5,50.0,58.8,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,1.1,-1.3,-8.9,Technology,growth_compounder
+DE,2026-08-29,48.1,review,medium,44.7,46.9,50.0,55.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.8,-1.0,1.6,1.6,Industrials,standard_compounder
+DHR,2026-08-29,51.6,weakening,medium,57.4,52.4,50.0,55.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-0.8,7.2,8.8,8.2,Health Care,standard_compounder
+DIS,2026-08-29,47.0,review,medium,50.0,39.7,50.0,58.8,48.4,thesis_integrity,sec_unavailable;thesis_unavailable,1.1,-1.1,5.6,3.4,Communication Services,mature_compounder
+DUK,2026-08-29,43.0,review,medium,59.9,20.1,50.0,55.0,39.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,2.8,3.0,-20.4,Utilities,standard_compounder
+DXCM,2026-08-29,59.8,weakening,medium,50.6,93.6,50.0,58.8,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,0.4,-0.9,11.9,-4.3,Health Care,standard_compounder
+ECL,2026-08-29,51.3,weakening,medium,50.0,55.0,50.0,50.0,50.2,thesis_integrity,sec_unavailable;thesis_unavailable,2.2,3.8,1.8,14.0,Materials,mature_compounder
+ELV,2026-08-29,47.2,review,medium,50.0,44.0,50.0,58.8,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-8.7,-8.9,-8.5,-10.3,Health Care,mature_compounder
+EMR,2026-08-29,52.0,weakening,medium,57.0,47.1,50.0,50.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.8,4.3,0.5,6.7,Industrials,standard_compounder
+EOG,2026-08-29,48.9,review,medium,50.0,46.0,50.0,50.0,49.6,thesis_integrity,sec_unavailable;thesis_unavailable,-3.3,-4.7,2.8,-5.3,Energy,standard_compounder
+EQIX,2026-08-29,47.0,review,medium,50.0,47.0,50.0,55.0,41.1,thesis_integrity,sec_unavailable;thesis_unavailable,5.7,5.5,2.9,-11.2,Real Estate,standard_compounder
+ETN,2026-08-29,49.8,review,medium,50.0,47.0,50.0,50.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,3.1,2.3,3.0,-16.3,Industrials,standard_compounder
+EXC,2026-08-29,43.8,review,medium,60.8,22.0,50.0,45.0,39.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,5.5,3.6,-6.0,Utilities,standard_compounder
+F,2026-08-29,55.2,weakening,medium,61.2,56.7,50.0,58.8,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,-1.2,-2.5,-3.0,5.2,Consumer Discretionary,standard_compounder
+FANG,2026-08-29,45.8,review,medium,47.3,37.1,50.0,55.0,49.6,thesis_integrity,sec_unavailable;thesis_unavailable,-5.0,-8.8,0.6,-26.7,Energy,standard_compounder
+FAST,2026-08-29,50.3,weakening,medium,45.1,55.3,50.0,50.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,-3.0,-3.7,3.2,-3.9,Industrials,standard_compounder
+FCX,2026-08-29,50.0,weakening,medium,50.0,50.0,50.0,58.8,50.2,thesis_integrity,sec_unavailable;thesis_unavailable,-3.1,-2.5,-5.9,8.4,Materials,standard_compounder
+FDX,2026-08-29,49.8,review,medium,50.0,47.0,50.0,55.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,1.9,0.0,3.8,1.4,Industrials,mature_compounder
+FTNT,2026-08-29,60.4,monitor,medium,46.8,97.9,50.0,58.8,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,-2.5,0.2,-9.6,Technology,mature_compounder
+GD,2026-08-29,52.8,weakening,medium,45.6,64.8,50.0,55.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,-1.3,1.8,4.3,1.4,Industrials,standard_compounder
+GE,2026-08-29,60.8,monitor,medium,63.3,74.5,50.0,55.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,6.7,5.5,4.4,-1.8,Industrials,recovery_rerating
+GEHC,2026-08-29,43.6,review,medium,44.1,37.1,50.0,55.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-1.0,-2.2,-1.2,5.1,Health Care,standard_compounder
+GEV,2026-08-29,49.5,review,medium,50.0,46.0,50.0,41.2,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,7.1,7.9,1.7,5.7,Industrials,growth_compounder
+GFS,2026-08-29,39.5,review,medium,54.9,4.8,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,1.5,-4.0,-8.8,-17.7,Technology,standard_compounder
+GILD,2026-08-29,53.5,weakening,medium,64.2,51.6,50.0,55.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,3.6,3.0,13.8,6.4,Health Care,standard_compounder
+GLW,2026-08-29,48.2,review,medium,50.0,46.0,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,11.8,14.1,6.0,-17.5,Technology,standard_compounder
+GM,2026-08-29,51.2,weakening,medium,53.6,50.2,50.0,58.8,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,1.7,1.8,-2.4,14.7,Consumer Discretionary,standard_compounder
+GOOG,2026-08-29,49.2,review,medium,62.7,34.6,50.0,58.8,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,4.7,0.6,0.6,-22.0,Communication Services,mature_compounder
+GOOGL,2026-08-29,49.5,review,medium,62.7,36.0,50.0,58.8,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,4.4,0.8,1.7,-22.3,Communication Services,mature_compounder
+GS,2026-08-29,55.9,weakening,medium,52.3,56.3,50.0,58.8,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.6,-0.9,-5.8,0.4,Financials,mature_compounder
+HCA,2026-08-29,48.7,review,medium,50.0,50.0,50.0,50.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,10.0,11.2,11.7,11.6,Health Care,mature_compounder
+HD,2026-08-29,43.5,review,medium,50.6,23.4,50.0,55.0,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,1.6,-1.7,-1.7,11.2,Consumer Discretionary,mature_compounder
+HLT,2026-08-29,50.0,weakening,medium,50.0,50.0,50.0,50.0,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,7.8,7.3,2.4,-7.7,Consumer Discretionary,standard_compounder
+HON,2026-08-29,42.8,review,medium,51.9,17.0,50.0,55.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,1.4,4.7,-3.4,-12.0,Industrials,standard_compounder
+HWM,2026-08-29,49.8,review,medium,50.0,47.0,50.0,55.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,2.0,1.9,-3.9,-1.5,Industrials,growth_compounder
+IBM,2026-08-29,39.7,review,medium,49.4,12.6,50.0,50.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-1.4,3.8,4.5,-11.3,Technology,mature_compounder
+ICE,2026-08-29,53.0,weakening,medium,50.0,47.0,50.0,55.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,4.6,5.5,5.5,0.0,Financials,financial
+IDXX,2026-08-29,42.6,review,medium,50.6,24.8,50.0,55.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,2.3,2.7,2.0,-2.7,Health Care,standard_compounder
+ILMN,2026-08-29,63.7,monitor,medium,65.0,91.3,50.0,55.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,4.1,0.3,4.8,18.1,Health Care,standard_compounder
+INTC,2026-08-29,53.1,weakening,medium,50.0,85.7,50.0,58.8,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,-1.5,-1.4,9.7,Technology,recovery_stabilization
+INTU,2026-08-29,40.5,review,medium,50.0,15.1,50.0,58.8,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.8,-7.1,3.3,-10.5,Technology,mature_compounder
+ISRG,2026-08-29,37.0,review,medium,50.0,3.5,50.0,58.8,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,2.2,0.5,-18.2,Health Care,mature_compounder
+ITW,2026-08-29,50.5,weakening,medium,50.0,50.0,50.0,50.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,2.3,3.0,1.0,9.2,Industrials,mature_compounder
+JCI,2026-08-29,49.8,review,medium,50.0,47.0,50.0,55.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,4.0,5.6,1.3,3.6,Industrials,standard_compounder
+JNJ,2026-08-29,55.0,weakening,medium,50.0,75.2,50.0,50.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,0.6,3.5,8.2,10.5,Health Care,mature_compounder
+JPM,2026-08-29,56.6,weakening,medium,50.0,61.5,50.0,55.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.5,0.1,-3.9,14.1,Financials,mature_compounder
+KDP,2026-08-29,56.8,weakening,medium,50.0,80.9,50.0,55.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,0.4,-0.1,3.1,6.4,Consumer Staples,standard_compounder
+KHC,2026-08-29,56.2,weakening,medium,50.0,78.8,50.0,55.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,1.0,-2.6,-0.5,20.1,Consumer Staples,standard_compounder
+KKR,2026-08-29,53.7,weakening,medium,50.0,50.0,50.0,58.8,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,1.1,-0.1,-1.5,0.0,Financials,financial
+KLAC,2026-08-29,43.2,review,medium,50.0,23.2,50.0,55.0,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,-2.6,-2.6,-7.2,-14.8,Technology,growth_compounder
+KMI,2026-08-29,49.9,review,medium,50.0,50.0,50.0,58.8,49.6,thesis_integrity,sec_unavailable;thesis_unavailable,4.9,6.0,7.3,-18.7,Energy,standard_compounder
+KO,2026-08-29,55.1,weakening,medium,50.0,74.3,50.0,55.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,0.4,-2.7,3.1,12.1,Consumer Staples,mature_compounder
+LCID,2026-08-29,36.1,review,medium,50.0,6.4,50.0,41.2,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,2.9,0.0,1.3,Consumer Discretionary,pre_profit_growth
+LIN,2026-08-29,43.9,review,medium,50.0,25.4,50.0,50.0,50.2,thesis_integrity,sec_unavailable;thesis_unavailable,1.0,4.8,-1.3,-5.3,Materials,standard_compounder
+LLY,2026-08-29,57.0,weakening,medium,50.0,83.5,50.0,58.8,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-0.1,-0.2,1.0,4.2,Health Care,growth_compounder
+LMT,2026-08-29,44.9,review,medium,50.0,27.7,50.0,58.8,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.6,4.4,4.8,5.4,Industrials,standard_compounder
+LOW,2026-08-29,39.3,review,medium,50.0,7.1,50.0,55.0,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.6,0.4,-0.9,4.4,Consumer Discretionary,standard_compounder
+LRCX,2026-08-29,49.9,review,medium,50.0,62.1,50.0,55.0,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,-2.6,0.7,-4.0,-6.4,Technology,growth_compounder
+LULU,2026-08-29,39.0,review,medium,50.0,6.1,50.0,50.0,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.3,0.5,1.1,3.2,Consumer Discretionary,standard_compounder
+MA,2026-08-29,57.1,weakening,medium,50.0,63.7,50.0,55.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,0.8,0.2,-3.0,Financials,mature_compounder
+MAR,2026-08-29,40.1,review,medium,50.0,10.3,50.0,55.0,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,-0.6,-10.5,-12.8,Consumer Discretionary,standard_compounder
+MCD,2026-08-29,40.2,review,medium,50.0,10.6,50.0,50.0,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.8,1.0,1.4,1.8,Consumer Discretionary,mature_compounder
+MCHP,2026-08-29,39.4,review,medium,50.0,10.5,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-1.2,-1.6,-12.8,-18.2,Technology,standard_compounder
+MCK,2026-08-29,47.9,review,medium,50.0,47.0,50.0,55.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,2.2,6.1,7.7,1.3,Health Care,mature_compounder
+MCO,2026-08-29,53.7,weakening,medium,50.0,50.0,50.0,58.8,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,-2.7,-4.4,-0.5,0.0,Financials,financial
+MDB,2026-08-29,60.6,monitor,medium,50.0,95.7,50.0,58.8,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,3.0,0.0,5.2,29.6,Technology,growth_compounder
+MDLZ,2026-08-29,50.7,weakening,medium,50.0,56.6,50.0,55.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,0.7,-0.1,1.9,2.1,Consumer Staples,standard_compounder
+MDT,2026-08-29,51.4,weakening,medium,50.0,61.0,50.0,50.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,2.6,3.8,8.3,18.5,Health Care,standard_compounder
+MELI,2026-08-29,49.9,review,medium,50.0,49.7,50.0,55.0,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,1.1,1.4,-1.9,-6.4,Consumer Discretionary,growth_compounder
+MET,2026-08-29,61.4,monitor,medium,50.0,80.7,50.0,55.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,-0.4,-3.4,-1.0,Financials,standard_compounder
+META,2026-08-29,39.5,review,medium,50.0,8.5,50.0,41.2,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,0.3,1.2,0.0,-29.2,Communication Services,mature_compounder
+MMM,2026-08-29,56.2,weakening,medium,50.0,73.0,50.0,55.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,0.2,-0.8,14.3,Industrials,mature_compounder
+MNST,2026-08-29,32.5,review,medium,50.0,-4.0,50.0,50.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,-0.1,-25.1,-27.6,Consumer Staples,standard_compounder
+MO,2026-08-29,48.2,review,medium,50.0,46.6,50.0,50.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,4.5,2.3,7.6,Consumer Staples,standard_compounder
+MPC,2026-08-29,49.1,review,medium,50.0,47.0,50.0,58.8,49.6,thesis_integrity,sec_unavailable;thesis_unavailable,-11.4,-11.1,-10.8,1.5,Energy,standard_compounder
+MPWR,2026-08-29,48.2,review,medium,50.0,46.0,50.0,58.8,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,9.9,8.3,-5.6,-13.5,Technology,growth_compounder
+MRK,2026-08-29,58.0,weakening,medium,50.0,87.2,50.0,58.8,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-0.2,0.5,8.7,19.6,Health Care,mature_compounder
+MRVL,2026-08-29,56.0,weakening,medium,50.0,89.2,50.0,50.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.7,-0.7,-1.1,-17.9,Technology,growth_compounder
+MS,2026-08-29,56.4,weakening,medium,50.0,60.8,50.0,58.8,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,-3.0,-7.1,-2.4,Financials,mature_compounder
+MSFT,2026-08-29,55.9,weakening,medium,50.0,74.0,50.0,58.8,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,-0.7,4.1,-2.3,Technology,mature_compounder
+MU,2026-08-29,58.3,weakening,medium,50.0,95.6,50.0,58.8,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,0.3,0.3,0.7,-21.6,Technology,growth_compounder
+NEE,2026-08-29,38.1,review,medium,50.0,12.8,50.0,55.0,39.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.3,0.8,-1.7,-5.1,Utilities,standard_compounder
+NEM,2026-08-29,49.3,review,medium,50.0,47.0,50.0,55.0,50.2,thesis_integrity,sec_unavailable;thesis_unavailable,-5.3,-1.2,5.9,-14.9,Materials,standard_compounder
+NFLX,2026-08-29,38.6,review,medium,50.0,5.9,50.0,50.0,48.4,thesis_integrity,sec_unavailable;thesis_unavailable,0.9,2.3,2.1,-19.8,Communication Services,standard_compounder
+NKE,2026-08-29,39.5,review,medium,50.0,7.8,50.0,58.8,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.5,-0.5,1.8,20.4,Consumer Discretionary,standard_compounder
+NOC,2026-08-29,50.5,weakening,medium,50.0,50.0,50.0,58.8,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,11.2,11.9,12.3,13.3,Industrials,mature_compounder
+NOW,2026-08-29,56.2,weakening,medium,50.0,89.9,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.7,-2.3,14.6,-3.1,Technology,mature_compounder
+NSC,2026-08-29,50.5,weakening,medium,50.0,50.0,50.0,55.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,-5.0,-5.7,-3.6,4.8,Industrials,mature_compounder
+NVDA,2026-08-29,49.2,review,medium,50.0,47.5,50.0,55.0,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,-3.0,0.5,0.6,-27.9,Technology,growth_compounder
+NXPI,2026-08-29,44.4,review,medium,50.0,30.5,50.0,50.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-1.7,-4.1,-12.8,-0.7,Technology,standard_compounder
+ODFL,2026-08-29,40.1,review,medium,50.0,8.3,50.0,55.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.3,-2.2,-11.1,-16.4,Industrials,standard_compounder
+ON,2026-08-29,36.6,review,medium,50.0,-0.3,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.9,-6.9,-18.0,-11.4,Technology,standard_compounder
+ORCL,2026-08-29,39.0,review,medium,50.0,6.4,50.0,55.0,49.5,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,2.6,0.1,-21.0,Technology,mature_compounder
+ORLY,2026-08-29,41.3,review,medium,50.0,15.1,50.0,50.0,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.3,1.6,-0.6,-1.4,Consumer Discretionary,standard_compounder
+PANW,2026-08-29,63.3,monitor,medium,50.0,106.3,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,0.3,1.2,-9.9,Technology,mature_compounder
+PAYX,2026-08-29,60.0,monitor,medium,50.0,87.8,50.0,50.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,0.5,2.5,12.7,Industrials,standard_compounder
+PCAR,2026-08-29,45.4,review,medium,50.0,29.8,50.0,55.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.3,-3.1,-9.3,14.0,Industrials,standard_compounder
+PDD,2026-08-29,39.1,review,medium,50.0,6.2,50.0,55.0,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,1.3,1.2,0.8,-15.6,Consumer Discretionary,standard_compounder
+PEP,2026-08-29,40.3,review,medium,50.0,14.9,50.0,50.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,0.8,0.6,0.4,10.7,Consumer Staples,mature_compounder
+PFE,2026-08-29,47.0,review,medium,50.0,43.3,50.0,58.8,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,-0.7,6.8,12.9,Health Care,mature_compounder
+PG,2026-08-29,45.6,review,medium,50.0,36.2,50.0,50.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,1.4,1.7,2.0,11.0,Consumer Staples,mature_compounder
+PGR,2026-08-29,53.0,weakening,medium,50.0,47.0,50.0,50.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,-2.5,3.3,0.0,Financials,financial
+PH,2026-08-29,50.5,weakening,medium,50.0,50.0,50.0,58.8,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,3.6,5.2,3.3,17.2,Industrials,mature_compounder
+PLD,2026-08-29,47.8,review,medium,50.0,50.0,50.0,58.8,41.1,thesis_integrity,sec_unavailable;thesis_unavailable,5.5,4.3,0.0,-10.0,Real Estate,standard_compounder
+PM,2026-08-29,57.3,weakening,medium,50.0,83.0,50.0,55.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,0.5,2.1,4.9,10.2,Consumer Staples,standard_compounder
+PNC,2026-08-29,53.0,weakening,medium,50.0,47.0,50.0,55.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.7,-2.0,-8.2,0.0,Financials,financial
+PSX,2026-08-29,48.9,review,medium,50.0,46.0,50.0,58.8,49.6,thesis_integrity,sec_unavailable;thesis_unavailable,-10.9,-10.8,-5.6,7.1,Energy,standard_compounder
+PWR,2026-08-29,49.5,review,medium,50.0,46.0,50.0,58.8,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,5.9,3.9,0.1,-15.0,Industrials,growth_compounder
+PYPL,2026-08-29,51.9,weakening,medium,50.0,42.6,50.0,55.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,-8.2,-11.3,-12.5,13.9,Financials,mature_compounder
+QCOM,2026-08-29,56.4,weakening,medium,50.0,78.7,50.0,50.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.4,0.5,4.9,-4.4,Technology,mature_compounder
+REGN,2026-08-29,47.7,review,medium,50.0,46.1,50.0,58.8,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-1.8,-2.5,4.7,16.7,Health Care,standard_compounder
+ROP,2026-08-29,55.9,weakening,medium,50.0,71.6,50.0,50.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,-0.5,0.6,7.1,1.9,Industrials,standard_compounder
+ROST,2026-08-29,44.8,review,medium,50.0,29.3,50.0,58.8,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.0,-3.0,-7.6,-13.4,Consumer Discretionary,standard_compounder
+RTX,2026-08-29,53.8,weakening,medium,50.0,63.1,50.0,58.8,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,2.1,6.5,6.4,7.6,Industrials,standard_compounder
+SBUX,2026-08-29,51.6,weakening,medium,50.0,56.2,50.0,58.8,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.6,1.6,1.7,7.7,Consumer Discretionary,standard_compounder
+SCHW,2026-08-29,59.6,weakening,medium,50.0,73.6,50.0,55.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,1.0,2.6,6.6,0.4,Financials,standard_compounder
+SHW,2026-08-29,46.3,review,medium,50.0,34.9,50.0,55.0,50.2,thesis_integrity,sec_unavailable;thesis_unavailable,1.0,-0.6,-3.8,15.8,Materials,standard_compounder
+SLB,2026-08-29,49.1,review,medium,50.0,47.0,50.0,55.0,49.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.6,1.6,3.1,4.5,Energy,standard_compounder
+SMCI,2026-08-29,55.2,weakening,medium,50.0,85.8,50.0,58.8,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-0.7,-0.4,-0.6,-4.8,Technology,growth_compounder
+SNPS,2026-08-29,41.9,review,medium,50.0,20.6,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-3.0,1.9,3.4,-1.8,Technology,standard_compounder
+SO,2026-08-29,40.5,review,medium,50.0,22.5,50.0,58.8,39.6,thesis_integrity,sec_unavailable;thesis_unavailable,0.4,3.1,-0.6,-15.6,Utilities,standard_compounder
+SPG,2026-08-29,48.3,review,medium,50.0,52.0,50.0,58.8,41.1,thesis_integrity,sec_unavailable;thesis_unavailable,0.5,-0.8,-7.7,-5.9,Real Estate,standard_compounder
+STX,2026-08-29,48.2,review,medium,50.0,46.0,50.0,58.8,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-8.1,-7.8,-8.4,-28.1,Technology,standard_compounder
+SYK,2026-08-29,47.9,review,medium,50.0,47.0,50.0,55.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,7.4,8.7,4.5,10.6,Health Care,mature_compounder
+T,2026-08-29,45.1,review,medium,50.0,31.8,50.0,58.8,48.4,thesis_integrity,sec_unavailable;thesis_unavailable,2.1,2.1,7.4,-4.9,Communication Services,mature_compounder
+TEAM,2026-08-29,57.7,weakening,medium,50.0,96.0,50.0,58.8,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,0.1,0.3,3.2,2.0,Technology,standard_compounder
+TGT,2026-08-29,49.3,review,medium,50.0,47.0,50.0,58.8,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,-9.5,-9.3,-7.4,7.0,Consumer Discretionary,standard_compounder
+TJX,2026-08-29,50.0,weakening,medium,50.0,50.0,50.0,58.8,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,10.8,11.0,5.7,1.2,Consumer Discretionary,mature_compounder
+TMO,2026-08-29,48.7,review,medium,50.0,50.0,50.0,55.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-6.7,-6.2,-5.4,13.4,Health Care,standard_compounder
+TMUS,2026-08-29,48.9,review,medium,50.0,47.0,50.0,58.8,48.4,thesis_integrity,sec_unavailable;thesis_unavailable,9.5,8.1,11.6,-9.0,Communication Services,standard_compounder
+TRV,2026-08-29,53.0,weakening,medium,50.0,47.0,50.0,58.8,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,-8.0,-7.5,-9.2,2.5,Financials,mature_compounder
+TSLA,2026-08-29,49.0,review,medium,50.0,46.0,50.0,41.2,50.1,thesis_integrity,sec_unavailable;thesis_unavailable,9.4,6.6,11.8,17.6,Consumer Discretionary,standard_compounder
+TT,2026-08-29,49.8,review,medium,50.0,47.0,50.0,50.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,7.8,8.5,3.7,-1.0,Industrials,standard_compounder
+TTD,2026-08-29,48.9,review,medium,50.0,47.0,50.0,41.2,48.4,thesis_integrity,sec_unavailable;thesis_unavailable,15.7,15.7,12.4,-0.5,Communication Services,standard_compounder
+TTWO,2026-08-29,48.6,review,medium,50.0,46.0,50.0,58.8,48.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.6,-5.3,-5.6,-1.1,Communication Services,standard_compounder
+TXN,2026-08-29,48.2,review,medium,50.0,46.0,50.0,58.8,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-4.9,-7.2,-10.4,-13.6,Technology,mature_compounder
+UBER,2026-08-29,49.0,review,medium,50.0,44.0,50.0,58.8,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,5.2,0.7,9.1,9.8,Industrials,growth_compounder
+UNH,2026-08-29,47.7,review,medium,50.0,46.0,50.0,58.8,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-8.0,-8.2,-10.8,-13.6,Health Care,standard_compounder
+UNP,2026-08-29,49.5,review,medium,50.0,46.0,50.0,55.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,-7.7,-7.4,-5.8,0.7,Industrials,standard_compounder
+UPS,2026-08-29,50.5,weakening,medium,50.0,50.0,50.0,55.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,3.5,5.0,0.8,14.6,Industrials,standard_compounder
+USB,2026-08-29,53.0,weakening,medium,50.0,47.0,50.0,55.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,-2.0,-2.4,-8.1,12.4,Financials,standard_compounder
+V,2026-08-29,52.7,weakening,medium,50.0,46.0,50.0,50.0,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,-7.4,-6.8,-6.8,-11.5,Financials,mature_compounder
+VLO,2026-08-29,49.1,review,medium,50.0,47.0,50.0,58.8,49.6,thesis_integrity,sec_unavailable;thesis_unavailable,-10.8,-10.6,-9.6,-10.4,Energy,standard_compounder
+VRSK,2026-08-29,49.8,review,medium,50.0,47.0,50.0,50.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,0.4,-0.7,7.2,8.3,Industrials,standard_compounder
+VRTX,2026-08-29,48.7,review,medium,50.0,50.0,50.0,50.0,44.7,thesis_integrity,sec_unavailable;thesis_unavailable,-8.6,-7.8,3.6,-5.0,Health Care,standard_compounder
+VZ,2026-08-29,48.9,review,medium,50.0,47.0,50.0,50.0,48.4,thesis_integrity,sec_unavailable;thesis_unavailable,-0.9,-1.3,8.9,-3.1,Communication Services,mature_compounder
+WBD,2026-08-29,48.6,review,medium,50.0,46.0,50.0,58.8,48.4,thesis_integrity,sec_unavailable;thesis_unavailable,1.3,3.0,10.0,22.2,Communication Services,standard_compounder
+WDAY,2026-08-29,49.2,review,medium,50.0,50.0,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-7.8,-8.2,1.2,9.4,Technology,standard_compounder
+WDC,2026-08-29,48.9,review,medium,50.0,47.0,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-3.3,-3.1,-5.1,-25.9,Technology,recovery_stabilization
+WELL,2026-08-29,47.8,review,medium,50.0,50.0,50.0,41.2,41.1,thesis_integrity,sec_unavailable;thesis_unavailable,-5.0,-2.8,-3.7,-24.6,Real Estate,standard_compounder
+WFC,2026-08-29,53.0,weakening,medium,50.0,47.0,50.0,58.8,64.9,thesis_integrity,sec_unavailable;thesis_unavailable,1.8,3.0,-0.2,23.1,Financials,mature_compounder
+WM,2026-08-29,50.5,weakening,medium,50.0,50.0,50.0,50.0,52.0,thesis_integrity,sec_unavailable;thesis_unavailable,6.5,7.0,7.9,-4.2,Industrials,mature_compounder
+WMB,2026-08-29,48.9,review,medium,50.0,46.0,50.0,50.0,49.6,thesis_integrity,sec_unavailable;thesis_unavailable,1.3,6.6,6.6,-24.8,Energy,standard_compounder
+WMT,2026-08-29,48.3,review,medium,50.0,47.0,50.0,55.0,46.2,thesis_integrity,sec_unavailable;thesis_unavailable,11.4,11.4,9.4,9.8,Consumer Staples,mature_compounder
+XEL,2026-08-29,47.4,review,medium,50.0,50.0,50.0,58.8,39.6,thesis_integrity,sec_unavailable;thesis_unavailable,6.6,8.5,5.3,-2.2,Utilities,standard_compounder
+XOM,2026-08-29,49.1,review,medium,50.0,47.0,50.0,58.8,49.6,thesis_integrity,sec_unavailable;thesis_unavailable,-0.4,-2.4,6.3,7.5,Energy,standard_compounder
+ZS,2026-08-29,48.2,review,medium,50.0,46.0,50.0,55.0,46.9,thesis_integrity,sec_unavailable;thesis_unavailable,-10.2,-10.3,8.0,20.0,Technology,growth_compounder
