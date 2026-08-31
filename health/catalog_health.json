@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-08-24T08:57:54+00:00",
+  "checked_at": "2026-08-31T16:06:03+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1938,
-    "gated": 161,
-    "dead": 22,
-    "unreachable": 71
+    "ok": 1939,
+    "gated": 160,
+    "dead": 21,
+    "unreachable": 72
   },
   "dead": [
     {
@@ -69,13 +69,6 @@
       "code": 404,
       "services": [
         "Anaconda.org (conda) API"
-      ]
-    },
-    {
-      "url": "https://www.ebi.ac.uk/jdispatcher/docs/webservices/",
-      "code": 404,
-      "services": [
-        "EMBL-EBI Job Dispatcher (sequence tools)"
       ]
     },
     {
@@ -230,13 +223,6 @@
       ]
     },
     {
-      "url": "https://cartblanche.docking.org/",
-      "code": null,
-      "services": [
-        "ZINC (CartBlanche) API"
-      ]
-    },
-    {
       "url": "https://clinical-information.canada.ca/",
       "code": null,
       "services": [
@@ -259,18 +245,10 @@
       ]
     },
     {
-      "url": "https://data.cdc.gov/",
+      "url": "https://data.ny.gov/Economic-Development/Current-OCM-Licenses/jskf-tt3q",
       "code": null,
       "services": [
-        "CDC NCHS via data.cdc.gov (Socrata SODA API)"
-      ]
-    },
-    {
-      "url": "https://data.cityofnewyork.us/Health/DOHMH-New-York-City-Restaurant-Inspection-Results/43nn-pn8j",
-      "code": null,
-      "services": [
-        "NYC Open Data - DOHMH Restaurant Inspections (Socrata)",
-        "NYC DOHMH Restaurant Inspections (Socrata)"
+        "New York OCM Cannabis Licenses (data.ny.gov/Socrata)"
       ]
     },
     {
@@ -342,6 +320,13 @@
       "code": null,
       "services": [
         "agents.json (Wildcard AI)"
+      ]
+    },
+    {
+      "url": "https://drugs.ncats.io/",
+      "code": null,
+      "services": [
+        "NCATS Inxight Drugs API"
       ]
     },
     {
@@ -483,29 +468,6 @@
       ]
     },
     {
-      "url": "https://ntrs.nasa.gov/citations/20250003355",
-      "code": null,
-      "services": [
-        "NASA NOTAM API (FAA SWIM redistribution, via NASA DIP catalog)",
-        "NASA NOTAM API (SWIM redistribution)"
-      ]
-    },
-    {
-      "url": "https://oqmd.org/",
-      "code": null,
-      "services": [
-        "OQMD (Open Quantum Materials Database)"
-      ]
-    },
-    {
-      "url": "https://oqmd.org/api/",
-      "code": null,
-      "services": [
-        "OQMD (Open Quantum Materials Database) API",
-        "OQMD (Open Quantum Materials Database)"
-      ]
-    },
-    {
       "url": "https://platform.docs.opentargets.org/data-access/graphql-api",
       "code": null,
       "services": [
@@ -534,10 +496,10 @@
       ]
     },
     {
-      "url": "https://roar.eprints.org/",
-      "code": null,
+      "url": "https://remote.universal-robots.com/",
+      "code": 503,
       "services": [
-        "ROAR (Registry of Open Access Repositories)"
+        "Universal Robots API (UR Cloud)"
       ]
     },
     {
@@ -552,6 +514,13 @@
       "code": null,
       "services": [
         "AGNTCY — Open Agentic Schema Framework (OASF)"
+      ]
+    },
+    {
+      "url": "https://scholia.toolforge.org/",
+      "code": 503,
+      "services": [
+        "Scholia"
       ]
     },
     {
@@ -576,6 +545,13 @@
       ]
     },
     {
+      "url": "https://tle.ivanstanojevic.me/api/tle/",
+      "code": null,
+      "services": [
+        "TLE API (tle.ivanstanojevic.me)"
+      ]
+    },
+    {
       "url": "https://trialstreamer.robotreviewer.net/",
       "code": null,
       "services": [
@@ -583,10 +559,10 @@
       ]
     },
     {
-      "url": "https://v6.db.transport.rest/",
-      "code": null,
+      "url": "https://upcdatabase.org/api",
+      "code": 521,
       "services": [
-        "Deutsche Bahn transport.rest (v6.db)"
+        "UPCdatabase.org"
       ]
     },
     {
@@ -601,6 +577,13 @@
       "code": null,
       "services": [
         "Plant.id (Kindwise)"
+      ]
+    },
+    {
+      "url": "https://world.openbeautyfacts.org/data",
+      "code": 500,
+      "services": [
+        "Open Beauty Facts API"
       ]
     },
     {
@@ -632,6 +615,20 @@
       ]
     },
     {
+      "url": "https://www.find-tender.service.gov.uk/Developer/Documentation",
+      "code": 502,
+      "services": [
+        "UK Find a Tender Service API"
+      ]
+    },
+    {
+      "url": "https://www.findstat.org/",
+      "code": 503,
+      "services": [
+        "FindStat (Combinatorial Statistic Finder)"
+      ]
+    },
+    {
       "url": "https://www.mousemine.org/mousemine/",
       "code": null,
       "services": [
@@ -653,10 +650,10 @@
       ]
     },
     {
-      "url": "https://www.scrapindex.com/historic.html",
+      "url": "https://www.thesportsdb.com/free_sports_api",
       "code": null,
       "services": [
-        "ScrapIndex.com (historical scrap commodity prices)"
+        "TheSportsDB"
       ]
     },
     {
