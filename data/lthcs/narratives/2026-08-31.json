@@ -246,8 +246,8 @@
       "ticker": "CCEP",
       "todays_take": "CCEP is showing Weakening at 51.3 (-2.3 over 30 days), supported by Institutional Confidence at 68.7.",
       "why_changed": "Score is at 51.3 (drift over 1d +0.3); no prior snapshot available for component-delta analysis.",
-      "why_not_to_sell": "Structural concerns: Adoption Momentum at 42.4 is well below the universe median, and Demand Environment at 46.2 is not compensating. Position should be reassessed against the original thesis.",
-      "what_would_break": "A sustained drop in Adoption Momentum below 32, or a Structural Review composite move below 50, would force a structural review.",
+      "why_not_to_sell": "Structural concerns: Thesis Integrity at 41.2 is well below the universe median, and Adoption Momentum at 42.4 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Thesis Integrity below 31, or a Structural Review composite move below 50, would force a structural review.",
       "confidence_level": "medium"
     },
     {
