@@ -1,12 +1,12 @@
 {
   "as_of": "2026-08-31",
-  "generated_at": "2026-08-31T19:55:28Z",
+  "generated_at": "2026-08-31T23:42:55Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-08-31",
       "label": null,
-      "note": "40 coins; 11 buy+, 5 sell+",
-      "score": 15,
+      "note": "40 coins; 8 buy+, 8 sell+",
+      "score": 0,
       "stale": false
     },
     "lthcs_composite": {
@@ -18,9 +18,9 @@
     },
     "money_flow_index": {
       "as_of": "2026-08-31",
-      "label": "Neutral",
+      "label": "Outflow",
       "note": null,
-      "score": -18.8,
+      "score": -30.41,
       "stale": false
     },
     "poc_signal_breadth": null,
