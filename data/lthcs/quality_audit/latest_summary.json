@@ -1,53 +1,53 @@
 {
-  "asof": "2026-08-01",
-  "snapshot_date": "2026-07-31",
-  "generated_at_utc": "2026-08-01T10:29:20+00:00",
+  "asof": "2026-09-01",
+  "snapshot_date": "2026-09-01",
+  "generated_at_utc": "2026-09-01T13:51:27+00:00",
   "overall_verdict": "CRITICAL",
   "pillars": {
     "adoption_momentum": {
-      "coverage_pct": 12.0,
+      "coverage_pct": 8.4,
       "mean": 50.0,
-      "stdev": 3.17,
+      "stdev": 2.65,
       "verdict": "STUB",
-      "n": 216
+      "n": 215
     },
     "institutional_confidence": {
       "coverage_pct": 100.0,
-      "mean": 48.5,
-      "stdev": 28.5,
+      "mean": 48.53,
+      "stdev": 28.83,
       "verdict": "HEALTHY",
-      "n": 216
+      "n": 215
     },
     "financial_evolution": {
       "coverage_pct": 0.0,
       "mean": 50.0,
       "stdev": 0.0,
       "verdict": "STUB",
-      "n": 216
+      "n": 215
     },
     "thesis_integrity": {
-      "coverage_pct": 76.9,
-      "mean": 54.14,
-      "stdev": 4.82,
+      "coverage_pct": 78.1,
+      "mean": 54.58,
+      "stdev": 4.34,
       "verdict": "HEALTHY",
-      "n": 216
+      "n": 215
     },
     "des": {
-      "coverage_pct": 97.7,
-      "mean": 48.96,
-      "stdev": 8.49,
+      "coverage_pct": 100.0,
+      "mean": 49.29,
+      "stdev": 7.29,
       "verdict": "HEALTHY",
-      "n": 216
+      "n": 215
     }
   },
   "distribution": {
-    "n": 216,
-    "mean": 49.04,
-    "stdev": 7.63,
+    "n": 215,
+    "mean": 49.13,
+    "stdev": 7.43,
     "elite_count": 0,
     "high_conf_count": 0,
-    "review_count": 111,
-    "review_pct": 51.4,
+    "review_count": 106,
+    "review_pct": 49.3,
     "critical": true
   },
   "weights": {
@@ -61,35 +61,35 @@
       "elite": 0,
       "high_confidence": 0,
       "constructive": 0,
-      "monitor": 15,
-      "weakening": 90,
-      "review": 111
+      "monitor": 12,
+      "weakening": 97,
+      "review": 106
     },
     "starved": [
       "elite",
       "high_confidence"
     ],
-    "review_pct": 51.4
+    "review_pct": 49.3
   },
   "alerts": [],
   "sub_audits": {
     "pillar_quality": {
       "ok": true,
-      "path": "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-08-01_pillar_quality.md",
-      "snapshot_date": "2026-07-31"
+      "path": "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-09-01_pillar_quality.md",
+      "snapshot_date": "2026-09-01"
     },
     "score_distribution": {
       "ok": true,
       "paths": [
-        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-08-01_composite_distribution.md",
-        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-08-01_pillar_correlation.md"
+        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-09-01_composite_distribution.md",
+        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-09-01_pillar_correlation.md"
       ]
     },
     "weights_thresholds": {
       "ok": true,
       "paths": [
-        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-08-01_weights_vs_ic.md",
-        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-08-01_band_distribution.md"
+        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-09-01_weights_vs_ic.md",
+        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-09-01_band_distribution.md"
       ]
     }
   }
