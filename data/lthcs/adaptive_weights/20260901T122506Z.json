@@ -1,0 +1,64 @@
+{
+  "mode": "walk_forward",
+  "result": {
+    "train_weights": {
+      "adoption_momentum": 0.08123446879912558,
+      "institutional_confidence": 0.12528749153183324,
+      "financial_evolution": 0.13015440742407486,
+      "thesis_integrity": 0.25550523038463513,
+      "des": 0.407818401860331
+    },
+    "train_ic": 0.077619088991774,
+    "test_ic": -0.19769644475799206,
+    "overfit_gap": 0.27531553374976603,
+    "train_dates": [
+      "2026-02-17",
+      "2026-06-12"
+    ],
+    "test_dates": [
+      "2026-06-13",
+      "2026-09-01"
+    ],
+    "test_dates_after_ffill_reject": [
+      "2026-06-15",
+      "2026-07-31"
+    ],
+    "n_train_obs": 13232,
+    "n_test_obs": 31,
+    "n_rejected_ffill": 16342,
+    "recommendation": "reject",
+    "recommendation_reason": "test_ic=-0.1977 <= 0.040 — out-of-sample signal too weak; keep curated weights.",
+    "ridge_alpha": 0.5,
+    "ridge_alpha_effective_train": 6616.0,
+    "horizon_days": 21,
+    "train_fraction": 0.6,
+    "prior_weights": [
+      0.2,
+      0.2,
+      0.2,
+      0.2,
+      0.2
+    ],
+    "pillar_sigmas_train": {
+      "adoption_momentum": 24.067959082545926,
+      "institutional_confidence": 29.00764132048628,
+      "financial_evolution": 16.844621456802436,
+      "thesis_integrity": 10.250545467645015,
+      "des": 6.730082868129529
+    },
+    "trained_at": "2026-09-01T12:25:06Z"
+  },
+  "config": {
+    "horizon_days": 21,
+    "ridge_alpha": 0.5,
+    "train_fraction": 0.6,
+    "universe_subset": null,
+    "offline": false
+  },
+  "data_window": {
+    "start": "2026-02-17",
+    "end": "2026-09-01",
+    "n_dates": 184
+  },
+  "n_tickers": 217
+}
