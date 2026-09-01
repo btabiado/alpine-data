@@ -1292,7 +1292,7 @@
     },
     {
       "ticker": "WMT",
-      "todays_take": "WMT requires Structural Review at 36.8 (-1.8 over 30 days), supported by Thesis Integrity at 55.0.",
+      "todays_take": "WMT requires Structural Review at 36.8 (-1.8 over 30 days), supported by Adoption Momentum at 50.0.",
       "why_changed": "Score is at 36.8 (drift over 1d +0.2); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Institutional Confidence at 1.7 is well below the universe median, and Demand Environment at 45.3 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
