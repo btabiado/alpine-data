@@ -49,21 +49,28 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run LTHCS crypto daily pipeline
+        # This step used to hand the job three secrets — COINGECKO_API_KEY,
+        # CRYPTOCOMPARE_API_KEY and GLASSNODE_API_KEY. An audit found the
+        # pipeline read NONE of them: a secret passed to code that cannot read
+        # it is worse than no secret, because it reads as working plumbing in
+        # the workflow, in the audit report, and to anyone debugging a throttled
+        # run. All three were removed, with the ordering for restoring one
+        # written down: add the header in crypto_data.py FIRST, then re-add the
+        # secret here, then fix its row in check_secrets_present.py.
+        #
+        # COINGECKO_API_KEY has since completed that sequence.
+        # lthcs/sources/crypto_data.py now reads it and sends x-cg-demo-api-key
+        # (host-matched, so the credential never rides along to a host that did
+        # not issue it), so it is restored here — the key now has a reader, and
+        # withholding it would put the pipeline back on the keyless ~30 req/min
+        # limit the key exists to lift.
+        #
+        # CRYPTOCOMPARE_API_KEY and GLASSNODE_API_KEY are deliberately still
+        # absent: verified against this branch, nothing under lthcs/ or in
+        # scripts/lthcs_crypto_daily.py reads either name. Do not re-add them
+        # until a reader exists, for the same reason they were removed.
         env:
-          # The crypto adapter uses free public APIs by default (CoinGecko
-          # free tier, blockchain.info, defillama) — none require keys.
-          # The plumbing below is for OPTIONAL paid-tier upgrades; every
-          # source degrades gracefully when its secret is absent.
-          #   * COINGECKO_API_KEY — Demo/Pro tier raises CoinGecko rate
-          #     limits (free tier ~30 calls/min is plenty for 3 assets,
-          #     but a key removes the throttle entirely).
-          #   * CRYPTOCOMPARE_API_KEY / GLASSNODE_API_KEY — reserved for a
-          #     future on-chain upgrade path. Currently unread; included
-          #     as placeholders so the workflow doesn't need an edit when
-          #     those sources land.
           COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
-          CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
-          GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
         # --force: re-running on a date that already has a snapshot is OK
         # (e.g. a manually dispatched run on the same UTC date as the cron).
         run: python scripts/lthcs_crypto_daily.py --force --verbose

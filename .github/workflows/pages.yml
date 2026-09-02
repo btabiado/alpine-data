@@ -217,14 +217,164 @@ jobs:
         # page falls back to when there's no live server to probe through.
         # Keyed sources report auth_required (live, gated) when the secret is
         # absent, so this stays useful without every key configured. Pure
-        # stdlib, ~25 cheap requests. Must NOT break the deploy.
+        # stdlib, ~50 cheap requests. Must NOT break the deploy.
+        #
+        # *** THIS ENV BLOCK MUST LIST EVERY key_env api_status.TARGETS NAMES. ***
+        # It listed five of fourteen. The other nine — Socrata, Census, BLS,
+        # AirNow, FBI CDE, OpenSky, Reddit, CoinGlass, Santiment — were named by
+        # the probe but never handed to it, so /health/apis.html reported
+        # `key_present=false` for every one of them *even when the repository
+        # secret was correctly set*. The page was not describing the user's
+        # configuration; it was describing this block, in words that sounded
+        # like the user's configuration. That is what "they used to be green,
+        # what the hell?" was looking at.
+        #
+        # Two of the nine were retired rather than wired, because they unlocked
+        # nothing (see api_status.py and scripts/check_secrets_present.py). The
+        # remaining seven are added below. tests/test_api_status_wiring.py
+        # re-derives api_status.KEY_ENVS and fails if this block falls behind
+        # again, and api_status.py now reports a key it was never handed as
+        # "not wired" rather than "no key" — so the next occurrence is visible
+        # on the page instead of silently wrong.
+        #
+        # A genuinely unset secret resolves to "" here, which is exactly what we
+        # want: the variable arrives empty and the probe can honestly say
+        # "wired, not configured" instead of guessing.
         env:
+          # --- already wired ---
           CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
           COINMETRICS_API_KEY: ${{ secrets.COINMETRICS_API_KEY }}
           GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          # --- named by the probe, never passed to it until now (the defect) ---
+          SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
+          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+          BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
+          FBI_CDE_API_KEY: ${{ secrets.FBI_CDE_API_KEY }}
+          AIRNOW_API_KEY: ${{ secrets.AIRNOW_API_KEY }}
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
         run: python api_status.py || echo "[api-status] probe failed; continuing"
+        continue-on-error: true
+
+      - name: Commit the API status record
+        # The authoritative per-API status was written every build, staged to the
+        # site, then thrown away with the runner. The only way to read it was to
+        # load the deployed page — no `git log`, no diff, no way for the user or
+        # any tooling to answer "when did Census start 403ing?" after the fact.
+        # Committed back the same way data/composites is: staged, then handed to
+        # the signed .github/scripts/api-commit.sh, with [skip ci] so it does not
+        # retrigger this workflow.
+        #
+        # data/health/ is otherwise gitignored; api_status.json is deliberately
+        # un-ignored (see the carve-out in .gitignore) because it is a RECORD,
+        # not a build cache.
+        #
+        # THE GUARD. A failed or empty probe must never overwrite a good record
+        # with nothing, so the snapshot is parsed and structurally validated
+        # before anything is staged: it must be JSON, carry summary.total >= 1,
+        # and have a sources array of exactly that length. Note what is
+        # deliberately NOT in the guard — "at least one source came back up". A
+        # sweep where everything is down is a real record, and the most
+        # interesting one there is; suppressing it would be this PR's own bug
+        # running in reverse.
+        #
+        # Plus a churn guard: generated_at moves on every hourly run, so
+        # committing on any diff at all would mean 24 no-op commits a day.
+        # Commit only when the SUBSTANCE moved (verdict / HTTP status / key
+        # wiring / summary), or when the committed record has aged past
+        # MAX_RECORD_AGE_H — a heartbeat, so the date in git keeps meaning
+        # "when we last checked" rather than "when it last changed".
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAX_RECORD_AGE_H: "6"
+          COMMIT_FLAG: ${{ runner.temp }}/api-status-commit.flag
+        run: |
+          set -euo pipefail
+          rm -f "$COMMIT_FLAG"
+          python3 - <<'PY'
+          import json, os, subprocess, sys
+          from datetime import datetime, timezone
+
+          PATH = "data/health/api_status.json"
+          # Fields that jitter every single run and say nothing new.
+          VOLATILE = {"latency_ms", "retries", "note"}
+
+          def substance(snap):
+              """What we actually learned, minus per-run jitter. Two snapshots
+              with equal substance make identical claims about every upstream,
+              so re-committing one is noise."""
+              return {
+                  "summary": snap.get("summary"),
+                  "unwired": snap.get("unwired_key_envs"),
+                  "sources": [
+                      {k: v for k, v in s.items() if k not in VOLATILE}
+                      for s in snap.get("sources", [])
+                  ],
+              }
+
+          def decide():
+              if not os.path.exists(PATH):
+                  return None, ("no snapshot on disk (probe skipped or crashed); "
+                                "leaving the committed record untouched")
+              try:
+                  fresh = json.loads(open(PATH, encoding="utf-8").read())
+              except (json.JSONDecodeError, OSError, ValueError) as e:
+                  return None, (f"snapshot is unreadable ({e}); refusing to "
+                                f"overwrite a good record with a broken one")
+              total = (fresh.get("summary") or {}).get("total") or 0
+              rows = fresh.get("sources") or []
+              if total < 1 or len(rows) != total:
+                  return None, (f"snapshot is structurally empty "
+                                f"(summary.total={total}, sources={len(rows)})")
+              # Compare against what is in git, not the working tree — the probe
+              # already overwrote the working tree.
+              old = subprocess.run(["git", "show", f"HEAD:{PATH}"],
+                                   capture_output=True, text=True)
+              if old.returncode != 0:
+                  return True, "first commit of the record"
+              try:
+                  prev = json.loads(old.stdout)
+              except (json.JSONDecodeError, ValueError):
+                  return True, "committed record is unparseable; replacing it"
+              if substance(prev) != substance(fresh):
+                  return True, "upstream status or key wiring changed"
+              try:
+                  then = datetime.fromisoformat(
+                      str(prev["generated_at"]).replace("Z", "+00:00"))
+                  age_h = (datetime.now(timezone.utc) - then).total_seconds() / 3600
+              except (KeyError, ValueError, TypeError):
+                  age_h = float("inf")
+              if age_h >= float(os.environ.get("MAX_RECORD_AGE_H", "6")):
+                  return True, f"heartbeat — committed record is {age_h:.1f}h old"
+              return None, "nothing moved and the record is recent"
+
+          go, why = decide()
+          print(f"[api-status-commit] {'committing' if go else 'skipping'}: {why}")
+          # A sentinel file rather than $GITHUB_OUTPUT: outputs are readable by
+          # LATER steps, not by the rest of the step that wrote them, so reading
+          # one here would silently always be empty.
+          if go:
+              open(os.environ["COMMIT_FLAG"], "w").write("yes")
+          PY
+          if [ ! -f "$COMMIT_FLAG" ]; then
+            echo "[api-status-commit] nothing staged."
+            exit 0
+          fi
+          # -f because the file lives under an otherwise-ignored directory. The
+          # .gitignore carve-out already un-ignores it (and a test asserts that);
+          # -f means a future .gitignore edit degrades the record's discoverability
+          # rather than silently killing this commit.
+          git add -f data/health/api_status.json
+          if git diff --cached --quiet -- data/health/api_status.json; then
+            echo "[api-status-commit] staged diff is empty; nothing to commit."
+            exit 0
+          fi
+          .github/scripts/api-commit.sh \
+            "health: api status record $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]" \
+            || echo "[api-status-commit] commit failed; continuing"
         continue-on-error: true
 
       - name: Enrich + rebuild Summit dashboard
@@ -384,6 +534,119 @@ jobs:
         # point is to block bad deploys before they ship to /v2/.
         if: hashFiles('v2/dashboard.html') != ''
         run: python tools/validate_v2_dashboard.py
+
+      - name: Judge the built artifacts (data_health --mode built)
+        # THE OTHER HALF OF THE WATCHDOG, finally wired.
+        #
+        # data-health.yml runs `--mode committed` daily: it judges the files a
+        # cron commits back. That mode cannot see a BUILT artifact at all,
+        # because the committed copy of data-*.json is a placeholder — the real
+        # one exists only here, for the ~10 minutes between the fetch step above
+        # and the runner being destroyed. `--mode built` judges THOSE.
+        #
+        # That gap is not hypothetical: the crypto breadth chart sat frozen at
+        # 2026-06-09 for three months while fetch_market rewrote its file every
+        # single hour. The file's mtime was perpetually fresh; the series inside
+        # it was not. Nothing in the committed-mode watchdog could ever have
+        # noticed, and nothing did.
+        #
+        # NON-BLOCKING, AND HERE IS WHY. A stale upstream feed is not a reason to
+        # withhold the entire site. If FRED is having a bad morning, the honest
+        # response is to ship the dashboard with FRED's panel showing its real
+        # age (the whole page is built to do exactly that) — not to serve the
+        # previous deploy's HTML and pretend nothing happened, which is strictly
+        # more stale and strictly less honest. Blocking here would also make
+        # every upstream outage look like a broken build, which is the fastest
+        # known way to teach everyone to ignore a red X.
+        #
+        # So: never fails the job. But it must not be quiet either — a
+        # continue-on-error step that prints into the log is the same diary
+        # entry nobody reads. It gets all three loud channels: a ::warning
+        # annotation per stale feed (these surface on the run summary page even
+        # for soft-failed steps), the full report in $GITHUB_STEP_SUMMARY, and a
+        # visible soft-failure on the step itself via the real exit code.
+        #
+        # Evaluated ONCE. data_health.py is run a single time with --report json
+        # and both the annotations and the summary are derived from that one
+        # verdict — re-running it to build a prettier summary could produce a
+        # second, contradicting verdict, which is the failure mode called out in
+        # data-health.yml's own comments.
+        #
+        # No --remediate: remediation re-runs fetchers, and doing that mid-deploy
+        # would race the artifacts this very job is about to stage.
+        id: builthealth
+        run: |
+          set +e
+          python scripts/data_health.py --mode built --report json > "$RUNNER_TEMP/built-health.json"
+          rc=$?
+          set -e
+          python3 - "$RUNNER_TEMP/built-health.json" "$rc" <<'PY'
+          import importlib.util, json, os, sys
+
+          path, rc = sys.argv[1], int(sys.argv[2])
+          try:
+              report = json.loads(open(path, encoding="utf-8").read())
+          except (OSError, json.JSONDecodeError, ValueError) as e:
+              print(f"::warning title=Built-artifact health check unreadable::"
+                    f"data_health --mode built exited {rc} and produced no usable "
+                    f"report ({e}). The post-build artifacts went UNJUDGED this "
+                    f"run — that is a gap in the monitor, not a clean bill of health.")
+              sys.exit(0)
+
+          # Which statuses count as a problem is data_health.py's call, not this
+          # step's. Importing the frozenset instead of re-typing it means a new
+          # status can never end up silently un-annotated here — the exact way a
+          # second monitor starts disagreeing with the first.
+          spec = importlib.util.spec_from_file_location(
+              "_dh", os.path.join(os.getcwd(), "scripts", "data_health.py"))
+          dh = importlib.util.module_from_spec(spec)
+          # Registered before exec: @dataclass resolves annotations through
+          # sys.modules[cls.__module__] and blows up on an unregistered module.
+          sys.modules[spec.name] = dh
+          spec.loader.exec_module(dh)
+
+          results = report.get("results", [])
+          bad = [r for r in results if r.get("status") in dh.FAILING_STATUSES]
+          lines = ["", f"## Built-artifact health (`--mode built`) — "
+                       f"{'OK' if not bad else str(len(bad)) + ' feed(s) need attention'}",
+                   "",
+                   f"Judged {len(results)} feed(s) against the artifacts this build "
+                   f"just produced, not against their committed placeholders.", ""]
+          if bad:
+              lines += ["| Feed | Status | Age | Limit | Owner |", "|---|---|---|---|---|"]
+          for r in bad:
+              age = r.get("age_h")
+              limit = r.get("limit_h")
+              age_s = "unknown" if age is None else f"{age:.1f}h"
+              lim_s = "—" if limit is None else f"{limit:.0f}h"
+              owner = r.get("owner") or "unknown"
+              detail = (r.get("detail") or "").strip()
+              lines.append(f"| `{r['path']}` | {r.get('status')} | {age_s} | "
+                           f"{lim_s} | {owner} |")
+              # One annotation per feed: named, aged, and pointed at its owner.
+              # A single lumped warning would let a second stale feed hide behind
+              # the first.
+              print(f"::warning title=Built artifact {r.get('status')}: {r['path']}::"
+                    f"{r['path']} is {age_s} old (limit {lim_s}); owner: {owner}."
+                    + (f" {detail}" if detail else "")
+                    + " Non-blocking — the deploy continues and the page will show"
+                      " this feed's real age.")
+          if not bad:
+              lines.append("Every built artifact is within its freshness budget.")
+          lines += ["", "_Non-blocking by design: a stale upstream should not "
+                        "withhold the whole site. See the comment on this step._", ""]
+          summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if summary:
+              with open(summary, "a", encoding="utf-8") as fh:
+                  fh.write("\n".join(lines) + "\n")
+          print("\n".join(lines))
+          PY
+          # Surface the real verdict on the step itself. `continue-on-error`
+          # below keeps the deploy going while leaving outcome == 'failure', so
+          # a stale feed reads as a visible soft-failure in the run UI rather
+          # than as an unbroken row of green ticks.
+          exit $rc
+        continue-on-error: true
 
       - name: Stage site directory
         run: |

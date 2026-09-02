@@ -38,8 +38,15 @@ neutral dict on bad input rather than raising.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any, Dict, List, Mapping, Optional, Sequence
+
+# NOTE: `datetime` is deliberately NOT imported at module scope. The library
+# half of this module must not be able to read a clock: its only date output is
+# the composite's `as_of`, which is the age of the DATA and is derived from the
+# legs or left None (see _composite_as_of). The self-test at the bottom imports
+# datetime locally for timestamp formatting. Keeping the import out of module
+# scope makes "money_flow cannot manufacture a date" a structural property that
+# `grep datetime money_flow.py` can check, not a convention.
 
 from lthcs.normalize import z_score, z_to_0_100
 
@@ -271,6 +278,30 @@ def _z_to_pm100(z: Optional[float]) -> float:
     return float((z_to_0_100(z) - 50.0) * 2.0)
 
 
+_ISO_DAY_LEN = 10
+
+
+def _iso_day(value: Any) -> Optional[str]:
+    """``value`` as a ``YYYY-MM-DD`` string, or ``None`` if it is not one.
+
+    Strict on purpose, for the same reason ``build_health_status``'s date parser
+    is: a lenient parser that fishes a plausible-looking date out of prose
+    publishes a date the source never asserted, and a WRONG data date is worse
+    than a missing one — a wrong one gets believed, a missing one gets chased.
+    """
+    if not isinstance(value, str):
+        return None
+    s = value.strip()[:_ISO_DAY_LEN]
+    if len(s) != _ISO_DAY_LEN or s[4] != "-" or s[7] != "-":
+        return None
+    y, m, d = s[:4], s[5:7], s[8:10]
+    if not (y.isdigit() and m.isdigit() and d.isdigit()):
+        return None
+    if not (1 <= int(m) <= 12 and 1 <= int(d) <= 31):
+        return None
+    return s
+
+
 def _component_z(today: Any, trailing: Any) -> Optional[float]:
     """z-score of ``today`` against its ``trailing`` history, or None.
 
@@ -311,7 +342,14 @@ def _per_index_subscore(leg: Optional[Mapping[str, Any]]) -> Dict[str, Any]:
           "mfi_hist":      [<trailing MFI series>],
           "cmf":           <float latest CMF -1..1>,   # carried through for UI
           "dollar_volume": <float, for dollar-weighting the headline>,
+          "as_of":         "YYYY-MM-DD",  # observation date of THIS leg's data
         }
+
+    ``as_of`` is the date of the newest bar / flow row the leg was built from —
+    the age of the DATA, never the time the fetcher ran. It is what lets the
+    composite report an honest date instead of a clock read; a leg that omits it
+    and still contributes makes the composite's date unknowable (see
+    :func:`build_money_flow_index`).
 
     Sub-score = mean of the available components in
     [ z(etf_flow), z(mfi - 50) ] each mapped to ±100. A component is "available"
@@ -355,7 +393,83 @@ def _per_index_subscore(leg: Optional[Mapping[str, Any]]) -> Dict[str, Any]:
         "_dollar_volume": _f(leg.get("dollar_volume")),
         "_z_flow": z_flow,
         "_z_mfi": z_mfi,
+        # Did this leg put a REAL component into the blend, or is its 0.0 the
+        # neutral fallback? Only a real contributor's date constrains the
+        # composite's date — a neutral placeholder contributes no data and so
+        # cannot make the composite older.
+        "_contributed": bool(parts),
+        "_as_of": _iso_day(leg.get("as_of")),
     }
+
+
+def _composite_as_of(
+    market: Mapping[str, Any],
+    sub_details: Sequence[Mapping[str, Any]],
+    z_ici: Optional[float],
+    z_mmf: Optional[float],
+) -> "tuple[Optional[str], Dict[str, Any]]":
+    """The composite's observation date, or ``None`` — never a clock read.
+
+    Three rules, in order:
+
+    1. **The age of the DATA, not of the run.** This function used to end in
+       ``datetime.now(timezone.utc).strftime("%Y-%m-%d")`` whenever the payload
+       carried no ``as_of``, and ``fetch_market`` never put one there — so the
+       gauge's published "as of" was, in production, always literally today's
+       wall clock. A frozen leg from March advertised itself as fresh this
+       morning. The renderer refuses ``mfx.as_of`` today precisely because of
+       this; the lie is fixed here, at the source, rather than papered over
+       downstream.
+    2. **A composite is only as fresh as its OLDEST input** — so ``min()`` over
+       the contributing legs, never ``max()``.
+    3. **Unknown is not "today".** If a leg genuinely contributed a component
+       but carries no observation date, the composite's oldest input is
+       *unknowable*: the honest answer is ``None``, because a ``min()`` over the
+       dated subset could easily be newer than the undated leg and would
+       overstate freshness. ``None`` renders as "as of —" with the disclosure
+       below attached; a manufactured date renders as a fact.
+
+    A market-wide ``as_of`` supplied by the caller still wins when it is a real
+    ISO day — that is the orchestrator asserting one date for the whole payload.
+
+    Returns ``(as_of, inputs)`` where ``inputs`` is the per-leg breakdown that
+    lets a renderer say *why* the date is what it is (and how many contributing
+    legs were undated) instead of just showing a dash.
+    """
+    per_leg: Dict[str, Optional[str]] = {}
+    undated: List[str] = []
+    dates: List[str] = []
+
+    def _consider(name: str, contributed: bool, raw: Any) -> None:
+        if not contributed:
+            return
+        day = _iso_day(raw)
+        per_leg[name] = day
+        if day is None:
+            undated.append(name)
+        else:
+            dates.append(day)
+
+    for d in sub_details:
+        _consider(str(d.get("etf")), bool(d.get("_contributed")), d.get("_as_of"))
+    _consider("ici_equity_flow", z_ici is not None, market.get("ici_as_of"))
+    _consider("mmf_wow_change", z_mmf is not None, market.get("mmf_as_of"))
+
+    override = _iso_day(market.get("as_of"))
+    if override is not None:
+        return override, {"resolved_from": "market.as_of", "legs": per_leg,
+                          "undated_contributors": undated}
+
+    if not per_leg:
+        # Nothing contributed at all — the gauge is entirely neutral fallback,
+        # so there is no observation to date.
+        return None, {"resolved_from": "no contributing legs", "legs": {},
+                      "undated_contributors": []}
+    if undated:
+        return None, {"resolved_from": "unknown (contributing legs carry no date)",
+                      "legs": per_leg, "undated_contributors": undated}
+    return min(dates), {"resolved_from": "oldest contributing leg",
+                        "legs": per_leg, "undated_contributors": []}
 
 
 def build_money_flow_index(payload: Optional[Mapping[str, Any]]) -> Dict[str, Any]:
@@ -373,15 +487,25 @@ def build_money_flow_index(payload: Optional[Mapping[str, Any]]) -> Dict[str, An
               "ici_equity_flow_hist":  [<trailing ICI equity-flow series>],
               "mmf_wow_change":        <float latest MMF week-over-week change, $>,
               "mmf_wow_change_hist":   [<trailing MMF WoW-change series>],
-              "as_of":                 "YYYY-MM-DD",        # optional
+              "ici_as_of":             "YYYY-MM-DD",        # ICI leg's data date
+              "mmf_as_of":             "YYYY-MM-DD",        # MMF leg's data date
+              "as_of":                 "YYYY-MM-DD",        # optional override
             }
 
     Returns
     -------
     dict
-        ``{as_of, headline:{score,label,components:[...]}, per_index:[...]}``.
-        Always returns a well-formed dict; missing legs degrade to neutral and
-        the headline renormalises over the components that are present.
+        ``{as_of, as_of_inputs, headline:{score,label,components:[...]},
+        per_index:[...]}``. Always returns a well-formed dict; missing legs
+        degrade to neutral and the headline renormalises over the components
+        that are present.
+
+        ``as_of`` is the OLDEST observation date among the legs that actually
+        contributed, or ``None`` when that cannot be established. It is never
+        a clock read — see :func:`_composite_as_of`. ``as_of_inputs`` carries
+        the per-leg dates and the names of any undated contributors, so a
+        renderer can disclose *why* the date is missing rather than silently
+        substituting one.
 
     Guardrails
     ----------
@@ -479,12 +603,11 @@ def build_money_flow_index(payload: Optional[Mapping[str, Any]]) -> Dict[str, An
     headline_score = sum(contributions) / len(contributions) if contributions else 0.0
     headline_score = float(_clip(headline_score, -100.0, 100.0))
 
-    as_of = market.get("as_of") if isinstance(market.get("as_of"), str) else None
-    if not as_of:
-        as_of = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    as_of, as_of_inputs = _composite_as_of(market, sub_details, z_ici, z_mmf)
 
     return {
         "as_of": as_of,
+        "as_of_inputs": as_of_inputs,
         "headline": {
             "score": round(headline_score, 2),
             "label": _band_label(headline_score),
@@ -520,6 +643,7 @@ def build_money_flow_index(payload: Optional[Mapping[str, Any]]) -> Dict[str, An
 if __name__ == "__main__":
     import json
     import urllib.request
+    from datetime import datetime, timezone
 
     def _fetch_ohlcv(ticker: str) -> List[Dict[str, Any]]:
         """Fetch ~6mo daily OHLCV for one ticker straight from Yahoo (self-test only)."""

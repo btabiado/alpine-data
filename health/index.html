@@ -204,6 +204,12 @@
     .keytag { font-size: 10px; font-family: var(--mono); padding: 1px 5px; border-radius: 3px; margin-left: 6px; border: 1px solid var(--border); color: var(--text-faint); }
     .keytag.set { color: var(--up); border-color: rgba(16,185,129,0.4); }
     .keytag.missing { color: var(--warn); border-color: rgba(245,158,11,0.4); }
+    /* Deliberately RED, not amber: "not wired" is not a missing secret, it is a
+       broken workflow — the probe was never handed the variable, so this page
+       cannot say anything at all about whether your key is set. It must not
+       look like the benign amber "no key" it was indistinguishable from until
+       api_status.py gained key_state. */
+    .keytag.unwired { color: var(--down); border-color: rgba(239,68,68,0.55); background: rgba(239,68,68,0.1); font-weight: 600; }
 
     /* Horizontal-scroll wrapper so the 5-col sources table scrolls cleanly on
        a phone instead of crushing cells / overflowing .wrap. */
@@ -226,6 +232,7 @@
     .banner { padding: 12px 16px; border-radius: 8px; margin: 16px 0; font-size: 13px; border: 1px solid var(--border); background: var(--bg-elev); }
     .banner.live { border-color: rgba(16,185,129,0.4); }
     .banner.snapshot { border-color: rgba(245,158,11,0.4); }
+    .banner.unwired { border-color: rgba(239,68,68,0.55); background: rgba(239,68,68,0.08); }
 
     /* At-a-glance per-pane sources headline — "N of M sources up". */
     .headline { font-size: 14px; font-weight: 600; margin-top: 6px; }
@@ -271,6 +278,9 @@
       </p>
 
       <div id="modeBanner"></div>
+      <!-- Populated only when the snapshot reports keys the probe never
+           received. Empty (and invisible) in the healthy case. -->
+      <div id="keyWiringBanner"></div>
       <div class="summary" id="srcSummary"></div>
       <div id="srcTable"></div>
     </section>
@@ -473,11 +483,32 @@
         <div class="chip"><span class="num">${s.total}</span><span class="lbl">Total</span></div>`;
     }
 
+    // Three states, three tags. Until api_status.py grew `key_state` this
+    // function had only two, and the missing third is the whole reason the page
+    // spent months telling the user "no key" for secrets that were correctly
+    // set: the probe step simply never received those variables, and "we were
+    // never given it" rendered identically to "you never set it".
+    //   set        — the secret reached the probe.
+    //   no key     — the probe was handed the variable, empty: set it in repo settings.
+    //   NOT WIRED  — the variable never arrived: a workflow bug, and this page
+    //                knows NOTHING about whether your key is set.
+    // Older snapshots have no key_state; fall back to the old two-state read so
+    // a cached JSON from before this change still renders sensibly.
     function keyTag(src) {
       if (!src.needs_key) return '';
-      return src.key_present
-        ? '<span class="keytag set" title="API key configured">key set</span>'
-        : '<span class="keytag missing" title="No API key in this environment">no key</span>';
+      const st = src.key_state || (src.key_present ? 'set' : 'unset');
+      const env = src.key_env ? ` (${src.key_env})` : '';
+      if (st === 'set') {
+        return `<span class="keytag set" title="API key${env} reached the probe">key set</span>`;
+      }
+      if (st === 'not_wired') {
+        return '<span class="keytag unwired" title="The probe process was never given '
+          + escapeHtml(src.key_env || 'this variable')
+          + '. This is a workflow plumbing bug, NOT a missing secret — this page cannot '
+          + 'tell you whether the key is set until the variable is mapped into the step\'s env.">'
+          + 'key not wired</span>';
+      }
+      return `<span class="keytag missing" title="${escapeHtml(src.key_env || 'The key')} was passed to the probe but is empty — set it as a repository secret">no key</span>`;
     }
 
     function renderSrcTable(sources) {
@@ -511,6 +542,33 @@
           + 'Run <span class="source-tag">python server.py</span> and open <span class="source-tag">/status</span> for live probing.';
     }
 
+    // The loud, page-level half of the "not wired" signal. A per-row tag is
+    // easy to skim past; this states the count, names the variables, and says
+    // whose bug it is. It renders nothing at all when every named key arrived,
+    // so a healthy page is unchanged.
+    function renderKeyWiringBanner(data) {
+      const el = document.getElementById('keyWiringBanner');
+      const unwired = data.unwired_key_envs || [];
+      if (!unwired.length) { el.className = ''; el.innerHTML = ''; return; }
+      el.className = 'banner unwired';
+      // `ci` distinguishes "the workflow forgot to map it" from the entirely
+      // unremarkable "your local shell has not exported it".
+      const who = data.ci
+        ? 'The CI step that produced this snapshot never mapped '
+          + (unwired.length === 1 ? 'it' : 'them')
+          + ' into its <span class="source-tag">env:</span> block — a workflow bug, not a missing secret.'
+        : 'This snapshot was produced outside CI, so this most likely just means the shell that ran the probe did not export '
+          + (unwired.length === 1 ? 'it' : 'them') + '.';
+      el.innerHTML = '🔴 <b>' + unwired.length + ' API key'
+        + (unwired.length === 1 ? '' : 's') + ' never reached the probe.</b> '
+        + who
+        + ' Until that is fixed this page <b>cannot tell you</b> whether '
+        + (unwired.length === 1 ? 'this secret is' : 'these secrets are')
+        + ' configured — it only knows it was never given '
+        + (unwired.length === 1 ? 'the value' : 'the values') + '.<br>'
+        + unwired.map(k => `<span class="source-tag">${escapeHtml(k)}</span>`).join(' ');
+    }
+
     let srcLastGenerated = null;
 
     async function loadSources(opts) {
@@ -542,6 +600,7 @@
         if (auto && data.generated_at === srcLastGenerated) return;
         srcLastGenerated = data.generated_at;
         renderModeBanner(live);
+        renderKeyWiringBanner(data);
         document.getElementById('generated').textContent = `as of ${formatTime(data.generated_at)}`;
         renderSrcHeadline(data.summary);
         renderSrcSummary(data.summary);
