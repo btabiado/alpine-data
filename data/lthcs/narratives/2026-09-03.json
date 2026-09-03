@@ -716,7 +716,7 @@
     },
     {
       "ticker": "LRCX",
-      "todays_take": "LRCX requires Structural Review at 48.0 (-7.2 over 30 days), supported by Thesis Integrity at 55.0.",
+      "todays_take": "LRCX requires Structural Review at 48.0 (-7.2 over 30 days), supported by Adoption Momentum at 50.0.",
       "why_changed": "Score is at 48.0 (drift over 1d +0.9); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Institutional Confidence at 44.0 is well below the universe median, and Demand Environment at 48.0 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
