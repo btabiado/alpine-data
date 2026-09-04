@@ -3244,7 +3244,7 @@
         "adoption_momentum": 62.5,
         "institutional_confidence": 50.0,
         "financial_evolution": 50.0,
-        "thesis_integrity": 55.0,
+        "thesis_integrity": 50.0,
         "des": 50.0
       },
       "modifiers": {
@@ -4700,7 +4700,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 54.0,
         "financial_evolution": 50.0,
-        "thesis_integrity": 50.0,
+        "thesis_integrity": 58.8,
         "des": 46.6
       },
       "modifiers": {

@@ -724,7 +724,7 @@
     },
     {
       "ticker": "LULU",
-      "todays_take": "LULU is showing Weakening at 50.1 (+11.2 over 30 days), supported by Institutional Confidence at 54.0.",
+      "todays_take": "LULU is showing Weakening at 50.1 (+11.2 over 30 days), supported by Thesis Integrity at 58.8.",
       "why_changed": "Score is at 50.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Demand Environment at 46.6 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "A sustained drop in Demand Environment below 37, or a Structural Review composite move below 50, would force a structural review.",
