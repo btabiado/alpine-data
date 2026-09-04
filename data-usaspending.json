@@ -1,11 +1,11 @@
 {
- "generated_utc": "2026-09-03T12:10:59.214301+00:00",
+ "generated_utc": "2026-09-04T12:11:58.680302+00:00",
  "source": "USAspending.gov Search API \u2014 spending_over_time",
  "note": "Published from GitHub Actions (clean egress) because the USAspending API blocks/525s Cloudflare datacenter IPs. Consumed by ADW-441 (grants) and ADW-444 (dod_contracts).",
  "grants": {
   "window": [
-   "2024-09-03",
-   "2026-09-03"
+   "2024-09-04",
+   "2026-09-04"
   ],
   "award_type_codes": [
    "02",
@@ -17,7 +17,7 @@
   "series": [
    {
     "period": "2024-09",
-    "obligated": 99363506461.09
+    "obligated": 96927940493.91
    },
    {
     "period": "2024-10",
@@ -57,15 +57,15 @@
    },
    {
     "period": "2025-07",
-    "obligated": 236182021031.69
+    "obligated": 236182041745.69
    },
    {
     "period": "2025-08",
-    "obligated": 44717098123.63
+    "obligated": 44717919745.63
    },
    {
     "period": "2025-09",
-    "obligated": 72096155080.5
+    "obligated": 72099856187.62
    },
    {
     "period": "2025-10",
@@ -73,7 +73,7 @@
    },
    {
     "period": "2025-11",
-    "obligated": 14922574870.13
+    "obligated": 14923488311.13
    },
    {
     "period": "2025-12",
@@ -97,30 +97,30 @@
    },
    {
     "period": "2026-05",
-    "obligated": 32912232357.71
+    "obligated": 32912662169.71
    },
    {
     "period": "2026-06",
-    "obligated": 31157757429.57
+    "obligated": 31159212210.89
    },
    {
     "period": "2026-07",
-    "obligated": 242664603983.21
+    "obligated": 242666877148.21
    },
    {
     "period": "2026-08",
-    "obligated": 21621973097.55
+    "obligated": 21634544219.05
    },
    {
     "period": "2026-09",
-    "obligated": 12176206.0
+    "obligated": 10077149.0
    }
   ]
  },
  "dod_contracts": {
   "window": [
    "2025-08-01",
-   "2026-09-03"
+   "2026-09-04"
   ],
   "award_type_codes": [
    "A",
@@ -143,13 +143,13 @@
    },
    {
     "month": "2025-10",
-    "awards": 13346395733,
-    "totalAmount": 13346395733.4
+    "awards": 13347524759,
+    "totalAmount": 13347524759.12
    },
    {
     "month": "2025-11",
-    "awards": 28081172509,
-    "totalAmount": 28081172509.14
+    "awards": 28081184530,
+    "totalAmount": 28081184529.85
    },
    {
     "month": "2025-12",
@@ -158,33 +158,33 @@
    },
    {
     "month": "2026-01",
-    "awards": 35506156446,
-    "totalAmount": 35506156445.81
+    "awards": 35506990405,
+    "totalAmount": 35506990404.78
    },
    {
     "month": "2026-02",
-    "awards": 27078125833,
-    "totalAmount": 27078125833.01
+    "awards": 27078110983,
+    "totalAmount": 27078110983.01
    },
    {
     "month": "2026-03",
-    "awards": 68566093281,
-    "totalAmount": 68566093281.43
+    "awards": 68566101959,
+    "totalAmount": 68566101958.65
    },
    {
     "month": "2026-04",
-    "awards": 52007431333,
-    "totalAmount": 52007431333.17
+    "awards": 52018309710,
+    "totalAmount": 52018309709.54
    },
    {
     "month": "2026-05",
-    "awards": 49469983307,
-    "totalAmount": 49469983307.46
+    "awards": 49469987342,
+    "totalAmount": 49469987341.95
    },
    {
     "month": "2026-06",
-    "awards": 5212345935,
-    "totalAmount": 5212345935.22
+    "awards": 7388199702,
+    "totalAmount": 7388199702.05
    },
    {
     "month": "2026-07",
@@ -198,8 +198,8 @@
    },
    {
     "month": "2026-09",
-    "awards": -811414,
-    "totalAmount": -811413.67
+    "awards": -564567,
+    "totalAmount": -564566.67
    }
   ]
  }
