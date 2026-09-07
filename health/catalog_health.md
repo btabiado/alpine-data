@@ -1,7 +1,7 @@
-# Catalog link health — 2026-08-31T16:06:03+00:00
+# Catalog link health — 2026-09-07T14:12:13+00:00
 
 - **Total URLs:** 2192
-- ✅ ok: 1939  ·  🔒 gated (exists, auth/bot-walled): 160  ·  ❌ dead (404/410): 21  ·  ⚠️ unreachable (timeout/5xx): 72
+- ✅ ok: 1931  ·  🔒 gated (exists, auth/bot-walled): 166  ·  ❌ dead (404/410): 21  ·  ⚠️ unreachable (timeout/5xx): 74
 
 ## ❌ Dead (404/410) — review/remove
 - `404` http://numbersapi.com/ — Numbers API (numbersapi.com)
@@ -38,8 +38,6 @@
 - `502` https://biolincc.nhlbi.nih.gov/ — NHLBI BioLINCC (Biologic Specimen and Data Repository)
 - `None` https://clinical-information.canada.ca/ — Health Canada Clinical Information Portal (Public Release of Clinical Information, PRCI), Health Canada Public Release of Clinical Information (PRCI) portal
 - `None` https://collection.britishmuseum.org/ — British Museum Collection (SPARQL/LOD)
-- `None` https://cris.nih.go.kr/ — CRiS (Korea Clinical Research Information Service)
-- `None` https://data.ny.gov/Economic-Development/Current-OCM-Licenses/jskf-tt3q — New York OCM Cannabis Licenses (data.ny.gov/Socrata)
 - `None` https://developer.boeing.com/apis/notams-3/ — DTN NOTAMs API / Boeing (Jeppesen) NOTAMs API
 - `None` https://developer.freightos.com/apis — Freightos Terminal / FBX API
 - `None` https://developer.nrel.gov/docs/ — NREL Developer Network (PVWatts, Utility Rates, OpenEI), NREL Developer Network APIs (PVWatts, solar, electricity)
@@ -48,19 +46,23 @@
 - `None` https://developer.nrel.gov/docs/solar/pvwatts/v8/ — PVWatts (NREL Developer Network)
 - `None` https://developer.nrel.gov/docs/transportation/alt-fuel-stations-v1/ — NREL Alternative Fuel Stations API
 - `None` https://developer.nrel.gov/docs/wind/wind-toolkit/ — NREL WIND Toolkit (HSDS)
+- `502` https://doaj.org/api/v3/docs — DOAJ API
+- `502` https://doaj.org/api/v4/docs — DOAJ API, DOAJ API (Directory of Open Access Journals), DOAJ (Directory of Open Access Journals) API, DOAJ API
 - `None` https://docs.aviationapi.com/ — AviationAPI
 - `None` https://docs.wild-card.ai/agentsjson/introduction — agents.json (Wildcard AI)
-- `None` https://drugs.ncats.io/ — NCATS Inxight Drugs API
 - `None` https://elexicon.wustl.edu/ — English Lexicon Project (ELP)
 - `None` https://en.wikichip.org/ — WikiChip
 - `None` https://fatcat.wiki/ — Internet Archive Scholar / Fatcat API
-- `None` https://firms.modaps.eosdis.nasa.gov/api/ — NASA FIRMS (Fire Information for Resource Management), NASA FIRMS Active Fire API
 - `None` https://fred.stlouisfed.org/categories/32217 — FRED (commodity & metals price series)
 - `None` https://fred.stlouisfed.org/docs/api/fred/ — FRED — Federal Reserve Economic Data API, FRED (Federal Reserve Bank of St. Louis), FRED API (manufacturing/IP indicators)
 - `None` https://fred.stlouisfed.org/series/WPU03 — FRED Textile & Apparel Price Indexes
 - `None` https://fred.stlouisfed.org/series/WPU081 — FRED - Lumber & Wood Products PPI (St. Louis Fed)
 - `503` https://gazetteer.dainst.org/ — iDAI.gazetteer / iDAI.world (DAI)
+- `None` https://geonames.nga.mil/gns/html/gns_services.html — NGA Geographic Names Server (GNS) - foreign GEOINT toponyms, NGA Geographic Names Server (GNS) - GEOINT toponyms
+- `504` https://github.com/bentoml/OpenLLM — OpenLLM (BentoML)
+- `504` https://github.com/unclecode/crawl4ai — Crawl4AI
 - `None` https://gssdataexplorer.norc.org/ — GSS Data Explorer (NORC General Social Survey), GSS Data Explorer (NORC, General Social Survey)
+- `None` https://gwosc.org/api/v1/docs/ — GWOSC (Gravitational Wave Open Science Center)
 - `None` https://hemp.ams.usda.gov/s/PublicSearchTool — USDA Hemp eManagement Platform (HeMP) Public/LE Search Tool
 - `None` https://jrct.niph.go.jp/ — jRCT / JPRN (Japan Registry of Clinical Trials)
 - `500` https://llama.developer.meta.com/ — Meta Llama API (llama.developer.meta.com)
@@ -70,32 +72,32 @@
 - `None` https://mymarketnews.ams.usda.gov/mars-api/getting-started — USDA AMS My Market News (MARS API)
 - `None` https://nassgeodata.gmu.edu/CropScape/ — USDA CropScape / Cropland Data Layer
 - `None` https://neuroquery.org/ — NeuroQuery API, NeuroQuery
+- `502` https://oqmd.org/ — OQMD (Open Quantum Materials Database)
+- `502` https://oqmd.org/api/ — OQMD (Open Quantum Materials Database) API, OQMD (Open Quantum Materials Database)
 - `None` https://platform.docs.opentargets.org/data-access/graphql-api — Open Targets Platform GraphQL API
 - `None` https://play.ht/ — PlayHT (Play.ht) TTS API
+- `None` https://pncp.gov.br/api/pncp/swagger-ui/index.html — Brazil PNCP (Portal Nacional de Contratacoes Publicas) API
 - `None` https://prime-numbers-api.com/ — Prime Numbers API (prime-numbers-api.com)
 - `None` https://rctportal.niph.go.jp/en — JPRN / NIPH Clinical Trials Search Portal (Japan)
-- `503` https://remote.universal-robots.com/ — Universal Robots API (UR Cloud)
+- `None` https://remote.universal-robots.com/ — Universal Robots API (UR Cloud)
+- `None` https://rest.isric.org/ — ISRIC SoilGrids REST API, ISRIC SoilGrids REST API
+- `None` https://rest.isric.org/soilgrids/v2.0/docs — ISRIC SoilGrids
 - `None` https://sanskritwordnet.chs.harvard.edu/api — Sanskrit WordNet API (CHS Harvard)
 - `None` https://schema.oasf.agntcy.org/ — AGNTCY — Open Agentic Schema Framework (OASF)
 - `503` https://scholia.toolforge.org/ — Scholia
 - `None` https://search.patentsview.org/docs/ — PatentsView PatentSearch API
 - `None` https://snowstorm-training.snomedtools.org/fhir/metadata — SNOMED CT Snowstorm public training FHIR API
 - `None` https://stats.un.org/SDGAPI/swagger/ — SDMX Global Registry / UNdata2 (added in verify)
-- `None` https://tle.ivanstanojevic.me/api/tle/ — TLE API (tle.ivanstanojevic.me)
+- `503` https://transparency.entsoe.eu/ — ENTSO-E Transparency Platform API, ENTSO-E Transparency Platform API
 - `None` https://trialstreamer.robotreviewer.net/ — Trialstreamer
-- `521` https://upcdatabase.org/api — UPCdatabase.org
 - `None` https://water.weather.gov/ahps/ — NWS / NOAA Advanced Hydrologic Prediction Service (AHPS)
 - `None` https://web.plant.id/plant-identification-api/ — Plant.id (Kindwise)
-- `500` https://world.openbeautyfacts.org/data — Open Beauty Facts API
 - `None` https://www.2dmatpedia.org/ — 2DMatPedia
 - `None` https://www.acq.osd.mil/eie/imr/rpid/library.html — DoD RPID / Base Structure Report (real-property footprint)
 - `None` https://www.brocade.io/ — Brocade.io
 - `None` https://www.clinicalstudydatarequest.com/ — ClinicalStudyDataRequest.com (CSDR)
-- `502` https://www.find-tender.service.gov.uk/Developer/Documentation — UK Find a Tender Service API
-- `503` https://www.findstat.org/ — FindStat (Combinatorial Statistic Finder)
-- `None` https://www.mousemine.org/mousemine/ — Mouse Genome Informatics (MGI / MouseMine)
+- `None` https://www.followthemoney.org/our-data/apis — FollowTheMoney.org API (Institute / OpenSecrets), FollowTheMoney.org API (NIMP / OpenSecrets), FollowTheMoney.org API (state campaign finance)
 - `None` https://www.nrcs.usda.gov/resources/data-and-reports/web-soil-survey — USDA NRCS Web Soil Survey / spatial WMS-WFS
 - `None` https://www.nvr.navy.mil/ — Naval Vessel Register (NVR)
-- `None` https://www.thesportsdb.com/free_sports_api — TheSportsDB
 - `None` https://www.transitland.org/documentation/ — Transitland (Interline)
 - `None` https://yeastmine.yeastgenome.org/yeastmine/ — Saccharomyces Genome Database (YeastMine)

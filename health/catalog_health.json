@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-08-31T16:06:03+00:00",
+  "checked_at": "2026-09-07T14:12:13+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1939,
-    "gated": 160,
+    "ok": 1931,
+    "gated": 166,
     "dead": 21,
-    "unreachable": 72
+    "unreachable": 74
   },
   "dead": [
     {
@@ -238,20 +238,6 @@
       ]
     },
     {
-      "url": "https://cris.nih.go.kr/",
-      "code": null,
-      "services": [
-        "CRiS (Korea Clinical Research Information Service)"
-      ]
-    },
-    {
-      "url": "https://data.ny.gov/Economic-Development/Current-OCM-Licenses/jskf-tt3q",
-      "code": null,
-      "services": [
-        "New York OCM Cannabis Licenses (data.ny.gov/Socrata)"
-      ]
-    },
-    {
       "url": "https://developer.boeing.com/apis/notams-3/",
       "code": null,
       "services": [
@@ -309,6 +295,23 @@
       ]
     },
     {
+      "url": "https://doaj.org/api/v3/docs",
+      "code": 502,
+      "services": [
+        "DOAJ API"
+      ]
+    },
+    {
+      "url": "https://doaj.org/api/v4/docs",
+      "code": 502,
+      "services": [
+        "DOAJ API",
+        "DOAJ API (Directory of Open Access Journals)",
+        "DOAJ (Directory of Open Access Journals) API",
+        "DOAJ API"
+      ]
+    },
+    {
       "url": "https://docs.aviationapi.com/",
       "code": null,
       "services": [
@@ -320,13 +323,6 @@
       "code": null,
       "services": [
         "agents.json (Wildcard AI)"
-      ]
-    },
-    {
-      "url": "https://drugs.ncats.io/",
-      "code": null,
-      "services": [
-        "NCATS Inxight Drugs API"
       ]
     },
     {
@@ -348,14 +344,6 @@
       "code": null,
       "services": [
         "Internet Archive Scholar / Fatcat API"
-      ]
-    },
-    {
-      "url": "https://firms.modaps.eosdis.nasa.gov/api/",
-      "code": null,
-      "services": [
-        "NASA FIRMS (Fire Information for Resource Management)",
-        "NASA FIRMS Active Fire API"
       ]
     },
     {
@@ -396,11 +384,40 @@
       ]
     },
     {
+      "url": "https://geonames.nga.mil/gns/html/gns_services.html",
+      "code": null,
+      "services": [
+        "NGA Geographic Names Server (GNS) - foreign GEOINT toponyms",
+        "NGA Geographic Names Server (GNS) - GEOINT toponyms"
+      ]
+    },
+    {
+      "url": "https://github.com/bentoml/OpenLLM",
+      "code": 504,
+      "services": [
+        "OpenLLM (BentoML)"
+      ]
+    },
+    {
+      "url": "https://github.com/unclecode/crawl4ai",
+      "code": 504,
+      "services": [
+        "Crawl4AI"
+      ]
+    },
+    {
       "url": "https://gssdataexplorer.norc.org/",
       "code": null,
       "services": [
         "GSS Data Explorer (NORC General Social Survey)",
         "GSS Data Explorer (NORC, General Social Survey)"
+      ]
+    },
+    {
+      "url": "https://gwosc.org/api/v1/docs/",
+      "code": null,
+      "services": [
+        "GWOSC (Gravitational Wave Open Science Center)"
       ]
     },
     {
@@ -468,6 +485,21 @@
       ]
     },
     {
+      "url": "https://oqmd.org/",
+      "code": 502,
+      "services": [
+        "OQMD (Open Quantum Materials Database)"
+      ]
+    },
+    {
+      "url": "https://oqmd.org/api/",
+      "code": 502,
+      "services": [
+        "OQMD (Open Quantum Materials Database) API",
+        "OQMD (Open Quantum Materials Database)"
+      ]
+    },
+    {
       "url": "https://platform.docs.opentargets.org/data-access/graphql-api",
       "code": null,
       "services": [
@@ -479,6 +511,13 @@
       "code": null,
       "services": [
         "PlayHT (Play.ht) TTS API"
+      ]
+    },
+    {
+      "url": "https://pncp.gov.br/api/pncp/swagger-ui/index.html",
+      "code": null,
+      "services": [
+        "Brazil PNCP (Portal Nacional de Contratacoes Publicas) API"
       ]
     },
     {
@@ -497,9 +536,24 @@
     },
     {
       "url": "https://remote.universal-robots.com/",
-      "code": 503,
+      "code": null,
       "services": [
         "Universal Robots API (UR Cloud)"
+      ]
+    },
+    {
+      "url": "https://rest.isric.org/",
+      "code": null,
+      "services": [
+        "ISRIC SoilGrids REST API",
+        "ISRIC SoilGrids REST API"
+      ]
+    },
+    {
+      "url": "https://rest.isric.org/soilgrids/v2.0/docs",
+      "code": null,
+      "services": [
+        "ISRIC SoilGrids"
       ]
     },
     {
@@ -545,10 +599,11 @@
       ]
     },
     {
-      "url": "https://tle.ivanstanojevic.me/api/tle/",
-      "code": null,
+      "url": "https://transparency.entsoe.eu/",
+      "code": 503,
       "services": [
-        "TLE API (tle.ivanstanojevic.me)"
+        "ENTSO-E Transparency Platform API",
+        "ENTSO-E Transparency Platform API"
       ]
     },
     {
@@ -556,13 +611,6 @@
       "code": null,
       "services": [
         "Trialstreamer"
-      ]
-    },
-    {
-      "url": "https://upcdatabase.org/api",
-      "code": 521,
-      "services": [
-        "UPCdatabase.org"
       ]
     },
     {
@@ -577,13 +625,6 @@
       "code": null,
       "services": [
         "Plant.id (Kindwise)"
-      ]
-    },
-    {
-      "url": "https://world.openbeautyfacts.org/data",
-      "code": 500,
-      "services": [
-        "Open Beauty Facts API"
       ]
     },
     {
@@ -615,24 +656,12 @@
       ]
     },
     {
-      "url": "https://www.find-tender.service.gov.uk/Developer/Documentation",
-      "code": 502,
-      "services": [
-        "UK Find a Tender Service API"
-      ]
-    },
-    {
-      "url": "https://www.findstat.org/",
-      "code": 503,
-      "services": [
-        "FindStat (Combinatorial Statistic Finder)"
-      ]
-    },
-    {
-      "url": "https://www.mousemine.org/mousemine/",
+      "url": "https://www.followthemoney.org/our-data/apis",
       "code": null,
       "services": [
-        "Mouse Genome Informatics (MGI / MouseMine)"
+        "FollowTheMoney.org API (Institute / OpenSecrets)",
+        "FollowTheMoney.org API (NIMP / OpenSecrets)",
+        "FollowTheMoney.org API (state campaign finance)"
       ]
     },
     {
@@ -647,13 +676,6 @@
       "code": null,
       "services": [
         "Naval Vessel Register (NVR)"
-      ]
-    },
-    {
-      "url": "https://www.thesportsdb.com/free_sports_api",
-      "code": null,
-      "services": [
-        "TheSportsDB"
       ]
     },
     {
