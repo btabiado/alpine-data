@@ -500,7 +500,7 @@
     },
     {
       "ticker": "GE",
-      "todays_take": "GE is showing Weakening at 50.2 (-8.0 over 30 days), supported by Thesis Integrity at 55.0.",
+      "todays_take": "GE is showing Weakening at 50.2 (-8.0 over 30 days), supported by Demand Environment at 51.0.",
       "why_changed": "Score is at 50.2 (drift over 1d -6.3); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Institutional Confidence at 50.0 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
