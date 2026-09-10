@@ -32,3 +32,15 @@ mcp[cli]==1.27.2
 # syntax error) which pattern-only checks couldn't see. ~30MB wheel,
 # parse-only (no script execution) — adds ~1-2s to the validate step.
 mini-racer==0.14.1
+
+# Test-only: tests/test_data_health.py parses .github/workflows/data-health.yml
+# to assert the monitor's alarm path is actually wired — the issue
+# create/update/close steps present, `issues: write` granted, and the check
+# step unable to short-circuit them. No shipped module imports yaml.
+#
+# A hard dependency rather than pytest.importorskip("yaml") on purpose: a
+# skipped test reports green while verifying nothing, which is the exact
+# silent-pass failure this whole monitor exists to remove. If the alarm wiring
+# regresses, this has to FAIL, not skip. It was importable locally and absent
+# in CI, which is how it got missed in the first place.
+PyYAML==6.0.2

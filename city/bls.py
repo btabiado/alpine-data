@@ -79,6 +79,8 @@ from typing import Optional
 
 import requests
 
+from .redact import redact
+
 __all__ = [
     "BLSError",
     "CITY_LAUS_SERIES",
@@ -234,7 +236,7 @@ def fetch_unemployment(city_id, *, api_key=None, session=None) -> Optional[float
             body = (resp.text or "")[:200]
         except Exception:
             pass
-        raise BLSError(f"BLS returned HTTP {status} for {series_id}: {body}")
+        raise BLSError(redact(f"BLS returned HTTP {status} for {series_id}: {body}"))
 
     try:
         data = resp.json()

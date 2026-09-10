@@ -108,7 +108,9 @@ CLI ::
     python fetch_mufon.py                       # default --out v2/data-mufon.json
     python fetch_mufon.py --out PATH
     python fetch_mufon.py --no-network          # offline parser self-test
-    python fetch_mufon.py --months-back N       # how many months of NUFORC to pull (default 144)
+    python fetch_mufon.py --months-back N       # legacy relative window; default is
+                                                # floor-anchored to NUFORC_LIVE_FLOOR_YM
+                                                # so the window grows, never slides
     python fetch_mufon.py --no-live             # skip live scrape, planetsig only
 """
 
@@ -158,6 +160,41 @@ NUFORC_REQUEST_DELAY_SEC = 2.0      # polite floor between requests
 NUFORC_WALL_CLOCK_CAP_SEC = 240
 NUFORC_404_STREAK_CAP = 3           # stop after this many consecutive misses
 NUFORC_CACHE_DIR = ROOT / "data" / ".stale"
+
+# The live scrape's ABSOLUTE FLOOR — the oldest month it will ever walk.
+#
+# This used to be expressed as a rolling `months_back=144` count anchored to
+# today, and that count is LOSSY BY CONSTRUCTION: every calendar month the
+# window slides forward, the oldest month drops off the bottom, and the payload
+# silently shrinks. It had already happened by 2026-08 — the committed payload
+# held 144,521 records from a 2026-06 run, while a re-run produced 142,450 with
+# totals_by_month showing 2014-07 and 2014-08 at ZERO. Both months are sitting
+# right there in data/.stale/nuforc_subndx_20140{7,8}.json (2,098 rows); the
+# loop simply stopped visiting them.
+#
+# Nothing can put a dropped month back:
+#   * the live scrape only ever walks its own window, so a month below the floor
+#     is never re-fetched;
+#   * the planetsig historical mirror stops at 2014-05-08, so it cannot backfill
+#     anything above that date.
+# fetch_all() keeps planetsig rows strictly below the live scrape's oldest row,
+# so every month the window sheds becomes a permanent hole between the mirror's
+# end and the window's new bottom — visible above as 2014-06/07/08 = 0.
+#
+# 201405 is chosen deliberately: it is the month the planetsig mirror's coverage
+# ENDS, so the live window starts exactly where the mirror stops and the two
+# sources abut with no gap. (201406 has never been cached and 201405 is only
+# half-covered by the mirror, so a floor here also gives the scrape a chance to
+# close the pre-existing 2014-06 hole the moment nuforc.org is reachable.)
+#
+# THE TRADE-OFF, stated: the window now grows by one month per calendar month
+# instead of sliding, so the committed month cache grows ~120KB/month
+# (~1.4MB/year) forever. That is the same bill the cache-pruning decision below
+# already accepted, and it buys a dataset that never erodes. The alternative —
+# keeping a fixed count — costs ~2,000 unrecoverable sightings per year, in a
+# historical record whose entire value is that it is complete. Repo bytes are
+# cheap and recoverable; NUFORC months below the window are neither.
+NUFORC_LIVE_FLOOR_YM = "201405"
 # A healthy cached CI run pulls only {today_ym, prior_ym}. Anything above this
 # means the committed month cache is not being seen (carve-out broken, cache
 # not committed back, or the rolling window has drifted past it) and the run is
@@ -754,32 +791,72 @@ def _months_back_iter(n: int) -> list[str]:
     return out
 
 
-# DELIBERATELY NOT IMPLEMENTED: pruning cached months that fall out of the
-# rolling window.
+def _months_since(floor_ym: str) -> int:
+    """How many months the window must span to reach back to ``floor_ym``.
+
+    Inclusive of both the current month and ``floor_ym``, and never less than 1,
+    so a malformed or future floor degrades to "just this month" rather than to
+    an empty window.
+    """
+    today = datetime.now(timezone.utc).date()
+    try:
+        fy, fm = int(floor_ym[:4]), int(floor_ym[4:6])
+    except (TypeError, ValueError):
+        return 1
+    return max(1, (today.year * 12 + today.month) - (fy * 12 + fm) + 1)
+
+
+def _window_months(months_back: int | None = None,
+                   floor_ym: str = NUFORC_LIVE_FLOOR_YM) -> list[str]:
+    """The months the live scrape will walk, newest first.
+
+    ``months_back=None`` (the default, and what CI uses) means FLOOR-ANCHORED:
+    walk from the current month back to ``floor_ym`` inclusive. The window then
+    only ever grows, so history cannot erode out from under the payload — see
+    the NUFORC_LIVE_FLOOR_YM note for why that matters and what it costs.
+
+    An explicit integer still means the old relative "last N months" behaviour.
+    That is kept ON PURPOSE for `--months-back N`: a first cold run with no
+    committed cache is the one case where a deliberately short window is the
+    right answer, and it is opt-in rather than the silent default.
+    """
+    n = _months_since(floor_ym) if months_back is None else int(months_back)
+    return _months_back_iter(max(1, n))
+
+
+# DELIBERATELY NOT IMPLEMENTED: pruning cached months.
 #
-# It is tempting — the window slides forward one month per calendar month, so
-# the committed cache grows ~120KB/month forever while the oldest files are
-# never re-read by the scrape loop. But deleting them is DATA LOSS, not
-# housekeeping, because nothing can ever put those rows back:
+# It is tempting — the committed cache grows ~120KB/month forever. But deleting
+# a month is DATA LOSS, not housekeeping, because nothing can ever put those
+# rows back:
 #
-#   * the live scrape only ever walks the window, so a pruned month is never
+#   * the live scrape only walks its window, so a pruned month is never
 #     re-fetched;
 #   * the planetsig historical mirror stops at 2014-05-08, so it cannot backfill
-#     any month the cache drops (the cache floor is already 2014-07).
+#     any month above that date.
 #
-# fetch_all() merges "planetsig below live_cover_min" + "live rows", so raising
-# the cache floor by one month simply punches a permanent, widening hole between
-# 2014-05-08 and the new floor — silently, ~500-900 sightings at a time. With the
-# cache now committed back by pages.yml, a prune would commit those deletions too,
-# making the loss irreversible in git history terms as well.
+# fetch_all() merges "planetsig below live_cover_min" + "live rows", so losing a
+# month at the bottom punches a permanent hole between 2014-05-08 and the new
+# floor — silently, ~500-900 sightings at a time. With the cache committed back
+# by pages.yml, a prune would commit those deletions too, making the loss
+# irreversible in git-history terms as well.
 #
-# ~1.2MB/year of repo growth is a fine price for a dataset that stays whole.
+# The rolling window used to inflict exactly this loss WITHOUT anyone pruning
+# anything, by walking past cached months instead of deleting them. That is why
+# the window is floor-anchored now: the "don't prune" promise below is only worth
+# anything if the reader actually reads what the cache holds.
+#
+# ~1.4MB/year of repo growth is a fine price for a dataset that stays whole.
 
 
-def _fetch_nuforc_live(months_back: int = 144,
+def _fetch_nuforc_live(months_back: int | None = None,
                        wall_clock_cap_sec: float = NUFORC_WALL_CLOCK_CAP_SEC,
                        cache_dir: Path = NUFORC_CACHE_DIR) -> dict:
-    """Scrape the last ``months_back`` months of NUFORC's subndx index.
+    """Scrape NUFORC's subndx index back to ``NUFORC_LIVE_FLOOR_YM``.
+
+    ``months_back=None`` (default) walks every month from now down to the floor,
+    so the window grows rather than slides and no month can fall out of the
+    payload. Pass an integer for the legacy relative "last N months" window.
 
     Returns a dict ``{"rows": [...], "meta": {...}}``. ``rows`` is the
     normalized per-row list (same shape as ``_row_iter`` output). ``meta``
@@ -808,7 +885,7 @@ def _fetch_nuforc_live(months_back: int = 144,
     months_skipped_offline = 0
     stopped_reason: str | None = None
 
-    window = _months_back_iter(months_back)
+    window = _window_months(months_back)
 
     nonce: str | None = None  # lazy-fetch on first network request
     # Set once the network proves unusable (bootstrap page unreachable, or
@@ -946,6 +1023,16 @@ def _fetch_nuforc_live(months_back: int = 144,
     wall_clock_sec = time.monotonic() - start
     if stopped_reason is None:
         stopped_reason = "all_months_processed"
+
+    # Cached months the window did not visit. Under the floor-anchored window
+    # this must be empty; anything here is a month whose rows are on disk but
+    # absent from the payload — the exact silent erosion that cost 2,098
+    # sightings under the old rolling window. Reported, not swallowed.
+    in_window = set(window)
+    orphaned = sorted(
+        p.stem.rsplit("_", 1)[-1] for p in cache_dir.glob("nuforc_subndx_*.json")
+        if p.stem.rsplit("_", 1)[-1] not in in_window)
+
     meta = {
         "months_pulled": months_pulled,
         "months_404": months_404,
@@ -954,7 +1041,17 @@ def _fetch_nuforc_live(months_back: int = 144,
         "network_disabled": network_disabled,
         "wall_clock_sec": round(wall_clock_sec, 1),
         "stopped_reason": stopped_reason,
+        "window_months": len(window),
+        "window_first": window[-1] if window else None,   # oldest walked
+        "window_last": window[0] if window else None,     # newest walked
+        "window_floor": NUFORC_LIVE_FLOOR_YM if months_back is None else None,
+        "cached_months_outside_window": orphaned,
     }
+    if orphaned:
+        print(f"  NUFORC: WARNING {len(orphaned)} cached month(s) fall outside "
+              f"the scrape window and are NOT in this payload: "
+              f"{', '.join(orphaned[:12])}"
+              f"{' ...' if len(orphaned) > 12 else ''}", file=sys.stderr)
     return {"rows": rows, "meta": meta}
 
 
@@ -990,7 +1087,7 @@ def _fetch_planetsig_rows() -> tuple[list[dict], str | None, str | None]:
     return [], None, None
 
 
-def fetch_all(months_back: int = 144,
+def fetch_all(months_back: int | None = None,
               live_scrape: bool = True) -> dict | None:
     """Orchestrate the two-source merge: planetsig (1906-2014) + NUFORC live
     (2014+). The live scrape is the load-bearing improvement; planetsig
@@ -1235,6 +1332,20 @@ def _self_test() -> int:
          "_months_back_iter not descending"),
         (len(_months_back_iter(12)) == 12,
          "_months_back_iter wrong length"),
+        # Floor-anchored window: must reach the floor and must GROW over time,
+        # never slide. Both assertions fail loudly if someone reinstates a
+        # fixed count as the default.
+        (_window_months()[-1] == NUFORC_LIVE_FLOOR_YM,
+         f"floor-anchored window bottom is {_window_months()[-1]!r}, "
+         f"expected {NUFORC_LIVE_FLOOR_YM!r}"),
+        (len(_window_months()) == _months_since(NUFORC_LIVE_FLOOR_YM),
+         "floor-anchored window length disagrees with _months_since"),
+        (len(_window_months()) > 144,
+         f"window is {len(_window_months())} months — a floor-anchored window "
+         f"passed 144 in 2026-09 and only grows; a value at or below 144 means "
+         f"the rolling window is back and history is eroding again"),
+        (_window_months(3) == _months_back_iter(3),
+         "explicit --months-back no longer produces the relative window"),
     ]
     failed = [m for ok, m in checks if not ok]
     if failed:
@@ -1254,10 +1365,14 @@ def main(argv: list[str] | None = None) -> int:
                     help=f"Output JSON path (default: {DEFAULT_OUT})")
     ap.add_argument("--no-network", action="store_true",
                     help="Run offline parser self-test and exit (no HTTP).")
-    ap.add_argument("--months-back", type=int, default=144,
-                    help="How many months of NUFORC data to scrape "
-                         "(default 144 = 12 years). Set lower if the first "
-                         "run is too slow.")
+    ap.add_argument("--months-back", type=int, default=None,
+                    help="How many months of NUFORC data to scrape. Default is "
+                         f"floor-anchored: every month back to "
+                         f"{NUFORC_LIVE_FLOOR_YM} (where the planetsig mirror "
+                         "ends), so the window grows instead of sliding and no "
+                         "month can drop out of the payload. Pass an integer "
+                         "for the legacy relative window — useful only for a "
+                         "first cold run with no committed month cache.")
     ap.add_argument("--no-live", action="store_true",
                     help="Skip the NUFORC live scrape (planetsig only).")
     args = ap.parse_args(argv)

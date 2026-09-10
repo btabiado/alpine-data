@@ -1,0 +1,166 @@
+name: data-health
+
+# The monitoring agent. Supersedes data-freshness-check.yml, which this PR
+# deletes — two watchdogs that can disagree about what "stale" means is worse
+# than one, because the disagreement is what everybody argues about instead of
+# fixing the feed.
+#
+# WHY THIS EXISTS IN THIS SHAPE
+# The previous watchdog did detect staleness, and then reported it by turning a
+# workflow red. That is the same channel that swallowed 30 consecutive TSA
+# failures before anyone noticed — its own docstring says so. A red check on a
+# page nobody opens is not an alarm, it is a diary entry.
+#
+# So this workflow does two things the old one did not:
+#   1. Files the result as a GitHub ISSUE — opened on first failure, EDITED IN
+#      PLACE while it persists (never spams), CLOSED automatically on recovery.
+#      An issue notifies, shows on the repo home page, and survives neglect.
+#   2. Attempts ONE self-heal per stale feed before alarming, so a transient
+#      upstream blip fixes itself and only real breakage reaches you.
+#
+# WHAT IS NOT WIRED YET, STATED PLAINLY
+# scripts/data_health.py also has a `--mode built`, which judges the
+# deploy-time artifacts (market/whale/metals/cpi/supplies and the data/ build
+# caches) against the REAL generated files instead of the committed
+# placeholders. That is the gap that hid the crypto breadth freeze for three
+# months: fetch_market rewrote data-*.json every hour while the series inside
+# them stale-kept, so the file was perpetually fresh and the data was not.
+# Running it needs a step inside pages.yml, AFTER the build — pages.yml is not
+# touched by this change, so today `built` is reachable only via the
+# workflow_dispatch input below. Saying so here rather than implying coverage
+# that does not exist: an over-claimed monitor is how the last one failed.
+#
+# Auto-remediation deliberately commits nothing on its own. It re-runs the
+# owning fetcher; the fetchers themselves refuse to write a partial or
+# regressing parse. If a retry succeeds, the feed's normal cron picks up the
+# real refresh on its next tick. A watchdog that force-pushes data it healed
+# itself is one bad parse away from destroying history.
+
+on:
+  schedule:
+    # 15:00 UTC — after the daily fetch crons (06:00 city, 08:30 money-flow,
+    # 09:15 etf-flows, 14:10 tsa) have all had their chance to run and commit.
+    # Checking before them would alarm on yesterday's data every morning.
+    - cron: "0 15 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "committed (default) or built"
+        required: false
+        default: committed
+        type: choice
+        options: [committed, built]
+      remediate:
+        description: "attempt one self-heal per stale feed before alarming"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: data-health-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # `inputs.*` is empty on a schedule run, so both fall back to the cron
+  # defaults. Resolved once here rather than repeated in three `run:` blocks
+  # where they could drift apart.
+  MODE: ${{ inputs.mode || 'committed' }}
+  REMEDIATE: ${{ (github.event_name != 'workflow_dispatch' || inputs.remediate) && '--remediate' || '' }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+
+      - name: Check data health (with one self-heal attempt)
+        id: check
+        # This step must NOT fail. The issue is the alarm channel, and a hard
+        # exit here would skip the reporting steps below — reproducing the exact
+        # silent-failure pattern this workflow exists to eliminate.
+        #
+        # rc is captured into a variable rather than tested via $? inside a
+        # command substitution: $? inside $( ) refers to the subshell's own
+        # state, not the python exit code, which would pin `healthy` to one
+        # value forever and either never alarm or always alarm.
+        #
+        # No pipe and no separate summary step: data_health.py appends the full
+        # report to $GITHUB_STEP_SUMMARY itself. Re-running it to build a
+        # summary would evaluate the feeds a third time and could print a
+        # verdict contradicting the one that decided whether to file the issue.
+        run: |
+          set +e
+          python scripts/data_health.py --mode "$MODE" $REMEDIATE
+          rc=$?
+          set -e
+          if [ "$rc" -eq 0 ]; then
+            echo "healthy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "healthy=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "data_health exited $rc"
+        shell: bash
+
+      - name: Build issue body
+        if: steps.check.outputs.healthy == 'false'
+        # No --remediate here: the retries already ran above, and re-running
+        # them would double every fetch and could report a different verdict
+        # than the one that decided to open the issue.
+        run: python scripts/data_health.py --mode "$MODE" --report issue > /tmp/issue-body.md
+
+      - name: Open or update the tracking issue
+        if: steps.check.outputs.healthy == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TITLE="Data health: one or more feeds are stale"
+          # Create the label idempotently — `gh issue create --label` hard-fails
+          # on a label that does not exist yet, which would mean the very first
+          # alarm this workflow ever tries to raise is the one that gets lost.
+          gh label create data-health \
+            --color B60205 \
+            --description "Automated data-feed staleness reports" \
+            --force >/dev/null 2>&1 || true
+          # Search by exact title among open issues carrying our label, so we
+          # edit the existing board instead of filing a new issue every day.
+          EXISTING=$(gh issue list --label data-health --state open \
+                       --json number,title \
+                       --jq ".[] | select(.title == \"$TITLE\") | .number" | head -1)
+          if [ -n "$EXISTING" ]; then
+            gh issue edit "$EXISTING" --body-file /tmp/issue-body.md
+            echo "updated issue #$EXISTING"
+          else
+            gh issue create --title "$TITLE" \
+                            --body-file /tmp/issue-body.md \
+                            --label data-health
+          fi
+
+      - name: Close the tracking issue on recovery
+        if: steps.check.outputs.healthy == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          TITLE="Data health: one or more feeds are stale"
+          # Tolerant of the label not existing yet: on a repo that has never
+          # alarmed there is nothing to close, and that is a success, not an
+          # error worth failing the healthy path over.
+          EXISTING=$(gh issue list --label data-health --state open \
+                       --json number,title \
+                       --jq ".[] | select(.title == \"$TITLE\") | .number" \
+                       2>/dev/null | head -1 || true)
+          if [ -n "$EXISTING" ]; then
+            gh issue close "$EXISTING" \
+              --comment "All feeds healthy as of $(date -u +'%Y-%m-%d %H:%M') UTC. Closed automatically by data-health.yml."
+            echo "closed issue #$EXISTING"
+          fi

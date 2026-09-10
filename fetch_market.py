@@ -4511,6 +4511,10 @@ def build_money_flow_payload() -> dict:
             "mfi_hist": mfi_hist,
             "cmf": _mf.cmf(bars, 20) if bars else None,
             "dollar_volume": (last["close"] * last["volume"]) if last else 0.0,
+            # Observation date of the MFI/CMF half of this leg: the newest BAR,
+            # not the moment yahoo_chart_history() ran. Widened below to the
+            # older of (bar, ETF-flow row) once the flow leg lands.
+            "as_of": (last or {}).get("date"),
         }
 
     # --- per-index ETF flow (ΔSO × NAV) -------------------------------------
@@ -4520,11 +4524,19 @@ def build_money_flow_payload() -> dict:
         etf_block = _eef.main(write=True) or {}
         for tk in MFX_ETFS:
             t = (etf_block.get("tickers") or {}).get(tk) or {}
+            hist = [h for h in (t.get("history") or [])
+                    if h.get("net_flow_musd") is not None]
             legs[tk]["etf_flow"] = t.get("net_flow_musd")
-            legs[tk]["etf_flow_hist"] = [
-                h.get("net_flow_musd") for h in (t.get("history") or [])
-                if h.get("net_flow_musd") is not None
-            ]
+            legs[tk]["etf_flow_hist"] = [h["net_flow_musd"] for h in hist]
+            # The flow leg's own data date is the newest history ROW's date.
+            # Deliberately NOT etf_block["as_of"] — fetch_equity_etf_flows sets
+            # that from _today(), i.e. when the fetcher ran, which is precisely
+            # the clock read this whole change exists to stop propagating.
+            flow_day = max((h.get("date") or "" for h in hist), default="")
+            # A leg fuses two components, so it is only as fresh as the OLDER of
+            # them (same min-not-max rule the composite applies one level up).
+            days = [d for d in (legs[tk].get("as_of"), flow_day or None) if d]
+            legs[tk]["as_of"] = min(days) if days else None
     except Exception as e:
         print(f"  [money_flow] equity ETF flows failed: {e}", file=sys.stderr)
 
@@ -4539,25 +4551,45 @@ def build_money_flow_payload() -> dict:
     except Exception as e:
         print(f"  [money_flow] ICI flows failed: {e}", file=sys.stderr)
 
-    mmf_totals = [w.get("total") for w in (mmf_block.get("weekly") or []) if w.get("total") is not None]
+    # Keep each weekly row's own date next to its value. The ICI blocks carry a
+    # top-level `as_of` too, but fetch_money_flows sets it with _now_iso() —
+    # when the download happened, not what week the data describes. ICI
+    # publishes weekly with a multi-day lag, so those differ by design and the
+    # row date is the only honest one.
+    mmf_rows = [w for w in (mmf_block.get("weekly") or []) if w.get("total") is not None]
+    mmf_totals = [w["total"] for w in mmf_rows]
     mmf_wow_hist = [round(mmf_totals[i] - mmf_totals[i - 1], 2) for i in range(1, len(mmf_totals))]
+    # A week-over-week CHANGE observes the newer of the two weeks it spans.
+    mmf_as_of = mmf_rows[-1].get("date") if len(mmf_rows) >= 2 else None
 
-    ici_eq_hist = [
-        w.get("total_equity") for w in (mf_flows_block.get("weekly") or [])
-        if w.get("total_equity") is not None
-    ]
+    ici_rows = [w for w in (mf_flows_block.get("weekly") or [])
+                if w.get("total_equity") is not None]
+    ici_eq_hist = [w["total_equity"] for w in ici_rows]
+    ici_as_of = ici_rows[-1].get("date") if ici_rows else None
 
     market: dict = dict(legs)
     market["ici_equity_flow"] = ici_eq_hist[-1] if ici_eq_hist else None
     market["ici_equity_flow_hist"] = ici_eq_hist
+    market["ici_as_of"] = ici_as_of
     market["mmf_wow_change"] = mmf_wow_hist[-1] if mmf_wow_hist else None
     market["mmf_wow_change_hist"] = mmf_wow_hist
+    market["mmf_as_of"] = mmf_as_of
+    # No market-wide `as_of` override is set on purpose: there is no single
+    # observation for a four-leg composite, so build_money_flow_index() derives
+    # it as the OLDEST contributing leg (or None). Setting one here would be
+    # this function asserting a date it does not have.
 
     try:
         mfx = _mf.build_money_flow_index({"market": market})
     except Exception as e:
         print(f"  [money_flow] composite failed: {e}", file=sys.stderr)
-        mfx = {"headline": {"score": 0, "label": "Neutral", "components": []}, "per_index": []}
+        # as_of stays explicitly None: a gauge built from nothing has no
+        # observation date, and "today" would be a fabricated one.
+        mfx = {"as_of": None,
+               "as_of_inputs": {"resolved_from": f"composite failed: {e}",
+                                "legs": {}, "undated_contributors": []},
+               "headline": {"score": 0, "label": "Neutral", "components": []},
+               "per_index": []}
 
     mfx["sources"] = {
         "mmf": mmf_block,

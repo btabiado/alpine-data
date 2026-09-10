@@ -312,10 +312,38 @@ def score_city(*, id, name, scope, pillar_objs, disclosures, weights=None):
     ``context`` (None in P0) / ``disclosures`` / ``data_health``.
 
     ``data_health.feeds_ok`` counts feeds with status ``ok`` across all
-    pillars; ``feeds_total`` is fixed at 3 (the backbone: one feed per
-    pillar). ``last_updated`` is the max feed ``recent_period`` rendered as an
-    ISO8601 UTC timestamp (start of that month), or ``generated`` now if no
-    feed has scored.
+    pillars; ``feeds_total`` is fixed at 3 (the backbone: one feed per pillar).
+
+    ``last_updated`` — READ THIS BEFORE COMPARING IT TO A CLOCK
+    ---------------------------------------------------------
+    It is the age of the DATA, not of the fetch and not of the file. Every feed
+    here is a MONTHLY series, so the value is a data *month* rendered as the
+    first instant of that month in UTC (``2026-07`` -> ``2026-07-01T00:00:00+00:00``).
+    Even a perfectly healthy city can therefore never read younger than
+    ~28-60 days: the newest COMPLETE month is by definition last month, and
+    several feeds lag a further month on top of that. A monitor that judges
+    this field against an hours-scale budget will report a healthy city as
+    catastrophically stale forever. Budget it in months.
+
+    Which month is chosen: the **OLDEST** ``recent_period`` among the feeds that
+    actually put a data point in this payload (status ``ok`` or ``stale``), not
+    the newest. A city Pulse is a composite, and a composite is only as fresh as
+    its oldest input — Chicago's crime feed lags a month, so a Chicago card
+    built partly from March numbers is March-fresh, not April-fresh. Taking the
+    max reported the most flattering feed and hid exactly the rot this field
+    exists to expose (Miami read as April-fresh off a working permits feed while
+    its 311 pillar sat on a frozen 2023 snapshot).
+
+    Feeds with NO period at all (``not_published`` / ``fetch_error`` / an empty
+    ``insufficient_history``) are ABSENT, not old: they contribute no reading,
+    so they cannot drag the minimum down. Their absence is disclosed separately
+    and honestly by ``feeds_ok`` and ``pulse.pillars_present``.
+
+    ``last_updated`` is ``None`` when no feed reported any period at all. It is
+    deliberately NOT back-filled with ``datetime.now()``: a clock read is a
+    statement about this process, not about the data, and stamping "now" on a
+    city that produced nothing would make the emptiest city on the page look
+    like the freshest.
     """
     pillar_objs = list(pillar_objs)
     c = _composite(pillar_objs, weights)
@@ -332,24 +360,27 @@ def score_city(*, id, name, scope, pillar_objs, disclosures, weights=None):
         "pillars": pillar_objs,
     }
 
-    # data_health: count ok feeds and find the latest scored period.
+    # data_health: count ok feeds and find the OLDEST period actually present.
     feeds_ok = 0
-    latest_period = None
+    oldest_period = None
     for p in pillar_objs:
         for f in p.get("feeds", []):
             if f.get("status") == "ok":
                 feeds_ok += 1
             rp = f.get("recent_period")
-            if rp is not None and (latest_period is None
-                                   or _parse_month(rp) > _parse_month(latest_period)):
-                latest_period = rp
+            if rp is not None and (oldest_period is None
+                                   or _parse_month(rp) < _parse_month(oldest_period)):
+                oldest_period = rp
 
-    if latest_period is not None:
-        idx = _parse_month(latest_period)
+    if oldest_period is not None:
+        idx = _parse_month(oldest_period)
         year, mon0 = divmod(idx, 12)
         last_updated = datetime(year, mon0 + 1, 1, tzinfo=timezone.utc).isoformat()
     else:
-        last_updated = datetime.now(timezone.utc).isoformat()
+        # No feed produced a reading. Absence is not a timestamp — say null.
+        # (This used to be datetime.now(), which dressed an empty city up as
+        # the freshest thing on the page.)
+        last_updated = None
 
     data_health = {
         "feeds_ok": feeds_ok,
