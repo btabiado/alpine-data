@@ -1,12 +1,12 @@
 {
   "as_of": "2026-09-12",
-  "generated_at": "2026-09-12T19:12:06Z",
+  "generated_at": "2026-09-12T22:08:47Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-09-12",
       "label": null,
-      "note": "40 coins; 6 buy+, 6 sell+",
-      "score": 0,
+      "note": "40 coins; 7 buy+, 6 sell+",
+      "score": 2,
       "stale": false
     },
     "lthcs_composite": {
