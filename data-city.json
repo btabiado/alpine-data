@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-12T11:24:58Z",
+  "generated_at": "2026-09-13T12:26:52Z",
   "methodology_version": "1.1",
   "as_of": "2026-04",
   "methodology_disclosures": [
@@ -22,17 +22,17 @@
       "name": "Chicago",
       "scope": "city",
       "pulse": {
-        "score": 58,
-        "glyph": "up",
-        "label": "Improving",
-        "pillars_present": 1,
+        "score": 47,
+        "glyph": "down",
+        "label": "Worsening",
+        "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": 0.4653473717009862,
+        "composite_c": -0.1725659537324397,
         "pillars": [
           {
             "key": "city_services",
             "name": "City Services",
-            "score_d": null,
+            "score_d": -1.2784915386466011,
             "feeds": [
               {
                 "label": "311 Service Requests",
@@ -40,22 +40,167 @@
                 "polarity": -1,
                 "complete_through": "2026-04",
                 "note": null,
-                "status": "not_published",
-                "recent": null,
-                "recent_period": null,
-                "baseline_mean": null,
-                "baseline_std": null,
-                "z": null,
-                "yoy_pct": null,
-                "d": null,
-                "series": null
+                "status": "ok",
+                "recent": 187464,
+                "recent_period": "2026-04",
+                "baseline_mean": 168263.41666666666,
+                "baseline_std": 15018.15440535406,
+                "z": 1.2784915386466011,
+                "yoy_pct": 19.11097556326484,
+                "d": -1.2784915386466011,
+                "series": [
+                  {
+                    "month": "2023-05",
+                    "n": 142279
+                  },
+                  {
+                    "month": "2023-06",
+                    "n": 150551
+                  },
+                  {
+                    "month": "2023-07",
+                    "n": 179495
+                  },
+                  {
+                    "month": "2023-08",
+                    "n": 182028
+                  },
+                  {
+                    "month": "2023-09",
+                    "n": 159696
+                  },
+                  {
+                    "month": "2023-10",
+                    "n": 159729
+                  },
+                  {
+                    "month": "2023-11",
+                    "n": 147721
+                  },
+                  {
+                    "month": "2023-12",
+                    "n": 145250
+                  },
+                  {
+                    "month": "2024-01",
+                    "n": 157206
+                  },
+                  {
+                    "month": "2024-02",
+                    "n": 152505
+                  },
+                  {
+                    "month": "2024-03",
+                    "n": 164774
+                  },
+                  {
+                    "month": "2024-04",
+                    "n": 174949
+                  },
+                  {
+                    "month": "2024-05",
+                    "n": 184625
+                  },
+                  {
+                    "month": "2024-06",
+                    "n": 178716
+                  },
+                  {
+                    "month": "2024-07",
+                    "n": 186745
+                  },
+                  {
+                    "month": "2024-08",
+                    "n": 163848
+                  },
+                  {
+                    "month": "2024-09",
+                    "n": 144004
+                  },
+                  {
+                    "month": "2024-10",
+                    "n": 147618
+                  },
+                  {
+                    "month": "2024-11",
+                    "n": 128952
+                  },
+                  {
+                    "month": "2024-12",
+                    "n": 129987
+                  },
+                  {
+                    "month": "2025-01",
+                    "n": 134747
+                  },
+                  {
+                    "month": "2025-02",
+                    "n": 129388
+                  },
+                  {
+                    "month": "2025-03",
+                    "n": 150669
+                  },
+                  {
+                    "month": "2025-04",
+                    "n": 157386
+                  },
+                  {
+                    "month": "2025-05",
+                    "n": 174901
+                  },
+                  {
+                    "month": "2025-06",
+                    "n": 177333
+                  },
+                  {
+                    "month": "2025-07",
+                    "n": 191081
+                  },
+                  {
+                    "month": "2025-08",
+                    "n": 193062
+                  },
+                  {
+                    "month": "2025-09",
+                    "n": 168158
+                  },
+                  {
+                    "month": "2025-10",
+                    "n": 174490
+                  },
+                  {
+                    "month": "2025-11",
+                    "n": 155418
+                  },
+                  {
+                    "month": "2025-12",
+                    "n": 153962
+                  },
+                  {
+                    "month": "2026-01",
+                    "n": 154830
+                  },
+                  {
+                    "month": "2026-02",
+                    "n": 142303
+                  },
+                  {
+                    "month": "2026-03",
+                    "n": 176237
+                  },
+                  {
+                    "month": "2026-04",
+                    "n": 187464
+                  }
+                ]
               }
             ]
           },
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": null,
+            "score_d": 0.29544630574829595,
             "feeds": [
               {
                 "label": "Crimes 2001-present",
@@ -63,15 +208,160 @@
                 "polarity": -1,
                 "complete_through": "2026-03",
                 "note": "excludes last ~7 days; latest complete month lags to prior month",
-                "status": "not_published",
-                "recent": null,
-                "recent_period": null,
-                "baseline_mean": null,
-                "baseline_std": null,
-                "z": null,
-                "yoy_pct": null,
-                "d": null,
-                "series": null
+                "status": "ok",
+                "recent": 19163,
+                "recent_period": "2026-03",
+                "baseline_mean": 19704.5,
+                "baseline_std": 1832.8203448965387,
+                "z": -0.29544630574829595,
+                "yoy_pct": -3.3343422114608554,
+                "d": 0.29544630574829595,
+                "series": [
+                  {
+                    "month": "2023-04",
+                    "n": 20849
+                  },
+                  {
+                    "month": "2023-05",
+                    "n": 22323
+                  },
+                  {
+                    "month": "2023-06",
+                    "n": 22814
+                  },
+                  {
+                    "month": "2023-07",
+                    "n": 24110
+                  },
+                  {
+                    "month": "2023-08",
+                    "n": 24281
+                  },
+                  {
+                    "month": "2023-09",
+                    "n": 22696
+                  },
+                  {
+                    "month": "2023-10",
+                    "n": 23151
+                  },
+                  {
+                    "month": "2023-11",
+                    "n": 21472
+                  },
+                  {
+                    "month": "2023-12",
+                    "n": 21372
+                  },
+                  {
+                    "month": "2024-01",
+                    "n": 19710
+                  },
+                  {
+                    "month": "2024-02",
+                    "n": 19987
+                  },
+                  {
+                    "month": "2024-03",
+                    "n": 20953
+                  },
+                  {
+                    "month": "2024-04",
+                    "n": 20532
+                  },
+                  {
+                    "month": "2024-05",
+                    "n": 23031
+                  },
+                  {
+                    "month": "2024-06",
+                    "n": 23244
+                  },
+                  {
+                    "month": "2024-07",
+                    "n": 24149
+                  },
+                  {
+                    "month": "2024-08",
+                    "n": 23046
+                  },
+                  {
+                    "month": "2024-09",
+                    "n": 23026
+                  },
+                  {
+                    "month": "2024-10",
+                    "n": 22522
+                  },
+                  {
+                    "month": "2024-11",
+                    "n": 19764
+                  },
+                  {
+                    "month": "2024-12",
+                    "n": 19650
+                  },
+                  {
+                    "month": "2025-01",
+                    "n": 18564
+                  },
+                  {
+                    "month": "2025-02",
+                    "n": 16579
+                  },
+                  {
+                    "month": "2025-03",
+                    "n": 19824
+                  },
+                  {
+                    "month": "2025-04",
+                    "n": 19723
+                  },
+                  {
+                    "month": "2025-05",
+                    "n": 20562
+                  },
+                  {
+                    "month": "2025-06",
+                    "n": 21179
+                  },
+                  {
+                    "month": "2025-07",
+                    "n": 22708
+                  },
+                  {
+                    "month": "2025-08",
+                    "n": 21385
+                  },
+                  {
+                    "month": "2025-09",
+                    "n": 20403
+                  },
+                  {
+                    "month": "2025-10",
+                    "n": 21047
+                  },
+                  {
+                    "month": "2025-11",
+                    "n": 18489
+                  },
+                  {
+                    "month": "2025-12",
+                    "n": 17585
+                  },
+                  {
+                    "month": "2026-01",
+                    "n": 17011
+                  },
+                  {
+                    "month": "2026-02",
+                    "n": 16538
+                  },
+                  {
+                    "month": "2026-03",
+                    "n": 19163
+                  }
+                ]
               }
             ]
           },
@@ -259,7 +549,7 @@
         "Crimes 2001-present: excludes last ~7 days; latest complete month lags to prior month"
       ],
       "data_health": {
-        "feeds_ok": 1,
+        "feeds_ok": 3,
         "feeds_total": 3,
         "last_updated": "2026-04-01T00:00:00+00:00"
       },
@@ -770,17 +1060,17 @@
       "name": "New York City",
       "scope": "city",
       "pulse": {
-        "score": 57,
+        "score": 58,
         "glyph": "up",
         "label": "Improving",
-        "pillars_present": 2,
+        "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": 0.39378956481226335,
+        "composite_c": 0.479679839364992,
         "pillars": [
           {
             "key": "city_services",
             "name": "City Services",
-            "score_d": null,
+            "score_d": 0.6514603884704492,
             "feeds": [
               {
                 "label": "311 (2010-present)",
@@ -788,15 +1078,160 @@
                 "polarity": -1,
                 "complete_through": "2026-04",
                 "note": "~38M rows; REQUIRES app token + recent $where filter or it times out",
-                "status": "not_published",
-                "recent": null,
-                "recent_period": null,
-                "baseline_mean": null,
-                "baseline_std": null,
-                "z": null,
-                "yoy_pct": null,
-                "d": null,
-                "series": null
+                "status": "ok",
+                "recent": 302190,
+                "recent_period": "2026-04",
+                "baseline_mean": 316322.0,
+                "baseline_std": 21692.800130458032,
+                "z": -0.6514603884704492,
+                "yoy_pct": 10.875475602552202,
+                "d": 0.6514603884704492,
+                "series": [
+                  {
+                    "month": "2023-05",
+                    "n": 280932
+                  },
+                  {
+                    "month": "2023-06",
+                    "n": 267168
+                  },
+                  {
+                    "month": "2023-07",
+                    "n": 289330
+                  },
+                  {
+                    "month": "2023-08",
+                    "n": 282757
+                  },
+                  {
+                    "month": "2023-09",
+                    "n": 283517
+                  },
+                  {
+                    "month": "2023-10",
+                    "n": 302769
+                  },
+                  {
+                    "month": "2023-11",
+                    "n": 280046
+                  },
+                  {
+                    "month": "2023-12",
+                    "n": 271817
+                  },
+                  {
+                    "month": "2024-01",
+                    "n": 287186
+                  },
+                  {
+                    "month": "2024-02",
+                    "n": 240436
+                  },
+                  {
+                    "month": "2024-03",
+                    "n": 266604
+                  },
+                  {
+                    "month": "2024-04",
+                    "n": 267565
+                  },
+                  {
+                    "month": "2024-05",
+                    "n": 283982
+                  },
+                  {
+                    "month": "2024-06",
+                    "n": 306200
+                  },
+                  {
+                    "month": "2024-07",
+                    "n": 298936
+                  },
+                  {
+                    "month": "2024-08",
+                    "n": 284823
+                  },
+                  {
+                    "month": "2024-09",
+                    "n": 306770
+                  },
+                  {
+                    "month": "2024-10",
+                    "n": 306803
+                  },
+                  {
+                    "month": "2024-11",
+                    "n": 293515
+                  },
+                  {
+                    "month": "2024-12",
+                    "n": 313949
+                  },
+                  {
+                    "month": "2025-01",
+                    "n": 348180
+                  },
+                  {
+                    "month": "2025-02",
+                    "n": 255364
+                  },
+                  {
+                    "month": "2025-03",
+                    "n": 281221
+                  },
+                  {
+                    "month": "2025-04",
+                    "n": 272549
+                  },
+                  {
+                    "month": "2025-05",
+                    "n": 295058
+                  },
+                  {
+                    "month": "2025-06",
+                    "n": 306442
+                  },
+                  {
+                    "month": "2025-07",
+                    "n": 315883
+                  },
+                  {
+                    "month": "2025-08",
+                    "n": 304039
+                  },
+                  {
+                    "month": "2025-09",
+                    "n": 302684
+                  },
+                  {
+                    "month": "2025-10",
+                    "n": 336612
+                  },
+                  {
+                    "month": "2025-11",
+                    "n": 304905
+                  },
+                  {
+                    "month": "2025-12",
+                    "n": 332103
+                  },
+                  {
+                    "month": "2026-01",
+                    "n": 348511
+                  },
+                  {
+                    "month": "2026-02",
+                    "n": 334690
+                  },
+                  {
+                    "month": "2026-03",
+                    "n": 342388
+                  },
+                  {
+                    "month": "2026-04",
+                    "n": 302190
+                  }
+                ]
               }
             ]
           },
@@ -1154,7 +1589,7 @@
         "DOB Permit Issuance: issuance_date is TEXT -> date_trunc_ym fails. Bucket via substring(issuance_date,7,4)||'-'||substring(issuance_date,1,2) and filter IS NOT NULL, OR use dobrundate (real calendar_date, ~1-day proxy)."
       ],
       "data_health": {
-        "feeds_ok": 2,
+        "feeds_ok": 3,
         "feeds_total": 3,
         "last_updated": "2026-04-01T00:00:00+00:00"
       },
@@ -1326,15 +1761,160 @@
           "polarity": -1,
           "complete_through": "2026-04",
           "note": "CONFIRMED live (max crash_date 2026-05-26; ~6-6.7k/mo, dense). NYC Vision Zero crash file. Polarity -1: fewer collisions is favorable. pillar_hint public_safety, SUPPLEMENTARY (display alongside the NYPD-complaints pillar, not summed in). Latest complete month 2026-04.",
-          "status": "not_published",
-          "recent": null,
-          "recent_period": null,
-          "baseline_mean": null,
-          "baseline_std": null,
-          "z": null,
-          "yoy_pct": null,
-          "d": null,
-          "series": null
+          "status": "ok",
+          "recent": 6665,
+          "recent_period": "2026-04",
+          "baseline_mean": 7172.083333333333,
+          "baseline_std": 361.1180458735835,
+          "z": -1.4042038029604522,
+          "yoy_pct": -3.740612362796072,
+          "d": 1.4042038029604522,
+          "series": [
+            {
+              "month": "2023-05",
+              "n": 8995
+            },
+            {
+              "month": "2023-06",
+              "n": 8191
+            },
+            {
+              "month": "2023-07",
+              "n": 8243
+            },
+            {
+              "month": "2023-08",
+              "n": 8014
+            },
+            {
+              "month": "2023-09",
+              "n": 8293
+            },
+            {
+              "month": "2023-10",
+              "n": 8717
+            },
+            {
+              "month": "2023-11",
+              "n": 7860
+            },
+            {
+              "month": "2023-12",
+              "n": 7994
+            },
+            {
+              "month": "2024-01",
+              "n": 7542
+            },
+            {
+              "month": "2024-02",
+              "n": 6841
+            },
+            {
+              "month": "2024-03",
+              "n": 7861
+            },
+            {
+              "month": "2024-04",
+              "n": 7161
+            },
+            {
+              "month": "2024-05",
+              "n": 8196
+            },
+            {
+              "month": "2024-06",
+              "n": 7967
+            },
+            {
+              "month": "2024-07",
+              "n": 7496
+            },
+            {
+              "month": "2024-08",
+              "n": 7640
+            },
+            {
+              "month": "2024-09",
+              "n": 7842
+            },
+            {
+              "month": "2024-10",
+              "n": 7796
+            },
+            {
+              "month": "2024-11",
+              "n": 7364
+            },
+            {
+              "month": "2024-12",
+              "n": 7610
+            },
+            {
+              "month": "2025-01",
+              "n": 6482
+            },
+            {
+              "month": "2025-02",
+              "n": 5988
+            },
+            {
+              "month": "2025-03",
+              "n": 7035
+            },
+            {
+              "month": "2025-04",
+              "n": 6924
+            },
+            {
+              "month": "2025-05",
+              "n": 7636
+            },
+            {
+              "month": "2025-06",
+              "n": 7483
+            },
+            {
+              "month": "2025-07",
+              "n": 7410
+            },
+            {
+              "month": "2025-08",
+              "n": 6989
+            },
+            {
+              "month": "2025-09",
+              "n": 7537
+            },
+            {
+              "month": "2025-10",
+              "n": 7537
+            },
+            {
+              "month": "2025-11",
+              "n": 7148
+            },
+            {
+              "month": "2025-12",
+              "n": 7377
+            },
+            {
+              "month": "2026-01",
+              "n": 6773
+            },
+            {
+              "month": "2026-02",
+              "n": 6492
+            },
+            {
+              "month": "2026-03",
+              "n": 6759
+            },
+            {
+              "month": "2026-04",
+              "n": 6665
+            }
+          ]
         }
       ]
     },
@@ -1343,17 +1923,17 @@
       "name": "Los Angeles",
       "scope": "city",
       "pulse": {
-        "score": 58,
+        "score": 66,
         "glyph": "up",
         "label": "Improving",
-        "pillars_present": 3,
+        "pillars_present": 2,
         "pillars_total": 3,
-        "composite_c": 0.47745319316981244,
+        "composite_c": 0.9351437278379873,
         "pillars": [
           {
             "key": "city_services",
             "name": "City Services",
-            "score_d": -0.4379278761665374,
+            "score_d": null,
             "feeds": [
               {
                 "label": "MyLA311 Cases",
@@ -1361,72 +1941,15 @@
                 "polarity": -1,
                 "complete_through": "2026-04",
                 "note": "RESOLVED: LA retired the 'MyLA311 Service Request Data {year}' series ~Aug 2025 (old h73f-gn57=2025 is dead for current data). Current product = 'MyLA311 Cases {year}'. 2026 = 2cy6-i7zn (date col createddate, live, ~185k/mo). Baseline = 73a2-6ar5 ('MyLA311 Cases March 2025 to December 2025'). Resolve current-year by catalog search: GET data.lacity.org/api/catalog/v1?q=MyLA311%20Cases -> item titled 'MyLA311 Cases {currentYear}'. Do NOT auto-build '...Service Request Data {year}' IDs.",
-                "status": "ok",
-                "recent": 199584,
-                "recent_period": "2026-04",
-                "baseline_mean": 192600.83333333334,
-                "baseline_std": 15945.928648787509,
-                "z": 0.4379278761665374,
-                "yoy_pct": 3.037155203122338,
-                "d": -0.4379278761665374,
-                "series": [
-                  {
-                    "month": "2025-03",
-                    "n": 17534
-                  },
-                  {
-                    "month": "2025-04",
-                    "n": 193701
-                  },
-                  {
-                    "month": "2025-05",
-                    "n": 190726
-                  },
-                  {
-                    "month": "2025-06",
-                    "n": 185341
-                  },
-                  {
-                    "month": "2025-07",
-                    "n": 219739
-                  },
-                  {
-                    "month": "2025-08",
-                    "n": 200912
-                  },
-                  {
-                    "month": "2025-09",
-                    "n": 188921
-                  },
-                  {
-                    "month": "2025-10",
-                    "n": 191436
-                  },
-                  {
-                    "month": "2025-11",
-                    "n": 161397
-                  },
-                  {
-                    "month": "2025-12",
-                    "n": 190662
-                  },
-                  {
-                    "month": "2026-01",
-                    "n": 198816
-                  },
-                  {
-                    "month": "2026-02",
-                    "n": 170823
-                  },
-                  {
-                    "month": "2026-03",
-                    "n": 218736
-                  },
-                  {
-                    "month": "2026-04",
-                    "n": 199584
-                  }
-                ]
+                "status": "not_published",
+                "recent": null,
+                "recent_period": null,
+                "baseline_mean": null,
+                "baseline_std": null,
+                "z": null,
+                "yoy_pct": null,
+                "d": null,
+                "series": null
               }
             ]
           },
@@ -1783,7 +2306,7 @@
         "LAPD NIBRS Offenses: UNION SEAM CONFIRMED: baseline y8y3-fqfu complete through 2025-12; live k7nn-b2ep dense from 2026-01. Both keyed on date_occ. Clip baseline to trailing window - both tables hold a few dirty pre-2010 dates from data-entry errors; ignore raw MIN(date_occ). Legacy 2nrs-mtv8 frozen - never poll."
       ],
       "data_health": {
-        "feeds_ok": 3,
+        "feeds_ok": 2,
         "feeds_total": 3,
         "last_updated": "2026-04-01T00:00:00+00:00"
       }
@@ -2022,7 +2545,7 @@
                   },
                   {
                     "month": "2024-01",
-                    "n": 6985
+                    "n": 6986
                   },
                   {
                     "month": "2024-02",
@@ -2589,7 +3112,7 @@
       "data_health": {
         "feeds_ok": 0,
         "feeds_total": 3,
-        "last_updated": "2026-09-12T11:24:57.400433+00:00"
+        "last_updated": "2026-09-13T12:26:52.049314+00:00"
       },
       "extended": [
         {
