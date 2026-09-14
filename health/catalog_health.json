@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-09-07T14:12:13+00:00",
+  "checked_at": "2026-09-14T14:58:04+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1931,
-    "gated": 166,
-    "dead": 21,
-    "unreachable": 74
+    "ok": 1921,
+    "gated": 172,
+    "dead": 22,
+    "unreachable": 77
   },
   "dead": [
     {
@@ -20,6 +20,13 @@
       "code": 404,
       "services": [
         "Free Use Bible API (AO Lab)"
+      ]
+    },
+    {
+      "url": "https://docs.data.nasdaq.com/",
+      "code": 404,
+      "services": [
+        "Nasdaq Data Link (formerly Quandl)"
       ]
     },
     {
@@ -174,6 +181,20 @@
       ]
     },
     {
+      "url": "https://api.archives-ouvertes.fr/docs",
+      "code": null,
+      "services": [
+        "HAL API (Archives Ouvertes)"
+      ]
+    },
+    {
+      "url": "https://api.archives-ouvertes.fr/docs/search",
+      "code": null,
+      "services": [
+        "HAL Theses API (CCSD/CNRS)"
+      ]
+    },
+    {
       "url": "https://api.fatcat.wiki/",
       "code": null,
       "services": [
@@ -199,6 +220,13 @@
       "code": null,
       "services": [
         "ITA Consolidated Screening List (CSL) API (Commerce)"
+      ]
+    },
+    {
+      "url": "https://asdc.larc.nasa.gov/project/TEMPO",
+      "code": null,
+      "services": [
+        "NASA TEMPO (Earthdata ASDC)"
       ]
     },
     {
@@ -231,10 +259,24 @@
       ]
     },
     {
+      "url": "https://clinicaltrials.gov/data-api/about-api/csv-download",
+      "code": null,
+      "services": [
+        "ClinicalTrials.gov CSV download"
+      ]
+    },
+    {
       "url": "https://collection.britishmuseum.org/",
       "code": null,
       "services": [
         "British Museum Collection (SPARQL/LOD)"
+      ]
+    },
+    {
+      "url": "https://cris.nih.go.kr/",
+      "code": null,
+      "services": [
+        "CRiS (Korea Clinical Research Information Service)"
       ]
     },
     {
@@ -295,23 +337,6 @@
       ]
     },
     {
-      "url": "https://doaj.org/api/v3/docs",
-      "code": 502,
-      "services": [
-        "DOAJ API"
-      ]
-    },
-    {
-      "url": "https://doaj.org/api/v4/docs",
-      "code": 502,
-      "services": [
-        "DOAJ API",
-        "DOAJ API (Directory of Open Access Journals)",
-        "DOAJ (Directory of Open Access Journals) API",
-        "DOAJ API"
-      ]
-    },
-    {
       "url": "https://docs.aviationapi.com/",
       "code": null,
       "services": [
@@ -344,6 +369,14 @@
       "code": null,
       "services": [
         "Internet Archive Scholar / Fatcat API"
+      ]
+    },
+    {
+      "url": "https://firms.modaps.eosdis.nasa.gov/api/",
+      "code": null,
+      "services": [
+        "NASA FIRMS (Fire Information for Resource Management)",
+        "NASA FIRMS Active Fire API"
       ]
     },
     {
@@ -392,20 +425,6 @@
       ]
     },
     {
-      "url": "https://github.com/bentoml/OpenLLM",
-      "code": 504,
-      "services": [
-        "OpenLLM (BentoML)"
-      ]
-    },
-    {
-      "url": "https://github.com/unclecode/crawl4ai",
-      "code": 504,
-      "services": [
-        "Crawl4AI"
-      ]
-    },
-    {
       "url": "https://gssdataexplorer.norc.org/",
       "code": null,
       "services": [
@@ -425,6 +444,13 @@
       "code": null,
       "services": [
         "USDA Hemp eManagement Platform (HeMP) Public/LE Search Tool"
+      ]
+    },
+    {
+      "url": "https://iiif.bodleian.ox.ac.uk/iiif/",
+      "code": null,
+      "services": [
+        "Digital Bodleian / Oxford IIIF (added in verify)"
       ]
     },
     {
@@ -477,6 +503,13 @@
       ]
     },
     {
+      "url": "https://ndltd.org/thesis-resources/global-etd-search/",
+      "code": null,
+      "services": [
+        "NDLTD Global ETD Search"
+      ]
+    },
+    {
       "url": "https://neuroquery.org/",
       "code": null,
       "services": [
@@ -486,14 +519,14 @@
     },
     {
       "url": "https://oqmd.org/",
-      "code": 502,
+      "code": null,
       "services": [
         "OQMD (Open Quantum Materials Database)"
       ]
     },
     {
       "url": "https://oqmd.org/api/",
-      "code": 502,
+      "code": null,
       "services": [
         "OQMD (Open Quantum Materials Database) API",
         "OQMD (Open Quantum Materials Database)"
@@ -511,13 +544,6 @@
       "code": null,
       "services": [
         "PlayHT (Play.ht) TTS API"
-      ]
-    },
-    {
-      "url": "https://pncp.gov.br/api/pncp/swagger-ui/index.html",
-      "code": null,
-      "services": [
-        "Brazil PNCP (Portal Nacional de Contratacoes Publicas) API"
       ]
     },
     {
@@ -564,6 +590,13 @@
       ]
     },
     {
+      "url": "https://scaife.perseus.org/",
+      "code": null,
+      "services": [
+        "Scaife Viewer / Perseus (Open Greek & Latin) API"
+      ]
+    },
+    {
       "url": "https://schema.oasf.agntcy.org/",
       "code": null,
       "services": [
@@ -592,18 +625,17 @@
       ]
     },
     {
+      "url": "https://splatalogue.online/",
+      "code": null,
+      "services": [
+        "Splatalogue (NRAO Spectral Line Catalog)"
+      ]
+    },
+    {
       "url": "https://stats.un.org/SDGAPI/swagger/",
       "code": null,
       "services": [
         "SDMX Global Registry / UNdata2 (added in verify)"
-      ]
-    },
-    {
-      "url": "https://transparency.entsoe.eu/",
-      "code": 503,
-      "services": [
-        "ENTSO-E Transparency Platform API",
-        "ENTSO-E Transparency Platform API"
       ]
     },
     {
@@ -653,15 +685,6 @@
       "code": null,
       "services": [
         "ClinicalStudyDataRequest.com (CSDR)"
-      ]
-    },
-    {
-      "url": "https://www.followthemoney.org/our-data/apis",
-      "code": null,
-      "services": [
-        "FollowTheMoney.org API (Institute / OpenSecrets)",
-        "FollowTheMoney.org API (NIMP / OpenSecrets)",
-        "FollowTheMoney.org API (state campaign finance)"
       ]
     },
     {
