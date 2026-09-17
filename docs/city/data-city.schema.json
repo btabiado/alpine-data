@@ -246,9 +246,10 @@
             "ok",
             "not_published",
             "stale",
-            "insufficient_history"
+            "insufficient_history",
+            "fetch_error"
           ],
-          "description": "ok = scored; not_published = city/source has no feed (Miami Safety pending FBI key); stale = source exists but lags badly (Miami 311 2023 snapshot); insufficient_history = <12mo baseline."
+          "description": "ok = scored; not_published = the CITY/SOURCE publishes no such feed (a claim about the publisher: Miami Safety pending an FBI key); stale = source exists but lags badly (Miami 311 2023 snapshot); insufficient_history = <12mo baseline; fetch_error = OUR request failed (a claim about us, not about the publisher) — the reason is carried in `note`. not_published and fetch_error are both excluded from pillar math, but they mean opposite things and must never be collapsed: printing 'Not published by this city' over a feed the city publishes daily is a false statement about a third party."
         },
         "recent": {
           "type": [
@@ -418,8 +419,12 @@
           "const": 3
         },
         "last_updated": {
-          "type": "string",
-          "format": "date-time"
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time",
+          "description": "Age of the DATA, never of the fetch or the file. These are MONTHLY series, so this is a data MONTH rendered as that month's first instant UTC ('2026-07' -> '2026-07-01T00:00:00+00:00'). A healthy city can never read younger than ~28-60 days, because the newest COMPLETE month is last month and several feeds lag a further month; budget freshness checks in MONTHS, not hours. Value = the OLDEST recent_period among feeds that produced a reading (ok or stale), because a composite is only as fresh as its oldest input. Feeds with no reading at all (not_published / fetch_error) are absent, not old, and are disclosed via feeds_ok / pulse.pillars_present instead. null when no feed reported any period — deliberately NOT back-filled with the current clock."
         }
       }
     }

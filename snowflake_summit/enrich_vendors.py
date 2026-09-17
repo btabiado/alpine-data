@@ -50,7 +50,14 @@ NEWS_TTL = 12 * 3600
 WD_TTL = 30 * 24 * 3600
 
 GDELT_MAX = 4            # articles kept per vendor
-NEWS_TIMESPAN = "60days"
+# GDELT DOC 2.0 documents timespan as <number><unit> with unit in
+# {min, h, d, w, m} — "24h", "7d", "3w". This was "60days", which is not one of
+# those spellings; GDELT reports a rejected query as HTTP 200 with a plain-text
+# body, which is indistinguishable from a quota error unless you read the body.
+# Canonicalised to "60d". NOT VERIFIED LIVE: api.gdeltproject.org is 403'd by
+# this sandbox's egress proxy, so this is a spec-conformance fix, not a
+# confirmed root cause — see the diagnosis note above main().
+NEWS_TIMESPAN = "60d"
 NEWS_MIN_TO_WRITE = 8    # don't overwrite curated news.json with a near-empty fetch
 MAX_WORKERS = 6
 HTTP_TIMEOUT = 8.0
@@ -83,7 +90,10 @@ GDELT_GIVE_UP_AFTER = 25
 # `generated` date is older than this and this run added nothing, that is an
 # alarm regardless of which upstream excuse produced it.
 STALE_ALERT_DAYS = 3
-NEWS_CAP = 500           # max items retained in news.json
+# Max items retained in news.json. The cap EVICTS THE OLDEST; it used to refuse
+# the newest, which turned a size limit into a permanent freeze — see
+# _merge_feed().
+NEWS_CAP = 500
 
 # Wikidata property ids we read.
 P_INCEPTION = "P571"
@@ -170,6 +180,19 @@ def _get_json(url: str, timeout: float = HTTP_TIMEOUT, tag: str = "http", retrie
             return None
 
         text = raw.decode("utf-8", "replace")
+        if not text.strip():
+            # GDELT's DOC/ArtList endpoint answers a zero-match query with HTTP
+            # 200 and an EMPTY BODY. json.loads("") raises ValueError, so the
+            # branch below classified the most common HEALTHY response as
+            # `non_json` — an upstream failure. That poisons the exact
+            # distinction this module exists to make: on a genuinely quiet news
+            # day every vendor returns empty, `_OK["gdelt"]` stays 0,
+            # `upstream_down` goes true, and a perfectly working GDELT is
+            # reported as a transport outage (and vice versa — a real outage
+            # looks identical to a quiet day). An empty body is an ANSWER:
+            # zero results.
+            _note(tag, "ok")
+            return {}
         try:
             # strict=False: GDELT's ArtList regularly emits raw control chars
             # inside article titles. Under the default strict parser one bad
@@ -458,6 +481,63 @@ def _upstream_report(tag: str) -> str:
     return " · ".join(parts)
 
 
+def _item_day(item: dict) -> str:
+    """One news item's publication day as YYYY-MM-DD, or "" if it has none."""
+    s = str((item or {}).get("date") or "").strip()[:10]
+    if len(s) == 10 and s[4] == "-" and s[7] == "-" and s.replace("-", "").isdigit():
+        return s
+    return ""
+
+
+def _feed_data_date(items: list[dict], today: str) -> str:
+    """The feed's DATA date: the newest item in it, clamped to today.
+
+    Rule 1 of the freshness contract — report the age of the DATA, not of the
+    run. `generated` used to be a straight clock read, which PR #24 narrowed to
+    "clock read on a day content moved". That is still the wrong quantity: a run
+    that merges one 45-day-old GDELT article would stamp the feed with today's
+    date and report a two-month-old feed as gathered this morning.
+
+    Newest-item (max) is the right reducer *here specifically* and nowhere else
+    in this repo: a news feed is feed-shaped, so the honest claim is "the feed
+    has seen nothing more recent than this" — the same rule app.py's
+    aiNewsFreshness() applies with fMax. A composite of parallel sources takes
+    the OLDEST; a stream takes the newest. Clamped to today because a source
+    timezone can hand us a date a few hours in the future, and a feed cannot be
+    fresher than now.
+    """
+    days = [d for d in (_item_day(i) for i in items) if d]
+    return min(max(days), today) if days else ""
+
+
+def _merge_feed(existing: list[dict], fresh: list[dict],
+                cap: int = NEWS_CAP) -> "tuple[list[dict], list[dict]]":
+    """Merge fresh items into the curated feed under a size cap.
+
+    Returns ``(merged, evicted)``.
+
+    THE CAP EVICTS THE OLDEST. It used to do the opposite — ``room = cap -
+    len(existing)`` and ``fresh[:room]`` — which drops the NEWEST items once the
+    feed is full and, at exactly ``cap`` items, makes ``added`` permanently 0.
+    That is a freeze switch with a timer on it: the feed stops accepting news,
+    `generated` stops moving, and the monitor alarms forever with no action that
+    can clear it. A size limit must bound the feed, not end it.
+
+    Curated ordering is preserved for everything that survives, so the
+    hand-written entries the dashboard relies on keep their sequence.
+    """
+    merged = list(existing) + list(fresh)
+    if len(merged) <= cap:
+        return merged, []
+    # Rank by publication day, newest first; undated items sort last but keep
+    # their relative position (index tiebreak) so curation order is stable.
+    order = sorted(range(len(merged)),
+                   key=lambda i: (_item_day(merged[i]), -i), reverse=True)
+    keep = set(order[:cap])
+    return ([merged[i] for i in range(len(merged)) if i in keep],
+            [merged[i] for i in range(len(merged)) if i not in keep])
+
+
 def _age_days(iso: str) -> int | None:
     try:
         y, m, d = (int(x) for x in iso.split("-")[:3])
@@ -465,6 +545,55 @@ def _age_days(iso: str) -> int | None:
     except Exception:
         return None
 
+
+# ---------------------------------------------------------------------------
+# WHY news.json SAT AT 2026-06-04 FOR 60 DAYS — the diagnosis, in order of
+# how load-bearing each cause is. PR #24 made the failure loud; this is what
+# the noise turned out to be pointing at.
+#
+# CAUSE 1 (decisive, and NOT fixable from this file): nothing ever commits
+# news.json back to the repository.
+#   .github/workflows/pages.yml runs this script inside the Pages build, then
+#   runs build.py, then deploys _site/. Its only `git add`s are
+#   `data/composites` and `data/.stale/nuforc_subndx_*.json`. The refreshed
+#   news.json therefore lives and dies inside the ephemeral runner. Even a
+#   flawless GDELT fetch cannot move the committed file, so the artifact the
+#   data-health monitor watches is frozen BY CONSTRUCTION and no change to this
+#   script can unfreeze it. WHAT IS NEEDED: a commit-back step in pages.yml,
+#   modelled on the "Commit NUFORC month cache" step that already exists a few
+#   lines below it, staging `snowflake_summit/news.json`. That file belongs to
+#   the workflow lane. (The DEPLOYED /summit/ page is not affected by this —
+#   build.py reads the freshly-written file in the same job.)
+#
+# CAUSE 2 (real, and the reason even the deployed page is stale): GDELT has
+# never returned a usable article to this feed. Evidence, not inference — all
+# 345 items in news.json carry a non-empty `summary`, and gdelt_news() always
+# sets `"summary": ""`. Zero GDELT-shaped items have ever landed. Matching
+# evidence in .enrich_cache.json: every one of the ~197 vendor entries is `{}`,
+# i.e. no vendor has ever had a successful non-empty news fetch cached.
+#
+# CAUSE 3 (contributory, fixed above): a zero-match GDELT response is an
+# HTTP-200 EMPTY BODY, which _get_json classified as `non_json` — an upstream
+# failure. So "quiet news day" and "GDELT is down" produced identical stats and
+# `upstream_down` could fire on a perfectly healthy API. Fixed in _get_json.
+#
+# CAUSE 4 (latent, fixed above): the NEWS_CAP merge refused the newest items
+# instead of evicting the oldest, so at 500 items the feed would have frozen
+# permanently with no way to clear the alarm. It has not fired yet (345 items),
+# but it was 155 articles away.
+#
+# NOT DIAGNOSABLE FROM HERE: whether GDELT is throttling GitHub's runner IPs,
+# rejecting the query, or answering normally. api.gdeltproject.org is 403'd at
+# the CONNECT layer by this development sandbox's egress proxy, so no live call
+# can be made to find out. WHAT IS NEEDED: one CI run with the diagnostics that
+# already exist — `_upstream_report("gdelt")` prints the outcome breakdown and
+# the first error body verbatim (`http_429 x197`, or `non_json ... body=...`
+# carrying GDELT's own explanation). That single log line distinguishes
+# throttle / rejected-query / healthy, and it is already being emitted; nobody
+# has read one yet because the step runs under `|| echo` with
+# continue-on-error. The `NEWS_TIMESPAN` spelling fix above is the one
+# query-shape defect visible without the network.
+# ---------------------------------------------------------------------------
 
 def main() -> int:
     vraw = _load_json(VENDORS_PATH, {})
@@ -503,7 +632,12 @@ def main() -> int:
 
     # Sort fresh GDELT news newest-first.
     all_news.sort(key=lambda n: n.get("date", ""), reverse=True)
-    generated = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # When this RUN happened. Kept separate from the feed's data date on
+    # purpose, and deliberately not named anything in
+    # build_health_status._DATE_KEYS — a run timestamp must never be mistaken
+    # for a freshness signal by the watchdog.
+    run_day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    gathered_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # Persist cache (best effort).
     try:
@@ -514,9 +648,12 @@ def main() -> int:
         # us a slow rebuild next time, not this run's enrichment output.
         pass
 
-    # Write enrichment.json (always — accumulates across runs).
+    # Write enrichment.json (always — accumulates across runs). Wikidata facts
+    # (founded year, HQ, headcount) carry no observation date of their own, so
+    # the run stamp is the only thing this file can honestly claim.
     ENRICH_PATH.write_text(json.dumps(
-        {"generated": generated, "by_vendor": enrichment}, ensure_ascii=False, indent=1))
+        {"generated": run_day, "gathered_at": gathered_at,
+         "by_vendor": enrichment}, ensure_ascii=False, indent=1))
 
     # MERGE fresh GDELT items into the existing (curated) feed rather than
     # REPLACING it. Curated items carry summaries that GDELT's ArtList lacks, so
@@ -540,8 +677,13 @@ def main() -> int:
             fresh.append(it)
             seen.add(k)
     fresh.sort(key=lambda n: n.get("date", ""), reverse=True)
-    room = max(0, NEWS_CAP - len(existing))
-    added = min(len(fresh), room)
+    merged, evicted = _merge_feed(existing, fresh)
+    kept_keys = {(it.get("url") or it.get("headline") or "").strip() for it in merged}
+    # Count what actually SURVIVED the cap, not what we tried to add — an item
+    # that arrived and was immediately evicted for being older than everything
+    # in the feed did not move the feed forward and must not claim to have.
+    added = sum(1 for it in fresh
+                if (it.get("url") or it.get("headline") or "").strip() in kept_keys)
 
     gdelt_attempts = _ATTEMPTS["gdelt"]
     gdelt_ok = _OK["gdelt"]
@@ -552,13 +694,19 @@ def main() -> int:
     # Only WRITE when we actually have something to add. The old code stamped
     # `generated` with today's date on every write, including "+0 new" writes,
     # so a permanently frozen feed still advertised itself as gathered today.
-    # `generated` now moves only when the content moves.
+    # `generated` now moves only when the content moves — AND it is no longer a
+    # clock read at all: it is the newest item date in the feed (see
+    # _feed_data_date). The run's own timestamp lives in `gathered_at`, which
+    # the watchdog deliberately does not treat as a freshness signal.
     if added and len(all_news) >= NEWS_MIN_TO_WRITE:
-        merged = list(existing) + fresh[:room]
         NEWS_PATH.write_text(json.dumps(
-            {"generated": generated, "items": merged}, ensure_ascii=False, indent=1))
+            {"generated": _feed_data_date(merged, run_day),
+             "gathered_at": gathered_at,
+             "items": merged}, ensure_ascii=False, indent=1))
         news_status = (f"merged news.json (+{added} new from {ok_news} vendors, "
-                       f"{len(merged)} total)")
+                       f"{len(merged)} total"
+                       + (f", {len(evicted)} oldest evicted at the "
+                          f"{NEWS_CAP}-item cap" if evicted else "") + ")")
         preserved = False
     else:
         if len(all_news) < NEWS_MIN_TO_WRITE:
@@ -567,8 +715,9 @@ def main() -> int:
         elif not fresh:
             why = f"{len(all_news)} items gathered but all {len(all_news)} already in the feed"
         else:
-            why = (f"{len(fresh)} new items dropped: feed is at the {NEWS_CAP}-item cap "
-                   f"({len(existing)} existing, room=0)")
+            why = (f"all {len(fresh)} new items are older than every one of the "
+                   f"{len(existing)} already in the feed, so none survived the "
+                   f"{NEWS_CAP}-item cap")
         news_status = f"PRESERVED existing news.json ({why})"
         preserved = True
 

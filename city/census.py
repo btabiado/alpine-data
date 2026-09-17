@@ -54,6 +54,8 @@ from typing import Optional
 
 import requests
 
+from .redact import redact, safe_url
+
 __all__ = ["CensusError", "fetch_acs"]
 
 
@@ -230,16 +232,16 @@ def fetch_acs(
     try:
         resp = sess.get(url, params=params, timeout=timeout)
     except requests.RequestException as exc:
-        raise CensusError(f"ACS request to {url} failed: {exc}") from exc
+        raise CensusError(redact(f"ACS request to {safe_url(url)} failed: {exc}")) from exc
 
     status = getattr(resp, "status_code", 200)
     if status >= 400:
         # Census returns the "Missing Key" / "Invalid Key" message as the body
         # of a non-200 response; include a short snippet for diagnosis.
         body = (getattr(resp, "text", "") or "")[:200]
-        raise CensusError(
-            f"ACS request to {url} returned HTTP {status}: {body!r}".rstrip()
-        )
+        raise CensusError(redact(
+            f"ACS request to {safe_url(url)} returned HTTP {status}: {body!r}".rstrip()
+        ))
 
     try:
         data = resp.json()
@@ -247,9 +249,9 @@ def fetch_acs(
         # Keyless DATA queries return an HTML "Missing Key" page (HTTP 200),
         # which is not JSON — surface it rather than letting json() bubble.
         body = (getattr(resp, "text", "") or "")[:200]
-        raise CensusError(
-            f"ACS response from {url} was not JSON (missing/invalid key?): "
-            f"{body!r}"
-        ) from exc
+        raise CensusError(redact(
+            f"ACS response from {safe_url(url)} was not JSON "
+            f"(missing/invalid key?): {body!r}"
+        )) from exc
 
     return _parse_acs_rows(data)

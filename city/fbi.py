@@ -52,6 +52,8 @@ from typing import Optional
 
 import requests
 
+from .redact import redact, safe_url
+
 __all__ = [
     "FBIError",
     "resolve_ori",
@@ -142,7 +144,7 @@ def _get_json(session, url: str, *, params: dict, timeout: int):
     try:
         resp = sess.get(url, params=params, timeout=timeout)
     except requests.RequestException as exc:
-        raise FBIError(f"CDE request to {url} failed: {exc}") from exc
+        raise FBIError(redact(f"CDE request to {safe_url(url)} failed: {exc}")) from exc
 
     status = getattr(resp, "status_code", 200)
     if status != 200:
@@ -151,12 +153,12 @@ def _get_json(session, url: str, *, params: dict, timeout: int):
             body = (resp.text or "")[:200]
         except Exception:
             pass
-        raise FBIError(f"CDE returned HTTP {status} at {url}: {body}".rstrip(": "))
+        raise FBIError(redact(f"CDE returned HTTP {status} at {safe_url(url)}: {body}".rstrip(": ")))
 
     try:
         return resp.json()
     except ValueError as exc:
-        raise FBIError(f"CDE response from {url} was not JSON") from exc
+        raise FBIError(redact(f"CDE response from {safe_url(url)} was not JSON")) from exc
 
 
 # --------------------------------------------------------------------------- #

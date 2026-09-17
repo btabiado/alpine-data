@@ -198,3 +198,95 @@ def test_render_html_substitutes_payload():
     assert "<!doctype html>" in html
     assert "__DATA_JSON__" not in html
     assert "generated_at" in html
+
+
+# ---------- copy_sidecar_if_changed (Item 6: builds must not dirty the tree) ----------
+#
+# app.py stages v2/data-mufon.json into the repo ROOT so V1 can serve it without
+# depending on the /v2/ preview path. The root file is git-TRACKED (an explicit
+# .gitignore carve-out — it is the committed stale-keep fallback), while the v2
+# one is a build product regenerated on every run. The copy used to be
+# unconditional, so every local build rewrote a tracked file with nothing but a
+# fresh `generated_at`, and one `git add -A` then committed pure data churn.
+
+def _mufon(generated_at, total, extra=None):
+    blob = {"total_records": total, "date_range": ["1906-11-11", "2026-06-05"],
+            "generated_at": generated_at,
+            "_nuforc_live_meta": {"months_pulled": 2, "wall_clock_sec": 4.9}}
+    blob.update(extra or {})
+    return json.dumps(blob)
+
+
+def test_sidecar_copy_skips_when_only_the_build_stamp_moved(tmp_path: Path, capsys):
+    """The whole point. A refetch that produced the SAME sightings must leave
+    the tracked file byte-identical, stamp and all."""
+    src = tmp_path / "src.json"
+    dst = tmp_path / "dst.json"
+    dst.write_text(_mufon("2026-06-07T15:56:14Z", 144521))
+    before = dst.read_bytes()
+    src.write_text(_mufon("2026-08-03T19:23:09Z", 144521,
+                          {"_nuforc_live_meta": {"months_pulled": 0,
+                                                 "network_disabled": True}}))
+
+    assert app.copy_sidecar_if_changed(src, dst, "mufon") is False
+    assert dst.read_bytes() == before
+    assert "not rewritten" in capsys.readouterr().out
+
+
+def test_sidecar_copy_happens_when_the_data_actually_differs(tmp_path: Path):
+    """Not a no-op cache: the deployed page needs the new data, so a real
+    change still copies."""
+    src = tmp_path / "src.json"
+    dst = tmp_path / "dst.json"
+    dst.write_text(_mufon("2026-06-07T15:56:14Z", 144521))
+    src.write_text(_mufon("2026-08-03T19:23:09Z", 144548))
+
+    assert app.copy_sidecar_if_changed(src, dst, "mufon") is True
+    assert json.loads(dst.read_text())["total_records"] == 144548
+
+
+def test_sidecar_copy_creates_a_missing_destination(tmp_path: Path):
+    src = tmp_path / "src.json"
+    dst = tmp_path / "dst.json"
+    src.write_text(_mufon("2026-08-03T19:23:09Z", 144548))
+
+    assert app.copy_sidecar_if_changed(src, dst, "mufon") is True
+    assert json.loads(dst.read_text())["total_records"] == 144548
+
+
+def test_sidecar_copy_refuses_to_clobber_with_unreadable_json(tmp_path: Path):
+    """A truncated or half-written fetch must not destroy the committed
+    stale-keep fallback the .gitignore carve-out exists to provide."""
+    src = tmp_path / "src.json"
+    dst = tmp_path / "dst.json"
+    dst.write_text(_mufon("2026-06-07T15:56:14Z", 144521))
+    src.write_text('{"total_records": 14454')  # truncated
+
+    assert app.copy_sidecar_if_changed(src, dst, "mufon") is False
+    assert json.loads(dst.read_text())["total_records"] == 144521
+
+
+def test_sidecar_copy_writes_unreadable_source_only_when_there_is_no_prior(tmp_path: Path):
+    src = tmp_path / "src.json"
+    dst = tmp_path / "dst.json"
+    src.write_text("not json at all")
+
+    assert app.copy_sidecar_if_changed(src, dst, "mufon") is True
+    assert dst.read_text() == "not json at all"
+
+
+def test_the_mufon_stage_goes_through_the_guard_not_a_bare_copyfile():
+    """Source contract: the unconditional shutil.copyfile is gone. It is the
+    exact line that dirtied a tracked file on every single build."""
+    src = Path(app.__file__).read_text(encoding="utf-8")
+    assert 'copy_sidecar_if_changed(_mufon_src, ROOT / "data-mufon.json"' in src
+    assert 'shutil.copyfile(_mufon_src' not in src
+
+
+def test_volatile_keys_never_include_a_real_observation_field():
+    """`date_range` is what mufonFreshness() reports as the data's age. If it
+    ever landed in the volatile set, a genuinely newer archive would stop
+    being copied and the page would silently serve older sightings."""
+    for k in ("date_range", "total_records", "by_state_year", "velocity",
+              "totals_by_month", "shape_totals"):
+        assert k not in app.SIDECAR_VOLATILE_KEYS

@@ -21,6 +21,16 @@ Two ways it's used:
 Pure stdlib (urllib + concurrent.futures) so it stays cheap in CI and adds no
 dependency to the server process.
 
+THE KEY-REPORTING CONTRACT
+Each source that names a ``key_env`` reports a three-state ``key_state``:
+``set`` (the secret reached this process), ``unset`` (the variable was handed to
+us empty — the secret is not configured) and ``not_wired`` (the variable never
+arrived at all — whatever launched us forgot to map it). The last state exists
+because collapsing it into "no key" is what let this page report `key_present=
+false` for nine correctly-configured secrets: the workflow simply never passed
+them, and the page had no vocabulary to say so. Values are never read, printed
+or stored — presence only.
+
 Note on environments with locked-down egress (e.g. Claude Code on the web,
 where only github.com is allowlisted): every target will come back "down" or
 "blocked". That reflects the *probe host's* network policy, not the APIs — run
@@ -54,6 +64,15 @@ PROBE_ATTEMPTS = 2       # 1 retry: gov/city hosts give transient timeouts from 
 # environment variable that unlocks the source — when set, a 401/403 is
 # reported as "auth_required" (endpoint live, just gated) rather than down, and
 # the snapshot records whether the key is actually configured.
+#
+# *** A key_env named here is a PROMISE that the probe process receives it. ***
+# Naming one that no workflow maps into the step's `env:` is the bug that made
+# this page lie for months: Socrata/Census/BLS/AirNow/FBI-CDE/OpenSky/Reddit all
+# reported "no key" on /health/apis.html even with the repository secret
+# correctly set, because pages.yml handed the probe only five of the fourteen
+# names this file used. ``key_state()`` below now tells those two situations
+# apart, and tests/test_api_status_wiring.py fails the build if a key_env here
+# is not mapped by the workflow step that runs this script.
 #
 # Fields: label, category (≈ dashboard tab/role), url, key_env (None = keyless)
 TARGETS: list[dict] = [
@@ -92,16 +111,32 @@ TARGETS: list[dict] = [
     # fetch_live.MIRROR_BTC_CSV), so probe that real data path instead.
     {"label": "Farside (ETF mirror)", "category": "ETF Flows",     "url": "https://raw.githubusercontent.com/canadiancode/btc-etf-flows/main/Bitcoin-ETF-Flow-Data/data/BTC_ETF_INFLOWS_OUTFLOWS.csv", "key_env": None},
     # SoSoValue dropped: api.sosovalue.com no longer resolves (DNS NXDOMAIN — the
-    # API subdomain was decommissioned). ETF flows already come from the Farside
-    # mirror above + the CoinGlass fallback below. fetch_live.py still carries a
-    # (now dead) SoSoValue path, harmlessly skipped when SOSOVALUE_API_KEY is unset.
-    {"label": "CoinGlass (ETF flows)","category": "ETF Flows",     "url": "https://open-api-v4.coinglass.com/api/etf/bitcoin/flow-history",                                 "key_env": "COINGLASS_API_KEY"},
+    # API subdomain was decommissioned).
+    #
+    # CoinGlass dropped one step later, for a related reason. Its branch in
+    # fetch_live.fetch_all() is only reached when COINGLASS_API_KEY is set, and
+    # no workflow passes that variable to anything, so fetch_all always takes
+    # the keyless GitHub-mirror path — the one probed directly above. Keeping a
+    # probe (and a key_env) for a branch that never executes reported on a
+    # source the dashboard does not use, and made COINGLASS_API_KEY look like
+    # live plumbing on /health/apis.html.
+    #
+    # Both keys stay named in scripts/check_secrets_present.py, annotated
+    # "(retired…)", deliberately: a user who has them set should be told they
+    # do nothing, rather than told nothing at all.
     # ---- news / social / research ----
     # Reddit hard-blocks datacenter IPs on the keyless public API; the dashboard
     # reaches it via OAuth (REDDIT_CLIENT_ID/SECRET), so a 403 here means
     # "needs credentials from this host", i.e. auth_required rather than down.
     {"label": "Reddit",               "category": "Research",      "url": "https://www.reddit.com/r/CryptoCurrency/about.json",                                            "key_env": "REDDIT_CLIENT_ID", "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
-    {"label": "Santiment",            "category": "Research",      "url": "https://api.santiment.net/graphql",                                                             "key_env": "SANTIMENT_API_KEY"},
+    # Santiment is KEYLESS here on purpose. SANTIMENT_API_KEY used to be named
+    # as this target's key_env and existed nowhere else in the repo — not in a
+    # workflow, not a repository secret, and fetch_market.santiment_metrics()
+    # queries the free public GraphQL tier with no auth header at all. Its only
+    # effect was printing "auth required" on /health/apis.html forever for a key
+    # that unlocked nothing. Claim removed; the probe still reports whether the
+    # endpoint the dashboard actually calls is serving.
+    {"label": "Santiment",            "category": "Research",      "url": "https://api.santiment.net/graphql",                                                             "key_env": None},
     {"label": "SEC EDGAR",            "category": "AI News",       "url": "https://efts.sec.gov/LATEST/search-index?q=ai",                                                 "key_env": None, "headers": {"User-Agent": "BDT-Dashboards/1.0 (open-source dashboard; contact@bdt-dashboards.local)", "Accept": "application/json"}},
     # ---- summit (the standalone Snowflake Summit dashboard is static/baked —
     # no live upstream API; we probe the deployed page itself for "is it up") ----
@@ -162,6 +197,51 @@ TARGETS: list[dict] = [
     # HTML table). Akamai-fronted, so send a browser UA to avoid a bot 403.
     {"label": "State Dept advisories","category": "Travel",        "url": "https://travel.state.gov/_res/rss/TAsTWs.xml",                                                   "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
 ]
+
+
+# Every distinct env var the targets above name. Exported so the wiring test
+# (and anyone auditing the workflow) can enumerate the promise this file makes
+# without re-deriving it from TARGETS by hand — a hand-copied list is exactly
+# how the workflow's env block fell seven names behind in the first place.
+KEY_ENVS: list[str] = sorted({t["key_env"] for t in TARGETS if t.get("key_env")})
+
+# The three states a named key can be in, from the probe process's point of view.
+KEY_SET = "set"              # var present and non-empty — the secret reached us
+KEY_UNSET = "unset"          # var present but empty — wired, secret not configured
+KEY_NOT_WIRED = "not_wired"  # var absent entirely — nobody handed it to this process
+
+
+def key_state(key_env: str | None) -> str | None:
+    """Classify a named key into set / unset / not_wired. Never reads a value.
+
+    This is the fix for the defect that made /health/apis.html unfalsifiable: a
+    source whose key was never plumbed through and a source whose secret is
+    genuinely missing both rendered as a flat "no key", so a page full of "no
+    key" tags could mean "you never set these" OR "we never asked for them" and
+    there was no way to tell which. They are different problems with different
+    owners — one is the user's to fix in repo settings, the other is a workflow
+    bug — and reporting them identically is how the workflow bug survived.
+
+    The observable that separates them is *membership*, not truthiness. GitHub
+    Actions materialises ``FOO: ${{ secrets.FOO }}`` as an env var set to the
+    EMPTY STRING when the secret does not exist, so:
+
+        "FOO" in os.environ  and  value == ""   ->  wired, secret not set
+        "FOO" not in os.environ                 ->  NOT wired: a plumbing bug
+
+    Outside CI (a plain shell, a test runner) nothing is exported, so almost
+    everything reads ``not_wired``. That is still the honest statement — "this
+    process was not given the key" — and the snapshot's ``ci`` flag lets a
+    consumer say so in different words. Whitespace-only counts as unset, matching
+    scripts/check_secrets_present.py, so a stray-newline paste is not "set".
+
+    Returns None for a keyless source (there is nothing to classify).
+    """
+    if not key_env:
+        return None
+    if key_env not in os.environ:
+        return KEY_NOT_WIRED
+    return KEY_SET if (os.environ[key_env] or "").strip() else KEY_UNSET
 
 
 def _verdict(status: int | None, needs_key: bool) -> str:
@@ -227,6 +307,7 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
             retried = attempt + 1
     latency_ms = int((time.monotonic() - t0) * 1000)
     verdict = _verdict(status, needs_key)
+    kstate = key_state(key_env)
     return {
         "label": target["label"],
         "category": target["category"],
@@ -237,7 +318,16 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
         # An auth_required source counts as reachable for the up/down summary.
         "reachable": verdict in ("up", "auth_required", "rate_limited"),
         "needs_key": needs_key,
-        "key_present": bool(os.environ.get(key_env)) if key_env else None,
+        # key_present is kept (older snapshots and any external reader depend on
+        # it) but it is now derived from key_state, and it is deliberately NOT
+        # the whole truth: False covers both "unset" and "not_wired". Consumers
+        # that want to tell a settings problem from a plumbing bug must read
+        # key_state. health/index.html renders all three distinctly.
+        "key_present": (kstate == KEY_SET) if key_env else None,
+        "key_state": kstate,
+        # Named so the page can say WHICH variable is missing instead of making
+        # the reader guess. A name, never a value.
+        "key_env": key_env,
         "retries": retried,
         "note": note,
     }
@@ -252,6 +342,9 @@ def probe_all(timeout: float = DEFAULT_TIMEOUT, max_workers: int = 12) -> dict:
     def count(*verdicts: str) -> int:
         return sum(1 for s in sources if s["verdict"] in verdicts)
 
+    def keys(state: str) -> int:
+        return sum(1 for s in sources if s["key_state"] == state)
+
     summary = {
         "total": len(sources),
         "up": count("up"),
@@ -261,10 +354,26 @@ def probe_all(timeout: float = DEFAULT_TIMEOUT, max_workers: int = 12) -> dict:
         "blocked": count("blocked"),
         "down": count("down"),
         "reachable": sum(1 for s in sources if s["reachable"]),
+        # Key accounting, so "how many of my keys actually arrived?" is answerable
+        # from the summary alone. keys_not_wired > 0 is a WORKFLOW bug, not a
+        # missing secret — see key_state().
+        "keyed": sum(1 for s in sources if s["needs_key"]),
+        "keys_set": keys(KEY_SET),
+        "keys_unset": keys(KEY_UNSET),
+        "keys_not_wired": keys(KEY_NOT_WIRED),
     }
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "timeout_s": timeout,
+        # Whether this snapshot came from a CI runner. Off a runner, "not_wired"
+        # just means the operator's shell did not export the key, which is
+        # unremarkable; on a runner it means the workflow forgot to map it.
+        "ci": bool(os.environ.get("GITHUB_ACTIONS")),
+        # Names only — never values. Lets the page and the CI log say exactly
+        # which variable never arrived instead of "some key is missing".
+        "unwired_key_envs": sorted(
+            {s["key_env"] for s in sources if s["key_state"] == KEY_NOT_WIRED}
+        ),
         "summary": summary,
         "sources": sources,
     }
@@ -309,13 +418,29 @@ def main() -> int:
         f"{s['degraded']} degraded, {s['blocked']} blocked, {s['down']} down)"
     )
     # Print a compact table to stdout for CI logs / manual runs.
+    key_tag = {KEY_SET: " [key set]", KEY_UNSET: " [no key]",
+               KEY_NOT_WIRED: " [KEY NOT WIRED]"}
     for src in snapshot["sources"]:
         st = src["status"] if src["status"] is not None else "—"
-        key = ""
-        if src["needs_key"]:
-            key = " [key set]" if src["key_present"] else " [no key]"
         print(f"  {src['verdict']:<13} {str(st):>4} {src['latency_ms']:>5}ms  "
-              f"{src['label']}{key}")
+              f"{src['label']}{key_tag.get(src['key_state'], '')}")
+    # Shout about unwired keys. This is a defect in whatever launched us, and it
+    # is invisible in the per-row table if you are skimming: every unwired source
+    # otherwise looks exactly like a source whose secret you never set. On a
+    # runner it is emitted as a ::warning so it lands on the run summary too.
+    unwired = snapshot["unwired_key_envs"]
+    if unwired:
+        names = ", ".join(unwired)
+        if snapshot["ci"]:
+            print(f"::warning title=API key not wired into the probe::"
+                  f"{len(unwired)} key(s) named by api_status.py never reached "
+                  f"this step: {names}. /health/apis.html cannot tell these apart "
+                  f"from unset secrets. Add them to the step's env: block.")
+        print(f"\n  !! {len(unwired)} named key(s) NOT WIRED into this process: "
+              f"{names}")
+        print("     These are reported as 'not wired', NOT as 'no key' — the "
+              "difference is\n     a workflow plumbing bug vs. an unset "
+              "repository secret.")
     return 0
 
 

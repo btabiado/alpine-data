@@ -62,6 +62,13 @@ SIDECAR_KEYS: tuple[str, ...] = ("whale", "defi")
 # — no need to re-fetch to see the size drop.
 FEAR_GREED_MAX_DAYS = 1095
 
+# How many daily composite snapshots (data/composites/<date>.json) get folded
+# into the inlined history. One file is ~600 bytes and collapses to a handful
+# of points per index, so a year of archive costs well under 100KB inlined —
+# cheap enough to avoid a sidecar round trip on click. The cap exists so the
+# payload cannot grow without bound once the directory has years in it.
+COMPOSITE_HISTORY_MAX_SNAPSHOTS = 400
+
 
 def split_payload_for_sidecars(
     payload: dict, keys: tuple[str, ...] = SIDECAR_KEYS
@@ -381,6 +388,132 @@ def _fred_stale_keep(market: dict) -> None:
               "cache; leaving empty state.", file=sys.stderr)
 
 
+def load_composite_history(max_snapshots: int = COMPOSITE_HISTORY_MAX_SNAPSHOTS) -> dict:
+    """Fold ``data/composites/<YYYY-MM-DD>.json`` into a per-index time series.
+
+    scripts/snapshot_composites.py has been writing one file per day since
+    PR #23 and nothing has ever read it. This is the reader.
+
+    Output shape (all of it inlined into the payload — the whole archive is
+    a few hundred bytes per day, far smaller than a sidecar round trip)::
+
+        {
+          "snapshots": 37,                    # files actually parsed
+          "first_snapshot": "2026-08-02",     # by FILENAME, i.e. capture day
+          "last_snapshot":  "2026-09-07",
+          "indexes": {
+            "crypto_signal_sentiment": {
+              "points": [{"as_of","score","label","stale","note","snapshot"}],
+              "snapshots": 37,   # days this key appeared in, null or not
+              "dated": 31,       # snapshots that produced a plottable point
+              "undated": 2,      # recorded a score but no observation date
+              "missing": 4,      # recorded as null → a real gap in the series
+            }, ...
+          }
+        }
+
+    THE RULES (each one is a lie this function refuses to tell):
+
+    * A point is dated by the value's OWN ``as_of``, never by the filename.
+      A snapshot captured today can hold a value observed three weeks ago —
+      the composite archive exists precisely to make that visible, so
+      plotting it at the capture date would destroy the only signal it has.
+    * An entry with a score but no ``as_of`` is UNPLOTTABLE, not "today".
+      It is counted in ``undated`` and dropped from ``points``.
+    * A ``null`` entry is a GAP, counted in ``missing``, never interpolated.
+    * ``stale`` rides along per point so the chart can mark cache-served
+      observations instead of drawing them as genuine flat-line movement.
+    * Two snapshots reporting the SAME ``as_of`` are the same observation
+      seen twice (the source had not refreshed between captures). They
+      collapse to one point — the later capture wins, because it is the
+      most recently recomputed view of that observation — and the collapse
+      is what makes a frozen source render as a single stationary dot
+      rather than a week of fake daily readings.
+    * A key that appears in ANY snapshot is emitted even with zero points,
+      so the UI can distinguish "tracked, nothing recorded yet" from
+      "not tracked at all".
+
+    Never raises: a missing directory or an unparseable file is a gap in the
+    series, not a reason to fail a build.
+    """
+    out: dict = {"snapshots": 0, "first_snapshot": None,
+                 "last_snapshot": None, "indexes": {}}
+    src = DATA_DIR / "composites"
+    if not src.is_dir():
+        return out
+    try:
+        files = sorted(p for p in src.glob("*.json") if p.stem[:4].isdigit())
+    except Exception as e:  # pragma: no cover - defensive
+        print(f"  [v2][composites] listing failed: {e}", file=sys.stderr)
+        return out
+    if not files:
+        return out
+    if max_snapshots and len(files) > max_snapshots:
+        files = files[-max_snapshots:]
+
+    # as_of -> point, per index. dict preserves insertion order; we sort by
+    # as_of at the end because a later capture can carry an OLDER as_of.
+    series: dict[str, dict[str, dict]] = {}
+    meta: dict[str, dict] = {}
+    parsed = 0
+    for path in files:
+        try:
+            snap = json.loads(path.read_text())
+        except Exception as e:
+            print(f"  [v2][composites] {path.name}: {e}", file=sys.stderr)
+            continue
+        if not isinstance(snap, dict):
+            continue
+        idx = snap.get("indexes")
+        if not isinstance(idx, dict):
+            continue
+        parsed += 1
+        snap_day = str(snap.get("as_of") or path.stem)[:10]
+        for key, entry in idx.items():
+            m = meta.setdefault(key, {"snapshots": 0, "dated": 0,
+                                      "undated": 0, "missing": 0})
+            m["snapshots"] += 1
+            if not isinstance(entry, dict):
+                m["missing"] += 1          # null → gap, never interpolated
+                series.setdefault(key, {})
+                continue
+            score = entry.get("score")
+            if not isinstance(score, (int, float)) or isinstance(score, bool):
+                m["missing"] += 1
+                series.setdefault(key, {})
+                continue
+            as_of = entry.get("as_of")
+            as_of = str(as_of)[:10] if isinstance(as_of, str) and len(str(as_of)) >= 10 else None
+            if not as_of:
+                # Scored but undatable. Refuse to date it from the filename.
+                m["undated"] += 1
+                series.setdefault(key, {})
+                continue
+            m["dated"] += 1
+            series.setdefault(key, {})[as_of] = {
+                "as_of": as_of,
+                "score": score,
+                "label": entry.get("label") if isinstance(entry.get("label"), str) else None,
+                "stale": bool(entry.get("stale")),
+                "note": entry.get("note") if isinstance(entry.get("note"), str) else None,
+                "snapshot": snap_day,
+            }
+
+    out["snapshots"] = parsed
+    out["first_snapshot"] = files[0].stem[:10]
+    out["last_snapshot"] = files[-1].stem[:10]
+    for key, m in sorted(meta.items()):
+        pts = sorted(series.get(key, {}).values(), key=lambda p: p["as_of"])
+        out["indexes"][key] = {
+            "points": pts,
+            "snapshots": m["snapshots"],
+            "dated": m["dated"],
+            "undated": m["undated"],
+            "missing": m["missing"],
+        }
+    return out
+
+
 def build_payload() -> dict:
     """Read CSVs + JSON caches and return the full dashboard payload."""
     btc_df = ensure_total(load_csv(DATA_DIR / "btc_flows.csv"))
@@ -420,6 +553,10 @@ def build_payload() -> dict:
         "market": market,
         "whale": whale,
         "defi": defi or {},
+        # Daily archive of every composite index, so a card can chart its own
+        # past instead of only ever showing today's number. See
+        # load_composite_history() for the shape and the honesty rules.
+        "composite_history": load_composite_history(),
         "generated_at": datetime.now().isoformat(timespec="seconds"),
     }
     try:
@@ -741,8 +878,130 @@ HTML_TEMPLATE = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <title>BDT Dashboards — Crypto, Markets &amp; Macro</title>
+<!-- No maximum-scale / user-scalable=no. Pinch-zoom stays available; the iOS
+     focus-zoom problem is fixed by sizing the INPUTS >=16px on coarse
+     pointers (see the `@media (pointer:coarse)` block below), not by
+     disabling zoom for everyone. -->
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
+<!-- Chart.js is the ONE third-party request this page ever makes. V2 has no
+     map and no webfont, so cdn.jsdelivr.net is the whole of its third-party
+     surface — nothing else gets (or needs) a connection hint. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<!-- ===================================================================== -->
+<!-- NON-BLOCKING CHART.JS LOADER                                          -->
+<!-- ===================================================================== -->
+<!-- This used to be a plain `script src="https://cdn.jsdelivr.net/..."` tag right here
+     in <head>: parser-blocking, third-party, and therefore able to hold
+     domInteractive/DOMContentLoaded hostage for as long as the CDN felt like
+     taking. Measured on the BUILT V2 page over a harness that held the CDN
+     and then answered: 13,000ms stall -> domInteractive 13,239ms, DCL
+     13,239ms, FCP 13,172ms; 6,000ms stall -> 6,224 / 6,224 / 6,156. The
+     document itself was ready in ~240ms (measured with the CDN refused
+     outright) and then simply sat waiting on somebody else's server —
+     including, on V2, the FIRST PAINT.
+
+     A dynamically inserted script element is async by definition: it is not in
+     the parser's path and is NOT in the "scripts that will execute when the
+     document has finished parsing" list, so it cannot delay DOMContentLoaded.
+     `defer` would NOT have been enough — deferred scripts still run before
+     DCL fires and would have kept the 13.2s.
+
+     The cost of async is that `Chart` is no longer guaranteed to exist when
+     the first renderer runs, so the boot render goes through whenChartsReady()
+     which resolves on load, on error, or when a short budget expires —
+     whichever is first. Nothing on the page waits on the CDN indefinitely.
+     SRI + crossorigin are carried over unchanged; the pin still applies.
+
+     Byte-for-byte the same loader V1 carries (app.py), with ONE deliberate
+     divergence, marked below: V1's late-arrival recovery reads `window.state`,
+     and `state` is a top-level `const`, which lives in the global LEXICAL
+     environment and is therefore never a property of `window`. That test is
+     permanently false, so V1's recovery never fires. -->
+<script>
+(function(){
+  var CDN = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+  var SRI = 'sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g';
+  // How long the FIRST render is willing to wait for the chart library before
+  // it paints anyway. Healthy jsDelivr answers in well under this; a stalled
+  // or blocked CDN therefore costs the reader ~1.2s of chart area, not 12.8s
+  // of a blank document. A late arrival is still adopted (see below).
+  var BUDGET_MS = 1200;
+  var queue = [], settled = false, domDone = false, libDone = false, expired = false;
+  window.__chartCdn = { src: CDN, state: 'loading' };
+
+  function flush(){
+    if (settled) return;
+    // The fallback stub is defined in the body (it has to sit next to the
+    // renderers it protects), so never resolve before the body has parsed —
+    // otherwise there would be nothing to install.
+    if (!domDone) return;
+    if (!libDone && !expired) return;
+    settled = true;
+    var have = (typeof window.Chart !== 'undefined');
+    window.__chartCdn.state = have ? 'loaded' : (libDone ? 'failed' : 'timeout');
+    if (!have && typeof window.__installChartFallback === 'function'){
+      window.__installChartFallback();
+    }
+    var cbs = queue; queue = [];
+    for (var i = 0; i < cbs.length; i++){
+      try { cbs[i](); } catch (e) { console.error(e); }
+    }
+  }
+  // Run cb once the chart library has resolved one way or the other.
+  window.whenChartsReady = function(cb){
+    if (typeof cb !== 'function') return;
+    if (settled){ try { cb(); } catch (e) { console.error(e); } return; }
+    queue.push(cb); flush();
+  };
+
+  var s = document.createElement('script');
+  s.src = CDN; s.integrity = SRI; s.crossOrigin = 'anonymous'; s.async = true;
+  s.onload = function(){
+    var late = settled;
+    libDone = true; flush();
+    // Arrived AFTER we gave up and painted with the no-op stub: the UMD
+    // bundle has just overwritten window.Chart with the real thing, so
+    // repaint the active tab and the charts appear without a reload.
+    //
+    // The guard used to read `window.state`. That check could never pass:
+    // the dashboard's `state` is declared as a top-level `const state = {…}`
+    // in a CLASSIC script, and a top-level const/let/class lives in the
+    // global LEXICAL environment, never on the global OBJECT. `window.state`
+    // was therefore permanently undefined and this whole recovery branch was
+    // dead code — a slow CDN that finally answered repainted nothing, and
+    // the reader kept the empty chart frames until they touched a tab.
+    // The binding IS reachable by bare name from any later classic script,
+    // so that is what we read. By the time this branch can run, `late` is
+    // true, which means flush() already settled, which means domDone was
+    // true, which means DOMContentLoaded fired and every classic script has
+    // executed — so `state` is initialised and out of its temporal dead
+    // zone. The try/catch stays as a belt-and-braces guard in case an
+    // earlier script threw before reaching the declaration.
+    if (late && typeof window.Chart === 'function' && !window.Chart.__unavailable){
+      window.__chartCdn.state = 'loaded-late';
+      try {
+        // ONE line V1 does not have yet. See __clearChartFallbackNotes()
+        // next to the stub: without it, a late arrival repaints working
+        // charts while the stub's "Chart library unavailable" sentence is
+        // still sitting under one of them. Measured on the built V2 page
+        // with a 3,000ms arrival: 1 such note visible on the active tab.
+        // Latent in V1 only because V1's default tab draws no chart — V1
+        // should take both pieces verbatim.
+        if (typeof window.__clearChartFallbackNotes === 'function') window.__clearChartFallbackNotes();
+        if (typeof selectTab === 'function' && typeof state === 'object'
+            && state && state.tab) selectTab(state.tab);
+      } catch (e) { console.error(e); }
+    }
+  };
+  s.onerror = function(){ libDone = true; flush(); };
+  (document.head || document.documentElement).appendChild(s);
+
+  setTimeout(function(){ expired = true; flush(); }, BUDGET_MS);
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ domDone = true; flush(); });
+  } else { domDone = true; flush(); }
+})();
+</script>
 <style>
 :root{
   --bg:#0b0d12; --panel:#141821; --panel2:#1b2030; --border:#252b3a;
@@ -800,13 +1059,76 @@ HTML_TEMPLATE = r"""<!doctype html>
 .v2-freshstrip.v2-freshstrip--bad {border-color:var(--v2-bad-bd); background:var(--v2-bad-bg)}
 /* Card-level stamp sits directly under the card's subline. */
 .v2-card__head .v2-fresh{margin-top:2px}
+/* ---- S2: a freshness chip that CARRIES an explanation must look like it,
+   and must be operable by finger and by keyboard. Everything below keys off
+   the `title` ATTRIBUTE rather than a class, because paintFreshness() rewrites
+   className and textContent on every repaint — an added class or an appended
+   marker node would be wiped, while the attribute (and the ::after that hangs
+   off it) survives. Chips with no explanation are untouched and stay plain
+   text: the affordance only appears where there is something to reveal. */
+.v2-fresh[title]{cursor:pointer;border-bottom:1px dotted currentColor;
+  padding-bottom:1px;-webkit-tap-highlight-color:rgba(167,139,250,.25)}
+.v2-fresh[title]::after{content:"\00a0\24D8";font-size:.95em;opacity:.75}
+.v2-fresh[title]:hover{opacity:.85}
+.v2-fresh[title]:focus-visible{outline:2px solid var(--purple);outline-offset:3px;
+  border-radius:4px}
+/* The tab strip's chip is the whole row's point, so give it the full 44px
+   touch target there rather than a 15px line of text. */
+.v2-freshstrip{min-height:44px}
+.v2-freshstrip .v2-fresh[title]{display:inline-flex;align-items:center;min-height:32px}
+/* The revealed note. Fixed-position so it escapes card overflow, clamped by
+   JS to the viewport, dismissible by its own button, by Escape, and by a tap
+   anywhere outside. Deliberately NOT alert(): an alert blocks the page, can't
+   be styled, and reads as an error rather than an explanation. */
+.v2-freshnote{position:fixed;z-index:400;max-width:min(340px,calc(100vw - 16px));
+  background:var(--panel2);color:var(--text);border:1px solid var(--border);
+  border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.5);padding:12px 13px;
+  font-size:12.5px;line-height:1.5}
+.v2-freshnote__body{overflow-wrap:anywhere}
+.v2-freshnote__x{margin-top:10px;min-height:44px;width:100%;cursor:pointer;
+  background:var(--panel);color:var(--text);border:1px solid var(--border);
+  border-radius:8px;font:inherit;font-size:12px}
+.v2-freshnote__x:hover{background:#222838}
+.v2-freshnote__x:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+@media (pointer:coarse),(max-width:640px){
+  /* Finger-sized target for the chip itself, not just the note. */
+  .v2-fresh[title]{display:inline-flex;align-items:center;min-height:32px;
+    padding:4px 2px}
+}
+/* --- VISIBLE FOCUS ON THE TWO TEXT INPUTS (audit V2-E) ------------------
+   Every other interactive element on the page has a focus ring; these two
+   were the exceptions (both set outline:none — #symbolSearchInput inline,
+   #chatInput via .chat-form input), so a keyboard user lost their place the
+   moment they tabbed into search or chat. `!important` is required to beat
+   the inline `outline:none` on #symbolSearchInput. */
+#symbolSearchInput:focus-visible,
+.chat-form input#chatInput:focus-visible{
+  outline:2px solid var(--v2-ai) !important;outline-offset:1px;
+  border-color:var(--v2-ai) !important}
+/* --- EMPTY STATE: ABSENT vs WARMING (audit V2-B) ------------------------
+   `.v2-empty--warm` is a PROMISE ("refresh in a moment"). It is only honest
+   while a fetch is genuinely in flight. A feed that is inlined at build
+   time, or whose sidecar already resolved, is not warming up — it is absent
+   for this build, and reloading serves the same bytes. Absence gets its own
+   tint so the two states are not one look. */
+.v2-empty.v2-empty--absent{border-style:solid;border-color:var(--v2-warn-bd);
+  background:var(--v2-warn-bg)}
+.v2-empty.v2-empty--absent .v2-empty__title{color:var(--v2-warn)}
+.v2-empty__note{font-size:11px;color:var(--muted);line-height:1.5;
+  max-width:46ch;overflow-wrap:anywhere}
 /* --- V2 PREVIEW BANNER ---------------------------------------------------
    Sticky at the very top of the page so anyone landing on /v2/ sees they
    are NOT looking at production. Solid contrasting bar with a link back to
    the production URL — keeps the user one click away from the canonical
    experience while the cleanup sprint stabilises. */
 .v2-banner{position:sticky;top:0;z-index:50;
-  background:linear-gradient(90deg,var(--v2-ai-bg),var(--v2-info-bg));
+  /* Both tint tokens are 14%-alpha rgba and the shorthand left the base
+     colour transparent, so this sticky bar had NO opaque backing: on the
+     Travel tab (13.6k px of scroll) the advisory text ran straight through
+     the words "PRODUCTION DASHBOARD IS UNCHANGED". A banner that is
+     unreadable over the page it is disclaiming is not a disclaimer.
+     Keep the tint, put --panel underneath it. */
+  background:linear-gradient(90deg,var(--v2-ai-bg),var(--v2-info-bg)),var(--panel);
   border-bottom:1px solid var(--v2-ai-bd);
   color:var(--text);font-size:12px;font-weight:600;letter-spacing:.04em;
   text-transform:uppercase;padding:8px 16px;text-align:center}
@@ -958,7 +1280,139 @@ header .meta{color:var(--muted);font-size:12px}
 .btn.active.eth{background:var(--eth);color:#fff;border-color:var(--eth)}
 .btn.active.link{background:var(--link);color:#fff;border-color:var(--link)}
 .lbl{font-size:11px;color:var(--muted);align-self:center;margin:0 4px;letter-spacing:.04em;text-transform:uppercase}
+/* ===== iOS FOCUS-ZOOM: EVERY TEXT-ENTRY CONTROL, NOT JUST THE TWO =========
+   Mobile Safari zooms the viewport whenever a focused form control's font is
+   under 16px, and leaves the reader pinched in and scrolled sideways with no
+   way back except a manual pinch-out. V2 used to raise exactly two controls
+   (#symbolSearchInput, #chatInput) and left the rest, so the fix held on the
+   two fields it had been demonstrated against and nowhere else.
+
+   Measured on the BUILT V2 page in headless Chromium at 360x740 with a coarse
+   pointer, computed font-size per control — EIGHT still zoomed:
+     · #shareHost           11px      · #travelSearch    12px
+     · #shareNewUrl         11px      · #travelSort      12px
+     · #shareLabel          12px      · #shareDays       13.33px
+     · #pasteText           12px      · #pasteAsset      13.33px
+   Two were already compliant (#symbolSearchInput, #chatInput at 16px).
+
+   So the rule is now blanket rather than a list of two, and it is the same
+   blanket rule V1 ships (app.py). `pointer:coarse` is the real signal (a
+   touchscreen at any width); the max-width arm is a belt-and-braces fallback
+   for touch devices that report a fine pointer. !important is required
+   because several of these fields carry an inline `font:12px …` shorthand,
+   which no plain rule can beat. Checkboxes/radios are excluded — they have
+   no text and no zoom trigger. The viewport meta is deliberately NOT touched:
+   maximum-scale / user-scalable=no would trade one person's zoom-in for
+   everyone's zoom-out, and modern iOS ignores it anyway. */
+@media (pointer:coarse),(max-width:640px){
+  input[type="text"],input[type="search"],input[type="email"],input[type="url"],
+  input[type="number"],input[type="tel"],input[type="password"],input[type="date"],
+  input:not([type]),textarea,select{font-size:16px !important}
+}
 .container{padding:18px 24px;display:grid;gap:18px;max-width:1600px;margin:0 auto}
+/* ===== HORIZONTAL-OVERFLOW GUARD (the phone bug) ==========================
+   `.container` is display:grid with no grid-template-columns, so its single
+   implicit track is `auto` — and an `auto` track's BASE SIZE is the
+   MIN-CONTENT of its widest grid item. Every tab panel is a grid item, so
+   ANY descendant with an intrinsic minimum width pushes the track — and
+   therefore the whole document — wider than the viewport. The phone then
+   scrolls sideways on every tab, not just the offending card.
+
+   Three separate mechanisms were doing this, all measured at 360x740 on the
+   built page (document.documentElement.scrollWidth):
+     · AI News 519px — `<table class="tracker-grid">` (6 columns). Its
+       `.v2-card__body` already has overflow-x:auto, but an auto-overflow box
+       still reports a content-based min-content width, so the scroll
+       container itself was what grew.
+     · Travel 439px — one State-Dept bulletin excerpt containing
+       `risk of&nbsp;crime,&nbsp;terrorism` as literal text: a single
+       60-character unbreakable token.
+     · Crypto Signals 393px / Research 386px — `.v2-card__title` is
+       white-space:nowrap, whose min-content is the full untruncated string.
+       It carries overflow:hidden + text-overflow:ellipsis, which clips the
+       PAINT but does nothing about the intrinsic size it contributes.
+
+   Rule 1 fixes the first and third: min-width:0 on the grid items decouples
+   the track from its content's min-content, so the track is the viewport and
+   each surface has to solve its own overflow locally — which the ellipsis and
+   the overflow-x:auto body were already set up to do.
+
+   Rule 2 is needed because min-width:0 does NOT contain content that PAINTS
+   wider than its box: an unbreakable word still spills through
+   overflow:visible ancestors and re-grows the document. `anywhere` (not
+   `break-word`) is deliberate — only `anywhere` also lowers the min-content
+   size, which is what the grid track is reading.
+
+   NOT the freshness stamps: hiding every .v2-fresh / .v2-freshstrip leaves
+   scrollWidth byte-identical. Verified before touching anything. */
+.container > *{min-width:0}
+/* Rule 1b — the same escape hatch one level down. `.v2-card` and
+   `.v2-card__head` are flex containers, and a flex item's DEFAULT
+   `min-width:auto` re-introduces exactly the min-content floor rule 1 just
+   removed. Every card head wraps its title in an unclassed <div>; that
+   wrapper (not the h2, which already carries min-width:0) is what was still
+   holding AI News at 460px, Crypto Signals at 380px and Research at 369px
+   after rule 1 landed. Once it can shrink, the nowrap h2 inside it finally
+   uses the overflow:hidden + text-overflow:ellipsis it always had. */
+.v2-card > *,.v2-card__head > *{min-width:0}
+/* Rule 1c — a card head is title-left / badge-right and was flex-wrap:nowrap.
+   Once rule 1b let those two columns shrink, the RIGHT one still could not:
+   `.v2-chip` is white-space:nowrap, so "● Updated May 26, 2026" kept painting
+   147px of chip inside a 94px flex track and pushed Travel back out to 388px.
+   Letting the head wrap drops the badge onto its own full-width line instead.
+   Only engages when the two columns genuinely don't fit, so desktop is
+   unchanged. */
+.v2-card__head{flex-wrap:wrap}
+.travel-bullet__title,.travel-bullet__excerpt,.travel-bullet__top,
+.v2-chip,.tag,.v2-card__subtitle,.v2-fresh,.feedrow,
+.v2-insight,.v2-ai-take__bullet,.chart-card .desc{overflow-wrap:anywhere}
+/* .feedrow — every article / post / insight row whose text comes from upstream:
+   #aiNewsFeed, #overviewNews, #newsFeed, #researchNewsHost, the Reddit top /
+   trending post lists, the per-symbol news modal. One underscore-joined slug in
+   a headline is a single unbreakable token; measured on a 360px viewport it took
+   the overview tab to 1362px and social to 1355px. #aiNewsFeed only ever
+   measured 360 because it has overflow-y:auto (so overflow-x computes to auto)
+   and CONTAINED the spill inside its own scroller — the headline was still
+   unreadable, cut off mid-token. Wrapping it is the fix; containment was not.
+   overflow-wrap is inherited, so one class on the row element covers the
+   headline, the body and the source chip, and `anywhere` (not `break-word`)
+   also lowers min-content so the enclosing grid track shrinks with it.
+   Identical rule in app.py, which additionally has an #aiNewsTop5 panel with no
+   scroller to hide behind (1284px before this). */
+
+/* ===== COMPOSITE INDEX HISTORY AFFORDANCE ================================
+   A composite card whose value is archived daily to data/composites/ becomes
+   clickable and opens its own history chart. The call-to-action is appended
+   as the card's LAST child, in normal flow — deliberately NOT absolutely
+   positioned, because every one of these cards already puts its big score in
+   the top-right corner and an overlay chip would land on top of it. Adding a
+   row at the bottom cannot reflow anything above it. */
+.v2-histcard{cursor:pointer}
+.v2-histcard:hover{border-color:var(--v2-ai)}
+.v2-histcta{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);
+  display:flex;align-items:center;justify-content:flex-start}
+.v2-histbtn{font:inherit;font-size:11px;font-weight:600;line-height:1.3;cursor:pointer;
+  display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;
+  background:var(--v2-ai-bg);color:var(--v2-ai);
+  border:1px solid var(--v2-ai);text-align:left}
+.v2-histbtn:hover{filter:brightness(1.15)}
+.v2-histbtn:focus-visible{outline:2px solid var(--v2-ai);outline-offset:2px}
+/* Not-yet-archived index: the click still does something honest (it explains
+   what is missing) but must not promise a chart, so it reads as muted. */
+.v2-histbtn--none{background:transparent;color:var(--muted);border-color:var(--border);font-weight:500}
+.v2-histchart{width:100%;height:auto;display:block}
+.v2-histnote{font-size:11.5px;line-height:1.5;color:var(--muted)}
+.v2-histwarn{font-size:12px;line-height:1.5;border-radius:6px;padding:9px 11px;
+  background:var(--v2-warn-bg);border:1px solid var(--v2-warn-bd);color:var(--v2-warn)}
+.v2-histlegend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--muted);align-items:center}
+.v2-histlegend b{font-weight:600;color:var(--text)}
+.v2-histtable{width:100%;border-collapse:collapse;font-size:11.5px}
+.v2-histtable th,.v2-histtable td{text-align:left;padding:3px 8px 3px 0;border-bottom:1px solid var(--border);white-space:nowrap}
+.v2-histtable th{color:var(--muted);font-weight:600}
+/* Horizontal scroll only. A nested vertical scroller inside a modal that
+   already scrolls is miserable on a phone — the row list is capped in JS
+   instead (COMPOSITE_HISTORY_TABLE_ROWS). */
+.v2-histscroll{overflow-x:auto}
 .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 /* Top-25 signals strip layout. Outer #top20SignalCards is a vertical flex
    column — each populated bucket section gets its OWN full-width row, and
@@ -1247,14 +1701,31 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     white-space:nowrap;
     -webkit-overflow-scrolling:touch;
     scrollbar-width:none;
-    /* Fade-right affordance so users see there's more content to scroll —
-       without this, "Research" / "Whale Activity" looked like they didn't
-       exist because they sit off-screen past 390px. */
+    /* Snap so a flick lands on a tab boundary instead of mid-label.
+       `proximity`, not `mandatory`: mandatory + centre alignment can make
+       the first and last tabs unreachable at these widths. */
+    scroll-snap-type:x proximity;
+    scroll-padding-inline:8px;
+  }
+  /* Edge fade is DIRECTIONAL and class-driven (see updateTabScrollAffordance).
+     The old rule faded the right edge unconditionally, which kept claiming
+     "more tabs this way" after the user had already scrolled to the end —
+     an affordance that lies is worse than none. No class ⇒ no mask. */
+  .tabs.v2-tabs--more-right{
     -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);
             mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);
   }
+  .tabs.v2-tabs--more-left{
+    -webkit-mask-image:linear-gradient(to right,transparent,#000 28px);
+            mask-image:linear-gradient(to right,transparent,#000 28px);
+  }
+  .tabs.v2-tabs--more-left.v2-tabs--more-right{
+    -webkit-mask-image:linear-gradient(to right,transparent,#000 28px,#000 calc(100% - 28px),transparent);
+            mask-image:linear-gradient(to right,transparent,#000 28px,#000 calc(100% - 28px),transparent);
+  }
   .tabs::-webkit-scrollbar{display:none}
-  .tab{padding:9px 12px;font-size:13px;flex:0 0 auto;min-height:44px;display:inline-flex;align-items:center}
+  .tab{padding:9px 12px;font-size:13px;flex:0 0 auto;min-height:44px;display:inline-flex;align-items:center;
+       scroll-snap-align:center}
 
   /* --- Period/timeframe controls row below tabs (smaller buttons) --- */
   .controls{padding:8px 12px;gap:5px}
@@ -1624,6 +2095,58 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   .travel-count{flex:1 1 100%;margin-left:0;text-align:right}
   .travel-grid{grid-template-columns:1fr;gap:8px}
 }
+
+/* ===================== TOUCH BLOCK (site audit S1 / S3 / V2-C) ===========
+   Deliberately LAST in the sheet so these win on source order without
+   needing !important anywhere except against the two inline `style=`
+   attributes. Gated on a coarse pointer OR a phone-width viewport: the
+   desktop sizes above are untouched. */
+@media (pointer:coarse),(max-width:860px){
+  /* S1 — iOS Safari zooms the page whenever a focused input renders under
+     16px, and leaves the user pinched in and horizontally scrolled with no
+     way back. Measured: #symbolSearchInput 12px, #chatInput 13px.
+     The fix is to raise the INPUTS. It is explicitly NOT to add
+     maximum-scale=1 / user-scalable=no to the viewport meta — that kills
+     pinch-zoom for everyone (an accessibility regression) and modern iOS
+     ignores it anyway. #symbolSearchInput carries its size in an inline
+     style attribute, so only !important can reach it. */
+  header #symbolSearchInput{font-size:16px !important}
+  .chat-form input#chatInput{font-size:16px !important}
+  /* The 84px mobile width was budgeted around an 11px font, so 16px text
+     fits fewer characters in it. Widening the field is NOT the answer: the
+     header title is already truncated at 360px (57px of the 166px it wants)
+     and the user has already called this area squished once. Claw the
+     characters back from the horizontal padding instead, so the header
+     geometry is unchanged and only the type gets bigger. */
+  header #symbolSearchInput{padding:8px 6px}
+
+  /* S3 — .v2-histbtn measured 186x22; the floor is 44. This is the only
+     entry point to the composite history charts. The CTA row is the card's
+     LAST child in normal flow, so growing it cannot reflow the card header
+     at 360px — it only extends the card downward. */
+  .v2-histbtn{min-height:44px;padding:8px 12px}
+
+  /* V2-C — Travel sub-view buttons measured 69x28. */
+  .travel-subtab{min-height:44px;padding-top:0;padding-bottom:0}
+  /* ...and the sub-nav scrolled off the top of a 13,635px tab and never
+     came back. Stick it under the preview banner (itself position:sticky;
+     top:0, and 45px tall at 360px because the disclaimer wraps to two
+     lines) so the five sub-views stay reachable for the whole scroll. The
+     45px fallback matches that measurement; syncBannerHeight() replaces it
+     with the real height on load and on every resize. */
+  .travel-subtabs{position:sticky;top:var(--v2-banner-h,45px);z-index:6;
+    background:var(--bg);margin-left:-2px;margin-right:-2px;
+    padding-left:2px;padding-right:2px;
+    overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  .travel-subtabs::-webkit-scrollbar{display:none}
+  .travel-subtab{flex:0 0 auto}
+  /* The freshness chip's tap target is NOT sized here any more. It moved
+     into the shared `@media (pointer:coarse),(max-width:640px)` block up top
+     (`.v2-fresh[title]{display:inline-flex;min-height:32px;padding:4px 2px}`)
+     when V2 adopted V1's disclosure, so both frontends size it identically.
+     Re-adding a rule here would land LATER in the sheet and quietly beat the
+     shared one at 360px. */
+}
 </style>
 </head>
 <body>
@@ -1796,6 +2319,31 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <button class="btn" id="symbolDetailClose" aria-label="Close symbol detail">×</button>
     </div>
     <div id="symbolDetailBody"></div>
+  </div>
+</div>
+
+<!-- ============ COMPOSITE INDEX HISTORY MODAL ============ ================
+     Every composite index card (Crypto Signal Sentiment, POC breadth, the two
+     Whale Sentiment gauges, …) is clickable and opens this one shared modal
+     with that index's own daily history, read from DATA.composite_history
+     (folded out of data/composites/<date>.json by load_composite_history()).
+
+     One modal reused for every index — same reason there is one freshness()
+     for every stamp. Opened by openCompositeHistory(<index key>); the title,
+     chart and disclosure block are all written into the slots below.
+     role/aria-modal + focus handling live in the opener, not the markup, so
+     the two stay in sync. -->
+<div id="compositeHistoryModal" class="modal-bg hidden" role="dialog" aria-modal="true"
+     aria-labelledby="compositeHistoryTitle">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;width:min(760px,100%);max-height:92vh;display:flex;flex-direction:column;gap:10px;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div style="min-width:0">
+        <h2 id="compositeHistoryTitle" style="margin:0;font-size:15px">Index history</h2>
+        <div id="compositeHistorySub" class="sub" style="font-size:11px;color:var(--muted);margin-top:2px"></div>
+      </div>
+      <button class="btn" id="compositeHistoryClose" aria-label="Close index history">×</button>
+    </div>
+    <div id="compositeHistoryBody"></div>
   </div>
 </div>
 
@@ -3460,7 +4008,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
            user still sees an explanation instead of a blank tab. -->
       <div id="cpiEmpty" class="v2-card v2-card--info" style="margin-bottom:12px">
         <div class="v2-card__body">
-          <div class="v2-empty v2-empty--warm">
+          <!-- A missing API key is a hard, standing failure, not a warm-up.
+               --warm is reserved for fetches genuinely in flight. -->
+          <div class="v2-empty v2-empty--absent">
             <div class="v2-empty__icon">&#128202;</div>
             <div class="v2-empty__title">CPI data unavailable</div>
             <div class="v2-empty__sub" id="cpiEmptySub">FRED_API_KEY is not set on the server.</div>
@@ -3823,6 +4373,19 @@ window.addEventListener('error', e => {
 // A stamp that is missing is as dishonest as a stamp that lies, so charts are
 // downgraded to a no-op rather than allowed to take the page down with them.
 // Real Chart.js, when it loads, is left completely untouched.
+//
+// Byte-for-byte the same stub V1 carries (app.py). If you change one, change
+// both — a fix that lands in only one frontend is a half fix.
+//
+// WHAT CHANGED WHEN CHART.JS STOPPED BLOCKING THE PARSER: this test used to
+// run right here, at parse time, when a synchronous script-src tag in <head>
+// guaranteed the answer was already final. With the loader now async, "Chart
+// is undefined at parse time" no longer means "Chart failed" — it usually
+// just means "still in flight". So the identical check is wrapped in a
+// function and called by whenChartsReady() (see <head>) at the one moment the
+// answer IS final: load, error, or budget expiry. Installing it any earlier
+// would paint "Chart library unavailable" over charts that were about to work.
+window.__installChartFallback = function(){
 if (typeof window.Chart === 'undefined'){
   window.Chart = function ChartUnavailable(canvas){
     try {
@@ -3830,7 +4393,10 @@ if (typeof window.Chart === 'undefined'){
       if (wrap && !wrap.dataset.chartFailed){
         wrap.dataset.chartFailed = '1';
         const note = document.createElement('div');
-        note.className = 'sub';
+        // Classed so the late-arrival recovery can find and remove it. Without
+        // a handle the caption "Chart library unavailable" stayed on screen
+        // underneath charts that had, by then, drawn perfectly well.
+        note.className = 'sub chart-unavailable-note';
         note.style.cssText = 'padding:10px;color:var(--muted);font-size:12px';
         note.textContent = 'Chart library unavailable — the numbers and '
           + 'freshness stamps below are unaffected.';
@@ -3845,6 +4411,36 @@ if (typeof window.Chart === 'undefined'){
   };
   window.Chart.__unavailable = true;
 }
+};
+
+// Undo of the above, for the one case that needs it: Chart.js arrived AFTER
+// the budget expired, so the stub already wrote "Chart library unavailable"
+// into some chart wrappers, and the loader is about to repaint those very
+// charts for real. The stub marks each wrapper `data-chart-failed` so it
+// only writes once — leave the marker up and the sentence stays on screen
+// underneath a chart that has just drawn correctly. Measured on the built
+// V2 page with a 3,000ms CDN arrival: 1 such note visible on the active tab.
+// A caption that lies and a stamp that lies are the same defect.
+//
+// V1 (app.py) needs this too; it is latent there only because V1's default
+// tab instantiates no Chart, so the stub never writes anything before the
+// recovery runs. Copy this function and the single call in the <head> loader.
+// Called by the CDN loader when Chart.js arrives AFTER the fallback stub has
+// already painted. Without it a late arrival repaints working charts while the
+// stub's "Chart library unavailable" caption is still sitting under one of
+// them — telling the reader the opposite of what they can see.
+//
+// Selects on the class rather than matching the caption text: the wording is
+// user-facing copy and a future edit to it would silently orphan every note.
+window.__clearChartFallbackNotes = function(){
+  var notes = document.querySelectorAll('.chart-unavailable-note');
+  for (var i = 0; i < notes.length; i++){
+    if (notes[i].parentNode) notes[i].parentNode.removeChild(notes[i]);
+  }
+  // Clear the guard too, so a genuine later failure can re-announce itself.
+  var wraps = document.querySelectorAll('[data-chart-failed]');
+  for (var j = 0; j < wraps.length; j++) wraps[j].removeAttribute('data-chart-failed');
+};
 
 const DATA = __DATA_JSON__;
 const SHARE_TOKEN = __SHARE_TOKEN__;  // string when viewing via /share/<token>, else null
@@ -4664,7 +5260,8 @@ function renderCoinbaseIntlPerps(){
   const shorts = perps.filter(p => p && typeof p.funding_rate === 'number' && p.funding_rate < 0)
                       .sort((a,b) => a.funding_rate - b.funding_rate)
                       .slice(0, 6);
-  const emptyRow = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">No perpetuals data — wait for next refresh</td></tr>';
+  const emptyRow = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">'
+    + 'No perpetuals in this build\u2019s payload \u2014 an absence, not a reading of zero.</td></tr>';
 
   function rowFor(p){
     const ratePct = (p.funding_rate * 100).toFixed(4) + '%';
@@ -4699,7 +5296,7 @@ function renderCadliChart(){
   const series = (bars || [])
     .filter(b => b && b.date && b.close != null)
     .map(b => ({date: b.date, value: b.close}));
-  if (!chartOrEmpty('cadliBtcChart', series.length > 0, 'No CADLI BTC reference data — wait for next refresh.')) {
+  if (!chartOrEmpty('cadliBtcChart', series.length > 0, 'No CADLI BTC reference series in this build\u2019s payload \u2014 an absence, not a reading of zero.')) {
     destroy('cadliBtc');
     return;
   }
@@ -5193,11 +5790,9 @@ function renderTop20Signals(){
     .slice().sort((a,b) => (b.score||0) - (a.score||0))
     .slice(0, 25);
   if (!all.length){
-    host.innerHTML = V2.empty({
-      icon: '📡',
-      title: 'Signals warming up',
-      sub: 'No top-20 signals yet — refresh in a moment.',
-      warm: true,
+    host.innerHTML = V2.feedEmpty({
+      icon: '📡', what: 'Top-20 signals', source: 'the per-coin signal set',
+      freshness: (typeof signalsTop20Freshness === 'function') ? signalsTop20Freshness : null,
     });
     return;
   }
@@ -5318,11 +5913,9 @@ function renderPerCoinSignalList(){
     .sort((a,b) => (a.rank||999) - (b.rank||999))
     .slice(0, 25);
   if (!top25.length){
-    host.innerHTML = V2.empty({
-      icon: '📡',
-      title: 'Per-coin signals warming up',
-      sub: 'No top-25 signals yet — refresh in a moment.',
-      warm: true,
+    host.innerHTML = V2.feedEmpty({
+      icon: '📡', what: 'Top-25 signals', source: 'the per-coin signal set',
+      freshness: (typeof pocTopFreshness === 'function') ? pocTopFreshness : null,
     });
     return;
   }
@@ -6197,11 +6790,13 @@ function renderWhaleEth(){
         <span style="color:var(--muted)"> in a single transaction</span><br>
         <a href="https://etherscan.io/tx/${hash}" target="_blank" rel="noopener" style="color:var(--v2-ai);text-decoration:none">${shortHash} ↗</a>`;
     } else {
-      ltBox.innerHTML = V2.empty({
-        icon: '🐋',
-        title: 'No single-largest transaction',
-        sub: 'Blockchair fetch may have failed — retry on next refresh.',
-        warm: true,
+      // "may have failed ... retry on next refresh" guessed at a cause and
+      // promised a fix. State what is known: nothing came through.
+      ltBox.innerHTML = V2.feedEmpty({
+        icon: '🐋', what: 'Single-largest transaction',
+        source: 'the Blockchair large-transaction feed',
+        freshness: (typeof whaleFreshness === 'function')
+          ? (() => whaleFreshness(state.asset)) : null,
       });
     }
   }
@@ -6893,10 +7488,30 @@ function renderInsights(){
   const cnt = document.getElementById('insightsCount');
   const label = TAB_LABELS[tab] || 'Insights';
   if (cnt) {
-    const asOf = (DATA.generated_at || '').slice(0, 16);
+    // THE FIX (was: `as of ${DATA.generated_at}`). DATA.generated_at is the
+    // BUILD clock. The page rebuilds hourly, so that stamp read "as of <a few
+    // minutes ago>" over a bar summarising feeds that could be weeks old — the
+    // last surviving instance of the defect the freshness work exists to kill.
+    //
+    // Insights ARE derived at build time, but each one names the feed it read
+    // (`i.tab`), so the honest stamp is the OLDEST data date across the feeds
+    // the LISTED insights actually came from. That is what insightsFreshness()
+    // computes, and it renders through the same freshness()/paintFreshness()
+    // path as every other stamp — same thresholds, same tints, same explicit
+    // "as of —" when no honest date exists.
     cnt.textContent = list.length
-      ? `${label} · ${list.length} as of ${asOf}`
+      ? `${label} · ${list.length}`
       : `${label} · none right now`;
+    if (list.length){
+      const f = insightsFreshness(list, tab);
+      cnt.appendChild(document.createTextNode(' · '));
+      const stamp = document.createElement('span');
+      stamp.style.marginLeft = '2px';
+      paintFreshness(stamp, f.date, {
+        label: 'data as of', stale: f.stale, total: f.total, title: f.title,
+      });
+      cnt.appendChild(stamp);
+    }
   }
   // Re-label the strong "Insights" header if present (the bar's title).
   // Always set the strong header so a stale tab label doesn't linger
@@ -6908,7 +7523,7 @@ function renderInsights(){
   // Overview keep their own inline insight surfaces via renderInsightsFor()).
   if (host) {
     if (!list.length){
-      const empty = TAB_EMPTY[tab] || 'Nothing unusual right now. Load more data or wait for the next refresh.';
+      const empty = TAB_EMPTY[tab] || 'No rule fired on the data in this build. That is a result, not a delay.';
       host.innerHTML = V2.empty({ icon: '📡', title: 'Insights warming up', sub: empty, warm: true });
     } else {
       host.innerHTML = list.map(i => V2.insightCard(i)).join('');
@@ -7044,6 +7659,209 @@ function freshnessHtml(isoDate, opts){
   return '<div class="v2-fresh v2-fresh--' + f.tone + '"' + title + '>'
        + escapeHtml(f.text) + '</div>';
 }
+
+// ===========================================================================
+// S2 — THE HONESTY STORY MUST BE REACHABLE WITHOUT A MOUSE
+// ===========================================================================
+// Every explanation of a freshness stamp — why a date is what it is, what the
+// amber/red tint means, how much of a list the minimum actually covers, and
+// above all why something reads "as of —" — lived in a `title=` attribute.
+// A title attribute has NO activation on a touchscreen. On the phone this
+// dashboard is mostly read on, the tersest, most alarming states were
+// therefore the least explainable: a red chip, or Aviation's bare "as of —"
+// whose whole justification (the FAA feeds ship a prose vintage, so no single
+// observation date can be computed, so we refuse to invent one) was hover-only
+// and thus invisible. A refusal nobody can read is indistinguishable from a
+// bug — the honesty contract says the date must be explained, not just
+// withheld.
+//
+// This is done ONCE here rather than at the 30-odd call sites, and it is
+// deliberately attached to the RENDERED CHIP rather than edited into
+// freshnessHtml()/paintFreshness(): those two are byte-for-byte parity-locked
+// against v2/app.py (tests/test_v1_freshness.py::test_helper_is_byte_identical_
+// to_v2) and V2 is not this lane's to change. Working on `.v2-fresh[title]`
+// also catches the chips paintFreshness() writes, the tab strips, and the
+// header stamp — every chip on the page, from one place.
+//
+// The `title` stays exactly where it was, so desktop hover is untouched.
+(function freshnessNotes(){
+  var open = null;      // {note, chip}
+  // The affordance + focusability are attributes, not classes, because
+  // paintFreshness() reassigns el.className and el.textContent on every
+  // repaint — an added class or an appended marker node would be wiped.
+  // role/tabindex/title all survive that, and the ⓘ marker is a ::after.
+  function enhanceFreshnessChips(){
+    var els = document.querySelectorAll('.v2-fresh[title]:not([data-fx])');
+    for (var i = 0; i < els.length; i++){
+      var el = els[i];
+      el.setAttribute('data-fx', '1');
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('aria-expanded', 'false');
+    }
+  }
+  function close(refocus){
+    if (!open) return;
+    var chip = open.chip;
+    if (open.note && open.note.parentNode) open.note.parentNode.removeChild(open.note);
+    if (chip){
+      chip.setAttribute('aria-expanded', 'false');
+      chip.removeAttribute('aria-describedby');
+      if (refocus) { try { chip.focus(); } catch (_) {} }
+    }
+    open = null;
+  }
+  // ---- OWNER LIFECYCLE (audit B6) -----------------------------------------
+  // The note is position:fixed and lives on <body>, so nothing in normal flow
+  // can take it away. That is what made it survive tab navigation: open a
+  // note on #etf, let the hash change to #social (a deep link, an in-page
+  // anchor, the browser Back button, or a plain tab click), and the note
+  // stayed on screen — floating over the nav at z-index 400 — while the chip
+  // that owns it sat inside a panel that was now display:none. A disclosure
+  // outliving the thing it discloses is a lie about what the reader is
+  // looking at.
+  //
+  // These two predicates are the whole fix. `ownerLive` answers "does the
+  // chip still exist AND still render?" — a chip inside a display:none panel
+  // has a zero-size box, so this catches tab switches, re-renders that
+  // replace the chip's DOM, and modal bodies being torn down, without the
+  // note needing to know which of those happened. `ownerOnScreen` answers
+  // "is the chip still in the viewport?", which is what makes scrolling the
+  // owner away dismiss the note instead of dragging it along.
+  function ownerLive(chip){
+    if (!chip || !chip.getBoundingClientRect) return false;
+    if (!document.contains(chip)) return false;
+    var r = chip.getBoundingClientRect();
+    return (r.width > 0 || r.height > 0);
+  }
+  function ownerOnScreen(chip){
+    var r = chip.getBoundingClientRect();
+    return r.bottom > 0 && r.top < window.innerHeight
+        && r.right > 0 && r.left < window.innerWidth;
+  }
+  // Two separate tests, because they answer different questions and the
+  // wrong one fires at the wrong time. `closeIfDead` is for DOM churn: the
+  // owner is gone or no longer renders, so the note is orphaned no matter
+  // where the page is scrolled to. `closeIfOffScreen` is for scrolling: the
+  // owner still exists, it has just left the viewport. Folding the viewport
+  // test into the DOM-churn path would close a note the instant any renderer
+  // touched the page while its chip happened to be just off-screen.
+  function closeIfDead(){
+    if (open && !ownerLive(open.chip)) close(false);
+  }
+  function closeIfOffScreen(){
+    if (open && (!ownerLive(open.chip) || !ownerOnScreen(open.chip))) close(false);
+  }
+  // selectTab() calls this directly, so a programmatic tab change (deep link
+  // on boot, the Chart.js late-arrival repaint, a "show me on the X tab"
+  // link) tears the note down even when no event the reader generated fires.
+  window.__closeFreshnessNote = function(){ close(false); };
+  function place(note, chip){
+    var r = chip.getBoundingClientRect();
+    var w = note.offsetWidth, h = note.offsetHeight;
+    var left = Math.min(Math.max(8, r.left), Math.max(8, window.innerWidth - w - 8));
+    // Prefer below the chip; flip above when there is no room, so the note is
+    // never pushed off the bottom of a phone screen.
+    var top = r.bottom + 6;
+    if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+    note.style.left = Math.round(left) + 'px';
+    note.style.top  = Math.round(top) + 'px';
+  }
+  function show(chip){
+    var text = chip.getAttribute('title') || '';
+    if (!text) return;
+    if (open && open.chip === chip){ close(true); return; }
+    close(false);
+    var note = document.createElement('div');
+    note.className = 'v2-freshnote';
+    note.id = 'v2-freshnote';
+    note.setAttribute('role', 'dialog');
+    note.setAttribute('aria-label', 'What this freshness stamp means');
+    var body = document.createElement('div');
+    body.className = 'v2-freshnote__body';
+    // textContent, not innerHTML: the title strings are built from source
+    // names and dates and are never trusted as markup.
+    body.textContent = text;
+    var x = document.createElement('button');
+    x.type = 'button';
+    x.className = 'v2-freshnote__x';
+    x.textContent = 'Got it';
+    note.appendChild(body); note.appendChild(x);
+    document.body.appendChild(note);
+    open = {note: note, chip: chip};
+    chip.setAttribute('aria-expanded', 'true');
+    chip.setAttribute('aria-describedby', 'v2-freshnote');
+    place(note, chip);
+    // Not an alert(): an alert blocks the page, cannot be styled, and reads
+    // as an error rather than an explanation.
+    x.addEventListener('click', function(e){ e.stopPropagation(); close(true); });
+    try { x.focus({preventScroll:true}); } catch (_) { try { x.focus(); } catch (_2) {} }
+  }
+  document.addEventListener('click', function(e){
+    var chip = e.target && e.target.closest ? e.target.closest('.v2-fresh[title]') : null;
+    if (chip){ e.preventDefault(); e.stopPropagation(); show(chip); return; }
+    if (open && !(e.target.closest && e.target.closest('.v2-freshnote'))) close(false);
+  });
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'Escape'){ close(true); return; }
+    if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+    var chip = e.target && e.target.closest ? e.target.closest('.v2-fresh[title]') : null;
+    if (!chip) return;
+    e.preventDefault();
+    show(chip);
+  });
+  window.addEventListener('resize', function(){
+    if (!open) return;
+    closeIfDead();
+    if (open) place(open.note, open.chip);
+  });
+  // Scroll used to unconditionally re-place the note, which is precisely how
+  // it stayed glued to the screen after its chip had scrolled away. Now the
+  // owner has to still be on screen to keep it.
+  window.addEventListener('scroll', function(){
+    if (!open) return;
+    closeIfOffScreen();
+    if (open) place(open.note, open.chip);
+  }, {passive:true});
+  // The dashboard routes on the hash. A deep link, an in-page anchor and the
+  // browser Back/Forward buttons all land here without any click we could
+  // have seen, so this is the event that has to catch them.
+  window.addEventListener('hashchange', function(){ close(false); });
+  window.addEventListener('popstate', function(){ close(false); });
+  // A tab that goes to the background can come back much later on a
+  // different hash; nothing about the old note is still true by then.
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) close(false);
+  });
+
+  // Chips are painted by a dozen renderers at unpredictable times (tab
+  // switch, sidecar arrival, modal open), so rather than teach each one to
+  // call the enhancer, watch for them. Debounced to one pass per frame, and
+  // childList-only so setting our own attributes cannot re-trigger it.
+  var pending = false;
+  function schedule(){
+    if (pending) return;
+    pending = true;
+    (window.requestAnimationFrame || window.setTimeout)(function(){
+      pending = false;
+      enhanceFreshnessChips();
+      // Same pass doubles as the liveness check: any render that removed or
+      // hid the owning chip has just mutated the DOM, so this is the first
+      // moment we could possibly know the note has been orphaned. This is
+      // what catches a tab switch that leaves the hash alone, and a renderer
+      // replacing the chip's DOM out from under an open note.
+      closeIfDead();
+    }, 16);
+  }
+  function boot(){
+    enhanceFreshnessChips();
+    try {
+      new MutationObserver(schedule).observe(document.body, {childList:true, subtree:true});
+    } catch (_) { /* no MutationObserver: the initial pass still ran */ }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
 
 // --- date plumbing ---------------------------------------------------------
 // fDay: normalise anything date-ish to 'YYYY-MM-DD' (or null). Everything
@@ -7442,6 +8260,59 @@ const TAB_FRESHNESS_SOURCE = {
   mufon:    'NUFORC sightings',
 };
 
+// --- insights: age of the DATA the insights were derived FROM --------------
+// The insights engine runs at build time, so every insight surface used to be
+// stamped with DATA.generated_at — a clock read dressed up as "as of". Each
+// insight does name its source feed though (`i.tab`, set by insights.py's
+// `setdefault("tab", …)`), and each tab already has a resolver that reports
+// the oldest observation date behind it. So: resolve every tab represented in
+// the list, take the MIN across them (rule 3 — the bar is only as fresh as the
+// stalest feed it summarises), and disclose how many feeds carry no date.
+//
+// insights.py emits tab="markets" for the general macro/news pool; the page
+// calls that surface "overview", so it is aliased rather than dropped — an
+// unmapped tab would silently shrink the minimum's coverage.
+const INSIGHT_TAB_FRESHNESS_ALIAS = { markets: 'overview' };
+function insightsFreshness(list, tab){
+  const rows = Array.isArray(list) ? list : [];
+  const tabs = [];
+  rows.forEach(i => {
+    const t = (i && i.tab) || 'markets';
+    if (tabs.indexOf(t) < 0) tabs.push(t);
+  });
+  // Overview shows the unfiltered pool, so its stamp spans every feed present.
+  if (!tabs.length && tab) tabs.push(tab);
+  const dates = [];
+  let staleSum = 0, staleTotal = 0, undated = 0;
+  const named = [];
+  tabs.forEach(t => {
+    const key = INSIGHT_TAB_FRESHNESS_ALIAS[t] || t;
+    const fn = TAB_FRESHNESS[key];
+    let info = null;
+    if (typeof fn === 'function'){ try { info = fn(); } catch (_) { info = null; } }
+    if (!info || !info.date){ undated++; return; }
+    dates.push(info.date);
+    named.push(TAB_FRESHNESS_SOURCE[key] || key);
+    const s = Number(info.stale), n = Number(info.total);
+    if (isFinite(s) && s > 0){ staleSum += s; if (isFinite(n) && n > 0) staleTotal += n; }
+  });
+  const date = dates.length ? fMin(dates) : null;
+  let title = dates.length
+    ? 'Oldest observation date across the ' + dates.length + ' feed'
+      + (dates.length === 1 ? '' : 's') + ' these insights were derived from ('
+      + named.join(' · ') + ').'
+    : 'None of the feeds behind these insights report an observation date.';
+  if (undated > 0){
+    title += ' ' + undated + (undated === 1
+             ? ' further feed carries no observation date and is'
+             : ' further feeds carry no observation date and are')
+           + ' excluded from that minimum.';
+  }
+  title += ' The insight TEXT is generated at build time; this stamp is the age '
+         + 'of the DATA underneath it, not of the build.';
+  return { date: date, stale: staleSum, total: staleTotal, title: title };
+}
+
 function renderTabFreshness(){
   const tab = state && state.tab;
   if (!tab) return;
@@ -7642,15 +8513,87 @@ const V2 = (function(){
   }
 
   // --- empty / fallback state --------------------------------------------
+  // `warm` is the "still arriving" look. `absent` is the "this did not
+  // arrive" look — see feedEmpty() below for why they must not be the same
+  // element. `note` takes trusted HTML (a freshness stamp), everything else
+  // is escaped.
   function empty(opts){
     const o = opts || {};
     const cls = ['v2-empty'];
-    if (o.warm) cls.push('v2-empty--warm');
+    if (o.warm)   cls.push('v2-empty--warm');
+    if (o.absent) cls.push('v2-empty--absent');
     return '<div class="' + cls.join(' ') + '">' +
              (o.icon  ? '<div class="v2-empty__icon">'  + escapeHtml(o.icon)  + '</div>' : '') +
              (o.title ? '<div class="v2-empty__title">' + escapeHtml(o.title) + '</div>' : '') +
              (o.sub   ? '<div class="v2-empty__sub">'   + escapeHtml(o.sub)   + '</div>' : '') +
+             (o.note  ? '<div class="v2-empty__note">'  + o.note              + '</div>' : '') +
            '</div>';
+  }
+
+  // --- absence is not a delay (audit V2-B) --------------------------------
+  // "Headlines warming up / No top news yet — refresh in a moment" is a
+  // PROMISE. It is only true while a fetch is genuinely in flight. Every
+  // feed inlined into the page at build time is already final by the time
+  // the user reads it: reloading serves the same bytes, and a feed that is
+  // hard-failing upstream can sit on that copy indefinitely. Telling the
+  // user to wait for something that will never come is the same class of
+  // dishonesty as stamping stale data fresh — transient copy over a
+  // possibly permanent absence.
+  //
+  // So: only claim "loading" when there is an in-flight sidecar backing the
+  // claim. Otherwise say the feed delivered nothing, and — where a
+  // freshness resolver already knows how old the payload behind it is —
+  // say that instead of promising a refresh.
+  //
+  // This never reports 0 as a reading. "delivered no items" is the absence
+  // of a measurement, not a measurement of zero.
+  //   o.sidecar   : sidecar name whose in-flight state licenses "loading"
+  //   o.what      : subject, e.g. 'Headlines'
+  //   o.source    : where it comes from, e.g. 'the market news feed'
+  //   o.freshness : () => {date,...}|null — the resolver for that surface
+  function feedEmpty(o){
+    const opts = o || {};
+    const what = opts.what || 'Data';
+    const source = opts.source || 'this feed';
+    const sc = opts.sidecar;
+    const scState = (sc && typeof SIDECAR_STATE !== 'undefined') ? SIDECAR_STATE[sc] : null;
+    // undefined = the fetch has not been kicked off yet (tab not entered);
+    // 'loading' = genuinely in flight. Both are honest "wait" states.
+    const inFlight = !!sc && (scState === undefined || scState === 'loading');
+    if (inFlight){
+      return empty({ icon: opts.icon || '📡',
+                     title: what + ' loading',
+                     sub: 'Fetching ' + source + '…',
+                     warm: true });
+    }
+    // Not in flight ⇒ this is what the build got. Attach the age of the
+    // payload the empty feed arrived with, when a resolver knows it — that
+    // is the number that tells the user whether "empty" means "quiet today"
+    // or "nothing has come through in eleven weeks".
+    let note = '';
+    try {
+      const f = (typeof opts.freshness === 'function') ? opts.freshness() : null;
+      if (f && typeof freshnessHtml === 'function'){
+        note = freshnessHtml(f.date, {
+          label: opts.ageLabel || 'payload it arrived with, as of',
+          stale: f.stale, total: f.total,
+          title: 'Age of the surrounding payload this empty ' + source
+               + ' was delivered in. It is NOT a date for the missing items —'
+               + ' there are none to date.',
+        });
+      }
+    } catch (_) {}
+    return empty({
+      icon: opts.icon || '🚫',
+      title: opts.absentTitle || (what + ' not delivered'),
+      sub: opts.absentSub
+        || ('This build received nothing from ' + source
+            + '. That is an absence, not a count of zero, and it will not'
+            + ' change until the next successful fetch — reloading serves'
+            + ' the same page.'),
+      note: note,
+      absent: true,
+    });
   }
 
   // --- insight card (one entry from DATA.insights, or fallback) ----------
@@ -7658,7 +8601,7 @@ const V2 = (function(){
     if (!i) {
       return '<div class="v2-insight">' +
                '<div class="v2-insight__head">Insight unavailable</div>' +
-               '<div class="v2-insight__detail">Data warming — refresh in a moment.</div>' +
+               '<div class="v2-insight__detail">No detail carried with this insight.</div>' +
              '</div>';
     }
     const sev = sevClass(i.severity, i.kind);
@@ -7686,10 +8629,13 @@ const V2 = (function(){
       ? document.getElementById(hostElOrId) : hostElOrId;
     if (!host) return;
     if (!list.length){
+      // The insights list is derived from data already inlined in the page,
+      // so an empty result is a finding ("no rule fired"), not a wait.
       host.innerHTML = empty({
-        icon: '📡', title: 'Insights warming up',
-        sub: o.emptySub || 'No notable signals from this tab\'s rules yet — refresh in a moment.',
-        warm: true,
+        icon: '📭', title: 'No insights for this tab',
+        sub: o.emptySub || 'None of this tab\'s rules fired on the data in this'
+           + ' build. That is a result, not a delay — the rules ran.',
+        absent: true,
       });
       return;
     }
@@ -7719,15 +8665,29 @@ const V2 = (function(){
                  '</li>';
         }).join('') +
         '</ul>'
-      : '<div class="v2-ai-take__empty">No major moves on this tab right now — check back after the next refresh.</div>';
+      : '<div class="v2-ai-take__empty">No rule fired on this tab\u2019s data in this build \u2014 a result, not a delay.</div>';
+    // The band is titled "Today's AI Take", which asserts a date. V2 dropped
+    // the global insights bar, so THIS is the live insight surface — and it
+    // was carrying the same implicit build-time claim the bar's explicit
+    // `as of ${DATA.generated_at}` did. Stamp it with the age of the DATA the
+    // bullets were derived from (oldest feed behind them), via the same
+    // freshness() path as every other stamp. No bullets ⇒ nothing is being
+    // asserted ⇒ no stamp.
+    let stamp = '';
+    if (bullets.length && typeof insightsFreshness === 'function'
+        && typeof freshnessHtml === 'function'){
+      const f = insightsFreshness(bullets, tabId);
+      stamp = freshnessHtml(f.date, { label: 'data as of', stale: f.stale,
+                                      total: f.total, title: f.title });
+    }
     return '<div class="v2-ai-take">' +
              '<div class="v2-ai-take__head">🧠 ' + escapeHtml(title) + '</div>' +
-             bulletHtml +
+             bulletHtml + stamp +
            '</div>';
   }
 
   return {
-    sevClass, sevIcon, card, chip, metric, skel, empty,
+    sevClass, sevIcon, card, chip, metric, skel, empty, feedEmpty,
     insightCard, renderInsightsFor, aiTake,
   };
 })();
@@ -7752,11 +8712,9 @@ function renderGeckoTerminalPools(){
     const tbody = document.querySelector(tbodySel);
     if (!tbody) return;
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="padding:0">' + V2.empty({
-        icon: '📊',
-        title: 'Pools warming up',
-        sub: 'No DEX pool data yet — wait for the next refresh.',
-        warm: true,
+      tbody.innerHTML = '<tr><td colspan="6" style="padding:0">' + V2.feedEmpty({
+        icon: '📊', what: 'DEX pools', source: 'the GeckoTerminal pool feed',
+        freshness: (typeof overviewFreshness === 'function') ? overviewFreshness : null,
       }) + '</td></tr>';
       return;
     }
@@ -7828,13 +8786,19 @@ function renderDefiSpotlight(){
   const hasAny = (llama && (llama.stablecoin_mcap_usd != null || llama.dex_volume_24h_usd != null))
               || (Array.isArray(yields) && yields.length);
   if (!hasAny){
-    host.innerHTML = V2.card({
-      title: 'Top DeFi signals',
-      severity: 'info',
-      body: '<div class="v2-card__metric-row">'
-          + V2.skel('metric') + V2.skel('metric') + V2.skel('metric')
-          + '</div>',
-    });
+    // A shimmering skeleton says "arriving". Only show one while something
+    // is actually arriving — otherwise it sat above the tab's own
+    // "not delivered" notice, contradicting it.
+    const stillComing = SIDECAR_STATE.defi === 'loading' || SIDECAR_STATE.defi === undefined;
+    host.innerHTML = stillComing
+      ? V2.card({
+          title: 'Top DeFi signals',
+          severity: 'info',
+          body: '<div class="v2-card__metric-row">'
+              + V2.skel('metric') + V2.skel('metric') + V2.skel('metric')
+              + '</div>',
+        })
+      : '';
     return;
   }
   const stableMcap = llama.stablecoin_mcap_usd;
@@ -8060,16 +9024,14 @@ function renderNews(){
   const host = document.getElementById('newsFeed');
   if (!host) return;
   if (!news.length) {
-    host.innerHTML = V2.empty({
-      icon: '📰',
-      title: 'News feed warming up',
-      sub: 'No headlines have landed yet — check back after the next refresh.',
-      warm: true,
+    host.innerHTML = V2.feedEmpty({
+      icon: '📰', what: 'News feed', source: 'the market news feed',
+      freshness: (typeof overviewFreshness === 'function') ? overviewFreshness : null,
     });
     return;
   }
   host.innerHTML = news.slice(0, 25).map(n =>
-    `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
+    `<a class="feedrow" href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
       <div style="font-size:12px;color:var(--muted);margin-bottom:3px">
         <span style="color:var(--v2-ai);font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
       </div>
@@ -8769,15 +9731,17 @@ function renderOverviewNews(){
   const host = document.getElementById('overviewNews');
   if (host){
     if (!news.length){
-      host.innerHTML = V2.empty({
-        icon: '📰',
-        title: 'Headlines warming up',
-        sub: 'No top news yet — refresh in a moment.',
-        warm: true,
+      // market.news is INLINED at build time — there is no sidecar and no
+      // fetch to wait for, so "refresh in a moment" was a promise nothing
+      // could keep. Say what actually happened and stamp the age of the
+      // market payload the empty feed came in.
+      host.innerHTML = V2.feedEmpty({
+        icon: '📰', what: 'Headlines', source: 'the market news feed',
+        freshness: (typeof overviewFreshness === 'function') ? overviewFreshness : null,
       });
     } else {
       host.innerHTML = news.slice(0,4).map(n =>
-        `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
+        `<a class="feedrow" href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
           <div style="font-size:11px;color:var(--muted);margin-bottom:2px">
             <span style="color:var(--v2-ai);font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
           </div>
@@ -8793,16 +9757,25 @@ function renderOverviewNews(){
   if (bottom){
     const more = news.slice(4, 14);
     if (!more.length){
-      bottom.innerHTML = V2.empty({
-        icon: '📰',
-        title: 'No additional headlines',
-        sub: 'The feed has 4 or fewer items right now — all shown in the top teaser.',
-        warm: true,
-      });
+      // Two different facts wore one message here. With 1-4 headlines the
+      // teaser really has shown everything; with ZERO the feed delivered
+      // nothing at all, and "the feed has 4 or fewer items" dressed that up
+      // as an ordinary quiet day.
+      bottom.innerHTML = news.length
+        ? V2.empty({
+            icon: '📰',
+            title: 'No additional headlines',
+            sub: 'The feed carries ' + news.length + ' item'
+               + (news.length === 1 ? '' : 's') + ' — all shown in the top teaser.',
+          })
+        : V2.feedEmpty({
+            icon: '📰', what: 'Headlines', source: 'the market news feed',
+            freshness: (typeof overviewFreshness === 'function') ? overviewFreshness : null,
+          });
       return;
     }
     bottom.innerHTML = more.map(n =>
-      `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
+      `<a class="feedrow" href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
         <div style="font-weight:600;font-size:13px">${escapeHtml(n.title)}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(n.source)} · ${escapeHtml(n.date)}</div>
       </a>`
@@ -8815,11 +9788,14 @@ function renderOverviewInsights(){
   const host = document.getElementById('overviewInsights');
   if (!host) return;
   if (!all.length){
+    // DATA.insights is inlined at build time; an empty list means no rule
+    // fired on this build's data, not that results are still on their way.
     host.innerHTML = V2.empty({
-      icon: '📡',
-      title: 'Top insights warming up',
-      sub: 'No notable cross-tab signals yet — they will appear here after the next refresh.',
-      warm: true,
+      icon: '📭',
+      title: 'No cross-tab insights',
+      sub: 'No rule fired on the data in this build. That is a result, not a'
+         + ' delay — reloading serves the same page.',
+      absent: true,
     });
     return;
   }
@@ -9256,9 +10232,10 @@ function renderStocksTab(){
   if (!Array.isArray(rows) || rows.length === 0){
     grid.innerHTML = V2.empty({
       icon: '📡',
-      title: 'Stock signals warming up',
-      sub: 'Run python app.py --fetch-market to populate top-50 equity signals.',
-      warm: true,
+      title: 'No stock signals in this build',
+      sub: 'Nothing to warm up — stocks_signals is absent from the payload.'
+         + ' Locally, run python app.py --fetch-market to populate it.',
+      absent: true,
     });
     return;
   }
@@ -11874,17 +12851,15 @@ function renderAiNewsTab(){
       return (db||0) - (da||0);
     }).slice(0, 30);
     if (!items.length){
-      feed.innerHTML = V2.empty({
-        icon: '📰',
-        title: 'AI news warming up',
-        sub: 'No AI-related articles yet — wait for the next refresh.',
-        warm: true,
+      feed.innerHTML = V2.feedEmpty({
+        icon: '📰', what: 'AI news', source: 'the AI headline feed',
+        freshness: (typeof aiNewsFreshness === 'function') ? aiNewsFreshness : null,
       });
     } else {
       feed.innerHTML = items.map(n => {
         const sc = AI_SENT_COLOR[n.sentiment] || 'var(--muted)';
         const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};vertical-align:middle;margin-right:6px;flex-shrink:0"></span>`;
-        return `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
+        return `<a class="feedrow" href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
           <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-bottom:3px">
             ${dot}<span style="color:var(--v2-ai);font-weight:600">${escapeHtml(n.source||'')}</span>
             <span>· ${escapeHtml(n.date||'')}</span>
@@ -11968,11 +12943,9 @@ function renderAiNewsTab(){
       .map(([src, r]) => ({src, ...r, net: r.positive - r.negative}))
       .sort((a,b)=> b.total - a.total || b.net - a.net);
     if (!rows.length){
-      srcHost.innerHTML = V2.empty({
-        icon: '📰',
-        title: 'Source breakdown unavailable',
-        sub: 'No per-source headline data — refresh in a moment.',
-        warm: true,
+      srcHost.innerHTML = V2.feedEmpty({
+        icon: '📰', what: 'Source breakdown', source: 'the AI headline feed',
+        freshness: (typeof aiNewsFreshness === 'function') ? aiNewsFreshness : null,
       });
     } else {
       srcHost.innerHTML = `<table style="width:100%;font-size:12px;border-collapse:collapse">
@@ -12047,11 +13020,8 @@ function renderAiInvestmentKpis(){
   if (!host) return;
   const kpis = (((DATA.market||{}).ai_curated||{}).investment_kpis) || [];
   if (!Array.isArray(kpis) || !kpis.length){
-    host.innerHTML = '<div style="grid-column:1/-1">' + V2.empty({
-      icon: '⏳',
-      title: 'Investment KPIs warming up',
-      sub: 'No KPI data yet — refresh in a moment.',
-      warm: true,
+    host.innerHTML = '<div style="grid-column:1/-1">' + V2.feedEmpty({
+      icon: '📭', what: 'Investment KPIs', source: 'the AI-curated KPI set',
     }) + '</div>';
     return;
   }
@@ -12253,11 +13223,8 @@ function renderAiWhitepaperKpis(){
   if (!host) return;
   const kpis = (((DATA.market||{}).ai_curated||{}).whitepaper_kpis) || [];
   if (!Array.isArray(kpis) || !kpis.length){
-    host.innerHTML = '<div style="grid-column:1/-1">' + V2.empty({
-      icon: '⏳',
-      title: 'Research benchmarks warming up',
-      sub: 'No benchmark data yet — refresh in a moment.',
-      warm: true,
+    host.innerHTML = '<div style="grid-column:1/-1">' + V2.feedEmpty({
+      icon: '📭', what: 'Research benchmarks', source: 'the AI-curated whitepaper set',
     }) + '</div>';
     return;
   }
@@ -12471,7 +13438,7 @@ function openTickerModal(symbol){
     // Ticker not in current stocks_signals — likely an index symbol or a
     // ticker that scrolled off the top-50. Surface a graceful fallback so
     // the click never feels broken.
-    body.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px 4px;font-size:12px">No signal data available for this ticker in the current snapshot. The top-50 most-active US equities are scored by fetch_market.py — refresh in a moment or try a different symbol.</div>';
+    body.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px 4px;font-size:12px">No signal data for this ticker in this build\u2019s snapshot. Only the top-50 most-active US equities are scored by fetch_market.py, so this is most likely out of scope rather than late \u2014 try a different symbol.</div>';
     modal.classList.remove('hidden');
     return;
   }
@@ -12734,9 +13701,10 @@ function renderBreadthChart(canvasId, breadth, title){
     if (wrap){
       wrap.innerHTML = V2.empty({
         icon: '📊',
-        title: 'Breadth data warming up',
-        sub: 'No signal history yet — run --fetch-market to populate.',
-        warm: true,
+        title: 'No breadth history in this build',
+        sub: 'Nothing to warm up — no signal history is present. Locally, run'
+           + ' --fetch-market to populate it.',
+        absent: true,
       });
     }
     return;
@@ -13012,6 +13980,541 @@ function hideSentimentCard(prefix){
   const card = document.getElementById(prefix + 'Card');
   if (card) card.style.display = 'none';
 }
+
+// ============================================================================
+// COMPOSITE INDEX HISTORY — click a composite card, get its own time series
+// ============================================================================
+// scripts/snapshot_composites.py has written data/composites/<date>.json every
+// build since PR #23; load_composite_history() (Python, above) folds those
+// files into DATA.composite_history and this block renders them.
+//
+// THE RULES THIS ENFORCES — they are the same honesty rules the freshness
+// stamps obey, applied to a time axis:
+//
+//  1. A point is plotted at the value's OWN `as_of`, NEVER at the snapshot
+//     filename's date. A capture taken today can hold a value observed three
+//     weeks ago; drawing that at today's x would erase the single most
+//     important thing this archive records. The x-axis is therefore
+//     TIME-proportional, not index-proportional, so a frozen source shows up
+//     as a gap and a stationary dot rather than as a tidy daily cadence.
+//  2. Cache-served points (`stale:true`, i.e. fetch_market carried the
+//     previous entry forward) are drawn as hollow amber rings, never as solid
+//     observations, and counted in the disclosure block.
+//  3. A sparse archive says so. Below MIN_TREND_POINTS the connecting line is
+//     not drawn at all — two dots joined by a line is a trend claim, and the
+//     directory only started accumulating recently.
+//  4. Gaps are gaps. Consecutive points more than GAP_BREAK_DAYS apart are
+//     drawn as separate polyline segments; a solid line across a three-week
+//     hole asserts continuity that was never observed.
+//  5. Snapshots that recorded a score with no observation date are UNPLOTTED
+//     and disclosed by count, rather than being dated from the filename.
+//  6. A PER-ASSET card charts the asset its toggle is on, resolved live from
+//     `assets` + `assetOf` below. The archive also writes bare
+//     `etf_flow_sentiment` / `futures_sentiment` aliases holding the DEFAULT
+//     asset; charting an alias would put BTC's past under an ETH card, so the
+//     aliases are never plotted and the modal names the asset it is showing.
+//
+// Extending: add a row to COMPOSITE_HISTORY_CARDS. `key` must match the key
+// scripts/snapshot_composites.py writes into `indexes`. A card whose key the
+// archive has never seen still gets a (muted) affordance that opens an honest
+// "not recorded" explanation — silently hiding the gap is how the archive
+// went a whole release unnoticed and unread in the first place.
+const COMPOSITE_HISTORY_CARDS = [
+  { card: 'cryptoSignalsSentimentCard', key: 'crypto_signal_sentiment', archived: true,
+    title: 'Crypto Signal Sentiment',
+    what: 'Top-50 buy/sell breadth: ((BUY+STRONG BUY) − (SELL+STRONG SELL)) / scored coins × 100, stablecoins excluded.' },
+  { card: 'pocSentimentCard', key: 'poc_signal_breadth', archived: true,
+    title: 'POC Signal Breadth',
+    what: 'Mean of the latest per-coin signal score across the top-25 Point-of-Control universe.' },
+  { card: 'whaleSentimentCard', key: 'whale_sentiment_btc', archived: true,
+    title: 'BTC Whale Sentiment Index',
+    what: '±100 composite of the BTC on-chain proxies (hash rate, miner revenue, average tx value, output volume, active addresses, tx volume).' },
+  { card: 'whaleEthSentimentCard', key: 'whale_sentiment_eth', archived: true,
+    title: 'ETH Whale Sentiment Index',
+    what: '±100 composite of the ETH on-chain proxies (Coin Metrics active addresses / tx count, Etherscan daily series).' },
+  // --- The five PR #25 made clickable and the composites lane then archived --
+  // These were computed in the browser and thrown away, exactly as the four
+  // above were before PR #23. scripts/snapshot_composites.py now records all
+  // five.
+  //
+  // `archived: true` means EXACTLY ONE THING: snapshot_composites.py emits
+  // this key. It is what lets the "no history" modal say "recording has
+  // started, the archive has not captured it yet" instead of the (now false)
+  // "this index is not persisted at all" — two genuinely different states.
+  // A card added here WITHOUT a writer entry must be left un-archived so it
+  // keeps the honest copy; tests/test_v2_composite_history.py asserts the
+  // flag and the writer agree in BOTH directions.
+  { card: 'overviewSentimentCard', key: 'overview_sentiment', archived: true,
+    title: 'Crypto Market Sentiment',
+    what: 'Mean of Fear & Greed, the top-50 signal average and average perp funding.' },
+  { card: 'defiSentimentCard', key: 'defi_sentiment', archived: true,
+    title: 'DeFi Sentiment',
+    what: 'TVL-weighted 7d chain momentum plus stablecoin market-cap 7d change.' },
+  // PER-ASSET. These two cards do not show one number — they show the number
+  // for the asset their toggle is on, and the archive stores one key per asset
+  // (etf_flow_sentiment_btc/_eth, futures_sentiment_btc/_eth/_link/_ltc)
+  // precisely because the series diverge. `assets` + `assetOf` resolve the
+  // archive key from the LIVE toggle, so the chart under an ETH card is ETH's
+  // own history. The bare `etf_flow_sentiment` / `futures_sentiment` keys the
+  // writer also emits are duplicates of the _btc series kept for shape
+  // compatibility; plotting one would show BTC's past under whatever asset the
+  // user had selected, so they are deliberately never charted.
+  { card: 'etfFlowSentimentCard', key: 'etf_flow_sentiment', archived: true,
+    assets: ['btc', 'eth'],
+    assetOf: () => (typeof etfAsset === 'function' ? etfAsset() : 'btc'),
+    title: 'ETF Flow Sentiment',
+    what: '7d net flow sum (60%) and 30d net flow sum (40%) for the selected asset.' },
+  { card: 'futuresSentimentCard', key: 'futures_sentiment', archived: true,
+    assets: ['btc', 'eth', 'link', 'ltc'],
+    assetOf: () => ((typeof state === 'object' && state && state.asset) || 'btc'),
+    title: 'Futures Positioning Sentiment',
+    what: 'Funding rate, long/short ratio and 7d open-interest change for the selected asset.' },
+  { card: 'stocksSentimentCard', key: 'stocks_signal_breadth', archived: true,
+    title: 'Equity Signal Breadth',
+    what: 'Buy/sell breadth across the scored top-50 US equities.' },
+];
+// Below this many dated points, draw dots only — no connecting line, and say
+// why. Two points joined by a line is a trend assertion the archive cannot
+// support yet.
+const COMPOSITE_HISTORY_MIN_TREND_POINTS = 3;
+// Consecutive observations further apart than this get separate line segments.
+const COMPOSITE_HISTORY_GAP_BREAK_DAYS = 3;
+// The chart plots every point; the readout table under it is capped so a
+// multi-year archive doesn't turn the modal into an endless scroll.
+const COMPOSITE_HISTORY_TABLE_ROWS = 60;
+
+function compositeHistoryArchive(){
+  const h = DATA.composite_history;
+  return (h && typeof h === 'object') ? h : { snapshots: 0, indexes: {} };
+}
+function compositeHistoryFor(key){
+  const idx = compositeHistoryArchive().indexes;
+  const e = idx && idx[key];
+  if (!e || typeof e !== 'object') return null;    // key never archived
+  return {
+    points: Array.isArray(e.points) ? e.points : [],
+    snapshots: Number(e.snapshots) || 0,
+    dated: Number(e.dated) || 0,
+    undated: Number(e.undated) || 0,
+    missing: Number(e.missing) || 0,
+  };
+}
+function compositeHistoryCardFor(key){
+  for (const c of COMPOSITE_HISTORY_CARDS) if (c.key === key) return c;
+  // Per-asset keys (etf_flow_sentiment_eth, futures_sentiment_link, …) belong
+  // to the card whose base key they extend.
+  for (const c of COMPOSITE_HISTORY_CARDS){
+    if (!Array.isArray(c.assets)) continue;
+    for (const a of c.assets) if (key === c.key + '_' + a) return c;
+  }
+  return null;
+}
+// The asset a per-asset key names, or null for a single-series card.
+function compositeHistoryAssetOf(key){
+  const spec = compositeHistoryCardFor(key);
+  if (!spec || !Array.isArray(spec.assets)) return null;
+  for (const a of spec.assets) if (key === spec.key + '_' + a) return a;
+  return null;
+}
+// The archive key a card should chart RIGHT NOW. For a per-asset card that is
+// the key for the asset its toggle is on — never the bare alias, which holds
+// the default asset's series and would render as this asset's past.
+function compositeHistoryKeyFor(spec){
+  if (!spec) return null;
+  if (!Array.isArray(spec.assets) || typeof spec.assetOf !== 'function') return spec.key;
+  let a = spec.assets[0];
+  try {
+    const v = String(spec.assetOf() || '').toLowerCase();
+    if (spec.assets.indexOf(v) >= 0) a = v;
+  } catch (_) {}
+  return spec.key + '_' + a;
+}
+// Modal title — a per-asset card names the asset, so a chart of LINK futures
+// can never be mistaken for the BTC one the card showed a moment ago.
+function compositeHistoryTitleFor(key){
+  const spec = compositeHistoryCardFor(key);
+  if (!spec) return key;
+  const a = compositeHistoryAssetOf(key);
+  return a ? spec.title + ' — ' + a.toUpperCase() : spec.title;
+}
+
+// Attach (or refresh) the click affordance on every composite card. Idempotent
+// and cheap, so renderAll() can call it unconditionally — several of these
+// cards are rebuilt with innerHTML by their renderers, which drops the CTA,
+// and this puts it back.
+function refreshCompositeHistoryAffordances(){
+  COMPOSITE_HISTORY_CARDS.forEach(spec => {
+    const card = document.getElementById(spec.card);
+    if (!card) return;
+    // Resolved per render, so flipping the ETF / Futures asset toggle (both
+    // call renderAll()) repoints the affordance at that asset's own series.
+    const key = compositeHistoryKeyFor(spec);
+    const asset = compositeHistoryAssetOf(key);
+    const hist = compositeHistoryFor(key);
+    const n = hist ? hist.points.length : 0;
+    const suffix = asset ? ' (' + asset.toUpperCase() + ')' : '';
+    const label = (!hist ? 'History not recorded yet'
+                : n === 0 ? 'History: tracked, nothing recorded yet'
+                : n === 1 ? 'History: 1 observation'
+                : 'History: ' + n + ' observations') + suffix;
+    let cta = card.querySelector(':scope > .v2-histcta');
+    if (!cta){
+      cta = document.createElement('div');
+      cta.className = 'v2-histcta';
+      cta.innerHTML = '<button type="button" class="v2-histbtn"></button>';
+      card.appendChild(cta);
+    } else if (cta !== card.lastElementChild){
+      // A renderer appended content after us; keep the CTA last.
+      card.appendChild(cta);
+    }
+    const btn = cta.querySelector('.v2-histbtn');
+    if (!btn) return;
+    btn.className = 'v2-histbtn' + ((hist && n) ? '' : ' v2-histbtn--none');
+    btn.textContent = '📈 ' + label;
+    btn.setAttribute('data-histindex', key);
+    btn.setAttribute('aria-haspopup', 'dialog');
+    btn.setAttribute('title', (hist && n)
+      ? 'Open the daily history of this index, plotted against each value’s own observation date.'
+      : 'This index has no usable daily history yet — open for the details.');
+    card.classList.add('v2-histcard');
+    card.setAttribute('data-histcard', key);
+  });
+}
+
+// --- the chart -------------------------------------------------------------
+// Hand-rolled inline SVG: no chart library is loaded on this page for anything
+// this small, and the CSP-safe / offline-safe path matters more than features.
+function compositeHistoryChart(points){
+  const W = 640, H = 210;
+  const PL = 46, PR = 14, PT = 14, PB = 30;
+  const iw = W - PL - PR, ih = H - PT - PB;
+  const dayMs = 86400000;
+  const xs = points.map(p => freshnessDayUTC(p.as_of)).filter(v => v != null);
+  if (!xs.length) return '';
+  let x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
+  if (x1 === x0){ x0 -= dayMs; x1 += dayMs; }         // single point → centre it
+  const vs = points.map(p => Number(p.score)).filter(v => isFinite(v));
+  let y0 = Math.min.apply(null, vs), y1 = Math.max.apply(null, vs);
+  // AXIS FLOOR. Every index charted here is a BOUNDED score — roughly
+  // -100..+100, or 0..100. Fitting the axis to the observed range alone
+  // means a composite that crept from 51 to 53 gets redrawn across the full
+  // chart height and reads as a dramatic swing. That is not a cosmetic
+  // complaint: an axis that exaggerates is a chart that lies, and this chart
+  // exists specifically to stop the archive being over-read.
+  //
+  // 20 points is a tenth of the ±100 domain, so a 2-point move occupies
+  // under a tenth of the plot and looks like what it is. A genuinely wide
+  // series is unaffected — the floor only ever widens the domain, never
+  // narrows it, so no real movement is ever compressed out of view.
+  const MIN_SPAN = 20;
+  if (y1 - y0 < MIN_SPAN){
+    const mid = (y0 + y1) / 2;
+    y0 = mid - MIN_SPAN / 2;
+    y1 = mid + MIN_SPAN / 2;
+  }
+  const span = y1 - y0;
+  y0 -= span * 0.15; y1 += span * 0.15;
+  const X = ms => PL + ((ms - x0) / (x1 - x0)) * iw;
+  const Y = v  => PT + (1 - (v - y0) / (y1 - y0)) * ih;
+  const esc = s => escapeHtml(String(s));
+  const fmtScore = v => (v > 0 ? '+' : '') + (Number.isInteger(v) ? v : Number(v).toFixed(2));
+  // Axis ticks are read at a glance, so they round: whole numbers on a wide
+  // domain, one decimal on a narrow one. Point tooltips and the table below
+  // still carry the exact stored value.
+  const yRange = y1 - y0;
+  const fmtAxis = v => {
+    const r = yRange >= 20 ? Math.round(v) : Math.round(v * 10) / 10;
+    return (r > 0 ? '+' : '') + r;
+  };
+
+  const parts = [];
+  // grid + y axis (3 ticks: bottom / middle / top of the value domain)
+  [y0, (y0 + y1) / 2, y1].forEach(v => {
+    const y = Y(v);
+    parts.push('<line x1="' + PL + '" y1="' + y.toFixed(1) + '" x2="' + (W - PR)
+      + '" y2="' + y.toFixed(1) + '" stroke="var(--border)" stroke-width="1"/>');
+    parts.push('<text x="' + (PL - 6) + '" y="' + (y + 3.5).toFixed(1)
+      + '" text-anchor="end" font-size="10" fill="var(--muted)">' + esc(fmtAxis(v)) + '</text>');
+  });
+  // zero line when the domain crosses it — the sign of a sentiment index is
+  // the whole point, so it gets its own emphasised rule.
+  if (y0 < 0 && y1 > 0){
+    const yz = Y(0);
+    parts.push('<line x1="' + PL + '" y1="' + yz.toFixed(1) + '" x2="' + (W - PR)
+      + '" y2="' + yz.toFixed(1) + '" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 3"/>');
+  }
+  // x labels: first and last observation date (plus the middle one when the
+  // series is long enough for a third label not to collide).
+  const lbl = (ms, anchor) => '<text x="' + X(ms).toFixed(1) + '" y="' + (H - 9)
+    + '" text-anchor="' + anchor + '" font-size="10" fill="var(--muted)">'
+    + esc(freshnessYmd(ms)) + '</text>';
+  const firstMs = freshnessDayUTC(points[0].as_of);
+  const lastMs  = freshnessDayUTC(points[points.length - 1].as_of);
+  if (firstMs != null) parts.push(lbl(firstMs, points.length > 1 ? 'start' : 'middle'));
+  if (points.length > 1 && lastMs != null) parts.push(lbl(lastMs, 'end'));
+  // Middle tick is the TIME midpoint, not the middle array element — the
+  // x-axis is time-proportional (rule 1), so an index midpoint lands wherever
+  // the observations happen to cluster and can collide with the end label.
+  // Only drawn once the span is wide enough for three labels not to touch.
+  if ((x1 - x0) >= 10 * dayMs) parts.push(lbl((x0 + x1) / 2, 'middle'));
+
+  // Line — only above the sparse threshold (rule 3), and broken across gaps
+  // longer than GAP_BREAK_DAYS (rule 4).
+  if (points.length >= COMPOSITE_HISTORY_MIN_TREND_POINTS){
+    let seg = [];
+    const flush = () => {
+      if (seg.length >= 2){
+        parts.push('<polyline points="' + seg.join(' ') + '" fill="none" '
+          + 'stroke="var(--v2-ai)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>');
+      }
+      seg = [];
+    };
+    let prevMs = null;
+    points.forEach(p => {
+      const ms = freshnessDayUTC(p.as_of), v = Number(p.score);
+      if (ms == null || !isFinite(v)){ flush(); prevMs = null; return; }
+      if (prevMs != null && (ms - prevMs) > COMPOSITE_HISTORY_GAP_BREAK_DAYS * dayMs) flush();
+      seg.push(X(ms).toFixed(1) + ',' + Y(v).toFixed(1));
+      prevMs = ms;
+    });
+    flush();
+  }
+  // Points. Stale (cache-served) observations are hollow amber rings so they
+  // can never be mistaken for a genuinely observed value (rule 2).
+  points.forEach(p => {
+    const ms = freshnessDayUTC(p.as_of), v = Number(p.score);
+    if (ms == null || !isFinite(v)) return;
+    const cx = X(ms).toFixed(1), cy = Y(v).toFixed(1);
+    const tip = p.as_of + ' · ' + fmtScore(v)
+      + (p.label ? ' · ' + p.label : '')
+      + (p.stale ? ' · source was cache-served (stale-kept)' : '')
+      + (p.snapshot && p.snapshot !== p.as_of
+         ? ' · recorded ' + p.snapshot + ' (capture day, not the observation)' : '')
+      + (p.note ? ' · ' + p.note : '');
+    parts.push(p.stale
+      ? '<circle cx="' + cx + '" cy="' + cy + '" r="4.5" fill="var(--panel)" '
+        + 'stroke="var(--v2-warn)" stroke-width="2"><title>' + esc(tip) + '</title></circle>'
+      : '<circle cx="' + cx + '" cy="' + cy + '" r="3.5" fill="var(--v2-ai)"'
+        + '><title>' + esc(tip) + '</title></circle>');
+  });
+  return '<svg class="v2-histchart" viewBox="0 0 ' + W + ' ' + H + '" role="img" '
+       + 'aria-label="Daily history of this composite index, plotted against each '
+       + 'value’s own observation date">' + parts.join('') + '</svg>';
+}
+
+// --- the modal body --------------------------------------------------------
+function compositeHistoryBodyHtml(key){
+  const spec = compositeHistoryCardFor(key) || { title: key, what: '' };
+  const arch = compositeHistoryArchive();
+  const hist = compositeHistoryFor(key);
+  const esc = s => escapeHtml(String(s == null ? '' : s));
+  const out = [];
+  const archiveLine = arch.snapshots
+    ? 'The composite archive holds ' + arch.snapshots + ' daily snapshot'
+      + (arch.snapshots === 1 ? '' : 's') + ' (' + esc(arch.first_snapshot)
+      + ' → ' + esc(arch.last_snapshot) + ').'
+    : 'No composite snapshots have been captured yet.';
+
+  // A per-asset card charts ONE asset's series. Name it, and name the siblings,
+  // so nobody reads a LINK chart as "futures positioning" in general.
+  const assetLine = (function(){
+    const a = compositeHistoryAssetOf(key);
+    if (!a) return '';
+    const others = (spec.assets || []).filter(x => x !== a).map(x => x.toUpperCase());
+    return 'This card is per-asset: the chart is <b>' + esc(a.toUpperCase())
+      + '</b> only, read from <code>' + esc(key) + '</code>, because the assets '
+      + 'genuinely diverge and a blended series would be a number no card ever '
+      + 'displayed.' + (others.length
+          ? ' ' + esc(others.join(', ')) + ' are archived separately — switch the '
+            + 'toggle on the card to chart one of those.'
+          : '');
+  })();
+
+  if (!hist){
+    // Two genuinely different situations, and conflating them is the lie the
+    // archive itself was guilty of for a whole release.
+    out.push(spec.archived
+      ? '<div class="v2-histwarn">This index <b>is</b> recorded by the daily '
+        + 'archive, but no snapshot in it carries this key yet. The capture '
+        + 'writes one file per build and cannot be backfilled, so the series '
+        + 'starts from the first build after the key was added.</div>'
+      : '<div class="v2-histwarn">This index is not persisted to the daily '
+        + 'archive, so it has no history to chart. Its value is computed in the '
+        + 'browser at render time and discarded — the same gap every other '
+        + 'composite had before the archive existed.</div>');
+    out.push('<div class="v2-histnote" style="margin-top:10px">'
+      + esc(spec.what) + (assetLine ? '<br><br>' + assetLine : '')
+      + '<br><br>' + archiveLine
+      + ' It records ' + Object.keys(arch.indexes || {}).length
+      + ' index series; <code>' + esc(key) + '</code> is not one of them. '
+      + (spec.archived
+          ? '<code>scripts/snapshot_composites.py</code> writes it at the end of '
+            + 'every Pages build; every snapshot currently on disk predates that.'
+          : 'Recording it means adding it to <code>scripts/snapshot_composites.py</code>, '
+            + 'which runs at the end of every Pages build — history would start '
+            + 'accumulating from that day forward and cannot be backfilled.')
+      + '</div>');
+    return out.join('');
+  }
+
+  const pts = hist.points;
+  if (pts.length){
+    out.push(compositeHistoryChart(pts));
+    out.push('<div class="v2-histlegend" style="margin-top:6px">'
+      + '<span><svg width="12" height="12" style="vertical-align:-2px"><circle cx="6" cy="6" r="3.5" fill="var(--v2-ai)"/></svg> observed</span>'
+      + '<span><svg width="12" height="12" style="vertical-align:-2px"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--v2-warn)" stroke-width="2"/></svg> source cache-served</span>'
+      + '<span>x-axis is the value’s own <b>observation date</b>, not the capture day</span>'
+      + '</div>');
+  }
+
+  // Sparse-archive disclosure (rule 3). Loud, above the numbers, whenever the
+  // series is too short to read as a trend.
+  if (pts.length < COMPOSITE_HISTORY_MIN_TREND_POINTS){
+    out.push('<div class="v2-histwarn" style="margin-top:10px">'
+      + (pts.length === 0
+          ? 'No dated observation has been recorded for this index yet, so there is nothing to plot. '
+          : 'Only ' + pts.length + ' dated observation'
+            + (pts.length === 1 ? '' : 's') + ' recorded so far — too few to draw a trend, '
+            + 'so the points are shown without a connecting line. ')
+      + archiveLine
+      + ' This archive only began accumulating recently; it fills in one day per build.'
+      + '</div>');
+  }
+
+  const staleN = pts.filter(p => p && p.stale).length;
+  const bits = [];
+  bits.push(esc(spec.what));
+  if (assetLine) bits.push(assetLine);
+  bits.push(archiveLine + ' This index appeared in ' + hist.snapshots
+    + ' of them: ' + hist.dated + ' produced a dated value'
+    + (hist.undated ? ', ' + hist.undated + ' recorded a score with no observation date (unplottable, so excluded)' : '')
+    + (hist.missing ? ', ' + hist.missing + ' recorded nothing at all (a real gap, never interpolated)' : '')
+    + '.');
+  if (pts.length){
+    bits.push('Those collapse to <b>' + pts.length + '</b> distinct observation date'
+      + (pts.length === 1 ? '' : 's') + ' — repeat captures of the same unchanged '
+      + 'observation are one point, which is why a frozen source shows as a single '
+      + 'stationary dot instead of a week of invented daily readings.');
+  }
+  if (staleN){
+    bits.push('<b>' + staleN + ' of ' + pts.length + '</b> plotted point'
+      + (staleN === 1 ? ' was' : 's were') + ' cache-served at capture time '
+      + '(the fetcher carried the previous entry forward) and are drawn as hollow rings.');
+  }
+  out.push('<div class="v2-histnote" style="margin-top:10px">' + bits.join('<br><br>') + '</div>');
+
+  if (pts.length){
+    const shown = pts.slice(-COMPOSITE_HISTORY_TABLE_ROWS);
+    if (shown.length < pts.length){
+      out.push('<div class="v2-histnote" style="margin-top:10px">Table shows the '
+        + shown.length + ' most recent of ' + pts.length
+        + ' observations. The chart above plots all of them.</div>');
+    }
+    const rows = shown.slice().reverse().map(p =>
+      '<tr><td>' + esc(p.as_of) + '</td>'
+      + '<td style="font-weight:600">' + esc((Number(p.score) > 0 ? '+' : '')
+          + (Number.isInteger(p.score) ? p.score : Number(p.score).toFixed(2))) + '</td>'
+      + '<td>' + esc(p.label || '') + '</td>'
+      + '<td>' + (p.stale ? '<span class="v2-chip v2-chip--warn">cached</span>' : '') + '</td>'
+      + '<td style="color:var(--muted)">' + esc(p.snapshot || '') + '</td></tr>').join('');
+    out.push('<div class="v2-histscroll" style="margin-top:10px"><table class="v2-histtable">'
+      + '<thead><tr><th>Observed</th><th>Score</th><th>Label</th><th></th>'
+      + '<th title="The day the snapshot was captured. Deliberately shown separately from the observation date.">Captured</th></tr></thead>'
+      + '<tbody>' + rows + '</tbody></table></div>');
+  }
+  return out.join('');
+}
+
+let _compositeHistoryReturnFocus = null;
+function openCompositeHistory(key){
+  const modal = document.getElementById('compositeHistoryModal');
+  if (!modal || !key) return;
+  const spec = compositeHistoryCardFor(key);
+  const titleEl = document.getElementById('compositeHistoryTitle');
+  const subEl = document.getElementById('compositeHistorySub');
+  const body = document.getElementById('compositeHistoryBody');
+  if (titleEl) titleEl.textContent = '📈 ' + compositeHistoryTitleFor(key) + ' — daily history';
+  if (subEl){
+    const hist = compositeHistoryFor(key);
+    subEl.textContent = hist
+      ? 'From data/composites/ · indexes.' + key + ' · each value plotted at its own observation date'
+      : ((spec && spec.archived)
+          ? 'Recorded by the daily capture · no snapshot carries it yet'
+          : 'Not persisted to the daily composite archive');
+  }
+  if (body) body.innerHTML = compositeHistoryBodyHtml(key);
+  _compositeHistoryReturnFocus = (document.activeElement instanceof HTMLElement)
+    ? document.activeElement : null;
+  modal.classList.remove('hidden');
+  const closeBtn = document.getElementById('compositeHistoryClose');
+  if (closeBtn) closeBtn.focus();
+}
+function closeCompositeHistory(){
+  const modal = document.getElementById('compositeHistoryModal');
+  if (!modal || modal.classList.contains('hidden')) return;
+  modal.classList.add('hidden');
+  // Return focus to whatever opened it so keyboard users don't get dumped at
+  // the top of the document.
+  const back = _compositeHistoryReturnFocus;
+  _compositeHistoryReturnFocus = null;
+  if (back && document.contains(back)) { try { back.focus(); } catch(_){} }
+}
+
+// One delegated wiring for every composite card, present and future. Clicking
+// anywhere on the card opens the history — EXCEPT on a genuinely interactive
+// child (a link, a toggle button, a form control), which keeps their own
+// behaviour. The .v2-histbtn is the keyboard/screen-reader entry point and is
+// a real <button>, so Enter/Space come free.
+(function wireCompositeHistory(){
+  if (window._compositeHistoryWired) return; window._compositeHistoryWired = true;
+  document.addEventListener('click', e => {
+    const t = e.target;
+    if (!t || !t.closest) return;
+    if (t.id === 'compositeHistoryClose' || t.id === 'compositeHistoryModal'){
+      closeCompositeHistory();
+      return;
+    }
+    const btn = t.closest('.v2-histbtn');
+    if (btn){
+      e.preventDefault(); e.stopPropagation();
+      openCompositeHistory(btn.getAttribute('data-histindex'));
+      return;
+    }
+    const card = t.closest('[data-histcard]');
+    if (card && !t.closest('a, button, input, select, textarea, [role="button"]')){
+      openCompositeHistory(card.getAttribute('data-histcard'));
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeCompositeHistory();
+  });
+  // FOCUS TRAP (audit V2-E). The modal already declared role="dialog"
+  // aria-modal="true", moved focus to its close button on open and restored
+  // it on close — but nothing kept focus INSIDE. One Tab put a keyboard or
+  // screen-reader user back on the page behind a dialog their AT was
+  // treating as modal, with no way to tell they had left. aria-modal is a
+  // promise to the AT; the trap is what makes it true.
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Tab') return;
+    const modal = document.getElementById('compositeHistoryModal');
+    if (!modal || modal.classList.contains('hidden')) return;
+    const items = Array.prototype.filter.call(
+      modal.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]),'
+        + ' select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+      el => el.offsetWidth > 0 || el.offsetHeight > 0 || el === document.activeElement);
+    if (!items.length){ e.preventDefault(); return; }
+    const first = items[0], last = items[items.length - 1];
+    // Focus outside the dialog entirely (it escaped earlier, or the user
+    // tabbed in from the address bar) → pull it back to the near edge.
+    if (!modal.contains(document.activeElement)){
+      e.preventDefault();
+      (e.shiftKey ? last : first).focus();
+      return;
+    }
+    if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  });
+})();
 // Given a composite net score in [-100,+100], plus an array of normalized
 // component scores in [-100,+100], compute the proportional bar split (pos /
 // neu / neg) by summing absolute positive contributions, absolute negative
@@ -13241,8 +14744,20 @@ function renderFuturesSentiment(){
   // 1) Funding rate. > 0.05% = +100, < -0.05% = -100, linear in between.
   const fundArr = Array.isArray(a.funding) ? a.funding : [];
   const fundLast = fundArr.length ? fundArr[fundArr.length - 1] : null;
-  const rate = fundLast && Number(fundLast.rate);
-  if (isFinite(rate)){
+  // Number.isFinite, NOT the global isFinite, and NaN rather than the falsy
+  // fundLast. The global COERCES: isFinite(null) evaluates Number(null) === 0
+  // and returns TRUE, so an EMPTY funding array pushed clampScore(0) — a
+  // neutral reading fabricated out of no data. That put this card and the
+  // history chart drawn beneath it on different numbers, because
+  // snapshot_composites.futures_sentiment() correctly SKIPS an absent input.
+  // Absence is not neutrality.
+  // `Number(null)` is 0, so a row that EXISTS with rate:null fabricates a
+  // zero exactly like an absent array does. Reject the empty values before
+  // coercing rather than after.
+  const rateRaw = fundLast ? fundLast.rate : null;
+  const rate = (rateRaw === null || rateRaw === undefined || rateRaw === '')
+             ? NaN : Number(rateRaw);
+  if (Number.isFinite(rate)){
     // 0.05% as a fraction = 0.0005. Map ±0.0005 → ±100.
     components.push(clampScore((rate / 0.0005) * 100));
   }
@@ -13250,8 +14765,13 @@ function renderFuturesSentiment(){
   //    log2(ratio); ±1 → ±100. Clamps via clampScore.
   const lsArr = Array.isArray(a.long_short_ratio) ? a.long_short_ratio : [];
   const lsLast = lsArr.length ? lsArr[lsArr.length - 1] : null;
-  const ratio = lsLast && Number(lsLast.ratio);
-  if (isFinite(ratio) && ratio > 0){
+  // Same shape as the funding leg above. This one happened to be safe — the
+  // `ratio > 0` clause rejects the coerced null — but relying on a second
+  // condition to catch the first one's bug is luck, not design.
+  const ratioRaw = lsLast ? lsLast.ratio : null;
+  const ratio = (ratioRaw === null || ratioRaw === undefined || ratioRaw === '')
+              ? NaN : Number(ratioRaw);
+  if (Number.isFinite(ratio) && ratio > 0){
     const lg = Math.log2(ratio);
     components.push(clampScore(lg * 100));
   }
@@ -13460,9 +14980,10 @@ function renderPocTopCards(){
   if (!Array.isArray(list) || list.length === 0){
     host.innerHTML = '<div style="grid-column:1/-1">' + V2.empty({
       icon: '📊',
-      title: 'POC data warming up',
-      sub: 'Run python app.py --fetch-market and reload to populate volume-profile data.',
-      warm: true,
+      title: 'No volume-profile data in this build',
+      sub: 'Nothing to warm up — poc_top is absent from the payload. Locally,'
+         + ' run python app.py --fetch-market and reload to populate it.',
+      absent: true,
     }) + '</div>';
     if (featuredHost) featuredHost.innerHTML = '';
     return;
@@ -13920,13 +15441,13 @@ function renderRedditCards(){
       return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">/r/${escapeHtml(s?.sub || name)}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no Reddit data</div></div>`;
     }
     const posts = (s.top_posts || []).slice(0, 3).map(p => `
-      <a href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:4px 0;border-top:1px solid var(--border)">
+      <a class="feedrow" href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:4px 0;border-top:1px solid var(--border)">
         <span style="color:var(--muted)">▲ ${fmtNumShort(p.score)} · 💬 ${fmtNumShort(p.comments)}</span>
         <span style="display:block;color:var(--text);line-height:1.3">${escapeHtml(p.title||'')}</span>
       </a>
     `).join('') || '<div class="sub" style="color:var(--muted);font-size:11px;padding:6px 0">No top posts.</div>';
     const trending = (s.trending || []).slice(0, 3).map(p => `
-      <a href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:3px 0">
+      <a class="feedrow" href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:3px 0">
         <span style="color:var(--v2-warn)">🔥 ${fmtNumShort(p.score)}</span>
         <span style="color:var(--muted)"> · 💬 ${fmtNumShort(p.comments)}</span>
         <span style="display:block;color:var(--text);line-height:1.3">${escapeHtml(p.title||'')}</span>
@@ -14291,7 +15812,7 @@ function openNewsSentimentDetail(symbol){
     const articles = (ccCoin.top_articles || []).slice(0, 6).map(art => {
       const sc = SENT_COLOR[art.sentiment] || 'var(--muted)';
       const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};margin-right:6px;vertical-align:middle"></span>`;
-      return `<a href="${sanitizeUrl(art.url)}" target="_blank" rel="noopener" style="display:block;padding:6px 0;font-size:12px;color:var(--text);text-decoration:none;border-top:1px solid var(--border);line-height:1.35">
+      return `<a class="feedrow" href="${sanitizeUrl(art.url)}" target="_blank" rel="noopener" style="display:block;padding:6px 0;font-size:12px;color:var(--text);text-decoration:none;border-top:1px solid var(--border);line-height:1.35">
         ${dot}<strong style="color:${sc}">${escapeHtml((art.sentiment||'?').slice(0,3))}</strong>
         <span style="color:var(--muted)"> · ${escapeHtml((art.source||'').slice(0,24))}</span>
         <div style="color:var(--text);margin-top:2px">${escapeHtml(art.title || '')}</div>
@@ -14331,7 +15852,7 @@ function openNewsSentimentDetail(symbol){
     ? items.map(n => {
         const col = n.sentiment === 'POSITIVE' ? 'var(--v2-good)' : n.sentiment === 'NEGATIVE' ? 'var(--v2-bad)' : 'var(--v2-warn)';
         const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${col};margin-right:6px;vertical-align:middle"></span>`;
-        return `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
+        return `<a class="feedrow" href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
           <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-bottom:3px">
             ${dot}<span style="color:var(--v2-ai);font-weight:600">${escapeHtml(n.source || '')}</span>
             <span>· ${escapeHtml(n.date || '')}</span>
@@ -14384,8 +15905,8 @@ function renderTopNewsSentiment(){
     host.innerHTML = V2.empty({
       icon: '📰',
       title: 'No top-25 mentions',
-      sub: 'No news headlines reference top-25 coins in the current window.',
-      warm: true,
+      sub: 'No news headlines reference top-25 coins in the current window.'
+         + ' That is a result over the headlines present, not a wait.',
     });
     return;
   }
@@ -14399,8 +15920,8 @@ function renderTopNewsSentiment(){
     host.innerHTML = V2.empty({
       icon: '📰',
       title: 'No top-25 mentions',
-      sub: 'No news headlines reference top-25 coins in the current window.',
-      warm: true,
+      sub: 'No news headlines reference top-25 coins in the current window.'
+         + ' That is a result over the headlines present, not a wait.',
     });
     return;
   }
@@ -14451,11 +15972,9 @@ function renderResearchNews(){
   if (!host) return;
   const news = ((DATA.market || {}).news) || [];
   if (!news.length) {
-    host.innerHTML = V2.empty({
-      icon: '📰',
-      title: 'Research news warming up',
-      sub: 'No notable headlines yet — refresh in a moment.',
-      warm: true,
+    host.innerHTML = V2.feedEmpty({
+      icon: '📰', what: 'Research news', source: 'the market news feed',
+      freshness: (typeof overviewFreshness === 'function') ? overviewFreshness : null,
     });
     return;
   }
@@ -14465,7 +15984,7 @@ function renderResearchNews(){
     return (db || 0) - (da || 0);
   });
   host.innerHTML = sorted.slice(0, 15).map(n =>
-    `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
+    `<a class="feedrow" href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
       <div style="font-weight:600;font-size:13px">${escapeHtml(n.title || '')}</div>
       <div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(n.source || '')} · ${escapeHtml(n.date || '')}</div>
     </a>`
@@ -14738,7 +16257,9 @@ function renderCpiCard(s){
           '<span class="v2-chip v2-chip--warn cpi-mini__chip">unavailable</span>' +
         '</div>' +
         '<div class="v2-card__body">' +
-          '<div class="v2-empty v2-empty--warm" style="padding:8px 0">' +
+          // A fetch error is not a warm-up. --warm is the "still arriving"
+          // tint; this series is not arriving.
+          '<div class="v2-empty v2-empty--absent" style="padding:8px 0">' +
             '<div class="v2-empty__sub" style="font-size:11px">' + err + '</div>' +
           '</div>' +
         '</div>' +
@@ -15043,8 +16564,9 @@ function renderAll(){
     const defiLoading = document.getElementById('defiLoading');
     const defiContent = document.getElementById('defiContent');
     const defiLoadingActive = SIDECAR_STATE.defi === 'loading';
+    const defiFailed = sidecarFailed('defi');
     if (defiLoading) {
-      defiLoading.classList.toggle('hidden', !defiLoadingActive);
+      defiLoading.classList.toggle('hidden', !defiLoadingActive && !defiFailed);
       if (defiLoadingActive) {
         defiLoading.innerHTML = V2.empty({
           icon: '⏳',
@@ -15052,14 +16574,16 @@ function renderAll(){
           sub: 'Fetching TVL, stablecoin, and yield data — usually under a second.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      } else if (defiFailed) {
+        defiLoading.innerHTML = sidecarFailureHtml('defi');
       }
     }
-    if (defiContent) defiContent.classList.toggle('hidden', defiLoadingActive);
+    if (defiContent) defiContent.classList.toggle('hidden', defiLoadingActive || defiFailed);
     // Wave-3c — spotlight row stays above the loading state so the top of
     // the tab is consistent (skeleton metrics → real metrics) regardless of
     // sidecar status.
     renderDefiSpotlight();
-    if (!defiLoadingActive) renderDefi();
+    if (!defiLoadingActive && !defiFailed) renderDefi();
   }
   if (state.tab === 'trading' && !trEmpty){
     renderNews();
@@ -15090,8 +16614,9 @@ function renderAll(){
     const travelLoading = document.getElementById('travelLoading');
     const travelContent = document.getElementById('travelContent');
     const travelLoadingActive = !DATA.travel && SIDECAR_STATE.travel === 'loading';
+    const travelFailed = sidecarFailed('travel');
     if (travelLoading) {
-      travelLoading.classList.toggle('hidden', !travelLoadingActive);
+      travelLoading.classList.toggle('hidden', !travelLoadingActive && !travelFailed);
       if (travelLoadingActive) {
         travelLoading.innerHTML = V2.empty({
           icon: '🌎',
@@ -15099,10 +16624,12 @@ function renderAll(){
           sub: 'Fetching State Dept advisory levels for ~190 destinations.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      } else if (travelFailed) {
+        travelLoading.innerHTML = sidecarFailureHtml('travel');
       }
     }
-    if (travelContent) travelContent.classList.toggle('hidden', travelLoadingActive);
-    if (!travelLoadingActive) renderTravel();
+    if (travelContent) travelContent.classList.toggle('hidden', travelLoadingActive || travelFailed);
+    if (!travelLoadingActive && !travelFailed) renderTravel();
   }
   if (state.tab === 'cpi'){
     // Lazy-load gate (mirrors travel/defi): show the placeholder while the
@@ -15110,8 +16637,9 @@ function renderAll(){
     const cpiLoading = document.getElementById('cpiLoading');
     const cpiContent = document.getElementById('cpiContent');
     const cpiLoadingActive = !DATA.cpi && SIDECAR_STATE.cpi === 'loading';
+    const cpiFailed = sidecarFailed('cpi');
     if (cpiLoading) {
-      cpiLoading.classList.toggle('hidden', !cpiLoadingActive);
+      cpiLoading.classList.toggle('hidden', !cpiLoadingActive && !cpiFailed);
       if (cpiLoadingActive) {
         cpiLoading.innerHTML = V2.empty({
           icon: '📊',
@@ -15119,10 +16647,12 @@ function renderAll(){
           sub: 'Fetching FRED Consumer Price Index series.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      } else if (cpiFailed) {
+        cpiLoading.innerHTML = sidecarFailureHtml('cpi');
       }
     }
-    if (cpiContent) cpiContent.classList.toggle('hidden', cpiLoadingActive);
-    if (!cpiLoadingActive) renderCpi();
+    if (cpiContent) cpiContent.classList.toggle('hidden', cpiLoadingActive || cpiFailed);
+    if (!cpiLoadingActive && !cpiFailed) renderCpi();
   }
   if (state.tab === 'supplies'){
     // Mirror the travel lazy-load pattern: while the sidecar is in flight we
@@ -15132,8 +16662,9 @@ function renderAll(){
     const suppliesLoading = document.getElementById('suppliesLoading');
     const suppliesContent = document.getElementById('suppliesContent');
     const suppliesLoadingActive = !DATA.supplies && SIDECAR_STATE.supplies === 'loading';
+    const suppliesFailed = sidecarFailed('supplies');
     if (suppliesLoading) {
-      suppliesLoading.classList.toggle('hidden', !suppliesLoadingActive);
+      suppliesLoading.classList.toggle('hidden', !suppliesLoadingActive && !suppliesFailed);
       if (suppliesLoadingActive) {
         suppliesLoading.innerHTML = V2.empty({
           icon: '🚢',
@@ -15141,10 +16672,12 @@ function renderAll(){
           sub: 'Fetching port TEU, inventory ratio, and NY Fed GSCPI.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      } else if (suppliesFailed) {
+        suppliesLoading.innerHTML = sidecarFailureHtml('supplies');
       }
     }
-    if (suppliesContent) suppliesContent.classList.toggle('hidden', suppliesLoadingActive);
-    if (!suppliesLoadingActive) renderSupplies();
+    if (suppliesContent) suppliesContent.classList.toggle('hidden', suppliesLoadingActive || suppliesFailed);
+    if (!suppliesLoadingActive && !suppliesFailed) renderSupplies();
   }
   if (state.tab === 'metals'){
     // Same lazy-load pattern as travel/defi/whale: show a placeholder while
@@ -15153,8 +16686,9 @@ function renderAll(){
     const metalsLoading = document.getElementById('metalsLoading');
     const metalsContent = document.getElementById('metalsContent');
     const metalsLoadingActive = !DATA.metals && SIDECAR_STATE.metals === 'loading';
+    const metalsFailed = sidecarFailed('metals');
     if (metalsLoading) {
-      metalsLoading.classList.toggle('hidden', !metalsLoadingActive);
+      metalsLoading.classList.toggle('hidden', !metalsLoadingActive && !metalsFailed);
       if (metalsLoadingActive) {
         metalsLoading.innerHTML = V2.empty({
           icon: '🥇',
@@ -15162,10 +16696,12 @@ function renderAll(){
           sub: 'Gold/silver prices + central-bank gold + gold/silver mine production.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      } else if (metalsFailed) {
+        metalsLoading.innerHTML = sidecarFailureHtml('metals');
       }
     }
-    if (metalsContent) metalsContent.classList.toggle('hidden', metalsLoadingActive);
-    if (!metalsLoadingActive) renderMetals();
+    if (metalsContent) metalsContent.classList.toggle('hidden', metalsLoadingActive || metalsFailed);
+    if (!metalsLoadingActive && !metalsFailed) renderMetals();
   }
   if (state.tab === 'mufon'){
     // Same lazy-load pattern as the other sidecar-backed tabs: while the
@@ -15180,8 +16716,9 @@ function renderAll(){
     const mufonTrendLoading = document.getElementById('mufonTrendLoading');
     const mufonTrendContent = document.getElementById('mufonTrendContent');
     const mufonLoadingActive = !DATA.mufon && SIDECAR_STATE.mufon === 'loading';
+    const mufonFailed = sidecarFailed('mufon');
     if (mufonLoading) {
-      mufonLoading.classList.toggle('hidden', !mufonLoadingActive);
+      mufonLoading.classList.toggle('hidden', !mufonLoadingActive && !mufonFailed);
       if (mufonLoadingActive) {
         mufonLoading.innerHTML = V2.empty({
           icon: '🛸',
@@ -15189,14 +16726,19 @@ function renderAll(){
           sub: 'Fetching NUFORC eyewitness reports — aggregated by state.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      } else if (mufonFailed) {
+        mufonLoading.innerHTML = sidecarFailureHtml('mufon');
       }
     }
-    if (mufonContent) mufonContent.classList.toggle('hidden', mufonLoadingActive);
+    if (mufonContent) mufonContent.classList.toggle('hidden', mufonLoadingActive || mufonFailed);
     // Trend card shares the same sidecar — hide it while the fetch is in
     // flight to avoid flashing an "empty" state before data lands.
-    if (mufonTrendLoading) mufonTrendLoading.classList.toggle('hidden', !mufonLoadingActive);
-    if (mufonTrendContent) mufonTrendContent.classList.toggle('hidden', mufonLoadingActive);
-    if (!mufonLoadingActive) { renderMufonTrend(); renderMufonMap(); renderMufonShapes(); }
+    if (mufonTrendLoading) mufonTrendLoading.classList.toggle('hidden', !mufonLoadingActive && !mufonFailed);
+    if (mufonTrendContent) mufonTrendContent.classList.toggle('hidden', mufonLoadingActive || mufonFailed);
+    if (mufonTrendLoading && !mufonLoadingActive && mufonFailed){
+      mufonTrendLoading.innerHTML = sidecarFailureHtml('mufon');
+    }
+    if (!mufonLoadingActive && !mufonFailed) { renderMufonTrend(); renderMufonMap(); renderMufonShapes(); }
   }
   renderCoverage();
   // Freshness AGAIN (it was already painted at the top of renderAll): every
@@ -15209,6 +16751,12 @@ function renderAll(){
   // a renderer above throwing; this one is the accuracy pass.
   renderTabFreshness();
   renderDataFreshness();
+  // Composite cards are the last thing touched: several of them (both whale
+  // sentiment gauges) are rebuilt with innerHTML by their own renderers, which
+  // drops the history call-to-action. Re-attaching here — after every renderer
+  // above has run — is what keeps every composite card clickable through tab
+  // switches, asset toggles and late sidecar landings.
+  refreshCompositeHistoryAffordances();
 }
 
 function selectTab(t){
@@ -15231,11 +16779,25 @@ function selectTab(t){
   // tab's empty-state handles that), then re-runs once the fetch lands.
   const _sc = SIDECAR_FOR_TAB[t];
   if (_sc && (SIDECARS||{})[_sc] && SIDECAR_STATE[_sc] !== 'loaded'){
-    loadSidecar(_sc).then(loaded => { if (state.tab === t && loaded) renderAll(); });
+    // Re-render on FAILURE as well as success. Gating this on `loaded` meant
+    // a sidecar that 404'd or threw left the DOM exactly as the in-flight
+    // pass had painted it — i.e. "Loading DeFi data… usually under a second"
+    // sitting there permanently, with no further render to take it down.
+    // That is the audit's V2-B defect at its purest: transient copy over a
+    // permanent absence, and the state where the user is owed the most
+    // explanation was the one that gave them a spinner forever.
+    loadSidecar(_sc).then(() => { if (state.tab === t) renderAll(); });
   }
   // Close any open detail modals when switching tabs — leaving a POC or
   // Stocks modal floating over an unrelated tab is disorienting.
   document.querySelectorAll('.modal-bg').forEach(m => m.classList.add('hidden'));
+  // Same reasoning, and the same bug class, for the freshness explanation
+  // popover and the composite-history dialog: both are position:fixed, so
+  // neither is taken away by the panel that owned it going display:none.
+  // A stamp's explanation is about THIS tab's data; carrying it onto the
+  // next tab states something false about what is on screen.
+  try { if (window.__closeFreshnessNote) window.__closeFreshnessNote(); } catch (_) {}
+  try { if (typeof closeCompositeHistory === 'function') closeCompositeHistory(); } catch (_) {}
   // Whale Activity is BTC-only (free on-chain proxies from blockchain.info).
   // Force the asset to BTC so the page renders something useful instead of
   // the "switch to BTC" empty state when the user is on ETH or LINK.
@@ -15269,6 +16831,13 @@ function selectTab(t){
   if (_activeTab && _activeTab.scrollIntoView){
     try { _activeTab.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'}); }
     catch(_){ _activeTab.scrollIntoView(); }
+    // Repaint the edge fades once the smooth scroll settles — a smooth
+    // scroll that ends exactly at either end fires no further scroll event
+    // in some engines, which would leave a fade pointing at nothing.
+    if (typeof updateTabScrollAffordance === 'function'){
+      updateTabScrollAffordance();
+      setTimeout(updateTabScrollAffordance, 400);
+    }
   }
   document.querySelectorAll('.tab').forEach(el => {
     const isActive = el.dataset.tab === t;
@@ -15736,7 +17305,130 @@ document.querySelectorAll('.tab').forEach(b => {
       selectTab(b.dataset.tab);
     }
   });
+  // Keyboard focus moving along the strip must drag the strip with it, or a
+  // Tab-key user focuses a tab that is scrolled off-screen. Instant, not
+  // smooth: a focus ring that arrives before the element does is worse than
+  // no animation.
+  b.addEventListener('focus', () => {
+    try { b.scrollIntoView({inline:'nearest', block:'nearest'}); } catch(_){}
+    updateTabScrollAffordance();
+  });
 });
+
+// --- Two standing a11y gaps the audit measured (V2-E, "also note") --------
+//   * 20 role="tab" elements and ZERO role="tabpanel" / aria-controls, so
+//     the tab pattern announced as a list of buttons with nothing attached.
+//   * 34 of 34 <canvas> charts with no accessible name at all — a screen
+//     reader passed over every chart on the page in silence.
+// Both are wired here rather than in markup so adding a tab or a chart
+// cannot silently reintroduce the gap.
+//
+// Honest scope note: an accessible NAME is not a text alternative for the
+// data in a chart. It tells a screen-reader user the chart exists and what
+// it is about; it does not read them the series. The tables and freshness
+// stamps beside these charts remain the only textual route to the numbers.
+function wireChartAndPanelSemantics(){
+  document.querySelectorAll('.tab[data-tab]').forEach(tab => {
+    const name = tab.dataset.tab;
+    const panel = document.getElementById('tab-' + name);
+    if (!panel) return;
+    if (!tab.id) tab.id = 'tabbtn-' + name;
+    tab.setAttribute('aria-controls', panel.id);
+    panel.setAttribute('role', 'tabpanel');
+    panel.setAttribute('aria-labelledby', tab.id);
+  });
+  // Name each canvas from the nearest card/section heading above it. A
+  // canvas we cannot name is left alone rather than given a made-up label.
+  document.querySelectorAll('canvas').forEach(cv => {
+    if (cv.getAttribute('aria-label') || cv.getAttribute('aria-labelledby')) return;
+    let host = cv.closest('.v2-card, .chart-card, .card, section');
+    let title = null;
+    for (let i = 0; i < 3 && host && !title; i++){
+      const h = host.querySelector('.v2-card__title, h2, h3, .card-title');
+      if (h && h.textContent.trim()) title = h.textContent.trim();
+      else host = host.parentElement ? host.parentElement.closest('.v2-card, .chart-card, .card, section') : null;
+    }
+    if (!title) return;
+    cv.setAttribute('role', 'img');
+    cv.setAttribute('aria-label', title.replace(/\s+/g, ' ').slice(0, 120) + ' — chart');
+  });
+}
+
+// --- V2-A: honest scroll affordance on the 15-tab strip -------------------
+// At 360px the strip is 1214px wide inside a 360px box: ~4.5 of 15 tabs are
+// visible. The fade tells the user which direction still has tabs in it —
+// and, just as importantly, stops claiming there are more once there aren't.
+// Both classes are removed on a wide viewport where nothing overflows.
+// A sidecar that fails is not a sidecar that is slow (audit V2-B).
+// SIDECAR_STATE goes 'loading' -> 'loaded' | 'error'; the six lazy tabs used
+// to key their placeholder on 'loading' alone, so 'error' fell through to a
+// blank tab (or, before the selectTab fix above, to a permanent spinner).
+// This paints the honest version: what did not arrive, and — because the
+// page itself is a build artifact — that reloading will not change it.
+const SIDECAR_LABELS = {
+  defi:       { what: 'DeFi data',          source: 'the DefiLlama sidecar' },
+  travel:     { what: 'Travel advisories',  source: 'the State Dept advisory sidecar' },
+  cpi:        { what: 'CPI series',         source: 'the FRED CPI sidecar' },
+  supplies:   { what: 'Global supplies',    source: 'the port/GSCPI sidecar' },
+  metals:     { what: 'Metals data',        source: 'the metals sidecar' },
+  mufon:      { what: 'UAP sightings',      source: 'the NUFORC sidecar' },
+  whale:      { what: 'Whale activity',     source: 'the on-chain proxy sidecar' },
+  stockprices:{ what: 'Stock prices',       source: 'the stock-price sidecar' },
+};
+function sidecarFailed(name){
+  if (SIDECAR_STATE[name] !== 'error') return false;
+  const d = DATA[name];
+  if (!d) return true;
+  // loadSidecar leaves an EMPTY object behind on some failure paths, and a
+  // truthy `{}` is not data. Treating it as data is how a hard failure ends
+  // up rendering as a wall of em-dashes with nothing saying why — dashes
+  // that a reader can easily take for measured nulls.
+  if (Array.isArray(d)) return d.length === 0;
+  if (typeof d === 'object') return Object.keys(d).length === 0;
+  return false;
+}
+function sidecarFailureHtml(name){
+  const l = SIDECAR_LABELS[name] || { what: 'Data', source: 'this sidecar' };
+  return V2.feedEmpty({
+    icon: '\u26a0\ufe0f', what: l.what, source: l.source,
+    absentSub: l.source.charAt(0).toUpperCase() + l.source.slice(1)
+      + ' did not load for this page. That is a'
+      + ' failed fetch, not a slow one \u2014 nothing further is on its way,'
+      + ' and reloading serves the same build. Nothing below is a reading of'
+      + ' zero; there is simply no reading.',
+  });
+}
+
+function updateTabScrollAffordance(){
+  const tabs = document.querySelector('.tabs');
+  if (!tabs) return;
+  const max = tabs.scrollWidth - tabs.clientWidth;
+  const x = tabs.scrollLeft;
+  const overflows = max > 2;
+  tabs.classList.toggle('v2-tabs--more-left',  overflows && x > 2);
+  tabs.classList.toggle('v2-tabs--more-right', overflows && x < max - 2);
+}
+(function wireTabScrollAffordance(){
+  const tabs = document.querySelector('.tabs');
+  if (!tabs) return;
+  tabs.addEventListener('scroll', updateTabScrollAffordance, {passive:true});
+  window.addEventListener('resize', updateTabScrollAffordance);
+  // The Travel sub-nav sticks below the preview banner, which is itself
+  // position:sticky. Measure the banner instead of guessing, so the sub-nav
+  // never hides under it (or floats below it with a gap).
+  const syncBannerHeight = () => {
+    const b = document.querySelector('.v2-banner');
+    const h = b ? Math.round(b.getBoundingClientRect().height) : 0;
+    document.documentElement.style.setProperty('--v2-banner-h', h + 'px');
+  };
+  syncBannerHeight();
+  window.addEventListener('resize', syncBannerHeight);
+  updateTabScrollAffordance();
+  wireChartAndPanelSemantics();
+  // Charts are created lazily as tabs are first rendered, so re-run once the
+  // deferred renders have landed.
+  setTimeout(wireChartAndPanelSemantics, 1500);
+})();
 
 // ---------- live refresh (server mode only) ----------
 // /api/refresh is now ASYNC server-side — it kicks off a background fetch
@@ -17629,12 +19321,20 @@ function _tabFromHash(){
     el => el.dataset.tab === h
   ) ? h : null;
 }
-selectTab(_tabFromHash() || 'overview');
+// The FIRST paint of a tab is the only render that can race the async
+// Chart.js loader, so it is the only one that waits for it. whenChartsReady
+// resolves on load, on error, or after a 1.2s budget — never indefinitely —
+// and DOMContentLoaded has already fired by then either way. Every later
+// render (tab click, hashchange, sidecar arrival) runs unconditionally
+// because the library has long since resolved.
+whenChartsReady(function(){
+  selectTab(_tabFromHash() || 'overview');
+  renderAll();
+});
 window.addEventListener('hashchange', () => {
   const h = _tabFromHash();
   if (h && h !== state.tab) selectTab(h);
 });
-renderAll();
 </script>
 </body>
 </html>
