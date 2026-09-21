@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-09-14T14:58:04+00:00",
+  "checked_at": "2026-09-21T15:04:00+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1921,
+    "ok": 1925,
     "gated": 172,
-    "dead": 22,
-    "unreachable": 77
+    "dead": 24,
+    "unreachable": 71
   },
   "dead": [
     {
@@ -30,6 +30,13 @@
       ]
     },
     {
+      "url": "https://docs.eudat.eu/b2share/httpapi/",
+      "code": 404,
+      "services": [
+        "EUDAT B2SHARE REST API"
+      ]
+    },
+    {
       "url": "https://docs.stratz.com/",
       "code": 404,
       "services": [
@@ -41,6 +48,13 @@
       "code": 404,
       "services": [
         "FARA eFile API (DOJ Foreign Agents Registration)"
+      ]
+    },
+    {
+      "url": "https://getbible.net/docs",
+      "code": 404,
+      "services": [
+        "GetBible.net API v2"
       ]
     },
     {
@@ -181,20 +195,6 @@
       ]
     },
     {
-      "url": "https://api.archives-ouvertes.fr/docs",
-      "code": null,
-      "services": [
-        "HAL API (Archives Ouvertes)"
-      ]
-    },
-    {
-      "url": "https://api.archives-ouvertes.fr/docs/search",
-      "code": null,
-      "services": [
-        "HAL Theses API (CCSD/CNRS)"
-      ]
-    },
-    {
       "url": "https://api.fatcat.wiki/",
       "code": null,
       "services": [
@@ -220,13 +220,6 @@
       "code": null,
       "services": [
         "ITA Consolidated Screening List (CSL) API (Commerce)"
-      ]
-    },
-    {
-      "url": "https://asdc.larc.nasa.gov/project/TEMPO",
-      "code": null,
-      "services": [
-        "NASA TEMPO (Earthdata ASDC)"
       ]
     },
     {
@@ -259,24 +252,10 @@
       ]
     },
     {
-      "url": "https://clinicaltrials.gov/data-api/about-api/csv-download",
-      "code": null,
-      "services": [
-        "ClinicalTrials.gov CSV download"
-      ]
-    },
-    {
       "url": "https://collection.britishmuseum.org/",
       "code": null,
       "services": [
         "British Museum Collection (SPARQL/LOD)"
-      ]
-    },
-    {
-      "url": "https://cris.nih.go.kr/",
-      "code": null,
-      "services": [
-        "CRiS (Korea Clinical Research Information Service)"
       ]
     },
     {
@@ -365,18 +344,17 @@
       ]
     },
     {
+      "url": "https://fakeapi.platzi.com/",
+      "code": null,
+      "services": [
+        "Platzi Fake Store API"
+      ]
+    },
+    {
       "url": "https://fatcat.wiki/",
       "code": null,
       "services": [
         "Internet Archive Scholar / Fatcat API"
-      ]
-    },
-    {
-      "url": "https://firms.modaps.eosdis.nasa.gov/api/",
-      "code": null,
-      "services": [
-        "NASA FIRMS (Fire Information for Resource Management)",
-        "NASA FIRMS Active Fire API"
       ]
     },
     {
@@ -417,11 +395,38 @@
       ]
     },
     {
-      "url": "https://geonames.nga.mil/gns/html/gns_services.html",
-      "code": null,
+      "url": "https://github.com/cjhutto/vaderSentiment",
+      "code": 504,
       "services": [
-        "NGA Geographic Names Server (GNS) - foreign GEOINT toponyms",
-        "NGA Geographic Names Server (GNS) - GEOINT toponyms"
+        "VADER / AFINN sentiment lexicons (NLTK/PyPI)"
+      ]
+    },
+    {
+      "url": "https://github.com/fawazahmed0/quran-api",
+      "code": 504,
+      "services": [
+        "fawazahmed0 Quran API"
+      ]
+    },
+    {
+      "url": "https://github.com/jolpica/jolpica-f1",
+      "code": 504,
+      "services": [
+        "Jolpica-F1 (Ergast successor)"
+      ]
+    },
+    {
+      "url": "https://github.com/nmslib/hnswlib",
+      "code": 504,
+      "services": [
+        "hnswlib"
+      ]
+    },
+    {
+      "url": "https://github.com/ollama/ollama",
+      "code": 504,
+      "services": [
+        "Ollama (+ Ollama Cloud)"
       ]
     },
     {
@@ -433,24 +438,10 @@
       ]
     },
     {
-      "url": "https://gwosc.org/api/v1/docs/",
-      "code": null,
-      "services": [
-        "GWOSC (Gravitational Wave Open Science Center)"
-      ]
-    },
-    {
       "url": "https://hemp.ams.usda.gov/s/PublicSearchTool",
       "code": null,
       "services": [
         "USDA Hemp eManagement Platform (HeMP) Public/LE Search Tool"
-      ]
-    },
-    {
-      "url": "https://iiif.bodleian.ox.ac.uk/iiif/",
-      "code": null,
-      "services": [
-        "Digital Bodleian / Oxford IIIF (added in verify)"
       ]
     },
     {
@@ -489,6 +480,20 @@
       ]
     },
     {
+      "url": "https://mrdata.usgs.gov/",
+      "code": null,
+      "services": [
+        "USGS Mineral Resources Online Spatial Data"
+      ]
+    },
+    {
+      "url": "https://mrdata.usgs.gov/mrds/",
+      "code": null,
+      "services": [
+        "USGS Mineral Resources Data System (MRDS)"
+      ]
+    },
+    {
       "url": "https://mymarketnews.ams.usda.gov/mars-api/getting-started",
       "code": null,
       "services": [
@@ -503,10 +508,10 @@
       ]
     },
     {
-      "url": "https://ndltd.org/thesis-resources/global-etd-search/",
+      "url": "https://ned.ipac.caltech.edu/",
       "code": null,
       "services": [
-        "NDLTD Global ETD Search"
+        "NASA/IPAC Extragalactic Database (NED)"
       ]
     },
     {
@@ -518,18 +523,11 @@
       ]
     },
     {
-      "url": "https://oqmd.org/",
+      "url": "https://open-elevation.com/",
       "code": null,
       "services": [
-        "OQMD (Open Quantum Materials Database)"
-      ]
-    },
-    {
-      "url": "https://oqmd.org/api/",
-      "code": null,
-      "services": [
-        "OQMD (Open Quantum Materials Database) API",
-        "OQMD (Open Quantum Materials Database)"
+        "Open-Elevation API",
+        "Open-Elevation"
       ]
     },
     {
@@ -554,6 +552,13 @@
       ]
     },
     {
+      "url": "https://query.wikidata.org/sparql",
+      "code": null,
+      "services": [
+        "Wikidata SPARQL Query Service"
+      ]
+    },
+    {
       "url": "https://rctportal.niph.go.jp/en",
       "code": null,
       "services": [
@@ -568,21 +573,6 @@
       ]
     },
     {
-      "url": "https://rest.isric.org/",
-      "code": null,
-      "services": [
-        "ISRIC SoilGrids REST API",
-        "ISRIC SoilGrids REST API"
-      ]
-    },
-    {
-      "url": "https://rest.isric.org/soilgrids/v2.0/docs",
-      "code": null,
-      "services": [
-        "ISRIC SoilGrids"
-      ]
-    },
-    {
       "url": "https://sanskritwordnet.chs.harvard.edu/api",
       "code": null,
       "services": [
@@ -590,24 +580,10 @@
       ]
     },
     {
-      "url": "https://scaife.perseus.org/",
-      "code": null,
-      "services": [
-        "Scaife Viewer / Perseus (Open Greek & Latin) API"
-      ]
-    },
-    {
       "url": "https://schema.oasf.agntcy.org/",
       "code": null,
       "services": [
         "AGNTCY — Open Agentic Schema Framework (OASF)"
-      ]
-    },
-    {
-      "url": "https://scholia.toolforge.org/",
-      "code": 503,
-      "services": [
-        "Scholia"
       ]
     },
     {
@@ -622,13 +598,6 @@
       "code": null,
       "services": [
         "SNOMED CT Snowstorm public training FHIR API"
-      ]
-    },
-    {
-      "url": "https://splatalogue.online/",
-      "code": null,
-      "services": [
-        "Splatalogue (NRAO Spectral Line Catalog)"
       ]
     },
     {
