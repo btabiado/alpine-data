@@ -1,16 +1,16 @@
 {
   "as_of": "2026-09-21",
-  "generated_at": "2026-09-21T00:04:35Z",
+  "generated_at": "2026-09-21T06:05:39Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-09-21",
       "label": null,
-      "note": "40 coins; 26 buy+, 1 sell+",
-      "score": 62,
+      "note": "40 coins; 23 buy+, 1 sell+",
+      "score": 55,
       "stale": false
     },
     "lthcs_composite": {
-      "as_of": "2026-09-20",
+      "as_of": "2026-09-21",
       "label": "LTHCS WEAKENING",
       "note": null,
       "score": -32,
@@ -20,7 +20,7 @@
       "as_of": "2026-09-21",
       "label": "Outflow",
       "note": null,
-      "score": -35.37,
+      "score": -38.46,
       "stale": false
     },
     "poc_signal_breadth": null,
