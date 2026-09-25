@@ -1,11 +1,11 @@
 {
   "as_of": "2026-09-25",
-  "generated_at": "2026-09-25T18:26:57Z",
+  "generated_at": "2026-09-25T22:10:59Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-09-25",
       "label": null,
-      "note": "40 coins; 26 buy+, 3 sell+",
+      "note": "40 coins; 25 buy+, 2 sell+",
       "score": 57,
       "stale": false
     },
@@ -18,9 +18,9 @@
     },
     "money_flow_index": {
       "as_of": "2026-09-25",
-      "label": "Neutral",
+      "label": "Outflow",
       "note": null,
-      "score": -26.92,
+      "score": -48.88,
       "stale": false
     },
     "poc_signal_breadth": null,
