@@ -316,7 +316,7 @@
     },
     {
       "ticker": "COST",
-      "todays_take": "COST requires Structural Review at 46.5 (+5.0 over 30 days), supported by Adoption Momentum at 54.9.",
+      "todays_take": "COST requires Structural Review at 46.5 (+5.0 over 30 days), supported by Thesis Integrity at 55.0.",
       "why_changed": "Score is at 46.5 (drift over 1d -2.0); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Demand Environment at 41.9 is well below the universe median, and Institutional Confidence at 47.0 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "Score is already in structural review territory. A move below 30 on Demand Environment, combined with a continued drift below 40 in the composite, would force a position exit decision.",
