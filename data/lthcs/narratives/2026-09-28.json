@@ -540,7 +540,7 @@
     },
     {
       "ticker": "GOOG",
-      "todays_take": "GOOG requires Structural Review at 38.1 (-11.1 over 30 days), supported by Thesis Integrity at 58.8.",
+      "todays_take": "GOOG requires Structural Review at 38.1 (-11.1 over 30 days), supported by Adoption Momentum at 54.8.",
       "why_changed": "Score is at 38.1 (drift over 1d +0.3); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Institutional Confidence at 9.6 is well below the universe median, and Demand Environment at 46.0 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
