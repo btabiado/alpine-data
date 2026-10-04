@@ -10,6 +10,7 @@ Covers:
 """
 from __future__ import annotations
 
+from urllib.parse import urlparse
 
 import fetch_market
 
@@ -64,7 +65,7 @@ def test_etherscan_eth_daily_happy_path(monkeypatch):
         calls["count"] += 1
         # Sanity-check we're hitting the Etherscan v2 endpoint with the
         # right module/action and that the apikey is being forwarded.
-        assert "etherscan.io" in url
+        assert urlparse(url).hostname == "api.etherscan.io"
         assert params is not None
         assert params.get("module") == "block"
         assert params.get("action") == "getblocknobytime"

@@ -60,13 +60,15 @@ _ACS_FIELDS = (
 # Where an operator actually fixes a missing key. These are referenced by
 # .github/workflows/city-daily.yml, so a key that exists in the repo secrets but
 # is not passed through in that workflow's `env:` block presents exactly like a
-# key that was never created.
-_KEY_HELP = {
-    "CENSUS_API_KEY": (
+# key that was never created. Keyed by source rather than by env-var name: this
+# is fixed public help text, and a lookup like ["CENSUS_API_KEY"] reads to
+# static analysis (CodeQL py/clear-text-logging-sensitive-data) as a secret.
+_SIGNUP_HELP = {
+    "census": (
         "free key: https://api.census.gov/data/key_signup.html — then add it to "
         "the repo secrets AND to the env: block of .github/workflows/city-daily.yml"
     ),
-    "AIRNOW_API_KEY": (
+    "airnow": (
         "free key: https://docs.airnowapi.org/account/request/ — then add it to "
         "the repo secrets AND to the env: block of .github/workflows/city-daily.yml"
     ),
@@ -124,7 +126,7 @@ def build_context(city_cfg: dict, geo_cfg: Optional[dict], *, session=None,
         _note(diagnostics, city_id, "census", "no key",
               "CENSUS_API_KEY unset; the ACS DATA endpoint returns an HTML "
               "'Missing Key' page keyless, so no request is worth sending. "
-              + _KEY_HELP["CENSUS_API_KEY"], _ACS_FIELDS)
+              + _SIGNUP_HELP["census"], _ACS_FIELDS)
     else:
         try:
             acs = census.fetch_acs(geo_cfg, session=session)
@@ -158,7 +160,7 @@ def build_context(city_cfg: dict, geo_cfg: Optional[dict], *, session=None,
         # degradation produced literally no output anywhere.
         _note(diagnostics, city_id, "airnow", "no key",
               "AIRNOW_API_KEY unset; the adapter short-circuits without sending "
-              "a request. " + _KEY_HELP["AIRNOW_API_KEY"], "aqi")
+              "a request. " + _SIGNUP_HELP["airnow"], "aqi")
         aqi = None
     else:
         try:

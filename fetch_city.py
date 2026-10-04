@@ -535,7 +535,7 @@ def _report_diagnostics(diagnostics: list) -> None:
                 d["city"])
         for (source, detail, lost), cities in sorted(by_source.items()):
             # Redacted like the other two loops below. In this branch `detail`
-            # is normally the _KEY_HELP signup text rather than an upstream
+            # is normally the _SIGNUP_HELP text rather than an upstream
             # error, so there is nothing secret in it today — but "today" is
             # not a security property, and a third printer that treats the
             # same field differently from its two siblings is how the next
