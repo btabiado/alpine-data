@@ -1,6 +1,6 @@
 {
   "as_of": "2026-10-04",
-  "generated_at": "2026-10-04T12:16:27Z",
+  "generated_at": "2026-10-04T12:25:56Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-04",
@@ -69,7 +69,7 @@
       "as_of": "2026-10-03",
       "label": "BALANCED",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 5,
+      "score": 4,
       "stale": false
     },
     "lthcs_composite": {
