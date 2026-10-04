@@ -224,26 +224,71 @@ def test_resolve_ori_live_smoke_miami_dade():
 
 
 # --------------------------------------------------------------------------- #
-# monthly_offenses — no key short-circuit (NO network)
+# monthly_offenses — keyless (the CDE LATEST host does not check a key)
 # --------------------------------------------------------------------------- #
-def test_monthly_offenses_no_key_returns_empty_without_network():
-    session = FakeSession([])  # any .get would IndexError
-    out = monthly_offenses("FL0130000", api_key=None, session=session)
-    assert out == []
-    assert session.calls == []  # never touched the network
+# These used to assert the opposite: "no key -> [] and no request". That gate
+# was the whole reason Miami's Public Safety pillar was empty in every build;
+# the endpoint serves the series keyless (re-verified live 2026-10-04).
+def test_monthly_offenses_without_a_key_still_requests_and_parses():
+    session = FakeSession([_summarized_payload()])
+    out = monthly_offenses("FL0130000", api_key=None, since="2024-11",
+                           until="2025-02", session=session)
+    assert [r["month"] for r in out] == ["2024-11", "2024-12", "2025-01", "2025-02"]
+    assert len(session.calls) == 1
+    url, params = session.calls[0]
+    assert url == SUMMARIZED_URL
+    assert "API_KEY" not in params  # nothing sent, not even an empty value
 
 
-def test_monthly_offenses_no_key_via_env_empty(monkeypatch):
+def test_monthly_offenses_env_unset_requests_without_api_key_param(monkeypatch):
     monkeypatch.delenv("FBI_CDE_API_KEY", raising=False)
-    session = FakeSession([])
-    assert monthly_offenses("FL0130000", session=session) == []
-    assert session.calls == []
+    session = FakeSession([_summarized_payload()])
+    assert monthly_offenses("FL0130000", since="2024-11", session=session)
+    assert "API_KEY" not in session.calls[0][1]
 
 
-def test_monthly_offenses_empty_string_key_treated_as_no_key():
-    session = FakeSession([])
-    assert monthly_offenses("FL0130000", api_key="", session=session) == []
-    assert session.calls == []
+def test_monthly_offenses_empty_string_key_sends_no_api_key_param():
+    session = FakeSession([_summarized_payload()])
+    monthly_offenses("FL0130000", api_key="", since="2024-11", session=session)
+    assert "API_KEY" not in session.calls[0][1]
+
+
+# --------------------------------------------------------------------------- #
+# monthly_offenses — partial months at CDE's last refresh are dropped
+# --------------------------------------------------------------------------- #
+def _with_refresh(payload, refresh):
+    payload["cde_properties"]["last_refresh_date"] = {"UCR": refresh}
+    return payload
+
+
+def test_month_in_progress_at_last_refresh_is_dropped():
+    """Live shape on 2026-10-04: refreshed 09/15, September holds 6 offenses.
+
+    Scored as a full month that is a ~98% crime drop. It must not be scored.
+    """
+    payload = _with_refresh(_summarized_payload(offenses={
+        "07-2026": 332, "08-2026": 332, "09-2026": 6}), "09/15/2026")
+    out = monthly_offenses("FL0130000", since="2026-07", until="2026-09",
+                           session=FakeSession([payload]))
+    assert out == [{"month": "2026-07", "n": 332}, {"month": "2026-08", "n": 332}]
+
+
+def test_refresh_on_the_last_day_keeps_that_month():
+    payload = _with_refresh(_summarized_payload(offenses={
+        "08-2026": 332, "09-2026": 300}), "09/30/2026")
+    out = monthly_offenses("FL0130000", since="2026-08", until="2026-09",
+                           session=FakeSession([payload]))
+    assert [r["month"] for r in out] == ["2026-08", "2026-09"]
+
+
+def test_missing_or_malformed_refresh_date_trims_nothing():
+    for refresh in (None, "", "2026-09-15", "13/40/2026"):
+        payload = _summarized_payload(offenses={"08-2026": 332, "09-2026": 6})
+        if refresh is not None:
+            _with_refresh(payload, refresh)
+        out = monthly_offenses("FL0130000", since="2026-08", until="2026-09",
+                               session=FakeSession([payload]))
+        assert [r["month"] for r in out] == ["2026-08", "2026-09"], refresh
 
 
 # --------------------------------------------------------------------------- #

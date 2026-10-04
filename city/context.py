@@ -7,8 +7,10 @@ key or a failed call yields ``None`` for that field and never raises out of
 ``build_context`` — so the City Context strip degrades gracefully one KPI at a time.
 
 Keys are read from the environment by each adapter (CENSUS_API_KEY, BLS_API_KEY,
-AIRNOW_API_KEY, FBI_CDE_API_KEY). BLS works keyless; the others need a free key for
-live data.
+AIRNOW_API_KEY, FBI_CDE_API_KEY). BLS and the FBI CDE series work keyless (a BLS
+key only raises its daily cap; the CDE host this repo calls does not check one);
+Census ACS and AirNow need a free key for live data (both re-verified 2026-10-04:
+keyless ACS 302-redirects to missing_key.html, keyless AirNow answers HTTP 401).
 
 WHY THIS FILE LOGS SO LOUDLY
 ----------------------------
@@ -67,10 +69,6 @@ _KEY_HELP = {
     "AIRNOW_API_KEY": (
         "free key: https://docs.airnowapi.org/account/request/ — then add it to "
         "the repo secrets AND to the env: block of .github/workflows/city-daily.yml"
-    ),
-    "FBI_CDE_API_KEY": (
-        "free key: https://api.data.gov/signup/ — then add it to the repo secrets "
-        "AND to the env: block of .github/workflows/city-daily.yml"
     ),
 }
 
@@ -194,25 +192,10 @@ def build_context(city_cfg: dict, geo_cfg: Optional[dict], *, session=None,
 
 def fbi_crime_series(feed_cfg: dict, *, since: str, until: str, session=None) -> list:
     """Monthly offense counts for a feed whose adapter == 'fbi' (Miami's Public
-    Safety pillar). Returns ``[]`` when ``FBI_CDE_API_KEY`` is unset (the feed then
-    stays ``not_published``) or when the feed has no resolved ORI."""
+    Safety pillar). Returns ``[]`` only when the feed has no resolved ORI or CDE
+    reports no actuals; the request is sent with or without ``FBI_CDE_API_KEY``
+    because the CDE endpoint serves this series keyless (see ``city/fbi.py``)."""
     ori = feed_cfg.get("ori")
     if not ori:
         return []
     return fbi.monthly_offenses(ori, since=since, until=until, session=session)
-
-
-def fbi_key_missing() -> bool:
-    """True when ``FBI_CDE_API_KEY`` is unset.
-
-    Lets the caller label Miami's Public Safety pillar with the reason it is
-    empty ('needs FBI_CDE_API_KEY') instead of the bare 'not published by this
-    city', which is false — the FBI publishes the series, we just cannot ask
-    for it.
-    """
-    return not os.environ.get("FBI_CDE_API_KEY")
-
-
-def fbi_key_help() -> str:
-    """Operator-facing instruction for the missing FBI key."""
-    return _KEY_HELP["FBI_CDE_API_KEY"]
