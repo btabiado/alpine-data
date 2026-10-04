@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-08-24T08:57:54+00:00",
+  "checked_at": "2026-09-28T16:42:17+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1938,
-    "gated": 161,
-    "dead": 22,
-    "unreachable": 71
+    "ok": 1927,
+    "gated": 172,
+    "dead": 26,
+    "unreachable": 67
   },
   "dead": [
     {
@@ -23,6 +23,20 @@
       ]
     },
     {
+      "url": "https://docs.data.nasdaq.com/",
+      "code": 404,
+      "services": [
+        "Nasdaq Data Link (formerly Quandl)"
+      ]
+    },
+    {
+      "url": "https://docs.eudat.eu/b2share/httpapi/",
+      "code": 404,
+      "services": [
+        "EUDAT B2SHARE REST API"
+      ]
+    },
+    {
       "url": "https://docs.stratz.com/",
       "code": 404,
       "services": [
@@ -34,6 +48,20 @@
       "code": 404,
       "services": [
         "FARA eFile API (DOJ Foreign Agents Registration)"
+      ]
+    },
+    {
+      "url": "https://getbible.net/docs",
+      "code": 404,
+      "services": [
+        "GetBible.net API v2"
+      ]
+    },
+    {
+      "url": "https://github.com/marketplace/models",
+      "code": 404,
+      "services": [
+        "GitHub Models"
       ]
     },
     {
@@ -69,13 +97,6 @@
       "code": 404,
       "services": [
         "Anaconda.org (conda) API"
-      ]
-    },
-    {
-      "url": "https://www.ebi.ac.uk/jdispatcher/docs/webservices/",
-      "code": 404,
-      "services": [
-        "EMBL-EBI Job Dispatcher (sequence tools)"
       ]
     },
     {
@@ -158,6 +179,13 @@
       ]
     },
     {
+      "url": "https://www.oapen.org/resources/15635975-metadata",
+      "code": 404,
+      "services": [
+        "OAPEN Library REST/OAI API"
+      ]
+    },
+    {
       "url": "https://www.pantone.com/products/digital-apps/pantone-api",
       "code": 404,
       "services": [
@@ -195,6 +223,13 @@
       ]
     },
     {
+      "url": "https://api.justyy.workers.dev/api/factor/",
+      "code": 503,
+      "services": [
+        "Integer Factorization API (justyy / HelloACM)"
+      ]
+    },
+    {
       "url": "https://api.pharmgkb.org/swagger/",
       "code": null,
       "services": [
@@ -206,6 +241,15 @@
       "code": null,
       "services": [
         "ITA Consolidated Screening List (CSL) API (Commerce)"
+      ]
+    },
+    {
+      "url": "https://aqs.epa.gov/aqsweb/documents/data_api.html",
+      "code": null,
+      "services": [
+        "EPA Air Quality System (AQS) API",
+        "EPA Air Quality System (AQS) API",
+        "EPA Air Quality System (AQS) API"
       ]
     },
     {
@@ -230,10 +274,10 @@
       ]
     },
     {
-      "url": "https://cartblanche.docking.org/",
+      "url": "https://cfpub.epa.gov/ecotox/",
       "code": null,
       "services": [
-        "ZINC (CartBlanche) API"
+        "EPA ECOTOX Knowledgebase"
       ]
     },
     {
@@ -249,28 +293,6 @@
       "code": null,
       "services": [
         "British Museum Collection (SPARQL/LOD)"
-      ]
-    },
-    {
-      "url": "https://cris.nih.go.kr/",
-      "code": null,
-      "services": [
-        "CRiS (Korea Clinical Research Information Service)"
-      ]
-    },
-    {
-      "url": "https://data.cdc.gov/",
-      "code": null,
-      "services": [
-        "CDC NCHS via data.cdc.gov (Socrata SODA API)"
-      ]
-    },
-    {
-      "url": "https://data.cityofnewyork.us/Health/DOHMH-New-York-City-Restaurant-Inspection-Results/43nn-pn8j",
-      "code": null,
-      "services": [
-        "NYC Open Data - DOHMH Restaurant Inspections (Socrata)",
-        "NYC DOHMH Restaurant Inspections (Socrata)"
       ]
     },
     {
@@ -359,18 +381,17 @@
       ]
     },
     {
+      "url": "https://fakeapi.platzi.com/",
+      "code": null,
+      "services": [
+        "Platzi Fake Store API"
+      ]
+    },
+    {
       "url": "https://fatcat.wiki/",
       "code": null,
       "services": [
         "Internet Archive Scholar / Fatcat API"
-      ]
-    },
-    {
-      "url": "https://firms.modaps.eosdis.nasa.gov/api/",
-      "code": null,
-      "services": [
-        "NASA FIRMS (Fire Information for Resource Management)",
-        "NASA FIRMS Active Fire API"
       ]
     },
     {
@@ -433,13 +454,6 @@
       ]
     },
     {
-      "url": "https://llama.developer.meta.com/",
-      "code": 500,
-      "services": [
-        "Meta Llama API (llama.developer.meta.com)"
-      ]
-    },
-    {
       "url": "https://maps.bts.dot.gov/services/rest/services/NTAD/MilitaryBases/MapServer",
       "code": null,
       "services": [
@@ -483,25 +497,9 @@
       ]
     },
     {
-      "url": "https://ntrs.nasa.gov/citations/20250003355",
-      "code": null,
-      "services": [
-        "NASA NOTAM API (FAA SWIM redistribution, via NASA DIP catalog)",
-        "NASA NOTAM API (SWIM redistribution)"
-      ]
-    },
-    {
       "url": "https://oqmd.org/",
       "code": null,
       "services": [
-        "OQMD (Open Quantum Materials Database)"
-      ]
-    },
-    {
-      "url": "https://oqmd.org/api/",
-      "code": null,
-      "services": [
-        "OQMD (Open Quantum Materials Database) API",
         "OQMD (Open Quantum Materials Database)"
       ]
     },
@@ -520,6 +518,13 @@
       ]
     },
     {
+      "url": "https://pncp.gov.br/api/pncp/swagger-ui/index.html",
+      "code": null,
+      "services": [
+        "Brazil PNCP (Portal Nacional de Contratacoes Publicas) API"
+      ]
+    },
+    {
       "url": "https://prime-numbers-api.com/",
       "code": null,
       "services": [
@@ -534,10 +539,10 @@
       ]
     },
     {
-      "url": "https://roar.eprints.org/",
+      "url": "https://remote.universal-robots.com/",
       "code": null,
       "services": [
-        "ROAR (Registry of Open Access Repositories)"
+        "Universal Robots API (UR Cloud)"
       ]
     },
     {
@@ -580,13 +585,6 @@
       "code": null,
       "services": [
         "Trialstreamer"
-      ]
-    },
-    {
-      "url": "https://v6.db.transport.rest/",
-      "code": null,
-      "services": [
-        "Deutsche Bahn transport.rest (v6.db)"
       ]
     },
     {
@@ -633,7 +631,7 @@
     },
     {
       "url": "https://www.mousemine.org/mousemine/",
-      "code": null,
+      "code": 503,
       "services": [
         "Mouse Genome Informatics (MGI / MouseMine)"
       ]

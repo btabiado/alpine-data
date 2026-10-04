@@ -15,6 +15,9 @@ concurrency:
 jobs:
   scan:
     runs-on: ubuntu-latest
+    # A full-history scan grows with the repo, and this job had no bound at all,
+    # so a hung scan would have held a runner for GitHub's 6-hour default.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
@@ -25,7 +28,25 @@ jobs:
         # scanner binary version, so this freezes both. Refresh quarterly.
         uses: trufflesecurity/trufflehog@37b77001d0174ebec2fcca2bd83ff83a6d45a3ab # v3.95.3
         with:
-          extra_args: --only-verified --since-commit=HEAD~200
+          # NO --since-commit here. The action supplies its own, so passing one
+          # in extra_args made trufflehog abort before scanning anything:
+          #
+          #   trufflehog: error: flag 'since-commit' cannot be repeated
+          #
+          # That is not a warning — it is exit 1 before a single commit is read.
+          # Every run since 2026-06-07 died on it, so this repo has had ZERO
+          # effective secret scans for ~13 weeks while the workflow reported a
+          # red X that read like a finding rather than a config error.
+          #
+          # Dropping the flag is also the right scope, not just the compiling
+          # one. HEAD~200 was meant to bound the work, but this repo commits
+          # automated data snapshots constantly — 161 commits in the last 7 days,
+          # 959 in the last 30 — so HEAD~200 reaches back only ~8 days. On a
+          # WEEKLY cron that window is barely one period wide and silently
+          # misses everything in any busier week. A weekly audit over a
+          # fetch-depth: 0 checkout should read the whole history; the
+          # timeout-minutes above is the bound instead.
+          extra_args: --only-verified
       - name: Summarize result
         if: always()
         run: |

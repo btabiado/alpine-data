@@ -381,12 +381,20 @@ NESTED_DATE_PATHS = _NESTED_DATE_PATHS
 # been renewed three times is telling you the fix is never coming, and should
 # either be fixed properly or the feed retired from the dashboard.
 SUPPRESSIONS: dict[str, Suppression] = {
+    # Re-validated on expiry (2026-10-04), not extended reflexively: the old
+    # reason ("no code change can fix it from CI") stopped being true, and the
+    # decision it was waiting on was made -- the feed stays. tsa.gov is behind
+    # Akamai, which refuses datacenter IPs outright (a plain 403, not a JS
+    # challenge), so the fix reads the Internet Archive's near-daily snapshot of
+    # the same public page instead. Two weeks is enough for that fix to land
+    # and refresh the file; if data-tsa.json is still stale on expiry, the
+    # fallback did not work and this should come back as a real failure.
     "data-tsa.json": Suppression(
-        reason="tsa.gov 403s GitHub Actions IPs even with a browser UA. Needs a "
-               "non-datacenter egress path (residential proxy or a self-hosted "
-               "runner); no code change can fix it from CI.",
-        until=date(2026, 9, 15),
-        tracked_in="needs a decision on proxy vs. dropping the feed"),
+        reason="tsa.gov (Akamai) 403s datacenter IPs incl. GitHub Actions. Fix in "
+               "flight: fetch_tsa.py falls back to the Internet Archive snapshot "
+               "of the same page. Remove this entry once data-tsa.json is fresh.",
+        until=date(2026, 10, 18),
+        tracked_in="branch claude/alpine-data-status-check-93q95x-tsa (Wayback fallback)"),
     # NOTE: the crypto-flow suppressions that used to live here were REMOVED,
     # not renewed. Their stated blocker ("needs COINGLASS_API_KEY; free mirror
     # is dead") stopped being true when scripts/fetch_etf_flows.py landed with
