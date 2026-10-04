@@ -6139,7 +6139,8 @@ function moneyFlowFreshness(){
   const src = mfx.sources || {};
   const parts = [];
   const named = [];
-  const mmfD = fLast((src.mmf || {}).weekly);
+  // A FRED fallback MMF block (ICI blocked) is display-only, not a composite input.
+  const mmfD = (src.mmf || {}).fallback ? null : fLast((src.mmf || {}).weekly);
   if (mmfD){ parts.push(mmfD); named.push('ICI money-market weekly'); }
   const mfD = fLast((src.mf_flows || {}).weekly);
   if (mfD){ parts.push(mfD); named.push('ICI equity mutual-fund weekly'); }
@@ -8347,9 +8348,21 @@ function renderMoneyFlowTab(){
     const src = mfx.sources || {};
     const blocks = [];
 
+    // A leg the fetcher could not read ships available:false + a reason;
+    // disclose it instead of silently dropping the block.
+    const unavailBlock = (title, b) => `
+        <div style="padding:8px 0;border-top:1px solid #1f2533">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em">${title}</div>
+          <div style="font-size:11px;color:#fb923c;margin-top:2px">Unavailable — ${escapeHtml(String(b.unavailable_reason))}</div>
+        </div>`;
+    const srcNote = b => b && b.note
+      ? `<div class="sub" style="font-size:10px;color:#fb923c;margin-top:2px">${escapeHtml(String(b.note))}</div>` : '';
+
     // Money-market funds (cash on the sidelines).
     const mmf = src.mmf || null;
-    if (mmf && Array.isArray(mmf.weekly) && mmf.weekly.length){
+    if (mmf && (!Array.isArray(mmf.weekly) || !mmf.weekly.length) && mmf.unavailable_reason){
+      blocks.push(unavailBlock('MONEY-MARKET FUNDS', mmf));
+    } else if (mmf && Array.isArray(mmf.weekly) && mmf.weekly.length){
       const latest = mmf.weekly[mmf.weekly.length - 1] || {};
       const unit = escapeHtml(mmf.unit || 'USD billions');
       // MMF balances are trillions-scale — roll >=$1,000B up to $T for readability.
@@ -8378,12 +8391,15 @@ function renderMoneyFlowTab(){
           </div>
           ${wowHtml}
           <div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">week of ${escapeHtml(latest.date || mmf.as_of || '—')}</div>
+          ${srcNote(mmf)}
         </div>`);
     }
 
     // Equity mutual-fund flows.
     const mf = src.mf_flows || null;
-    if (mf && Array.isArray(mf.weekly) && mf.weekly.length){
+    if (mf && (!Array.isArray(mf.weekly) || !mf.weekly.length) && mf.unavailable_reason){
+      blocks.push(unavailBlock('EQUITY MUTUAL-FUND FLOWS', mf));
+    } else if (mf && Array.isArray(mf.weekly) && mf.weekly.length){
       const latest = mf.weekly[mf.weekly.length - 1] || {};
       const unit = escapeHtml(mf.unit || 'USD billions');
       const fmtB = v => {
