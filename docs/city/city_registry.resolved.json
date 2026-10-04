@@ -44,8 +44,8 @@
       "feeds": [
         { "pillar": "city_services",       "label": "MyLA311 Cases",     "dataset": "2cy6-i7zn", "baseline_dataset": "73a2-6ar5", "dataset_rotates_yearly": true, "date_col": "createddate", "date_col_status": "confirmed", "polarity": -1, "metric": "count",
           "note": "RESOLVED: LA retired the 'MyLA311 Service Request Data {year}' series ~Aug 2025 (old h73f-gn57=2025 is dead for current data). Current product = 'MyLA311 Cases {year}'. 2026 = 2cy6-i7zn (date col createddate, live, ~185k/mo). Baseline = 73a2-6ar5 ('MyLA311 Cases March 2025 to December 2025'). Resolve current-year by catalog search: GET data.lacity.org/api/catalog/v1?q=MyLA311%20Cases -> item titled 'MyLA311 Cases {currentYear}'. Do NOT auto-build '...Service Request Data {year}' IDs." },
-        { "pillar": "public_safety",        "label": "LAPD NIBRS Offenses","dataset": "k7nn-b2ep", "baseline_dataset": "y8y3-fqfu", "date_col": "date_occ", "date_col_status": "confirmed", "polarity": -1, "metric": "count",
-          "note": "UNION SEAM CONFIRMED: baseline y8y3-fqfu complete through 2025-12; live k7nn-b2ep dense from 2026-01. Both keyed on date_occ. Clip baseline to trailing window - both tables hold a few dirty pre-2010 dates from data-entry errors; ignore raw MIN(date_occ). Legacy 2nrs-mtv8 frozen - never poll." },
+        { "pillar": "public_safety",        "label": "LAPD NIBRS Offenses","dataset": "k7nn-b2ep", "date_col": "date_occ", "date_col_status": "confirmed", "polarity": -1, "metric": "count",
+          "note": "Single consolidated NIBRS file since 2026-08-18 (LA renamed k7nn-b2ep from '...2026 to Present' and folded all RMS offenses into it). The old 2024-2025 baseline y8y3-fqfu now returns HTTP 403 'You must be logged in' - never poll it. RMS went live 2024-03-07, so 2024 months are a partial ramp (continuity break in the trend line); dense from 2025-01. Upstream lags ~2 weeks, so the newest month is usually incomplete and is not scored. Legacy 2nrs-mtv8 frozen - never poll." },
         { "pillar": "development_economy",  "label": "B&S Permits 2020+",  "dataset": "pi9x-tg5x", "date_col": "issue_date", "date_col_status": "confirmed", "polarity": 1, "metric": "count" }
       ] },
     { "id": "seattle", "name": "Seattle", "scope": "city", "adapter": "socrata", "host": "data.seattle.gov",
@@ -54,7 +54,7 @@
         { "pillar": "public_safety",        "label": "SPD Crime 2008+",           "dataset": "tazs-3rd5", "date_col": "report_date_time", "date_col_status": "corrected", "date_col_was": "report_datetime", "date_col_alt": "offense_date", "polarity": -1, "metric": "count", "note": "CORRECTED: column is 'report_date_time' (underscores), not 'report_datetime'. 2019 RMS change = continuity breakpoint." },
         { "pillar": "development_economy",  "label": "Building Permits",          "dataset": "76t5-zqzr", "date_col": "issueddate", "date_col_status": "confirmed", "polarity": 1, "metric": "count", "note": "Confirmed via columns metadata (a $limit=1 row had it null). MUST filter issueddate IS NOT NULL - large null bucket = un-issued applications." }
       ] },
-    { "id": "sf", "name": "San Francisco", "scope": "city", "adapter": "socrata", "host": "data.sfgov.org",
+    { "id": "sf", "name": "San Francisco", "scope": "city", "adapter": "socrata", "host": "data.sf.gov",
       "feeds": [
         { "pillar": "city_services",       "label": "311 Cases",                "dataset": "vw6y-z8j6", "date_col": "requested_datetime", "date_col_status": "confirmed", "polarity": -1, "metric": "count" },
         { "pillar": "public_safety",        "label": "Police Incident Reports",  "dataset": "wg3w-h783", "date_col": "incident_datetime", "date_col_status": "confirmed", "polarity": -1, "metric": "count", "note": "2018 portal/system migration = continuity breakpoint" },
@@ -72,21 +72,21 @@
           "polarity": -1, "metric": "count",
           "note": "STALE: this is the 2023 yearly snapshot (ticket_created_date_time range 2023-01-01 -> 2024-01-01). County 311 is published only as frozen per-year snapshots ('311 Service Requests - Miami-Dade County - {year}'); latest = 2023. NO current County 311 feed exists (alternates b74b1dd0=2018 max, a6b9c3e3=OBJECTID-only, 7cc10915=City-of-Miami footprint max 2024-08). opendata.miamidade.gov is the same ArcGIS Hub org (no Socrata BETA found). Resolve latest snapshot by catalog title pattern; use created_year_month (int yyyymm) for bucketing. Expect Miami Services = stale in P0; Miami likely ships 2-of-3 pillars." },
         { "pillar": "development_economy",  "label": "MDC Building Permit",
-          "hub_item": "31cd319f45544648b59f0418aea60091",
-          "feature_server": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/BuildingPermit_gdb/FeatureServer",
-          "endpoint": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/BuildingPermit_gdb/FeatureServer/0",
-          "arcgis_entity": "layer", "entity_id": 0,
-          "date_col": "ISSUDATE", "date_col_status": "confirmed", "date_col_type": "esriFieldTypeDate",
-          "object_id_field": "OBJECTID", "max_record_count": 2000, "supports_statistics": true,
+          "hub_item": "6db5f56e886446df88313ca279e59120",
+          "feature_server": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/miamidade_permit_data/FeatureServer",
+          "endpoint": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/miamidade_permit_data/FeatureServer/0",
+          "arcgis_entity": "table", "entity_id": 0,
+          "date_col": "PermitIssuedDate", "date_col_status": "confirmed", "date_col_type": "esriFieldTypeDateOnly",
+          "object_id_field": "ObjectId", "max_record_count": 1000, "supports_statistics": true,
           "polarity": 1, "metric": "count",
-          "note": "LIVE: ISSUDATE range 1982-09-22 -> 2026-05-21 (current). Plenty for 12-mo baseline + YoY. No date_trunc in ArcGIS: bucket via monthly date-range loop (where=ISSUDATE >= timestamp 'YYYY-MM-01' AND < next-month, returnCountOnly=true) or paginate (resultOffset, maxRecordCount 2000) + bucket client-side. Filter ISSUDATE IS NOT NULL." },
+          "note": "Source moved 2026: 'Building Permits Issued By Miami-Dade County - 2 Previous Years to Present' (miamidade_permit_data). The old BuildingPermit_gdb layer now answers code=499 Token Required - never poll it. Rolling ~24-month window, so the trend line starts about two years back and the first, partial month is skipped." },
         { "pillar": "public_safety",        "label": "FBI CDE (fallback)",  "adapter": "fbi",
           "ori": "FL0130000", "ori_status": "resolved", "agency_name": "Miami-Dade County Police Department", "agency_type": "County",
           "agencies_endpoint": "https://cde.ucr.cjis.gov/LATEST/agency/byStateAbbr/FL",
           "data_endpoint_base": "https://cde.ucr.cjis.gov/LATEST",
           "nibrs_start_date": "2022-01-01", "is_nibrs": true,
           "polarity": -1, "metric": "count",
-          "note": "ORI FL0130000 resolved keyless from agencies endpoint. Spec's 'MDSO' = this county PD entry (county PD->Sheriff transition not yet renamed in CDE). City-of-Miami-proper PD = FL0130600 if scope flips. DATA series requires free api.data.gov key (FBI_CDE_API_KEY) as ?API_KEY=...; agencies list is keyless. NIBRS from 2022-01 -> 12-mo baseline+YoY feasible once keyed. P0: Safety = not_published/pending until key set." }
+          "note": "ORI FL0130000 resolved keyless from agencies endpoint. Spec's 'MDSO' = this county PD entry (county PD->Sheriff transition not yet renamed in CDE). City-of-Miami-proper PD = FL0130600 if scope flips. Re-verified 2026-10-04: the cde.ucr.cjis.gov/LATEST summarized DATA series is served keyless (a bogus API_KEY returns the same body), so no key is needed. CDE refreshes mid-month; the month in progress at last_refresh_date is not scored." }
       ] }
   ],
   "context_layer": {
@@ -116,7 +116,7 @@
       },
       "bls_laus":   { "api": "api.bls.gov/publicAPI/v2", "kpi": "unemployment_rate", "env_var": "BLS_API_KEY", "key_required": false, "key_note": "free key raises daily limits" },
       "epa_airnow": { "api": "airnowapi.org", "kpi": "aqi", "env_var": "AIRNOW_API_KEY", "key_required": true },
-      "fbi_cde":    { "api": "cde.ucr.cjis.gov", "env_var": "FBI_CDE_API_KEY", "key_required": true, "key_note": "free via api.data.gov; needed for data series, not for ORI list", "ori_resolution": "GET https://cde.ucr.cjis.gov/LATEST/agency/byStateAbbr/{ST} (keyless), match by county/name, cache" },
+      "fbi_cde":    { "api": "cde.ucr.cjis.gov", "env_var": "FBI_CDE_API_KEY", "key_required": false, "key_note": "re-verified 2026-10-04: the cde.ucr.cjis.gov/LATEST data series and ORI list are both keyless; FBI_CDE_API_KEY is forwarded if set but not checked by this host", "ori_resolution": "GET https://cde.ucr.cjis.gov/LATEST/agency/byStateAbbr/{ST} (keyless), match by county/name, cache" },
       "hud":        { "api": "huduser.gov", "kpi": "fair_market_rent", "env_var": "HUD_API_KEY", "key_required": true }
     }
   }

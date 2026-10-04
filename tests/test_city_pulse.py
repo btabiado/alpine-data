@@ -498,25 +498,136 @@ def test_glyph_thresholds():
 # ===========================================================================
 # 12. data_health
 # ===========================================================================
-def test_data_health_counts_ok_feeds_and_latest_period():
+def _absent_feed(status="not_published"):
+    """A feed carrying no reading at all — absent, not old."""
+    return {"label": "311", "dataset": "X", "polarity": -1,
+            "status": status, "recent": None, "recent_period": None,
+            "baseline_mean": None, "baseline_std": None, "z": None,
+            "yoy_pct": None, "d": None, "complete_through": None, "note": None}
+
+
+def test_data_health_counts_ok_feeds_and_reports_the_OLDEST_period():
+    """last_updated takes the OLDEST contributing month, not the newest.
+
+    A city Pulse is a composite, and a composite is only as fresh as its oldest
+    input. Chicago's crime feed lags a month behind its 311 and permits feeds,
+    so a card built partly from March numbers is March-fresh. Reporting the max
+    (2026-04) advertised the single most flattering feed and is how a card can
+    look current while a pillar underneath it rots.
+    """
     ok1 = pulse.score_feed(series_from_baseline(AS_OF, baseline=varied_baseline(100), recent=85),
                            polarity=-1, as_of=AS_OF, label="Crime", dataset="C")
     ok2 = pulse.score_feed(series_from_baseline("2026-03", baseline=varied_baseline(100), recent=115),
                            polarity=1, as_of=AS_OF, label="Permits", dataset="P",
                            complete_through="2026-03")
-    notpub = {"label": "311", "dataset": "X", "polarity": -1,
-              "status": "not_published", "recent": None, "recent_period": None,
-              "baseline_mean": None, "baseline_std": None, "z": None,
-              "yoy_pct": None, "d": None, "complete_through": None, "note": None}
     safety = pulse.score_pillar("public_safety", "PS", [ok1])
     dev = pulse.score_pillar("development_economy", "DE", [ok2])
-    services = pulse.score_pillar("city_services", "CS", [notpub])
+    services = pulse.score_pillar("city_services", "CS", [_absent_feed()])
     city = pulse.score_city(id="chicago", name="Chicago", scope="city",
                             pillar_objs=[safety, dev, services], disclosures=[])
     assert city["data_health"]["feeds_ok"] == 2
     assert city["data_health"]["feeds_total"] == 3
-    # latest_updated reflects the max recent_period (2026-04) start-of-month UTC.
+    # ok1 is 2026-04, ok2 is 2026-03 -> the composite is only 2026-03 fresh.
+    assert city["data_health"]["last_updated"].startswith("2026-03-01T00:00:00")
+
+
+def test_data_health_absent_feed_does_not_drag_the_age_down():
+    """A feed with no reading is ABSENT, not infinitely old.
+
+    Absence is disclosed by feeds_ok / pillars_present. Letting it participate
+    in the age would make every partially-covered city report an age it has no
+    evidence for.
+    """
+    ok = pulse.score_feed(series_from_baseline(AS_OF, baseline=varied_baseline(100), recent=85),
+                          polarity=-1, as_of=AS_OF, label="Crime", dataset="C")
+    city = pulse.score_city(
+        id="chicago", name="Chicago", scope="city", disclosures=[],
+        pillar_objs=[pulse.score_pillar("public_safety", "PS", [ok]),
+                     pulse.score_pillar("city_services", "CS",
+                                        [_absent_feed("not_published"),
+                                         _absent_feed("fetch_error")])])
     assert city["data_health"]["last_updated"].startswith("2026-04-01T00:00:00")
+    assert city["data_health"]["feeds_ok"] == 1
+
+
+def _frozen_311_feed():
+    """Miami-Dade's frozen 2023 County 311 snapshot: a real reading, marked
+    ``stale`` by the adapter, and therefore excluded from pillar math."""
+    frozen = pulse.score_feed(series_constant("2023-12", value=100, length=13),
+                              polarity=-1, as_of=AS_OF, label="311", dataset="X")
+    frozen["status"] = "stale"
+    return frozen
+
+
+def test_data_health_stale_unscored_feed_does_not_set_the_age():
+    """Miami's exact shape: a frozen 2023 snapshot next to a live scored feed.
+
+    last_updated dates the SCORE. The stale 311 snapshot never enters pillar
+    math, so it must not make Miami's score look older than it is — counting it
+    pinned the card at 2023-12 while every number behind the Pulse was current.
+    The stale feed stays disclosed through its own status, feeds_ok and
+    pillars_present.
+    """
+    live = pulse.score_feed(series_from_baseline(AS_OF, baseline=varied_baseline(100), recent=115),
+                            polarity=1, as_of=AS_OF, label="Permits", dataset="P")
+    frozen = _frozen_311_feed()
+    assert frozen["recent_period"] == "2023-12"  # it DOES carry a period
+    city = pulse.score_city(
+        id="miami", name="Miami", scope="county", disclosures=[],
+        pillar_objs=[pulse.score_pillar("development_economy", "DE", [live]),
+                     pulse.score_pillar("city_services", "CS", [frozen])])
+    assert city["data_health"]["last_updated"].startswith(AS_OF + "-01T00:00:00")
+    assert city["data_health"]["feeds_ok"] == 1
+    assert city["pulse"]["pillars_present"] == 1
+
+
+def test_data_health_is_null_when_only_unscored_feeds_reported():
+    """No scored feed -> no score to date -> null, even though unscored feeds
+    carry periods (stale snapshot, short insufficient_history series, a
+    context-only polarity-0 feed). Never a clock read, never the stale month."""
+    short = pulse.score_feed(series_constant(AS_OF, value=100, length=6),
+                             polarity=1, as_of=AS_OF, label="Permits", dataset="P")
+    assert short["status"] == "insufficient_history" and short["recent_period"] == AS_OF
+    context_only = pulse.score_feed(
+        series_from_baseline(AS_OF, baseline=varied_baseline(100), recent=115),
+        polarity=0, as_of=AS_OF, label="Context", dataset="C")
+    assert context_only["status"] == "ok" and context_only["d"] is None
+    city = pulse.score_city(
+        id="miami", name="Miami", scope="county", disclosures=[],
+        pillar_objs=[pulse.score_pillar("city_services", "CS", [_frozen_311_feed()]),
+                     pulse.score_pillar("development_economy", "DE", [short]),
+                     pulse.score_pillar("public_safety", "PS", [context_only])])
+    assert city["pulse"]["score"] is None
+    assert city["data_health"]["last_updated"] is None
+
+
+def test_data_health_is_null_not_now_when_nothing_reported():
+    """THE forbidden fallback: never stamp the clock on data that does not exist.
+
+    score_city used to fall back to datetime.now() here, which dressed the
+    emptiest city on the page up as the freshest thing on it and would have
+    told the freshness monitor that a totally dead city was 0h old.
+    """
+    city = pulse.score_city(
+        id="ghost", name="Ghost", scope="city", disclosures=[],
+        pillar_objs=[pulse.score_pillar("city_services", "CS",
+                                        [_absent_feed("fetch_error")])])
+    assert city["data_health"]["last_updated"] is None
+    assert city["data_health"]["feeds_ok"] == 0
+    assert city["pulse"]["score"] is None
+
+
+def test_data_health_last_updated_is_a_data_month_not_a_wall_clock():
+    """The value is always a month BOUNDARY, never an arbitrary instant.
+
+    This is the property a freshness monitor has to know about: monthly
+    municipal series can never read younger than the start of last month, so an
+    hours-scale staleness budget can never be satisfied by a healthy city.
+    """
+    ok = pulse.score_feed(series_from_baseline(AS_OF, baseline=varied_baseline(100), recent=85),
+                          polarity=-1, as_of=AS_OF, label="Crime", dataset="C")
+    city = one_feed_city(ok)
+    assert city["data_health"]["last_updated"].endswith("-01T00:00:00+00:00")
 
 
 def test_context_is_none_in_p0():
@@ -693,3 +804,42 @@ def test_insufficient_history_feed_conforms_to_schema():
 def schema_loaded():
     with open(SCHEMA_PATH) as fh:
         return json.load(fh)
+
+
+def test_null_last_updated_conforms_to_schema():
+    """A city that produced no reading emits last_updated: null — and the schema
+    has to allow it, or the honest value becomes unshippable and the clock-read
+    fallback comes back by the back door."""
+    pytest.importorskip("jsonschema")
+    import jsonschema
+    city = pulse.score_city(
+        id="miami", name="Miami", scope="county", disclosures=[],
+        pillar_objs=[pulse.score_pillar("city_services", "CS", [_absent_feed()])])
+    assert city["data_health"]["last_updated"] is None
+    jsonschema.validate(
+        instance=pulse.score_payload([city], as_of=AS_OF, methodology_disclosures=[]),
+        schema=schema_loaded())
+
+
+def test_fetch_error_status_conforms_to_schema():
+    """`fetch_error` (our request failed) must be a first-class status, distinct
+    from `not_published` (the city publishes nothing). Collapsing them prints a
+    false statement about a government body over a feed that is merely broken on
+    our end."""
+    pytest.importorskip("jsonschema")
+    import jsonschema
+    schema = schema_loaded()
+    enum = schema["definitions"]["feed"]["properties"]["status"]["enum"]
+    assert "fetch_error" in enum and "not_published" in enum
+    feed = _absent_feed("fetch_error")
+    feed["note"] = "ArcGIS request failed: HTTP 503"
+    city = pulse.score_city(
+        id="miami", name="Miami", scope="county", disclosures=[],
+        pillar_objs=[pulse.score_pillar("city_services", "CS", [feed])])
+    # A failed fetch is excluded from the math exactly like not_published --
+    # same coverage honesty, opposite meaning.
+    assert city["pulse"]["pillars_present"] == 0
+    assert city["data_health"]["feeds_ok"] == 0
+    jsonschema.validate(
+        instance=pulse.score_payload([city], as_of=AS_OF, methodology_disclosures=[]),
+        schema=schema_loaded())

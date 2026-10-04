@@ -111,7 +111,8 @@ The ETF Flows tab is empty until you load data. Three options:
 **1. One-click GitHub mirror** (BTC only, ~Jan 2024 → May 2025, Total column only)
 - In the dashboard, click **"Seed BTC from GitHub mirror"**.
 - Or `curl -X POST http://127.0.0.1:8765/api/seed-etf`.
-- Source: [canadiancode/btc-etf-flows](https://github.com/canadiancode/btc-etf-flows). Community-maintained, **may be stale**.
+- Source: [canadiancode/btc-etf-flows](https://github.com/canadiancode/btc-etf-flows). Community-maintained, and **abandoned** — its last row is 2025-05-02 (verified 2026-08-03).
+- Only useful against an empty `data/btc_flows.csv`. The committed file runs to 2026-05-12 with a per-fund breakdown, so in a populated checkout this endpoint **refuses to write** and returns 503 rather than regress the dataset by a year and collapse 13 fund columns into one `Total`.
 
 **2. Paste from Farside** (freshest, manual)
 - Visit [farside.co.uk/bitcoin-etf-flow-all-data/](https://farside.co.uk/bitcoin-etf-flow-all-data/) (Cloudflare lets your real browser through; it blocks scripts).
@@ -119,10 +120,9 @@ The ETF Flows tab is empty until you load data. Three options:
 - Click **"Paste CSV…"** in the dashboard, paste, choose BTC or ETH, Import.
 - Tab-separated also works (browser table copy-paste defaults to tabs).
 
-**3. Paid API**
-- `export SOSOVALUE_API_KEY=...` (SoSoValue Open API)
-- `export COINGLASS_API_KEY=...` (CoinGlass v4)
-- `python app.py --fetch` or `curl -X POST http://localhost:8765/api/refresh` (after wiring keys into your shell).
+**3. Automatic (CI)** — this is what actually keeps the committed CSVs current
+- [`scripts/fetch_etf_flows.py`](scripts/fetch_etf_flows.py) scrapes Farside from a GitHub Actions runner on its own cron ([`etf-flows-daily.yml`](.github/workflows/etf-flows-daily.yml)) and commits `data/btc_flows.csv` + `data/eth_flows.csv`. Keyless.
+- There is no paid-API option any more. The CoinGlass and SoSoValue integrations in `fetch_live.py` were removed on 2026-08-03: nothing ever invoked them (`app.py --fetch` was their only caller and no workflow passes `--fetch`), and `api.sosovalue.com` no longer resolves. `COINGLASS_API_KEY` and `SOSOVALUE_API_KEY` are retired and reach no code.
 
 ## Reality check on history
 
@@ -216,8 +216,8 @@ All optional. Core dashboard runs with none of these set; the dashboard surfaces
 | `COINMETRICS_API_KEY` | `fetch_market.py` | ETH whale series omitted from Whale tab |
 | `ETHERSCAN_API_KEY` | `fetch_market.py` | 90-day ETH blocks-per-day chart on the Whale tab hidden; gas oracle still works (separate keyless endpoint) |
 | `REDDIT_CLIENT_ID` + `REDDIT_CLIENT_SECRET` | `fetch_market.py` | Reddit subscriber counts unavailable; public dashboard falls back to RSS post titles only |
-| `COINGLASS_API_KEY` | `fetch_live.py` | CoinGlass v4 ETF-flow path disabled |
-| `SOSOVALUE_API_KEY` | `fetch_live.py` | SoSoValue ETF-flow path disabled |
+| `COINGLASS_API_KEY` | *(retired 2026-08-03)* | Nothing. The path it gated was dead code and was removed; crypto ETF flows come from `scripts/fetch_etf_flows.py` |
+| `SOSOVALUE_API_KEY` | *(retired 2026-08-03)* | Nothing. Same removal, and `api.sosovalue.com` no longer resolves |
 | `DASH_USER` + `DASH_PASS` | `server.py` | HTTP Basic Auth disabled (server is open on bound interface) |
 | `HOST` | `server.py` | Defaults to `127.0.0.1` |
 | `PORT` | `server.py` | Defaults to `8765` |
@@ -276,7 +276,7 @@ app.py            CSV + JSON loader → aggregator → HTML generator (SIDECAR_K
 signals.py        Composite BTC/ETH/top-25/stocks signal indicator
 insights.py       Rule-based cross-tab insights bar (29 + 7 AI rules)
 fetch_market.py   Free trading + whale + AI-news + EDGAR Form D fetcher
-fetch_live.py     ETF-flow fetcher (GitHub mirror fallback / SoSoValue / CoinGlass)
+fetch_live.py     BTC ETF-flow seeder for the "Seed BTC (mirror)" button only
 wiki_enrich.py    Wikipedia infobox enrichment for top-funded AI companies
 chat.py           Claude-powered "Ask the data" chat dock
 share.py          Read-only share-link minting
