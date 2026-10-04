@@ -251,7 +251,10 @@ jobs:
           SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
           CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
           BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
-          FBI_CDE_API_KEY: ${{ secrets.FBI_CDE_API_KEY }}
+          # FBI_CDE_API_KEY is deliberately absent: the FBI CDE probe is
+          # keyless (cde.ucr.cjis.gov/LATEST serves its data series without a
+          # key), so no probe names it. The wiring test also fails on a key
+          # passed here that no probe uses.
           AIRNOW_API_KEY: ${{ secrets.AIRNOW_API_KEY }}
           OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}

@@ -81,7 +81,9 @@ KEYS: list[tuple[str, str, str]] = [
     ("SOCRATA_APP_TOKEN",     "City: lifts Socrata rate limit (avoids 429)",   "city-daily"),
     ("CENSUS_API_KEY",        "City: Census ACS median income",                 "city-daily"),
     ("BLS_API_KEY",           "City: BLS LAUS unemployment",                    "city-daily"),
-    ("FBI_CDE_API_KEY",       "City: FBI Crime Data Explorer",                  "city-daily"),
+    ("FBI_CDE_API_KEY",       "City: FBI Crime Data Explorer - OPTIONAL, the "
+                              "cde.ucr.cjis.gov series is keyless; forwarded if set",
+                                                                                "city-daily"),
     ("AIRNOW_API_KEY",        "City: AirNow air quality",                       "city-daily"),
     ("FRED_API_KEY",          "Macro overlay, CPI, metals, real estate",        "pages, lthcs-daily, real-estate-daily"),
     # Was annotated "pages, lthcs-crypto-daily". lthcs-crypto-daily.yml passed it

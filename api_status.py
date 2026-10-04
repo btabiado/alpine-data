@@ -74,7 +74,9 @@ PROBE_ATTEMPTS = 2       # 1 retry: gov/city hosts give transient timeouts from 
 # apart, and tests/test_api_status_wiring.py fails the build if a key_env here
 # is not mapped by the workflow step that runs this script.
 #
-# Fields: label, category (≈ dashboard tab/role), url, key_env (None = keyless)
+# Fields: label, category (≈ dashboard tab/role), url, key_env (None = keyless).
+# Optional: headers (merged over the default UA), body_check ("arcgis": read
+# the body and judge the in-band error envelope ArcGIS sends with HTTP 200).
 TARGETS: list[dict] = [
     # ---- price / market cap ----
     {"label": "CoinGecko",            "category": "Price/MktCap",  "url": "https://api.coingecko.com/api/v3/ping",                                                          "key_env": None},
@@ -142,21 +144,48 @@ TARGETS: list[dict] = [
     # no live upstream API; we probe the deployed page itself for "is it up") ----
     {"label": "Summit dashboard",     "category": "Summit",        "url": "https://btabiado.github.io/alpine-data/summit/",                                                 "key_env": None},
     # ---- city pulse (the City tab): Socrata 311/permits/crime per city, plus
-    # Miami via ArcGIS + FBI CDE, and Census/BLS/AirNow context. Socrata's
-    # keyless catalog endpoint is a cheap per-portal ping; SOCRATA_APP_TOKEN
-    # only raises rate limits, so it's an optional key (200 keyless → "up").
-    {"label": "Socrata · Chicago",    "category": "City",          "url": "https://data.cityofchicago.org/api/catalog/v1?limit=1",                                          "key_env": "SOCRATA_APP_TOKEN"},
-    {"label": "Socrata · Los Angeles","category": "City",          "url": "https://data.lacity.org/api/catalog/v1?limit=1",                                                 "key_env": "SOCRATA_APP_TOKEN"},
-    {"label": "Socrata · Seattle",    "category": "City",          "url": "https://data.seattle.gov/api/catalog/v1?limit=1",                                                "key_env": "SOCRATA_APP_TOKEN"},
-    {"label": "Socrata · San Francisco","category": "City",        "url": "https://data.sfgov.org/api/catalog/v1?limit=1",                                                  "key_env": "SOCRATA_APP_TOKEN"},
-    {"label": "Socrata · New York",   "category": "City",          "url": "https://data.cityofnewyork.us/api/catalog/v1?limit=1",                                           "key_env": "SOCRATA_APP_TOKEN"},
-    {"label": "ArcGIS (Miami)",       "category": "City",          "url": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/BuildingPermit_gdb/FeatureServer/0?f=json", "key_env": None},
-    {"label": "FBI Crime Data Explorer","category": "City",        "url": "https://cde.ucr.cjis.gov/LATEST/agency/byStateAbbr/FL",                                          "key_env": "FBI_CDE_API_KEY"},
-    # Probe the median-income variable metadata (the exact ACS field the City
-    # context fetcher pulls) — small + keyless + fast. The /data.json discovery
-    # doc is huge and trips the 8s timeout whenever Census is sluggish.
-    {"label": "Census ACS",           "category": "City",          "url": "https://api.census.gov/data/2023/acs/acs5/variables/B19013_001E.json",                           "key_env": "CENSUS_API_KEY"},
-    {"label": "BLS",                  "category": "City",          "url": "https://api.bls.gov/publicAPI/v2/timeseries/data/LNS14000000",                                   "key_env": "BLS_API_KEY"},
+    # Miami via ArcGIS + FBI CDE, and Census/BLS/AirNow context. Each probe hits
+    # the path the city/*.py fetcher calls, on the host
+    # docs/city/city_registry.resolved.json names. tests/test_api_status_city.py
+    # fails if a probe drifts from the registry or the fetchers again.
+    #
+    # Socrata: a single-row read of one registry dataset per portal (the
+    # building-permits feed, which answers fast on every host), via the same
+    # /resource/{dataset}.json path city/socrata.py reads. The probe used to
+    # ping /api/catalog/v1, which is not portal-specific: every host returns
+    # the same platform-wide catalog. So it kept answering 200 for SF's retired
+    # data.sfgov.org host (urllib follows its 301 to data.sf.gov).
+    # SOCRATA_APP_TOKEN only raises rate limits, so it's an optional key
+    # (200 keyless → "up").
+    {"label": "Socrata · Chicago",    "category": "City",          "url": "https://data.cityofchicago.org/resource/ydr8-5enu.json?$limit=1",                                "key_env": "SOCRATA_APP_TOKEN"},
+    {"label": "Socrata · Los Angeles","category": "City",          "url": "https://data.lacity.org/resource/pi9x-tg5x.json?$limit=1",                                       "key_env": "SOCRATA_APP_TOKEN"},
+    {"label": "Socrata · Seattle",    "category": "City",          "url": "https://data.seattle.gov/resource/76t5-zqzr.json?$limit=1",                                      "key_env": "SOCRATA_APP_TOKEN"},
+    {"label": "Socrata · San Francisco","category": "City",        "url": "https://data.sf.gov/resource/i98e-djp9.json?$limit=1",                                           "key_env": "SOCRATA_APP_TOKEN"},
+    {"label": "Socrata · New York",   "category": "City",          "url": "https://data.cityofnewyork.us/resource/ipu4-2q9a.json?$limit=1",                                 "key_env": "SOCRATA_APP_TOKEN"},
+    # ArcGIS (Miami-Dade building permits): a returnCountOnly query on the
+    # registry's miamidade_permit_data layer, the same /query path
+    # city/arcgis.py uses. ArcGIS reports errors INSIDE an HTTP 200 body, so
+    # body_check reads it. The retired BuildingPermit_gdb layer answers
+    # {"error":{"code":499,"message":"Token Required"}} with HTTP 200, and the
+    # old probe of that layer kept reporting "up". Never point this back at it.
+    {"label": "ArcGIS (Miami)",       "category": "City",          "url": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/miamidade_permit_data/FeatureServer/0/query?where=1%3D1&returnCountOnly=true&f=json", "key_env": None, "body_check": "arcgis"},
+    # FBI CDE (Miami Public Safety): one fixed, already-published month of the
+    # summarized DATA series city/fbi.py reads for ORI FL0130000 (about 1 KB,
+    # vs about 220 KB for the state agency list). Keyless: cde.ucr.cjis.gov/LATEST
+    # serves it without a key (re-verified 2026-10-04), so no key_env.
+    # Naming FBI_CDE_API_KEY here had the page report a key that gates nothing.
+    {"label": "FBI Crime Data Explorer","category": "City",        "url": "https://cde.ucr.cjis.gov/LATEST/summarized/agency/FL0130000/violent-crime?from=01-2025&to=01-2025", "key_env": None},
+    # Census: the median-income variable metadata (the exact ACS field the City
+    # context fetcher pulls) at the registry's ACS vintage, small, keyless and
+    # fast. ACS *data* queries need CENSUS_API_KEY (keyless they 302 to an HTML
+    # missing_key page). The /data.json discovery doc is huge and trips the
+    # timeout whenever Census is sluggish.
+    {"label": "Census ACS",           "category": "City",          "url": "https://api.census.gov/data/2024/acs/acs5/variables/B19013_001E.json",                           "key_env": "CENSUS_API_KEY"},
+    # BLS: one of the LAUS series city/bls.py requests (Miami-Dade unemployment
+    # rate). Keyless works under a low daily cap; BLS_API_KEY lifts it. Caveat:
+    # BLS answers an exhausted keyless quota with HTTP 200 and
+    # "status": "REQUEST_NOT_PROCESSED", which this probe does not inspect.
+    {"label": "BLS",                  "category": "City",          "url": "https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN120860000000003",                          "key_env": "BLS_API_KEY"},
     {"label": "EPA AirNow",           "category": "City",          "url": "https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=40&longitude=-74&distance=25&API_KEY=", "key_env": "AIRNOW_API_KEY"},
     # ---- aviation: OpenSky live ADS-B. Anonymous access works (rate-limited);
     # OPENSKY_CLIENT_ID only raises limits. Tiny bbox keeps the probe cheap.
@@ -244,6 +273,36 @@ def key_state(key_env: str | None) -> str | None:
     return KEY_SET if (os.environ[key_env] or "").strip() else KEY_UNSET
 
 
+# ArcGIS in-band error codes that mean "this layer needs a token" (498 =
+# invalid token, 499 = token required). ArcGIS's equivalent of a 401/403.
+_ARCGIS_TOKEN_CODES = (498, 499)
+# How much of a body_check target's response to read. ArcGIS error envelopes
+# and returnCountOnly answers are tens of bytes.
+_BODY_CHECK_BYTES = 65536
+
+
+def _arcgis_inband_error(body: bytes) -> tuple[int, str] | None:
+    """``(code, message)`` if an ArcGIS REST body is an error envelope, else None.
+
+    ArcGIS answers token and query failures with HTTP 200 and
+    ``{"error": {"code": N, "message": ...}}``, so the status line alone says
+    "up" for a layer that serves nothing. An unparseable body is not treated
+    as an error here; only an explicit envelope is.
+    """
+    try:
+        doc = json.loads(body.decode("utf-8", "replace"))
+    except ValueError:
+        return None
+    err = doc.get("error") if isinstance(doc, dict) else None
+    if not isinstance(err, dict):
+        return None
+    try:
+        code = int(err.get("code"))
+    except (TypeError, ValueError):
+        code = 500  # an error envelope without a usable code is still an error
+    return code, str(err.get("message") or "")
+
+
 def _verdict(status: int | None, needs_key: bool) -> str:
     """Map an HTTP status (or None for connection failure) to a verdict.
 
@@ -253,6 +312,9 @@ def _verdict(status: int | None, needs_key: bool) -> str:
     blocked       — 401/403 on a keyless source (geo-block, WAF, or egress proxy).
     degraded      — other 4xx/5xx: reachable but erroring.
     down          — no HTTP response at all (DNS / TCP / TLS / timeout).
+
+    ``status`` may also be an ArcGIS in-band error code (see body_check):
+    498/499 (token invalid/required) count as 401/403, anything else as an error.
     """
     if status is None:
         return "down"
@@ -260,12 +322,13 @@ def _verdict(status: int | None, needs_key: bool) -> str:
         return "up"
     if status == 429:
         return "rate_limited"
+    gated = status in (401, 403) or status in _ARCGIS_TOKEN_CODES
     # Key-gated sources commonly answer a *keyless* probe with 400 (missing
     # api_key/params), 401, or 403 — all mean "alive, just needs a key", so
     # surface them as auth_required rather than blocked/degraded.
-    if needs_key and status in (400, 401, 403):
+    if needs_key and (status == 400 or gated):
         return "auth_required"
-    if status in (401, 403):
+    if gated:
         return "blocked"
     return "degraded"
 
@@ -280,8 +343,10 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
     # without it EDGAR returns 403/500).
     headers = {"User-Agent": _UA}
     headers.update(target.get("headers") or {})
+    body_check = target.get("body_check")
     t0 = time.monotonic()
     status: int | None = None
+    inband: tuple[int, str] | None = None
     note = ""
     retried = 0
     # Probe with one retry. GitHub Actions runners intermittently get slow DNS /
@@ -294,8 +359,11 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
             req = urllib.request.Request(url, headers=headers, method="GET")
             with urllib.request.urlopen(req, timeout=timeout, context=_SSL_CTX) as r:
                 status = r.status
-                # Drain a little so keep-alive sockets close cleanly; ignore body.
-                r.read(1)
+                if body_check == "arcgis":
+                    inband = _arcgis_inband_error(r.read(_BODY_CHECK_BYTES))
+                else:
+                    # Drain a little so keep-alive sockets close cleanly; ignore body.
+                    r.read(1)
             note = ""
             break
         except urllib.error.HTTPError as e:
@@ -306,7 +374,13 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
             note = f"{type(e).__name__}: {e}"[:120]
             retried = attempt + 1
     latency_ms = int((time.monotonic() - t0) * 1000)
-    verdict = _verdict(status, needs_key)
+    # `status` stays the real HTTP status (the page's HTTP column); an in-band
+    # error decides the verdict instead and is spelled out in the note.
+    verdict_code = status
+    if inband is not None:
+        verdict_code, message = inband
+        note = f"ArcGIS error {verdict_code} in HTTP {status} body: {message}"[:120]
+    verdict = _verdict(verdict_code, needs_key)
     kstate = key_state(key_env)
     return {
         "label": target["label"],
