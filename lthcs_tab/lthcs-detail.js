@@ -9,6 +9,7 @@
 'use strict';
 
 import { bandColorForScore } from './lthcs-sparkline.js';
+import { loadFileIndex } from './lthcs-files.js';
 import {
   bindPillarExplainer,
   refreshPillarExplainer,
@@ -20,6 +21,10 @@ import {
 // ---------------------------------------------------------------------------
 
 const HISTORY_BASE = '../data/lthcs/history/by_ticker';
+// Per-ticker pillar sub-score history, written at deploy time by
+// scripts/build_lthcs_site_index.py (~40 KB per ticker). Replaces fetching
+// every daily snapshot (~48 MB, 200+ requests) to plot the pillar chips.
+const PILLAR_HISTORY_BASE = '../data/lthcs/history/pillars_by_ticker';
 const VARDETAIL_BASE = '../data/lthcs/variable_detail';
 const HOLDINGS_BASE = '../data/lthcs/holdings';
 const SNAPSHOTS_BASE = '../data/lthcs/snapshots';
@@ -1298,8 +1303,10 @@ function buildLegendChip(key, label, color, initialActive, state) {
   return chip;
 }
 
-// Pillar-series aggregation. Fetches every daily snapshot (parallel,
-// per-date cache shared across the module), builds per-ticker arrays of
+// Pillar-series aggregation — FALLBACK ONLY (see ensurePillarSeriesForTicker:
+// the deployed site serves history/pillars_by_ticker/<T>.json instead).
+// Fetches every daily snapshot (parallel, per-date cache shared across the
+// module), builds per-ticker arrays of
 // {date, adoption_momentum, institutional_confidence, ...}.
 //
 // Performance: 91 fetches × ~180KB = ~16MB transfer; runs in parallel so
@@ -1328,7 +1335,7 @@ async function ensurePillarSeriesIndex() {
     const promises = dates.map(async (d) => {
       if (moduleState.snapshotCache.has(d)) return { date: d, snap: moduleState.snapshotCache.get(d) };
       try {
-        const r = await fetch(`${SNAPSHOTS_BASE}/${d}.json`, { cache: 'no-store' });
+        const r = await fetch(`${SNAPSHOTS_BASE}/${d}.json`, { cache: 'no-cache' });
         if (!r.ok) return { date: d, snap: null };
         const snap = await r.json();
         moduleState.snapshotCache.set(d, snap);
@@ -1374,6 +1381,38 @@ async function ensurePillarSeriesIndex() {
 
 async function ensurePillarSeriesForTicker(ticker) {
   if (!ticker) return null;
+  // Fast path: one small per-ticker file. Only when it is missing (local dev
+  // server, or the deploy-time build step failed) do we fall back to the
+  // all-snapshots aggregation below.
+  if (!moduleState.pillarHistoryCache) moduleState.pillarHistoryCache = new Map();
+  if (moduleState.pillarHistoryCache.has(ticker)) return moduleState.pillarHistoryCache.get(ticker);
+  if (!moduleState.pillarHistoryUnavailable) {
+    try {
+      const r = await fetch(`${PILLAR_HISTORY_BASE}/${encodeURIComponent(ticker)}.json`, { cache: 'no-cache' });
+      if (r.ok) {
+        const j = await r.json();
+        const rows = (j && Array.isArray(j.history)) ? j.history.map((row) => {
+          const entry = { date: row.date, composite: Number(row.composite) };
+          for (const p of PILLAR_ORDER) entry[p] = Number(row[p]);
+          return entry;
+        }) : null;
+        moduleState.pillarHistoryCache.set(ticker, rows && rows.length ? rows : null);
+        return moduleState.pillarHistoryCache.get(ticker);
+      }
+      // 404: if the deploy-time file index exists, the per-ticker files were
+      // built and this ticker simply has no pillar history yet. Without the
+      // index (dev server / failed build step) fall back to the snapshots.
+      if (r.status === 404) {
+        if (await loadFileIndex()) {
+          moduleState.pillarHistoryCache.set(ticker, null);
+          return null;
+        }
+        moduleState.pillarHistoryUnavailable = true;
+      }
+    } catch (_) {
+      moduleState.pillarHistoryUnavailable = true;
+    }
+  }
   const idx = await ensurePillarSeriesIndex();
   return idx.get(ticker) || null;
 }
@@ -1499,11 +1538,20 @@ function renderNarrativeBody(narrEl, { snapshotRow, narrative, source }) {
   const slot3Label = reviewTone ? 'Why to review' : 'Why not to sell';
 
   if (source === NARRATIVE_SOURCE_LLM) {
-    // Small badge so users know they're reading the shadow output.
+    // Small badge so users know they're reading the shadow output. When the
+    // LLM call failed (or the cost cap hit) the pipeline writes a templated
+    // narrative into the LLM file and marks the row `fallback: true` — the
+    // badge must say so instead of claiming the text is LLM-written.
+    const isFallback = !!(narrative && (narrative.fallback === true || narrative.fallback === 'true'));
     narrEl.appendChild(el('div', {
-      className: 'lthcs-narrative-llm-badge',
-      text: 'LLM (shadow)',
-      attrs: { 'aria-label': 'LLM-generated narrative (shadow)' },
+      className: 'lthcs-narrative-llm-badge' + (isFallback ? ' is-fallback' : ''),
+      text: isFallback ? 'template narrative (LLM unavailable)' : 'LLM (shadow)',
+      attrs: {
+        'aria-label': isFallback
+          ? 'Template narrative — the LLM was unavailable for this snapshot'
+          : 'LLM-generated narrative (shadow)',
+        'data-fallback': isFallback ? 'true' : 'false',
+      },
     }));
   }
 

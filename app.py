@@ -2418,6 +2418,31 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   .travel-grid{grid-template-columns:1fr;gap:8px}
 }
 
+/* Stock Flows rank rows. The six fixed/min tracks summed to ~485px, which
+   forced a horizontal page scroll on a 390px phone. Under 480px the MFI/CMF
+   columns drop out (the score + band label already summarise them; both stay
+   in the row's tooltip on wider screens) and the min widths relax to 0 so the
+   name/flow tracks shrink instead of overflowing. */
+.sfx-grid{display:grid;grid-template-columns:28px minmax(120px,1.6fr) minmax(90px,1.4fr) 64px 52px 56px;gap:10px}
+@media (max-width:480px){
+  .sfx-grid{grid-template-columns:20px minmax(0,1.5fr) minmax(0,1.2fr) 46px;gap:8px}
+  .sfx-grid .sfx-mfi,.sfx-grid .sfx-cmf{display:none}
+}
+
+/* CLS: these slots are filled by the boot render, which waits up to
+   ~1.2s for Chart.js. Empty, they collapsed to 0px and the whole tab
+   jumped ~330px when they filled (CLS 0.64 desktop / 0.76 phone).
+   Reserve roughly their filled height only while :empty, so a short
+   list never leaves a gap once real content is in. */
+/* The Overview strip always has a date (crypto prices), so keep its
+   44px row reserved while the boot render hasn't filled it — it used
+   to appear at ~0.9s and push the whole tab down 54px. */
+#tabFresh-overview:empty { display: block; visibility: hidden; }
+#overviewNews:empty { min-height: 165px; }
+#overviewInsights:empty { min-height: 165px; }
+#overviewAiStocksGrid:empty { min-height: 260px; }
+#overviewSentimentCard { min-height: 160px; }
+
 /* ===================== TOUCH BLOCK (site audit V2-C) =====================
    Deliberately LAST in the sheet so these win on source order. Gated on a
    coarse pointer OR a phone-width viewport, matching the equivalent block in
@@ -2963,7 +2988,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
          breaking news. Bid/ask + 24h range from Coinbase Exchange. -->
     <div id="coinbaseSpotWrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
       <div class="head">
-        <h2 style="margin:0;font-size:15px">Coinbase spot <span class="tag">live exchange</span></h2>
+        <h2 style="margin:0;font-size:15px">Coinbase spot <span class="tag">exchange quote</span> <span class="sub" id="coinbaseSpotAsOf" style="font-size:11px;font-weight:400;color:var(--muted)"></span></h2>
         <span class="desc">Bid/ask + 24h range from Coinbase Exchange (US-regulated). Cross-check vs CoinGecko aggregate.</span>
       </div>
       <div style="overflow:auto">
@@ -3052,12 +3077,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <span style="color:#ef4444">OUTFLOWS</span>
       </div>
     </div>
-    <div class="card" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px">
+    <div class="card" id="etfLoadCard" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px">
       <span class="lbl" style="margin:0">Load data</span>
       <button class="btn" id="loadBtcBtn" title="Paste BTC ETF flow CSV from Farside">Paste BTC</button>
       <button class="btn" id="loadEthBtn" title="Paste ETH ETF flow CSV from Farside">Paste ETH</button>
       <button class="btn" id="seedBtcBtn" title="Pull BTC from canadiancode/btc-etf-flows GitHub mirror (may be stale)">Seed BTC (mirror)</button>
-      <a class="btn" href="/bookmarklet" target="_blank" rel="noopener noreferrer" style="text-decoration:none" title="One-click bookmarklet for Farside pages">Get bookmarklet</a>
+      <a class="btn" id="bookmarkletLink" href="/bookmarklet" target="_blank" rel="noopener noreferrer" style="text-decoration:none" title="One-click bookmarklet for Farside pages">Get bookmarklet</a>
       <span id="loadStatus" class="sub" style="margin-left:8px;color:var(--muted)"></span>
     </div>
     <!-- Per-tab asset toggle: BTC or ETH (no spot LINK/LTC ETFs exist).
@@ -3567,7 +3592,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="chart-card" id="realEstateCard">
         <div class="head">
           <h2>US Real Estate Markets <span class="tag">Zillow &middot; Redfin &middot; FRED</span></h2>
-          <span class="desc">National housing heat index &middot; hot &amp; cooling markets &middot; refreshed daily &middot; full view at <a href="real-estate/" style="color:var(--accent)">/real-estate/</a></span>
+          <span class="desc">National housing heat index &middot; hot &amp; cooling markets &middot; vendors publish monthly (dates below) &middot; full view at <a href="real-estate/" style="color:var(--accent)">/real-estate/</a></span>
         </div>
         <div id="realEstateSummary">
           <div class="empty" style="padding:12px 14px">Loading real-estate snapshot&hellip;</div>
@@ -3634,7 +3659,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <!-- AI sentiment summary card (full width, below the top row) -->
         <div class="chart-card" id="aiNewsSummaryCard" style="margin-top:12px">
           <div class="head">
-            <h2>AI news sentiment <span class="tag">live</span></h2>
+            <h2>AI news sentiment <span class="tag">news feed</span></h2>
             <span class="desc">Aggregate sentiment across AI/ML/chips coverage &middot; auto-classified POSITIVE / NEUTRAL / NEGATIVE</span>
           </div>
           <div id="aiNewsSummary"></div>
@@ -4020,7 +4045,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </div>
     <div id="socialEmpty" class="empty hidden">
       No research data yet — all free sources (Reddit, CryptoCompare, Santiment) returned empty.
-      Refresh or wait for the next hourly cron.
+      Check back later — the site rebuilds every few hours.
     </div>
     <div id="socialContent">
       <div class="sub" id="socialAsOf" style="margin-bottom:6px"></div>
@@ -4808,6 +4833,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   #aviation-tab .pill{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid var(--edge)}
   #aviation-tab .pill.used{color:var(--green);border-color:rgba(61,220,132,.4)}
   #aviation-tab .pill.avail{color:var(--ink-dim)}
+  #aviation-tab .av-stale{margin:0 0 12px;padding:8px 12px;border:1px solid var(--red);border-radius:8px;background:rgba(255,93,108,.08);color:var(--red);font-family:var(--mono);font-size:12px;font-weight:600}
+  #aviation-tab .av-stale[hidden]{display:none}
   #aviation-tab .takeaway{display:flex;gap:11px;background:rgba(255,181,71,.06);border:1px solid rgba(255,181,71,.25);border-radius:9px;padding:12px 14px;margin-bottom:18px;font-size:13px;color:#f1dcb4}
   #aviation-tab .takeaway b{color:var(--amber)}
   #aviation-tab .tl{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
@@ -5006,9 +5033,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </div>
 
 <div class="av-view" id="view-tsa">
-  <div class="takeaway"><span aria-hidden="true">&#128737;</span><div><b>How many people the TSA screened, day by day.</b> A near-real-time pulse of US air-travel demand &mdash; over 900 million passengers screened in 2025, with single days topping 3 million. The daily series below refreshes from a cron-committed snapshot of the TSA checkpoint numbers.</div></div>
+  <div class="takeaway"><span aria-hidden="true">&#128737;</span><div><b>How many people the TSA screened, day by day.</b> A daily pulse of US air-travel demand &mdash; over 900 million passengers screened in 2025, with single days topping 3 million. The daily series below comes from a cron-committed snapshot of the TSA checkpoint numbers; its newest day is shown on the first card.</div></div>
+  <div class="av-stale" id="tsa-stale-badge" role="status" hidden></div>
   <div class="kpis" id="kpi-tsa" aria-live="polite" aria-atomic="false"></div>
-  <div class="panel"><h3>Daily passengers screened &mdash; recent weeks</h3><div class="ph-note">Passengers through all US TSA checkpoints, most recent ~30 days. Weekly travel rhythm (Sunday/Thursday peaks, Tuesday/Saturday troughs) is clearly visible.</div><div class="chart-wrap tall"><canvas id="c-tsa-series"></canvas></div></div>
+  <div class="panel"><h3>Daily passengers screened &mdash; recent weeks</h3><div class="ph-note" id="tsa-series-note">Passengers through all US TSA checkpoints, the most recent days on file.</div><div class="chart-wrap tall"><canvas id="c-tsa-series"></canvas></div></div>
   <div class="src" id="src-tsa"></div>
 </div>
 
@@ -6209,6 +6237,19 @@ function lthcsFreshness(){
 // into _reCache; `generated_at` on it is PIPELINE RUN TIME, not an
 // observation date, so we read the monthly history labels instead — Zillow
 // ZHVI / Redfin are monthly series and the last label is the real bucket.
+// Per-vendor vintages from the snapshot's `sources.<v>.last_modified` (the
+// HTTP Last-Modified of each source CSV — a publish date, not our fetch time).
+// The tab mixes Zillow and Redfin KPIs, so the honest stamp is the OLDEST
+// vendor (fMin) — the same rule /real-estate/ applies to its header.
+function realEstateSourceDates(d){
+  const s = (d && d.sources) || {};
+  const comps = [['Zillow', 'zillow'], ['Redfin', 'redfin'], ['FRED', 'fred']].map(p => ({
+    label: p[0], date: fDay(s[p[1]] && s[p[1]].last_modified) || null,
+  }));
+  const dated = comps.filter(c => c.date).map(c => c.date);
+  return { oldest: dated.length ? fMin(dated) : null, comps: comps };
+}
+
 function realEstateFreshness(){
   // _reCache is a `let` declared further down; this only ever runs after the
   // whole script has evaluated (renderAll → renderTabFreshness), so the TDZ
@@ -6217,6 +6258,14 @@ function realEstateFreshness(){
   const d = _reCache || null;
   if (!d) return null;
   const metros = Array.isArray(d.metros) ? d.metros : [];
+  const src = realEstateSourceDates(d);
+  if (src.oldest){
+    return { date: src.oldest, stale: 0, total: 1, label: 'data as of',
+             title: 'Oldest vendor publish date ('
+                  + src.comps.map(c => c.label + ' ' + (c.date || 'undated')).join(' · ')
+                  + '). The snapshot is fetched daily, but the vendors publish '
+                  + 'monthly; generated_at is fetch time and is not used here.' };
+  }
   const lasts = [];
   metros.forEach(m => {
     const labels = ((m || {}).history_5y_monthly || {}).labels;
@@ -6260,12 +6309,51 @@ function cityFreshness(){
                 + 'vintages; this is the panel-level bucket.' };
 }
 
+// --- TSA checkpoint series (Aviation > TSA) --------------------------------
+// TSA publishes days as 'M/D/YYYY'. Strict parse to ISO; anything else is
+// refused rather than handed to a lenient Date.parse (same reasoning as the
+// prose refusal in aviationFreshness below).
+function tsaDayIso(s){
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(s == null ? '' : s).trim());
+  if (!m) return null;
+  const p2 = v => (v.length < 2 ? '0' : '') + v;
+  return fDay(m[3] + '-' + p2(m[1]) + '-' + p2(m[2]));
+}
+// TSA posts every weekday (Monday's post covers the weekend), so a newest day
+// more than this many days old means the feed/cron stopped — not a quiet week.
+const TSA_STALE_DAYS = 3;
+// Age in days when the newest TSA day is STALE (> TSA_STALE_DAYS), 0 when it
+// is current, null when undatable. Age comes from freshness(), the page's one
+// age implementation.
+function tsaStaleDays(latestIso){
+  const f = freshness(latestIso, {});
+  if (f.ageDays == null) return null;
+  return f.ageDays > TSA_STALE_DAYS ? f.ageDays : 0;
+}
+// The live data-tsa.json, fetched once and shared by the TSA view and the
+// Aviation tab's freshness strip (which used to read "as of —").
+let _tsaLive = null, _tsaLivePromise = null;
+function loadTsaLive(){
+  if (!_tsaLivePromise){
+    _tsaLivePromise = fetch('data-tsa.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(j => { _tsaLive = (j && j.latest && Array.isArray(j.series)) ? j : null; return _tsaLive; })
+      .catch(() => null);
+  }
+  return _tsaLivePromise;
+}
+
 // Aviation tab. `asOf` is a PROSE string ("FAA airman data Dec 31 2025 · FAA
 // aircraft registry late May 2026 · …"), not a parseable date, so there is no
-// honest single stamp — say so and surface the prose in the hover (rule 5).
+// honest single stamp from it — the prose goes in the hover (rule 5). The one
+// DAILY feed on the tab is TSA, so the strip names that date explicitly
+// ("TSA data through …") instead of reading "as of —".
 function aviationFreshness(){
   const a = DATA.aviation;
   if (!a) return null;
+  const tsaRaw = (_tsaLive && _tsaLive.latest && _tsaLive.latest.date)
+              || (a.tsa && a.tsa.seed && a.tsa.seed.date) || null;
+  const tsaDay = tsaDayIso(tsaRaw);
   // STRICT ISO ONLY. freshnessDayUTC() falls back to Date.parse() for
   // anything that is not 'YYYY-MM-DD...', and engines are wildly lenient
   // there: V8 happily pulls "Dec 31 2025" out of the middle of this prose
@@ -6274,6 +6362,14 @@ function aviationFreshness(){
   // which parser ran is not a fact. Anything that is not an unambiguous ISO
   // date is refused outright and explained in the hover instead.
   const iso = /^\d{4}-\d{2}-\d{2}/.test(String(a.asOf || '')) ? a.asOf : null;
+  if (!iso && tsaDay){
+    return { date: tsaDay, stale: 0, total: 1, label: 'TSA data through',
+             warnDays: TSA_STALE_DAYS,
+             title: 'Newest TSA checkpoint day on file'
+               + (_tsaLive ? '' : ' (built-in seed; the live data-tsa.json has not loaded)')
+               + ' — the only daily feed on this tab. The other views are annual/'
+               + 'quarterly: ' + (a.asOf ? String(a.asOf) : 'no vintage recorded') + '.' };
+  }
   return { date: fDay(iso), stale: 0, total: 1,
            title: (a.asOf
              ? 'Source vintages: ' + String(a.asOf) + '.'
@@ -6402,9 +6498,9 @@ const TAB_FRESHNESS_SOURCE = {
   money_flow:  'ICI weekly flows · equity ETF flow history',
   stockflow:   'per-stock daily bars',
   lthcs:       'LTHCS daily index snapshot',
-  real_estate: 'Zillow/Redfin monthly metro history',
+  real_estate: 'Zillow / Redfin / FRED source publish dates',
   city:        'city indicator reference month',
-  aviation:    'FAA registry / airman vintages',
+  aviation:    'TSA checkpoint series · FAA registry / airman vintages',
 };
 
 // --- insights: age of the DATA the insights were derived FROM --------------
@@ -6489,6 +6585,10 @@ function renderTabFreshness(){
     label: info.label || 'as of',
     stale: info.stale,
     total: info.total,
+    // Optional per-feed thresholds (e.g. TSA posts daily, so it goes amber
+    // after TSA_STALE_DAYS rather than the default 7).
+    warnDays: info.warnDays,
+    badDays: info.badDays,
     title: (info.title ? info.title + ' ' : '')
          + 'Source: ' + (TAB_FRESHNESS_SOURCE[tab] || 'tab data')
          + '. This is an observation date, not the page build time.',
@@ -6504,13 +6604,31 @@ function renderTabFreshness(){
 // alone in the header, which is how a page that rebuilds hourly managed to
 // look fresh while the series behind it were two months old. It now always
 // appears next to #dataFreshness, which reports the actual data age.
+// "12m ago" / "3h ago" / "2d ago" for a sub-day timestamp (build time,
+// exchange quote time). '' when unparseable. Stamps for DATA dates go through
+// freshness(); this is only for wall-clock events.
+function agoText(isoTs){
+  const raw = String(isoTs == null ? '' : isoTs).trim();
+  if (!raw) return '';
+  // generated_at is written without a zone ("2026-10-04T21:11:18") but is UTC.
+  const t = Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(raw) ? raw : raw + 'Z');
+  if (!isFinite(t)) return '';
+  const mins = Math.max(0, Math.round((Date.now() - t) / 60000));
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.round(mins / 60);
+  if (hrs < 48) return hrs + 'h ago';
+  return Math.round(hrs / 24) + 'd ago';
+}
+
 function setBuildStamp(){
   const el = document.getElementById('generatedAt');
   if (el){
-    el.textContent = 'built ' + (DATA.generated_at || '—');
-    el.title = 'When this page was rendered. The dashboard rebuilds hourly, so '
-             + 'this is always recent and says NOTHING about how old the data '
-             + 'is — that is the stamp to the right.';
+    const ago = agoText(DATA.generated_at);
+    el.textContent = 'built ' + (DATA.generated_at || '—') + (ago ? ' (' + ago + ')' : '');
+    el.title = 'When this page was rendered. The rebuild is scheduled hourly, but '
+             + 'GitHub Actions actually runs it every ~1–6 hours, so this can be '
+             + 'several hours old. It says NOTHING about how old the data is — '
+             + 'that is the stamp to the right.';
   }
   renderDataFreshness();
 }
@@ -8518,7 +8636,7 @@ function stockflowRow(st, rank){
   const idxMap = {'DJIA':'Dow','NASDAQ-100':'NDX','S&P 500':'SPX'};
   const idxStr = escapeHtml((Array.isArray(st.indices) ? st.indices : []).map(i => idxMap[i]).filter(Boolean).join(' · '));
   return `
-    <div style="display:grid;grid-template-columns:28px minmax(120px,1.6fr) minmax(90px,1.4fr) 64px 52px 56px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #1f2533">
+    <div class="sfx-grid" style="align-items:center;padding:8px 0;border-top:1px solid #1f2533">
       <span style="font-size:11px;color:var(--muted);text-align:right">${rank}</span>
       <div style="min-width:0">
         <div style="font-size:13px;font-weight:700">${sym}${idxStr ? ` <span style="font-size:9px;font-weight:500;color:var(--muted)" title="Index membership">${idxStr}</span>` : ''}</div>
@@ -8529,8 +8647,8 @@ function stockflowRow(st, rank){
         <div style="font-size:9px;color:${accent};font-weight:600;letter-spacing:.03em;margin-top:3px">${label}</div>
       </div>
       <span style="font-size:14px;font-weight:700;color:${accent};text-align:right">${scoreStr}</span>
-      <span style="font-size:12px;text-align:right" title="Money Flow Index"><span style="font-size:9px;color:var(--muted)">MFI </span>${mfi}</span>
-      <span style="font-size:12px;text-align:right;color:${cmfCls}" title="Chaikin Money Flow"><span style="font-size:9px;color:var(--muted)">CMF </span>${cmf}</span>
+      <span class="sfx-mfi" style="font-size:12px;text-align:right" title="Money Flow Index"><span style="font-size:9px;color:var(--muted)">MFI </span>${mfi}</span>
+      <span class="sfx-cmf" style="font-size:12px;text-align:right;color:${cmfCls}" title="Chaikin Money Flow"><span style="font-size:9px;color:var(--muted)">CMF </span>${cmf}</span>
     </div>`;
 }
 
@@ -8635,8 +8753,8 @@ function renderStockFlowTab(){
            </div>`
         : '';
       body = `
-        <div style="display:grid;grid-template-columns:28px minmax(120px,1.6fr) minmax(90px,1.4fr) 64px 52px 56px;gap:10px;padding:0 0 4px;font-size:9px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase">
-          <span style="text-align:right">#</span><span>Stock</span><span>Flow</span><span style="text-align:right">Score</span><span style="text-align:right">MFI</span><span style="text-align:right">CMF</span>
+        <div class="sfx-grid" style="padding:0 0 4px;font-size:9px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase">
+          <span style="text-align:right">#</span><span>Stock</span><span>Flow</span><span style="text-align:right">Score</span><span class="sfx-mfi" style="text-align:right">MFI</span><span class="sfx-cmf" style="text-align:right">CMF</span>
         </div>
         ${rowsHtml}
         ${moreBtn}`;
@@ -8913,7 +9031,9 @@ function renderRealEstateTab(){
   if (_reCache) { _drawRealEstate(host, _reCache); return; }
   fetch('data/real_estate.json', {cache: 'no-store'})
     .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
-    .then(d => { _reCache = d; _drawRealEstate(host, d); })
+    // Repaint the tab strip once the snapshot is in: realEstateFreshness()
+    // reads _reCache, so the strip was blank on every first visit.
+    .then(d => { _reCache = d; _drawRealEstate(host, d); try { if (state.tab === 'real_estate') renderTabFreshness(); } catch (_) {} })
     .catch(e => { host.innerHTML = '<div class="empty">Real-estate snapshot not yet loaded ('+ String(e.message || e) +'). Daily refresh runs at 06:00 UTC.</div>'; });
 }
 function _drawRealEstate(host, d){
@@ -9320,7 +9440,9 @@ function _drawRealEstate(host, d){
   const domValues = metros.map(m => m.kpis?.days_on_market?.value).filter(v => v != null);
   const avgDom = domValues.length ? Math.round(domValues.reduce((a,b)=>a+b,0) / domValues.length) : null;
 
-  const generated = d.generated_at ? new Date(d.generated_at).toISOString().slice(0,10) : '—';
+  // Observation date, not fetch time: generated_at is when the daily job
+  // pulled the CSVs, which read "today" even with Redfin months behind.
+  const reSrc = realEstateSourceDates(d);
 
   // ---- HTML build -----------------------------------------------------
   // Hero: heat index card
@@ -9417,7 +9539,11 @@ function _drawRealEstate(host, d){
     '</div>';
 
   const snapshotHtml =
-    '<div style="padding:8px 14px 0 14px;font-size:10px;color:var(--muted,#9aa3b2);font-family:ui-monospace,monospace">snapshot ' + generated + ' UTC &middot; sources: Zillow Research, Redfin Data Center, FRED</div>';
+    '<div style="padding:8px 14px 0 14px;font-size:10px;color:var(--muted,#9aa3b2);font-family:ui-monospace,monospace">'
+    + freshnessHtml(reSrc.oldest, { label: 'data as of',
+        title: 'Oldest vendor publish date; the page is only as current as its stalest source.' }).replace('<div ', '<span ').replace(/<\/div>$/, '</span>')
+    + ' &middot; ' + reSrc.comps.map(c => escapeHtml(c.label) + ' ' + escapeHtml(c.date || 'undated')).join(' &middot; ')
+    + ' &middot; sources: Zillow Research, Redfin Data Center, FRED</div>';
 
   // ---- Geographic state map (real polygons, lazy sidecar) -------------
   // Renders at the BOTTOM of the tab from data-us_states.json (51 pre-projected
@@ -9880,7 +10006,11 @@ function renderWhaleEth(){
         const n = Number(v);
         return Number.isFinite(n) ? n : null;
       };
-      const avgFee = toFiniteNum(bc.avg_tx_fee_eth_24h);
+      let avgFee = toFiniteNum(bc.avg_tx_fee_eth_24h);
+      // Older payloads carried Blockchair's raw WEI string under this *_eth_*
+      // name (fetch_market now converts). No 24h average fee is ever >= 1
+      // ETH, so a value that large is wei.
+      if (avgFee != null && avgFee >= 1) avgFee = avgFee / 1e18;
       const mp    = toFiniteNum(bc.market_price_usd);
       const burn  = toFiniteNum(bc.burned_eth_24h);
       const erc20 = toFiniteNum(bc.erc20_transactions_24h);
@@ -11159,6 +11289,16 @@ function renderCoinbaseSpot(){
     return;
   }
   wrap.classList.remove('hidden');
+  // These are quotes captured when the page was built, not a live feed: say
+  // when (the OLDEST exchange ticker time across the rows) and how long ago.
+  const asOfEl = document.getElementById('coinbaseSpotAsOf');
+  if (asOfEl){
+    const times = rows.map(k => (cb[k] || {}).time).filter(t => typeof t === 'string' && isFinite(Date.parse(t))).sort();
+    const t0 = times[0] || null;
+    asOfEl.textContent = t0 ? '· quoted ' + t0.slice(0, 16).replace('T', ' ') + ' UTC (' + agoText(t0) + ')' : '';
+    asOfEl.title = 'Exchange ticker time of the snapshot taken at the last site rebuild. '
+                 + 'The page does not stream prices; it refreshes when the site rebuilds (every few hours).';
+  }
   tbody.innerHTML = rows.map(k => {
     const q = cb[k] || {};
     const sym = k.toUpperCase();
@@ -15736,12 +15876,32 @@ function avBootAviation(DATA){
         const latestV=(live&&live.latest)?live.latest.vol:t.seed.vol;
         const avg7=(live&&live.avg7)?live.avg7:t.seed.avg7;
         const ageNote=(live&&live.generated)?"":" · seed";
+        // Stale badge: TSA posts every weekday, so a newest day older than
+        // TSA_STALE_DAYS means the feed stopped. Said in the KPI, on the view
+        // and on the chart note; the view copy no longer promises real-time data.
+        const latestIso=tsaDayIso(latestD);
+        const staleDays=tsaStaleDays(latestIso);
+        const badge=$("#tsa-stale-badge");
+        if(badge){
+          if(staleDays){badge.hidden=false;badge.textContent="Stale · newest TSA day is "+latestD+" ("+staleDays+" days old)";}
+          else{badge.hidden=true;badge.textContent="";}
+        }
+        // The 7-day KPI names its actual window instead of "trailing week".
+        const wk=series.slice(-7);
+        const wkTxt=wk.length?(wk.length<7?wk.length+" days · ":"")+wk[0].d+" – "+wk[wk.length-1].d:"trailing week";
         const head=[
-          {label:"Latest day",val:fmt(latestV),delta:latestD+" · TSA"+ageNote,dir:"up",raw:true},
-          {label:"7-day average",val:fmt(avg7),delta:"trailing week",dir:"flat",raw:true}
+          {label:"Latest day",val:fmt(latestV),delta:latestD+" · TSA"+ageNote+(staleDays?" · stale ("+staleDays+"d old)":""),dir:staleDays?"down":"up",raw:true},
+          {label:"7-day average",val:fmt(avg7),delta:wkTxt,dir:"flat",raw:true}
         ].concat(t.kpis);
         kpi($("#kpi-tsa"),head);
-        const labels=series.map(p=>String(p.d).replace(/\/20\d\d$/,"")), vals=series.map(p=>p.v);
+        const note=$("#tsa-series-note");
+        if(note&&series.length){
+          note.textContent="Passengers through all US TSA checkpoints, "+series[0].d+" – "+series[series.length-1].d
+            +" ("+series.length+" days on file)."+(staleDays?" This feed has not updated since then.":" Weekly travel rhythm (Sunday/Thursday peaks, Tuesday/Saturday troughs) is clearly visible.");
+        }
+        // Year kept on the axis (M/D/YY): with a stale series, "6/17" alone
+        // read as this year's June.
+        const labels=series.map(p=>String(p.d).replace(/\/20(\d\d)$/,"/$1")), vals=series.map(p=>p.v);
         // Rebuild the Show-data/Copy-CSV companion to match the series actually
         // drawn. tsa() renders twice (synchronous seed, then live fetch) and
         // chartTable() bails if a .cdata sibling already exists — so drop the
@@ -15753,8 +15913,8 @@ function avBootAviation(DATA){
         window._tsaChart=new Chart($("#c-tsa-series"),{type:"line",data:{labels:labels,datasets:[{data:vals,borderColor:C.cyan,backgroundColor:"rgba(54,217,210,.10)",fill:true,tension:.2,pointRadius:2,borderWidth:2}]},
           options:base({plugins:{legend:{display:false},tooltip:{callbacks:{title:c=>series[c[0].dataIndex].d,label:c=>fmt(c.raw)+" screened"}}},scales:{x:{ticks:{color:C.dim,font:{family:AV_MONO,size:9},maxTicksLimit:12},grid:{display:false}},y:axes(0,0,null,v=>(v/1e6).toFixed(1)+"M").y}})});
       };
-      apply(null);
-      fetch("data-tsa.json",{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(apply).catch(()=>{});}
+      apply(_tsaLive);
+      loadTsaLive().then(j=>{ if(j) apply(j); });}
 
     function go(v){ // activate a view by name (shared by nav + summary tiles)
       document.querySelectorAll("#aviation-tab .av-nav button").forEach(x=>{const on=x.dataset.view===v;x.classList.toggle("active",on);x.setAttribute("aria-current",on?"true":"false");x.setAttribute("aria-selected",on?"true":"false");x.tabIndex=on?0:-1;});
@@ -15808,6 +15968,9 @@ function avBootAviation(DATA){
     });
     // Entry render: as-of stamp + summary tiles + default (Pilots) sub-view.
     document.getElementById("av-asof-stamp").textContent=D.asOf;
+    // TSA is the tab's one daily feed; load it up front so the freshness
+    // strip shows "TSA data through <date>" rather than "as of —".
+    loadTsaLive().then(()=>{ try{ if(state&&state.tab==='aviation') renderTabFreshness(); }catch(_){} });
     summary();
     let _av0="pilots"; try{const _sv=localStorage.getItem("av_view"); if(_sv&&V[_sv])_av0=_sv;}catch(_){}
     go(_av0);
@@ -16580,7 +16743,7 @@ if (!isServer){
   const _rb = document.getElementById('refreshBtn');
   if (_rb){
     _rb.textContent = '↻ Reload';
-    _rb.title = 'Reload page to get the latest hourly snapshot';
+    _rb.title = 'Reload to get the latest published snapshot (the site rebuilds every few hours)';
     // Remove the existing live-server click handler by cloning the node.
     const _clone = _rb.cloneNode(true);
     _rb.parentNode.replaceChild(_clone, _rb);
@@ -16604,6 +16767,13 @@ if (!isServer){
     const b = document.getElementById(id);
     if (b) b.style.display = 'none';
   });
+  // /bookmarklet is a Flask route; on GitHub Pages it 404s. Remove the anchor
+  // (not just hide it) so it can't be reached or crawled, and drop the whole
+  // "Load data" card — every control on it needs the local server.
+  const _bm = document.getElementById('bookmarkletLink');
+  if (_bm) _bm.remove();
+  const _lc = document.getElementById('etfLoadCard');
+  if (_lc) _lc.style.display = 'none';
 }
 
 // ---------- Share modal (owner side) ----------
