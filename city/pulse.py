@@ -151,11 +151,17 @@ def score_feed(series, *, polarity, as_of, label, dataset, baseline_months=12,
     series_out = ([{"month": m, "n": by_month[m]} for m in trail]
                   if len(trail) >= 2 else None)
 
+    # complete_through is a claim about the DATA ("latest complete month
+    # available for this feed", per the schema), so it is the newest month the
+    # series actually holds at or before the cutoff -- never the cutoff itself.
+    # Publishing the cutoff labelled NYC's NYPD file "complete through 2026-08"
+    # when the source ends 2026-06-30, and Miami's frozen 2023 311 snapshot
+    # "complete through 2026-09". No eligible month -> null (nothing complete).
     base = {
         "label": label,
         "dataset": dataset,
         "polarity": polarity,
-        "complete_through": cutoff,
+        "complete_through": eligible_sorted[-1] if eligible_sorted else None,
         "note": note,
     }
 
