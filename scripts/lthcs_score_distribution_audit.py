@@ -137,7 +137,7 @@ def percentile(values: Sequence[float], pct: float) -> Optional[float]:
             f = float(v)
         except (TypeError, ValueError):
             continue
-        if f != f:  # NaN
+        if math.isnan(f):  # NaN
             continue
         cleaned.append(f)
     if not cleaned:
@@ -154,7 +154,7 @@ def percentile(values: Sequence[float], pct: float) -> Optional[float]:
 
 def summary_stats(values: Sequence[float]) -> Dict[str, Any]:
     """Mean / stdev / count / percentiles for a numeric sample."""
-    cleaned = [float(v) for v in values if v is not None and not (isinstance(v, float) and v != v)]
+    cleaned = [float(v) for v in values if v is not None and not (isinstance(v, float) and math.isnan(v))]
     n = len(cleaned)
     if n == 0:
         return {
@@ -199,7 +199,7 @@ def histogram(
             x = float(v)
         except (TypeError, ValueError):
             continue
-        if x != x:
+        if math.isnan(x):
             continue
         x_clamped = max(0.0, min(100.0, x))
         for i, (lo, hi) in enumerate(bins):
@@ -250,7 +250,7 @@ def band_counts(
             x = float(v)
         except (TypeError, ValueError):
             continue
-        if x != x:
+        if math.isnan(x):
             continue
         x_floor = int(math.floor(max(0.0, min(100.0, x))))
         for i, (_, lo, hi) in enumerate(bands):

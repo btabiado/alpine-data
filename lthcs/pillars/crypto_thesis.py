@@ -46,6 +46,7 @@ All math is pure.
 
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, Optional
 
 
@@ -83,7 +84,7 @@ def _funding_score(funding_rate_pct_8h: Optional[float]) -> Optional[float]:
         r = float(funding_rate_pct_8h)
     except (TypeError, ValueError):
         return None
-    if r != r:  # NaN
+    if math.isnan(r):  # NaN
         return None
     mag = abs(r)
     if mag <= _FUNDING_HEALTHY_THRESHOLD:
@@ -113,7 +114,7 @@ def _funding_polarity(funding_rate_pct_8h: Optional[float]) -> Optional[float]:
         r = float(funding_rate_pct_8h)
     except (TypeError, ValueError):
         return None
-    if r != r:  # NaN
+    if math.isnan(r):  # NaN
         return None
     mag = abs(r)
     if mag <= _FUNDING_HEALTHY_THRESHOLD:
@@ -138,9 +139,8 @@ def _long_short_polarity(long_short_ratio: Optional[float]) -> Optional[float]:
         r = float(long_short_ratio)
     except (TypeError, ValueError):
         return None
-    if r != r or r <= 0:
+    if math.isnan(r) or r <= 0:
         return None
-    import math
     log_r = math.log(r)
     extreme_log = math.log(_LS_EXTREME_HIGH)
     scaled = max(-1.0, min(1.0, log_r / extreme_log))
@@ -156,7 +156,7 @@ def _long_short_score(long_short_ratio: Optional[float]) -> Optional[float]:
         r = float(long_short_ratio)
     except (TypeError, ValueError):
         return None
-    if r != r or r <= 0:
+    if math.isnan(r) or r <= 0:
         return None
     if r >= _LS_EXTREME_HIGH:
         return 0.0
@@ -164,7 +164,6 @@ def _long_short_score(long_short_ratio: Optional[float]) -> Optional[float]:
         return 0.0
     # Convert to symmetric distance from 1.0 in log-ratio space so 1.5
     # and 0.667 (its reciprocal) score equally.
-    import math
     log_r = math.log(r)
     # log(1.8) ~= 0.588, log(0.555) ~= -0.588
     extreme_log = math.log(_LS_EXTREME_HIGH)
@@ -220,7 +219,7 @@ def compute_crypto_thesis(
         s_f: Optional[float] = (
             float(sentiment_raw) if sentiment_raw is not None else None
         )
-        if s_f is not None and s_f != s_f:
+        if s_f is not None and math.isnan(s_f):
             s_f = None
     except (TypeError, ValueError):
         s_f = None
@@ -257,7 +256,7 @@ def compute_crypto_thesis(
         funding_mean_30d_f: Optional[float] = (
             float(funding_mean_30d) if funding_mean_30d is not None else None
         )
-        if funding_mean_30d_f is not None and funding_mean_30d_f != funding_mean_30d_f:
+        if funding_mean_30d_f is not None and math.isnan(funding_mean_30d_f):
             funding_mean_30d_f = None
     except (TypeError, ValueError):
         funding_mean_30d_f = None
@@ -265,7 +264,7 @@ def compute_crypto_thesis(
         ls_mean_30d_f: Optional[float] = (
             float(ls_mean_30d) if ls_mean_30d is not None else None
         )
-        if ls_mean_30d_f is not None and (ls_mean_30d_f != ls_mean_30d_f or ls_mean_30d_f <= 0):
+        if ls_mean_30d_f is not None and (math.isnan(ls_mean_30d_f) or ls_mean_30d_f <= 0):
             ls_mean_30d_f = None
     except (TypeError, ValueError):
         ls_mean_30d_f = None

@@ -84,6 +84,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import re
 import xml.etree.ElementTree as ET
@@ -446,7 +447,7 @@ def _load_managers_full() -> Tuple[Dict[str, str], float, Dict[str, float], floa
             aum = float(raw_aum) if raw_aum is not None else 0.0
         except (TypeError, ValueError):
             aum = 0.0
-        if aum != aum:  # NaN
+        if math.isnan(aum):  # NaN
             aum = 0.0
         if aum < 0.0:
             aum = 0.0

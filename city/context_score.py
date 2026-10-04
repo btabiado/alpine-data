@@ -87,7 +87,7 @@ city with no usable KPI. This integer is what the producer writes into
 """
 from __future__ import annotations
 
-import statistics
+import math
 
 __all__ = [
     "score_context",
@@ -138,7 +138,7 @@ def _coerce_number(value):
         return None
     f = float(value)
     # Reject NaN / +-inf (NaN != NaN).
-    if f != f or f in (float("inf"), float("-inf")):
+    if math.isnan(f) or f in (float("inf"), float("-inf")):
         return None
     return f
 

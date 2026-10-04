@@ -26,6 +26,7 @@ All math is pure.
 
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, List, Optional
 
 from lthcs.normalize import bounded_linear
@@ -137,7 +138,7 @@ def compute_crypto_institutional(
     mom_pct = market.get("price_change_pct_30d")
     try:
         mom_pct_f: Optional[float] = float(mom_pct) if mom_pct is not None else None
-        if mom_pct_f is not None and (mom_pct_f != mom_pct_f):  # NaN
+        if mom_pct_f is not None and math.isnan(mom_pct_f):  # NaN
             mom_pct_f = None
     except (TypeError, ValueError):
         mom_pct_f = None
