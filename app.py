@@ -794,7 +794,7 @@ def compute_lthcs_insights(
                             })
                     break
         except Exception:
-            pass
+            pass  # optional insight card; malformed index history must not break the build
 
     # ---- (6): Macro regime ----
     breadth_file = None
@@ -890,7 +890,7 @@ def compute_lthcs_insights(
                         ),
                     })
         except Exception:
-            pass
+            pass  # optional insight card; malformed ticker history must not break the build
         if len(band_changes) >= 5:
             band_changes.sort(key=lambda c: -abs(c["score_delta"]))
             top3 = band_changes[:3]

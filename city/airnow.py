@@ -160,7 +160,7 @@ def fetch_aqi(city_id, *, api_key=None, session=None) -> "int | None":
         try:
             body = (resp.text or "")[:200]
         except Exception:
-            pass
+            pass  # response body is optional context for the error raised below
         raise AirNowError(redact(f"AirNow returned HTTP {status}: {body}"))
 
     try:

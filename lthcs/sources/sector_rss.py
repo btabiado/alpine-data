@@ -216,7 +216,7 @@ def _to_iso_date(raw: Any) -> Optional[str]:
         if dt is not None:
             return dt.date().isoformat()
     except (TypeError, ValueError, IndexError):
-        pass
+        pass  # not RFC 822; try the ISO / fallback formats below
 
     # ISO with trailing Z (3.9 doesn't accept Z directly).
     try:
@@ -428,7 +428,7 @@ def _fetch_rss(
         if apparent:
             resp.encoding = apparent
     except Exception:
-        pass
+        pass  # keep requests' detected encoding if apparent_encoding fails
     text = getattr(resp, "text", "") or ""
     parsed = _parse_rss_xml(text, source=source, feed=feed)
 

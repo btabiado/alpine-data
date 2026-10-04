@@ -10,7 +10,6 @@ input, missing-data tolerance, hash stability, additive-caveat note).
 
 from __future__ import annotations
 
-import math
 from typing import Any, Dict, List
 
 import pandas as pd

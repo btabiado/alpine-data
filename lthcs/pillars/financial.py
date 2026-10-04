@@ -956,7 +956,7 @@ def _compute_bank_financial(
             if not math.isnan(f):  # not NaN
                 rev_growth_val = f
         except (TypeError, ValueError):
-            pass
+            pass  # non-numeric focal growth; leave rev_growth_val unset
     has_rev = rev_growth_val is not None
 
     if use_cohort:

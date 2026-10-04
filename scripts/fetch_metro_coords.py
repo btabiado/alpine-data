@@ -124,7 +124,7 @@ def fetch_gazetteer_txt(cache_path: Path) -> bytes:
             ts = parsedate_to_datetime(last_mod).timestamp()
             os.utime(cache_path, (ts, ts))
         except (TypeError, ValueError):
-            pass
+            pass  # unparseable Last-Modified; keep the file's current mtime
     return txt_bytes
 
 

@@ -32,7 +32,6 @@ import math
 import os
 import tempfile
 import warnings
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -88,7 +87,7 @@ def _atomic_write_json(path: Path, payload: Any) -> None:
         try:
             os.unlink(tmp)
         except OSError:
-            pass
+            pass  # best-effort temp-file cleanup; the original error is re-raised below
         raise
 
 
@@ -881,7 +880,7 @@ def _atomic_write_text(path: Path, payload: str) -> None:
         try:
             os.unlink(tmp)
         except OSError:
-            pass
+            pass  # best-effort temp-file cleanup; the original error is re-raised below
         raise
 
 

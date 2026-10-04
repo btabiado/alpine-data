@@ -60,8 +60,7 @@ SENTIMENT_WEIGHT = 0.20
 _FUNDING_HEALTHY_THRESHOLD = 0.01
 _FUNDING_EXTREME_THRESHOLD = 0.10
 
-# Long/short ratio: 1.0 is balanced.
-_LS_HEALTHY = 1.0
+# Long/short ratio: 1.0 is balanced (scored as distance from log(1) = 0).
 _LS_EXTREME_HIGH = 1.8
 _LS_EXTREME_LOW = 0.55  # ~ 1/1.8
 

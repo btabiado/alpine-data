@@ -63,16 +63,16 @@ FRESH_SECONDS = 24 * 3600  # daily cadence
 
 # The section-2 caveats, shown in the methodology disclosure panel (a P0 gate).
 METHODOLOGY_DISCLOSURES = [
-    "Each feed is scored against that city's own trailing-12-month baseline: "
-    "50 = on its own baseline, >50 trending favorable, <50 unfavorable.",
-    "Not a cross-city ranking. A higher Pulse means a city is improving versus "
-    "its own past, not that it is 'better' than another city.",
-    "Polarity is an editorial choice. Each feed declares which direction is "
-    "favorable (permits up = good; crime / 311 backlog down = good); see each "
-    "feed's polarity in the breakdown.",
-    "Data-continuity breaks can cause artificial jumps: Seattle PD's 2019 "
-    "records-system change, LA's yearly dataset rotation, and SF's 2018 portal "
-    "migration are known breakpoints.",
+    ("Each feed is scored against that city's own trailing-12-month baseline: "
+     "50 = on its own baseline, >50 trending favorable, <50 unfavorable."),
+    ("Not a cross-city ranking. A higher Pulse means a city is improving versus "
+     "its own past, not that it is 'better' than another city."),
+    ("Polarity is an editorial choice. Each feed declares which direction is "
+     "favorable (permits up = good; crime / 311 backlog down = good); see each "
+     "feed's polarity in the breakdown."),
+    ("Data-continuity breaks can cause artificial jumps: Seattle PD's 2019 "
+     "records-system change, LA's yearly dataset rotation, and SF's 2018 portal "
+     "migration are known breakpoints."),
     "Reporting lag: some feeds exclude the most recent days (Chicago crime " +
     "excludes ~7 days), so 'Recent' is aligned to the last complete month.",
     "Coverage honesty: when a city does not publish a pillar's feed, Pulse is " +

@@ -28,7 +28,7 @@ try:
 
     load_dotenv(REPO_ROOT / ".env")
 except ImportError:
-    pass
+    pass  # python-dotenv is optional; env vars may already be set
 
 from lthcs.pillars import adoption
 from lthcs.sources import sec_edgar

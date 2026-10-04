@@ -211,9 +211,6 @@ _INDEX_TTL_SECONDS = 365 * 24 * 60 * 60
 # Per-filing universe-extracted holdings: filings are immutable, so cache
 # essentially forever. 365 days is a comfortable upper bound.
 _FILING_TTL_SECONDS = 365 * 24 * 60 * 60
-# Per-ticker aggregate snapshot: refreshed shortly after each 45-day 13F
-# deadline. 14 days is safe inside that envelope.
-_AGGREGATE_TTL_SECONDS = 14 * 24 * 60 * 60
 
 # Common XML namespaces seen in 13F filings. The schema lives under
 # http://www.sec.gov/edgar/document/thirteenf/informationtable but newer
