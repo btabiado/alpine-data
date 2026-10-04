@@ -6928,20 +6928,53 @@ function renderWhaleAlerts(){
   }).join('');
 }
 
-// Recent ETH whale transactions: ≥ $1M last 24h from Blockchair. Hidden when
-// no data. Mirrors renderWhaleAlerts() (BTC mempool feed) in structure.
+// Recent ETH whale transactions: ≥ $1M in the TRAILING 24h from Blockchair.
+// Rows are re-checked against the window here as well as in the fetcher: an
+// earlier build replayed an unfiltered all-time scan (2015-2022 transfers)
+// under this "last 24h" label, so a row older than 24h is never shown. When
+// nothing qualifies the card says why instead of silently disappearing.
+const ETH_WHALE_WINDOW_MS = 24 * 3600 * 1000;
+function ethWhaleTxTime(t){
+  const s = (t && typeof t.time === 'string') ? t.time.trim() : '';
+  if (!s) return NaN;
+  // Blockchair times are UTC "YYYY-MM-DD HH:MM:SS" with no zone marker.
+  const hasZone = /([zZ]|[+-]\d\d:?\d\d)$/.test(s);
+  return Date.parse(s.replace(' ', 'T') + (hasZone ? '' : 'Z'));
+}
+function recentEthWhaleTxs(txs, nowMs){
+  const now = Number.isFinite(nowMs) ? nowMs : Date.now();
+  return (Array.isArray(txs) ? txs : []).filter(t => {
+    const ms = ethWhaleTxTime(t);
+    return Number.isFinite(ms) && ms >= now - ETH_WHALE_WINDOW_MS && ms <= now + 10 * 60 * 1000;
+  });
+}
 function renderEthWhaleAlerts(){
   const card = document.getElementById('ethWhaleAlertsCard');
   if (!card) return;
-  const txs = (((DATA.whale||{}).eth||{}).large_transactions) || [];
-  if (!txs.length){ card.classList.add('hidden'); return; }
+  const eth = ((DATA.whale||{}).eth) || null;
+  if (!eth){ card.classList.add('hidden'); return; }
+  const raw = Array.isArray(eth.large_transactions) ? eth.large_transactions : [];
+  const txs = recentEthWhaleTxs(raw);
+  const st = eth.large_transactions_status || {};
+  const asOf = st.as_of ? String(st.as_of).replace('T', ' ').slice(0, 16) + ' UTC' : '';
   card.classList.remove('hidden');
   const note = document.getElementById('ethWhaleAlertsNote');
   if (note){
-    note.textContent = `${txs.length} txs ≥ $1M · last 24h`;
+    const cached = st.source === 'stale-cache' ? ' · cached, Blockchair unreachable this build' : '';
+    note.textContent = txs.length
+      ? `${txs.length} txs ≥ $1M · last 24h${cached}`
+      : `≥ $1M · last 24h${asOf ? ' · as of ' + asOf : ''}`;
   }
   const tbody = document.getElementById('ethWhaleAlertsBody');
   if (!tbody) return;
+  if (!txs.length){
+    let why;
+    if (raw.length) why = `The latest Blockchair scan${asOf ? ' (' + asOf + ')' : ''} has no transactions from the last 24 hours.`;
+    else if (st.source === 'live') why = 'No ETH transactions of $1M or more in the last 24 hours.';
+    else why = 'Blockchair was unreachable, so there are no ETH whale transactions from the last 24 hours to show.';
+    tbody.innerHTML = `<tr><td colspan="4" style="color:var(--muted);padding:12px 8px">${escapeHtml(why)}</td></tr>`;
+    return;
+  }
   // Validate ETH tx hash as 0x + 64 hex chars to defang any javascript:/data:
   // scheme injection through the href + innerHTML.
   const isEthTxHash = s => typeof s === 'string' && /^0x[0-9a-fA-F]{64}$/.test(s);
@@ -6952,7 +6985,7 @@ function renderEthWhaleAlerts(){
     const eth = t.value_eth != null ? fmtNum(t.value_eth, 2) : '—';
     const usd = t.value_usd != null ? fmtUSD(t.value_usd, 'auto') : '—';
     const cls = (t.value_usd != null && t.value_usd >= 10_000_000) ? 'green' : '';
-    const time = t.time ? escapeHtml(String(t.time)) : '—';
+    const time = t.time ? escapeHtml(String(t.time)) + ' UTC' : '—';
     const linkCell = hash
       ? `<a href="${txUrl}" target="_blank" rel="noopener" style="color:var(--v2-ai);text-decoration:none">${shortHash} ↗</a>`
       : '—';
@@ -10439,6 +10472,18 @@ function renderAiNewsSpotlight(){
 // hasn't loaded yet — renderAll's travelLoadingActive branch shows a
 // placeholder in that case. Reads state.travelSub / travelSubLevel /
 // travelQuery / travelTerrorOnly / travelSort.
+// Risk-indicator pills exist only when fetch_advisories parsed the State
+// Dept HTML table. In its RSS fallback (the table sits behind a bot
+// challenge) every row carries risks:[] because the data is MISSING, not
+// because a country has none. Treat that as "unavailable" so a Level 4
+// country never reads "No specific risk indicators" and the terrorism count
+// is never a fabricated 0. Older payloads without the flag are recognised by
+// their source tag.
+function travelRisksAvailable(t){
+  return !!t && t.risks_available !== false && t.source !== 'rss-fallback';
+}
+const TRAVEL_RISKS_UNAVAILABLE = 'Risk indicators unavailable (source blocked)';
+
 function renderTravel(){
   const travel = DATA.travel;
   if (!travel || !Array.isArray(travel.advisories)) return; // sidecar pending
@@ -10452,7 +10497,12 @@ function renderTravel(){
     if (Array.isArray(a.risks) && a.risks.indexOf('T') !== -1) counts.terror++;
   }
 
-  const sub = state.travelSub || 'overview';
+  const risksOk = travelRisksAvailable(travel);
+  let sub = state.travelSub || 'overview';
+  if (!risksOk && sub === 'terror') { sub = 'overview'; state.travelSub = 'overview'; }
+  document.querySelectorAll('.travel-subtab[data-travelsub="terror"]').forEach(b => {
+    b.classList.toggle('hidden', !risksOk);
+  });
 
   // Toggle sub-view visibility
   const overviewEl = document.getElementById('travelOverview');
@@ -10468,9 +10518,9 @@ function renderTravel(){
   });
 
   if (sub === 'overview') {
-    renderTravelOverview(advisories, bulletins, counts, travel.generated_at);
+    renderTravelOverview(advisories, bulletins, counts, travel.generated_at, risksOk);
   } else {
-    renderTravelList(advisories, sub, counts);
+    renderTravelList(advisories, sub, counts, risksOk);
   }
 }
 
@@ -10492,7 +10542,7 @@ function travelFmtDate(iso){
   return months[m] + ' ' + d + ', ' + parts[0];
 }
 
-function renderTravelOverview(advisories, bulletins, counts, generatedAt){
+function renderTravelOverview(advisories, bulletins, counts, generatedAt, risksOk = true){
   // Stat cards row — clicking L1/L2/L3/L4 navigates to that level sub-view;
   // Terrorism card opens the Terrorism sub-view.
   const statHost = document.getElementById('travelStatCards');
@@ -10504,11 +10554,13 @@ function renderTravelOverview(advisories, bulletins, counts, generatedAt){
         '<div class="travel-stat__sub">' + escapeHtml(TRAVEL_LEVEL_SHORT[l]) + '</div>' +
       '</button>'
     ).join('') +
-    '<button class="travel-stat travel-stat--terror" data-travelstat="terror" type="button">' +
-      '<div class="travel-stat__num">' + counts.terror + '</div>' +
-      '<div class="travel-stat__label">Terrorism</div>' +
-      '<div class="travel-stat__sub">Flagged destinations &rarr;</div>' +
-    '</button>';
+    (risksOk
+      ? '<button class="travel-stat travel-stat--terror" data-travelstat="terror" type="button">' +
+          '<div class="travel-stat__num">' + counts.terror + '</div>' +
+          '<div class="travel-stat__label">Terrorism</div>' +
+          '<div class="travel-stat__sub">Flagged destinations &rarr;</div>' +
+        '</button>'
+      : '');
     statHost.innerHTML = cards;
   }
 
@@ -10582,7 +10634,7 @@ function renderTravelOverview(advisories, bulletins, counts, generatedAt){
   }
 }
 
-function renderTravelList(advisories, sub, counts){
+function renderTravelList(advisories, sub, counts, risksOk = true){
   // Determine level filter and whether the segmented L3/L4 control is shown
   let levelSet = null;
   let merged = false;
@@ -10603,7 +10655,9 @@ function renderTravelList(advisories, sub, counts){
   if (segment) segment.classList.toggle('hidden', !merged);
   const terrorToggle = document.getElementById('travelTerrorToggle');
   if (terrorToggle) {
-    terrorToggle.classList.toggle('hidden', isTerror); // hidden on the dedicated Terrorism view
+    // Hidden on the dedicated Terrorism view, and whenever risk indicators
+    // are unavailable (filtering on unknown data would show zero rows).
+    terrorToggle.classList.toggle('hidden', isTerror || !risksOk);
     terrorToggle.classList.toggle('active', !!state.travelTerrorOnly);
   }
   // Sync segment active state
@@ -10620,7 +10674,7 @@ function renderTravelList(advisories, sub, counts){
   const q = (state.travelQuery || '').toLowerCase();
   const rows = advisories.filter(d => {
     if (levelSet && levelSet.indexOf(d.level) === -1) return false;
-    if ((state.travelTerrorOnly || isTerror) && !(Array.isArray(d.risks) && d.risks.indexOf('T') !== -1)) return false;
+    if (risksOk && (state.travelTerrorOnly || isTerror) && !(Array.isArray(d.risks) && d.risks.indexOf('T') !== -1)) return false;
     if (q && !String(d.name || '').toLowerCase().includes(q)) return false;
     return true;
   });
@@ -10657,7 +10711,9 @@ function renderTravelList(advisories, sub, counts){
     const lv = d.level;
     const href = sanitizeUrl(d.url, '#');
     const risks = Array.isArray(d.risks) ? d.risks : [];
-    const chips = risks.length === 0
+    const chips = !risksOk
+      ? '<span class="travel-card__norisk">' + TRAVEL_RISKS_UNAVAILABLE + '</span>'
+      : risks.length === 0
       ? '<span class="travel-card__norisk">No specific risk indicators</span>'
       : risks.map(r => {
           const isT = (r === 'T');

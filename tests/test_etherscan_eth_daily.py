@@ -141,6 +141,8 @@ def test_fetch_whale_exposes_etherscan_daily_key(monkeypatch):
     monkeypatch.setattr(fetch_market, "mempool_whale_transactions", lambda *_: [])
     monkeypatch.setattr(fetch_market, "blockchair_eth_stats", lambda: {})
     monkeypatch.setattr(fetch_market, "blockchair_eth_large_transactions", lambda *_: {})
+    monkeypatch.setattr(fetch_market, "blockchair_eth_large_transactions_with_status",
+                        lambda *_: {"rows": [], "status": {"source": "unavailable"}})
     monkeypatch.setattr(fetch_market, "coin_metrics_eth_whale_metrics", lambda: {})
     monkeypatch.setattr(fetch_market, "fetch_multichain_whale_stats", lambda: {})
 
