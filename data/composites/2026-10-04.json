@@ -1,6 +1,6 @@
 {
   "as_of": "2026-10-04",
-  "generated_at": "2026-10-04T23:23:38Z",
+  "generated_at": "2026-10-04T23:31:41Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-04",
@@ -55,7 +55,7 @@
       "as_of": "2026-10-04",
       "label": "BALANCED",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": -9,
+      "score": -10,
       "stale": false
     },
     "futures_sentiment_link": {
@@ -90,7 +90,7 @@
       "as_of": "2026-10-04",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": 15,
+      "score": 16,
       "stale": false
     },
     "poc_signal_breadth": null,
