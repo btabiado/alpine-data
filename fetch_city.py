@@ -166,15 +166,11 @@ def _fetch_feed_series(feed_cfg: dict, city_cfg: dict, *, as_of: str,
             })
 
     if adapter == "fbi":
-        # Miami Public Safety via FBI CDE. The FBI DOES publish this series —
-        # what we lack is a free api.data.gov key — so an empty result here is
-        # 'fetch_error' (on us), never 'not_published' (on them).
-        if city_context.fbi_key_missing():
-            reason = ("needs FBI_CDE_API_KEY: the FBI publishes this NIBRS "
-                      "series, we cannot request it without a free key. "
-                      + city_context.fbi_key_help())
-            _fail("no key", reason)
-            return [], "fetch_error", reason
+        # Miami Public Safety via FBI CDE. The FBI publishes this series, so an
+        # empty result here is 'fetch_error' (on us), never 'not_published' (on
+        # them). No key gate: the CDE endpoint serves it keyless (re-verified
+        # 2026-10-04), and the old "no FBI_CDE_API_KEY -> don't even ask" gate
+        # is what kept this pillar empty in every build. See city/fbi.py.
         try:
             series = city_context.fbi_crime_series(
                 feed_cfg, since=since_ym, until=as_of, session=session
@@ -353,6 +349,102 @@ def build_city(city_cfg: dict, *, as_of: str, since_date: str, geo_cfg=None,
             city_obj["extended"] = ext
 
     return city_obj
+
+
+# --------------------------------------------------------------------------- #
+# GitHub Actions annotations for a degraded build
+# --------------------------------------------------------------------------- #
+# The job stays green on purpose (one dead feed must not block the other five
+# cities), so a degradation has to be visible somewhere that is not the full
+# log. Annotations sit on the run summary and stay readable through the checks
+# API after the logs expire — the same reasoning as lthcs_daily.py's
+# _report_sec_errors. GitHub shows at most 10 warning annotations per step.
+_ANNOTATION_TITLE = "City data not refreshed"
+_MAX_ANNOTATIONS = 10
+
+# Which repository secret fixes a "no key" degradation, per context source.
+# Variable NAMES only — never a value.
+_ENV_VAR_FOR_SOURCE = {"census": "CENSUS_API_KEY", "airnow": "AIRNOW_API_KEY"}
+
+# HTTP statuses called out by number in an annotation's cause.
+_ANNOTATED_STATUSES = ("400", "401", "403", "404", "429", "499",
+                       "500", "502", "503", "504")
+
+
+def _cause_class(entry: dict) -> str:
+    """A short, fixed cause label for one diagnostics entry.
+
+    Deliberately returns only string constants assembled here — never the
+    adapter's message, a URL, or any slice of either. ``detail`` is
+    exception-derived text that has passed through request URLs; it is used
+    only to choose a label, and nothing from it reaches the output.
+    """
+    kind = entry.get("kind")
+    if kind == "no key":
+        name = _ENV_VAR_FOR_SOURCE.get(entry.get("source"))
+        return "missing secret " + name if name else "missing secret"
+    if kind == "bug":
+        return "code bug (traceback in job log)"
+    if kind in ("empty", "no value"):
+        return "empty response"
+    if str(kind or "").startswith("no geography"):
+        return "no geography in registry"
+    detail = str(entry.get("detail") or "")
+    for status in _ANNOTATED_STATUSES:
+        if ("HTTP " + status) in detail:
+            return "HTTP " + status
+        if ("code=" + status) in detail:          # ArcGIS in-band error code
+            return "error code " + status
+    lowered = detail.lower()
+    if ("rejected by census" in lowered or "invalid key" in lowered
+            or "missing key" in lowered):
+        return "key rejected by upstream"
+    if "daily threshold" in lowered:              # BLS keyless/keyed quota
+        return "daily request quota exhausted"
+    if "timed out" in lowered or "timeout" in lowered:
+        return "timeout"
+    if "not json" in lowered or "malformed json" in lowered:
+        return "non-JSON response"
+    return "request failed"
+
+
+def _workflow_escape(text: str) -> str:
+    """Workflow-command escaping: % CR LF, or the annotation is cut at a newline."""
+    return text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
+def _annotate_github(diagnostics: list) -> None:
+    """Emit one ``::warning`` per (source, cause) when running in GitHub Actions.
+
+    Body shape: ``<source>: <cause> — <what was lost> (<city>, <city>); ...``.
+    Built from the source name, the fixed cause label, the city id and the
+    ``lost`` label (a registry feed label or a fixed field list) only.
+    """
+    if os.environ.get("GITHUB_ACTIONS") != "true" or not diagnostics:
+        return
+    groups: dict = {}
+    for entry in diagnostics:
+        group = (str(entry.get("source") or "?"), _cause_class(entry))
+        lost = str(entry.get("lost") or "data")
+        groups.setdefault(group, {}).setdefault(lost, []).append(
+            str(entry.get("city", "?")))
+
+    ordered = sorted(groups.items(),
+                     key=lambda kv: (-sum(len(c) for c in kv[1].values()), kv[0]))
+    overflow = len(ordered) - _MAX_ANNOTATIONS
+    shown = ordered[:_MAX_ANNOTATIONS - 1] if overflow > 0 else ordered
+    for (source, cause), by_lost in shown:
+        affected = ["{} ({})".format(lost, ", ".join(cities))
+                    for lost, cities in by_lost.items()]
+        body = "{}: {} — {}".format(source, cause, "; ".join(affected))
+        if len(body) > 600:
+            body = body[:597] + "..."
+        print("::warning title={}::{}".format(
+            _ANNOTATION_TITLE, _workflow_escape(body)))
+    if overflow > 0:
+        print("::warning title={}::{}".format(_ANNOTATION_TITLE, _workflow_escape(
+            "{} more degraded source/cause group(s); see the DEGRADATION SUMMARY "
+            "in the job log".format(overflow + 1))))
 
 
 def _resolve_as_of(cli_as_of, registry: dict, now: datetime) -> str:
@@ -568,6 +660,7 @@ def main(argv=None) -> int:
             (c.get("data_health") or {}).get("feeds_total")))
 
     _report_diagnostics(diagnostics)
+    _annotate_github(diagnostics)
     return 0
 
 

@@ -52,6 +52,12 @@ class FakeSession:
         return self._responses
 
 
+@pytest.fixture(autouse=True)
+def _no_retry_sleep(monkeypatch):
+    """The transient-failure retry path must not make the suite wait."""
+    monkeypatch.setattr(socrata, "_sleep", lambda seconds: None)
+
+
 def _agg_rows(pairs):
     """Build Socrata date_trunc_ym aggregation rows from (month, n) pairs.
 
@@ -82,7 +88,8 @@ def test_monthly_counts_builds_date_trunc_query_and_parses_ascending():
     assert call["url"] == "https://data.cityofchicago.org/resource/ijzp-q8t2.json"
     params = call["params"]
     # date_trunc_ym month bucket aliased m, count(*) AS n.
-    assert params["$select"] == "date_trunc_ym(date) AS m, count(*) AS n"
+    # ...plus the newest record per bucket, used to spot an unfinished month.
+    assert params["$select"] == "date_trunc_ym(date) AS m, count(*) AS n, max(date) AS last"
     assert params["$group"] == "m"
     assert params["$order"] == "m"
     # IS NOT NULL always present; since normalized to Jan-1 of the bare year.
@@ -119,6 +126,119 @@ def test_monthly_counts_extra_where_appended():
     assert "requested_datetime IS NOT NULL" in where
     assert "status = 'Closed'" in where
     assert " AND " in where
+
+
+# --------------------------------------------------------------------------- #
+# 1b. an unfinished newest month is not handed to the scorer
+# --------------------------------------------------------------------------- #
+def _rows_with_last(triples):
+    return [{"m": f"{m}-01T00:00:00.000", "n": str(n), "last": last}
+            for m, n, last in triples]
+
+
+def test_newest_month_cut_short_upstream_is_dropped():
+    """Live LAPD NIBRS shape on 2026-10-04: September stops on the 19th.
+
+    10,097 offenses against a ~18,300 baseline would score as a 45% crime drop.
+    """
+    rows = _rows_with_last([
+        ("2026-07", 19324, "2026-07-31T23:55:00.000"),
+        ("2026-08", 18313, "2026-08-31T23:50:00.000"),
+        ("2026-09", 10097, "2026-09-19T00:00:00.000"),
+    ])
+    out = socrata.monthly_counts("data.lacity.org", "k7nn-b2ep", "date_occ",
+                                 session=FakeSession(FakeResp(rows)))
+    assert out == [{"month": "2026-07", "n": 19324}, {"month": "2026-08", "n": 18313}]
+
+
+def test_newest_month_running_to_month_end_is_kept():
+    # Last record two days before month-end is inside the slack (weekend, holiday).
+    rows = _rows_with_last([
+        ("2026-08", 900, "2026-08-31T00:00:00.000"),
+        ("2026-09", 950, "2026-09-28T00:00:00.000"),
+    ])
+    out = socrata.monthly_counts("data.cityofchicago.org", "ydr8-5enu", "issue_date",
+                                 session=FakeSession(FakeResp(rows)))
+    assert [r["month"] for r in out] == ["2026-08", "2026-09"]
+
+
+def test_only_the_newest_month_is_ever_judged():
+    """An earlier month with a short `last` is complete by definition: the
+    portal already published later data. Only the tail can be unfinished."""
+    rows = _rows_with_last([
+        ("2026-08", 900, "2026-08-12T00:00:00.000"),   # sparse, but followed
+        ("2026-09", 950, "2026-09-30T00:00:00.000"),
+        ("2026-10", 40, "2026-10-03T00:00:00.000"),    # current month: dropped
+    ])
+    out = socrata.monthly_counts("data.sf.gov", "vw6y-z8j6", "requested_datetime",
+                                 session=FakeSession(FakeResp(rows)))
+    assert [r["month"] for r in out] == ["2026-08", "2026-09"]
+
+
+def test_text_date_last_value_is_understood():
+    """NYC DOB issuance_date is TEXT MM/DD/YYYY; max() on it is per-bucket text."""
+    rows = [{"m": "2026-09", "n": "560", "last": "09/30/2026"},
+            {"m": "2026-10", "n": "13", "last": "10/01/2026"},
+            {"m": "2-03-19", "n": "240", "last": "1999-12-03"}]   # junk bucket
+    out = socrata.monthly_counts("data.cityofnewyork.us", "ipu4-2q9a", "issuance_date",
+                                 date_is_text=True, session=FakeSession(FakeResp(rows)))
+    assert out == [{"month": "2026-09", "n": 560}]
+
+
+def test_rows_without_last_are_never_trimmed():
+    rows = _agg_rows([("2026-08", 1), ("2026-09", 2)])
+    out = socrata.monthly_counts("data.sf.gov", "vw6y-z8j6", "requested_datetime",
+                                 session=FakeSession(FakeResp(rows)))
+    assert [r["month"] for r in out] == ["2026-08", "2026-09"]
+
+
+# --------------------------------------------------------------------------- #
+# 1c. transient failures are retried; permanent ones are not
+# --------------------------------------------------------------------------- #
+def test_throttle_then_success_is_retried():
+    rows = _agg_rows([("2026-08", 5)])
+    sess = FakeSession([FakeResp({}, status_code=429, text="slow down"), FakeResp(rows)])
+    out = socrata.monthly_counts("data.sf.gov", "vw6y-z8j6", "requested_datetime",
+                                 session=sess)
+    assert out == [{"month": "2026-08", "n": 5}]
+    assert len(sess.calls) == 2
+
+
+def test_timeout_then_success_is_retried():
+    import requests
+
+    rows = _agg_rows([("2026-08", 5)])
+
+    class FlakySession(FakeSession):
+        def get(self, url, params=None, headers=None, timeout=None):
+            if not self.calls:
+                self.calls.append({"url": url})
+                raise requests.ReadTimeout("Read timed out. (read timeout=120)")
+            return super().get(url, params=params, headers=headers, timeout=timeout)
+
+    sess = FlakySession(FakeResp(rows))
+    out = socrata.monthly_counts("data.lacity.org", "73a2-6ar5", "createddate",
+                                 session=sess)
+    assert out == [{"month": "2026-08", "n": 5}]
+
+
+def test_persistent_gateway_error_gives_up_after_three_attempts():
+    sess = FakeSession(FakeResp({}, status_code=503, text="unavailable"))
+    with pytest.raises(socrata.SocrataError) as exc:
+        socrata.monthly_counts("data.sf.gov", "vw6y-z8j6", "requested_datetime",
+                               session=sess)
+    assert "503" in str(exc.value)
+    assert len(sess.calls) == 3
+
+
+def test_retired_dataset_403_is_not_retried():
+    """LA's y8y3-fqfu answers 403 'You must be logged in' — permanent."""
+    sess = FakeSession(FakeResp({}, status_code=403,
+                                text='{"message":"You must be logged in"}'))
+    with pytest.raises(socrata.SocrataError) as exc:
+        socrata.monthly_counts("data.lacity.org", "y8y3-fqfu", "date_occ", session=sess)
+    assert "403" in str(exc.value)
+    assert len(sess.calls) == 1
 
 
 # --------------------------------------------------------------------------- #

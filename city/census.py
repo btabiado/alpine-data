@@ -31,6 +31,14 @@ Live-probe findings (2026-05-31):
     no live data call is made without a key. (The variables *metadata*
     endpoints stay keyless and were used to confirm the four variable codes
     resolve for vintage 2024.)
+  * Re-verified 2026-10-04: there is NO keyless allowance left for data
+    queries. Every keyless data URL tried (acs5 2023/2024, acs1, dec/pl) answers
+    ``302`` with header ``X-DataWebAPI-KeyError: 1`` and
+    ``Location: .../data/missing_key.html``; a wrong key gets the same header
+    and ``.../data/invalid_key.html``. ``requests`` follows the redirect and
+    hands back the HTML page with status 200, so :func:`fetch_acs` inspects the
+    redirect chain and raises a :class:`CensusError` that names the cause
+    ("missing key" / "invalid key") instead of a generic JSON decode error.
   * ACS responds as a **two-row JSON array** —
     ``[[header...], [values...]]`` — so values are read **by header name**,
     never by fixed position.
@@ -160,6 +168,27 @@ def _parse_acs_rows(data) -> dict:
     return fields
 
 
+def _key_rejection(resp) -> Optional[str]:
+    """``'missing key'`` / ``'invalid key'`` when Census bounced the request to
+    its key-error page, else ``None``.
+
+    Census signals a key problem with a 302 carrying ``X-DataWebAPI-KeyError``
+    to ``/data/missing_key.html`` or ``/data/invalid_key.html``. ``requests``
+    follows it, so the evidence is in ``resp.history`` / ``resp.url``. Fakes
+    without those attributes simply report no rejection.
+    """
+    final_url = str(getattr(resp, "url", "") or "")
+    if final_url.endswith("/missing_key.html"):
+        return "missing key"
+    if final_url.endswith("/invalid_key.html"):
+        return "invalid key"
+    for hop in list(getattr(resp, "history", None) or []) + [resp]:
+        headers = getattr(hop, "headers", None)
+        if hasattr(headers, "get") and headers.get("X-DataWebAPI-KeyError"):
+            return "key rejected"
+    return None
+
+
 def fetch_acs(
     geo_cfg: dict,
     *,
@@ -233,6 +262,13 @@ def fetch_acs(
         resp = sess.get(url, params=params, timeout=timeout)
     except requests.RequestException as exc:
         raise CensusError(redact(f"ACS request to {safe_url(url)} failed: {exc}")) from exc
+
+    rejection = _key_rejection(resp)
+    if rejection:
+        raise CensusError(
+            f"ACS request rejected by Census: {rejection} (redirected to its "
+            f"key-error page; CENSUS_API_KEY must hold a valid key)"
+        )
 
     status = getattr(resp, "status_code", 200)
     if status >= 400:

@@ -204,27 +204,65 @@ def test_arcgis_failure_is_fetch_error_not_not_published(monkeypatch):
     assert "500" in reason
 
 
-def test_missing_fbi_key_is_fetch_error_and_names_the_variable(monkeypatch):
-    """The FBI publishes this series. We just cannot ask for it without a key.
+class _CDESession:
+    """Fake transport for the FBI CDE summarized endpoint (no network)."""
 
-    Labelling that 'not_published' blames the FBI for our missing credential and
-    hides the one thing an operator could actually fix.
-    """
+    def __init__(self, payload):
+        self.payload = payload
+        self.calls = []
+
+    def get(self, url, params=None, timeout=None):
+        self.calls.append((url, dict(params or {})))
+        payload = self.payload
+
+        class _R:
+            status_code = 200
+            text = ""
+
+            def json(self):
+                return payload
+        return _R()
+
+
+def _cde_payload(months):
+    return {"offenses": {"actuals": {
+        "Miami-Dade County Police Department Offenses": dict(months),
+        "Miami-Dade County Police Department Clearances": {}}},
+        "cde_properties": {"last_refresh_date": {"UCR": "09/15/2026"}}}
+
+
+def test_fbi_feed_is_fetched_without_a_key(monkeypatch):
+    """Miami Public Safety used to be refused without FBI_CDE_API_KEY, before
+    any request was sent. The CDE host serves the series keyless (verified
+    live 2026-10-04), so the build must ask, and score what comes back."""
     monkeypatch.delenv("FBI_CDE_API_KEY", raising=False)
+    months = {}
+    for i, ym in enumerate(r["month"] for r in dense("2023-06", "2026-09")):
+        months["{}-{}".format(ym[5:7], ym[:4])] = 300 + (i % 5) * 7
+    sess = _CDESession(_cde_payload(months))
     cfg = {"pillar": "public_safety", "label": "FBI CDE (fallback)",
            "adapter": "fbi", "ori": "FL0130000", "polarity": -1}
 
     series, hint, reason = fetch_city._fetch_feed_series(
-        cfg, {"id": "miami"}, as_of=LIVE_MONTH, since_date="2023-06-01")
+        cfg, {"id": "miami"}, as_of="2026-09", since_date="2023-06-01",
+        session=sess)
 
+    assert hint == "ok" and reason is None
+    assert len(sess.calls) == 1 and "API_KEY" not in sess.calls[0][1]
+    # September was still in progress at the 09/15 refresh: not handed over.
+    assert series[-1]["month"] == "2026-08"
+
+
+def test_fbi_empty_response_is_fetch_error_not_not_published(monkeypatch):
+    monkeypatch.delenv("FBI_CDE_API_KEY", raising=False)
+    sess = _CDESession({"offenses": {"actuals": None}})
+    cfg = {"pillar": "public_safety", "label": "FBI CDE (fallback)",
+           "adapter": "fbi", "ori": "FL0130000", "polarity": -1}
+    series, hint, reason = fetch_city._fetch_feed_series(
+        cfg, {"id": "miami"}, as_of="2026-09", since_date="2023-06-01",
+        session=sess)
     assert (series, hint) == ([], "fetch_error")
-    assert "FBI_CDE_API_KEY" in reason
-    # Full signup URL, not a bare host substring: the operator needs the
-    # actual link, and a host-only check is the shape CodeQL flags because
-    # it is bypassable when used for trust decisions. This is an assertion
-    # about help text, not a security check — but the specific form is the
-    # better test either way.
-    assert "https://api.data.gov/signup/" in reason
+    assert "FL0130000" in reason
 
 
 def test_stale_snapshot_still_reports_stale_not_fetch_error(monkeypatch):
@@ -313,3 +351,152 @@ def test_diagnostics_summary_separates_credentials_from_failures(capsys):
 def test_diagnostics_summary_says_so_when_everything_worked(capsys):
     fetch_city._report_diagnostics([])
     assert "no degradations" in capsys.readouterr().out
+
+
+# --------------------------------------------------------------------------- #
+# 5. GitHub Actions annotations: loud, grouped, and never echoing raw errors
+# --------------------------------------------------------------------------- #
+DIAGS = [
+    {"city": "chicago", "source": "census", "kind": "no key",
+     "detail": "CENSUS_API_KEY unset; see https://api.census.gov/data/key_signup.html",
+     "lost": "median_income"},
+    {"city": "nyc", "source": "census", "kind": "no key",
+     "detail": "CENSUS_API_KEY unset", "lost": "median_income"},
+    {"city": "sf", "source": "socrata", "kind": "failed",
+     "detail": "Socrata request to data.sf.gov failed: HTTPSConnectionPool(host="
+               "'data.sf.gov', port=443): Read timed out. (read timeout=120)",
+     "lost": "feed '311 Cases'"},
+    {"city": "miami", "source": "arcgis", "kind": "failed",
+     "detail": "ArcGIS error from https://x.invalid/q?token=abc123: code=499 Token Required",
+     "lost": "feed 'MDC Building Permit'"},
+]
+
+
+def _annotations(out):
+    return [ln for ln in out.splitlines() if ln.startswith("::warning ")]
+
+
+def test_annotations_emitted_only_under_github_actions(monkeypatch, capsys):
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    fetch_city._annotate_github(DIAGS)
+    assert _annotations(capsys.readouterr().out) == []
+
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    fetch_city._annotate_github(DIAGS)
+    lines = _annotations(capsys.readouterr().out)
+    assert lines, "a degraded build must annotate the run"
+    assert all(ln.startswith("::warning title=City data not refreshed::") for ln in lines)
+
+
+def test_annotations_group_by_source_and_cause(monkeypatch, capsys):
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    fetch_city._annotate_github(DIAGS)
+    lines = _annotations(capsys.readouterr().out)
+    assert len(lines) == 3   # census/no key (x2 cities), socrata/timeout, arcgis/499
+    census = [ln for ln in lines if "::census: " in ln][0]
+    assert "missing secret CENSUS_API_KEY" in census
+    # Same loss across cities is listed once, with the cities that lost it.
+    assert "median_income (chicago, nyc)" in census
+    assert any("socrata: timeout" in ln and "311 Cases" in ln for ln in lines)
+    assert any("arcgis: error code 499" in ln for ln in lines)
+
+
+def test_annotations_never_echo_the_raw_error_text(monkeypatch, capsys):
+    """Only fixed cause labels go out — no URL, no query string, no message."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    fetch_city._annotate_github(DIAGS)
+    out = capsys.readouterr().out
+    for leaked in ("abc123", "token=", "https://", "HTTPSConnectionPool", "x.invalid"):
+        assert leaked not in out
+
+
+def test_annotation_body_is_workflow_escaped():
+    assert fetch_city._workflow_escape("50% done\r\nnext") == "50%25 done%0D%0Anext"
+
+
+def test_annotation_escaping_applies_to_emitted_lines(monkeypatch, capsys):
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    fetch_city._annotate_github([{"city": "la", "source": "socrata", "kind": "failed",
+                                  "detail": "HTTP 503", "lost": "feed '100%\nreal'"}])
+    line = _annotations(capsys.readouterr().out)[0]
+    assert "100%25%0Areal" in line
+    assert "\n" not in line.split("::", 2)[2]
+
+
+def test_annotations_are_capped_at_ten(monkeypatch, capsys):
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    many = [{"city": "c%d" % i, "source": "src%d" % i, "kind": "failed",
+             "detail": "HTTP 500", "lost": "x"} for i in range(14)]
+    fetch_city._annotate_github(many)
+    lines = _annotations(capsys.readouterr().out)
+    assert len(lines) == 10
+    assert "5 more degraded" in lines[-1]
+
+
+def test_no_annotation_when_nothing_degraded(monkeypatch, capsys):
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    fetch_city._annotate_github([])
+    assert _annotations(capsys.readouterr().out) == []
+
+
+def test_main_annotates_a_degraded_build(monkeypatch, capsys, tmp_path):
+    """End to end: a dead feed in a real main() run becomes an annotation and
+    the run still exits 0 (one broken source must not block the rest)."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setattr(socrata, "feed_series", lambda *a, **k: (_ for _ in ()).throw(
+        socrata.SocrataError("Socrata returned HTTP 403 at https://h/resource/x.json")))
+    monkeypatch.setattr(arcgis, "feed_series",
+                        lambda *a, **k: (dense("2024-01", "2026-08"), "ok"))
+    monkeypatch.setattr(city_context, "fbi_crime_series",
+                        lambda *a, **k: dense("2024-01", "2026-08"))
+    monkeypatch.setattr(city_context, "build_context", lambda *a, **k: None)
+    monkeypatch.setattr(fetch_city, "_load_extended_feeds", lambda: {})
+
+    rc = fetch_city.main(["--force", "--out", str(tmp_path / "city.json"),
+                          "--as-of", "2026-08"])
+    assert rc == 0
+    lines = _annotations(capsys.readouterr().out)
+    assert any("socrata: HTTP 403" in ln for ln in lines)
+    assert not any("https://h/" in ln for ln in lines)
+
+
+# --------------------------------------------------------------------------- #
+# 6. registry: moved / retired upstream datasets stay fixed
+# --------------------------------------------------------------------------- #
+def _registry_city(cid):
+    reg = json.loads(fetch_city.REGISTRY.read_text())
+    return next(c for c in reg["cities"] if c["id"] == cid)
+
+
+def test_la_crime_no_longer_unions_the_retired_baseline():
+    """y8y3-fqfu answers 403 'You must be logged in' since LA consolidated NIBRS
+    into k7nn-b2ep (2026-08-18); unioning it failed LA Public Safety nightly."""
+    feed = next(f for f in _registry_city("la")["feeds"] if f["pillar"] == "public_safety")
+    assert feed["dataset"] == "k7nn-b2ep"
+    assert "baseline_dataset" not in feed
+
+
+def test_sf_uses_the_canonical_portal_host():
+    """data.sfgov.org now 301s to data.sf.gov (and served an nginx 403 on 2026-09-30)."""
+    assert _registry_city("sf")["host"] == "data.sf.gov"
+
+
+@pytest.mark.parametrize("entry, label", [
+    ({"kind": "no key", "source": "census"}, "missing secret CENSUS_API_KEY"),
+    ({"kind": "no key", "source": "airnow"}, "missing secret AIRNOW_API_KEY"),
+    ({"kind": "failed", "detail": "Socrata throttled (HTTP 429) at https://h/x"}, "HTTP 429"),
+    ({"kind": "failed", "detail": "ArcGIS error ...: code=499 Token Required"}, "error code 499"),
+    ({"kind": "failed", "detail": "ACS request rejected by Census: invalid key"},
+     "key rejected by upstream"),
+    ({"kind": "failed", "detail": "Read timed out. (read timeout=120)"}, "timeout"),
+    ({"kind": "failed", "detail": "BLS request not processed for LAUCT1714: "
+      "REQUEST_NOT_PROCESSED ... the daily threshold for total number of requests"},
+     "daily request quota exhausted"),
+    ({"kind": "failed", "detail": "CDE response from x was not JSON"}, "non-JSON response"),
+    ({"kind": "failed", "detail": "connection reset"}, "request failed"),
+    ({"kind": "empty", "detail": "FBI CDE returned no offense rows"}, "empty response"),
+    ({"kind": "no geography in registry (context_layer...)"}, "no geography in registry"),
+    ({"kind": "bug", "detail": "KeyError: 'x'"}, "code bug (traceback in job log)"),
+])
+def test_cause_labels(entry, label):
+    assert fetch_city._cause_class(entry) == label

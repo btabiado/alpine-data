@@ -185,13 +185,75 @@ def test_context_is_none_when_nothing_at_all_resolved(monkeypatch):
     assert city_context.build_context(CITY, GEO) is None
 
 
-def test_fbi_key_helpers(monkeypatch):
-    assert city_context.fbi_key_missing() is True
-    # Full signup URL rather than a bare host substring — see the note in
-    # tests/test_fetch_city.py. The operator needs the link itself.
-    assert "https://api.data.gov/signup/" in city_context.fbi_key_help()
-    monkeypatch.setenv("FBI_CDE_API_KEY", "REAL")
-    assert city_context.fbi_key_missing() is False
+class _RecordingSession:
+    """Minimal fake transport: records each GET, replays one canned response."""
+
+    def __init__(self, resp):
+        self.resp = resp
+        self.calls = []
+
+    def get(self, url, params=None, timeout=None, **kw):
+        self.calls.append((url, dict(params or {})))
+        return self.resp
+
+
+class _Resp:
+    def __init__(self, payload=None, *, status_code=200, url="", text="",
+                 history=(), headers=None):
+        self._payload = payload
+        self.status_code = status_code
+        self.url = url
+        self.text = text
+        self.history = list(history)
+        self.headers = headers or {}
+
+    def json(self):
+        if isinstance(self._payload, Exception):
+            raise self._payload
+        return self._payload
+
+
+def test_fbi_crime_series_requests_without_a_key(monkeypatch):
+    """No FBI_CDE_API_KEY must still send the request (the host is keyless).
+
+    The old behaviour returned [] without asking, which is what left Miami's
+    Public Safety pillar empty in every build.
+    """
+    payload = {"offenses": {"actuals": {
+        "Miami-Dade County Police Department Offenses": {"07-2026": 332, "08-2026": 330}}}}
+    sess = _RecordingSession(_Resp(payload))
+    out = city_context.fbi_crime_series(
+        {"ori": "FL0130000"}, since="2026-07", until="2026-08", session=sess)
+    assert out == [{"month": "2026-07", "n": 332}, {"month": "2026-08", "n": 330}]
+    assert len(sess.calls) == 1
+    assert "API_KEY" not in sess.calls[0][1]
+
+
+def test_census_key_rejection_is_reported_not_laundered_into_nulls(monkeypatch, capsys):
+    """THE ORIGINAL BUG, end to end through the real Census adapter.
+
+    Census answers a bad/missing key with a 302 to its key-error page, which
+    requests follows and returns as HTML with status 200. That used to become a
+    JSON-decode CensusError that build_context swallowed into ``acs = {}`` with
+    no output. It must now be a named, recorded failure.
+    """
+    monkeypatch.setenv("CENSUS_API_KEY", "WRONG")
+    monkeypatch.setattr(bls, "fetch_unemployment", lambda *a, **k: 5.9)
+    hop = _Resp(status_code=302, headers={"X-DataWebAPI-KeyError": "1"})
+    page = _Resp(ValueError("Expecting value"), url=(
+        "https://api.census.gov/data/invalid_key.html"), text="<html>Invalid Key",
+        history=[hop])
+    monkeypatch.setattr(census, "_SESSION", _RecordingSession(page))
+
+    diags: list = []
+    ctx = city_context.build_context(CITY, GEO, diagnostics=diags)
+
+    entry = [d for d in diags if d["source"] == "census"][0]
+    assert entry["kind"] == "failed"
+    assert "rejected by Census: invalid key" in entry["detail"]
+    assert "invalid key" in capsys.readouterr().err
+    assert ctx["median_income"] is None
+    assert ctx["unemployment_rate"] == 5.9  # the other sources survive
 
 
 def test_fbi_crime_series_without_an_ori_is_empty_and_hits_no_network():
