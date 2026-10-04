@@ -13146,7 +13146,9 @@ function renderAiSecFormD(){
     tb.innerHTML = '<tr><td colspan="6" style="padding:14px;color:var(--muted)">No AI-adjacent Form D filings in the last 60 days. EDGAR may be unreachable, or no qualifying issuers filed in that window.</td></tr>';
     return;
   }
-  if (badge) badge.textContent = 'EDGAR · ' + rows.length + ' filings · last 60d';
+  const fdCov = ((DATA.market||{}).ai_funding||{}).form_d_coverage || {};
+  const fdOf = (Number(fdCov.ai_matches) > rows.length) ? (' of ' + fdCov.ai_matches) : '';
+  if (badge) badge.textContent = 'EDGAR · ' + rows.length + fdOf + ' filings · last 60d';
   // Sort by filed_date desc so the freshest deals lead.
   const sorted = rows.slice().sort((a,b) => {
     const da = a && a.filed_date ? Date.parse(a.filed_date) : 0;

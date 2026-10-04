@@ -1305,13 +1305,20 @@ def _ai_keyword_hit(name: str) -> bool:
     return False
 
 
+def _sec_headers() -> dict:
+    """SEC fair-access headers. Prefer the operator-supplied SEC_USER_AGENT
+    secret (a real contact, as SEC asks) and fall back to the generic UA."""
+    ua = (os.environ.get("SEC_USER_AGENT") or "").strip() or SEC_UA
+    return {"User-Agent": ua, "Accept": "application/json"}
+
+
 def _sec_get(url: str, params: dict | None = None, timeout: int = 20):
     """SEC-flavored requests.get that always uses the polite UA. Returns
     the parsed JSON (or text for non-JSON endpoints) or None on failure.
     Honors EDGAR's preferred 10 req/sec ceiling implicitly by being called
     serially in the fetcher with a small sleep between calls."""
     try:
-        r = requests.get(url, params=params, headers=SEC_HEADERS, timeout=timeout)
+        r = requests.get(url, params=params, headers=_sec_headers(), timeout=timeout)
         if r.status_code != 200:
             print(f"  [sec] {url} -> {r.status_code}", file=sys.stderr)
             return None
@@ -1383,15 +1390,46 @@ def _parse_form_d_xml(xml_text: str) -> dict:
 
     out["total_offering_amount"] = _ffloat("totalOfferingAmount")
     out["total_amount_sold"]     = _ffloat("totalAmountSold")
-    out["date_of_first_sale"]    = _ftext("dateOfFirstSale")
+    # Live EDGAR schema nests the date: <dateOfFirstSale><value>YYYY-MM-DD
+    # </value></dateOfFirstSale>, or <yetToOccur>true</yetToOccur> when no
+    # sale has happened. Older/flat docs carry the date as direct text.
+    first_sale = _ftext("dateOfFirstSale/value") or _ftext("dateOfFirstSale")
+    if not first_sale and _ftext("dateOfFirstSale/yetToOccur").lower() == "true":
+        first_sale = "yet to occur"
+    out["date_of_first_sale"] = first_sale
     try:
-        ex_nodes = root.findall(".//exemption")
+        # Live schema: <federalExemptionsExclusions><item>06b</item>...;
+        # some docs use <exemption> leaves instead.
+        ex_nodes = (root.findall(".//federalExemptionsExclusions/item")
+                    or root.findall(".//exemption"))
         out["exemptions"] = [
             (n.text or "").strip() for n in ex_nodes if n.text and n.text.strip()
         ]
     except Exception:
         out["exemptions"] = []
     return out
+
+
+# Server-side EDGAR full-text query. The unfiltered Form D firehose is
+# >=10,000 filings per 60 days and EDGAR caps paging at 10,000, so scanning
+# "the first 100 hits" (the old approach) only ever saw ONE filing day. Asking
+# EDGAR for the AI terms instead returns ~200 hits for 60 days, which we page
+# through completely; the issuer-name matcher below then keeps only names
+# that are themselves AI-adjacent (a full-text hit can come from a related
+# person's name or an address).
+_SEC_FTS_QUERY = " OR ".join(
+    f'"{kw}"' if (" " in kw or "." in kw) else kw
+    for kw in ("ai", "artificial intelligence", "machine learning", "neural",
+               "deep learning", "gpt", "llm", "agentic", "robotics",
+               "autonomous", "openai", "anthropic", "inference")
+)
+_SEC_FTS_PAGE = 100          # EDGAR FTS page size (fixed upstream)
+_SEC_FTS_MAX_PAGES = 20      # hard stop: 2,000 hits; a real 60d window is ~2-3 pages
+_SEC_MIN_GAP_S = 0.15        # ~6 req/s, under SEC's 10 req/s fair-access ceiling
+
+# Coverage of the most recent sweep, published next to the rows so the UI can
+# say "N of M" instead of implying the list is the whole window.
+_SEC_FORM_D_LAST_COVERAGE: dict = {}
 
 
 def _fetch_sec_form_d_filings_impl(
@@ -1403,29 +1441,54 @@ def _fetch_sec_form_d_filings_impl(
     optionally enrich each with offering-amount fields from primary_doc.xml.
 
     Steps:
-      1. One full-text search request: `forms=D&dateRange=custom&startdt=...`
-         returns up to 100 hits in chronological order (newest first).
-      2. Filter hits by AI keywords in the issuer display_name.
+      1. Full-text search ``forms=D`` over ``[today-days, today]`` with the AI
+         terms as a server-side OR query, paging with ``from=`` until every
+         hit is read (sleeping between pages for SEC's 10 req/s limit).
+      2. Keep hits whose issuer display_name passes ``_ai_keyword_hit``,
+         de-duplicated by accession, newest first. Exemptions come straight
+         from the hit's ``items`` (e.g. 06B, 3C.7).
       3. Take the top `max_results`. If `enrich_details` is True, fetch
-         each filing's primary_doc.xml (with a 0.15s gap between requests
-         to stay below SEC's 10 req/sec ceiling).
+         each filing's primary_doc.xml for offering amounts and date of
+         first sale.
 
     Returns a list of dicts ready for the AI tab renderer.
     """
     end = datetime.now(timezone.utc).date()
     start = end - timedelta(days=days)
-    params = {
-        "q": "",
+    base = {
+        "q": _SEC_FTS_QUERY,
         "forms": "D",
         "dateRange": "custom",
         "startdt": start.isoformat(),
         "enddt": end.isoformat(),
     }
-    j = _sec_get("https://efts.sec.gov/LATEST/search-index", params=params)
-    if not isinstance(j, dict):
-        return []
-    hits = (((j.get("hits") or {}).get("hits")) or [])
+    hits: list = []
+    total = None
+    pages = 0
+    for page in range(_SEC_FTS_MAX_PAGES):
+        params = dict(base)
+        if page:
+            params["from"] = page * _SEC_FTS_PAGE
+            time.sleep(_SEC_MIN_GAP_S)
+        j = _sec_get("https://efts.sec.gov/LATEST/search-index", params=params)
+        if not isinstance(j, dict):
+            if page == 0:
+                return []
+            break  # keep what earlier pages returned
+        pages += 1
+        h = (j.get("hits") or {})
+        if total is None:
+            t = h.get("total")
+            total = t.get("value") if isinstance(t, dict) else t
+        batch = h.get("hits") or []
+        hits.extend(batch)
+        if len(batch) < _SEC_FTS_PAGE:
+            break
+        if isinstance(total, int) and len(hits) >= total:
+            break
+
     rows: list[dict] = []
+    seen: set = set()
     for h in hits:
         src = h.get("_source") or {}
         names = src.get("display_names") or []
@@ -1443,10 +1506,14 @@ def _fetch_sec_form_d_filings_impl(
         # "0001234567-25-000123:primary_doc.xml" — the part before the colon
         # is the accession number.
         raw_id = h.get("_id") or ""
-        adsh = raw_id.split(":", 1)[0] if raw_id else ""
+        adsh = src.get("adsh") or (raw_id.split(":", 1)[0] if raw_id else "")
+        if adsh and adsh in seen:
+            continue
+        seen.add(adsh)
         ciks = src.get("ciks") or []
         cik = ciks[0] if ciks else ""
         file_date = src.get("file_date") or ""
+        items = [str(x) for x in (src.get("items") or []) if x]
         rows.append({
             "issuer": clean_name,
             "cik": cik,
@@ -1458,10 +1525,25 @@ def _fetch_sec_form_d_filings_impl(
             "total_offering_amount": None,
             "total_amount_sold": None,
             "date_of_first_sale": "",
-            "exemptions": [],
+            # The search hit already carries the claimed exemptions; the XML
+            # pass overwrites them only if it finds its own list.
+            "exemptions": items,
         })
-        if len(rows) >= max_results:
-            break
+
+    rows.sort(key=lambda r: r.get("filed_date") or "", reverse=True)
+    matched = len(rows)
+    rows = rows[:max_results]
+    _SEC_FORM_D_LAST_COVERAGE.clear()
+    _SEC_FORM_D_LAST_COVERAGE.update({
+        "window_days": days,
+        "window": [start.isoformat(), end.isoformat()],
+        "fts_hits_total": total,
+        "fts_hits_scanned": len(hits),
+        "pages": pages,
+        "complete": isinstance(total, int) and len(hits) >= total,
+        "ai_matches": matched,
+        "shown": len(rows),
+    })
 
     if enrich_details and rows:
         for row in rows:
@@ -1469,13 +1551,16 @@ def _fetch_sec_form_d_filings_impl(
                 continue
             url = _sec_primary_doc_url(row["cik"], row["accession"])
             xml_text = _sec_get(url)
-            # Be polite — sleep 0.15s between filing fetches (~6 req/sec
+            # Be polite — sleep between filing fetches (~6 req/sec
             # ceiling, well under SEC's 10 req/sec limit).
-            time.sleep(0.15)
+            time.sleep(_SEC_MIN_GAP_S)
             if not isinstance(xml_text, str):
                 continue
             parsed = _parse_form_d_xml(xml_text)
-            row.update(parsed)
+            # Only overwrite with values the XML actually carried, so the
+            # exemptions taken from the search hit survive an XML without them.
+            row.update({k: v for k, v in parsed.items()
+                        if v not in (None, "", [])})
 
     return rows
 
@@ -1516,13 +1601,17 @@ def fetch_ai_funding() -> dict:
     hn_news = fetch_ai_funding_news_hn(30, 40)
     print(f"    -> {len(hn_news)} HN funding stories")
     print("  AI funding: SEC EDGAR Form D (AI issuers, last 60d)...")
-    form_d = fetch_sec_form_d_filings(60, 20, True)
-    print(f"    -> {len(form_d)} Form D filings (AI-adjacent)")
+    _SEC_FORM_D_LAST_COVERAGE.clear()
+    form_d = fetch_sec_form_d_filings(60, 50, True)
+    form_d_cov = dict(_SEC_FORM_D_LAST_COVERAGE) or {"window_days": 60, "stale_fallback": True}
+    print(f"    -> {len(form_d)} Form D filings (AI-adjacent; "
+          f"{form_d_cov.get('ai_matches', '?')} matched in window)")
     return {
         "yc_companies": yc.get("yc_companies", []),
         "yc_total_ai_count": yc.get("yc_total_ai_count", 0),
         "recent_funding_news": hn_news,
         "form_d_filings": form_d,
+        "form_d_coverage": form_d_cov,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 
