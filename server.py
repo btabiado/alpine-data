@@ -36,6 +36,7 @@ import time
 import traceback
 from datetime import datetime, timezone
 from functools import lru_cache
+from html import escape as _html_escape
 from typing import Any
 
 import requests
@@ -157,6 +158,20 @@ def _share_token_from_request() -> str | None:
         if tok:
             return tok
     return request.args.get("share")
+
+
+def _live_share_token(tok: str | None) -> str | None:
+    """Return ``tok`` if it is a live share token, else None, ready to embed.
+
+    Live tokens are minted by ``secrets.token_urlsafe`` (``[A-Za-z0-9_-]``),
+    so the HTML-escape is a no-op for every token that passes ``is_valid``.
+    It is applied anyway so the value reflected from the request into the
+    page is HTML-safe by construction, not only because the store lookup
+    happened to reject anything else.
+    """
+    if not tok or not shares.is_valid(tok):
+        return None
+    return _html_escape(tok)
 
 
 @flask_app.before_request
@@ -311,8 +326,7 @@ def _expired_share_page() -> Response:
 
 @flask_app.route("/")
 def index() -> Response:
-    tok = _share_token_from_request()
-    share_token = tok if (tok and shares.is_valid(tok)) else None
+    share_token = _live_share_token(_share_token_from_request())
     payload = dash.build_payload()
     payload["server"] = {
         "last_fetch_at": _state["last_fetch_at"],
@@ -349,7 +363,10 @@ def share_view(token: str) -> Response:
         "label": entry.get("label", ""),
     }
     trimmed, _sidecars, manifest = dash.split_payload_for_sidecars(payload)
-    html = dash.render_html(trimmed, share_token=token, sidecars_manifest=manifest)
+    # Validated above; escaping is a no-op for token_urlsafe tokens (see
+    # _live_share_token) and keeps the reflected value HTML-safe regardless.
+    html = dash.render_html(trimmed, share_token=_html_escape(token),
+                            sidecars_manifest=manifest)
     return Response(html, mimetype="text/html")
 
 

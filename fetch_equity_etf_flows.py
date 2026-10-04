@@ -237,7 +237,7 @@ def _yahoo_session_crumb() -> tuple[requests.Session, str] | tuple[None, None]:
         try:
             s.get("https://fc.yahoo.com", timeout=TIMEOUT)
         except requests.RequestException:
-            pass
+            pass  # cookie seeding is best-effort; finance.yahoo.com below is the fallback
         s.get("https://finance.yahoo.com", timeout=TIMEOUT)
     except requests.RequestException:
         return None, None

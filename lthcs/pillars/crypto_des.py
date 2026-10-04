@@ -28,6 +28,7 @@ neutral 50.0 midpoint.
 
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, Optional
 
 from lthcs.normalize import bounded_linear
@@ -85,7 +86,7 @@ def _signal_tilt(value: Optional[float], low: float, high: float) -> Optional[fl
         v = float(value)
     except (TypeError, ValueError):
         return None
-    if v != v:
+    if math.isnan(v):
         return None
     if low >= high:
         return None
@@ -141,7 +142,7 @@ def compute_crypto_des(
         stable_f: Optional[float] = (
             float(stable_delta) if stable_delta is not None else None
         )
-        if stable_f is not None and stable_f != stable_f:
+        if stable_f is not None and math.isnan(stable_f):
             stable_f = None
     except (TypeError, ValueError):
         stable_f = None
@@ -155,7 +156,7 @@ def compute_crypto_des(
         reserves_f: Optional[float] = (
             float(reserves_pct) if reserves_pct is not None else None
         )
-        if reserves_f is not None and reserves_f != reserves_f:
+        if reserves_f is not None and math.isnan(reserves_f):
             reserves_f = None
     except (TypeError, ValueError):
         reserves_f = None

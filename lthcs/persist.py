@@ -18,6 +18,7 @@ sections 3 and 7 for the storage layout and snapshot row schema.
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import tempfile
@@ -91,7 +92,7 @@ def _atomic_write_json(path: Path, payload: Any) -> None:
         try:
             os.unlink(tmp_path)
         except OSError:
-            pass
+            pass  # best-effort temp-file cleanup; the original error is re-raised below
         raise
 
 
@@ -357,7 +358,7 @@ class LthcsPersist:
                 s_val = float(s_raw)
             except (TypeError, ValueError):
                 continue
-            if s_val != s_val:  # NaN guard
+            if math.isnan(s_val):  # NaN guard
                 continue
             usable.append((d_dt, s_val))
         if not usable:

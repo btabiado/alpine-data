@@ -76,7 +76,7 @@ def _atomic_write_json(path: Path, payload: Any) -> None:
         try:
             os.unlink(tmp_path)
         except OSError:
-            pass
+            pass  # best-effort temp-file cleanup; the original error is re-raised below
         raise
 
 
