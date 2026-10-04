@@ -87,7 +87,9 @@ jobs:
         # to neutral 50 in CI runs (V1 daily pipeline behavior).
         # --catch-up: forward-fill any missed days since the last snapshot.
         # --force: re-running on a date that already has a snapshot is OK.
-        run: python lthcs_daily.py --force --catch-up --skip-thesis
+        # --sector-etf: keep the sector ETF strength file (yfinance, no
+        # Alpha Vantage quota) that --skip-thesis would otherwise skip.
+        run: python lthcs_daily.py --force --catch-up --skip-thesis --sector-etf
 
       - name: Commit data changes via signed API commit
         # Switched from plain `git push` to API-based commit so the

@@ -146,6 +146,12 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         help="Skip Alpha Vantage call entirely (Thesis falls back to neutral 50).",
     )
     p.add_argument(
+        "--sector-etf",
+        action="store_true",
+        help="Fetch sector ETF relative strength even with --skip-thesis "
+             "(it uses yfinance, not the Alpha Vantage quota).",
+    )
+    p.add_argument(
         "--catch-up",
         action="store_true",
         help=(
@@ -888,8 +894,11 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     # Sector ETF relative strength (XLK/XLF/XLE/... vs SPY).
     # Additive: persisted today; downstream Adoption / Thesis consumption
     # in a follow-up commit. Skip in --skip-thesis runs to keep test
-    # pipelines fast (yfinance can be slow under flaky network).
-    if not state.args.skip_thesis:
+    # pipelines fast (yfinance can be slow under flaky network). The daily
+    # workflow passes --skip-thesis to save the Alpha Vantage quota, which
+    # silently stopped this yfinance fetch after 2026-05-18; --sector-etf
+    # turns it back on without touching that quota.
+    if not state.args.skip_thesis or getattr(state.args, "sector_etf", False):
         try:
             state.sector_strength = sector_etf.fetch_sector_strength(**as_of_kw)
             counts["sector_etf_ok"] = len(state.sector_strength.get("sectors", {}))
