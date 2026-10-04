@@ -102,6 +102,17 @@ def test_pages_passes_every_key_env_api_status_names(api_status, build_steps):
     )
 
 
+def test_pages_passes_no_key_the_probe_does_not_name(api_status, build_steps):
+    """The mirror image: a secret handed to the probe step that no probe names
+    is a secret exposed for nothing (FBI_CDE_API_KEY stayed mapped after the
+    FBI CDE probe went keyless). Least privilege, and an honest env block."""
+    step = _step_running(build_steps, "api_status.py")
+    extra = sorted(set(step.get("env") or {}) - set(api_status.KEY_ENVS))
+    assert not extra, (
+        f"the probe step passes {extra}, which no api_status target names. "
+        "Drop them from that step's env: block.")
+
+
 def test_the_probe_step_maps_each_key_from_the_matching_secret(build_steps):
     """`FOO: ${{ secrets.BAR }}` would be wired but wrong — the probe would
     report on a key the fetchers never use. Names must line up."""
