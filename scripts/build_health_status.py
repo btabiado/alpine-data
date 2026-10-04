@@ -66,10 +66,28 @@ THRESHOLDS: dict[str, Threshold] = {
     # runs. A permanently red light is how the genuinely dead TSA feed sat
     # unnoticed for 45 days, which is the failure this table exists to prevent.
     #
-    # 62d/100d: a one-month-lagging series' month-start sits 59-92 days back,
-    # plus cron slack. The point of this entry is that when it is red, it is
-    # red for a true reason: a scored feed has genuinely stopped moving.
-    "data-city.json": Threshold(62 * 24, 100 * 24),
+    # 62d fresh: a one-month-lagging series' month-start sits 59-92 days back,
+    # plus cron slack.
+    #
+    # 160d stale, NOT the earlier 100d, because one scored feed is QUARTERLY.
+    # NYPD Complaint Data Current (YTD), Socrata 5uac-w243, is tagged "Update
+    # Frequency: Quarterly" and only ever holds complete quarters: Q2 landed on
+    # 2026-07-27 (27 days after quarter end) with max(cmplnt_fr_dt) 2026-06-30.
+    # So the newest month NYC can offer is the LAST month of the previous
+    # quarter, and just before the next drop its month-start is ~30d (that
+    # month) + ~92d (the following quarter) + ~27d (publish lag) = ~150d old.
+    # Under 100d, NYC went red every quarter for ~7 weeks on a healthy feed
+    # (125.8d on 2026-10-04, waiting for the Q3 drop). 160d leaves ~10 days of
+    # slack for a late drop. Since PR #40, last_updated counts only SCORED
+    # feeds, so this is a statement about NYPD's cadence, not about Miami's
+    # frozen 311 snapshot.
+    #
+    # ACCEPTED COST: the limit applies to the oldest scored feed in every city,
+    # so a MONTHLY feed that freezes now takes up to ~160d, not ~100d, to trip.
+    # Watching cities separately would need a per-feed limit in city/pulse.py.
+    # The point of this entry stays the same: when it is red, it is red for a
+    # true reason.
+    "data-city.json": Threshold(62 * 24, 160 * 24),
     # real_estate.json is a once-a-day cron; 12h old is normal, not "stale".
     "real_estate.json": Threshold(30, 48),
     # metro_coords.json is STATIC reference data — Census CBSA gazetteer

@@ -52,6 +52,21 @@ def dh():
 NOW = datetime(2026, 8, 3, 12, 0, tzinfo=timezone.utc).timestamp()
 
 
+@pytest.fixture(autouse=True)
+def _no_live_site(dh, monkeypatch):
+    """No test reaches the real Pages site.
+
+    DEPLOYED feeds are judged from the live copy in committed mode, so without
+    this every evaluate()/main() call below would make real HTTPS requests and
+    its verdict would depend on the network. Tests that exercise the live path
+    install their own fake; everything else sees a fetch that fails cleanly,
+    which is also the path that must never crash the run.
+    """
+    def _offline(url):
+        raise dh.LiveFetchError("live fetch disabled in tests")
+    monkeypatch.setattr(dh, "_fetch_deployed", _offline)
+
+
 def _write(tmp_path: Path, name: str, payload) -> Path:
     p = tmp_path / name
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -246,14 +261,16 @@ def test_container_fresh_contents_stale_reports_the_contents(dh, tmp_path,
     generated_at while every city inside it stopped updating months ago.
     Identical in shape to the breadth freeze the dashboard just fixed."""
     monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    # Older than the 160d city limit (raised from 100d for NYPD's quarterly
+    # cadence), so the contents genuinely fail rather than merely aging.
     _write(tmp_path, "data-city.json", {
         "generated_at": "2026-08-03T00:00:00Z",
-        "cities": [{"data_health": {"last_updated": "2026-04-01T00:00:00+00:00"}}],
+        "cities": [{"data_health": {"last_updated": "2026-01-01T00:00:00+00:00"}}],
     })
     results = {r.path: r for r in dh.evaluate(dh.COMMITTED, now_ts=NOW)}
     city = results["data-city.json"]
     assert city.status == dh.STALE
-    assert city.age_h > 120 * 24
+    assert city.age_h > 160 * 24
     assert "only as fresh as its oldest input" in city.detail
 
 
@@ -494,10 +511,13 @@ def test_unknown_is_a_failure(dh, tmp_path, monkeypatch):
     """Hole #4. A feed whose date signal has become unreadable is the exact
     symptom of an upstream schema change, and it used to exit 0."""
     monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
-    _write(tmp_path, "data-mufon.json", {"total_records": 5})
+    # A REPO-source feed, so the unreadable date comes from the file itself
+    # rather than from the (stubbed-out) live fetch of a DEPLOYED feed.
+    _write(tmp_path, "data-cfpb.json", {"total_records": 5})
     row = next(r for r in dh.evaluate(dh.COMMITTED, now_ts=NOW)
-               if r.path == "data-mufon.json")
+               if r.path == "data-cfpb.json")
     assert row.status == dh.UNKNOWN and row.fails
+    assert "no readable date signal" in row.detail
 
 
 def test_built_artifacts_are_checked_in_built_mode(dh, tmp_path, monkeypatch):
@@ -562,6 +582,37 @@ def test_exit_code_tracks_the_verdict(dh, tmp_path, monkeypatch, capsys):
     (tmp_path / "data").mkdir()
     assert dh.main([]) == 1
     assert "FAIL:" in capsys.readouterr().out
+    # pages.yml's built step surfaces the JSON run's exit code on the step,
+    # so the json report must keep carrying the verdict too.
+    assert dh.main(["--report", "json"]) == 1
+    assert json.loads(capsys.readouterr().out)["healthy"] is False
+
+
+def test_issue_report_exits_zero_when_feeds_are_unhealthy(dh, tmp_path,
+                                                          monkeypatch, capsys):
+    """THE crash on the first scheduled run (2026-10-04). data-health.yml only
+    builds the issue body after the check step found the run unhealthy, and
+    `--report issue` exited 1 in exactly that case — so "Build issue body"
+    failed and "Open or update the tracking issue" never ran. The alarm
+    channel was skipped on the one run that needed it."""
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    (tmp_path / "data").mkdir()
+    assert dh.main(["--report", "issue"]) == 0
+    body = capsys.readouterr().out
+    assert "feed(s) unhealthy" in body
+    assert "| `data-tsa.json` | **missing** |" in body
+    # ...while the check itself still reports the same tree as unhealthy.
+    assert dh.main([]) == 1
+
+
+def test_issue_step_in_the_workflow_does_not_mask_its_own_exit(dh):
+    """The fix belongs in the script, not in an `|| true` on the step: a real
+    crash while building the body should still fail loudly."""
+    wf = yaml.safe_load((WORKFLOWS / "data-health.yml").read_text())
+    step = next(s for s in wf["jobs"]["check"]["steps"]
+                if s.get("name") == "Build issue body")
+    assert "--report issue" in step["run"]
+    assert "|| true" not in step["run"]
 
 
 # ==========================================================================
@@ -577,6 +628,17 @@ def test_the_old_watchdog_is_gone_and_unreferenced():
          ":!scripts/data_health.py", ":!tests/test_data_health.py"],
         cwd=REPO_ROOT, capture_output=True, text=True).stdout.split()
     assert hits == [], f"still referenced by {hits}"
+
+
+def test_workflows_do_not_pin_the_node20_actions():
+    """checkout v6.0.3 / setup-python v5 run on the deprecated Node 20 runtime
+    and printed a deprecation warning on every data-health run."""
+    old = ("df4cb1c069e1874edd31b4311f1884172cec0e10",   # checkout v6.0.3
+           "a26af69be951a213d495a4c3e4e4022e16d87065")   # setup-python v5
+    for wf in WORKFLOWS.glob("*.yml"):
+        text = wf.read_text()
+        for sha in old:
+            assert sha not in text, f"{wf.name} still pins {sha}"
 
 
 def test_data_health_workflow_is_valid_and_wired():
@@ -852,3 +914,244 @@ def test_real_repo_run_is_honest_about_the_current_tree(dh):
         if feed.kind == dh.BUILT:
             continue
         assert rel in reported, f"{rel} declared but produced no verdict"
+
+
+# ==========================================================================
+# G. deployed feeds are judged on the live site, not on a stale fallback
+# ==========================================================================
+
+def _serve(dh, monkeypatch, pages: dict):
+    """Fake the Pages site: `pages` maps rel -> JSON payload (or an exception
+    instance to raise). Returns the list of URLs requested."""
+    seen: list[str] = []
+
+    def _fake(url):
+        seen.append(url)
+        rel = url[len(dh.PAGES_BASE_URL.rstrip("/")) + 1:]
+        item = pages.get(rel, dh.LiveFetchError("HTTP 404", not_found=True))
+        if isinstance(item, Exception):
+            raise item
+        return json.dumps(item).encode()
+    monkeypatch.setattr(dh, "_fetch_deployed", _fake)
+    return seen
+
+
+def test_the_deploy_time_feeds_are_marked_deployed(dh):
+    """These three are rewritten by every pages.yml build and never committed
+    back (its only commit-backs are data/composites and the NUFORC month
+    cache), so their repo files are fallbacks frozen at their last hand commit.
+    Judging those reported 118-131 days stale on feeds the live site was
+    serving fresh."""
+    for rel in ("data-travel.json", "data-stock-money-flow.json",
+                "data-mufon.json"):
+        assert dh.MANIFEST[rel].source == dh.DEPLOYED, rel
+    # ...and the feeds a cron really commits back stay judged from the repo.
+    for rel in ("data-city.json", "data-tsa.json", "data-cfpb.json",
+                "data-usaspending.json", "data/real_estate.json",
+                "data/btc_flows.csv", "data/equity_etf_flows.csv"):
+        assert dh.MANIFEST[rel].source == dh.REPO, rel
+
+
+def test_deployed_feed_is_judged_from_the_live_copy(dh, tmp_path, monkeypatch):
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    # The repo copy is the ancient fallback...
+    _write(tmp_path, "data-travel.json", {"generated_at": "2026-05-28T00:00:00Z"})
+    # ...while the site serves one built an hour ago.
+    seen = _serve(dh, monkeypatch, {
+        "data-travel.json": {"generated_at": "2026-08-03T11:00:00Z"}})
+    row = next(r for r in dh.evaluate(dh.COMMITTED, now_ts=NOW)
+               if r.path == "data-travel.json")
+    assert row.status == dh.OK and not row.fails
+    assert row.age_h == pytest.approx(1.0, abs=0.01)
+    assert "deployed copy" in row.source
+    assert dh.deployed_url("data-travel.json") in seen
+
+
+def test_deployed_url_points_at_the_pages_site(dh, monkeypatch):
+    monkeypatch.setattr(dh, "PAGES_BASE_URL",
+                        "https://btabiado.github.io/alpine-data/")
+    assert (dh.deployed_url("data-travel.json")
+            == "https://btabiado.github.io/alpine-data/data-travel.json")
+
+
+def test_deployed_feed_does_not_need_a_repo_copy(dh, tmp_path, monkeypatch):
+    """What is judged is the site, so a missing local fallback is not MISSING."""
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    (tmp_path / "data").mkdir()
+    _serve(dh, monkeypatch, {
+        "data-travel.json": {"generated_at": "2026-08-03T11:00:00Z"}})
+    row = next(r for r in dh.evaluate(dh.COMMITTED, now_ts=NOW)
+               if r.path == "data-travel.json")
+    assert row.status == dh.OK
+
+
+def test_stale_live_copy_is_still_stale(dh, tmp_path, monkeypatch):
+    """Judging the live copy must not become a way to never alarm."""
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    _write(tmp_path, "data-travel.json", {"generated_at": "2026-08-03T11:00:00Z"})
+    _serve(dh, monkeypatch, {
+        "data-travel.json": {"generated_at": "2026-07-01T00:00:00Z"}})
+    row = next(r for r in dh.evaluate(dh.COMMITTED, now_ts=NOW)
+               if r.path == "data-travel.json")
+    assert row.status == dh.STALE and row.fails
+    assert dh.deployed_url("data-travel.json") in row.detail
+
+
+def test_live_fetch_failure_is_unknown_not_stale(dh, tmp_path, monkeypatch):
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    _write(tmp_path, "data-travel.json", {"generated_at": "2026-01-01T00:00:00Z"})
+    _serve(dh, monkeypatch, {
+        "data-travel.json": dh.LiveFetchError("URLError: timed out")})
+    results = dh.evaluate(dh.COMMITTED, now_ts=NOW)   # must not raise
+    row = next(r for r in results if r.path == "data-travel.json")
+    assert row.status == dh.UNKNOWN
+    assert row.age_h is None, "the stale repo fallback must not leak in as an age"
+    assert "could not check" in row.detail
+    assert "timed out" in row.detail
+
+
+def test_live_404_is_missing(dh, tmp_path, monkeypatch):
+    """The site answered and the file is not on it: the tab is broken."""
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    _serve(dh, monkeypatch, {})
+    row = next(r for r in dh.evaluate(dh.COMMITTED, now_ts=NOW)
+               if r.path == "data-stock-money-flow.json")
+    assert row.status == dh.MISSING and row.fails
+
+
+def test_real_fetcher_turns_transport_errors_into_live_fetch_error(
+        dh, monkeypatch):
+    """The network layer itself: any transport failure becomes LiveFetchError
+    (so evaluate() reports UNKNOWN) instead of escaping and killing the run."""
+    import urllib.error
+    calls = []
+
+    def _boom(req, timeout):
+        calls.append(req.full_url)
+        raise urllib.error.URLError("Temporary failure in name resolution")
+    monkeypatch.undo()   # drop the autouse stub; exercise the real function
+    monkeypatch.setattr(dh.urllib.request, "urlopen", _boom)
+    monkeypatch.setattr(dh.time, "sleep", lambda s: None)
+    with pytest.raises(dh.LiveFetchError) as exc:
+        dh._fetch_deployed(dh.deployed_url("data-travel.json"))
+    assert not exc.value.not_found
+    assert "name resolution" in exc.value.reason
+    assert len(calls) == dh.LIVE_FETCH_ATTEMPTS
+
+    def _http(code):
+        def _raise(req, timeout):
+            raise urllib.error.HTTPError(req.full_url, code, "x", {}, None)
+        return _raise
+    monkeypatch.setattr(dh.urllib.request, "urlopen", _http(404))
+    with pytest.raises(dh.LiveFetchError) as exc:
+        dh._fetch_deployed(dh.deployed_url("data-travel.json"))
+    assert exc.value.not_found
+    monkeypatch.setattr(dh.urllib.request, "urlopen", _http(503))
+    with pytest.raises(dh.LiveFetchError) as exc:
+        dh._fetch_deployed(dh.deployed_url("data-travel.json"))
+    assert not exc.value.not_found and "503" in exc.value.reason
+
+
+def test_built_mode_judges_the_freshly_built_file_not_the_site(
+        dh, tmp_path, monkeypatch):
+    """Inside pages.yml the build has just written the copy it is about to
+    publish; the live site still holds the PREVIOUS deploy. MUFON's build
+    writes v2/data-mufon.json, not the root fallback."""
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+
+    def _must_not_fetch(url):
+        raise AssertionError(f"built mode fetched {url}")
+    monkeypatch.setattr(dh, "_fetch_deployed", _must_not_fetch)
+    _write(tmp_path, "data-travel.json", {"generated_at": "2026-08-03T11:00:00Z"})
+    _write(tmp_path, "data-mufon.json", {"generated_at": "2026-01-01T00:00:00Z",
+                                         "date_range": ["1906-11-11", "2026-01-01"]})
+    _write(tmp_path, "v2/data-mufon.json", {"generated_at": "2026-08-03T11:00:00Z",
+                                            "date_range": ["1906-11-11", "2026-08-03"]})
+    rows = {r.path: r for r in dh.evaluate(dh.BUILT, now_ts=NOW)}
+    assert rows["data-travel.json"].status == dh.OK
+    assert rows["data-mufon.json"].status == dh.OK, rows["data-mufon.json"].line()
+
+
+def test_remediation_does_not_pretend_to_fix_a_deployed_feed(dh, monkeypatch):
+    """Re-running fetch_advisories.py on the watchdog's runner cannot change
+    what the site serves; only the next deploy can."""
+    def _no_run(*a, **k):
+        raise AssertionError("a deployed feed's refresher was run")
+    monkeypatch.setattr(dh.subprocess, "run", _no_run)
+    notes = dh.remediate([dh.Result("data-travel.json", dh.STALE, 999.0, 24.0)])
+    assert len(notes) == 1 and "live site" in notes[0]
+
+
+def test_deployed_source_is_validated(dh, monkeypatch):
+    monkeypatch.setitem(dh.MANIFEST, "data-cpi.json",
+                        dh.Feed(dh.BUILT, "x", source=dh.DEPLOYED))
+    monkeypatch.setitem(dh.MANIFEST, "data-cfpb.json",
+                        dh.Feed(dh.COMMITTED, "x", built_path="v2/data-cfpb.json"))
+    problems = "\n".join(dh.verify_manifest())
+    assert "data-cpi.json: source=DEPLOYED applies to COMMITTED" in problems
+    assert "data-cfpb.json: built_path is only meaningful" in problems
+
+
+# ==========================================================================
+# H. the real-but-expected alarms, tuned
+# ==========================================================================
+
+MUFON_LIVE = {"generated_at": "2026-10-04T15:17:50Z", "_stale": True,
+              "data_through": "2026-06-09",
+              "date_range": ["1906-11-11", "2026-06-09"]}
+
+
+def test_mufon_freeze_is_suppressed_with_a_reason_and_an_expiry(dh):
+    sup = dh.SUPPRESSIONS["data-mufon.json"]
+    assert sup.until == date(2027, 1, 4)
+    for needle in ("NUFORC", "Cloudflare", "consent", "2026-06-09"):
+        assert needle in sup.reason, needle
+
+
+def test_mufon_is_muted_until_the_suppression_expires(dh, tmp_path, monkeypatch):
+    """Judged on the live copy, which is frozen at 2026-06-09 on purpose (the
+    container's generated_at is the build clock; date_range[1] is the data)."""
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    _serve(dh, monkeypatch, {"data-mufon.json": MUFON_LIVE})
+    now = datetime(2026, 10, 4, 19, 0, tzinfo=timezone.utc).timestamp()
+    row = next(r for r in dh.evaluate(dh.COMMITTED, today=date(2026, 10, 4),
+                                      now_ts=now)
+               if r.path == "data-mufon.json")
+    assert row.status == dh.SUPPRESSED and not row.fails
+    assert row.age_h > 100 * 24
+    later = datetime(2027, 1, 5, 19, 0, tzinfo=timezone.utc).timestamp()
+    row = next(r for r in dh.evaluate(dh.COMMITTED, today=date(2027, 1, 5),
+                                      now_ts=later)
+               if r.path == "data-mufon.json")
+    assert row.status == dh.EXPIRED and row.fails
+
+
+def test_city_limit_allows_for_the_quarterly_nypd_drop(dh, tmp_path, monkeypatch):
+    """NYPD complaints (5uac-w243) publishes whole quarters, so right before
+    the Q3 drop NYC's newest month is June: 125.8d on 2026-10-04, healthy."""
+    assert dh.THRESHOLDS["data-city.json"].stale_h == 160 * 24
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    now = datetime(2026, 10, 4, 19, 0, tzinfo=timezone.utc).timestamp()
+
+    def city_row(oldest):
+        _write(tmp_path, "data-city.json", {
+            "generated_at": "2026-10-04T13:00:00Z",
+            "cities": [
+                {"data_health": {"last_updated": "2026-09-01T00:00:00+00:00"}},
+                {"data_health": {"last_updated": oldest}}]})
+        return next(r for r in dh.evaluate(dh.COMMITTED, now_ts=now)
+                    if r.path == "data-city.json")
+    assert city_row("2026-06-01T00:00:00+00:00").status == dh.OK
+    # A scored feed frozen for half a year still fails.
+    assert city_row("2026-04-01T00:00:00+00:00").status == dh.STALE
+
+
+def test_stock_money_flow_survives_a_holiday_weekend(dh, tmp_path, monkeypatch):
+    """as_of is the last daily bar: Friday's, on the Tuesday after a Monday
+    holiday at the 15:00Z check, is ~111h old and healthy."""
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    _serve(dh, monkeypatch, {"data-stock-money-flow.json": {"as_of": "2026-09-04"}})
+    tue = datetime(2026, 9, 8, 15, 0, tzinfo=timezone.utc).timestamp()
+    row = next(r for r in dh.evaluate(dh.COMMITTED, now_ts=tue)
+               if r.path == "data-stock-money-flow.json")
+    assert row.status == dh.OK, row.line()
