@@ -927,3 +927,25 @@ class TestInsiderHoldingsFallback:
         assert state.holdings_by_ticker.get("AAPL", {}).get("conviction_signal") == "accumulating"
         assert state.fetch_counts.get("insider_fallback_age_days") == 1
         assert state.fetch_counts.get("holdings_fallback_age_days") == 1
+
+
+def test_sector_etf_flag_parses_and_defaults_off():
+    """--sector-etf re-enables the yfinance sector fetch under --skip-thesis.
+
+    The daily workflow runs with --skip-thesis (Alpha Vantage quota), which
+    used to silently skip the sector ETF fetch too: the last
+    sector_strength file was 2026-05-18.
+    """
+    import lthcs_daily
+
+    args = lthcs_daily.parse_args(["--skip-thesis"])
+    assert args.skip_thesis and not args.sector_etf
+    args = lthcs_daily.parse_args(["--skip-thesis", "--sector-etf"])
+    assert args.skip_thesis and args.sector_etf
+
+
+def test_daily_workflow_keeps_sector_etf_on():
+    from pathlib import Path
+
+    wf = (Path(__file__).resolve().parents[2] / ".github/workflows/lthcs-daily.yml").read_text()
+    assert "--sector-etf" in wf
