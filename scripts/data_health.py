@@ -155,9 +155,10 @@ from build_health_status import (  # noqa: E402  (path set above)
 )
 from build_health_status import NESTED_DATE_PATHS as _NESTED_DATE_PATHS  # noqa: E402
 import history_continuity as hc  # noqa: E402  (path set above)
-from history_continuity import (  # noqa: E402
-    DAILY, MONTHLY, TRADING, History,
-)
+
+# Short names for the manifest below; bound from the one module import so the
+# module isn't imported with both `import` and `from ... import`.
+DAILY, MONTHLY, TRADING, History = hc.DAILY, hc.MONTHLY, hc.TRADING, hc.History
 
 # `_select` and `nested_age_h` are re-exports, not dead imports: the age
 # resolution they implement lives in build_health_status so /health/ and this
