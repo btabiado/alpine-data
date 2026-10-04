@@ -93,7 +93,7 @@ def main():
                         m = json.loads(body)
                         run_meta[int(m["run_id"])] = m
                     except Exception:
-                        pass
+                        pass  # skip unreadable/malformed run summaries; they are optional detail
             print(f"[jobs] loaded {len(run_meta)} run summaries from R2")
     except Exception as e:
         print(f"[jobs] R2 summary load skipped: {e}")
@@ -109,7 +109,7 @@ def main():
             t1 = datetime.fromisoformat(updated.replace("Z", "+00:00"))
             duration_s = int((t1 - t0).total_seconds())
         except Exception:
-            pass
+            pass  # missing/unparseable timestamps leave duration_s as None
         meta = run_meta.get(run.get("id"), {})
         jobs.append({
             "id": run.get("id"),

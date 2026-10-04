@@ -54,7 +54,7 @@ def client(tmp_path: Path, monkeypatch):
     try:
         server._symbol_lookup_cached.cache_clear()
     except AttributeError:
-        pass
+        pass  # route not memoised in this build; nothing to clear
 
     server.flask_app.config["TESTING"] = True
     with server.flask_app.test_client() as c:
@@ -65,7 +65,7 @@ def client(tmp_path: Path, monkeypatch):
     try:
         server._symbol_lookup_cached.cache_clear()
     except AttributeError:
-        pass
+        pass  # route not memoised in this build; nothing to clear
 
 
 def _canned_crypto_series(days: int = 180) -> dict:

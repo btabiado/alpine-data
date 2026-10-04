@@ -38,6 +38,7 @@ neutral dict on bad input rather than raising.
 
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 # NOTE: `datetime` is deliberately NOT imported at module scope. The library
@@ -71,7 +72,7 @@ def _f(value: Any) -> Optional[float]:
     except (TypeError, ValueError):
         return None
     # NaN != NaN; inf is also unusable for our purposes.
-    if f != f or f in (float("inf"), float("-inf")):
+    if math.isnan(f) or f in (float("inf"), float("-inf")):
         return None
     return f
 
@@ -325,7 +326,7 @@ def _component_z(today: Any, trailing: Any) -> Optional[float]:
         return None
     z = z_score(val, series)
     # z_score returns NaN only when value is NaN (already guarded) — but be safe.
-    if z != z:
+    if math.isnan(z):
         return None
     return float(z)
 

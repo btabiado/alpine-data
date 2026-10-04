@@ -2164,7 +2164,14 @@ def _stale_path(funcname: str) -> Path:
     # A few cache keys embed upstream API symbols/ids (e.g. CoinGecko 'symbol'/'id'),
     # so strip path separators + traversal before joining (CodeQL py/path-injection).
     safe = "".join(c if (c.isalnum() or c in "_.-") else "_" for c in Path(str(funcname)).name)
-    return _STALE_DIR / f"{safe}.json"
+    # Normalise and confirm the result is still directly inside the stale dir.
+    # Unreachable with the character filter above; kept as an explicit
+    # containment check so the guarantee doesn't rest on the filter alone.
+    base = os.path.normpath(_STALE_DIR)
+    full = os.path.normpath(os.path.join(base, f"{safe}.json"))
+    if not full.startswith(base + os.sep):
+        raise ValueError(f"unsafe stale-cache key: {funcname!r}")
+    return Path(full)
 
 
 def _stale_save(funcname: str, value) -> None:

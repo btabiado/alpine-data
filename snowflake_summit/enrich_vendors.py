@@ -593,7 +593,7 @@ def wikidata_facts(name: str) -> dict:
         try:
             facts["employees"] = f"{int(float(str(emp['amount']).lstrip('+'))):,}"
         except (ValueError, TypeError):
-            pass
+            pass  # non-numeric employee count is simply omitted
     # Official website.
     site = _claim_value(claims, P_WEBSITE)
     if isinstance(site, str) and site.startswith("http"):

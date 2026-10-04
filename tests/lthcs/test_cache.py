@@ -65,8 +65,9 @@ def test_distinct_keys_distinct_entries(cache: FileCache) -> None:
 
 def test_delete(cache: FileCache) -> None:
     cache.set("k", 1, ttl_seconds=60, now=0.0)
-    assert cache.delete("k") is True
-    assert cache.delete("k") is False
+    first, second = cache.delete("k"), cache.delete("k")
+    assert first is True
+    assert second is False
     assert cache.get("k") is None
 
 

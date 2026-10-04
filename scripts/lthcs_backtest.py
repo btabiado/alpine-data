@@ -45,7 +45,6 @@ to backfill a run whose original report.md wasn't emitted.
 from __future__ import annotations
 
 import argparse
-import json
 import math
 import sys
 from datetime import datetime

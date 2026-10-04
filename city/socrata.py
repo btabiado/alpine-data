@@ -309,7 +309,7 @@ def _get_json(session, url: str, *, params: dict, headers: dict, timeout: int):
         try:
             body = (resp.text or "")[:200]
         except Exception:
-            pass
+            pass  # response body is optional context for the error raised below
         raise SocrataError(f"Socrata returned HTTP {status} at {url}: {body}")
 
     try:
