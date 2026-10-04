@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+import pytest
+
 import fetch_market
 
 
@@ -251,8 +253,9 @@ def test_blockchair_eth_stats_wei_conversions():
         "data": {
             "blocks_24h": 7200,
             "transactions_24h": 1_200_000,
-            "average_transaction_fee_24h": 0.0021,
-            "average_transaction_value_24h": 0.42,
+            # Real Blockchair shape: wei strings (0.0021 ETH fee, 0.42 ETH value).
+            "average_transaction_fee_24h": "2100000000000000",
+            "average_transaction_value_24h": "420000000000000000",
             "circulation_approximate": "120e24",  # 120e24 wei = 120e6 ETH
             "burned": "5e24",                       # 5e24 wei = 5e6 ETH
             "burned_24h": "1e21",                   # 1e21 wei = 1000 ETH
@@ -282,6 +285,31 @@ def test_blockchair_eth_stats_wei_conversions():
     assert out["erc721_transactions_24h"] == 12_000
     assert out["largest_tx_24h"] == {"hash": "0xdeadbeef", "value_usd": 50_000_000.0}
     assert "fetched_at" in out
+    # Fee/value are wei on the wire and must leave as ETH floats.
+    assert out["avg_tx_fee_eth_24h"] == pytest.approx(0.0021)
+    assert out["avg_tx_value_eth_24h"] == pytest.approx(0.42)
+    assert out["transfer_volume_24h_usd"] == pytest.approx(1_200_000 * 0.42 * 3500.0)
+
+
+def test_blockchair_eth_stats_avg_fee_is_eth_not_wei():
+    """Regression: the live payload carried avg_tx_fee_eth_24h =
+    "88120340117212" (a raw wei string). It must be a float in ETH — about
+    0.000088 ETH, i.e. ~$0.24 at $2,700 — never a string, never >= 1 ETH."""
+    payload = {"data": {
+        "blocks_24h": 7178, "transactions_24h": 1510696,
+        "average_transaction_fee_24h": "88120340117212",
+        "average_transaction_value_24h": None,
+        "market_price_usd": 2705.73,
+    }}
+    with patch.object(fetch_market, "_get", return_value=payload):
+        out = fetch_market.blockchair_eth_stats()
+    fee = out["avg_tx_fee_eth_24h"]
+    assert isinstance(fee, float)
+    assert fee == pytest.approx(88120340117212 / 1e18)
+    assert 0 < fee < 1
+    assert fee * 2705.73 == pytest.approx(0.2384, abs=1e-3)
+    assert out["avg_tx_value_eth_24h"] is None
+    assert out["transfer_volume_24h_usd"] is None
 
 
 def test_blockchair_eth_stats_missing_largest_tx_still_populates():

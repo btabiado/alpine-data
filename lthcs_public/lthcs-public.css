@@ -78,6 +78,13 @@
   padding-left: 12px;
 }
 
+/* Scroll box: long nowrap endpoint paths made the page 517px wide on a
+   390px phone. On phones the paths may also break (see the media query). */
+.lpub-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
 .lpub-table {
   width: 100%;
   border-collapse: collapse;
@@ -142,6 +149,10 @@
 
 /* ----- Narrow viewports -------------------------------------------------- */
 @media (max-width: 640px) {
+  .lpub-table .lpub-endpoint-cell {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
   .lpub-table .lpub-shape-cell {
     display: none;
   }
