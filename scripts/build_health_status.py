@@ -40,7 +40,12 @@ THRESHOLDS: dict[str, Threshold] = {
     # rendered files baked into dashboard.html
     "market.json": Threshold(2, 6),
     "whale.json": Threshold(2, 6),
-    "ai_curated.json": Threshold(8, 24),
+    # Hand-curated quarterly snapshot (valuations, AI Index KPIs), not a feed:
+    # nothing regenerates it, so 8h/24h made it red the morning after every
+    # re-curation. 30d fresh / 90d stale matches the curated Summit roster
+    # below. Its contents (last funding rounds, annual reports) move roughly
+    # quarterly; past 90 days it should alarm, and it will.
+    "ai_curated.json": Threshold(720, 2160),
     "ai_curated_wiki.json": Threshold(8, 24),
     "btc_flows.csv": Threshold(30, 48),
     "eth_flows.csv": Threshold(30, 48),

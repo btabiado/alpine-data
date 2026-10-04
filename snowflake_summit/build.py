@@ -902,7 +902,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       </div>
       <div class="newsfeed" id="newsfeed"></div>
       <div class="sub" id="newsEmpty" style="display:none;padding:16px 4px">No partner Summit announcements gathered yet — the feed populates on the next research run.</div>
-      <div class="sub" style="margin-top:11px;line-height:1.5">Gathered by AI research agents searching public news / press per vendor; each link opens the primary source. Directional — verify before relying. Refreshes whenever the feed is rebuilt.</div>
+      <div class="sub" style="margin-top:11px;line-height:1.5">Summit announcements were gathered by AI research agents from public news / press; newer per-vendor headlines come from a Google News search refreshed on every deploy. Each link opens the source. Directional — verify before relying.</div>
     </div>
   </div>
 </div>

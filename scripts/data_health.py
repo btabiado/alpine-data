@@ -282,8 +282,16 @@ MANIFEST: dict[str, Feed] = {
         # the very same compiled_at as the repo copy, so the repo copy IS the
         # deployed data and REPO is the right source. When it is red, the fix
         # is a human re-curating it, not a fetcher.
-        COMMITTED, "hand-curated snapshot (manual PR); read and inlined into the "
-                   "built HTML by fetch_market.load_ai_curated, never rewritten"),
+        #
+        # Limit: 90 days, from THRESHOLDS["ai_curated.json"] (shared with
+        # /health/). It was the 24h default, which judged a quarterly hand
+        # snapshot as if it were an hourly feed. No keyless source publishes
+        # private-company valuations, so this cannot be automated without a
+        # paid API. Refresh = re-verify every row against its source_url (or a
+        # newer primary source), keep the schema, bump compiled_at.
+        COMMITTED, "hand-curated snapshot (manual PR, re-curate quarterly); read "
+                   "and inlined into the built HTML by "
+                   "fetch_market.load_ai_curated, never rewritten"),
     "data/equity_etf_flows.csv": Feed(
         COMMITTED, "money-flow-daily.yml (daily 08:30Z)",
         # Trading-day feed: a 24h limit red-flags it every Saturday and Sunday,
@@ -339,14 +347,26 @@ MANIFEST: dict[str, Feed] = {
         # really stopped for a full trading week.
         limit_h=120.0),
     "snowflake_summit/news.json": Feed(
-        COMMITTED, "snowflake_summit/enrich_vendors.py (manual)"),
+        # Owner corrected: pages.yml runs the enricher (Google News RSS) on
+        # every deploy and its "Commit Summit news feed" step commits the file
+        # back, at most ~daily (when the newest item's day moves, or the copy
+        # is >24h old). Judged by `generated`, the newest headline's date.
+        COMMITTED, "snowflake_summit/enrich_vendors.py inside pages.yml, "
+                   "committed back by its 'Commit Summit news feed' step"),
     "snowflake_summit/vendors.json": Feed(
         # Found by the drift detector this PR added to _content_age_probe, not
         # by reading the directory: its only stamp is nested at
         # `_meta.generated`, so /health/ was scoring it off mtime and this
         # monitor did not cover it at all. Exactly the class of miss the
         # detector exists to surface.
-        COMMITTED, "snowflake_summit/enrich_vendors.py (manual)"),
+        #
+        # Owner corrected: enrich_vendors.py never writes this file (its
+        # Wikidata facts go to the gitignored enrichment.json and are merged at
+        # build time). It is Bryan's hand-curated partner directory; a manual
+        # refresh re-verifies market caps / funding events and bumps
+        # `_meta.generated`. 90d limit (THRESHOLDS["vendors.json"]).
+        COMMITTED, "hand-curated Summit partner directory (manual PR, "
+                   "re-verify quarterly and bump _meta.generated)"),
     "snowflake_summit/floorplan.json": Feed(
         STATIC, "hand-authored from the Summit venue map",
         justification="Booth geometry for a conference that already happened: "

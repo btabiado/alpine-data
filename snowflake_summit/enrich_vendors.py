@@ -1,22 +1,27 @@
 #!/usr/bin/env python3
-"""Enrich Snowflake Summit vendors with live news (GDELT) + company facts (Wikidata).
+"""Enrich Snowflake Summit vendors with live news (Google News RSS) + company facts (Wikidata).
 
 Keyless, free. Reads ``snowflake_summit/vendors.json``; for each of the ~197
 vendors it gathers:
 
-  * **GDELT DOC 2.0** — recent news articles mentioning the vendor (+ a Snowflake
-    context hint) → written to ``news.json`` in the exact shape the Summit
-    dashboard already renders ({vendor, headline, date, url, source, summary,
-    relevance}). No template change needed downstream.
+  * **Google News RSS search** — recent headlines naming the vendor → merged
+    into ``news.json`` in the exact shape the Summit dashboard already renders
+    ({vendor, headline, date, url, source, summary, relevance}). No template
+    change needed downstream. Replaced GDELT DOC 2.0, which never delivered a
+    usable article to this feed (see the diagnosis note above main()).
   * **Wikidata** — founded year, headquarters, employee count, industry, and the
     official website → written to ``enrichment.json`` (keyed by vendor name).
     build.py merges these onto each vendor so the detail sheet shows them.
 
-Both APIs need no key. Results are cached (``.enrich_cache.json``) with a TTL so
-most CI runs are cache hits — news is cheap to refresh, company facts almost
+Both sources need no key. Results are cached (``.enrich_cache.json``) with a TTL
+so most CI runs are cache hits — news is cheap to refresh, company facts almost
 never change. A transient upstream failure keeps the last good data
 (stale-keep) instead of wiping the dashboard, and per-vendor failures are
 isolated so one bad lookup never breaks the run.
+
+pages.yml runs this on every deploy and commits ``news.json`` back to the repo
+(see the "Commit Summit news feed" step), so the committed file, the deployed
+/summit/ page and the data-health monitor all see the same feed.
 
     python snowflake_summit/enrich_vendors.py
 """
@@ -26,12 +31,15 @@ import collections
 import concurrent.futures as cf
 import json
 import os
+import re
 import threading
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import date, datetime, timezone
+import xml.etree.ElementTree as ET
+from datetime import date, datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -40,24 +48,23 @@ NEWS_PATH = HERE / "news.json"
 ENRICH_PATH = HERE / "enrichment.json"
 CACHE_PATH = HERE / ".enrich_cache.json"
 
-_UA = "BDT-Dashboards/1.0 (Snowflake Summit vendor enrichment; +https://github.com/btabiado/alpine-data)"
-GDELT_DOC = "https://api.gdeltproject.org/api/v2/doc/doc"
+# Identifies the project to every upstream (Google News, Wikidata).
+_UA = "alpine-data (+https://github.com/btabiado/alpine-data)"
+GNEWS_RSS = "https://news.google.com/rss/search"
 WIKIDATA_API = "https://www.wikidata.org/w/api.php"
 
 # Cache TTLs (seconds). News refreshes a few times a day; company facts (founded,
-# HQ, employees) change rarely, so they get a long TTL to keep CI cheap.
+# HQ, employees) change rarely, so they get a long TTL to keep CI cheap. With
+# hourly deploys a 12h news TTL means each run re-queries only the ~1/12 of
+# vendors whose entry expired, which is what keeps the request rate polite.
 NEWS_TTL = 12 * 3600
 WD_TTL = 30 * 24 * 3600
+# Cache slot for news. GDELT entries lived under "news"; a new slot means a
+# restored CI cache cannot replay GDELT's phrase-match junk as if it were fresh.
+NEWS_CACHE_KEY = "gnews"
 
-GDELT_MAX = 4            # articles kept per vendor
-# GDELT DOC 2.0 documents timespan as <number><unit> with unit in
-# {min, h, d, w, m} — "24h", "7d", "3w". This was "60days", which is not one of
-# those spellings; GDELT reports a rejected query as HTTP 200 with a plain-text
-# body, which is indistinguishable from a quota error unless you read the body.
-# Canonicalised to "60d". NOT VERIFIED LIVE: api.gdeltproject.org is 403'd by
-# this sandbox's egress proxy, so this is a spec-conformance fix, not a
-# confirmed root cause — see the diagnosis note above main().
-NEWS_TIMESPAN = "60d"
+NEWS_MAX_PER_VENDOR = 4  # headlines kept per vendor per fetch
+NEWS_WINDOW_DAYS = 30    # Google News `when:` window, also enforced on parse
 NEWS_MIN_TO_WRITE = 8    # don't overwrite curated news.json with a near-empty fetch
 MAX_WORKERS = 6
 HTTP_TIMEOUT = 8.0
@@ -73,27 +80,33 @@ ENRICH_BUDGET = 240.0
 # feed that goes stale; company facts have a 30-day TTL and can wait a run.
 WD_BUDGET_SHARE = 0.5
 
-# GDELT's DOC endpoint is keyless and throttled per source IP; GitHub-hosted
-# runners share heavily-used IPs. Firing 197 requests through 6 workers with no
-# spacing is exactly the shape that gets an IP throttled, and a throttled GDELT
-# answers with HTTP 429 *or* an HTTP-200 plain-text error page — which the old
-# blind `except: return None` turned into "0 articles" indistinguishable from
-# "no news today". Space the calls out and retry once on a throttle.
-GDELT_MIN_INTERVAL = 0.35   # seconds between GDELT requests, process-wide
-GDELT_RETRIES = 1
-RETRY_BACKOFF = 1.5
+# Google News has no published rate limit, but bursts get HTTP 503 (seen live
+# from a dev sandbox after ~20 requests at 1.5s spacing; it cleared within a
+# minute). Space requests process-wide so the worker pool cannot burst, and
+# retry a throttle with a real backoff rather than hammering.
+GNEWS_MIN_INTERVAL = 2.0    # seconds between Google News requests, process-wide
+GNEWS_RETRIES = 2
+GNEWS_BACKOFF = 6.0         # seconds; multiplied by the attempt number
+RETRY_BACKOFF = 1.5         # Wikidata
+WD_MIN_INTERVAL = 1.0       # seconds between Wikidata requests, process-wide
+WD_RETRIES = 1
 # If the upstream is hard-down, stop after this many consecutive transport
 # failures instead of burning the whole budget proving it 197 times.
-GDELT_GIVE_UP_AFTER = 25
+GNEWS_GIVE_UP_AFTER = 8
 
 # The feed is allowed to be quiet, but not silently frozen. If news.json's own
 # `generated` date is older than this and this run added nothing, that is an
 # alarm regardless of which upstream excuse produced it.
 STALE_ALERT_DAYS = 3
-# Max items retained in news.json. The cap EVICTS THE OLDEST; it used to refuse
-# the newest, which turned a size limit into a permanent freeze — see
-# _merge_feed().
-NEWS_CAP = 500
+# Auto-fetched headlines kept per vendor across runs. Older ones for the same
+# vendor are evicted first, so fresh news rotates through without ever pushing
+# the hand-curated Summit announcements (which carry summaries) out of the feed.
+AUTO_PER_VENDOR = 6
+# Absolute bound on news.json. 345 curated + 197 vendors x AUTO_PER_VENDOR fits
+# under it, so in practice the per-vendor bound does the work. The cap EVICTS
+# THE OLDEST; it used to refuse the newest, which turned a size limit into a
+# permanent freeze — see _merge_feed().
+NEWS_CAP = 1600
 
 # Wikidata property ids we read.
 P_INCEPTION = "P571"
@@ -106,10 +119,10 @@ P_WEBSITE = "P856"
 # ------------------------------------------------------------------ call stats
 # Every upstream outcome is counted by (tag, reason) so the run can explain
 # *why* it has no news instead of just reporting that it has none. Without this
-# an HTTP 429, a DNS failure, a GDELT plain-text error page and a genuinely
-# quiet news day were all the same thing: `None`.
+# an HTTP 429/503, a DNS failure, an unparseable body and a genuinely quiet
+# news day were all the same thing: `None`.
 _STATS_LOCK = threading.Lock()
-_OK = collections.Counter()          # tag -> responses that parsed as JSON
+_OK = collections.Counter()          # tag -> responses that parsed
 _FAILS = collections.Counter()       # "tag:reason" -> count
 _SAMPLES: dict[str, str] = {}        # "tag:reason" -> first example detail
 _ATTEMPTS = collections.Counter()    # tag -> calls attempted
@@ -137,35 +150,37 @@ def _dead(tag: str, limit: int) -> bool:
 
 
 # ---------------------------------------------------------------- http helpers
-def _get_json(url: str, timeout: float = HTTP_TIMEOUT, tag: str = "http", retries: int = 0):
-    """GET → parsed JSON, or None on failure. Never raises.
+_RETRYABLE = (403, 408, 429, 500, 502, 503, 504)
 
-    Unlike the original bare ``except Exception: return None``, every failure
-    mode is *classified and counted* (see `_note`) so a 60-day outage shows up
-    as "gdelt:http_429 x197" in the run log instead of silence. Retries only on
-    throttle/5xx, which is the one class where waiting actually helps."""
+
+def _http_get(url: str, timeout: float = HTTP_TIMEOUT, tag: str = "http",
+              retries: int = 0, backoff: float = RETRY_BACKOFF,
+              accept: str = "application/json") -> "str | None":
+    """GET → decoded body, or None on an HTTP/transport failure. Never raises.
+
+    Every failure is *classified and counted* (see `_note`) so an outage shows
+    up as "gnews:http_503 x40" in the run log instead of silence. Success is
+    NOT counted here: the caller decides whether the body actually parsed.
+    Retries only on throttle/5xx, the one class where waiting helps."""
     last_reason, last_detail = "unknown", ""
     for attempt in range(retries + 1):
-        raw = None
         try:
             req = urllib.request.Request(
-                url, headers={"User-Agent": _UA, "Accept": "application/json"})
+                url, headers={"User-Agent": _UA, "Accept": accept})
             with urllib.request.urlopen(req, timeout=timeout) as r:
-                raw = r.read()
+                return r.read().decode("utf-8", "replace")
         except urllib.error.HTTPError as e:
             body = ""
             try:
                 body = (e.read() or b"").decode("utf-8", "replace")
             except OSError:
-                # The body is a diagnostic nicety — GDELT's error text usually
-                # says *why* (rate limit vs bad query). If the stream is
-                # already consumed or the socket died, we still have e.code,
-                # which is the part that drives retry/reporting. Never let
-                # reading the explanation mask the error being explained.
+                # The body is a diagnostic nicety. If the stream is already
+                # consumed or the socket died, we still have e.code, which is
+                # the part that drives retry/reporting.
                 pass
             last_reason, last_detail = f"http_{e.code}", body
-            if e.code in (403, 408, 429, 500, 502, 503, 504) and attempt < retries:
-                time.sleep(RETRY_BACKOFF * (attempt + 1))
+            if e.code in _RETRYABLE and attempt < retries:
+                time.sleep(backoff * (attempt + 1))
                 continue
             _note(tag, last_reason, last_detail)
             return None
@@ -174,113 +189,336 @@ def _get_json(url: str, timeout: float = HTTP_TIMEOUT, tag: str = "http", retrie
             last_reason = "timeout" if isinstance(inner, TimeoutError) else "network"
             last_detail = f"{type(e).__name__}: {inner}"
             if attempt < retries:
-                time.sleep(RETRY_BACKOFF * (attempt + 1))
+                time.sleep(backoff * (attempt + 1))
                 continue
             _note(tag, last_reason, last_detail)
             return None
-
-        text = raw.decode("utf-8", "replace")
-        if not text.strip():
-            # GDELT's DOC/ArtList endpoint answers a zero-match query with HTTP
-            # 200 and an EMPTY BODY. json.loads("") raises ValueError, so the
-            # branch below classified the most common HEALTHY response as
-            # `non_json` — an upstream failure. That poisons the exact
-            # distinction this module exists to make: on a genuinely quiet news
-            # day every vendor returns empty, `_OK["gdelt"]` stays 0,
-            # `upstream_down` goes true, and a perfectly working GDELT is
-            # reported as a transport outage (and vice versa — a real outage
-            # looks identical to a quiet day). An empty body is an ANSWER:
-            # zero results.
-            _note(tag, "ok")
-            return {}
-        try:
-            # strict=False: GDELT's ArtList regularly emits raw control chars
-            # inside article titles. Under the default strict parser one bad
-            # title discards the entire vendor's response.
-            data = json.loads(text, strict=False)
-        except ValueError as e:
-            # GDELT reports a rejected query or an exhausted quota as HTTP 200
-            # with a plain-text body. That body is the single most useful
-            # diagnostic this script can capture, so keep it.
-            _note(tag, "non_json", f"{e} | body={text.strip()[:180]}")
-            return None
-        _note(tag, "ok")
-        return data
     _note(tag, last_reason, last_detail)
     return None
 
 
-# --------------------------------------------------------------- gdelt throttle
-_GDELT_GATE = threading.Lock()
-_GDELT_NEXT = 0.0
+def _get_json(url: str, timeout: float = HTTP_TIMEOUT, tag: str = "http", retries: int = 0):
+    """GET → parsed JSON, or None on failure. Never raises.
+
+    An empty 200 body is an ANSWER (zero results), not a failure: counting it as
+    `non_json` made a quiet upstream indistinguishable from a broken one."""
+    text = _http_get(url, timeout=timeout, tag=tag, retries=retries)
+    if text is None:
+        return None
+    if not text.strip():
+        _note(tag, "ok")
+        return {}
+    try:
+        data = json.loads(text, strict=False)
+    except ValueError as e:
+        # A rejected query or exhausted quota sometimes arrives as HTTP 200 with
+        # a plain-text body. That body is the most useful diagnostic there is.
+        _note(tag, "non_json", f"{e} | body={text.strip()[:180]}")
+        return None
+    _note(tag, "ok")
+    return data
 
 
-def _gdelt_wait() -> None:
-    """Space GDELT requests process-wide so the worker pool cannot burst."""
-    global _GDELT_NEXT
-    if GDELT_MIN_INTERVAL <= 0:
-        return
-    with _GDELT_GATE:
-        now = time.monotonic()
-        gap = _GDELT_NEXT - now
-        if gap > 0:
-            time.sleep(gap)
-            now += gap
-        _GDELT_NEXT = now + GDELT_MIN_INTERVAL
+# ------------------------------------------------------------ request pacing
+class _Gate:
+    """Process-wide minimum spacing between requests to one upstream, so the
+    worker pool cannot burst."""
+
+    def __init__(self, interval: float):
+        self.interval = interval
+        self._lock = threading.Lock()
+        self._next = 0.0
+
+    def wait(self) -> None:
+        if self.interval <= 0:
+            return
+        with self._lock:
+            now = time.monotonic()
+            gap = self._next - now
+            if gap > 0:
+                time.sleep(gap)
+                now += gap
+            self._next = now + self.interval
 
 
-# ------------------------------------------------------------------- gdelt news
-def _gdelt_date(seendate: str) -> str:
-    """GDELT seendate '20260603T120000Z' → 'YYYY-MM-DD' (best effort)."""
-    s = (seendate or "").strip()
-    if len(s) >= 8 and s[:8].isdigit():
-        return f"{s[0:4]}-{s[4:6]}-{s[6:8]}"
-    return ""
+_GNEWS_GATE = _Gate(GNEWS_MIN_INTERVAL)
+# Wikidata answered HTTP 429 to ~half of an unpaced 6-worker sweep (checked
+# live 2026-10-04), which left most vendors without facts.
+_WD_GATE = _Gate(WD_MIN_INTERVAL)
 
 
-def gdelt_news(name: str) -> list[dict]:
-    """Recent news items for a vendor, in the dashboard's news.json item shape."""
-    # Quote the vendor name as a phrase; add a Snowflake hint to bias toward
-    # event-relevant coverage. GDELT ranks by recency (sort=DateDesc).
-    query = f'"{name}" (Snowflake OR "data cloud")'
-    url = (GDELT_DOC + "?" + urllib.parse.urlencode({
-        "query": query, "mode": "ArtList", "maxrecords": str(GDELT_MAX),
-        "format": "json", "sort": "DateDesc", "timespan": NEWS_TIMESPAN,
-    }))
-    if _dead("gdelt", GDELT_GIVE_UP_AFTER):
-        return []  # upstream is hard-down; don't spend the budget re-proving it
-    _gdelt_wait()
-    data = _get_json(url, tag="gdelt", retries=GDELT_RETRIES)
-    arts = (data or {}).get("articles") or []
+# ------------------------------------------------------------ google news query
+# Search terms for directory names that are not what the press calls the
+# company (legal suffixes, "an IBM Company", a domain name). Several terms are
+# OR-ed in the query and any of them may match the headline.
+SEARCH_TERMS: dict[str, list[str]] = {
+    "Hakkoda (an IBM Company)": ["Hakkoda"],
+    "Mendix (a Siemens Business)": ["Mendix"],
+    "Wipro Limited": ["Wipro"],
+    "Validio AB": ["Validio"],
+    "Glean Technologies": ["Glean"],
+    "TEKSystems Global Services": ["TEKsystems"],
+    "Prefect Technologies": ["Prefect"],
+    "Artie Technologies": ["Artie"],
+    "paradime.io": ["Paradime"],
+    "Timbrai": ["timbr.ai", "Timbr"],
+    "Dagster Labs": ["Dagster"],
+    "Astrato Analytics": ["Astrato"],
+    "Hevo Data": ["Hevo"],
+    "Seemore Data": ["Seemore"],
+    "Mastech Digital": ["Mastech"],
+    "MaxMyCloud AI": ["MaxMyCloud"],
+    "Treasure AI": ["Treasure AI", "Treasure Data"],
+    "Sigma": ["Sigma Computing", "Sigma"],
+    "LTM": ["LTIMindtree", "LTM"],
+    "Kipi.ai": ["Kipi.ai", "Kipi"],
+}
+
+# Household names whose news volume is mostly unrelated to this directory.
+# Their query requires a Snowflake mention, which keeps the feed on-topic for a
+# Summit partner page instead of filling it with generic Microsoft headlines.
+SNOWFLAKE_ONLY: frozenset[str] = frozenset({
+    "AWS", "Microsoft", "Google Cloud", "IBM", "SAP", "Salesforce", "OpenAI",
+    "Capgemini", "Cognizant", "Infosys", "KPMG", "Wipro Limited", "NTT DATA",
+    "EPAM", "Genpact", "CDW", "ServiceNow", "S&P Global", "TransUnion",
+    "The Trade Desk", "Dun & Bradstreet", "FactSet", "Crunchbase", "LTM",
+    "Capital One Software", "Hexaware", "Mastek", "Slalom",
+})
+
+# Names that are ordinary words, places or surnames ("Coastal", "Chalk",
+# "Monte Carlo", "Redpanda"). Their query must also hit Snowflake or one of the
+# vendor's own product terms (CONTEXT_TERMS), and the headline must name them
+# AND carry a data/AI context word. A generic "data OR AI" query was tried
+# first and still returned coastal-flooding and Sigma Lithium stories.
+AMBIGUOUS: frozenset[str] = frozenset({
+    "Arango", "Archetype", "Artie Technologies", "Astronomer", "Atlan",
+    "Atrium", "Bigeye", "Bruin", "Chalk", "Coalesce", "Coastal", "DataHub",
+    "edata", "Elementum", "Estuary", "Euno", "Flexor", "Foundational",
+    "Glean Technologies", "Gray Swan", "Hex", "Honeydew", "Insider One",
+    "Kumo", "Matia", "Maxa", "Merkle", "Meta Integration", "Monte Carlo",
+    "NICE", "Posit", "Precisely", "Precog", "Prefect Technologies", "Promethium",
+    "Prophecy", "Quest", "Redpanda", "Reducto", "Reflex", "Remix", "Retool",
+    "Row Zero", "Safe Software", "SELECT", "Seemore Data", "Sigma", "Snowplow",
+    "Solid Data", "Starburst", "Steep", "Sundial", "Yuki",
+    # Added after the first full sweep: a Syrian town (Tal Tamr), a surname,
+    # a Kyrgyz gold deposit (El Domo) and a UAE student platform.
+    "Tamr", "Sifflet", "Domo", "Sparq",
+})
+
+# Product terms that identify an AMBIGUOUS vendor's own coverage, OR-ed with
+# "Snowflake" in its query. Vendors not listed fall back to Snowflake alone.
+CONTEXT_TERMS: dict[str, list[str]] = {
+    "Arango": ["ArangoDB", "graph database"],
+    "Artie Technologies": ["change data capture", "data streaming"],
+    "Astronomer": ["Airflow"],
+    "Atlan": ["metadata", "data catalog", "governance"],
+    "Bigeye": ["data observability"],
+    "Chalk": ["feature store", "Chalk AI"],
+    "Coalesce": ["data transformation", "Coalesce.io"],
+    "DataHub": ["metadata", "data catalog"],
+    "Elementum": ["supply chain", "workflow automation"],
+    "Estuary": ["Estuary Flow", "change data capture"],
+    "Glean Technologies": ["enterprise search", "Work AI"],
+    "Hex": ["Hex Technologies", "data notebook"],
+    "Kumo": ["Kumo AI", "graph neural network"],
+    "Merkle": ["dentsu"],
+    "Monte Carlo": ["data observability", "AI observability"],
+    "NICE": ["CXone", "contact center"],
+    "Posit": ["RStudio", "Positron"],
+    "Precisely": ["data integrity"],
+    "Prefect Technologies": ["workflow orchestration", "Prefect Cloud"],
+    "Promethium": ["data fabric"],
+    "Prophecy": ["data engineering", "data prep"],
+    "Quest": ["Quest Software", "erwin"],
+    "Redpanda": ["Kafka", "streaming data"],
+    "Reducto": ["document parsing", "OCR"],
+    "Reflex": ["Python web apps", "Reflex.dev"],
+    "Retool": ["internal tools", "low-code"],
+    "Sigma": ["Sigma Computing", "business intelligence"],
+    "Snowplow": ["behavioral data", "customer data"],
+    "Starburst": ["Trino", "lakehouse"],
+    "Tamr": ["entity resolution", "master data"],
+    "Sifflet": ["data observability"],
+    "Domo": ["Progress Software", "business intelligence"],
+}
+
+# Known collisions, excluded in the query and again on the headline.
+NEGATIVE_TERMS: dict[str, list[str]] = {
+    "Sigma": ["Two Sigma", "Six Sigma", "Sigma Lithium", "Sigma Alpha", "Phi Sigma"],
+    "Monte Carlo": ["Monte Carlo simulation", "Monte Carlo method",
+                    "Monte Carlo integration", "Monte Carlo tree"],
+    "Coastal": ["Coastal Carolina", "Coastal Financial", "Coastal Bridge"],
+    "Hex": ["Jonah Hex", "hex key"],
+    "Quest": ["Quest Diagnostics", "Quest Resource"],
+    "Atlan": ["Crystal of Atlan", "Marine Atlan"],
+    "Redpanda": ["red panda"],
+    "Tamr": ["Tal Tamr", "Tel Tamr"],
+    "Domo": ["El Domo"],
+}
+
+# Title words that make an ambiguous name a data/AI company story.
+_CONTEXT_RE = re.compile(
+    r"\b(data|analytics|snowflake|databricks|cloud|platform|software|saas|"
+    r"startup|funding|raises|series [a-h]|valuation|acqui\w*|enterprise|agents?|"
+    r"agentic|llms?|genai|generative|governance|observability|warehouse|"
+    r"lakehouse|pipelines?|etl|database|dbt|gartner|forrester|machine learning|"
+    r"semantic|catalog|metadata|notebook|business intelligence)\b",
+    re.IGNORECASE)
+_AI_RE = re.compile(r"\bAI\b")  # case-sensitive: "AI", not "ai" inside words
+
+# Publishers whose "articles" are auto-generated stock, revenue, funding or
+# token-price pages, not news. Simply Wall St also uses "Snowflake" as the name
+# of its stock-analysis graphic, which defeats the Snowflake-context query for
+# big companies; Bybit's hit was a crypto token sharing a vendor's name.
+SOURCE_BLOCKLIST: frozenset[str] = frozenset({
+    "simply wall st", "simply wall street", "getlatka", "tracxn", "bybit"})
+
+
+def _terms_for(name: str) -> list[str]:
+    return SEARCH_TERMS.get(name) or [name]
+
+
+def gnews_query(name: str, window_days: int = NEWS_WINDOW_DAYS) -> str:
+    """The Google News search string for one vendor."""
+    terms = _terms_for(name)
+    phrase = " OR ".join(f'"{t}"' for t in terms)
+    q = f"({phrase})" if len(terms) > 1 else phrase
+    if name in AMBIGUOUS and CONTEXT_TERMS.get(name):
+        ctx = " OR ".join(f'"{c}"' if " " in c else c for c in CONTEXT_TERMS[name])
+        q += f" (Snowflake OR {ctx})"
+    elif name in SNOWFLAKE_ONLY or name in AMBIGUOUS:
+        q += " Snowflake"
+    for neg in NEGATIVE_TERMS.get(name, []):
+        q += f' -"{neg}"'
+    return f"{q} when:{window_days}d"
+
+
+def gnews_url(name: str) -> str:
+    return GNEWS_RSS + "?" + urllib.parse.urlencode({
+        "q": gnews_query(name), "hl": "en-US", "gl": "US", "ceid": "US:en"})
+
+
+def _mentions(title: str, term: str) -> bool:
+    """Whole-word mention. Case-sensitive whenever the term has a capital, so
+    "SiGMA World" is not Sigma and "NICE" is not "nice"; an all-lower-case term
+    (tavily, insightsoftware) matches any casing."""
+    flags = 0 if any(c.isupper() for c in term) else re.IGNORECASE
+    return re.search(r"(?<![\w])" + re.escape(term) + r"(?![\w])", title, flags) is not None
+
+
+def _rss_day(pub: str) -> str:
+    """RFC 822 pubDate → 'YYYY-MM-DD' in UTC, or '' if unparseable."""
+    try:
+        dt = parsedate_to_datetime((pub or "").strip())
+    except (TypeError, ValueError, IndexError):
+        return ""
+    if dt is None:
+        return ""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%d")
+
+
+def parse_gnews_rss(xml_text: str, name: str, today: "date | None" = None,
+                    window_days: int = NEWS_WINDOW_DAYS,
+                    limit: int = NEWS_MAX_PER_VENDOR) -> list[dict]:
+    """Google News RSS → this vendor's items in news.json's shape, newest first.
+
+    Raises ValueError on a body that is not RSS, so the caller can count it as
+    an upstream failure rather than as a quiet news day. Google matches the
+    article body, not just the headline, so every item is re-checked here: the
+    headline must name the vendor (and, for an ambiguous name, carry a data/AI
+    context word), must fall inside the window, and must not be a known
+    collision or an auto-generated stock page. Syndicated copies of one story
+    (same headline, different outlet) collapse to one.
+    """
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError as e:
+        raise ValueError(f"not RSS: {e}") from e
+    if root.tag != "rss" or root.find("channel") is None:
+        raise ValueError(f"not RSS: root <{root.tag}>")
+    today = today or datetime.now(timezone.utc).date()
+    oldest = (today - timedelta(days=window_days)).isoformat()
+    terms = _terms_for(name)
+    negatives = [n.lower() for n in NEGATIVE_TERMS.get(name, [])]
     items: list[dict] = []
-    seen_urls: set[str] = set()
-    for a in arts:
-        u = (a.get("url") or "").strip()
-        title = (a.get("title") or "").strip()
-        if not u or not title or u in seen_urls:
+    seen: set[str] = set()
+    for it in root.iter("item"):
+        title = (it.findtext("title") or "").strip()
+        link = (it.findtext("link") or "").strip()
+        src_el = it.find("source")
+        source = ((src_el.text if src_el is not None else "") or "").strip()
+        if not title or not link:
             continue
-        seen_urls.add(u)
+        # Google appends " - Publisher" to every title; the dashboard shows the
+        # publisher separately.
+        if source and title.endswith(" - " + source):
+            title = title[: -len(" - " + source)].rstrip()
+        if source.lower() in SOURCE_BLOCKLIST:
+            continue
+        if not any(_mentions(title, t) for t in terms):
+            continue
         low = title.lower()
-        rel = "high" if ("snowflake" in low or "summit" in low) else "medium"
+        if any(n in low for n in negatives):
+            continue
+        if name in AMBIGUOUS and not (_CONTEXT_RE.search(title) or _AI_RE.search(title)):
+            continue
+        day = _rss_day(it.findtext("pubDate") or "")
+        if not day or day < oldest or day > today.isoformat():
+            continue
+        key = re.sub(r"\W+", " ", low).strip()
+        if key in seen or link in seen:
+            continue
+        seen.update((key, link))
         items.append({
             "vendor": name,
             "headline": title,
-            "date": _gdelt_date(a.get("seendate", "")),
-            "url": u,
-            "source": (a.get("domain") or "").strip(),
-            "summary": "",  # GDELT ArtList has no abstract; headline carries it
-            "relevance": rel,
+            "date": day,
+            "url": link,
+            "source": source,
+            "summary": "",  # the RSS carries no abstract; the headline is it
+            "relevance": "high" if ("snowflake" in low or "summit" in low) else "medium",
         })
+    items.sort(key=lambda n: n["date"], reverse=True)
+    return items[:limit]
+
+
+def gnews_news(name: str) -> "list[dict] | None":
+    """Recent headlines for one vendor, [] when there are none, None on failure.
+
+    The None/[] distinction matters: a successful empty answer is cached (so a
+    quiet vendor is not re-queried every hourly run), while a failure keeps the
+    previous items and is retried next run."""
+    if _dead("gnews", GNEWS_GIVE_UP_AFTER):
+        return None  # upstream is hard-down; don't spend the budget re-proving it
+    _GNEWS_GATE.wait()
+    text = _http_get(gnews_url(name), tag="gnews", retries=GNEWS_RETRIES,
+                     backoff=GNEWS_BACKOFF,
+                     accept="application/rss+xml, application/xml;q=0.9, */*;q=0.1")
+    if text is None:
+        return None
+    try:
+        items = parse_gnews_rss(text, name)
+    except ValueError as e:
+        _note("gnews", "non_rss", f"{e} | body={text.strip()[:180]}")
+        return None
+    _note("gnews", "ok")
     return items
 
 
 # --------------------------------------------------------------- wikidata facts
+def _wd_get(url: str):
+    _WD_GATE.wait()
+    return _get_json(url, tag="wikidata", retries=WD_RETRIES)
+
+
 def _wd_search_qid(name: str) -> str | None:
     url = WIKIDATA_API + "?" + urllib.parse.urlencode({
         "action": "wbsearchentities", "search": name, "language": "en",
         "type": "item", "limit": "1", "format": "json",
     })
-    data = _get_json(url, tag="wikidata")
+    data = _wd_get(url)
     hits = (data or {}).get("search") or []
     return hits[0].get("id") if hits else None
 
@@ -318,7 +556,7 @@ def _resolve_labels(qids: list[str]) -> dict[str, str]:
         "action": "wbgetentities", "ids": "|".join(qids[:50]),
         "props": "labels", "languages": "en", "format": "json",
     })
-    data = _get_json(url, tag="wikidata")
+    data = _wd_get(url)
     ents = (data or {}).get("entities") or {}
     out = {}
     for qid, ent in ents.items():
@@ -337,7 +575,7 @@ def wikidata_facts(name: str) -> dict:
         "action": "wbgetentities", "ids": qid, "props": "claims",
         "format": "json",
     })
-    data = _get_json(url, tag="wikidata")
+    data = _wd_get(url)
     ent = ((data or {}).get("entities") or {}).get(qid) or {}
     claims = ent.get("claims") or {}
 
@@ -395,35 +633,44 @@ _SKIPPED = collections.Counter()  # "news"/"wd" -> vendors short-circuited by bu
 
 
 def enrich_one(vendor: dict, cache: dict, now: float,
-               deadline: float, wd_deadline: float | None = None) -> tuple[list[dict], dict, bool]:
-    """Return (news_items, wd_facts, news_is_live) for one vendor.
+               deadline: float, wd_deadline: float | None = None,
+               fetch_news=None, fetch_wd=None) -> tuple[list[dict], dict, bool]:
+    """Return (news_items, wd_facts, news_fetched_live) for one vendor.
 
     Cache is used where fresh. Past a deadline we skip network and return cached
     data so the pool drains instead of the build hanging on the long tail.
     Wikidata gets the earlier deadline (``wd_deadline``) so a cold cache cannot
     let 3 near-static company-fact requests per vendor starve the news fetch —
-    which is the part that actually goes stale."""
+    which is the part that actually goes stale.
+
+    A successful news fetch is cached even when it found nothing, so a quiet
+    vendor costs one request per NEWS_TTL rather than one per run; only a
+    failed fetch (None) falls back to the previous items. ``fetch_news`` /
+    ``fetch_wd`` exist so tests can run this without the network."""
+    fetch_news = fetch_news or gnews_news
+    fetch_wd = fetch_wd or wikidata_facts
     name = (vendor.get("name") or "").strip()
     if not name:
         return [], {}, False
     if wd_deadline is None:
         wd_deadline = deadline
     ent = cache.get(name) or {}
+    ent.pop("news", None)  # retired GDELT slot; see NEWS_CACHE_KEY
     live = False
 
-    news_entry = ent.get("news") or {}
+    news_entry = ent.get(NEWS_CACHE_KEY) or {}
     if _fresh(news_entry, NEWS_TTL, now):
         news = news_entry.get("items") or []
     elif time.time() > deadline:
         _SKIPPED["news"] += 1
         news = news_entry.get("items") or []
     else:
-        news = gdelt_news(name)
-        if news:  # only refresh cache on a successful (non-empty) fetch
-            ent["news"] = {"ts": now, "items": news}
-            live = True
-        else:
+        fetched = fetch_news(name)
+        if fetched is None:
             news = news_entry.get("items") or []  # stale-keep
+        else:
+            ent[NEWS_CACHE_KEY] = {"ts": now, "items": fetched}
+            news, live = fetched, True
 
     wd_entry = ent.get("wd") or {}
     if _fresh(wd_entry, WD_TTL, now):
@@ -432,7 +679,7 @@ def enrich_one(vendor: dict, cache: dict, now: float,
         _SKIPPED["wd"] += 1
         wd = wd_entry.get("facts") or {}
     else:
-        wd = wikidata_facts(name)
+        wd = fetch_wd(name)
         if wd:
             ent["wd"] = {"ts": now, "facts": wd}
         else:
@@ -495,7 +742,7 @@ def _feed_data_date(items: list[dict], today: str) -> str:
     Rule 1 of the freshness contract — report the age of the DATA, not of the
     run. `generated` used to be a straight clock read, which PR #24 narrowed to
     "clock read on a day content moved". That is still the wrong quantity: a run
-    that merges one 45-day-old GDELT article would stamp the feed with today's
+    that merges one 45-day-old article would stamp the feed with today's
     date and report a two-month-old feed as gathered this morning.
 
     Newest-item (max) is the right reducer *here specifically* and nowhere else
@@ -538,6 +785,32 @@ def _merge_feed(existing: list[dict], fresh: list[dict],
             [merged[i] for i in range(len(merged)) if i not in keep])
 
 
+def _is_auto(item: dict) -> bool:
+    """True for a headline this script fetched (Google News link), as opposed
+    to a hand-curated item, which links straight to the publisher."""
+    host = urllib.parse.urlsplit(str((item or {}).get("url") or "")).netloc.lower()
+    return host == "news.google.com"
+
+
+def _bound_auto(items: list[dict], per_vendor: int = AUTO_PER_VENDOR) -> "tuple[list[dict], list[dict]]":
+    """Keep each vendor's newest `per_vendor` auto-fetched items; curated items
+    are never touched. Returns ``(kept, evicted)`` in the original order.
+
+    Without this, fresh headlines would eventually push the curated Summit
+    announcements out through the global cap, because those are dated June
+    2026 and every new headline is newer."""
+    by_vendor: dict[str, list[int]] = collections.defaultdict(list)
+    for i, it in enumerate(items):
+        if _is_auto(it):
+            by_vendor[str(it.get("vendor") or "")].append(i)
+    drop: set[int] = set()
+    for idxs in by_vendor.values():
+        ranked = sorted(idxs, key=lambda i: (_item_day(items[i]), -i), reverse=True)
+        drop.update(ranked[per_vendor:])
+    return ([it for i, it in enumerate(items) if i not in drop],
+            [it for i, it in enumerate(items) if i in drop])
+
+
 def _age_days(iso: str) -> int | None:
     try:
         y, m, d = (int(x) for x in iso.split("-")[:3])
@@ -547,53 +820,33 @@ def _age_days(iso: str) -> int | None:
 
 
 # ---------------------------------------------------------------------------
-# WHY news.json SAT AT 2026-06-04 FOR 60 DAYS — the diagnosis, in order of
-# how load-bearing each cause is. PR #24 made the failure loud; this is what
-# the noise turned out to be pointing at.
+# WHY news.json SAT AT 2026-06-04 FOR FOUR MONTHS — and what changed.
 #
-# CAUSE 1 (decisive, and NOT fixable from this file): nothing ever commits
-# news.json back to the repository.
-#   .github/workflows/pages.yml runs this script inside the Pages build, then
-#   runs build.py, then deploys _site/. Its only `git add`s are
-#   `data/composites` and `data/.stale/nuforc_subndx_*.json`. The refreshed
-#   news.json therefore lives and dies inside the ephemeral runner. Even a
-#   flawless GDELT fetch cannot move the committed file, so the artifact the
-#   data-health monitor watches is frozen BY CONSTRUCTION and no change to this
-#   script can unfreeze it. WHAT IS NEEDED: a commit-back step in pages.yml,
-#   modelled on the "Commit NUFORC month cache" step that already exists a few
-#   lines below it, staging `snowflake_summit/news.json`. That file belongs to
-#   the workflow lane. (The DEPLOYED /summit/ page is not affected by this —
-#   build.py reads the freshly-written file in the same job.)
+# CAUSE 1: nothing committed news.json back. pages.yml ran this script, built
+#   /summit/ from the result and threw the runner away, so the committed file
+#   (the one the data-health monitor reads) was frozen by construction. FIXED:
+#   pages.yml now has a "Commit Summit news feed" step after the rebuild.
 #
-# CAUSE 2 (real, and the reason even the deployed page is stale): GDELT has
-# never returned a usable article to this feed. Evidence, not inference — all
-# 345 items in news.json carry a non-empty `summary`, and gdelt_news() always
-# sets `"summary": ""`. Zero GDELT-shaped items have ever landed. Matching
-# evidence in .enrich_cache.json: every one of the ~197 vendor entries is `{}`,
-# i.e. no vendor has ever had a successful non-empty news fetch cached.
+# CAUSE 2: GDELT never produced a usable feed. Checked live on 2026-10-04:
+#   api.gdeltproject.org answers HTTP 429 "Please limit requests to one every
+#   5 seconds", and this script spaced calls 0.35s apart, so every sweep was
+#   throttled. The few articles that did get through (64 across 29 vendors in
+#   four months, seen in the deployed /summit/ page) were mostly noise, because
+#   GDELT matched the vendor name anywhere in the article text: "Coastal" ->
+#   fishing fleets, "Chalk" -> tyre changes, "Atlan" -> Apple TV listings. At
+#   the rate GDELT allows, 197 vendors take ~16 minutes against a 6-minute
+#   step. REPLACED with Google News RSS search, which answers from GitHub's
+#   runners, plus headline-level checks in parse_gnews_rss().
 #
-# CAUSE 3 (contributory, fixed above): a zero-match GDELT response is an
-# HTTP-200 EMPTY BODY, which _get_json classified as `non_json` — an upstream
-# failure. So "quiet news day" and "GDELT is down" produced identical stats and
-# `upstream_down` could fire on a perfectly healthy API. Fixed in _get_json.
+# CAUSE 3 (fixed earlier): a zero-match 200 with an EMPTY BODY was counted as
+#   `non_json`, so a quiet day and an outage produced identical stats.
 #
-# CAUSE 4 (latent, fixed above): the NEWS_CAP merge refused the newest items
-# instead of evicting the oldest, so at 500 items the feed would have frozen
-# permanently with no way to clear the alarm. It has not fired yet (345 items),
-# but it was 155 articles away.
-#
-# NOT DIAGNOSABLE FROM HERE: whether GDELT is throttling GitHub's runner IPs,
-# rejecting the query, or answering normally. api.gdeltproject.org is 403'd at
-# the CONNECT layer by this development sandbox's egress proxy, so no live call
-# can be made to find out. WHAT IS NEEDED: one CI run with the diagnostics that
-# already exist — `_upstream_report("gdelt")` prints the outcome breakdown and
-# the first error body verbatim (`http_429 x197`, or `non_json ... body=...`
-# carrying GDELT's own explanation). That single log line distinguishes
-# throttle / rejected-query / healthy, and it is already being emitted; nobody
-# has read one yet because the step runs under `|| echo` with
-# continue-on-error. The `NEWS_TIMESPAN` spelling fix above is the one
-# query-shape defect visible without the network.
+# CAUSE 4 (fixed earlier): the NEWS_CAP merge refused the newest items instead
+#   of evicting the oldest, a freeze switch on a timer. The cap now evicts the
+#   oldest, and _bound_auto() rotates auto-fetched headlines per vendor so
+#   they can never evict the curated Summit announcements.
 # ---------------------------------------------------------------------------
+
 
 def main() -> int:
     vraw = _load_json(VENDORS_PATH, {})
@@ -630,7 +883,7 @@ def main() -> int:
                 enrichment[name] = wd
                 ok_wd += 1
 
-    # Sort fresh GDELT news newest-first.
+    # Sort fetched news newest-first.
     all_news.sort(key=lambda n: n.get("date", ""), reverse=True)
     # When this RUN happened. Kept separate from the feed's data date on
     # purpose, and deliberately not named anything in
@@ -655,11 +908,11 @@ def main() -> int:
         {"generated": run_day, "gathered_at": gathered_at,
          "by_vendor": enrichment}, ensure_ascii=False, indent=1))
 
-    # MERGE fresh GDELT items into the existing (curated) feed rather than
-    # REPLACING it. Curated items carry summaries that GDELT's ArtList lacks, so
-    # a blind overwrite silently degraded the hand-curated feed on every deploy.
-    # Preserve EVERY existing item in its curated order; append only GDELT URLs
-    # not already present.
+    # MERGE fetched items into the existing (curated) feed rather than
+    # REPLACING it. Curated items carry summaries the RSS lacks, so a blind
+    # overwrite silently degraded the hand-curated feed on every deploy.
+    # Preserve every curated item in its curated order; append only URLs not
+    # already present, then bound the auto-fetched items per vendor.
     try:
         _data = json.loads(NEWS_PATH.read_text())
     except Exception:
@@ -677,7 +930,9 @@ def main() -> int:
             fresh.append(it)
             seen.add(k)
     fresh.sort(key=lambda n: n.get("date", ""), reverse=True)
-    merged, evicted = _merge_feed(existing, fresh)
+    pool, evicted = _bound_auto(list(existing) + fresh)
+    merged, capped = _merge_feed(pool, [])
+    evicted += capped
     kept_keys = {(it.get("url") or it.get("headline") or "").strip() for it in merged}
     # Count what actually SURVIVED the cap, not what we tried to add — an item
     # that arrived and was immediately evicted for being older than everything
@@ -685,11 +940,11 @@ def main() -> int:
     added = sum(1 for it in fresh
                 if (it.get("url") or it.get("headline") or "").strip() in kept_keys)
 
-    gdelt_attempts = _ATTEMPTS["gdelt"]
-    gdelt_ok = _OK["gdelt"]
+    news_attempts = _ATTEMPTS["gnews"]
+    news_ok = _OK["gnews"]
     # A transport-level wipeout is a different animal from "the news was quiet".
-    upstream_down = gdelt_attempts > 0 and gdelt_ok == 0
-    upstream_degraded = gdelt_attempts > 0 and gdelt_ok < gdelt_attempts * 0.5
+    upstream_down = news_attempts > 0 and news_ok == 0
+    upstream_degraded = news_attempts > 0 and news_ok < news_attempts * 0.5
 
     # Only WRITE when we actually have something to add. The old code stamped
     # `generated` with today's date on every write, including "+0 new" writes,
@@ -705,8 +960,8 @@ def main() -> int:
              "items": merged}, ensure_ascii=False, indent=1))
         news_status = (f"merged news.json (+{added} new from {ok_news} vendors, "
                        f"{len(merged)} total"
-                       + (f", {len(evicted)} oldest evicted at the "
-                          f"{NEWS_CAP}-item cap" if evicted else "") + ")")
+                       + (f", {len(evicted)} older auto-fetched items evicted"
+                          if evicted else "") + ")")
         preserved = False
     else:
         if len(all_news) < NEWS_MIN_TO_WRITE:
@@ -715,9 +970,9 @@ def main() -> int:
         elif not fresh:
             why = f"{len(all_news)} items gathered but all {len(all_news)} already in the feed"
         else:
-            why = (f"all {len(fresh)} new items are older than every one of the "
-                   f"{len(existing)} already in the feed, so none survived the "
-                   f"{NEWS_CAP}-item cap")
+            why = (f"all {len(fresh)} new items were older than what the feed "
+                   f"already holds for their vendors, so none survived the "
+                   f"{AUTO_PER_VENDOR}-per-vendor / {NEWS_CAP}-item bounds")
         news_status = f"PRESERVED existing news.json ({why})"
         preserved = True
 
@@ -728,16 +983,16 @@ def main() -> int:
     # preserve now says so with the upstream evidence attached, and anything
     # that has been preserving for more than STALE_ALERT_DAYS is an error, not
     # a note — that is the condition that let this feed sit frozen for 60 days.
-    diag = " | ".join(p for p in (_upstream_report("gdelt"), _upstream_report("wikidata")) if p)
+    diag = " | ".join(p for p in (_upstream_report("gnews"), _upstream_report("wikidata")) if p)
     if preserved:
         detail = (f"{news_status}; feed last gathered {prior_generated or 'unknown'}"
                   + (f" ({stale_days}d ago)" if stale_days is not None else "")
                   + f". {diag}")
         if upstream_down:
-            detail += (" — every GDELT call failed at the transport/parse layer, so this is "
-                       "an upstream outage, not a quiet news day.")
+            detail += (" — every Google News call failed at the transport/parse layer, so "
+                       "this is an upstream outage, not a quiet news day.")
         elif upstream_degraded:
-            detail += " — majority of GDELT calls failed; treat as a partial outage."
+            detail += " — majority of Google News calls failed; treat as a partial outage."
         if cold_cache:
             detail += " Cache was cold (.enrich_cache.json missing/empty)."
         if _SKIPPED["news"]:
@@ -748,11 +1003,12 @@ def main() -> int:
         print(f"[enrich] {news_status} · {diag}")
 
     print(f"[enrich] {len(vendors)} vendors · {news_status} · "
-          f"live-news vendors: {live_news_vendors} · "
+          f"vendors fetched live: {live_news_vendors} · "
           f"enrichment.json: {ok_wd} vendors with Wikidata facts")
 
-    # Non-zero exit so the workflow step can go red. Requires dropping the
-    # `|| echo` that currently swallows it (see pages.yml).
+    # Non-zero exit so the workflow step can go red. pages.yml still runs this
+    # under `|| echo` so a news outage never blocks the deploy; the ::error::
+    # annotation above is what surfaces it.
     return 1 if (preserved and (upstream_down or (stale_days or 0) >= STALE_ALERT_DAYS)) else 0
 
 

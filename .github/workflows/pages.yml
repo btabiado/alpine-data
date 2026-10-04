@@ -381,9 +381,9 @@ jobs:
         continue-on-error: true
 
       - name: Enrich + rebuild Summit dashboard
-        timeout-minutes: 6   # bound the GDELT/Wikidata enrich + rebuild (continue-on-error already set)
-        # Pull live vendor news (GDELT) + company facts (Wikidata) — both
-        # keyless — then rebuild snowflake_summit/dashboard.html so /summit/
+        timeout-minutes: 6   # bound the news/Wikidata enrich + rebuild (continue-on-error already set)
+        # Pull live vendor news (Google News RSS) + company facts (Wikidata) —
+        # both keyless — then rebuild snowflake_summit/dashboard.html so /summit/
         # ships fresh data each deploy. Cached via .enrich_cache.json (restored
         # above) so most runs are cheap; a fetch failure keeps the prior data
         # (stale-keep) and the committed dashboard.html is the final fallback.
@@ -392,6 +392,82 @@ jobs:
         run: |
           python snowflake_summit/enrich_vendors.py || echo "[summit] enrich failed; using existing data"
           python snowflake_summit/build.py || echo "[summit] rebuild failed; using committed dashboard.html"
+        continue-on-error: true
+
+      - name: Commit Summit news feed
+        # The enricher above refreshes snowflake_summit/news.json on every
+        # deploy, but nothing committed it, so the repo copy (and the
+        # data-health monitor that reads it) sat at 2026-06-04 for four months
+        # while /summit/ itself moved on. Committed back the same way
+        # data/composites is: staged, then handed to the signed api-commit.sh,
+        # with [skip ci] so it does not retrigger this workflow.
+        #
+        # Churn guard: hourly runs add a few headlines each, and committing
+        # every one would mean ~24 commits a day. Commit only when the feed's
+        # data date (`generated`, the newest item's day) moved, or when the
+        # committed copy was gathered more than MAX_FEED_AGE_H ago. The check
+        # is also a validity guard: a file that is not JSON with a non-empty
+        # items list is never staged over a good one.
+        if: github.event_name != 'pull_request' && hashFiles('snowflake_summit/news.json') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAX_FEED_AGE_H: "24"
+          COMMIT_FLAG: ${{ runner.temp }}/summit-news-commit.flag
+        run: |
+          set -euo pipefail
+          rm -f "$COMMIT_FLAG"
+          python3 - <<'PY'
+          import json, os, subprocess
+          from datetime import datetime, timezone
+
+          PATH = "snowflake_summit/news.json"
+
+          def decide():
+              try:
+                  fresh = json.loads(open(PATH, encoding="utf-8").read())
+              except (OSError, ValueError) as e:
+                  return False, f"news.json unreadable ({e}); not staging it"
+              if not isinstance(fresh, dict) or not fresh.get("items"):
+                  return False, "news.json has no items; not staging it"
+              old = subprocess.run(["git", "show", f"HEAD:{PATH}"],
+                                   capture_output=True, text=True)
+              if old.returncode != 0:
+                  return True, "first commit of the feed"
+              try:
+                  prev = json.loads(old.stdout)
+              except ValueError:
+                  return True, "committed feed is unparseable; replacing it"
+              if prev == fresh:
+                  return False, "feed unchanged"
+              if prev.get("generated") != fresh.get("generated"):
+                  return True, (f"feed date moved {prev.get('generated')} -> "
+                                f"{fresh.get('generated')}")
+              try:
+                  then = datetime.fromisoformat(
+                      str(prev["gathered_at"]).replace("Z", "+00:00"))
+                  age_h = (datetime.now(timezone.utc) - then).total_seconds() / 3600
+              except (KeyError, ValueError, TypeError):
+                  age_h = float("inf")
+              if age_h >= float(os.environ.get("MAX_FEED_AGE_H", "24")):
+                  return True, f"committed feed gathered {age_h:.1f}h ago"
+              return False, "new headlines only, committed copy is recent"
+
+          go, why = decide()
+          print(f"[summit-news] {'committing' if go else 'skipping'}: {why}")
+          if go:
+              open(os.environ["COMMIT_FLAG"], "w").write("yes")
+          PY
+          if [ ! -f "$COMMIT_FLAG" ]; then
+            exit 0
+          fi
+          git add snowflake_summit/news.json
+          if git diff --cached --quiet -- snowflake_summit/news.json; then
+            echo "[summit-news] staged diff is empty; nothing to commit."
+            exit 0
+          fi
+          .github/scripts/api-commit.sh \
+            "summit: news feed $(date -u +%Y-%m-%d) [skip ci]" \
+            || echo "[summit-news] commit failed; continuing"
         continue-on-error: true
 
       - name: Rebuild Competitive Landscape dashboard
