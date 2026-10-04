@@ -45,6 +45,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import traceback
 from datetime import datetime, timezone
@@ -94,6 +95,28 @@ def _month_minus(ym: str, k: int) -> str:
 def _prev_complete_month(now: datetime) -> str:
     """The last fully-complete calendar month relative to ``now`` (this month - 1)."""
     return _month_minus("{:04d}-{:02d}".format(now.year, now.month), 1)
+
+
+# Recon-time facts that go stale the day after they are written ("max
+# inspection_date 2026-05-29", "Latest complete month 2026-04"). Registry notes
+# are copied onto the page, so such a claim would contradict the live data next
+# to it; they are stripped from the published note (the registry keeps none
+# today -- this guards the next recon pass).
+_RECON_CLAIMS = [
+    re.compile(r"\s*Latest complete month \d{4}-\d{2}\.?", re.I),
+    re.compile(r"\s*CONFIRMED live \((?:max|data_as_of)[^)]*\d{4}-\d{2}-\d{2}[^)]*\)\.?", re.I),
+]
+
+
+def _display_note(note):
+    """Registry note minus stale recon-date claims (None stays None)."""
+    if not note:
+        return note
+    out = note
+    for rx in _RECON_CLAIMS:
+        out = rx.sub("", out)
+    out = out.strip()
+    return out or None
 
 
 def _is_lagging(feed_cfg: dict) -> bool:
@@ -245,7 +268,7 @@ def _score_feed_obj(feed_cfg: dict, city_cfg: dict, *, as_of: str, since_date: s
         label=feed_cfg.get("label", "feed"),
         dataset=str(feed_cfg.get("dataset") or feed_cfg.get("ori")
                     or feed_cfg.get("endpoint") or ""),
-        note=feed_cfg.get("note"),
+        note=_display_note(feed_cfg.get("note")),
         complete_through=complete_through,
     )
     _apply_status_hint(feed_obj, status_hint, reason)
@@ -285,7 +308,7 @@ def build_city(city_cfg: dict, *, as_of: str, since_date: str, geo_cfg=None,
             label=feed_cfg.get("label", "feed"),
             dataset=str(feed_cfg.get("dataset") or feed_cfg.get("ori")
                         or feed_cfg.get("endpoint") or ""),
-            note=feed_cfg.get("note"),
+            note=_display_note(feed_cfg.get("note")),
             complete_through=complete_through,
         )
         # The adapter knows things the data alone can't say: a 2023 snapshot is
