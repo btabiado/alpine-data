@@ -11,7 +11,7 @@
       "date_col": "all confirmed live 2026-05-31 unless date_col_status says otherwise",
       "date_col_status": "confirmed | corrected | text_not_date | stale_source",
       "baseline_dataset": "union with primary dataset to assemble the trailing-12-month baseline",
-      "dataset_rotates_yearly": "resolve the current-year dataset by convention (or union recent years)"
+      "dataset_rotates_yearly": "one dataset per calendar year: union every year in the window, each later year resolved by catalog title; dataset_year / baseline_dataset_year give the years of the registry ids (fallbacks)"
     },
     "as_of_complete_month": "2026-04",
     "notes_global": [
@@ -42,7 +42,7 @@
       ] },
     { "id": "la", "name": "Los Angeles", "scope": "city", "adapter": "socrata", "host": "data.lacity.org",
       "feeds": [
-        { "pillar": "city_services",       "label": "MyLA311 Cases",     "dataset": "2cy6-i7zn", "baseline_dataset": "73a2-6ar5", "dataset_rotates_yearly": true, "date_col": "createddate", "date_col_status": "confirmed", "polarity": -1, "metric": "count",
+        { "pillar": "city_services",       "label": "MyLA311 Cases",     "dataset": "2cy6-i7zn", "dataset_year": 2026, "baseline_dataset": "73a2-6ar5", "baseline_dataset_year": 2025, "dataset_rotates_yearly": true, "date_col": "createddate", "date_col_status": "confirmed", "polarity": -1, "metric": "count",
           "note": "RESOLVED: LA retired the 'MyLA311 Service Request Data {year}' series ~Aug 2025 (old h73f-gn57=2025 is dead for current data). Current product = 'MyLA311 Cases {year}'. 2026 = 2cy6-i7zn (date col createddate, live, ~185k/mo). Baseline = 73a2-6ar5 ('MyLA311 Cases March 2025 to December 2025'). Resolve current-year by catalog search: GET data.lacity.org/api/catalog/v1?q=MyLA311%20Cases -> item titled 'MyLA311 Cases {currentYear}'. Do NOT auto-build '...Service Request Data {year}' IDs." },
         { "pillar": "public_safety",        "label": "LAPD NIBRS Offenses","dataset": "k7nn-b2ep", "date_col": "date_occ", "date_col_status": "confirmed", "polarity": -1, "metric": "count",
           "note": "Single consolidated NIBRS file since 2026-08-18 (LA renamed k7nn-b2ep from '...2026 to Present' and folded all RMS offenses into it). The old 2024-2025 baseline y8y3-fqfu now returns HTTP 403 'You must be logged in' - never poll it. RMS went live 2024-03-07, so 2024 months are a partial ramp (continuity break in the trend line); dense from 2025-01. Upstream lags ~2 weeks, so the newest month is usually incomplete and is not scored. Legacy 2nrs-mtv8 frozen - never poll." },
