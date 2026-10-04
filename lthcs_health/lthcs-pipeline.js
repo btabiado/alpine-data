@@ -38,6 +38,12 @@
 
 // Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
 import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+// Deploy-time listing of which files exist (scripts/build_lthcs_site_index.py).
+// With it, every "newest file" question is answered from one ~50 KB JSON
+// instead of walking back day by day with HEAD requests — which on Pages
+// meant ~285 x 404 and ~35 s of "Loading cron freshness…". The walk-back
+// probes below remain only as the fallback for a missing index (dev server).
+import { loadFileIndex } from '../lthcs_tab/lthcs-files.js';
 
 const DATA_ROOT = '../data/lthcs';
 const REPO_BASE = 'https://github.com/btabiado/alpine-data';
@@ -164,7 +170,15 @@ async function tryHead(url) {
 // Used by crons whose outputs are named YYYY-MM-DD.json or YYYY-MM-DD_<suffix>/...
 // We can't list a directory over HTTP on GitHub Pages, so we probe day-by-day
 // from today backwards until we hit a 200 (or give up after `maxDays`).
-async function probeMostRecentDated(buildPath, maxDays) {
+async function probeMostRecentDated(buildPath, maxDays, indexKey) {
+  if (indexKey) {
+    const idx = await loadFileIndex();
+    if (idx) {
+      const e = idx.dated[indexKey];
+      const latest = e && e.dates && e.dates[0];
+      return latest ? { date: latest, url: buildPath(latest) } : null;
+    }
+  }
   const now = new Date();
   for (let i = 0; i < maxDays; i += 1) {
     const d = new Date(now.valueOf());
@@ -179,6 +193,34 @@ async function probeMostRecentDated(buildPath, maxDays) {
     }
   }
   return null;
+}
+
+// Newest backtest run within `maxDays`, from the file index. Daily runs write
+// backtest/<date>_<suffix>/summary.json (older engine) or engine_summary.json
+// (current engine — the old probe only knew summary.json, so it could never
+// find a recent run); monthly runs write <YYYY-MM>_monthly/<ts>/summary.json.
+// Returns {dir, file, date} | null, or undefined when there is no index
+// (caller falls back to probing).
+async function latestBacktestRun(suffixes, maxDays) {
+  const idx = await loadFileIndex();
+  if (!idx || !Array.isArray(idx.backtest_files)) return undefined;
+  const cutoff = new Date();
+  cutoff.setUTCDate(cutoff.getUTCDate() - maxDays);
+  const cutoffIso = cutoff.toISOString().slice(0, 10);
+  let best = null;
+  const consider = (date, dir, file) => {
+    if (date < cutoffIso) return;
+    if (!best || date > best.date || (date === best.date && file === 'summary.json')) best = { dir, file, date };
+  };
+  for (const f of idx.backtest_files) {
+    let m = /^(\d{4}-\d{2}-\d{2})_([A-Za-z0-9_]+)\/((?:engine_)?summary\.json)$/.exec(f);
+    if (m && suffixes.indexOf(m[2]) !== -1) { consider(m[1], `${m[1]}_${m[2]}`, m[3]); continue; }
+    m = /^(\d{4}-\d{2})_monthly\/(\d{4})(\d{2})(\d{2})T\d{6}Z?\/summary\.json$/.exec(f);
+    if (m && suffixes.indexOf('monthly') !== -1) {
+      consider(`${m[2]}-${m[3]}-${m[4]}`, f.slice(0, f.lastIndexOf('/')), 'summary.json');
+    }
+  }
+  return best;
 }
 
 /* ======================================================================
@@ -215,6 +257,7 @@ async function probeDailyCrypto() {
   const hit = await probeMostRecentDated(
     (iso) => `${DATA_ROOT}/snapshots_crypto/${iso}.json`,
     14,
+    'snapshots_crypto',
   );
   return {
     name: 'Daily Crypto Pipeline',
@@ -223,7 +266,7 @@ async function probeDailyCrypto() {
     workflowFile: 'lthcs-crypto-daily.yml',
     lastDate: hit?.date || null,
     ageSec: hit ? ageSecFromDate(hit.date) : null,
-    evidenceLabel: hit ? `snapshots_crypto/${hit.date}.json` : 'no recent crypto snapshot in last 14d',
+    evidenceLabel: hit ? `snapshots_crypto/${hit.date}.json` : 'no crypto snapshot found',
     evidenceUrl: hit?.url || null,
   };
 }
@@ -234,6 +277,35 @@ async function probeDailyBacktest() {
   // repo history: _post_phase5, _validation, _h1, _h5, _h21. Fall back to a
   // raw report path so something is checked. We probe both today + 7-day window.
   const candidates = ['post_phase5', 'validation', 'h21', 'h5', 'h1', 'baseline'];
+  const fromIndex = await latestBacktestRun(candidates, 14);
+  if (fromIndex !== undefined) {
+    if (fromIndex) {
+      const url = `${DATA_ROOT}/backtest/${fromIndex.dir}/${fromIndex.file}`;
+      const body = await tryFetchJson(url);
+      const tsAge = ageSecFromTs(body?.generated_at);
+      return {
+        name: 'Daily Backtest Engine',
+        schedule: '30 23 * * * (23:30 UTC)',
+        cadence: 'daily',
+        workflowFile: 'lthcs-backtest-daily.yml',
+        lastDate: fromIndex.date,
+        ageSec: tsAge != null ? tsAge : ageSecFromDate(fromIndex.date),
+        evidenceLabel: `backtest/${fromIndex.dir}/${fromIndex.file}`,
+        evidenceUrl: url,
+        notes: body?.run_id ? `run_id ${body.run_id}` : null,
+      };
+    }
+    return {
+      name: 'Daily Backtest Engine',
+      schedule: '30 23 * * * (23:30 UTC)',
+      cadence: 'daily',
+      workflowFile: 'lthcs-backtest-daily.yml',
+      lastDate: null,
+      ageSec: null,
+      evidenceLabel: 'no backtest summary.json on disk',
+      evidenceUrl: null,
+    };
+  }
   const now = new Date();
   for (let i = 0; i < 14; i += 1) {
     const d = new Date(now.valueOf());
@@ -277,9 +349,11 @@ async function probeDailyBacktest() {
 async function probeDailyTrends() {
   // Trends file is weekly. Sub-week age comes from its `as_of` field if
   // present. Try current ISO week first, then walk back a few weeks.
-  let wkStr = currentIsoWeekStr();
-  let body = await tryFetchJson(`${DATA_ROOT}/trends/${wkStr}.json`);
-  if (!body) {
+  const idx = await loadFileIndex();
+  const idxWeek = idx && idx.weekly && idx.weekly.trends ? idx.weekly.trends.latest : null;
+  let wkStr = idxWeek || currentIsoWeekStr();
+  let body = (idx && !idxWeek) ? null : await tryFetchJson(`${DATA_ROOT}/trends/${wkStr}.json`);
+  if (!body && !idx) {
     // Walk back 4 weeks.
     for (let back = 1; back <= 4 && !body; back += 1) {
       const d = new Date();
@@ -306,8 +380,10 @@ async function probeDailyTrends() {
 
 async function probeWeeklyTrendsRotate() {
   // Weekly cron is the rotate-ISO-week-file action. Same trends/ file proves it.
-  const wkStr = currentIsoWeekStr();
-  const head = await tryHead(`${DATA_ROOT}/trends/${wkStr}.json`);
+  const idx = await loadFileIndex();
+  const idxWeek = idx && idx.weekly && idx.weekly.trends ? idx.weekly.trends.latest : null;
+  const wkStr = idxWeek || currentIsoWeekStr();
+  const head = (idx && !idxWeek) ? null : await tryHead(`${DATA_ROOT}/trends/${wkStr}.json`);
   let lastDate = null;
   let ageSec = null;
   if (head?.lastModified) {
@@ -331,8 +407,10 @@ async function probeWeeklyValidate() {
   // We can't list, but we know the index page also references those for the
   // last few weeks via the snapshots/ index.json mtime — proxy by checking
   // mtime of variable_detail/<latest>.json (validate runs against it).
-  const idx = await tryFetchJson(`${DATA_ROOT}/snapshots/index.json`);
-  const dates = (idx?.dates || []).sort().reverse();
+  const fileIdx = await loadFileIndex();
+  const vdDates = fileIdx ? ((fileIdx.dated.variable_detail || {}).dates || []) : null;
+  const idx = vdDates ? null : await tryFetchJson(`${DATA_ROOT}/snapshots/index.json`);
+  const dates = vdDates ? vdDates.slice(0, 1) : (idx?.dates || []).sort().reverse();
   // Walk back to find a date with a variable_detail file.
   for (const d of dates.slice(0, 14)) {
     const url = `${DATA_ROOT}/variable_detail/${d}.json`;
@@ -370,6 +448,19 @@ async function probeMonthlyBacktest() {
   // Same as daily-backtest, but with a wider 50-day window (we just want the
   // most recent run; if the monthly cron stopped firing the daily would too).
   const candidates = ['post_phase5', 'validation', 'monthly', 'h21'];
+  const fromIndex = await latestBacktestRun(candidates, 50);
+  if (fromIndex !== undefined) {
+    return {
+      name: 'Monthly Backtest',
+      schedule: '0 6 1 * * (1st of month 06:00 UTC)',
+      cadence: 'monthly',
+      workflowFile: 'lthcs-backtest-monthly.yml',
+      lastDate: fromIndex ? fromIndex.date : null,
+      ageSec: fromIndex ? ageSecFromDate(fromIndex.date) : null,
+      evidenceLabel: fromIndex ? `backtest/${fromIndex.dir}/${fromIndex.file}` : 'no backtest run on disk',
+      evidenceUrl: fromIndex ? `${DATA_ROOT}/backtest/${fromIndex.dir}/${fromIndex.file}` : null,
+    };
+  }
   const now = new Date();
   for (let i = 0; i < 50; i += 1) {
     const d = new Date(now.valueOf());
@@ -439,6 +530,7 @@ async function probeHourlyNews() {
   const hit = await probeMostRecentDated(
     (iso) => `${DATA_ROOT}/narratives/${iso}.json`,
     7,
+    'narratives',
   );
   let lastDate = hit?.date || null;
   let ageSec = lastDate ? ageSecFromDate(lastDate) : null;
@@ -469,9 +561,15 @@ async function probeLlmShadow() {
   // LLM shadow narratives + sentiment are Tier 6 outputs. Both directories
   // currently exist but may be empty (LLM rollout gated). Detect emptiness
   // by attempting AAPL.json under each.
+  const fileIdx = await loadFileIndex();
+  const sentKnown = fileIdx && fileIdx.exists && ('sentiment_llm/AAPL.json' in fileIdx.exists);
+  const narrLatest = fileIdx ? (((fileIdx.dated.narratives_llm || {}).dates || [])[0] || null) : undefined;
   const [llmSent, llmNarr] = await Promise.all([
-    tryHead(`${DATA_ROOT}/sentiment_llm/AAPL.json`),
-    tryHead(`${DATA_ROOT}/narratives_llm/${isoTodayUTC()}.json`),
+    (sentKnown && !fileIdx.exists['sentiment_llm/AAPL.json'])
+      ? Promise.resolve(null) : tryHead(`${DATA_ROOT}/sentiment_llm/AAPL.json`),
+    narrLatest === undefined
+      ? tryHead(`${DATA_ROOT}/narratives_llm/${isoTodayUTC()}.json`)
+      : Promise.resolve(narrLatest ? { date: narrLatest } : null),
   ]);
   let ageSec = null;
   let lastDate = null;
@@ -480,6 +578,11 @@ async function probeLlmShadow() {
     ageSec = (Date.now() - llmSent.lastModified.getTime()) / 1000;
     lastDate = llmSent.lastModified.toISOString().slice(0, 10);
     evidenceLabel = 'sentiment_llm/AAPL.json (mtime)';
+  } else if (llmNarr && llmNarr.date) {
+    // Newest dated narratives_llm/<date>.json on disk (from the file index).
+    lastDate = llmNarr.date;
+    ageSec = ageSecFromDate(llmNarr.date);
+    evidenceLabel = `narratives_llm/${llmNarr.date}.json`;
   }
   return {
     name: 'LLM Shadow Data',

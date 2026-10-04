@@ -7,13 +7,16 @@
      - Per-pillar data-quality counts (from variable_detail/<date>.json)
      - Recent runs (last 14 from snapshots/index.json)
 
-   All fetches are independent enough to Promise.allSettled together so
-   one missing file (e.g. macro breadth_sentiment_<date>.json on a day
-   the scrapers all failed) doesn't break the rest of the page.
+   Data: health_summary.json (built at deploy time by
+   scripts/build_lthcs_site_index.py) carries every count shown here. Only
+   when it is missing does the page fall back to reading the raw per-date
+   files — and then only the ones the file index says exist.
    ========================================================================= */
 
 // Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
 import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+// Deploy-time listing of which data files exist (skips 404 probes).
+import { loadFileIndex } from '../lthcs_tab/lthcs-files.js';
 
 const DATA_ROOT = '../data/lthcs';
 
@@ -79,6 +82,56 @@ async function tryFetch(url) {
   }
 }
 
+/* ----- Per-day coverage rows ------------------------------------------
+   One shape for both data paths: the deploy-time health_summary.json
+   (scripts/build_lthcs_site_index.py writes exactly these fields) and the
+   in-browser fallback below, which derives them from the raw files. */
+function dayRow(date, f) {
+  const { snap, ins, hol, mb, mbs, mss } = f || {};
+  const src = (o) => {
+    const dq = o && o.data_quality;
+    if (!dq || typeof dq !== 'object') return [null, null];
+    return [Number.isInteger(dq.sources_ok) ? dq.sources_ok : null,
+      Number.isInteger(dq.sources_failed) ? dq.sources_failed : null];
+  };
+  const [mbOk, mbBad] = src(mb);
+  const [sOk, sBad] = src(mbs);
+  return {
+    date,
+    snapshot: !!snap,
+    snapshot_calc_date: snap ? (snap.calc_date || null) : null,
+    tickers: Array.isArray(snap?.scores) ? snap.scores.length : null,
+    insider: ins && typeof ins === 'object' ? Object.keys(ins).length : null,
+    holdings_covered: hol && typeof hol === 'object'
+      ? Object.values(hol).filter((v) => v && typeof v === 'object' && (v.manager_count || 0) > 0).length
+      : null,
+    macro_as_of: mb ? (mb.as_of || null) : null,
+    macro_ok: mbOk, macro_failed: mbBad,
+    sentiment_ok: sOk, sentiment_failed: sBad,
+    sectors: mss?.sectors && typeof mss.sectors === 'object' ? Object.keys(mss.sectors).length : null,
+  };
+}
+
+// Same aggregation as build_lthcs_site_index._pillar_flags().
+function pillarFlags(variableDetail) {
+  if (!Array.isArray(variableDetail?.variables)) return null;
+  const by = {};
+  for (const v of variableDetail.variables) {
+    if (v && v.pillar) (by[v.pillar] ||= []).push(v);
+  }
+  const out = {};
+  for (const [pillar, rows] of Object.entries(by)) {
+    const first = rows[0].data_quality || {};
+    const flags = {};
+    for (const [k, sample] of Object.entries(first)) {
+      if (typeof sample !== 'boolean') continue;
+      flags[k] = rows.filter((r) => r.data_quality?.[k] === true).length;
+    }
+    out[pillar] = { total: rows.length, flags };
+  }
+  return out;
+}
+
 /* ======================================================================
    Main bootstrap
    ====================================================================== */
@@ -87,92 +140,113 @@ async function main() {
   const errBox = $('health-error');
   const content = $('health-content');
 
-  // Step 1 — fetch the snapshot index.
-  const snapIndex = await tryFetch(`${DATA_ROOT}/snapshots/index.json`);
-  if (!snapIndex || !Array.isArray(snapIndex.dates) || snapIndex.dates.length === 0) {
-    loading.classList.add('hidden');
-    errBox.classList.remove('hidden');
-    // Phase 2 polish: friendlier copy + back-link so a cold visitor who hits
-    // this page on a fresh deploy has somewhere to go instead of staring at
-    // a dead-end error string.
-    errBox.innerHTML =
-      '<strong>Waiting on the first pipeline run.</strong><br>' +
-      'The daily LTHCS pipeline cron has not produced any snapshots yet ' +
-      '(<code>data/lthcs/snapshots/index.json</code> is empty or missing). ' +
-      'Cron runs at 23:00 UTC. ' +
-      '<a href="../" class="lthcs-footer-link">&larr; Back to card view</a>';
-    return;
+  // Fast path: the deploy-time summary carries every count this page shows
+  // (~10 KB). The old path downloaded 30 days of snapshot + insider + 13F
+  // JSON (~50 MB, ~200 requests) only to count keys in the browser.
+  const summary = await tryFetch(`${DATA_ROOT}/health_summary.json`);
+  let datesDesc, latest, rows, ctx;
+  if (summary && Array.isArray(summary.days) && summary.days.length
+      && Array.isArray(summary.snapshot_dates) && summary.snapshot_dates.length) {
+    datesDesc = [...summary.snapshot_dates].sort().reverse();
+    latest = summary.latest || datesDesc[0];
+    rows = summary.days;
+    ctx = {
+      variableDetailDate: summary.variable_detail ? summary.variable_detail.calc_date : null,
+      pillars: summary.variable_detail ? summary.variable_detail.pillars : null,
+      analyst: summary.analyst,
+      trends: summary.trends,
+      universeSize: summary.universe_size,
+    };
+  } else {
+    const r = await loadFromRawFiles();
+    if (!r) {
+      loading.classList.add('hidden');
+      errBox.classList.remove('hidden');
+      // Phase 2 polish: friendlier copy + back-link so a cold visitor who hits
+      // this page on a fresh deploy has somewhere to go instead of staring at
+      // a dead-end error string.
+      errBox.innerHTML =
+        '<strong>Waiting on the first pipeline run.</strong><br>' +
+        'The daily LTHCS pipeline cron has not produced any snapshots yet ' +
+        '(<code>data/lthcs/snapshots/index.json</code> is empty or missing). ' +
+        'Cron runs at 23:00 UTC. ' +
+        '<a href="../" class="lthcs-footer-link">&larr; Back to card view</a>';
+      return;
+    }
+    ({ datesDesc, latest, rows, ctx } = r);
   }
 
-  // Dates in the index are newest-first per producer convention.
-  const datesDesc = [...snapIndex.dates].sort().reverse();
-  const latest = datesDesc[0];
+  const today = rows[0] || dayRow(latest, {});
+  const universeSize = ctx.universeSize || today.tickers || 168;
 
-  // Step 2 — fetch everything we need for the latest date in parallel.
-  // Macro/breadth filenames are date-suffixed (breadth_<date>.json) per
-  // PHASE_1_BUILD_SPEC convention; insider/holdings/index are
-  // date-named files in their per-source dir.
-  const [
-    latestSnap,
-    variableDetail,
-    macroBreadth,
-    macroBreadthSent,
-    macroSectorStrength,
-    insiderToday,
-    holdingsToday,
-    analystToday,
-    trendsLatest,
-    universe,
-  ] = await Promise.all([
-    tryFetch(`${DATA_ROOT}/snapshots/${latest}.json`),
-    tryFetch(`${DATA_ROOT}/variable_detail/${latest}.json`),
-    tryFetch(`${DATA_ROOT}/macro/breadth_${latest}.json`),
-    tryFetch(`${DATA_ROOT}/macro/breadth_sentiment_${latest}.json`),
-    tryFetch(`${DATA_ROOT}/macro/sector_strength_${latest}.json`),
-    tryFetch(`${DATA_ROOT}/insider/${latest}.json`),
-    tryFetch(`${DATA_ROOT}/holdings/${latest}.json`),
-    tryFetch(`${DATA_ROOT}/analyst_breadth/${latest}.json`),
-    fetchLatestWeeklyTrends(latest),
-    tryFetch(`${DATA_ROOT}/universe.json`),
-  ]);
-
-  // Step 3 — for the 30-day history view, fetch the per-date snapshot
-  // + insider + holdings JSON for the last min(30, count) dates. This is
-  // the chattiest part of the page (up to 90 GETs) but each file is small
-  // and HTTP/2 multiplexing on GitHub Pages handles it easily.
-  const historyDates = datesDesc.slice(0, 30);
-  const historyPromises = historyDates.map(async (d) => {
-    const [snap, ins, hol, mb, mbs, mss] = await Promise.all([
-      tryFetch(`${DATA_ROOT}/snapshots/${d}.json`),
-      tryFetch(`${DATA_ROOT}/insider/${d}.json`),
-      tryFetch(`${DATA_ROOT}/holdings/${d}.json`),
-      tryFetch(`${DATA_ROOT}/macro/breadth_${d}.json`),
-      tryFetch(`${DATA_ROOT}/macro/breadth_sentiment_${d}.json`),
-      tryFetch(`${DATA_ROOT}/macro/sector_strength_${d}.json`),
-    ]);
-    return { date: d, snap, ins, hol, mb, mbs, mss };
-  });
-  const history = await Promise.all(historyPromises);
-
-  // Step 4 — render.
-  const universeSize = universe?.tickers?.length || latestSnap?.scores?.length || 168;
-
-  renderHeader(latest, {
-    latestSnap, variableDetail, macroBreadth, macroSectorStrength,
-    insiderToday, holdingsToday, analystToday,
-  });
+  renderHeader(latest, { today, variableDetailDate: ctx.variableDetailDate, analyst: ctx.analyst });
   renderCadence(datesDesc, latest);
-  renderSourceToday({
-    latestSnap, insiderToday, holdingsToday, macroBreadth,
-    macroBreadthSent, macroSectorStrength, analystToday, trendsLatest,
-    universeSize,
-  });
-  renderSourceHistory(history, universeSize);
-  renderPillarBreakdown(variableDetail);
-  renderRecentRuns(history.slice(0, 14));
+  renderSourceToday({ today, analyst: ctx.analyst, trends: ctx.trends, universeSize });
+  renderSourceHistory(rows, universeSize);
+  renderPillarBreakdown(ctx.pillars);
+  renderRecentRuns(rows.slice(0, 14));
 
   loading.classList.add('hidden');
   content.classList.remove('hidden');
+}
+
+/* Fallback (local dev / summary not built): read the raw files, but only the
+   ones that exist — the deploy-time file index (when present) says which, so
+   optional stages such as sector_strength / analyst_breadth no longer 404 on
+   every date. */
+async function loadFromRawFiles() {
+  const snapIndex = await tryFetch(`${DATA_ROOT}/snapshots/index.json`);
+  if (!snapIndex || !Array.isArray(snapIndex.dates) || snapIndex.dates.length === 0) return null;
+  // Dates in the index are newest-first per producer convention.
+  const datesDesc = [...snapIndex.dates].sort().reverse();
+  const latest = datesDesc[0];
+  const fileIdx = await loadFileIndex();
+  const has = (key, d) => {
+    if (!fileIdx) return true;            // unknown -> try it
+    const e = fileIdx.dated[key];
+    return !!(e && e.dates.indexOf(d) !== -1);
+  };
+  const get = (key, d, url) => (has(key, d) ? tryFetch(url) : Promise.resolve(null));
+  const weeks = fileIdx && fileIdx.weekly && fileIdx.weekly.trends ? fileIdx.weekly.trends.weeks : null;
+
+  const [variableDetail, analystToday, trendsLatest, universe] = await Promise.all([
+    get('variable_detail', latest, `${DATA_ROOT}/variable_detail/${latest}.json`),
+    get('analyst_breadth', latest, `${DATA_ROOT}/analyst_breadth/${latest}.json`),
+    weeks ? (weeks.length ? tryFetch(`${DATA_ROOT}/trends/${weeks[0]}.json`) : Promise.resolve(null))
+      : fetchLatestWeeklyTrends(latest),
+    tryFetch(`${DATA_ROOT}/universe.json`),
+  ]);
+
+  // 30-day history: per-date snapshot + insider + holdings + macro files.
+  const historyDates = datesDesc.slice(0, 30);
+  const rows = await Promise.all(historyDates.map(async (d) => {
+    const [snap, ins, hol, mb, mbs, mss] = await Promise.all([
+      get('snapshots', d, `${DATA_ROOT}/snapshots/${d}.json`),
+      get('insider', d, `${DATA_ROOT}/insider/${d}.json`),
+      get('holdings', d, `${DATA_ROOT}/holdings/${d}.json`),
+      get('macro/breadth', d, `${DATA_ROOT}/macro/breadth_${d}.json`),
+      get('macro/breadth_sentiment', d, `${DATA_ROOT}/macro/breadth_sentiment_${d}.json`),
+      get('macro/sector_strength', d, `${DATA_ROOT}/macro/sector_strength_${d}.json`),
+    ]);
+    return dayRow(d, { snap, ins, hol, mb, mbs, mss });
+  }));
+
+  return {
+    datesDesc,
+    latest,
+    rows,
+    ctx: {
+      variableDetailDate: variableDetail ? (variableDetail.calc_date || latest) : null,
+      pillars: pillarFlags(variableDetail),
+      analyst: analystToday && typeof analystToday === 'object' ? Object.keys(analystToday).length : null,
+      trends: trendsLatest ? {
+        as_of: trendsLatest.as_of || null,
+        tickers: trendsLatest.tickers ? Object.keys(trendsLatest.tickers).length : 0,
+        terms: trendsLatest.term_map ? Object.keys(trendsLatest.term_map).length : 0,
+      } : null,
+      universeSize: universe?.tickers?.length || null,
+    },
+  };
 }
 
 /* ----- Trends file is weekly, not daily. Resolve the ISO week. -------- */
@@ -208,25 +282,26 @@ async function fetchLatestWeeklyTrends(latestDate) {
 // best one.
 function renderHeader(latest, sources) {
   const s = sources || {};
+  const t = s.today || {};
   const components = [
-    { label: 'snapshot', date: s.latestSnap ? (s.latestSnap.calc_date || latest) : null },
-    { label: 'pillars', date: s.variableDetail ? (s.variableDetail.calc_date || latest) : null },
-    { label: 'macro', date: s.macroBreadth ? (s.macroBreadth.as_of || latest) : null },
-    { label: 'insider', date: s.insiderToday ? latest : null },
-    { label: '13F', date: s.holdingsToday ? latest : null },
+    { label: 'snapshot', date: t.snapshot ? (t.snapshot_calc_date || latest) : null },
+    { label: 'pillars', date: s.variableDetailDate || null },
+    { label: 'macro', date: t.macro_ok != null || t.macro_as_of ? (t.macro_as_of || latest) : null },
+    { label: 'insider', date: t.insider != null ? latest : null },
+    { label: '13F', date: t.holdings_covered != null ? latest : null },
     {
       // Sector strength and analyst breadth are optional pipeline stages that
       // do not run every day. They are disclosed but do not age the headline,
       // because the page renders "not produced today" for them either way.
       label: 'sectors',
-      date: s.macroSectorStrength ? latest : null,
+      date: t.sectors != null ? latest : null,
       contributes: false,
       tag: 'optional',
       note: 'optional stage',
     },
     {
       label: 'analysts',
-      date: s.analystToday ? latest : null,
+      date: s.analyst != null ? latest : null,
       contributes: false,
       tag: 'optional',
       note: 'optional stage',
@@ -316,61 +391,44 @@ function renderCadence(datesDesc, latest) {
 
 /* ----- Today's source coverage ---------------------------------------- */
 function renderSourceToday(ctx) {
-  const {
-    latestSnap, insiderToday, holdingsToday, macroBreadth,
-    macroBreadthSent, macroSectorStrength, analystToday, trendsLatest,
-    universeSize,
-  } = ctx;
+  const { today, analyst, trends, universeSize } = ctx;
+  const t = today || {};
 
-  const tickerCount = latestSnap?.scores?.length || 0;
+  const tickerCount = t.tickers || 0;
 
   // Yahoo coverage — proxy by counting tickers in the snapshot
   // (scores list is produced from the Yahoo-fed price/momentum series).
   const yahooCovered = tickerCount;
 
-  // SEC EDGAR (XBRL) — proxy by counting tickers in variable_detail with
-  // has_revenue=true on the financial pillar. We don't have that here so
-  // fall back to ticker count (XBRL is the underlying revenue feed).
-  // Use snapshot ticker count as the lower-bound estimate (financial
-  // pillar always runs).
+  // SEC EDGAR (XBRL) — the financial pillar always runs, so the snapshot
+  // ticker count is the lower-bound estimate.
   const xbrlCovered = tickerCount;
 
-  // SEC Form 4 (insider) — count keys in insider/<date>.json.
-  const insiderCovered = insiderToday ? Object.keys(insiderToday).length : 0;
+  // SEC Form 4 (insider) — keys in insider/<date>.json.
+  const insiderCovered = t.insider || 0;
 
-  // SEC 13F (holdings) — count entries with manager_count > 0.
-  let holdingsCovered = 0;
-  if (holdingsToday) {
-    for (const v of Object.values(holdingsToday)) {
-      if (v && typeof v === 'object' && (v.manager_count || 0) > 0) holdingsCovered += 1;
-    }
-  }
+  // SEC 13F (holdings) — entries with manager_count > 0.
+  const holdingsCovered = t.holdings_covered || 0;
 
   // FRED macro — breadth file's data_quality.sources_ok.
-  const fredOk = macroBreadth?.data_quality?.sources_ok ?? 0;
-  const fredTotal = (macroBreadth?.data_quality?.sources_ok ?? 0)
-    + (macroBreadth?.data_quality?.sources_failed ?? 0)
-    || 4; // expected 4 series: DXY, HY OAS, IG OAS, 2s10s
+  const fredOk = t.macro_ok ?? 0;
+  const fredTotal = (t.macro_ok ?? 0) + (t.macro_failed ?? 0) || 4; // DXY, HY OAS, IG OAS, 2s10s
 
   // Sector ETFs — count sectors in sector_strength.
-  const sectorCount = macroSectorStrength?.sectors ? Object.keys(macroSectorStrength.sectors).length : 0;
+  const sectorCount = t.sectors || 0;
   const sectorTotal = 11; // XLB/XLC/XLE/XLF/XLI/XLK/XLP/XLRE/XLU/XLV/XLY
 
   // Breadth sentiment — sources_ok inside breadth_sentiment.
-  const sentOk = macroBreadthSent?.data_quality?.sources_ok ?? 0;
-  const sentTotal = (macroBreadthSent?.data_quality?.sources_ok ?? 0)
-    + (macroBreadthSent?.data_quality?.sources_failed ?? 0)
-    || 3; // AAII, NAAIM, put/call
+  const sentOk = t.sentiment_ok ?? 0;
+  const sentTotal = (t.sentiment_ok ?? 0) + (t.sentiment_failed ?? 0) || 3; // AAII, NAAIM, put/call
 
   // Google Trends — count term_map entries.
-  const trendsCovered = trendsLatest?.tickers ? Object.keys(trendsLatest.tickers).length : 0;
-  const trendsTotal = trendsLatest?.term_map ? Object.keys(trendsLatest.term_map).length : 30;
+  const trendsCovered = trends ? (trends.tickers || 0) : 0;
+  const trendsTotal = trends && trends.terms ? trends.terms : 30;
 
-  // Analyst breadth — count tickers with non-empty actions.
-  const analystCovered = analystToday ? Object.keys(analystToday).length : 0;
-  // Universe size is the denominator. Most tickers won't have an Alpha
-  // Vantage NEWS_SENTIMENT entry per Bryan's documented quirk; coverage
-  // is intentionally sparse so the bar should be low without being "fail".
+  // Analyst breadth — tickers with an entry. Universe size is the
+  // denominator; coverage is intentionally sparse (Alpha Vantage quirk).
+  const analystCovered = analyst || 0;
   const analystTotal = universeSize;
 
   const sources = [
@@ -414,49 +472,19 @@ function renderSourceHistory(history, universeSize) {
   // left-to-right chronologically.
   const ordered = [...history].reverse();
 
-  // For each source, build a 30-day cell array.
+  // For each source, build a 30-day cell array (null = no file that day).
+  const pctOf = (ok, bad, dflt) => {
+    if (ok == null) return null;
+    const tot = ok + (bad ?? 0) || dflt;
+    return (ok / tot) * 100;
+  };
   const sources = [
-    {
-      name: 'Yahoo / snapshots',
-      pct: (h) => h.snap?.scores?.length ? (h.snap.scores.length / universeSize) * 100 : null,
-    },
-    {
-      name: 'SEC Form 4 (insider)',
-      pct: (h) => h.ins ? (Object.keys(h.ins).length / universeSize) * 100 : null,
-    },
-    {
-      name: 'SEC 13F (holdings)',
-      pct: (h) => {
-        if (!h.hol) return null;
-        const c = Object.values(h.hol).filter((v) => v && (v.manager_count || 0) > 0).length;
-        return (c / universeSize) * 100;
-      },
-    },
-    {
-      name: 'FRED (macro)',
-      pct: (h) => {
-        if (!h.mb?.data_quality) return null;
-        const ok = h.mb.data_quality.sources_ok ?? 0;
-        const tot = ok + (h.mb.data_quality.sources_failed ?? 0) || 4;
-        return (ok / tot) * 100;
-      },
-    },
-    {
-      name: 'Breadth sentiment',
-      pct: (h) => {
-        if (!h.mbs?.data_quality) return null;
-        const ok = h.mbs.data_quality.sources_ok ?? 0;
-        const tot = ok + (h.mbs.data_quality.sources_failed ?? 0) || 3;
-        return (ok / tot) * 100;
-      },
-    },
-    {
-      name: 'Sector ETFs',
-      pct: (h) => {
-        if (!h.mss?.sectors) return null;
-        return (Object.keys(h.mss.sectors).length / 11) * 100;
-      },
-    },
+    { name: 'Yahoo / snapshots', pct: (h) => (h.tickers ? (h.tickers / universeSize) * 100 : null) },
+    { name: 'SEC Form 4 (insider)', pct: (h) => (h.insider != null ? (h.insider / universeSize) * 100 : null) },
+    { name: 'SEC 13F (holdings)', pct: (h) => (h.holdings_covered != null ? (h.holdings_covered / universeSize) * 100 : null) },
+    { name: 'FRED (macro)', pct: (h) => pctOf(h.macro_ok, h.macro_failed, 4) },
+    { name: 'Breadth sentiment', pct: (h) => pctOf(h.sentiment_ok, h.sentiment_failed, 3) },
+    { name: 'Sector ETFs', pct: (h) => (h.sectors != null ? (h.sectors / 11) * 100 : null) },
   ];
 
   const container = $('src-history');
@@ -491,18 +519,13 @@ function renderSourceHistory(history, universeSize) {
 }
 
 /* ----- Per-pillar data quality ---------------------------------------- */
-function renderPillarBreakdown(variableDetail) {
+function renderPillarBreakdown(pillars) {
   const container = $('pillar-breakdown');
   container.replaceChildren();
 
-  if (!variableDetail?.variables) {
+  if (!pillars || !Object.keys(pillars).length) {
     container.appendChild(el('p', { class: 'lhealth-note', text: 'No variable_detail file available for today.' }));
     return;
-  }
-
-  const byPillar = {};
-  for (const v of variableDetail.variables) {
-    (byPillar[v.pillar] ||= []).push(v);
   }
 
   // Display order matches the spec (Adoption / Institutional / Financial / Thesis / DES).
@@ -515,23 +538,15 @@ function renderPillarBreakdown(variableDetail) {
   ];
 
   for (const [key, label] of pillarOrder) {
-    const rows = byPillar[key] || [];
-    if (rows.length === 0) continue;
+    const p = pillars[key];
+    if (!p || !p.total) continue;
     const card = el('div', { class: 'lhealth-pillar' });
     card.appendChild(el('h3', { class: 'lhealth-pillar-title', text: label }));
-
-    // Inspect the data_quality flag keys present in this pillar.
-    // Count tickers where each flag is true.
-    const flagKeys = Object.keys(rows[0].data_quality || {});
-    const total = rows.length;
-    for (const k of flagKeys) {
-      // Skip non-boolean diagnostic keys like days_since_scored.
-      const sample = rows[0].data_quality[k];
-      if (typeof sample !== 'boolean') continue;
-      const trueCount = rows.filter((r) => r.data_quality?.[k] === true).length;
+    // Count of tickers where each boolean data_quality flag is true.
+    for (const [k, trueCount] of Object.entries(p.flags || {})) {
       const stat = el('div', { class: 'lhealth-pillar-stat' });
       stat.appendChild(el('span', { text: prettyFlag(k) }));
-      stat.appendChild(el('span', { text: `${trueCount}/${total}` }));
+      stat.appendChild(el('span', { text: `${trueCount}/${p.total}` }));
       card.appendChild(stat);
     }
     container.appendChild(card);
@@ -555,10 +570,10 @@ function renderRecentRuns(history14) {
 
     // Status — green if snapshot loaded; warn if partial (< 100 tickers);
     // fail if no snapshot at all.
-    const tickers = h.snap?.scores?.length || 0;
+    const tickers = h.tickers || 0;
     let status = 'ok';
     let glyph = '✓';
-    if (!h.snap) { status = 'fail'; glyph = '✗'; }
+    if (!h.snapshot) { status = 'fail'; glyph = '✗'; }
     else if (tickers < 100) { status = 'warn'; glyph = '!'; }
     const stTd = el('td');
     stTd.appendChild(el('span', { class: 'lhealth-pill', 'data-status': status, text: glyph }));

@@ -39,6 +39,10 @@
       display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 12px; margin: 20px 0 32px;
     }
+    /* CLS: hold the stat row's height until the JSON arrives (it used to
+       appear at ~0.3s and push the legend + heatmap down ~100px). */
+    .summary:empty { min-height: 102px; }
+    @media (max-width: 560px) { .summary:empty { min-height: 310px; } }
     .stat {
       background: var(--bg-elev); border: 1px solid var(--border);
       border-radius: 8px; padding: 14px 16px;

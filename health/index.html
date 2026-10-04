@@ -53,6 +53,9 @@
        (e.g. "42/50 sources up · 95/100 fact containers fresh · 3 critical"). Colored
        by the worst bucket present across either feed. */
     .unified { font-size: 14px; font-weight: 600; margin: 10px 0 4px; }
+    /* CLS: reserve the headline line while both feeds load. */
+    .unified:empty { min-height: 21px; }
+    @media (max-width: 560px) { .unified:empty { min-height: 42px; } }
     .unified.up { color: var(--up); }
     .unified.warn { color: var(--warn); }
     .unified.down { color: var(--down); }
@@ -653,8 +656,10 @@
         el.innerHTML = '<div class="empty">No files found.</div>';
         return;
       }
+      // .table-wrap: the 5 columns (long mono file names + timestamps) are
+      // ~760px wide; unwrapped they pushed the whole page sideways on a phone.
       el.innerHTML = `
-        <table>
+        <div class="table-wrap"><table>
           <thead>
             <tr>
               <th>Fact Container</th>
@@ -675,7 +680,7 @@
               </tr>
             `).join('')}
           </tbody>
-        </table>
+        </table></div>
       `;
     }
 

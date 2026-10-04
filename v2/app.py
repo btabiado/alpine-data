@@ -2446,6 +2446,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
   <div id="tab-overview">
+    <!-- CLS: reserve the filled height while the boot render (which waits
+             for Chart.js) hasn't run yet; :empty-only so no gap afterwards. -->
+        <style>#overviewNews:empty{min-height:225px}#overviewInsights:empty{min-height:290px}#overviewSentimentCard{min-height:150px}
+          /* The strip + spotlight above the news grid also fill at boot (~0.9s)
+             and pushed it down ~180px; hold their rows while empty. */
+          #tabFresh-overview:empty{display:block;visibility:hidden}
+          #overviewSpotlight:empty{min-height:125px}
+          @media (max-width:600px){#overviewSpotlight:empty{min-height:107px}}</style>
     <div id="aiTake-overview" class="aiTake-slot"></div>
     <!-- Freshness strip: OLDEST real observation date feeding this tab.
          Written by renderTabFreshness(); hidden while empty. -->
@@ -2460,6 +2468,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="v2-card" style="cursor:pointer" data-jump="trading" title="See full news feed in Trading tab">
         <div class="v2-card__head"><div><h2 class="v2-card__title">Latest crypto news</h2><div class="v2-card__subtitle">Top 4 · click for full feed</div></div></div>
         <div class="v2-card__body" id="overviewNews"></div>
+
       </div>
       <div class="v2-card v2-card--ai">
         <div class="v2-card__head"><div><h2 class="v2-card__title">Top insights</h2><div class="v2-card__subtitle">Most-relevant 4 right now</div></div></div>
@@ -2590,7 +2599,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div id="coinbaseSpotWrap" class="v2-card hidden" style="margin-top:6px">
       <div class="v2-card__head">
         <div>
-          <h2 class="v2-card__title">Coinbase spot <span class="tag">live exchange</span></h2>
+          <h2 class="v2-card__title">Coinbase spot <span class="tag">exchange quote</span> <span class="sub" id="coinbaseSpotAsOf" style="font-size:11px;font-weight:400;color:var(--muted)"></span></h2>
           <div class="v2-card__subtitle">Bid/ask + 24h range from Coinbase Exchange (US-regulated). Cross-check vs CoinGecko aggregate.</div>
         </div>
       </div>
@@ -2655,7 +2664,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <span style="color:var(--v2-bad)">OUTFLOWS</span>
       </div>
     </div>
-    <div class="card" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px">
+    <div class="card" id="etfLoadCard" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px">
       <span class="lbl" style="margin:0">Load data</span>
       <button class="btn" id="loadBtcBtn" title="Paste BTC ETF flow CSV from Farside">Paste BTC</button>
       <button class="btn" id="loadEthBtn" title="Paste ETH ETF flow CSV from Farside">Paste ETH</button>
@@ -3139,7 +3148,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="v2-card" id="aiNewsSummaryCard">
           <div class="v2-card__head">
             <div>
-              <h2 class="v2-card__title">AI news sentiment <span class="tag">live</span></h2>
+              <h2 class="v2-card__title">AI news sentiment <span class="tag">news feed</span></h2>
               <div class="v2-card__subtitle">Aggregate sentiment across AI/ML/chips coverage &middot; auto-classified POSITIVE / NEUTRAL / NEGATIVE</div>
             </div>
           </div>
@@ -3579,7 +3588,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </div>
     <div id="socialEmpty" class="empty hidden">
       No research data yet — all free sources (Reddit, CryptoCompare, Santiment) returned empty.
-      Refresh or wait for the next hourly cron.
+      Check back later — the site rebuilds every few hours.
     </div>
     <div id="socialContent">
       <div class="sub" id="socialAsOf" style="margin-bottom:6px"></div>
@@ -6873,12 +6882,26 @@ function renderWhaleEth(){
   const statsBox = document.getElementById('ethStatsBox');
   if (statsBox){
     if (bc.blocks_24h || bc.transactions_24h){
-      const avgFee = bc.avg_tx_fee_eth_24h;
-      const mp    = bc.market_price_usd;
-      const burn  = bc.burned_eth_24h;
-      const erc20 = bc.erc20_transactions_24h;
-      const erc721= bc.erc721_transactions_24h;
-      const inflation = bc.inflation_eth_24h;
+      // Coerce: Blockchair sometimes returns numeric fields as strings
+      // ("0.00123"), and a string has no .toFixed — that TypeError used to
+      // abort the whole ETH panel. Number(null/undefined/"") -> NaN, which
+      // Number.isFinite rejects, so missing fields stay hidden.
+      const toFiniteNum = (v) => {
+        if (v == null || v === '') return null;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      };
+      let avgFee = toFiniteNum(bc.avg_tx_fee_eth_24h);
+      // Older payloads carried Blockchair's raw WEI string under this *_eth_*
+      // name (fetch_market now converts), which rendered as
+      // "88120340117212.000000 ETH". No 24h average fee is ever >= 1 ETH, so
+      // a value that large is wei.
+      if (avgFee != null && avgFee >= 1) avgFee = avgFee / 1e18;
+      const mp    = toFiniteNum(bc.market_price_usd);
+      const burn  = toFiniteNum(bc.burned_eth_24h);
+      const erc20 = toFiniteNum(bc.erc20_transactions_24h);
+      const erc721= toFiniteNum(bc.erc721_transactions_24h);
+      const inflation = toFiniteNum(bc.inflation_eth_24h);
       // Deflationary if burn > inflation in the 24h window. Post-Merge this
       // flips between deflationary and mildly inflationary block-to-block.
       const netSupplyDelta = (burn != null && inflation != null) ? (inflation - burn) : null;
@@ -6887,7 +6910,7 @@ function renderWhaleEth(){
       statsBox.innerHTML = `
         <div>Blocks (24h): <strong style="color:var(--text)">${fmtNum(bc.blocks_24h||0, 0)}</strong></div>
         <div>Txs (24h): <strong style="color:var(--text)">${fmtNum(bc.transactions_24h||0, 0)}</strong></div>
-        ${avgFee != null ? `<div>Avg tx fee: <strong style="color:var(--text)">${avgFee.toFixed(6)} ETH</strong>${mp ? ` (~$${(avgFee*mp).toFixed(2)})` : ''}</div>` : ''}
+        ${avgFee != null ? `<div>Avg tx fee: <strong style="color:var(--text)">${avgFee.toFixed(6)} ETH</strong>${mp != null ? ` (~$${(avgFee*mp).toFixed(2)})` : ''}</div>` : ''}
         ${burn != null ? `<div><span class="v2-tip-anchor" data-v2-tip="ETH base fee permanently destroyed by every transaction since the London upgrade. Net deflationary when burn > issuance.">EIP-1559 burn</span> (24h): <strong class="${netCls}">${burn.toFixed(2)} ETH</strong>${mp ? ` (~${fmtUSD(burn*mp,'auto')})` : ''} <span style="color:var(--muted)">· ${netLbl}</span></div>` : ''}
         ${erc20  != null ? `<div>ERC-20 tx (24h): <strong style="color:var(--text)">${fmtNum(erc20, 0)}</strong></div>` : ''}
         ${erc721 != null ? `<div>ERC-721 tx (24h): <strong style="color:var(--text)">${fmtNum(erc721, 0)}</strong></div>` : ''}`;
@@ -8416,13 +8439,31 @@ function renderTabFreshness(){
 // alone in the header, which is how a page that rebuilds hourly managed to
 // look fresh while the series behind it were two months old. It now always
 // appears next to #dataFreshness, which reports the actual data age.
+// "12m ago" / "3h ago" / "2d ago" for a sub-day timestamp (build time,
+// exchange quote time). '' when unparseable. Stamps for DATA dates go through
+// freshness(); this is only for wall-clock events.
+function agoText(isoTs){
+  const raw = String(isoTs == null ? '' : isoTs).trim();
+  if (!raw) return '';
+  // generated_at is written without a zone ("2026-10-04T21:11:18") but is UTC.
+  const t = Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(raw) ? raw : raw + 'Z');
+  if (!isFinite(t)) return '';
+  const mins = Math.max(0, Math.round((Date.now() - t) / 60000));
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.round(mins / 60);
+  if (hrs < 48) return hrs + 'h ago';
+  return Math.round(hrs / 24) + 'd ago';
+}
+
 function setBuildStamp(){
   const el = document.getElementById('generatedAt');
   if (el){
-    el.textContent = 'built ' + (DATA.generated_at || '—');
-    el.title = 'When this page was rendered. The dashboard rebuilds hourly, so '
-             + 'this is always recent and says NOTHING about how old the data '
-             + 'is — that is the stamp to the right.';
+    const ago = agoText(DATA.generated_at);
+    el.textContent = 'built ' + (DATA.generated_at || '—') + (ago ? ' (' + ago + ')' : '');
+    el.title = 'When this page was rendered. The rebuild is scheduled hourly, but '
+             + 'GitHub Actions actually runs it every ~1–6 hours, so this can be '
+             + 'several hours old. It says NOTHING about how old the data is — '
+             + 'that is the stamp to the right.';
   }
   renderDataFreshness();
 }
@@ -9439,6 +9480,16 @@ function renderCoinbaseSpot(){
     return;
   }
   wrap.classList.remove('hidden');
+  // These are quotes captured when the page was built, not a live feed: say
+  // when (the OLDEST exchange ticker time across the rows) and how long ago.
+  const asOfEl = document.getElementById('coinbaseSpotAsOf');
+  if (asOfEl){
+    const times = rows.map(k => (cb[k] || {}).time).filter(t => typeof t === 'string' && isFinite(Date.parse(t))).sort();
+    const t0 = times[0] || null;
+    asOfEl.textContent = t0 ? '· quoted ' + t0.slice(0, 16).replace('T', ' ') + ' UTC (' + agoText(t0) + ')' : '';
+    asOfEl.title = 'Exchange ticker time of the snapshot taken at the last site rebuild. '
+                 + 'The page does not stream prices; it refreshes when the site rebuilds (every few hours).';
+  }
   tbody.innerHTML = rows.map(k => {
     const q = cb[k] || {};
     const sym = k.toUpperCase();
@@ -17693,7 +17744,7 @@ if (!isServer){
   const _rb = document.getElementById('refreshBtn');
   if (_rb){
     _rb.textContent = '↻ Reload';
-    _rb.title = 'Reload page to get the latest hourly snapshot';
+    _rb.title = 'Reload to get the latest published snapshot (the site rebuilds every few hours)';
     // Remove the existing live-server click handler by cloning the node.
     const _clone = _rb.cloneNode(true);
     _rb.parentNode.replaceChild(_clone, _rb);
@@ -17716,6 +17767,13 @@ if (!isServer){
     const b = document.getElementById(id);
     if (b) b.style.display = 'none';
   });
+  // /bookmarklet is a Flask route; on GitHub Pages it 404s. Remove the anchor
+  // (not just hide it) so it can't be reached or crawled, and drop the whole
+  // "Load data" card — every control on it needs the local server.
+  const _bm = document.getElementById('bookmarkletLink');
+  if (_bm) _bm.remove();
+  const _lc = document.getElementById('etfLoadCard');
+  if (_lc) _lc.style.display = 'none';
 }
 
 // ---------- Share modal (owner side) ----------

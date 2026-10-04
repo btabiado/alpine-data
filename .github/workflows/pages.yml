@@ -733,6 +733,21 @@ jobs:
           exit $rc
         continue-on-error: true
 
+      - name: Build LTHCS site indexes (file listing, health summary, pillar history)
+        # GitHub Pages cannot list directories, so the LTHCS pages used to
+        # discover files by requesting them: pipeline.html walked back day by
+        # day with HEAD probes (~285 x 404, ~35 s spinner), /lthcs/health/
+        # pulled 30 days of insider/13F/snapshot JSON (~50 MB) to count keys,
+        # and the detail modal fetched every snapshot (~48 MB) for 5 lines.
+        # This writes data/lthcs/file_index.json, health_summary.json and
+        # history/pillars_by_ticker/<T>.json from the committed data so the
+        # staging below ships them. Pure transform, no network; not committed
+        # (.gitignore). Non-fatal: every page falls back to its old behaviour
+        # when these files are missing.
+        if: hashFiles('scripts/build_lthcs_site_index.py') != ''
+        run: python scripts/build_lthcs_site_index.py --root data/lthcs || echo "[lthcs-index] build failed; pages fall back to probing"
+        continue-on-error: true
+
       - name: Stage site directory
         run: |
           mkdir -p _site
