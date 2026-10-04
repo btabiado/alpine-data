@@ -32,7 +32,8 @@ summary, reported, media, explanation]``. The scrape is polite:
   * 2-second minimum delay between month requests,
   * monthly responses cached on disk (``data/.stale/nuforc_subndx_YYYYMM.json``)
     so subsequent runs only re-fetch the current and prior month (which can
-    still get new entries),
+    still get new entries) plus any month that was cached before it ended
+    (a partial snapshot — see ``_month_cache_complete``),
   * a 5-minute hard wall-clock cap — if the scrape doesn't finish in time we
     ship whatever we got and merge with the historical mirror,
   * stops early if 3 consecutive months 404 (i.e. we've scrolled past the
@@ -40,6 +41,18 @@ summary, reported, media, explanation]``. The scrape is polite:
 
 Where the two sources overlap (2014-05–2014-09 in the wild), the NUFORC live
 scrape WINS (more accurate; it IS the upstream).
+
+**Status since 2026-06-10: the live scrape is blocked, on purpose.** nuforc.org
+now answers every non-browser request (month pages, admin-ajax, even
+robots.txt) with HTTP 403 + ``cf-mitigated: challenge`` — a Cloudflare managed
+challenge that needs JavaScript. NUFORC's terms of service also forbid
+automated harvesting without written consent. Do NOT "fix" this with
+challenge solvers, headless browsers, proxy rotation or cookie replay; the
+gate is deliberate. Until NUFORC grants a sanctioned feed, every run serves the
+committed month cache (data frozen at 2026-06-09) and says so loudly: a
+``::warning title=MUFON not refreshed`` annotation naming the cause, plus
+``_stale`` / ``data_through`` / ``live_refresh`` in the payload so the
+dashboard can show the real data date instead of the build clock.
 
 Output schema (sidecar v2/data-mufon.json) ::
 
@@ -90,11 +103,19 @@ capped at the trailing 36 months only — pre-2024 monthly shape detail is
 rarely useful and the payload bloat isn't justified. Both feed the V2 UAP
 trend / shapes charts' sub-yearly toggles (30d / 90d / YTD).
 
-The ``recent_buckets`` field is anchored to **today** (UTC) once the live
-scrape contributes data — so "30d" really means the last 30 days. If the
-live scrape produces zero rows AND we fall back to pure planetsig, we set
-``_stale: True`` and the buckets reset to be anchored to the dataset's last
-entry (2014-05-08) so the dashboard renders an honest "no recent data".
+The ``recent_buckets`` field is anchored to **today** (UTC) only when this
+run pulled at least one fresh month over the network — so "30d" really means
+the last 30 days. Otherwise (NUFORC unreachable, rows served from the month
+cache or the planetsig mirror alone) we set ``_stale: True`` and anchor the
+buckets to the dataset's newest entry, recorded in ``recent_buckets_anchor``,
+so the dashboard renders an honest "no recent data" instead of a fake lull.
+
+Freshness fields (added alongside, nothing renamed): ``data_through`` is
+``date_range[1]`` — the newest sighting on file and the ONLY data date.
+``generated_at`` is the build clock and advances every deploy regardless.
+``live_refresh`` = ``{ok, months_refreshed, cause, blocked_by, attempted_at}``
+says whether this run actually refreshed anything and, if not, why
+(``blocked_by: "cloudflare_challenge"`` for the bot gate).
 
 Shape aggregations
 ------------------
@@ -164,6 +185,14 @@ NUFORC_CACHE_DIR = ROOT / "data" / ".stale"
 # on its way back to the multi-minute backfill that used to blow the V2 build's
 # step timeout. Surfaced as a CI annotation rather than silently absorbed.
 NUFORC_BACKFILL_ALERT_MONTHS = 6
+# Prefix of the failure cause recorded when nuforc.org answers with its
+# Cloudflare bot challenge instead of content. Kept as one constant so the
+# fetch loop, the annotation and the tests agree on the wording.
+CF_CHALLENGE_LABEL = "Cloudflare challenge"
+# Key stamped into every month cache file this fetcher writes: the UTC time
+# the month was fetched. A month is only "complete" once it was fetched on or
+# after the 1st of the FOLLOWING month (see _month_cache_complete).
+CACHE_FETCHED_AT_KEY = "_alpine_fetched_at"
 
 # Probed in order. First one that yields >1000 sane rows wins. The historical
 # planetsig mirror is the load-bearing fallback; the Renner candidates are
@@ -204,17 +233,7 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _http_get_text(url: str, timeout: int = 60) -> str | None:
-    """GET text via stdlib urllib (no requests dependency). Returns None on
-    any failure (404, timeout, decode error). Stays quiet — callers log."""
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
-    try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            if resp.status != 200:
-                return None
-            raw = resp.read()
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError):
-        return None
+def _decode_text(raw: bytes) -> str:
     # NUFORC text is usually latin-1 (some legacy escapes); fall back to
     # replace errors so a bad byte never aborts the parse.
     for enc in ("utf-8", "latin-1"):
@@ -223,6 +242,75 @@ def _http_get_text(url: str, timeout: int = 60) -> str | None:
         except UnicodeDecodeError:
             continue
     return raw.decode("utf-8", errors="replace")
+
+
+def _is_cloudflare_challenge(status: int | None, headers: Any,
+                             body_head: str) -> bool:
+    """True when a response is Cloudflare's bot challenge, not a real page.
+
+    Since ~2026-06-10 nuforc.org answers every non-browser request (even
+    robots.txt) with HTTP 403, ``cf-mitigated: challenge`` and a "Just a
+    moment..." interstitial that needs JavaScript to pass. Telling that apart
+    from an ordinary 403/404 is the whole point: the failure annotation has to
+    name the real cause, because "unreachable" sends people looking for an
+    outage or a parser bug that does not exist.
+    """
+    if status not in (403, 503):
+        return False
+    mitigated = ""
+    try:
+        mitigated = str((headers or {}).get("cf-mitigated") or "")
+    except Exception:
+        mitigated = ""
+    if "challenge" in mitigated.lower():
+        return True
+    return "<title>just a moment" in (body_head or "").lower()
+
+
+def _http_fetch(url: str, *, data: bytes | None = None,
+                headers: dict[str, str] | None = None,
+                timeout: int = 60,
+                encoding: str | None = None) -> tuple[str | None, str | None]:
+    """GET (or POST, when ``data`` is given) via stdlib urllib.
+
+    Returns ``(text, None)`` on HTTP 200, else ``(None, cause)`` where cause
+    is a short human-readable reason — ``"Cloudflare challenge (403)"`` when
+    the host served its bot gate (see ``_is_cloudflare_challenge``),
+    ``"HTTP 404"``, ``"network error (...)"``. Never raises for HTTP/network
+    trouble. ``encoding`` forces one codec (errors replaced) instead of the
+    utf-8 -> latin-1 sniff, for JSON bodies.
+    """
+    hdrs = {"User-Agent": UA}
+    hdrs.update(headers or {})
+    req = urllib.request.Request(url, data=data, headers=hdrs,
+                                 method="POST" if data is not None else "GET")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            status = getattr(resp, "status", 200)
+            raw = resp.read()
+    except urllib.error.HTTPError as e:
+        try:
+            head = (e.read(8192) or b"").decode("utf-8", errors="replace")
+        except Exception:
+            head = ""
+        if _is_cloudflare_challenge(e.code, e.headers, head):
+            return None, f"{CF_CHALLENGE_LABEL} ({e.code})"
+        return None, f"HTTP {e.code}"
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        reason = getattr(e, "reason", None) or e
+        return None, f"network error ({type(e).__name__}: {reason})"
+    if status != 200:
+        return None, f"HTTP {status}"
+    if encoding:
+        return raw.decode(encoding, errors="replace"), None
+    return _decode_text(raw), None
+
+
+def _http_get_text(url: str, timeout: int = 60) -> str | None:
+    """GET text via stdlib urllib (no requests dependency). Returns None on
+    any failure (404, timeout, decode error). Stays quiet — callers log.
+    Use ``_http_fetch`` when the caller needs to know WHY it failed."""
+    return _http_fetch(url, timeout=timeout)[0]
 
 
 def _parse_datetime(s: str) -> datetime | None:
@@ -611,6 +699,12 @@ def aggregate(rows: list[dict], anchor_dt: datetime | None = None) -> dict:
         "by_state_year": by_state_year,
         "top_cities_by_state": top_cities_by_state,
         "recent_buckets": recent_buckets,
+        # The day the recent_buckets windows end on: today when this run
+        # pulled fresh months, else the newest sighting on file. The map's
+        # "last 30d" label needs it — reading date_range[1] instead claimed
+        # the wrong anchor whenever the buckets were anchored to today.
+        "recent_buckets_anchor": (bucket_anchor.date().isoformat()
+                                  if bucket_anchor is not None else None),
         "totals_by_year": totals_by_year,
         "shape_totals": shape_totals_list,
         "shape_by_year": shape_by_year,
@@ -683,6 +777,13 @@ def _nuforc_fetch_month(yyyymm: str, nonce: str,
     returned as the dict — the caller decides whether that means 404 or
     "month exists but empty".
     """
+    return _nuforc_fetch_month_ex(yyyymm, nonce, timeout=timeout)[0]
+
+
+def _nuforc_fetch_month_ex(yyyymm: str, nonce: str,
+                           timeout: int = 60) -> tuple[dict | None, str | None]:
+    """``_nuforc_fetch_month`` plus the failure cause: ``(payload, None)`` on
+    success, ``(None, cause)`` otherwise (cause as in ``_http_fetch``)."""
     body = urllib.parse.urlencode({
         "draw": "1",
         "start": "0",
@@ -705,16 +806,19 @@ def _nuforc_fetch_month(yyyymm: str, nonce: str,
         "Referer": f"{NUFORC_MONTH_PAGE}{yyyymm}",
         "Accept": "application/json, text/javascript, */*; q=0.01",
     }
-    req = urllib.request.Request(url, data=body, method="POST", headers=headers)
+    text, err = _http_fetch(url, data=body, headers=headers, timeout=timeout,
+                            encoding="utf-8")
+    if text is None:
+        return None, err
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            raw = resp.read()
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError):
-        return None
-    try:
-        return json.loads(raw.decode("utf-8", errors="replace"))
+        parsed = json.loads(text)
     except (json.JSONDecodeError, ValueError):
-        return None
+        if "<title>just a moment" in text[:8192].lower():
+            return None, f"{CF_CHALLENGE_LABEL} (200 interstitial)"
+        return None, "admin-ajax returned non-JSON"
+    if not isinstance(parsed, dict):
+        return None, "admin-ajax returned unexpected JSON"
+    return parsed, None
 
 
 def _nuforc_parse_data_rows(data: list) -> list[dict]:
@@ -754,6 +858,55 @@ def _months_back_iter(n: int) -> list[str]:
     return out
 
 
+def _month_after(yyyymm: str) -> datetime:
+    """First instant (naive UTC) of the calendar month after ``yyyymm``."""
+    y, m = int(yyyymm[:4]), int(yyyymm[4:6])
+    return datetime(y + (m == 12), 1 if m == 12 else m + 1, 1)
+
+
+def _cache_fetched_lower_bound(cached: dict) -> datetime | None:
+    """Earliest moment the cached month can have been fetched (naive UTC).
+
+    Files written by this fetcher carry ``CACHE_FETCHED_AT_KEY``. Older files
+    don't, so fall back to the newest ``reported`` / ``occurred`` timestamp in
+    the rows: the fetch cannot predate a report it contains. That bound is
+    what exposes the June 2026 file — 40 rows, newest reported 2026-06-09,
+    i.e. fetched mid-month — while every month cached after it ended clears
+    it easily (NUFORC posts late reports for weeks).
+    """
+    stamp = cached.get(CACHE_FETCHED_AT_KEY)
+    if isinstance(stamp, str) and stamp:
+        try:
+            return datetime.fromisoformat(stamp.replace("Z", "+00:00")) \
+                .astimezone(timezone.utc).replace(tzinfo=None)
+        except ValueError:
+            pass
+    newest: datetime | None = None
+    for r in cached.get("data", []) or []:
+        if not isinstance(r, list):
+            continue
+        for idx in (7, 1):  # 7 = reported, 1 = occurred
+            if len(r) > idx:
+                dt = _parse_datetime(_strip_html(str(r[idx] or "")))
+                if dt is not None and (newest is None or dt > newest):
+                    newest = dt
+    return newest
+
+
+def _month_cache_complete(cached: dict, yyyymm: str) -> bool:
+    """True when a cached month was fetched after the month had ended.
+
+    A month cached while it was still the current month is a partial
+    snapshot. The old loop only refreshed {current, prior}, so once the
+    calendar moved two months on, a partial month was served as if final
+    forever — June 2026 froze at 40 rows when NUFORC went dark on the 10th.
+    Incomplete months are now refetched every run until a fetch made after
+    month-end replaces them.
+    """
+    fetched = _cache_fetched_lower_bound(cached)
+    return fetched is not None and fetched >= _month_after(yyyymm)
+
+
 # DELIBERATELY NOT IMPLEMENTED: pruning cached months that fall out of the
 # rolling window.
 #
@@ -784,12 +937,20 @@ def _fetch_nuforc_live(months_back: int = 144,
     Returns a dict ``{"rows": [...], "meta": {...}}``. ``rows`` is the
     normalized per-row list (same shape as ``_row_iter`` output). ``meta``
     carries diagnostics: ``months_pulled``, ``months_404``, ``months_cached``,
-    ``wall_clock_sec``, ``stopped_reason``.
+    ``months_refreshed`` (months that came back over the network WITH rows —
+    0 means nothing new arrived this run), ``failure_cause`` /
+    ``cloudflare_challenge`` (why the network part failed, if it did),
+    ``incomplete_months_served`` (partial months that could not be
+    refetched), ``wall_clock_sec``, ``stopped_reason``.
 
     Cache policy: every successfully-fetched month is written to
-    ``cache_dir / nuforc_subndx_YYYYMM.json`` and re-loaded on subsequent
-    runs WITHOUT a network call — *except* the current and prior month,
-    which are always re-fetched (they accumulate new entries).
+    ``cache_dir / nuforc_subndx_YYYYMM.json`` (stamped with
+    ``CACHE_FETCHED_AT_KEY``) and re-loaded on subsequent runs WITHOUT a
+    network call — *except* the current and prior month, which are always
+    re-fetched (they accumulate new entries), and any month whose cache is
+    incomplete (fetched before the month ended, see
+    ``_month_cache_complete``). Whenever a refetch fails, the cached copy is
+    served instead of dropping the month.
     """
     cache_dir.mkdir(parents=True, exist_ok=True)
     today_ym = datetime.now(timezone.utc).strftime("%Y%m")
@@ -804,20 +965,46 @@ def _fetch_nuforc_live(months_back: int = 144,
     months_pulled = 0
     months_404 = 0
     months_cached = 0
+    months_refreshed = 0
     consecutive_misses = 0
     months_skipped_offline = 0
     stopped_reason: str | None = None
+    failure_cause: str | None = None
+    cloudflare_challenge = False
+    incomplete_months_served: list[str] = []
 
     window = _months_back_iter(months_back)
 
     nonce: str | None = None  # lazy-fetch on first network request
-    # Set once the network proves unusable (bootstrap page unreachable, or
-    # reachable but nonce-less). We then stop *attempting* network months but
-    # keep walking the window so every cached month still lands in the payload.
-    # Previously this was a `break`, which threw away ~142 perfectly good
-    # cached months because the newest month — always first, always in
-    # always_refresh, therefore always a network call — happened to fail.
+    # Set once the network proves unusable (bootstrap page unreachable or
+    # nonce-less, or a Cloudflare challenge anywhere). We then stop
+    # *attempting* network months but keep walking the window so every cached
+    # month still lands in the payload. Previously this was a `break`, which
+    # threw away ~142 perfectly good cached months because the newest month —
+    # always first, always in always_refresh, therefore always a network call
+    # — happened to fail.
     network_disabled = False
+
+    def _note_failure(cause: str) -> None:
+        nonlocal failure_cause, cloudflare_challenge
+        if cause.startswith(CF_CHALLENGE_LABEL):
+            cloudflare_challenge = True
+            # The challenge is the most specific explanation there is; let it
+            # replace a vaguer cause recorded earlier in the run.
+            if not (failure_cause or "").startswith(CF_CHALLENGE_LABEL):
+                failure_cause = cause
+        elif failure_cause is None:
+            failure_cause = cause
+
+    def _serve_cache(ym: str, cached: dict, complete: bool) -> None:
+        nonlocal months_cached, consecutive_misses
+        rows.extend(_nuforc_parse_data_rows(cached.get("data", []) or []))
+        months_cached += 1
+        # A cached month resets the consecutive-miss counter because we have
+        # evidence the era is populated.
+        consecutive_misses = 0
+        if not complete:
+            incomplete_months_served.append(ym)
 
     for ym in window:
         elapsed = time.monotonic() - start
@@ -826,122 +1013,138 @@ def _fetch_nuforc_live(months_back: int = 144,
             break
 
         cache_path = cache_dir / f"nuforc_subndx_{ym}.json"
-
-        # Cache hit (and not in the always-refresh window)?
-        #
-        # Once the network is known-down we also accept a cached copy of the
-        # always-refresh months: a current month that is a day or two stale is
-        # strictly better than serving nothing for it.
-        if cache_path.exists() and (ym not in always_refresh or network_disabled):
+        cached: dict | None = None
+        if cache_path.exists():
             try:
-                cached = json.loads(cache_path.read_text())
-                month_rows = _nuforc_parse_data_rows(cached.get("data", []))
-                rows.extend(month_rows)
-                months_cached += 1
-                # A cached month resets the consecutive-miss counter because
-                # we have evidence the era is populated.
-                consecutive_misses = 0
-                continue
+                loaded = json.loads(cache_path.read_text())
+                cached = loaded if isinstance(loaded, dict) else None
             except (OSError, json.JSONDecodeError, ValueError):
-                # Corrupt cache — fall through to refetch.
-                pass
+                cached = None  # corrupt cache — treat as missing, refetch
+        cache_complete = cached is not None and _month_cache_complete(cached, ym)
 
-        # Everything below this point needs the network. If an earlier
-        # iteration already proved it unusable, don't keep re-proving it once
-        # per month — skip straight on so the remaining cached months are
-        # still collected.
-        if network_disabled:
-            months_skipped_offline += 1
+        # Final, complete month outside the always-refresh window: no network.
+        if cached is not None and cache_complete and ym not in always_refresh:
+            _serve_cache(ym, cached, cache_complete)
             continue
 
-        # First network call — bootstrap the wdtNonce. The nonce only
-        # appears on /subndx/ pages where the wpDataTables instance is
-        # rendered (NOT on /ndx/?id=event), so we use the very same page
-        # we're about to scrape: the current month.
-        if nonce is None:
+        # Everything below wants the network. Once it is known-down, serve the
+        # cached copy (a stale/partial month beats a missing one) or skip.
+        payload: dict | None = None
+        if not network_disabled and nonce is None:
+            # First network call — bootstrap the wdtNonce. The nonce only
+            # appears on /subndx/ pages where the wpDataTables instance is
+            # rendered (NOT on /ndx/?id=event), so we use the very same page
+            # we're about to scrape.
             try:
-                bootstrap_html = _http_get_text(f"{NUFORC_MONTH_PAGE}{ym}")
-            except Exception:
-                bootstrap_html = None
+                bootstrap_html, boot_err = _http_fetch(f"{NUFORC_MONTH_PAGE}{ym}")
+            except Exception as e:  # pragma: no cover - defensive
+                bootstrap_html, boot_err = None, f"{type(e).__name__}: {e}"
             if not bootstrap_html:
-                # Degrade to cache-only rather than abandoning the backfill.
                 network_disabled = True
-                months_skipped_offline += 1
-                stopped_reason = ("could_not_load_bootstrap_page "
-                                  "(degraded to cache-only for remaining months)")
+                _note_failure(f"{boot_err or 'empty response'} on "
+                              f"{NUFORC_MONTH_PAGE}{ym}")
+                stopped_reason = (f"could_not_load_bootstrap_page: "
+                                  f"{boot_err or 'empty response'} "
+                                  f"(degraded to cache-only for remaining months)")
                 print(f"  NUFORC: {stopped_reason}", file=sys.stderr)
-                continue
-            nonce = _nuforc_extract_nonce(bootstrap_html)
-            if not nonce:
-                # Diagnostic dump — surface enough context in CI logs that a
-                # future regression is debuggable without re-fetching the page.
-                has_wdt = "wdtNonce" in bootstrap_html
-                has_input = '<input' in bootstrap_html
-                size = len(bootstrap_html)
-                network_disabled = True
-                months_skipped_offline += 1
-                stopped_reason = (
-                    f"could_not_extract_nonce "
-                    f"(bootstrap={size}B, has_wdtNonce_token={has_wdt}, "
-                    f"has_input_tag={has_input}, url={NUFORC_MONTH_PAGE}{ym}) "
-                    f"(degraded to cache-only for remaining months)"
-                )
-                print(f"  NUFORC: {stopped_reason}", file=sys.stderr)
-                continue
+            else:
+                nonce = _nuforc_extract_nonce(bootstrap_html)
+                if not nonce:
+                    # Diagnostic dump — surface enough context in CI logs that
+                    # a future regression is debuggable without re-fetching.
+                    has_wdt = "wdtNonce" in bootstrap_html
+                    has_input = '<input' in bootstrap_html
+                    size = len(bootstrap_html)
+                    network_disabled = True
+                    if "<title>just a moment" in bootstrap_html[:8192].lower():
+                        _note_failure(f"{CF_CHALLENGE_LABEL} (200 interstitial) "
+                                      f"on {NUFORC_MONTH_PAGE}{ym}")
+                    else:
+                        _note_failure(f"no wdtNonce on {NUFORC_MONTH_PAGE}{ym} "
+                                      f"(page markup changed?)")
+                    stopped_reason = (
+                        f"could_not_extract_nonce "
+                        f"(bootstrap={size}B, has_wdtNonce_token={has_wdt}, "
+                        f"has_input_tag={has_input}, url={NUFORC_MONTH_PAGE}{ym}) "
+                        f"(degraded to cache-only for remaining months)"
+                    )
+                    print(f"  NUFORC: {stopped_reason}", file=sys.stderr)
 
-        # Polite delay between actual network requests. Skip on the very
-        # first network call so we don't pay it for nothing.
-        if months_pulled + months_404 > 0:
-            time.sleep(NUFORC_REQUEST_DELAY_SEC)
-
-        try:
-            payload = _nuforc_fetch_month(ym, nonce)
-        except Exception:
-            payload = None
-        if payload is None:
-            months_404 += 1
-            consecutive_misses += 1
-            print(f"  NUFORC: {ym} request failed (will continue)",
-                  file=sys.stderr)
-            if consecutive_misses >= NUFORC_404_STREAK_CAP:
-                stopped_reason = (f"hit {NUFORC_404_STREAK_CAP} consecutive "
-                                  f"failures (likely past earliest archive)")
-                break
-            continue
-
-        data = payload.get("data", []) or []
-        month_rows = _nuforc_parse_data_rows(data)
-
-        # Only cache a month that actually produced rows.
-        #
-        # Every month inside the rolling window is 2014-or-later and NUFORC has
-        # hundreds of reports for all of them, so "HTTP 200 with an empty data
-        # array" is never legitimate here — it is what wpDataTables returns when
-        # the wdtNonce is stale/rejected. Caching that would pin the month at
-        # zero rows forever (only {today, prior} are ever re-fetched), and now
-        # that pages.yml commits the cache back, the poisoned month would be
-        # committed too. Leaving it uncached costs one retry next run.
-        if month_rows:
+        if not network_disabled and nonce:
+            # Polite delay between actual network requests. Skip on the very
+            # first network call so we don't pay it for nothing.
+            if months_pulled + months_404 > 0:
+                time.sleep(NUFORC_REQUEST_DELAY_SEC)
             try:
-                cache_path.write_text(json.dumps(payload))
-            except OSError:
-                pass  # cache write failure isn't fatal
-            rows.extend(month_rows)
-            months_pulled += 1
-            consecutive_misses = 0
-            print(f"  NUFORC: {ym} -> {len(month_rows)} rows",
-                  file=sys.stderr)
-        else:
-            # Empty month — likely beyond the archive's depth. Count toward
-            # the 404 streak so the cap kicks in eventually.
+                payload, month_err = _nuforc_fetch_month_ex(ym, nonce)
+            except Exception as e:  # pragma: no cover - defensive
+                payload, month_err = None, f"{type(e).__name__}: {e}"
+            if payload is None:
+                months_404 += 1
+                cause = month_err or "request failed"
+                _note_failure(f"{cause} on admin-ajax for {ym}")
+                print(f"  NUFORC: {ym} request failed: {cause} (will continue)",
+                      file=sys.stderr)
+                if cause.startswith(CF_CHALLENGE_LABEL):
+                    # A bot gate is site-wide; hammering it once per month
+                    # changes nothing. Go cache-only for the rest of the run.
+                    network_disabled = True
+                    stopped_reason = (f"{cause} on admin-ajax "
+                                      f"(degraded to cache-only for remaining months)")
+
+        if payload is not None:
+            data = payload.get("data", []) or []
+            month_rows = _nuforc_parse_data_rows(data)
+            # Only cache a month that actually produced rows.
+            #
+            # Every month inside the rolling window is 2014-or-later and NUFORC
+            # has hundreds of reports for all of them, so "HTTP 200 with an
+            # empty data array" is never legitimate here — it is what
+            # wpDataTables returns when the wdtNonce is stale/rejected. Caching
+            # that would pin the month at zero rows, and now that pages.yml
+            # commits the cache back, the poisoned month would be committed too.
+            # Leaving it uncached costs one retry next run.
+            if month_rows:
+                payload[CACHE_FETCHED_AT_KEY] = _now_iso()
+                try:
+                    cache_path.write_text(json.dumps(payload))
+                except OSError:
+                    pass  # cache write failure isn't fatal
+                rows.extend(month_rows)
+                months_pulled += 1
+                months_refreshed += 1
+                consecutive_misses = 0
+                print(f"  NUFORC: {ym} -> {len(month_rows)} rows",
+                      file=sys.stderr)
+                continue
+            # Empty month — stale nonce, or beyond the archive's depth.
             months_pulled += 1  # we DID get a response, just empty
+            _note_failure(f"admin-ajax returned 0 rows for {ym} "
+                          f"(stale or rejected wdtNonce?)")
+            print(f"  NUFORC: {ym} -> 0 rows (empty month)", file=sys.stderr)
+            if cached is not None:
+                _serve_cache(ym, cached, cache_complete)
+                continue
+            # Count toward the 404 streak so the cap kicks in eventually.
             consecutive_misses += 1
-            print(f"  NUFORC: {ym} -> 0 rows (empty month)",
-                  file=sys.stderr)
             if consecutive_misses >= NUFORC_404_STREAK_CAP:
                 stopped_reason = (f"hit {NUFORC_404_STREAK_CAP} consecutive "
                                   f"empty months (likely past earliest archive)")
                 break
+            continue
+
+        # No fresh payload: network down, or this month's request failed.
+        if cached is not None:
+            _serve_cache(ym, cached, cache_complete)
+            continue
+        if network_disabled:
+            months_skipped_offline += 1
+            continue
+        consecutive_misses += 1
+        if consecutive_misses >= NUFORC_404_STREAK_CAP:
+            stopped_reason = (f"hit {NUFORC_404_STREAK_CAP} consecutive "
+                              f"failures (likely past earliest archive)")
+            break
 
     wall_clock_sec = time.monotonic() - start
     if stopped_reason is None:
@@ -950,8 +1153,12 @@ def _fetch_nuforc_live(months_back: int = 144,
         "months_pulled": months_pulled,
         "months_404": months_404,
         "months_cached": months_cached,
+        "months_refreshed": months_refreshed,
         "months_skipped_offline": months_skipped_offline,
         "network_disabled": network_disabled,
+        "cloudflare_challenge": cloudflare_challenge,
+        "failure_cause": failure_cause,
+        "incomplete_months_served": incomplete_months_served,
         "wall_clock_sec": round(wall_clock_sec, 1),
         "stopped_reason": stopped_reason,
     }
@@ -1003,9 +1210,13 @@ def fetch_all(months_back: int = 144,
 
     live_rows: list[dict] = []
     live_meta: dict = {"months_pulled": 0, "months_404": 0,
-                       "months_cached": 0,
+                       "months_cached": 0, "months_refreshed": 0,
                        "months_skipped_offline": 0,
-                       "network_disabled": False, "wall_clock_sec": 0.0,
+                       "network_disabled": False,
+                       "cloudflare_challenge": False,
+                       "failure_cause": None,
+                       "incomplete_months_served": [],
+                       "wall_clock_sec": 0.0,
                        "stopped_reason": "skipped"}
     if live_scrape:
         try:
@@ -1015,6 +1226,9 @@ def fetch_all(months_back: int = 144,
         except Exception as e:
             print(f"  NUFORC: live scrape crashed: {e}", file=sys.stderr)
             live_rows = []
+            live_meta = dict(live_meta, stopped_reason="crashed",
+                             failure_cause=f"live scrape crashed "
+                                           f"({type(e).__name__}: {e})")
 
     if not historical_rows and not live_rows:
         return None
@@ -1039,11 +1253,14 @@ def fetch_all(months_back: int = 144,
     else:
         merged_rows = list(historical_rows)
 
-    # Anchor recent_buckets to "now" when the live scrape contributed data —
-    # otherwise we keep the legacy max-dt anchor so a frozen dataset stays
-    # honest.
+    # Anchor recent_buckets to "now" only when this run actually pulled fresh
+    # months over the network. Rows served purely from the month cache are as
+    # frozen as the historical mirror: anchoring them to today made every
+    # state read "0 sightings in the last 30/60/90 days" under a note saying
+    # "anchored to today", which presents an outage as a real-world lull.
+    fresh_live = bool(live_rows) and live_meta.get("months_refreshed", 0) > 0
     anchor_dt: datetime | None = None
-    if live_rows:
+    if fresh_live:
         anchor_dt = datetime.now(timezone.utc).replace(tzinfo=None)
 
     payload = aggregate(merged_rows, anchor_dt=anchor_dt)
@@ -1064,10 +1281,45 @@ def fetch_all(months_back: int = 144,
     else:
         payload["source"] = "nuforc.org direct (subndx scrape)"
         payload["source_url"] = NUFORC_BASE + "/subndx/"
+    if live_scrape and not fresh_live:
+        # Same meaning as the planetsig-only case: nothing new arrived this
+        # run. The dashboard's "(stale)" chips and anchor notes key off this.
+        payload["_stale"] = True
 
     payload["generated_at"] = _now_iso()
+    # generated_at is the build clock — it advances every deploy whether or
+    # not a single new sighting arrived. These two fields say what the data
+    # actually covers and whether this run refreshed it.
+    payload["data_through"] = payload["date_range"][1]
+    payload["live_refresh"] = _live_refresh_status(live_meta, live_scrape,
+                                                   payload["generated_at"])
     payload["_nuforc_live_meta"] = live_meta
     return payload
+
+
+def _live_refresh_status(meta: dict, live_scrape: bool,
+                         attempted_at: str) -> dict:
+    """Public summary of this run's NUFORC refresh, shipped in the payload.
+
+    ``ok`` is True only when at least one month came back over the network
+    with rows, and None when the live scrape was switched off (--no-live).
+    """
+    refreshed = int(meta.get("months_refreshed", 0) or 0)
+    if not live_scrape:
+        return {"ok": None, "months_refreshed": 0,
+                "cause": "live scrape disabled (--no-live)",
+                "blocked_by": None, "attempted_at": attempted_at}
+    ok = refreshed > 0
+    cause = None if ok else (meta.get("failure_cause")
+                             or "no NUFORC month returned any rows")
+    return {
+        "ok": ok,
+        "months_refreshed": refreshed,
+        "cause": cause,
+        "blocked_by": ("cloudflare_challenge"
+                       if (not ok and meta.get("cloudflare_challenge")) else None),
+        "attempted_at": attempted_at,
+    }
 
 
 # ----- self-test -------------------------------------------------------------
@@ -1273,21 +1525,34 @@ def main(argv: list[str] | None = None) -> int:
         except Exception:
             prior = None
 
+    fetch_error: str | None = None
     try:
         payload = fetch_all(months_back=args.months_back,
                             live_scrape=not args.no_live)
     except Exception as e:
         print(f"  [mufon] unexpected fetch error: {e}", file=sys.stderr)
+        fetch_error = f"fetch crashed ({type(e).__name__}: {e})"
         payload = None
 
     if payload is None:
+        cause = fetch_error or ("every source failed (historical mirror and "
+                                "NUFORC month cache both empty)")
         if prior and prior.get("total_records", 0) > 1000:
             print("  [mufon] every probe failed; preserving prior file.",
                   file=sys.stderr)
             # Mark stale so the renderer can show a "data not refreshed" chip.
             prior["_stale"] = True
+            through = (prior.get("date_range") or [None, None])[-1]
+            prior["data_through"] = through
+            prior["live_refresh"] = {"ok": False, "months_refreshed": 0,
+                                     "cause": cause, "blocked_by": None,
+                                     "attempted_at": _now_iso()}
             out_path.write_text(json.dumps(prior))
+            _report_nuforc_refresh({"months_refreshed": 0,
+                                    "failure_cause": cause}, through)
             return 1
+        _report_nuforc_refresh({"months_refreshed": 0, "failure_cause": cause},
+                               None)
         # No prior, no fresh data — write a minimal placeholder so the
         # client gets a clean empty-state instead of a 404.
         empty = {
@@ -1317,12 +1582,77 @@ def main(argv: list[str] | None = None) -> int:
           f"range {payload['date_range'][0]}..{payload['date_range'][1]})")
     if "_nuforc_live_meta" in payload:
         m = payload["_nuforc_live_meta"]
-        print(f"  NUFORC live: {m['months_pulled']} months fetched, "
+        print(f"  NUFORC live: {m['months_pulled']} months fetched "
+              f"({m.get('months_refreshed', 0)} with rows), "
               f"{m['months_cached']} cached, {m['months_404']} failed, "
               f"{m['months_skipped_offline']} skipped-offline, "
               f"{m['wall_clock_sec']}s ({m['stopped_reason']})")
+        if not args.no_live:
+            _report_nuforc_refresh(m, payload["date_range"][1])
         _emit_nuforc_health_marker(m)
     return 0
+
+
+def _report_nuforc_refresh(meta: dict, data_through: str | None,
+                           today: datetime | None = None) -> str | None:
+    """Annotate the run when NO NUFORC month was refreshed over the network.
+
+    Mirrors ``lthcs_daily._report_sec_errors``: a ``::warning`` annotation is
+    what survives on the check run (and is readable through the API) after
+    the job log expires, and this step runs under continue-on-error, so an
+    exit code cannot carry the alarm.
+
+    Before this, the only alarm was "MUFON/NUFORC feed degraded — NUFORC
+    unreachable", which named neither the cause nor how old the data was,
+    while the page kept rebuilding with a fresh ``generated_at``. A run that
+    reached the AJAX endpoint but got zero rows back (stale nonce, challenged
+    POST) raised nothing at all, because the only other check fires on TOO
+    MANY months fetched, never on zero.
+
+    Returns the message when the alert fires, else None.
+    """
+    refreshed = int(meta.get("months_refreshed", 0) or 0)
+    if refreshed > 0:
+        return None
+    cause = meta.get("failure_cause") or "no NUFORC month returned any rows"
+    now = today or datetime.now(timezone.utc).replace(tzinfo=None)
+    if data_through:
+        try:
+            age = (now.date() - datetime.fromisoformat(str(data_through)).date()).days
+            frozen = f"Sightings data is frozen through {data_through} ({age} days old)"
+        except ValueError:
+            frozen = f"Sightings data is frozen through {data_through}"
+    else:
+        frozen = "No sightings data on file"
+    parts = [f"0 NUFORC months refreshed this run. Cause: {cause}.", frozen + "."]
+    if meta.get("months_cached"):
+        parts.append(f"Served {meta['months_cached']} months from the committed "
+                     f"cache.")
+    partial = meta.get("incomplete_months_served") or []
+    if partial:
+        parts.append("Partial month(s) still awaiting a complete refetch: "
+                     + ", ".join(partial) + ".")
+    if str(cause).startswith(CF_CHALLENGE_LABEL):
+        parts.append("nuforc.org now puts every request behind a Cloudflare "
+                     "JavaScript challenge, and its terms forbid automated "
+                     "harvesting without written consent; this fetcher will "
+                     "not try to get past it. New sightings need a sanctioned "
+                     "data feed from NUFORC.")
+    body = " ".join(parts)
+    print(f"[MUFON-NOT-REFRESHED] {body}", file=sys.stderr)
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        # Workflow-command escaping: % CR LF must be encoded or the
+        # annotation is truncated at the first newline.
+        esc = body.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+        print("::warning title=MUFON not refreshed::" + esc)
+        summary = os.environ.get("GITHUB_STEP_SUMMARY")
+        if summary:
+            try:
+                with open(summary, "a", encoding="utf-8") as fh:
+                    fh.write(f"\n**MUFON not refreshed** — {body}\n")
+            except OSError:
+                pass  # cosmetic; the annotation above carries the alarm
+    return body
 
 
 def _emit_nuforc_health_marker(m: dict) -> str | None:
@@ -1340,11 +1670,10 @@ def _emit_nuforc_health_marker(m: dict) -> str | None:
     condition is unit-testable without scraping stdout).
     """
     reasons: list[str] = []
-    if m.get("network_disabled"):
-        reasons.append(
-            f"NUFORC unreachable — served {m.get('months_cached', 0)} months "
-            f"from the committed cache and skipped "
-            f"{m.get('months_skipped_offline', 0)} live months")
+    # NUFORC being unreachable used to be reported here too, as a bare
+    # "NUFORC unreachable". It now belongs to _report_nuforc_refresh, which
+    # names the cause and the frozen data-through date; repeating it here
+    # would only double the annotation.
     if m.get("months_pulled", 0) > NUFORC_BACKFILL_ALERT_MONTHS:
         reasons.append(
             f"full-backfill mode: {m['months_pulled']} months fetched over the "
