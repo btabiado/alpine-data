@@ -620,6 +620,12 @@ def build_lthcs_payload() -> dict:
         if isinstance(scores, list) and scores:
             # Top movers by 30d drift (the snapshot field).
             def _drift(row): return row.get("drift_30d") or 0.0
+            def _subs(row):
+                # A pillar in dropped_pillars was not measured: publish null,
+                # never the placeholder older snapshots stored for it.
+                dropped = set(row.get("dropped_pillars") or [])
+                return {k: (None if k in dropped else v)
+                        for k, v in (row.get("subscores") or {}).items()}
             def _row(row):
                 return {
                     "ticker": row.get("ticker"),
@@ -627,7 +633,7 @@ def build_lthcs_payload() -> dict:
                     "band": row.get("band"),
                     "drift_30d": row.get("drift_30d"),
                     "sector": row.get("sector"),
-                    "subscores": row.get("subscores") or {},
+                    "subscores": _subs(row),
                 }
             sorted_by_drift = sorted(
                 [r for r in scores if r.get("ticker")],
@@ -638,6 +644,24 @@ def build_lthcs_payload() -> dict:
                 "gainers": [_row(r) for r in sorted_by_drift[:5]],
                 "decliners": [_row(r) for r in sorted_by_drift[-5:][::-1]],
             }
+            # 30d drift whose window straddles a methodology break mixes a
+            # model/coverage change into the move: say so next to the movers.
+            snap_date = snap.get("calc_date") or snap_file.stem
+            try:
+                from datetime import timedelta as _td30
+                from lthcs import methodology as _meth
+                anchor = (datetime.strptime(snap_date, "%Y-%m-%d")
+                          - _td30(days=30)).strftime("%Y-%m-%d")
+                spanned = _meth.breaks_between(anchor, snap_date)
+            except Exception:
+                spanned = []
+            if spanned:
+                out["movers"]["methodology_breaks"] = spanned
+                out["movers"]["note"] = (
+                    "30d drift spans a methodology change on "
+                    + ", ".join(b["date"] for b in spanned)
+                    + " (" + "; ".join(b["summary"] for b in spanned)
+                    + "): part of these moves is the model change, not the market.")
             out["universe_count"] = len(scores)
             out.setdefault("as_of", snap.get("calc_date"))
             out["available"] = True
@@ -655,6 +679,27 @@ def build_lthcs_payload() -> dict:
         print(f"[lthcs] insights error: {e}", file=sys.stderr)
         out["insights"] = []
     return out
+
+
+def _methodology_breaks_between(start_exclusive, end_inclusive) -> list:
+    """LTHCS methodology breaks inside (start, end]; [] if unavailable."""
+    try:
+        from lthcs import methodology as _meth
+        return _meth.breaks_between(start_exclusive, end_inclusive)
+    except Exception:
+        return []
+
+
+def _methodology_insight(spanned: list, what: str) -> dict:
+    dates = ", ".join(b["date"] for b in spanned)
+    return {
+        "category": "methodology",
+        "icon": "🛠️",
+        "headline": f"Methodology change {dates}: {what} — not a market signal",
+        "detail": "; ".join(b["detail"] for b in spanned),
+        "severity": "medium",
+        "methodology_breaks": [b["date"] for b in spanned],
+    }
 
 
 def compute_lthcs_insights(
@@ -773,7 +818,13 @@ def compute_lthcs_insights(
                         s_today = float(index_today.get("score") or 0)
                         s_yest = float(y.get("score") or 0)
                         delta = s_today - s_yest
-                        if abs(delta) >= 1:
+                        spanned = _methodology_breaks_between(
+                            yest.strftime("%Y-%m-%d"), as_of)
+                        if spanned and abs(delta) >= 1:
+                            candidates.append(_methodology_insight(
+                                spanned, f"Composite Index moved {s_yest:+.0f} → "
+                                         f"{s_today:+.0f} over {back}d"))
+                        elif abs(delta) >= 1:
                             sev = "high" if abs(delta) >= 10 else \
                                   "medium" if abs(delta) >= 5 else "low"
                             arrow = "▲" if delta > 0 else "▼"
@@ -858,6 +909,7 @@ def compute_lthcs_insights(
                 })
 
     # ---- (8): Band moves vs. yesterday ----
+    band_window = None
     if history_dir.exists():
         band_changes = []
         try:
@@ -880,6 +932,7 @@ def compute_lthcs_insights(
                 latest, prev = by_date[0], by_date[1]
                 if latest.get("band") and prev.get("band") and \
                         latest.get("band") != prev.get("band"):
+                    band_window = (prev.get("date"), latest.get("date"))
                     band_changes.append({
                         "ticker": hd.get("ticker") or hp.stem,
                         "from_band": prev.get("band"),
@@ -899,13 +952,21 @@ def compute_lthcs_insights(
                 f"({c['score_delta']:+.1f})"
                 for c in top3
             )
-            candidates.append({
-                "category": "movers",
-                "icon": "📈",
-                "headline": f"{len(band_changes)} tickers shifted band overnight",
-                "detail": tail,
-                "severity": "medium",
-            })
+            # A band shift across a methodology break (2026-10-04: SEC
+            # financial data restored, 98 tickers changed band) is the model
+            # changing, not the market: relabel instead of a movers signal.
+            spanned = _methodology_breaks_between(*band_window) if band_window else []
+            if spanned:
+                candidates.append(_methodology_insight(
+                    spanned, f"{len(band_changes)} tickers shifted band"))
+            else:
+                candidates.append({
+                    "category": "movers",
+                    "icon": "📈",
+                    "headline": f"{len(band_changes)} tickers shifted band overnight",
+                    "detail": tail,
+                    "severity": "medium",
+                })
 
     # ---- Prioritize: high > medium > low, with category diversity ----
     candidates.sort(key=lambda i: SEV_RANK.get(i.get("severity"), 9))
