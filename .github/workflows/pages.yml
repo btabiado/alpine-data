@@ -216,8 +216,11 @@ jobs:
         # data/health/api_status.json — the snapshot the static /health/apis.html
         # page falls back to when there's no live server to probe through.
         # Keyed sources report auth_required (live, gated) when the secret is
-        # absent, so this stays useful without every key configured. Pure
-        # stdlib, ~50 cheap requests. Must NOT break the deploy.
+        # absent, so this stays useful without every key configured. ~50 cheap
+        # requests, stdlib urllib except the TSA probe, which uses `requests`
+        # (tsa.gov's edge 403s urllib from Actions). `requests` comes from
+        # requirements.txt via "Install dependencies" above; without it that
+        # probe falls back to urllib. Must NOT break the deploy.
         #
         # *** THIS ENV BLOCK MUST LIST EVERY key_env api_status.TARGETS NAMES. ***
         # It listed five of fourteen. The other nine — Socrata, Census, BLS,
