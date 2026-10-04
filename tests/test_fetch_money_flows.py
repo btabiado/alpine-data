@@ -7,6 +7,8 @@ HTTP is stubbed.
 """
 from __future__ import annotations
 
+from urllib.parse import urlsplit
+
 import fetch_money_flows as fmf
 
 
@@ -25,8 +27,15 @@ _FRED_CSV = ("observation_date,WRMFNS\n"
              "2026-08-17,3034.8\n2026-08-24,3037.4\n2026-08-31,3034.0\n")
 
 
+ICI_HOSTS = ("ici.org", "www.ici.org")
+
+
+def _host(url):
+    return urlsplit(url).hostname or ""
+
+
 def _fake_get(url, headers=None, timeout=None, params=None):
-    if "ici.org" in url:
+    if _host(url) in ICI_HOSTS:
         return _Resp(403)
     if "fredgraph.csv" in url:
         return _Resp(200, text=_FRED_CSV)
@@ -53,7 +62,7 @@ def test_mmf_falls_back_to_fred_retail_when_ici_403s(monkeypatch):
 def test_mmf_marked_unavailable_when_fred_also_fails(monkeypatch):
     monkeypatch.delenv("FRED_API_KEY", raising=False)
     monkeypatch.setattr(fmf.requests, "get",
-                        lambda url, **kw: _Resp(403 if "ici.org" in url else 500))
+                        lambda url, **kw: _Resp(403 if _host(url) in ICI_HOSTS else 500))
     m = fmf.fetch_mmf()
     assert m["available"] is False
     assert m["weekly"] == [] and m["as_of"] is None
@@ -74,9 +83,9 @@ def test_fred_api_used_when_key_set_and_key_not_in_payload(monkeypatch):
     seen = {}
 
     def get(url, headers=None, timeout=None, params=None):
-        if "ici.org" in url:
+        if _host(url) in ICI_HOSTS:
             return _Resp(403)
-        if "api.stlouisfed.org" in url:
+        if _host(url) == "api.stlouisfed.org":
             seen["params"] = params
             return _Resp(200, payload={"observations": [
                 {"date": "2026-08-24", "value": "3037.4"},
