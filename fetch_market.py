@@ -538,8 +538,50 @@ def coingecko_trending() -> list[dict]:
     return out
 
 
+def _pct_change(now_v, then_v):
+    """Percent change now vs then, or None when either side is unusable."""
+    try:
+        now_f, then_f = float(now_v), float(then_v)
+    except (TypeError, ValueError):
+        return None
+    if then_f == 0:
+        return None
+    return (now_f / then_f - 1.0) * 100.0
+
+
+def _chain_changes_from_history(points: Any) -> dict:
+    """1d/7d/30d % change from a ``/v2/historicalChainTvl/{chain}`` body.
+
+    Compares the newest daily point with the point exactly 1/7/30 UTC days
+    earlier (matched by day, not by list offset, so a gap in the series yields
+    None instead of a change over the wrong span)."""
+    by_day: dict[int, float] = {}
+    for p in points or []:
+        try:
+            by_day[int(p.get("date")) // 86400] = float(p.get("tvl"))
+        except (TypeError, ValueError, AttributeError):
+            continue
+    if not by_day:
+        return {}
+    last = max(by_day)
+    cur = by_day[last]
+    return {
+        "change_1d_pct": _pct_change(cur, by_day.get(last - 1)),
+        "change_7d_pct": _pct_change(cur, by_day.get(last - 7)),
+        "change_1m_pct": _pct_change(cur, by_day.get(last - 30)),
+        "change_as_of": datetime.fromtimestamp(last * 86400, tz=timezone.utc).strftime("%Y-%m-%d"),
+    }
+
+
 def defillama_chains(top: int = 20) -> list[dict]:
-    """TVL across all blockchain ecosystems (Ethereum, Solana, etc.)."""
+    """TVL across all blockchain ecosystems (Ethereum, Solana, etc.).
+
+    DeFiLlama's free ``/v2/chains`` stopped returning ``change_1d/7d/1m``
+    (verified 2026-10-04: only name/tvl/tokenSymbol/gecko_id/cmcId/chainId),
+    which left every chain's change null and starved the TVL-momentum
+    composite. When the snapshot lacks them, the changes are derived per
+    top-N chain from ``/v2/historicalChainTvl/{chain}``; a chain whose
+    history cannot be fetched keeps null (never a guessed 0)."""
     j = _get("https://api.llama.fi/v2/chains")
     if not j or not isinstance(j, list):
         return []
@@ -555,7 +597,22 @@ def defillama_chains(top: int = 20) -> list[dict]:
             "cmc_id": c.get("cmcId"),
         })
     chains.sort(key=lambda x: x.get("tvl_usd") or 0, reverse=True)
-    return chains[:top]
+    chains = chains[:top]
+    for c in chains:
+        if all(c.get(k) is not None for k in ("change_1d_pct", "change_7d_pct", "change_1m_pct")):
+            continue
+        if not c.get("name"):
+            continue
+        hist = _get(f"https://api.llama.fi/v2/historicalChainTvl/{c['name']}")
+        derived = _chain_changes_from_history(hist if isinstance(hist, list) else [])
+        if not derived:
+            continue
+        for k in ("change_1d_pct", "change_7d_pct", "change_1m_pct"):
+            if c.get(k) is None:
+                c[k] = derived.get(k)
+        c["change_source"] = "historicalChainTvl"
+        c["change_as_of"] = derived.get("change_as_of")
+    return chains
 
 
 def defillama_historical_tvl(chain: str = "Ethereum") -> list[dict]:
@@ -573,8 +630,30 @@ def defillama_historical_tvl(chain: str = "Ethereum") -> list[dict]:
     return out[-365:]  # keep last year
 
 
+def _protocols2_enrichment(j: Any) -> tuple[dict, dict]:
+    """(by_name, parent_by_id) from DeFiLlama ``/lite/protocols2``.
+
+    That endpoint still carries ``tvlPrevMonth`` per protocol and a
+    ``parentProtocols`` list with each parent token's ``mcap``."""
+    if not isinstance(j, dict):
+        return {}, {}
+    by_name = {p.get("name"): p for p in (j.get("protocols") or [])
+               if isinstance(p, dict) and p.get("name")}
+    parents = {p.get("id"): p for p in (j.get("parentProtocols") or [])
+               if isinstance(p, dict) and p.get("id")}
+    return by_name, parents
+
+
 def defillama_protocols(top: int = 25) -> list[dict]:
-    """Top DeFi protocols by TVL with 1d/7d/1m changes."""
+    """Top DeFi protocols by TVL with 1d/7d/1m changes.
+
+    ``/protocols`` no longer returns ``change_1m`` (null on 25/25 rows) and
+    reports ``mcap`` only for protocols that own a CoinGecko id, so child
+    protocols (Aave V3, Morpho Blue, ...) read null. Both are filled from
+    ``/lite/protocols2``: ``change_1m`` from its ``tvl``/``tvlPrevMonth`` and
+    ``mcap`` from the parent protocol's token (tagged ``mcap_source``). Rows
+    that still have no value (CEX entries carry no 30d baseline; tokenless
+    entries have no market cap) say why in ``unavailable``."""
     j = _get("https://api.llama.fi/protocols")
     if not j or not isinstance(j, list):
         return []
@@ -591,9 +670,36 @@ def defillama_protocols(top: int = 25) -> list[dict]:
             "change_1m_pct": p.get("change_1m"),
             "mcap_usd": p.get("mcap"),
             "url": p.get("url"),
+            "_parent": p.get("parentProtocol"),
         })
     out.sort(key=lambda x: x.get("tvl_usd") or 0, reverse=True)
-    return out[:top]
+    out = out[:top]
+    by_name: dict = {}
+    parents: dict = {}
+    if any(r.get("change_1m_pct") is None or r.get("mcap_usd") is None for r in out):
+        by_name, parents = _protocols2_enrichment(_get("https://api.llama.fi/lite/protocols2"))
+    for r in out:
+        parent_id = r.pop("_parent", None)
+        lite = by_name.get(r.get("name")) or {}
+        missing: dict = {}
+        if r.get("change_1m_pct") is None:
+            r["change_1m_pct"] = _pct_change(lite.get("tvl"), lite.get("tvlPrevMonth"))
+            if r["change_1m_pct"] is None:
+                missing["change_1m_pct"] = (
+                    "no 30d TVL baseline published for CEX entries"
+                    if (r.get("category") == "CEX") else "no 30d TVL baseline from DeFiLlama")
+        if r.get("mcap_usd") is None:
+            parent = parents.get(parent_id) if parent_id else None
+            if parent and parent.get("mcap") is not None:
+                r["mcap_usd"] = parent.get("mcap")
+                r["mcap_source"] = f"parent token ({parent.get('symbol') or parent.get('name')})"
+            elif not r.get("symbol") or r.get("symbol") == "-":
+                missing["mcap_usd"] = "no token"
+            else:
+                missing["mcap_usd"] = "market cap not reported by DeFiLlama"
+        if missing:
+            r["unavailable"] = missing
+    return out
 
 
 def defillama_yields_stablecoin_top(top: int = 20) -> list[dict]:
