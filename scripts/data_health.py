@@ -292,18 +292,19 @@ MANIFEST: dict[str, Feed] = {
         COMMITTED, "hand-curated snapshot (manual PR, re-curate quarterly); read "
                    "and inlined into the built HTML by "
                    "fetch_market.load_ai_curated, never rewritten"),
+    # Trading-day feeds. No limit_h: build_health_status measures their last
+    # row on a WEEKDAY clock (TRADING_DAY_FEEDS) and THRESHOLDS gives the
+    # budget (56 weekday hours), shared with /health/. The old flat 96h wall-
+    # clock limit here disagreed with /health/'s 48h, which read Friday's
+    # complete data as "critical 2.8d" every weekend.
     "data/equity_etf_flows.csv": Feed(
-        COMMITTED, "money-flow-daily.yml (daily 08:30Z)",
-        # Trading-day feed: a 24h limit red-flags it every Saturday and Sunday,
-        # which is noise. Friday's row is ~3d old by Monday; a Monday holiday
-        # pushes it to ~4d.
-        limit_h=96.0),
+        COMMITTED, "money-flow-daily.yml (daily 08:30Z)"),
     "data/btc_flows.csv": Feed(
         COMMITTED, "etf-flows-daily.yml (daily 09:15Z)",
-        "python scripts/fetch_etf_flows.py", limit_h=96.0),
+        "python scripts/fetch_etf_flows.py"),
     "data/eth_flows.csv": Feed(
         COMMITTED, "etf-flows-daily.yml (daily 09:15Z)",
-        "python scripts/fetch_etf_flows.py", limit_h=96.0),
+        "python scripts/fetch_etf_flows.py"),
     "data-travel.json": Feed(
         # DEPLOYED: app.py rewrites the root file on every pages.yml build and
         # the "Stage site directory" step publishes it, but nothing commits it
@@ -395,16 +396,28 @@ MANIFEST: dict[str, Feed] = {
     "data-metals.json": Feed(BUILT, "fetch_metals.py, inside pages.yml"),
     "data-supplies.json": Feed(BUILT, "fetch_supplies.py, inside pages.yml"),
     "data-cpi.json": Feed(BUILT, "fetch_cpi.py, inside pages.yml"),
+    # The four build artifacts the built-mode check reported as UNWATCHED.
+    "data-defi.json": Feed(
+        BUILT, "app.py / v2/app.py lazy sidecar from fetch_market's DeFi subtree"),
+    "data-mmf.json": Feed(
+        BUILT, "fetch_money_flows.py, via fetch_market.build_money_flow_payload "
+               "inside pages.yml (ICI; FRED WRMFNS fallback)"),
+    "data-mf-flows.json": Feed(
+        BUILT, "fetch_money_flows.py, via fetch_market.build_money_flow_payload "
+               "inside pages.yml (ICI; no fallback — available:false when blocked)"),
+    "data-equity-etf-flows.json": Feed(
+        BUILT, "fetch_equity_etf_flows.py, via fetch_market.build_money_flow_payload "
+               "inside pages.yml"),
     "data-travel-fetch-status.json": Feed(
         BUILT, "fetch_advisories.py (status record added in PR #24)"),
     "data/ai_curated_wiki.json": Feed(BUILT, "insights.py / wiki_enrich, inside pages.yml"),
     "data/market.json": Feed(BUILT, "fetch_market.py, inside pages.yml"),
     "data/whale.json": Feed(BUILT, "fetch_market.py, inside pages.yml"),
     "data/coinbase.json": Feed(BUILT, "fetch_coinbase.py, inside pages.yml"),
-    "data/cpi.json": Feed(BUILT, "fetch_cpi.py, inside pages.yml"),
-    "data/metals.json": Feed(BUILT, "fetch_metals.py, inside pages.yml"),
-    "data/supplies.json": Feed(BUILT, "fetch_supplies.py, inside pages.yml"),
-    "data/shares.json": Feed(BUILT, "shares.py, inside pages.yml"),
+    # data/cpi.json, data/metals.json and data/supplies.json were listed here
+    # and reported MISSING on every build: nothing writes them. fetch_cpi /
+    # fetch_metals / fetch_supplies dual-write v2/data-X.json and the root
+    # data-X.json (their DEFAULT_OUT_V1), which are the entries above.
     "data/insights_history.json": Feed(BUILT, "insights.py, inside pages.yml"),
 
     # --- legitimately static ------------------------------------------------
@@ -427,6 +440,12 @@ MANIFEST: dict[str, Feed] = {
                       "field because there is no refresh to date."),
 
     # --- watched by a different system --------------------------------------
+    "data/shares.json": Feed(
+        DELEGATED, "server.py / share.py (shares.create), local runtime only",
+        justification="The share-link store written by the local server and "
+                      "share.py CLI when someone mints a link. It is gitignored "
+                      "and never produced by pages.yml, so as a BUILT feed it "
+                      "read MISSING on every build. It is state, not a feed."),
     "data/lthcs/": Feed(
         DELEGATED, "lthcs-daily.yml and friends",
         justification="LTHCS has its own freshness pipeline "
@@ -797,6 +816,15 @@ def evaluate(mode: str, today: date | None = None,
             age_h = probe.age_h
             detail = probe.note if age_h is not None else ""
 
+        if probe.unavailable_reason and age_h is None:
+            # The payload says its upstream is gone (e.g. ici.org 403). Still
+            # a failure — the feed is not being served — but say WHY instead of
+            # blaming the parser.
+            results.append(Result(
+                rel, UNKNOWN, owner=feed.owner, source=source,
+                detail=f"payload marks itself unavailable: {probe.unavailable_reason}"))
+            continue
+
         if age_h is None:
             # Hole #4: this used to exit 0.
             results.append(Result(
@@ -805,6 +833,12 @@ def evaluate(mode: str, today: date | None = None,
                         "cannot evaluate this feed, which is worse than stale: "
                         "an upstream schema change looks identical to health. "
                         f"Parser says: {probe.note}")))
+            continue
+
+        if probe.unavailable_reason:
+            results.append(Result(
+                rel, STALE, age_h, None, feed.owner, source=source,
+                detail=f"payload marks itself unavailable: {probe.unavailable_reason}"))
             continue
 
         limit = feed.limit_h or THRESHOLDS.get(judged.name, DEFAULT).stale_h

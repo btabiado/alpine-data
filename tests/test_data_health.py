@@ -170,10 +170,13 @@ def test_non_dict_and_broken_json_say_why(bhs, tmp_path):
 
 
 def test_csv_age_comes_from_the_last_row(bhs, tmp_path):
+    """The last row's date names a DAY, so age is day-granular: a row for
+    2026-08-01 read at 2026-08-03 12:00Z is two days (48h) old, not 60h —
+    the midnight reading added up to 24 phantom hours to every daily feed."""
     p = tmp_path / "flows.csv"
     p.write_text("date,Total\n2026-07-01,10\n2026-08-01,20\n")
     probe = bhs._content_age_probe(p, NOW)
-    assert probe.age_h == pytest.approx(60, abs=0.1)
+    assert probe.age_h == pytest.approx(48, abs=0.1)
 
 
 def test_content_age_h_wrapper_still_returns_a_float_or_none(bhs, tmp_path):
@@ -326,6 +329,9 @@ def test_nested_date_sweep_is_documented(dh):
         "data-whale.json",
         "data-travel-fetch-status.json",
         "snowflake_summit/vendors.json",
+        # top-level `trade_date`: the session the snapshot describes. Its
+        # `as_of` is fetch_equity_etf_flows' _today(), a fetch clock.
+        "data-equity-etf-flows.json",
     }
     deliberately_excluded = {
         "data-travel.json": "advisories[].date — issue date of an advisory",
