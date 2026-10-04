@@ -9,11 +9,44 @@ import insights
 def _recent(days_ago: int) -> str:
     """YYYY-MM-DD `days_ago` days before today (UTC).
 
-    ETF rules are gated behind a 14-day freshness check, so fixtures that want
-    those rules to fire must use dates relative to *now* — a hard-coded date
-    silently rots past the cutoff and the rule stops firing.
+    Every insight generator is gated behind a freshness check sized to its
+    feed's cadence (see insights.FRESHNESS_MAX_AGE_DAYS), so fixtures that want
+    a present-tense rule to fire must use dates relative to *now* — a
+    hard-coded date silently rots past the cutoff and the rule stops firing.
     """
     return (datetime.utcnow() - timedelta(days=days_ago)).strftime("%Y-%m-%d")
+
+
+def _stale(days_ago: int = 68) -> str:
+    """A date old enough to trip every freshness guard in insights.py.
+
+    68 days is the gap the real 2026 feed freeze produced (2026-05-26 →
+    2026-08-02) and is comfortably beyond the largest per-feed budget
+    (``stocks``, at 5 days).
+    """
+    return _recent(days_ago)
+
+
+def _dated(values, *, newest_days_ago: int = 0, key: str = "value") -> list[dict]:
+    """Turn a list of numbers into a ``[{date, <key>}]`` daily series.
+
+    The LAST entry lands ``newest_days_ago`` days before today and earlier
+    entries step back one day each, so the same fixture can be made fresh or
+    frozen by moving that one argument. The generators derive a feed's age
+    from exactly these ``date`` fields.
+    """
+    n = len(values)
+    return [
+        {"date": _recent(newest_days_ago + (n - 1 - i)), key: v}
+        for i, v in enumerate(values)
+    ]
+
+
+def _score_history(n: int = 3, *, newest_days_ago: int = 0) -> list[dict]:
+    """A ``[{date, score}]`` rolling-signal history whose newest entry is
+    ``newest_days_ago`` days old. Only the dates matter to the guards.
+    """
+    return _dated([0] * n, newest_days_ago=newest_days_ago, key="score")
 
 
 # ---------- per-tab tagging ----------
@@ -102,10 +135,12 @@ def test_signal_insights_tagged_signals():
             "btc": {
                 "label": "STRONG BUY",
                 "score": 65,
+                "as_of": _recent(0),
                 "components": [{"name": "RSI", "contribution": 15},
                                {"name": "MACD", "contribution": 10},
                                {"name": "Funding", "contribution": 10}],
-                "history": [{"score": -10}, {"score": 65}],
+                "history": [{"date": _recent(1), "score": -10},
+                            {"date": _recent(0), "score": 65}],
             }
         },
     }
@@ -218,17 +253,24 @@ def test_every_insight_has_a_valid_tab():
 
 # ---------- whale: network velocity rule ----------
 
-def _whale_payload(velocity_series: list[float]) -> dict:
+def _whale_payload(velocity_series: list[float], *, newest_days_ago: int = 0) -> dict:
     """Build a payload whose tx_volume_usd / active_addresses ratio matches
     the provided ``velocity_series`` (one entry per day, oldest first).
     active_addresses is held constant so the ratio = tx_volume directly,
     which keeps the test math simple.
+
+    ``newest_days_ago`` shifts the whole series back in time so the same
+    fixture can exercise the whale freshness guard from both sides.
     """
     addrs = 1_000_000.0
+    n = len(velocity_series)
     rows_vol = []
     rows_addr = []
     for i, v in enumerate(velocity_series):
-        date = f"2024-01-{i+1:02d}"
+        # Newest bar is `newest_days_ago` days old; earlier bars step back one
+        # day each. Hard-coded 2024 dates here used to make the whole series
+        # read as ~2 years stale once the whale freshness guard landed.
+        date = _recent(newest_days_ago + n - 1 - i)
         rows_vol.append({"date": date, "value": v * addrs})
         rows_addr.append({"date": date, "value": addrs})
     return {
@@ -533,6 +575,7 @@ def test_poc_strong_migration_fires_and_tagged_poc():
                           "magnitude": "STRONG", "between_pocs": False,
                           "explanation": "..."},
             "naked": [],
+            "migration_series": _dated([79_000, 80_000], key="poc"),
         }
     }})
     out = insights.build_insights(payload, limit=100)
@@ -562,6 +605,7 @@ def test_poc_price_between_pocs_fires():
                           "magnitude": "STRONG", "between_pocs": True,
                           "explanation": "..."},
             "naked": [],
+            "migration_series": _dated([3400, 3500], key="poc"),
         }
     }})
     out = insights.build_insights(payload, limit=100)
@@ -574,9 +618,12 @@ def test_poc_price_between_pocs_fires():
 def test_poc_naked_cluster_fires_across_two_assets():
     """Two assets with ≥3 naked weekly POCs each → cluster insight."""
     naked3 = [{"poc": 50_000, "days_ago": 30, "distance_pct": -1.0, "week_start": "2024-01-01"}] * 3
+    fresh_series = _dated([50_000, 50_100], key="poc")
     payload = _empty_payload(market={"poc": {
-        "btc": {"naked": naked3, "migration": {"direction": "FLAT"}},
-        "eth": {"naked": naked3, "migration": {"direction": "FLAT"}},
+        "btc": {"naked": naked3, "migration": {"direction": "FLAT"},
+                "migration_series": fresh_series},
+        "eth": {"naked": naked3, "migration": {"direction": "FLAT"},
+                "migration_series": fresh_series},
     }})
     out = insights.build_insights(payload, limit=100)
     hits = [i for i in out if "naked poc cluster" in i.get("headline", "").lower()]
@@ -590,7 +637,8 @@ def test_poc_dense_single_asset_fires():
     naked5 = [{"poc": 60_000 + i * 1000, "days_ago": 30 + i,
                "distance_pct": -2.0 - i, "week_start": "2024-01-01"} for i in range(5)]
     payload = _empty_payload(market={"poc": {
-        "btc": {"naked": naked5, "migration": {"direction": "FLAT"}},
+        "btc": {"naked": naked5, "migration": {"direction": "FLAT"},
+                "migration_series": _dated([60_000, 61_000], key="poc")},
     }})
     out = insights.build_insights(payload, limit=100)
     hits = [i for i in out if "naked weekly pocs" in i.get("headline", "").lower()]
@@ -601,7 +649,7 @@ def test_poc_dense_single_asset_fires():
 
 def test_social_cc_news_sentiment_skew_fires():
     payload = _empty_payload(market={"social": {
-        "cc_news": {"coins": {
+        "cc_news": {"fetched_at": _recent(0) + "T12:00:00+00:00", "coins": {
             "btc": {"net_score": 8, "article_count": 30,
                     "positive": 20, "negative": 12, "neutral": 18},
         }},
@@ -615,7 +663,7 @@ def test_social_cc_news_sentiment_skew_fires():
 
 def test_social_cc_news_silent_when_balanced():
     payload = _empty_payload(market={"social": {
-        "cc_news": {"coins": {
+        "cc_news": {"fetched_at": _recent(0) + "T12:00:00+00:00", "coins": {
             "btc": {"net_score": 2, "article_count": 30,
                     "positive": 12, "negative": 10, "neutral": 28},
         }},
@@ -628,7 +676,7 @@ def test_social_cc_news_silent_when_balanced():
 def test_social_reddit_active_user_spike_fires():
     """Three subs with normal active/subs ratios, plus one outlier ≥3× median."""
     payload = _empty_payload(market={"social": {
-        "reddit": {"subreddits": {
+        "reddit": {"fetched_at": _recent(0) + "T12:00:00+00:00", "subreddits": {
             "CryptoCurrency": {"subscribers": 1_000_000, "active_users": 5_000,
                                "label": "All crypto", "sub": "CryptoCurrency"},
             "Bitcoin":        {"subscribers": 4_000_000, "active_users": 12_000,
@@ -648,9 +696,10 @@ def test_social_reddit_active_user_spike_fires():
 
 def test_social_santiment_daa_surge_fires():
     payload = _empty_payload(market={"social": {
-        "santiment": {"coins": {
+        "santiment": {"fetched_at": _recent(0) + "T00:05:00+00:00", "coins": {
             "btc": {"daily_active_addresses_delta_pct": 35.0,
-                    "daily_active_addresses_latest": 1_200_000},
+                    "daily_active_addresses_latest": 1_200_000,
+                    "daily_active_addresses": _dated([900_000, 1_200_000])},
         }},
     }})
     out = insights.build_insights(payload, limit=100)
@@ -664,10 +713,11 @@ def test_social_santiment_daa_surge_fires():
 
 def test_signals_rsi_overbought_fires():
     payload = _empty_payload(signals={"btc": {
-        "label": "BUY", "score": 25,
+        "label": "BUY", "score": 25, "as_of": _recent(0),
         "components": [{"name": "RSI(14)", "value": "78.5", "contribution": -15,
                         "explanation": "overbought"}],
-        "history": [{"score": 25}, {"score": 25}],
+        "history": [{"date": _recent(1), "score": 25},
+                    {"date": _recent(0), "score": 25}],
     }})
     out = insights.build_insights(payload, limit=100)
     hits = [i for i in out if "rsi overbought" in i.get("headline", "").lower()]
@@ -679,10 +729,11 @@ def test_signals_rsi_overbought_fires():
 
 def test_signals_rsi_oversold_fires():
     payload = _empty_payload(signals={"eth": {
-        "label": "SELL", "score": -25,
+        "label": "SELL", "score": -25, "as_of": _recent(0),
         "components": [{"name": "RSI(14)", "value": "22.4", "contribution": 15,
                         "explanation": "oversold"}],
-        "history": [{"score": -25}, {"score": -25}],
+        "history": [{"date": _recent(1), "score": -25},
+                    {"date": _recent(0), "score": -25}],
     }})
     out = insights.build_insights(payload, limit=100)
     hits = [i for i in out if "rsi oversold" in i.get("headline", "").lower()]
@@ -691,7 +742,7 @@ def test_signals_rsi_oversold_fires():
 
 def test_signals_rsi_silent_when_neutral():
     payload = _empty_payload(signals={"btc": {
-        "label": "HOLD", "score": 5,
+        "label": "HOLD", "score": 5, "as_of": _recent(0),
         "components": [{"name": "RSI(14)", "value": "55.0", "contribution": 0}],
     }})
     out = insights.build_insights(payload, limit=100)
@@ -702,7 +753,7 @@ def test_signals_rsi_silent_when_neutral():
 
 def test_signals_macd_histogram_fires():
     payload = _empty_payload(signals={"btc": {
-        "label": "BUY", "score": 30,
+        "label": "BUY", "score": 30, "as_of": _recent(0),
         "components": [{"name": "MACD histogram", "value": "+1.50", "contribution": 10,
                         "explanation": "momentum up"}],
     }})
@@ -717,7 +768,9 @@ def test_signals_macd_histogram_fires():
 
 def test_whale_eth_large_transactions_fires():
     payload = _empty_payload(whale={
-        "eth": {"large_transactions": [{"hash": f"0x{i}"} for i in range(35)]},
+        "eth": {"large_transactions": [
+            {"hash": f"0x{i}", "time": f"{_recent(0)} 0{i % 10}:00:00"}
+            for i in range(35)]},
     })
     out = insights.build_insights(payload, limit=100)
     hits = [i for i in out if "large-transaction surge" in i.get("headline", "").lower()]
@@ -729,7 +782,9 @@ def test_whale_eth_large_transactions_fires():
 
 def test_whale_eth_large_transactions_silent_under_threshold():
     payload = _empty_payload(whale={
-        "eth": {"large_transactions": [{"hash": f"0x{i}"} for i in range(10)]},
+        "eth": {"large_transactions": [
+            {"hash": f"0x{i}", "time": f"{_recent(0)} 0{i % 10}:00:00"}
+            for i in range(10)]},
     })
     out = insights.build_insights(payload, limit=100)
     hits = [i for i in out if "large-transaction surge" in i.get("headline", "").lower()]
@@ -740,9 +795,7 @@ def test_whale_eth_coin_metrics_zscore_fires():
     """30 days with normal variance then a big spike on day 31 trips ETH CM
     whale-transfer z-score."""
     # Add small variance so pstdev is finite.
-    series = [{"date": f"2024-01-{d:02d}", "value": 1.0e9 + (d % 4) * 5e7}
-              for d in range(1, 31)]
-    series.append({"date": "2024-01-31", "value": 5.0e9})
+    series = _dated([1.0e9 + (d % 4) * 5e7 for d in range(1, 31)] + [5.0e9])
     payload = _empty_payload(whale={
         "eth": {"coin_metrics": {"transfer_value_adj_usd": series}},
     })
@@ -757,7 +810,8 @@ def test_whale_eth_coin_metrics_zscore_fires():
 
 def test_stocks_news_alignment_fires():
     """Buy-biased stocks + crypto news cluster → richer combined insight."""
-    stocks = [{"symbol": f"T{i}", "name": f"Co{i}", "score": 25} for i in range(20)]
+    stocks = [{"symbol": f"T{i}", "name": f"Co{i}", "score": 25,
+               "history": _score_history()} for i in range(20)]
     payload = _empty_payload(market={
         "stocks_signals": stocks,
         "news": [
@@ -777,8 +831,10 @@ def test_stocks_news_alignment_fires():
 
 def test_stocks_single_name_dispersion_fires():
     """A clear outlier among 20 stocks → dispersion insight."""
-    stocks = [{"symbol": f"T{i}", "name": f"Co{i}", "score": 10} for i in range(19)]
-    stocks.append({"symbol": "MEGA", "name": "Mega Inc", "score": 70})
+    stocks = [{"symbol": f"T{i}", "name": f"Co{i}", "score": 10,
+               "history": _score_history()} for i in range(19)]
+    stocks.append({"symbol": "MEGA", "name": "Mega Inc", "score": 70,
+                   "history": _score_history()})
     payload = _empty_payload(market={"stocks_signals": stocks})
     out = insights.build_insights(payload, limit=100)
     hits = [i for i in out if "single-name dispersion" in i.get("headline", "").lower()]
@@ -919,21 +975,29 @@ def test_new_rules_idempotent_on_repeat_invocation():
     payload = _empty_payload(
         market={
             "fear_greed": [{"value": 70}, {"value": 78}],
-            "stocks_signals": [{"symbol": f"T{i}", "name": f"Co{i}", "score": 25}
+            "stocks_signals": [{"symbol": f"T{i}", "name": f"Co{i}", "score": 25,
+                                "history": _score_history()}
                                for i in range(20)],
             "poc": {"btc": {"d30": {"poc": 80_000, "current": 79_000},
                             "d90": {"poc": 70_000, "current": 79_000},
                             "migration": {"delta_pct": 14.28, "direction": "UP",
                                           "magnitude": "STRONG", "between_pocs": False},
-                            "naked": []}},
-            "social": {"cc_news": {"coins": {"btc": {"net_score": 8, "article_count": 30,
+                            "naked": [],
+                            "migration_series": _dated([79_000, 80_000], key="poc")}},
+            "social": {"cc_news": {"fetched_at": _recent(0) + "T12:00:00+00:00",
+                                   "coins": {"btc": {"net_score": 8, "article_count": 30,
                                                      "positive": 20, "negative": 12,
                                                      "neutral": 18}}}},
         },
-        whale={"eth": {"large_transactions": [{"hash": f"0x{i}"} for i in range(35)]}},
+        whale={"eth": {"large_transactions": [
+            {"hash": f"0x{i}", "time": f"{_recent(0)} 0{i % 10}:00:00"}
+            for i in range(35)]}},
     )
     first = insights.build_insights(payload, limit=100)
     second = insights.build_insights(payload, limit=100)
+    # Guard the guard: if the fixture ever goes stale the freshness gates
+    # empty this out and the idempotence assertion becomes vacuous.
+    assert first, "fixture must actually produce insights for this to test anything"
     h1 = sorted((i["headline"], i["tab"]) for i in first)
     h2 = sorted((i["headline"], i["tab"]) for i in second)
     assert h1 == h2
@@ -951,6 +1015,298 @@ def test_build_insights_respects_limit():
     }
     out = insights.build_insights(payload, limit=3)
     assert len(out) <= 3
+
+
+# ---------- freshness guards: a frozen feed must go quiet ----------
+#
+# Background: every fetcher in this repo preserves last-known-good on failure,
+# so a dead upstream keeps serving its final good day while the build stamps a
+# current `generated_at`. Six feeds froze between 2026-05-26 and 2026-06-09 and
+# nothing noticed for over two months. The insight generators made it worse:
+# they rendered those frozen rows as present-tense claims ("BTC active
+# addresses at 30-day high", "price $X sits between 30d POC and 90d POC"),
+# indistinguishable on the page from a real one.
+#
+# Each test below feeds a generator a payload that is IDENTICAL to a
+# known-firing fixture except that the dates are 68 days old (the real freeze
+# gap), and asserts the present-tense headline disappears. The paired
+# "…_still_fires_when_fresh" coverage is the existing rule tests above — the
+# guard is only useful if it discriminates.
+
+
+def test_signals_stale_feed_emits_no_present_tense_insight():
+    """A composite signal scored off a frozen price series must go silent.
+
+    `signals.compute_signal` stamps `as_of` with the last close it scored;
+    when CryptoCompare/CoinGecko fail the previous payload is preserved
+    wholesale, so `as_of` stops advancing while the label and score still read
+    as today's call.
+    """
+    stale = {
+        "label": "STRONG BUY", "score": 65, "as_of": _stale(),
+        "components": [
+            {"name": "RSI(14)", "value": "78.5", "contribution": -15},
+            {"name": "MACD histogram", "value": "+1.50", "contribution": 10},
+        ],
+        "history": [{"date": _stale(69), "score": -10},
+                    {"date": _stale(68), "score": 65}],
+    }
+    out = insights.build_insights(_empty_payload(signals={"btc": stale}), limit=100)
+    assert not [i for i in out if i.get("kind") in ("signal", "anomaly")], \
+        f"stale signal feed still emitted insights: {[i['headline'] for i in out]!r}"
+
+    # Control: the very same payload with today's dates DOES fire, so the
+    # assertion above is testing the guard and not a broken fixture.
+    fresh = dict(stale, as_of=_recent(0),
+                 history=[{"date": _recent(1), "score": -10},
+                          {"date": _recent(0), "score": 65}])
+    assert insights.build_insights(_empty_payload(signals={"btc": fresh}), limit=100)
+
+
+def test_signals_freshness_is_per_asset():
+    """One frozen coin must not silence the coins that are still updating."""
+    def _sig(day: str, score: int) -> dict:
+        return {"label": "STRONG BUY" if score > 0 else "STRONG SELL",
+                "score": score, "as_of": day,
+                "components": [{"name": "SMA50", "contribution": score // 4}],
+                "history": [{"date": day, "score": score}]}
+
+    out = insights.build_insights(_empty_payload(signals={
+        "btc": _sig(_stale(), 80),      # frozen
+        "eth": _sig(_recent(0), -80),   # live
+    }), limit=100)
+    assets = {i["asset"] for i in out if i.get("kind") == "signal"}
+    assert "eth" in assets, "the live asset should still produce a signal insight"
+    assert "btc" not in assets, "the frozen asset must be suppressed"
+
+
+def test_stocks_stale_feed_emits_no_present_tense_insight():
+    """A frozen Yahoo `stocks_signals` array must not assert today's breadth.
+
+    The array is preserved verbatim on a Yahoo outage, so every rule here
+    ("Broad stock-market buy bias", "Strong-buy signal", "single-name
+    dispersion") would keep describing a month-old tape as the current one.
+    """
+    stocks = [{"symbol": f"T{i}", "name": f"Co{i}", "score": 25,
+               "history": _score_history(newest_days_ago=68)}
+              for i in range(19)]
+    stocks.append({"symbol": "MEGA", "name": "Mega Inc", "score": 70,
+                   "history": _score_history(newest_days_ago=68)})
+    out = insights.build_insights(_empty_payload(market={"stocks_signals": stocks}),
+                                  limit=100)
+    assert not [i for i in out if i.get("kind") == "stocks"], \
+        f"stale stocks feed still emitted insights: {[i['headline'] for i in out]!r}"
+
+
+def test_stocks_crypto_divergence_ignores_a_frozen_crypto_signal():
+    """Rule 3 claims stocks and crypto DISAGREE. If the crypto side is frozen
+    the 'disagreement' is just one dead feed, so the rule must stay quiet even
+    though the stocks side is perfectly current.
+    """
+    stocks = [{"symbol": f"T{i}", "name": f"Co{i}", "score": 40,
+               "history": _score_history()} for i in range(20)]
+    frozen_crypto = {"btc": {"label": "SELL", "score": -40, "as_of": _stale(),
+                             "components": [{"name": "SMA50", "contribution": -10}],
+                             "history": [{"date": _stale(), "score": -40}]}}
+    out = insights.build_insights(
+        _empty_payload(market={"stocks_signals": stocks}, signals=frozen_crypto),
+        limit=100,
+    )
+    assert not [i for i in out if "disagree" in i.get("headline", "").lower()], \
+        "divergence rule fired against a frozen crypto signal"
+
+    # Control: unfreeze crypto and the same 80-point gap does fire.
+    live_crypto = {"btc": dict(frozen_crypto["btc"], as_of=_recent(0),
+                               history=[{"date": _recent(0), "score": -40}])}
+    live = insights.build_insights(
+        _empty_payload(market={"stocks_signals": stocks}, signals=live_crypto),
+        limit=100,
+    )
+    assert [i for i in live if "disagree" in i.get("headline", "").lower()]
+
+
+def test_whale_stale_feed_emits_no_present_tense_insight():
+    """A frozen blockchain.info series must not claim a 30-day extreme.
+
+    "at 30-day high" means the 30 days ending today. Served off a series that
+    stopped 68 days ago it is false, and it used to render identically to a
+    real one — this generator's docstring previously waived freshness entirely.
+    """
+    stale_payload = _whale_payload([1000.0] * 30 + [5000.0], newest_days_ago=68)
+    # Give it every BTC series so all seven BTC rules have data to chew on.
+    btc = stale_payload["whale"]["btc"]
+    btc["tx_count"] = _dated([100.0] * 30 + [900.0], newest_days_ago=68)
+    btc["avg_tx_usd"] = _dated([1e5 + (d % 4) * 1e3 for d in range(30)] + [9e5],
+                               newest_days_ago=68)
+    btc["miners_revenue_usd"] = _dated([4e7 + (d % 3) * 1e6 for d in range(30)] + [9e7],
+                                       newest_days_ago=68)
+    out = insights.build_insights(stale_payload, limit=100)
+    assert not [i for i in out if i.get("asset") == "btc"], \
+        f"stale whale feed still emitted insights: {[i['headline'] for i in out]!r}"
+
+
+def test_whale_eth_stale_legs_emit_no_present_tense_insight():
+    """Blockchair's large-tx scan and Coin Metrics' daily series are separate
+    upstreams behind the same `whale.eth` blob; both replay cached data on
+    failure, so both need their own guard. "in the latest scan" is the tell.
+    """
+    cm_series = _dated([1.0e9 + (d % 4) * 5e7 for d in range(30)] + [5.0e9],
+                       newest_days_ago=68)
+    out = insights.build_insights(_empty_payload(whale={"eth": {
+        "large_transactions": [{"hash": f"0x{i}", "time": f"{_stale()} 0{i % 10}:00:00"}
+                               for i in range(35)],
+        "coin_metrics": {"transfer_value_adj_usd": cm_series},
+        "etherscan_daily": {"active_addresses":
+                            _dated([100.0] * 30 + [900.0], newest_days_ago=68)},
+    }}), limit=100)
+    assert not [i for i in out if i.get("asset") == "eth"], \
+        f"stale ETH whale legs still emitted insights: {[i['headline'] for i in out]!r}"
+
+
+def test_poc_stale_feed_emits_no_present_tense_insight():
+    """The worst offender: POC quotes a PRICE as current.
+
+    `market.poc` is recomputed each build from `market[asset].price`, the
+    series that froze at 2026-06-09 behind CryptoCompare's silent failure. All
+    four rules are anchored to that last close — rule 2 prints "price $X sits
+    between…" and rule 4 prints "% away" — so a frozen profile does not merely
+    go quiet, it publishes a two-month-old price as today's.
+    """
+    naked5 = [{"poc": 60_000 + i * 1000, "days_ago": 30 + i,
+               "distance_pct": -2.0 - i, "week_start": _stale(90 + i * 7)}
+              for i in range(5)]
+    asset_poc = {
+        "d30": {"poc": 80_000, "current": 79_000},
+        "d90": {"poc": 70_000, "current": 79_000},
+        "migration": {"delta_pct": 14.28, "direction": "UP",
+                      "magnitude": "STRONG", "between_pocs": True},
+        "naked": naked5,
+        "migration_series": _dated([79_000, 80_000], newest_days_ago=68, key="poc"),
+    }
+    out = insights.build_insights(
+        _empty_payload(market={"poc": {"btc": asset_poc, "eth": dict(asset_poc)}}),
+        limit=100,
+    )
+    assert not out, f"stale POC feed still emitted insights: {[i['headline'] for i in out]!r}"
+
+
+def test_poc_falls_back_to_the_market_price_series_for_its_date():
+    """With 10-30 aligned days `poc_migration_series` returns [] while the
+    timeframes still populate, so the POC block carries no date of its own.
+    The guard then reads `market[asset].price`, the series POC is computed
+    from — and must still suppress when THAT is frozen.
+    """
+    asset_poc = {
+        "d30": {"poc": 80_000, "current": 79_000},
+        "d90": {"poc": 70_000, "current": 79_000},
+        "migration": {"delta_pct": 14.28, "direction": "UP",
+                      "magnitude": "STRONG", "between_pocs": False},
+        "naked": [],
+        "migration_series": [],
+    }
+    stale = insights.build_insights(_empty_payload(market={
+        "poc": {"btc": asset_poc},
+        "btc": {"price": _dated([78_000, 79_000], newest_days_ago=68)},
+    }), limit=100)
+    assert not [i for i in stale if "value migrating" in i.get("headline", "").lower()]
+
+    fresh = insights.build_insights(_empty_payload(market={
+        "poc": {"btc": asset_poc},
+        "btc": {"price": _dated([78_000, 79_000])},
+    }), limit=100)
+    assert [i for i in fresh if "value migrating" in i.get("headline", "").lower()], \
+        "the price-series fallback should let a live feed through"
+
+
+def test_social_stale_legs_emit_no_present_tense_insight():
+    """`fetch_social` stamps the OUTER dict with a build-time `fetched_at`
+    that is always "now"; only the per-leg timestamps survive stale-keep
+    (`{**prev, "stale": True}`). This asserts the guard reads the leg, not the
+    wrapper — a fresh outer timestamp must not rescue three frozen legs.
+    """
+    out = insights.build_insights(_empty_payload(market={"social": {
+        "fetched_at": _recent(0) + "T19:06:48+00:00",   # build time — a lie
+        "cc_news": {"fetched_at": _stale() + "T12:00:00+00:00", "stale": True,
+                    "coins": {"btc": {"net_score": 14, "article_count": 40,
+                                      "positive": 27, "negative": 13, "neutral": 10}}},
+        "reddit": {"fetched_at": _stale() + "T12:00:00+00:00", "stale": True,
+                   "subreddits": {
+                       "CryptoCurrency": {"subscribers": 1_000_000, "active_users": 5_000,
+                                          "label": "All crypto"},
+                       "Bitcoin": {"subscribers": 4_000_000, "active_users": 12_000,
+                                   "label": "BTC"},
+                       "ethereum": {"subscribers": 1_500_000, "active_users": 4_500,
+                                    "label": "ETH"},
+                       "Chainlink": {"subscribers": 100_000, "active_users": 8_000,
+                                     "label": "LINK"},
+                   }},
+        "santiment": {"fetched_at": _stale() + "T00:05:00+00:00", "stale": True,
+                      "coins": {"btc": {
+                          "daily_active_addresses_delta_pct": 35.0,
+                          "daily_active_addresses_latest": 1_200_000,
+                          "daily_active_addresses": _dated([900_000, 1_200_000],
+                                                           newest_days_ago=68)}}},
+    }}), limit=100)
+    assert not out, f"stale social legs still emitted insights: {[i['headline'] for i in out]!r}"
+
+
+def test_social_santiment_series_date_beats_a_fresh_fetched_at():
+    """Santiment is stale-kept 23 hours a day BY DESIGN, so `fetched_at` alone
+    is a weak signal. When the DAA series itself is frozen the rule must stay
+    quiet even though the leg was re-fetched today — a re-fetch that returns
+    the same old points is precisely the failure this guards.
+    """
+    out = insights.build_insights(_empty_payload(market={"social": {
+        "santiment": {"fetched_at": _recent(0) + "T00:05:00+00:00", "coins": {
+            "btc": {"daily_active_addresses_delta_pct": 35.0,
+                    "daily_active_addresses_latest": 1_200_000,
+                    "daily_active_addresses": _dated([900_000, 1_200_000],
+                                                     newest_days_ago=68)},
+        }},
+    }}), limit=100)
+    assert not [i for i in out if "on-chain attention" in i.get("headline", "").lower()], \
+        "a fresh fetched_at rescued a frozen DAA series"
+
+
+def test_market_generator_whale_rules_use_the_whale_budget_not_the_etf_one():
+    """`_market_insights` carries two BTC on-chain σ rules that render on the
+    Whale tab off the same blockchain.info series `_whale_insights` reads.
+
+    They already had a guard, but at ``max_age_days=14`` — the ETF number
+    copied onto a daily on-chain feed. A 10-day-old series therefore still
+    published "+2.4σ vs 30d mean" as current, and the two generators
+    disagreed about whether the very same data was fresh. This asserts one
+    feed now gets one answer.
+    """
+    def _payload(age: int) -> dict:
+        spiky = [1.0e9 + (i % 4) * 5e7 for i in range(30)] + [9.0e9]
+        return _empty_payload(whale={"btc": {
+            "tx_volume_usd": _dated(spiky, newest_days_ago=age),
+            "active_addresses": _dated(spiky, newest_days_ago=age),
+        }})
+
+    def _sigma_hits(age):
+        return [i for i in insights.build_insights(_payload(age), limit=100)
+                if "σ vs 30d" in i.get("headline", "")]
+
+    assert _sigma_hits(0), "a live series must still produce the σ anomalies"
+    # 10 days is inside the old 14-day budget and well outside the whale one.
+    assert not _sigma_hits(10), \
+        "10-day-old on-chain series still emitted a present-tense σ anomaly"
+
+
+def test_freshness_budgets_are_documented_and_sane():
+    """Every budget must exist, be a positive int, and stay tight enough to
+    catch a multi-week freeze. 14 days is the ETF budget (a weekly-ish CSV);
+    nothing on a daily/hourly cadence should ever need more.
+    """
+    budgets = insights.FRESHNESS_MAX_AGE_DAYS
+    expected = {"signals", "stocks", "whale_btc", "whale_eth_daily",
+                "whale_eth_scan", "poc", "social_news", "social_reddit",
+                "social_santiment"}
+    assert expected <= set(budgets)
+    for name, days in budgets.items():
+        assert isinstance(days, int) and 1 <= days <= 14, f"{name}={days!r}"
 
 
 # ---------- rolling history: sentiment flip + volume σ ----------

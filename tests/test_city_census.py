@@ -294,6 +294,41 @@ def test_missing_key_html_body_raises():
     assert "key" in str(exc.value).lower()
 
 
+class _RedirectedResponse(FakeResponse):
+    """What ``requests`` really hands back for a Census key error (live,
+    2026-10-04): the 302 is followed, so status is 200, the body is the HTML
+    key-error page, ``url`` is that page and the 302 sits in ``history`` with
+    an ``X-DataWebAPI-KeyError`` header."""
+
+    def __init__(self, page, *, flagged=True, url=None):
+        super().__init__(payload=None, status_code=200, text="<html>%s</html>" % page)
+        self.url = url if url is not None else "https://api.census.gov/data/%s" % page
+        hop = FakeResponse(status_code=302)
+        hop.headers = {"X-DataWebAPI-KeyError": "1"} if flagged else {}
+        self.history = [hop]
+        self.headers = {}
+
+
+@pytest.mark.parametrize("page, cause", [
+    ("missing_key.html", "missing key"),
+    ("invalid_key.html", "invalid key"),
+])
+def test_key_error_redirect_names_the_cause(page, cause):
+    session = FakeSession(_RedirectedResponse(page))
+    with pytest.raises(CensusError) as exc:
+        fetch_acs(PLACE_CFG_CHICAGO, api_key="K", session=session)
+    msg = str(exc.value)
+    assert cause in msg
+    assert "not JSON" not in msg, "must not be reported as a generic parse error"
+
+
+def test_key_error_header_alone_is_recognised():
+    session = FakeSession(_RedirectedResponse("x", url="https://api.census.gov/data/other"))
+    with pytest.raises(CensusError) as exc:
+        fetch_acs(PLACE_CFG_CHICAGO, api_key="K", session=session)
+    assert "key rejected" in str(exc.value)
+
+
 def test_invalid_key_non_200_surfaces_body():
     session = FakeSession(
         FakeResponse(status_code=403, text="Invalid Key: KEYNOTFOUND")

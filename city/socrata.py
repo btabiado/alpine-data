@@ -14,8 +14,11 @@ Quirks this module handles (see RECON.md / the registry per-feed ``note`` fields
   ``substring(...)||'-'||substring(...)`` month bucket instead.
 * ``IS NOT NULL`` on the date column is always applied (Seattle permits / un-issued
   rows otherwise inflate a large null bucket).
-* Union feeds (``baseline_dataset``): NYC complaints 5uac-w243 union qgea-i56i; LA crime
-  k7nn-b2ep union y8y3-fqfu. ``feed_series`` fetches both and sums ``n`` per month.
+* Union feeds (``baseline_dataset``): NYC complaints 5uac-w243 union qgea-i56i.
+  ``feed_series`` fetches both and sums ``n`` per month. (LA crime used to union
+  k7nn-b2ep with y8y3-fqfu; LA consolidated every NIBRS offense into k7nn-b2ep on
+  2026-08-18 and y8y3-fqfu now answers HTTP 403 "You must be logged in", which
+  failed the whole feed every night. The registry no longer names it.)
 * LA 311 rotates yearly (``dataset_rotates_yearly``): the current-year dataset is
   catalog-resolved by title ``MyLA311 Cases {year}`` (do NOT construct the retired
   ``...Service Request Data {year}`` ids), then unioned with the baseline file.
@@ -25,7 +28,11 @@ Quirks this module handles (see RECON.md / the registry per-feed ``note`` fields
 """
 from __future__ import annotations
 
+import calendar
 import os
+import sys
+import time
+from datetime import datetime, timezone
 from typing import Iterable, Optional
 
 import requests
@@ -41,6 +48,21 @@ _DEFAULT_LIMIT = 50000
 # LA 311 catalog resolution endpoint (data.lacity.org). Kept module-level so tests can
 # assert the URL without re-deriving it.
 _LA_CATALOG_URL = "https://data.lacity.org/api/catalog/v1"
+
+# Transient-failure retry policy for _get_json: HTTP statuses worth a second try
+# (throttle + upstream/gateway hiccups) and the sleep before each retry. Three
+# attempts total. Kept small: the scheduled job fetches ~25 datasets serially.
+_RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
+_RETRY_BACKOFF_S = (3, 10)
+
+# Sleep hook so tests can run the retry path without waiting.
+_sleep = time.sleep
+
+# A month is treated as complete when its newest record falls within this many
+# days of the month's last calendar day. Two days absorbs a weekend for
+# weekday-only feeds (permits issued Mon-Fri) without accepting a feed that
+# stopped mid-month. See _incomplete_tail_month.
+_COMPLETE_MONTH_SLACK_DAYS = 2
 
 
 class SocrataError(Exception):
@@ -154,6 +176,69 @@ def _parse_rows(rows) -> list[dict]:
     return [{"month": m, "n": acc[m]} for m in sorted(acc)]
 
 
+def _day_of(raw_last, month: str) -> Optional[int]:
+    """Day-of-month of a per-bucket ``max(date_col)`` value, or ``None``.
+
+    Handles both shapes Socrata returns: a floating timestamp
+    (``2026-09-19T00:00:00.000``) and the NYC DOB text date (``09/19/2026``).
+    The value must belong to ``month`` (``YYYY-MM``); anything else (junk rows
+    in a text column, a malformed value) yields ``None`` so it is ignored.
+    """
+    if raw_last is None:
+        return None
+    s = str(raw_last).strip()
+    if len(s) >= 10 and s[4] == "-" and s[7] == "-":          # YYYY-MM-DD...
+        ym, day = s[:7], s[8:10]
+    elif len(s) >= 10 and s[2] == "/" and s[5] == "/":        # MM/DD/YYYY
+        ym, day = f"{s[6:10]}-{s[0:2]}", s[3:5]
+    else:
+        return None
+    if ym != month or not day.isdigit():
+        return None
+    return int(day)
+
+
+def _incomplete_tail_month(rows) -> Optional[str]:
+    """Return the newest month in ``rows`` if its data stops short of month-end.
+
+    ``rows`` are the raw aggregation rows, which carry ``last`` = the newest
+    record date inside each month bucket. Only the NEWEST month can be partial:
+    any earlier month is followed by later data, so the portal had already moved
+    past it. The newest month is partial when its last record lands more than
+    ``_COMPLETE_MONTH_SLACK_DAYS`` before the month's final day.
+
+    Why this matters: the build scores the last COMPLETE calendar month, but a
+    feed that lags upstream has not finished that month yet. On 2026-10-04
+    LAPD's NIBRS file ran to 09-19, so September held 10,097 offenses against a
+    ~18,300/month baseline — a fake 45% crime drop that clips z to the max and
+    hands LA a free Public Safety boost. NYC's crash file stopped on 06-11
+    (upstream paused); scoring that June as a full month is the same lie.
+
+    Returns ``None`` when nothing is provably partial (no ``last`` values, e.g.
+    an older caller's canned rows, or the newest month runs to month-end).
+    """
+    if not isinstance(rows, list):
+        return None
+    newest, newest_last = None, None
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        month = _normalize_month(row.get("m"))
+        if month is None:
+            continue
+        if newest is None or month > newest:
+            newest, newest_last = month, row.get("last")
+    if newest is None:
+        return None
+    day = _day_of(newest_last, newest)
+    if day is None:
+        return None
+    month_len = calendar.monthrange(int(newest[:4]), int(newest[5:7]))[1]
+    if day < month_len - _COMPLETE_MONTH_SLACK_DAYS:
+        return newest
+    return None
+
+
 def _merge_series(series_list: Iterable[list[dict]]) -> list[dict]:
     """Sum multiple ``[{"month","n"}]`` series by month into one ascending series.
 
@@ -172,11 +257,35 @@ def _merge_series(series_list: Iterable[list[dict]]) -> list[dict]:
 
 def _get_json(session, url: str, *, params: dict, headers: dict, timeout: int):
     """Issue a GET and return parsed JSON, mapping transport/HTTP/parse failures to
-    ``SocrataError``. 429 (throttle) is called out explicitly."""
-    try:
-        resp = session.get(url, params=params, headers=headers, timeout=timeout)
-    except requests.RequestException as exc:  # network error, timeout, etc.
-        raise SocrataError(f"Socrata request to {url} failed: {exc}") from exc
+    ``SocrataError``. 429 (throttle) is called out explicitly.
+
+    Transient failures are retried (see ``_RETRY_STATUSES`` / ``_RETRY_BACKOFF_S``)
+    before giving up. Without a ``SOCRATA_APP_TOKEN`` the portals throttle
+    unauthenticated callers, and the city-daily logs show that as a different
+    feed dying each night (SF 311 read timeout on 2026-10-03, LA 311 baseline
+    read timeout on 2026-10-02) while the same query answers in seconds when
+    re-run. A 403 is never retried: it is either permanent (JSON "You must be
+    logged in" = retired/private dataset) or the old data.sfgov.org front end
+    refusing us (nginx 403 on 2026-09-30), which the move to the canonical
+    data.sf.gov host addresses instead. 404 / 400 (bad SoQL) are not retried.
+    """
+    attempts = len(_RETRY_BACKOFF_S) + 1
+    for attempt in range(attempts):
+        last_attempt = attempt == attempts - 1
+        try:
+            resp = session.get(url, params=params, headers=headers, timeout=timeout)
+        except requests.RequestException as exc:  # network error, timeout, etc.
+            if not last_attempt:
+                _sleep(_RETRY_BACKOFF_S[attempt])
+                continue
+            raise SocrataError(
+                f"Socrata request to {url} failed after {attempts} attempts: {exc}"
+            ) from exc
+        status = getattr(resp, "status_code", None)
+        if status in _RETRY_STATUSES and not last_attempt:
+            _sleep(_RETRY_BACKOFF_S[attempt])
+            continue
+        break
 
     status = getattr(resp, "status_code", None)
     if status == 429:
@@ -234,12 +343,19 @@ def monthly_counts(
 
     Raises ``SocrataError`` on non-200, 429, or a malformed/non-list payload.
 
+    Each bucket also selects ``max({date_col}) AS last`` (same request, no extra
+    round trip) so a newest month that the portal has not finished publishing is
+    dropped rather than scored as a full month — see ``_incomplete_tail_month``.
+
     ``text_fmt`` is accepted for interface/forward-compat; the substring positions are
     fixed to ``MM/DD/YYYY`` (the only text format in the resolved registry).
     """
     sess = _resolve_session(session)
 
-    select_expr = f"{_month_bucket_expr(date_col, date_is_text=date_is_text)}, count(*) AS n"
+    select_expr = (
+        f"{_month_bucket_expr(date_col, date_is_text=date_is_text)}, count(*) AS n, "
+        f"max({date_col}) AS last"
+    )
     where_clause = _build_where(
         date_col, since=since, extra_where=extra_where, date_is_text=date_is_text
     )
@@ -254,7 +370,18 @@ def monthly_counts(
 
     url = f"https://{host}/resource/{dataset}.json"
     payload = _get_json(sess, url, params=params, headers=_headers(app_token), timeout=timeout)
-    return _parse_rows(payload)
+    series = _parse_rows(payload)
+    partial = _incomplete_tail_month(payload)
+    if partial is not None:
+        # The calendar month in progress is always partial and is past the
+        # build's cutoff anyway; only an EARLIER unfinished month (upstream lag
+        # or a stalled feed) is worth a log line.
+        if partial < datetime.now(timezone.utc).strftime("%Y-%m"):
+            print(f"  [socrata] {host}/{dataset}: newest month {partial} stops "
+                  f"before month-end upstream; treating it as incomplete (not "
+                  f"scored)", file=sys.stderr)
+        series = [row for row in series if row["month"] != partial]
+    return series
 
 
 def la_current_311_dataset(*, app_token=None, session=None, fallback="2cy6-i7zn") -> str:
@@ -334,7 +461,7 @@ def feed_series(feed_cfg, host, *, app_token=None, since=None, session=None) -> 
 
     * ``baseline_dataset`` union: fetch BOTH the primary ``dataset`` and ``baseline_dataset``
       and sum ``n`` per month (NYC complaints 5uac-w243 ∪ qgea-i56i; LA crime
-      k7nn-b2ep ∪ y8y3-fqfu).
+      formerly k7nn-b2ep ∪ y8y3-fqfu, retired 2026-08 — see module docstring).
     * ``dataset_rotates_yearly`` (LA 311): resolve the current primary dataset via
       ``la_current_311_dataset()`` instead of the static ``dataset`` id, then still union
       with ``baseline_dataset``.

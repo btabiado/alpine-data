@@ -26,9 +26,12 @@
           <h1 class="lthcs-title">LTHCS &middot; Table view</h1>
           <p class="lthcs-subtitle">
             <span id="lthcs-table-count">&hellip;</span> tickers &middot;
-            Updated <span id="lthcs-table-last-updated">&hellip;</span> &middot;
+            <!-- "Data as of", not "Updated": the value is the age of the
+                 observations, never the page build. -->
+            Data <span id="lthcs-table-last-updated">&hellip;</span> &middot;
             Model <span id="lthcs-table-model-version">v1.1.0</span>
           </p>
+          <span id="lthcs-table-fresh-note" class="lthcs-freshnote" hidden></span>
         </div>
         <div class="lthcs-header-meta">
           <!--

@@ -16,6 +16,8 @@
 
 import { openDetail } from '../lthcs_tab/lthcs-detail.js';
 import { openAbout } from '../lthcs_tab/lthcs-about.js';
+// Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
+import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
 
 // ---------------------------------------------------------------------------
 // Constants — paths mirror V1's lthcs-tab.js
@@ -145,19 +147,12 @@ function formatSignedBp(n) {
   return `${sign}${v.toFixed(0)}bp`;
 }
 
-function formatDate(isoDate) {
-  if (!isoDate) return '—';
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
-  if (!m) return isoDate;
-  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
-  try {
-    return d.toLocaleDateString(undefined, {
-      year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC',
-    });
-  } catch {
-    return isoDate;
-  }
-}
+// formatDate() lived here and rendered a bare localised day ("Aug 1, 2026")
+// for the header stamp. It is gone on purpose: a bare date is exactly the
+// thing the freshness contract forbids (no age, no tint, and no way to tell a
+// one-day-old snapshot from a three-month-old one at a glance). Every stamp
+// on this page now goes through ../lthcs_tab/lthcs-freshness.js. Do not
+// reintroduce a local date formatter for a stamp.
 
 function uiBandFor(snapshotBand) {
   return BAND_SNAPSHOT_TO_UI[snapshotBand] || snapshotBand || 'review';
@@ -411,13 +406,39 @@ function computeSentiment(enriched, breadth, breadthSentiment) {
 // Rendering
 // ---------------------------------------------------------------------------
 
+// Freshness stamp. Called twice: once on first paint with the snapshot alone,
+// then again once the side-loaded macro / index payloads land, because those
+// carry their own observation dates and Rule 2 says the OLDEST of them wins.
+// `state.lthcsIndex` / `state.breadth` are null on the first call — an input
+// that has not arrived yet is simply absent from the list, not guessed at.
 function renderMeta(snapshot, enrichedCount) {
   const coverage = $('#lthcs-v2-coverage');
   if (coverage) coverage.textContent = `${enrichedCount} tickers`;
-  const gen = $('#lthcs-v2-generated');
-  if (gen && snapshot) {
-    gen.textContent = `generated ${formatDate(snapshot.calc_date)}`;
+
+  const components = [{ label: 'scores', date: snapshot && snapshot.calc_date }];
+  if (state.lthcsIndex) {
+    components.push({ label: 'index', date: state.lthcsIndex.as_of });
   }
+  if (state.breadth) {
+    components.push({ label: 'macro', date: state.breadth.as_of });
+  }
+  // Rule 3: entries whose pillars were dropped or flagged are counted, never
+  // averaged away behind a clean-looking headline date.
+  const scores = (snapshot && snapshot.scores) || [];
+  const incomplete = scores.filter((s) => {
+    const flags = (s && s.data_quality_flags) || [];
+    const dropped = (s && s.dropped_pillars) || [];
+    return flags.length > 0 || dropped.length > 0;
+  }).length;
+
+  paintComposite($('#lthcs-v2-generated'), components, {
+    detailEl: $('#lthcs-v2-fresh-note'),
+    stale: incomplete,
+    total: scores.length,
+    staleNoun: 'incomplete',
+    what: 'The LTHCS composite',
+    baseClass: '',
+  });
 }
 
 // Map LTHCS Index label → the v2 card's tone attribute (drives border + color).
@@ -974,6 +995,9 @@ async function refresh() {
       state.sectors = sectors || null;
       state.insiderByTicker = (insider && typeof insider === 'object') ? insider : {};
       state.lthcsIndex = (lthcsIndex && typeof lthcsIndex === 'object') ? lthcsIndex : null;
+      // The macro + index payloads carry their own observation dates, so the
+      // composite stamp has to be recomputed now that they exist.
+      renderMeta(snapshot, state.enriched.length);
       // Sentiment math depends on breadth + breadth_sentiment + index → re-render.
       renderSentiment();
       renderRegime();

@@ -27,6 +27,15 @@
           </p>
         </div>
         <div class="lthcs-header-meta">
+          <!-- A diff has no single date, so the stamp reports the age of the
+               NEWER endpoint — the most recent state being shown — and the
+               older endpoint is disclosed beside it as the user's own choice
+               of baseline, not as staleness. -->
+          <div class="lthcs-meta-line">
+            <span class="lthcs-meta-label">Data as of</span>
+            <span id="lthcs-diff-asof" class="lthcs-meta-value">&hellip;</span>
+            <span id="lthcs-diff-fresh-note" class="lthcs-freshnote" hidden></span>
+          </div>
           <a href="../lthcs_tab/" class="lthcs-refresh-btn lthcs-refresh-btn-nav" style="text-decoration:none" aria-label="Back to LTHCS overview">
             <span aria-hidden="true">&larr;</span>
             <span class="lthcs-refresh-label">LTHCS</span>

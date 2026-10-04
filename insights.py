@@ -146,6 +146,94 @@ FLOW_DIVERGENCE_USD_M = THRESHOLDS["FLOW_DIVERGENCE_USD_M"]
 FLOW_VS_PRICE_PCT = THRESHOLDS["FLOW_VS_PRICE_PCT"]
 
 
+# ----- per-feed freshness budgets (max_age_days) -----
+#
+# Every fetcher in this repo preserves last-known-good on failure, so a dead
+# upstream keeps serving its final good day while `generated_at` marches on.
+# Six feeds froze between 2026-05-26 and 2026-06-09 and nothing noticed. The
+# insight generators made that worse: they turned a frozen row into a
+# present-tense headline ("BTC active addresses at 30-day high"), which reads
+# as *today's* news no matter how old the underlying bar is.
+#
+# The fix is the pattern `_etf_insights` already uses: derive the age from the
+# DATA's own newest date (never from build time — build time is always "now"
+# and therefore always lies), and gate any rule that makes a present-tense
+# claim. Rules that are genuinely time-invariant (all-time cumulative totals,
+# milestones about a fixed historical total) stay ungated.
+#
+# Budgets below are sized to each feed's REAL cadence: large enough that
+# normal upstream lag never suppresses a legitimate insight, small enough that
+# a multi-week freeze is caught within days rather than months.
+#
+# READ THIS BEFORE TUNING A NUMBER: `_is_fresh` compares a midnight-anchored
+# date against `datetime.utcnow()`, so N here means "the newest bar may be up
+# to N-1 WHOLE days old" — at exactly N days plus any hours the check already
+# fails. Every budget below is therefore stated as N with its intended
+# tolerance (N-1) spelled out. This is pre-existing `_is_fresh` behaviour
+# shared with the ETF guard; the off-by-one is absorbed in the constants
+# rather than changed in the helper, which would silently loosen ETF too.
+FRESHNESS_MAX_AGE_DAYS = {
+    # signals.compute_signal stamps `as_of` with the last daily CLOSE it
+    # scored. Crypto trades 24/7 so a bar exists every calendar day, but a
+    # build that runs just after 00:00 UTC still sees yesterday's close as the
+    # newest, and CoinGecko/CryptoCompare occasionally publish a day late.
+    # 3 -> tolerates a 2-day-old close: 1 day of normal boundary lag plus one
+    # day of upstream slack. A real freeze is caught on day 3.
+    "signals": 3,
+    # Yahoo daily bars, US trading-day calendar. Friday's close is already 3
+    # calendar days old at a Monday pre-open build; add a Monday market
+    # holiday (Memorial Day, Labor Day, Juneteenth...) and a perfectly healthy
+    # feed's newest bar is 4 days old on Tuesday morning. 6 -> tolerates 5
+    # days, i.e. that worst case plus a day of slack.
+    "stocks": 6,
+    # blockchain.info daily charts. The generator's own docstring notes the
+    # endpoint "is occasionally a day or two behind", so the budget must
+    # tolerate a full 2-day lag: 4 -> tolerates 3 days, honouring that without
+    # letting a genuine freeze masquerade as lag.
+    "whale_btc": 4,
+    # Etherscan daily series + Coin Metrics community tier. Coin Metrics
+    # finalises a day's aggregates late and routinely trails BTC's chain data
+    # by an extra day, so this gets one more day than whale_btc.
+    # 5 -> tolerates 4 days.
+    "whale_eth_daily": 5,
+    # Blockchair's large-transaction endpoint is a rolling "last 24h" SCAN,
+    # not a daily series — the headline literally says "in the latest scan".
+    # It is wrapped in a `_stale_save`/`_stale_load` cache, so a dead endpoint
+    # replays yesterday's transfers forever. 2 -> tolerates 1 day, the
+    # tightest budget here, because a 24h window is only meaningful while it
+    # is roughly current.
+    "whale_eth_scan": 2,
+    # market.poc is recomputed each build from the same daily price/volume
+    # series in market[asset] that `signals` scores. This is the series that
+    # froze at 2026-06-09 behind CryptoCompare's silent failure, so it gets
+    # the identical budget: 3 -> tolerates 2 days.
+    "poc": 3,
+    # CryptoCompare news list — refetched every hourly build, and stale-kept
+    # with the PREVIOUS leg's `fetched_at` when it fails, so the timestamp is
+    # a true data age. A sentiment read over "the last 50 headlines" stops
+    # describing the present almost immediately; 2 -> tolerates 1 day.
+    "social_news": 2,
+    # Reddit about.json — hourly, same stale-keep semantics. "Active users" is
+    # an instantaneous gauge, so 2 -> tolerates 1 day is already generous.
+    "social_reddit": 2,
+    # Santiment is deliberately gated to fire only on the UTC hour-0 run and
+    # stale-kept for the other 23 hours, so a HEALTHY feed is routinely up to
+    # ~1 day old BY DESIGN. 3 -> tolerates 2 days, leaving room for one
+    # missed daily run without excusing a real outage.
+    "social_santiment": 3,
+}
+
+SIGNALS_MAX_AGE_DAYS = FRESHNESS_MAX_AGE_DAYS["signals"]
+STOCKS_MAX_AGE_DAYS = FRESHNESS_MAX_AGE_DAYS["stocks"]
+WHALE_BTC_MAX_AGE_DAYS = FRESHNESS_MAX_AGE_DAYS["whale_btc"]
+WHALE_ETH_DAILY_MAX_AGE_DAYS = FRESHNESS_MAX_AGE_DAYS["whale_eth_daily"]
+WHALE_ETH_SCAN_MAX_AGE_DAYS = FRESHNESS_MAX_AGE_DAYS["whale_eth_scan"]
+POC_MAX_AGE_DAYS = FRESHNESS_MAX_AGE_DAYS["poc"]
+SOCIAL_NEWS_MAX_AGE_DAYS = FRESHNESS_MAX_AGE_DAYS["social_news"]
+SOCIAL_REDDIT_MAX_AGE_DAYS = FRESHNESS_MAX_AGE_DAYS["social_reddit"]
+SOCIAL_SANTIMENT_MAX_AGE_DAYS = FRESHNESS_MAX_AGE_DAYS["social_santiment"]
+
+
 # ----- helpers -----
 
 
@@ -233,6 +321,50 @@ def _is_fresh(date_str: str | None, max_age_days: int = 14) -> bool:
     except (ValueError, TypeError):
         return False
     return (datetime.utcnow() - d) <= timedelta(days=max_age_days)
+
+
+def _as_day(value) -> str | None:
+    """Coerce a date-ish value to a ``YYYY-MM-DD`` string, else None.
+
+    Accepts both plain dates (``"2026-06-09"``) and the ISO timestamps our
+    fetchers stamp (``"2026-06-09T12:07:36+00:00"``, ``"2026-06-09 12:07:36"``)
+    by taking the leading 10 characters. Anything that doesn't parse as a real
+    calendar day returns None so callers fail closed.
+    """
+    if not isinstance(value, str) or len(value) < 10:
+        return None
+    day = value[:10]
+    try:
+        datetime.strptime(day, "%Y-%m-%d")
+    except ValueError:
+        return None
+    return day
+
+
+def _newest_day(*values) -> str | None:
+    """Newest parseable ``YYYY-MM-DD`` among the arguments, or None.
+
+    Used to pick a feed's own newest date when several fields could carry it
+    (e.g. a signal's ``as_of`` vs the last entry of its score ``history``).
+    """
+    best = None
+    for v in values:
+        day = _as_day(v)
+        if day is not None and (best is None or day > best):
+            best = day
+    return best
+
+
+def _series_last_day(rows, key: str = "date") -> str | None:
+    """Newest ``key`` value across a ``[{date: ..., value: ...}, ...]`` series.
+
+    Scans the whole list rather than trusting ``rows[-1]`` — several of our
+    series are merged from more than one upstream and are not guaranteed to be
+    sorted. Non-dict entries and unparseable dates are skipped.
+    """
+    if not isinstance(rows, list):
+        return None
+    return _newest_day(*[r.get(key) for r in rows if isinstance(r, dict)])
 
 
 # ----- per-domain insight generators -----
@@ -488,11 +620,38 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
     return out
 
 
+def _signal_asset_day(sig: dict) -> str | None:
+    """Newest date the composite-signal payload for one asset describes.
+
+    ``signals.compute_signal`` stamps ``as_of`` with the last daily close it
+    scored and emits a 90-day ``history`` of ``{date, score}``. Either is a
+    valid data date; we take whichever is newer so a partially-populated
+    payload still reports its true age.
+    """
+    if not isinstance(sig, dict):
+        return None
+    return _newest_day(sig.get("as_of"), _series_last_day(sig.get("history")))
+
+
 def _signal_insights(payload: dict) -> list[dict]:
+    # FRESHNESS: every rule below makes a present-tense claim about an asset's
+    # CURRENT signal state ("composite signal: STRONG BUY", "flipped positive",
+    # "RSI overbought at 78", "momentum building"). None of them is a
+    # time-invariant milestone — a score computed off a 2026-06-09 close says
+    # nothing true about today — so all of them are gated. The gate is
+    # PER ASSET: signals.compute_all scores btc/eth/link/ltc independently and
+    # one coin's price feed can die while the others keep updating.
+    fresh_by_asset = {
+        asset: _is_fresh(_signal_asset_day(sig),
+                         max_age_days=SIGNALS_MAX_AGE_DAYS)
+        for asset, sig in (payload.get("signals") or {}).items()
+    }
     out: list[dict] = []
     sigs = payload.get("signals") or {}
     for asset, sig in sigs.items():
         if not sig:
+            continue
+        if not fresh_by_asset.get(asset):
             continue
         label = sig.get("label", "")
         score = sig.get("score", 0)
@@ -538,7 +697,7 @@ def _signal_insights(payload: dict) -> list[dict]:
     # crosses <30 (oversold, contrarian bull) and >70 (overbought, contrarian
     # bear). Defensive against missing/non-numeric "value" strings.
     for asset, sig in sigs.items():
-        if not sig:
+        if not sig or not fresh_by_asset.get(asset):
             continue
         for comp in (sig.get("components") or []):
             if not isinstance(comp, dict):
@@ -570,7 +729,7 @@ def _signal_insights(payload: dict) -> list[dict]:
     # window AND the latest MACD-histogram component contribution flipped sign,
     # flag a momentum turn. Defensive against missing component fields.
     for asset, sig in sigs.items():
-        if not sig:
+        if not sig or not fresh_by_asset.get(asset):
             continue
         macd_comp = None
         for comp in (sig.get("components") or []):
@@ -606,7 +765,7 @@ def _signal_insights(payload: dict) -> list[dict]:
     # provided any signal data exists.
     candidates = []
     for asset, sig in sigs.items():
-        if not sig:
+        if not sig or not fresh_by_asset.get(asset):
             continue
         score = sig.get("score")
         comps = sig.get("components") or []
@@ -651,6 +810,23 @@ def _stocks_insights(payload: dict) -> list[dict]:
     out: list[dict] = []
     stocks = _get_nested(payload, "market.stocks_signals", []) or []
     if not stocks:
+        return out
+
+    # FRESHNESS: all five rules describe the tape RIGHT NOW ("Broad
+    # stock-market buy bias", "Strong-buy signal: X"). A Yahoo outage leaves
+    # the previous good `stocks_signals` array in place, which would keep
+    # asserting last month's breadth as today's. None of these rules is
+    # time-invariant, so a stale array suppresses the whole generator.
+    #
+    # The feed's own newest date is the last entry of each stock's rolling
+    # `history` ([{date, score}] off the same Yahoo daily bars). We take the
+    # newest across the whole list: a single delisted/halted ticker whose bars
+    # stopped must not drag the market-wide read into "stale".
+    stocks_day = _newest_day(*[
+        _series_last_day(s.get("history"))
+        for s in stocks if isinstance(s, dict)
+    ])
+    if not _is_fresh(stocks_day, max_age_days=STOCKS_MAX_AGE_DAYS):
         return out
 
     # Pull (score, symbol, name) tuples for stocks with a numeric score.
@@ -702,10 +878,17 @@ def _stocks_insights(payload: dict) -> list[dict]:
         })
 
     # Rule 3: stock vs crypto-signal score divergence.
+    # Cross-feed rule: it is only a real disagreement if BOTH sides are
+    # current. A frozen crypto signal paired with a live stock tape produces a
+    # guaranteed-looking "regime change" that is really just one dead feed, so
+    # each crypto asset is admitted to the average only when its own `as_of`
+    # is fresh (same per-asset gate `_signal_insights` uses).
     crypto_sigs = payload.get("signals") or {}
     crypto_scores = []
     for asset, sig in crypto_sigs.items():
         if not isinstance(sig, dict):
+            continue
+        if not _is_fresh(_signal_asset_day(sig), max_age_days=SIGNALS_MAX_AGE_DAYS):
             continue
         sc = sig.get("score")
         if isinstance(sc, (int, float)):
@@ -764,11 +947,29 @@ def _stocks_insights(payload: dict) -> list[dict]:
 
 
 def _whale_insights(payload: dict) -> list[dict]:
-    """BTC on-chain whale-tab rules. Operates on payload['whale']['btc'].
+    """BTC + ETH on-chain whale-tab rules. Operates on payload['whale'].
 
-    Each rule guards for empty/missing series. Freshness is not strictly
-    enforced here because blockchain.info is occasionally a day or two
-    behind — the trends still describe the most recent state we have.
+    Each rule guards for empty/missing series AND for staleness.
+
+    FRESHNESS: this generator used to say, in its own docstring, that
+    freshness "is not strictly enforced here because blockchain.info is
+    occasionally a day or two behind — the trends still describe the most
+    recent state we have". That reasoning holds for a two-day lag and breaks
+    completely for a two-month freeze, which is exactly what happened when six
+    feeds stalled in mid-2026. "BTC active addresses at 30-day high" is a
+    claim about the 30 days ending TODAY; served off a frozen series it is
+    simply false, and it renders identically to a real one.
+
+    So the lag allowance is now explicit and bounded (WHALE_BTC_MAX_AGE_DAYS =
+    3, which still absorbs the "day or two behind" case) rather than
+    unbounded. Every rule here is present-tense — rolling 30-day extremes and
+    30-day z-scores, not all-time milestones — so every rule is gated.
+
+    Gating is PER SERIES, not per generator: blockchain.info, Etherscan,
+    Coin Metrics and Blockchair are four independent upstreams behind one
+    ``whale`` blob, and each can die alone. A rule that combines series (e.g.
+    the tx-count + active-address momentum rule) requires all of its inputs to
+    be fresh.
     """
     out: list[dict] = []
     btc = (payload.get("whale") or {}).get("btc") or {}
@@ -777,17 +978,31 @@ def _whale_insights(payload: dict) -> list[dict]:
         rows = btc.get(series_name) or []
         return [r.get("value") for r in rows if r.get("value") is not None]
 
+    def _btc_fresh(*series_names: str) -> bool:
+        """True only if every named BTC series' newest bar is within budget."""
+        return all(
+            _is_fresh(_series_last_day(btc.get(nm)),
+                      max_age_days=WHALE_BTC_MAX_AGE_DAYS)
+            for nm in series_names
+        )
+
     addrs = _vals("active_addresses")
     tx_count = _vals("tx_count")
     tx_vol = _vals("tx_volume_usd")
     avg_tx = _vals("avg_tx_usd")
     miners = _vals("miners_revenue_usd")
 
-    addrs_high = _largest_in_window(addrs, 30) if len(addrs) >= 2 else False
-    addrs_low = _smallest_in_window(addrs, 30) if len(addrs) >= 2 else False
-    txc_high = _largest_in_window(tx_count, 30) if len(tx_count) >= 2 else False
-    txc_low = _smallest_in_window(tx_count, 30) if len(tx_count) >= 2 else False
-    vol_low = _smallest_in_window(tx_vol, 30) if len(tx_vol) >= 2 else False
+    # Rolling-window extremes are only meaningful if the window ENDS near
+    # today, so each flag folds in its own series' freshness.
+    addrs_fresh = _btc_fresh("active_addresses")
+    txc_fresh = _btc_fresh("tx_count")
+    vol_fresh = _btc_fresh("tx_volume_usd")
+
+    addrs_high = addrs_fresh and _largest_in_window(addrs, 30) if len(addrs) >= 2 else False
+    addrs_low = addrs_fresh and _smallest_in_window(addrs, 30) if len(addrs) >= 2 else False
+    txc_high = txc_fresh and _largest_in_window(tx_count, 30) if len(tx_count) >= 2 else False
+    txc_low = txc_fresh and _smallest_in_window(tx_count, 30) if len(tx_count) >= 2 else False
+    vol_low = vol_fresh and _smallest_in_window(tx_vol, 30) if len(tx_vol) >= 2 else False
 
     # 1. Active addresses 30d high
     if addrs_high and addrs:
@@ -808,7 +1023,7 @@ def _whale_insights(payload: dict) -> list[dict]:
         })
 
     # 3. Average transaction size spike (≥1.5σ above 30d mean) — whale proxy.
-    if len(avg_tx) >= 31:
+    if len(avg_tx) >= 31 and _btc_fresh("avg_tx_usd"):
         z = _zscore(avg_tx, 30)
         if z is not None and z >= SIGMA_15:
             out.append({
@@ -818,7 +1033,7 @@ def _whale_insights(payload: dict) -> list[dict]:
             })
 
     # 4. Miner revenue spike (≥2σ above 30d mean).
-    if len(miners) >= 31:
+    if len(miners) >= 31 and _btc_fresh("miners_revenue_usd"):
         z = _zscore(miners, 30)
         if z is not None and z >= SIGMA_20:
             last = miners[-1] or 0
@@ -858,7 +1073,7 @@ def _whale_insights(payload: dict) -> list[dict]:
         if v is None or a is None or a == 0:
             continue
         velocity.append(v / a)
-    if len(velocity) >= 31:
+    if len(velocity) >= 31 and _btc_fresh("tx_volume_usd", "active_addresses"):
         z = _zscore(velocity, 30)
         if z is not None and z >= SIGMA_15:
             out.append({
@@ -872,8 +1087,16 @@ def _whale_insights(payload: dict) -> list[dict]:
     # 8. ETH large_transactions count high. The blockchair endpoint returns
     # a list of recent ≥$1M ETH transfers. When that list is unusually long
     # (≥30), call it out as institutional-grade flow.
+    # Freshness: rows carry an ISO `time` per transfer. Because
+    # blockchair_eth_large_transactions replays a `data/.stale/` snapshot
+    # whenever the live query fails, "the latest scan" can silently be weeks
+    # old — the count stays plausible, so nothing looks wrong. Budget is the
+    # tight WHALE_ETH_SCAN_MAX_AGE_DAYS (2d): this is a rolling 24h window,
+    # not a daily series.
     eth_large = eth.get("large_transactions") or []
-    if isinstance(eth_large, list) and len(eth_large) >= 30:
+    eth_scan_fresh = _is_fresh(_series_last_day(eth_large, key="time"),
+                               max_age_days=WHALE_ETH_SCAN_MAX_AGE_DAYS)
+    if isinstance(eth_large, list) and len(eth_large) >= 30 and eth_scan_fresh:
         out.append({
             "kind": "anomaly", "asset": "eth", "severity": "alert",
             "headline": f"ETH large-transaction surge: {len(eth_large)} on-chain transfers ≥$1M in the latest scan",
@@ -884,7 +1107,9 @@ def _whale_insights(payload: dict) -> list[dict]:
     etherscan = eth.get("etherscan_daily") or {}
     eth_addrs_series = etherscan.get("active_addresses") or etherscan.get("daily_active_addresses") or []
     eth_addrs = [r.get("value") for r in eth_addrs_series if isinstance(r, dict) and r.get("value") is not None]
-    if len(eth_addrs) >= 2 and _largest_in_window(eth_addrs, 30):
+    eth_addrs_fresh = _is_fresh(_series_last_day(eth_addrs_series),
+                                max_age_days=WHALE_ETH_DAILY_MAX_AGE_DAYS)
+    if len(eth_addrs) >= 2 and eth_addrs_fresh and _largest_in_window(eth_addrs, 30):
         out.append({
             "kind": "milestone", "asset": "eth", "severity": "good",
             "headline": f"ETH active addresses at 30-day high ({eth_addrs[-1]:,.0f})",
@@ -895,7 +1120,9 @@ def _whale_insights(payload: dict) -> list[dict]:
     cm = eth.get("coin_metrics") or {}
     cm_series = cm.get("transfer_value_adj_usd") or cm.get("tx_volume_usd") or []
     cm_vals = [r.get("value") for r in cm_series if isinstance(r, dict) and r.get("value") is not None]
-    if len(cm_vals) >= 31:
+    cm_fresh = _is_fresh(_series_last_day(cm_series),
+                         max_age_days=WHALE_ETH_DAILY_MAX_AGE_DAYS)
+    if len(cm_vals) >= 31 and cm_fresh:
         z = _zscore(cm_vals, 30)
         if z is not None and z >= SIGMA_15:
             out.append({
@@ -940,6 +1167,28 @@ def _news_mentions(titles: list[str], keywords: tuple[str, ...]) -> int:
     return n
 
 
+def _poc_asset_day(asset: str, asset_poc: dict, payload: dict) -> str | None:
+    """Newest date the POC block for one asset was computed from.
+
+    The ``d30``/``d90``/``d180`` timeframe dicts are pure aggregates and carry
+    no date, so we read it from, in order of preference:
+
+    1. ``migration_series`` — ``[{date, poc}]``, one entry per aligned day,
+       produced from the same price/volume series as the timeframes;
+    2. ``market[asset].price`` — the raw daily series ``compute_poc_all``
+       consumes, used when the profile has 10-30 aligned days (enough for
+       ``point_of_control``, not enough for ``poc_migration_series``, which
+       needs 31 and otherwise returns []).
+
+    Returns None if neither is available, so the caller fails closed.
+    """
+    day = _series_last_day((asset_poc or {}).get("migration_series"))
+    if day is not None:
+        return day
+    prices = ((payload.get("market") or {}).get(asset) or {}).get("price")
+    return _series_last_day(prices)
+
+
 def _poc_insights(payload: dict) -> list[dict]:
     """POC (Point of Control) tab rules. Operates on payload['market']['poc'],
     which has the shape::
@@ -952,15 +1201,34 @@ def _poc_insights(payload: dict) -> list[dict]:
                               "distance_pct": float, "week_start": str}, ...]}}
 
     Each rule is defensive: returns empty if expected keys are missing.
+
+    FRESHNESS: this is the generator the mid-2026 freeze hit hardest. POC is
+    recomputed each build from ``market[asset].price`` / ``.volume``; when
+    CryptoCompare started failing silently those series stopped advancing and
+    the whole tab kept publishing a 2026-06-09 volume profile as live market
+    structure. Every rule here is anchored to the CURRENT price — rule 2
+    prints "price $X sits between..." and rule 4 prints "% away" — so a frozen
+    profile does not merely go quiet, it quotes a stale price as today's.
+
+    All four rules are gated, PER ASSET (compute_poc_all runs btc/eth/link/ltc
+    off independent series). None of them is time-invariant: even the naked-POC
+    rules describe levels "untested" as of the last bar, and price may well
+    have traded through them since.
     """
     out: list[dict] = []
     poc_root = ((payload.get("market") or {}).get("poc")) or {}
     if not isinstance(poc_root, dict) or not poc_root:
         return out
+    fresh_by_asset = {
+        asset: _is_fresh(_poc_asset_day(asset, asset_poc, payload),
+                         max_age_days=POC_MAX_AGE_DAYS)
+        for asset, asset_poc in poc_root.items()
+        if isinstance(asset_poc, dict)
+    }
 
     # Rule 1: STRONG migration (≥5%) — value migrating up/down clearly.
     for asset, asset_poc in poc_root.items():
-        if not isinstance(asset_poc, dict):
+        if not isinstance(asset_poc, dict) or not fresh_by_asset.get(asset):
             continue
         mig = asset_poc.get("migration") or {}
         direction = mig.get("direction")
@@ -976,7 +1244,7 @@ def _poc_insights(payload: dict) -> list[dict]:
 
     # Rule 2: price BETWEEN 30d POC and 90d POC — actionable transition zone.
     for asset, asset_poc in poc_root.items():
-        if not isinstance(asset_poc, dict):
+        if not isinstance(asset_poc, dict) or not fresh_by_asset.get(asset):
             continue
         mig = asset_poc.get("migration") or {}
         if mig.get("between_pocs") is True and mig.get("direction") in ("UP", "DOWN"):
@@ -997,7 +1265,7 @@ def _poc_insights(payload: dict) -> list[dict]:
     # untested-magnet structure forming.
     naked_counts: list[tuple[str, int]] = []
     for asset, asset_poc in poc_root.items():
-        if not isinstance(asset_poc, dict):
+        if not isinstance(asset_poc, dict) or not fresh_by_asset.get(asset):
             continue
         naked = asset_poc.get("naked") or []
         if isinstance(naked, list) and len(naked) >= 3:
@@ -1015,7 +1283,7 @@ def _poc_insights(payload: dict) -> list[dict]:
 
     # Rule 4: single-asset naked-POC density spike (≥5 unfilled weekly POCs).
     for asset, asset_poc in poc_root.items():
-        if not isinstance(asset_poc, dict):
+        if not isinstance(asset_poc, dict) or not fresh_by_asset.get(asset):
             continue
         naked = asset_poc.get("naked") or []
         if isinstance(naked, list) and len(naked) >= 5:
@@ -1041,17 +1309,40 @@ def _social_insights(payload: dict) -> list[dict]:
 
     Each rule is defensive — the social fetcher can return ``available: False``
     or partial data on any leg, and we silently skip those rules.
+
+    FRESHNESS: the four rules here all describe attention RIGHT NOW —
+    "sentiment skews bullish (last 50 headlines)", "active-user spike",
+    "on-chain attention surging". ``fetch_social`` stamps the OUTER dict with
+    a build-time ``fetched_at`` that is always "now" and therefore useless as
+    an age signal; but each LEG (reddit / cc_news / santiment) carries its own
+    ``fetched_at``, and ``_social_stale_fallback`` restores a failed leg with
+    ``{**prev, "stale": True}``, which preserves the previous leg's timestamp.
+    So the per-leg ``fetched_at`` is a true data age and that is what we gate
+    on — per leg, since any one of the three upstreams can die alone.
+
+    No rule here is time-invariant, so none is left ungated.
     """
     out: list[dict] = []
     social = ((payload.get("market") or {}).get("social")) or {}
     if not isinstance(social, dict) or not social:
         return out
 
+    def _leg_fresh(leg: str, max_age_days: int) -> bool:
+        """Freshness of one social leg from its own ``fetched_at``."""
+        node = social.get(leg)
+        if not isinstance(node, dict):
+            return False
+        return _is_fresh(_as_day(node.get("fetched_at")),
+                         max_age_days=max_age_days)
+
+    cc_news_fresh = _leg_fresh("cc_news", SOCIAL_NEWS_MAX_AGE_DAYS)
+    reddit_fresh = _leg_fresh("reddit", SOCIAL_REDDIT_MAX_AGE_DAYS)
+
     # Rule 1: CryptoCompare news sentiment skew. Per coin, when sentiment is
     # one-sided (net_score |≥5| with >=10 articles), emit a directional
     # insight. Only the strongest coin per call.
     cc_news = ((social.get("cc_news") or {}).get("coins")) or {}
-    if isinstance(cc_news, dict) and cc_news:
+    if isinstance(cc_news, dict) and cc_news and cc_news_fresh:
         candidates: list[tuple[int, str, dict]] = []
         for sym, coin in cc_news.items():
             if not isinstance(coin, dict):
@@ -1081,7 +1372,7 @@ def _social_insights(payload: dict) -> list[dict]:
     if not reddit:
         # Schema fallback: reddit() returns top-level keys per-sub in some shapes.
         reddit = social.get("reddit") or {}
-    if isinstance(reddit, dict):
+    if isinstance(reddit, dict) and reddit_fresh:
         ratios: list[tuple[float, str, int, int]] = []
         for sub_key, meta in reddit.items():
             if not isinstance(meta, dict):
@@ -1108,10 +1399,26 @@ def _social_insights(payload: dict) -> list[dict]:
     # Rule 3: Santiment daily-active-addresses delta — per coin, when
     # daily_active_addresses_delta_pct ≥ +20% or ≤ −20% over the recent
     # window, emit a directional flag.
+    #
+    # Santiment ships the DAA series itself (``daily_active_addresses`` =
+    # [{date, value}]) alongside the scalar summary, so we prefer the series'
+    # own last date — a real data date — and only fall back to the leg's
+    # ``fetched_at`` when the series is absent. Gating is per coin: the free
+    # tier drops individual slugs without failing the whole leg.
+    san_node = social.get("santiment") if isinstance(social.get("santiment"), dict) else {}
+    san_fetched = _as_day(san_node.get("fetched_at"))
     san = (social.get("santiment") or {}).get("coins") or {}
     if isinstance(san, dict):
         for sym, coin in san.items():
             if not isinstance(coin, dict):
+                continue
+            # Preference, not max(): a fresh `fetched_at` must never rescue an
+            # old series — a stale-kept leg re-fetched today is exactly the
+            # failure mode this guard exists to catch.
+            coin_day = _series_last_day(coin.get("daily_active_addresses"))
+            if coin_day is None:
+                coin_day = san_fetched
+            if not _is_fresh(coin_day, max_age_days=SOCIAL_SANTIMENT_MAX_AGE_DAYS):
                 continue
             delta = coin.get("daily_active_addresses_delta_pct")
             latest = coin.get("daily_active_addresses_latest")
@@ -1129,9 +1436,14 @@ def _social_insights(payload: dict) -> list[dict]:
     # Rule 4: news + Reddit alignment — if news sentiment is one-sided AND
     # at least one tracked subreddit shows high engagement, emit a stronger
     # combined insight. (Compose-only — depends on data from rules 1 + 2.)
+    #
+    # Cross-leg: its whole claim is "two independent sources agree RIGHT NOW",
+    # so it needs BOTH legs current. One frozen leg would manufacture a
+    # permanent, very confident-looking agreement.
     try:
         # Reuse cc_news strongest candidate if it exists.
-        cc_coins = ((social.get("cc_news") or {}).get("coins")) or {}
+        cc_coins = (((social.get("cc_news") or {}).get("coins")) or {}
+                    if (cc_news_fresh and reddit_fresh) else {})
         strongest = None
         for sym, coin in cc_coins.items():
             net = coin.get("net_score") if isinstance(coin, dict) else None
@@ -1509,13 +1821,22 @@ def _market_insights(payload: dict) -> list[dict]:
                 break
 
     # ----- Whale tab: BTC on-chain transfer volume + active-address swings -----
+    #
+    # These two rules read the SAME blockchain.info daily series as
+    # `_whale_insights` and get routed to the same Whale tab, but they lived
+    # here with a 14-day budget — the ETF number, copied onto a daily on-chain
+    # feed. That let a frozen chart keep publishing "+2.4σ vs 30d mean" for
+    # almost two weeks, and it disagreed with the whale generator sitting on
+    # the identical data. Both now use WHALE_BTC_MAX_AGE_DAYS so one feed has
+    # one answer. `_series_last_day` rather than `[-1]["date"]`: these series
+    # are merged upstream and are not guaranteed sorted.
     whale = (payload.get("whale") or {}).get("btc") or {}
 
     # Whale tx volume spike (≥2σ above 30d mean)
     tx_vol = whale.get("tx_volume_usd") or []
     if len(tx_vol) >= 31:
-        last_row = tx_vol[-1] or {}
-        if _is_fresh(last_row.get("date"), max_age_days=14):
+        if _is_fresh(_series_last_day(tx_vol),
+                     max_age_days=WHALE_BTC_MAX_AGE_DAYS):
             vals = [r.get("value") for r in tx_vol if r.get("value") is not None]
             z = _zscore(vals, 30)
             if z is not None and z >= SIGMA_20:
@@ -1529,8 +1850,8 @@ def _market_insights(payload: dict) -> list[dict]:
     # Active addresses anomaly (≥1.5σ either direction)
     addrs = whale.get("active_addresses") or []
     if len(addrs) >= 31:
-        last_row = addrs[-1] or {}
-        if _is_fresh(last_row.get("date"), max_age_days=14):
+        if _is_fresh(_series_last_day(addrs),
+                     max_age_days=WHALE_BTC_MAX_AGE_DAYS):
             vals = [r.get("value") for r in addrs if r.get("value") is not None]
             z = _zscore(vals, 30)
             if z is not None and abs(z) >= SIGMA_15:
