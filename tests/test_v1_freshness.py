@@ -814,26 +814,77 @@ def test_aviation_resolver_refuses_a_prose_vintage(resolve):
     assert "FAA airman data Dec 31 2025" in r["title"]
 
 
-# ------------- 6. The Money Flow clock read, proved against the source -------
+# ------------- 6. The Money Flow clock read, now fixed at the source ---------
+#
+# This section used to hold `test_money_flow_as_of_really_is_a_clock_read`,
+# which ASSERTED that money_flow.build_money_flow_index() answered
+# datetime.now(UTC) when the payload carried no observation date — the premise
+# behind moneyFlowFreshness() refusing `mfx.as_of` outright. Its own docstring
+# said "if the data layer starts passing a real observation date, this test
+# fails and the resolver can be simplified". That is exactly what happened: the
+# clock read is gone from money_flow.py, the legs now carry real dates from
+# fetch_market.build_money_flow_payload(), and the composite reports the OLDEST
+# contributing leg or None. The three tests below replace it and pin the new
+# contract from both ends.
+#
+# FOR THE RESOLVER LANE: moneyFlowFreshness() can now read `mfx.as_of`
+# directly when it is non-null, and fall back to its disclosure text (using
+# `mfx.as_of_inputs.undated_contributors`) when it is null. Deliberately not
+# changed here — app.py is not this lane's file.
 
 
-def test_money_flow_as_of_really_is_a_clock_read():
-    """The premise behind moneyFlowFreshness() refusing `mfx.as_of`.
-
-    money_flow.build_money_flow_index() falls back to datetime.now(UTC) when
-    the market blob carries no "as_of" — and fetch_market.money_flow_index()
-    never puts one there. If that ever changes (the data layer starts passing
-    a real observation date), this test fails and the resolver can be
-    simplified to read the field directly.
-    """
-    from datetime import datetime, timezone
+def _mf_module():
     sys.path.insert(0, str(ROOT))
-    mf = pytest.importorskip("money_flow")
+    return pytest.importorskip("money_flow")
+
+
+def test_money_flow_never_manufactures_a_date():
+    """Rule 4 at the source: an undatable composite says None, not today."""
+    mf = _mf_module()
     out = mf.build_money_flow_index({"market": {"DIA": {}, "SPY": {}, "QQQ": {}}})
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    assert out["as_of"] == today, (
-        "money_flow.as_of is expected to be a clock read; if the data layer "
-        "now supplies a real observation date, update moneyFlowFreshness()")
+    assert out["as_of"] is None, (
+        f"money_flow invented an as_of ({out['as_of']!r}) for a payload with no "
+        f"data in it at all")
+    # Structural, not behavioural: with no module-scope datetime the library
+    # half of money_flow physically cannot read a clock, so this cannot regress
+    # quietly through some new code path.
+    assert not hasattr(mf, "datetime"), (
+        "money_flow imported datetime at module scope again — that is the door "
+        "the clock read walked through the first time")
+
+
+def test_money_flow_as_of_is_the_oldest_contributing_leg():
+    """Rule 2: a composite is only as fresh as its OLDEST input — min, not max."""
+    mf = _mf_module()
+    leg = lambda day: {"etf_flow": 5, "etf_flow_hist": [1, 2, 3],
+                       "mfi": 60, "mfi_hist": [40, 50, 55], "as_of": day}
+    out = mf.build_money_flow_index({"market": {
+        "DIA": leg("2026-07-31"), "SPY": leg("2026-06-15"), "QQQ": leg("2026-08-01"),
+        "ici_equity_flow": 3, "ici_equity_flow_hist": [1, 2, 4],
+        "ici_as_of": "2026-07-25",
+        "mmf_wow_change": 2, "mmf_wow_change_hist": [1, 3, 5],
+        "mmf_as_of": "2026-07-24",
+    }})
+    assert out["as_of"] == "2026-06-15", out["as_of_inputs"]
+    assert out["as_of_inputs"]["resolved_from"] == "oldest contributing leg"
+
+
+def test_money_flow_undated_contributor_makes_the_date_unknown():
+    """A dated subset is not the answer when an undated leg also contributed:
+    the true oldest could be older still, so min() over what we have would
+    overstate freshness. None + disclosure instead."""
+    mf = _mf_module()
+    leg = lambda day: {"etf_flow": 5, "etf_flow_hist": [1, 2, 3],
+                       "mfi": 60, "mfi_hist": [40, 50, 55], **({"as_of": day} if day else {})}
+    market = {"DIA": leg("2026-07-31"), "SPY": leg(None), "QQQ": leg("2026-08-01")}
+    out = mf.build_money_flow_index({"market": market})
+    assert out["as_of"] is None
+    assert out["as_of_inputs"]["undated_contributors"] == ["SPY"]
+    # An undated leg that contributes NOTHING must not poison the date — it
+    # supplied no observation, so it cannot make the composite older.
+    market["SPY"] = {}
+    out = mf.build_money_flow_index({"market": market})
+    assert out["as_of"] == "2026-07-31", out["as_of_inputs"]
 
 
 # ------------------------ 7. Renderer executed against a stub DOM ------------
