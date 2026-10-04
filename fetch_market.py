@@ -4115,7 +4115,9 @@ def blockchair_eth_large_transactions_with_status(
     # replay it.
     try:
         _stale_path(_ETH_LARGE_TX_LEGACY_CACHE_KEY).unlink(missing_ok=True)
-    except Exception:
+    except OSError:
+        # Best-effort cleanup only: the legacy key is never read again, so a
+        # file we couldn't delete is harmless and must not stop the fetch.
         pass
     status = {
         "window_hours": ETH_LARGE_TX_WINDOW_HOURS,
