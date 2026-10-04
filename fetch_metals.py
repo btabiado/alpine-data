@@ -386,13 +386,31 @@ _USGS_GOLD_RELEASES = [
 ]
 
 
+# MCS 2026 (Jan 2026) stopped shipping per-commodity world CSVs and publishes
+# ONE long-format table for every chapter instead: "MCS 2026 Data Release -
+# Commodity Salient U.S. and World Statistics" (ScienceBase item below), file
+# MCS2026_Commodities_Data.csv with columns MCS chapter, Section, Commodity,
+# Country, Statistics, Statistics_detail, Unit, Year, Value. Its world tables
+# carry 2024 production and 2025 estimates, so the dashboard was still showing
+# the MCS 2024 edition's 2023 numbers two editions later. Tried first; the
+# per-commodity releases above remain the fallback. Add next year's combined
+# release ahead of this one when USGS posts it.
+_USGS_MCS_COMBINED_RELEASES = [
+    # (sciencebase_item_id, file_name_fragment, edition_year)
+    ("69837e43b66b01367d7ec7c7", "commodities_data", 2026),
+]
+
+_COMBINED_CSV_CACHE: dict[str, str | None] = {}
+
+
 def fetch_silver_mine_production() -> dict | None:
     """World silver mine production by country (metric tons), latest annual.
 
     USGS Mineral Commodity Summaries — Silver chapter, world production
     table, published annually. Public domain.
     """
-    return _fetch_usgs_mcs_production(_USGS_SILVER_RELEASES, metal_label="Silver")
+    return (_fetch_usgs_mcs_combined("SILVER", "Silver")
+            or _fetch_usgs_mcs_production(_USGS_SILVER_RELEASES, metal_label="Silver"))
 
 
 def _fetch_usgs_gold_production() -> dict | None:
@@ -402,7 +420,76 @@ def _fetch_usgs_gold_production() -> dict | None:
     table, published annually. Public domain. Mirrors the silver fetcher's
     structure; the underlying CSV schema is identical.
     """
-    return _fetch_usgs_mcs_production(_USGS_GOLD_RELEASES, metal_label="Gold")
+    return (_fetch_usgs_mcs_combined("GOLD", "Gold")
+            or _fetch_usgs_mcs_production(_USGS_GOLD_RELEASES, metal_label="Gold"))
+
+
+def _fetch_usgs_mcs_combined(chapter: str, metal_label: str) -> dict | None:
+    """World mine production for one chapter from the newest combined MCS
+    table. The ~3 MB file is downloaded once per process and shared by the
+    gold and silver cards."""
+    for item_id, fragment, edition in _USGS_MCS_COMBINED_RELEASES:
+        if item_id not in _COMBINED_CSV_CACHE:
+            text = None
+            meta = _get_json(f"https://www.sciencebase.gov/catalog/item/{item_id}",
+                             {"format": "json"}, timeout=30)
+            if isinstance(meta, dict):
+                for f in meta.get("files") or []:
+                    name = (f.get("name") or "").lower()
+                    if name.endswith(".csv") and fragment in name and f.get("url"):
+                        text = _get_text(f["url"], timeout=60)
+                        break
+            _COMBINED_CSV_CACHE[item_id] = text
+        text = _COMBINED_CSV_CACHE[item_id]
+        if text:
+            res = _parse_usgs_mcs_combined_csv(text, chapter, metal_label, edition)
+            if res:
+                return res
+    return None
+
+
+def _parse_usgs_mcs_combined_csv(csv_text: str, chapter: str, metal_label: str,
+                                 edition: int) -> dict | None:
+    """By-country mine production for `chapter` from the long-format MCS
+    table, for the newest year that has country rows. Same output shape and
+    the same aggregate exclusions ("World total", "Other countries") as
+    _parse_usgs_mcs_csv. The edition's final year is a USGS estimate, and the
+    source string says so."""
+    if csv_text.startswith("\ufeff"):
+        csv_text = csv_text[1:]
+    by_year: dict[int, list[dict]] = {}
+    for r in csv.DictReader(io.StringIO(csv_text)):
+        if (r.get("MCS chapter") or "").strip().upper() != chapter:
+            continue
+        if "world" not in (r.get("Section") or "").lower():
+            continue
+        if (r.get("Statistics") or "").strip().lower() != "production":
+            continue
+        if not (r.get("Statistics_detail") or "").strip().lower().startswith("mine production"):
+            continue
+        country = (r.get("Country") or "").strip()
+        if not country or "world total" in country.lower() \
+                or country.lower().startswith("other"):
+            continue
+        try:
+            year = int(str(r.get("Year") or "").strip())
+        except ValueError:
+            continue
+        val = _safe_float(r.get("Value"))
+        if val is None or val <= 0:
+            continue
+        by_year.setdefault(year, []).append({"country": country, "tonnes": val})
+    if not by_year:
+        return None
+    year = max(by_year)
+    rows = sorted(by_year[year], key=lambda x: x["tonnes"], reverse=True)
+    est = " estimate" if year >= edition - 1 else ""
+    return {
+        "unit": "metric tons",
+        "year": year,
+        "by_country": rows,
+        "source": f"USGS MCS {edition} ({metal_label}, {year}{est})",
+    }
 
 
 def _fetch_usgs_mcs_production(releases: list[tuple[str, str, list[str]]],
