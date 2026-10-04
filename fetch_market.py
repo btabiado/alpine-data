@@ -152,9 +152,29 @@ def coingecko_market(asset_id: str, days: int = 365) -> dict:
     return out if isinstance(out, dict) else {"price": [], "volume": [], "market_cap": []}
 
 
-def coinbase_intl_perpetuals() -> list[dict]:
+# A perp row only describes the market if the instrument is actually trading
+# and its quote is recent. On 2026-10-04 every Coinbase International PERP was
+# PAUSED (131) or DELISTED (133) with quotes frozen at 2026-09-03 / 2026-10-01,
+# yet those frozen predicted-funding values kept feeding the Overview
+# "Crypto Market Sentiment" composite as if live.
+CB_INTL_MAX_QUOTE_AGE_H = 24
+_CB_INTL_LAST_STATUS: dict = {}
+
+
+def _parse_iso_utc(ts: Any) -> datetime | None:
+    if not isinstance(ts, str) or not ts:
+        return None
+    try:
+        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def coinbase_intl_perpetuals(now: datetime | None = None) -> list[dict]:
     """Coinbase International Exchange — funding rate + mark price + open
-    interest for every PERP (~246 of them). Public endpoint, no auth.
+    interest for every PERP that is TRADING with a quote < 24h old. Public
+    endpoint, no auth.
 
     Works from US IPs (Binance's /fapi endpoint returns 451 from US, this
     one returns 200). Use case: cross-exchange perpetual positioning view
@@ -163,13 +183,27 @@ def coinbase_intl_perpetuals() -> list[dict]:
     settle at the next funding interval — i.e. forward-looking funding,
     most useful for spotting crowded positioning right now.
 
+    Instruments whose ``trading_state`` is not TRADING (PAUSED/DELISTED) or
+    whose quote is older than ``CB_INTL_MAX_QUOTE_AGE_H`` are dropped; the
+    counts and the reason land in ``_CB_INTL_LAST_STATUS`` (published as
+    ``market.coinbase_intl_perps_status``) so an empty table says why.
+
     Returns rows sorted by funding_rate descending (most crowded long first).
     Empty list on any failure.
     """
+    now = now or datetime.now(timezone.utc)
+    checked_at = now.isoformat(timespec="seconds")
+    _CB_INTL_LAST_STATUS.clear()
     j = _get("https://api.international.coinbase.com/api/v1/instruments")
     if not j or not isinstance(j, list):
+        _CB_INTL_LAST_STATUS.update({"available": False, "checked_at": checked_at,
+                                     "reason": "instruments endpoint unreachable"})
         return []
     out: list[dict] = []
+    total = 0
+    states: dict[str, int] = {}
+    stale_quotes = 0
+    newest_quote: str | None = None
     for it in j:
         if it.get("type") != "PERP":
             continue
@@ -177,6 +211,7 @@ def coinbase_intl_perpetuals() -> list[dict]:
         sym = sym_full.replace("-PERP", "")
         if not sym:
             continue
+        total += 1
         quote = it.get("quote") or {}
         # Coinbase stamps each quote object with its own ISO-8601 UTC
         # `timestamp` (same object that carries predicted_funding), which
@@ -187,6 +222,16 @@ def coinbase_intl_perpetuals() -> list[dict]:
         # upstream timestamp renders as "unavailable" instead of "now".
         q_ts = quote.get("timestamp") or it.get("timestamp")
         q_ts = q_ts if isinstance(q_ts, str) and q_ts else None
+        if q_ts and (newest_quote is None or q_ts > newest_quote):
+            newest_quote = q_ts
+        state = it.get("trading_state")
+        if state is not None and state != "TRADING":
+            states[str(state)] = states.get(str(state), 0) + 1
+            continue
+        q_dt = _parse_iso_utc(q_ts)
+        if q_dt is None or (now - q_dt) > timedelta(hours=CB_INTL_MAX_QUOTE_AGE_H):
+            stale_quotes += 1
+            continue
         try:
             out.append({
                 "symbol":         sym,
@@ -205,6 +250,55 @@ def coinbase_intl_perpetuals() -> list[dict]:
         except (ValueError, TypeError):
             continue
     out.sort(key=lambda r: r["funding_rate"], reverse=True)
+    status = {"available": bool(out), "checked_at": checked_at,
+              "perps_total": total, "trading_fresh": len(out),
+              "excluded_by_state": states, "excluded_stale_quote": stale_quotes,
+              "max_quote_age_hours": CB_INTL_MAX_QUOTE_AGE_H,
+              "newest_quote": newest_quote}
+    if not out:
+        bits = [f"{n} {st}" for st, n in sorted(states.items())]
+        if stale_quotes:
+            bits.append(f"{stale_quotes} with quotes older than {CB_INTL_MAX_QUOTE_AGE_H}h")
+        status["reason"] = (f"no Coinbase International perp is trading with a fresh quote "
+                            f"({', '.join(bits) or 'no PERP instruments'}"
+                            + (f"; newest quote {newest_quote}" if newest_quote else "") + ")")
+    _CB_INTL_LAST_STATUS.update(status)
+    return out
+
+
+def perp_funding_summary(funding_by_symbol: dict, now: datetime | None = None,
+                         max_age_days: int = 2) -> dict:
+    """Perp-funding input for the Overview sentiment composite, from OKX.
+
+    ``funding_by_symbol`` maps a symbol to ``okx_funding`` output (daily mean
+    of OKX's per-settlement rates, oldest->newest). Each symbol contributes its
+    newest row if that row is within ``max_age_days``; ``as_of`` is the OLDEST
+    contributing date (a composite is only as fresh as its oldest input).
+    Replaces the Coinbase International perps, which stopped trading."""
+    now = now or datetime.now(timezone.utc)
+    cutoff = (now - timedelta(days=max_age_days)).strftime("%Y-%m-%d")
+    rows, excluded = [], []
+    for sym, series in (funding_by_symbol or {}).items():
+        last = next((r for r in reversed(series or [])
+                     if isinstance(r, dict) and r.get("rate") is not None
+                     and isinstance(r.get("date"), str)), None)
+        if last is None:
+            excluded.append({"symbol": sym, "reason": "no funding rows"})
+            continue
+        if last["date"][:10] < cutoff:
+            excluded.append({"symbol": sym, "reason": f"newest row {last['date'][:10]} is stale"})
+            continue
+        rows.append({"symbol": sym, "rate": float(last["rate"]), "as_of": last["date"][:10]})
+    out = {
+        "source": "OKX USDT-margined perpetual swaps (daily mean of settlement funding rates)",
+        "available": bool(rows),
+        "rows": rows,
+        "excluded": excluded,
+        "avg_rate": (sum(r["rate"] for r in rows) / len(rows)) if rows else None,
+        "as_of": min(r["as_of"] for r in rows) if rows else None,
+    }
+    if not rows:
+        out["reason"] = "no OKX funding row within %d days" % max_age_days
     return out
 
 
@@ -5665,6 +5759,13 @@ async def _fetch_trading_async() -> dict:
         "global": glob,
         "coinbase": cb_spot,
         "coinbase_intl_perps": cb_intl,
+        "coinbase_intl_perps_status": dict(_CB_INTL_LAST_STATUS),
+        # Overview sentiment's perp-funding input (OKX; Coinbase Intl perps
+        # are paused/delisted). See perp_funding_summary.
+        "perp_funding": perp_funding_summary({
+            "BTC": okx_fund_btc, "ETH": okx_fund_eth,
+            "LINK": okx_fund_link, "LTC": okx_fund_ltc,
+        }),
         "defillama": llama,
         "geckoterminal": gt_pools,
         "social": social,
