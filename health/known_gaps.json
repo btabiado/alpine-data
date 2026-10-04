@@ -1,0 +1,173 @@
+{
+  "_doc": "Gaps in committed or archived history that no real source can fill. Read by scripts/history_continuity.py: a missing period (or null required field) listed here is reported as DISCLOSED instead of failing the daily data-health run. Published at /health/known_gaps.json so the dashboard can disclose it. Add an entry only after trying every real source (git history of the file, the upstream's historical endpoint, the R2 archive, Internet Archive copies of the site) and say which in backfill_attempted. Never add a gap that can still be filled; fill it. `fillable: true` marks a gap that a named tool can still fill (see remedy) and is listed so the dashboard can say so until it is.",
+  "checked": "2026-10-04",
+  "gaps": [
+    {
+      "feed": "data/composites/",
+      "history": "daily snapshots",
+      "field": "*",
+      "start": "2026-08-19",
+      "end": "2026-08-21",
+      "reason": "No pages build ran 2026-08-19..21: run 844 wedged the old 'pages' concurrency group and every hourly run queued behind it. No snapshot was taken. Files for these days were created on 2026-10-04 holding only the indexes a real source reproduces (whale sentiments from the upstream daily series, ETF flow sentiments from the flow CSVs as committed that day, LTHCS composite from that day's committed index file); money_flow_index, crypto_signal_sentiment and poc_signal_breadth stay null.",
+      "backfill_attempted": [
+        "git: data/market.json is never committed",
+        "R2: no upload ran these days (no deploy)",
+        "Internet Archive: no captures of btabiado.github.io/alpine-data"
+      ],
+      "fillable": false
+    },
+    {
+      "feed": "data/composites/",
+      "history": "daily snapshots",
+      "field": "indexes.poc_signal_breadth",
+      "start": "2026-08-02",
+      "end": "2026-10-04",
+      "reason": "market.poc_top has been empty in every build since the June freeze (the live dashboard ships \"poc_top\": []), so the breadth index had nothing to average on any archived day. Upstream fetch problem, not a persistence one; the index returns once poc_top is populated again.",
+      "backfill_attempted": [
+        "git: data/market.json is never committed",
+        "R2: archives data-*.json sidecars only; poc_top ships inline in index.html",
+        "Internet Archive: no captures of btabiado.github.io/alpine-data"
+      ],
+      "fillable": false
+    },
+    {
+      "feed": "data/lthcs/",
+      "history": "daily crypto snapshots",
+      "start": "2026-09-14",
+      "end": "2026-09-14",
+      "reason": "The 22:00Z crypto run started after midnight UTC and wrote 2026-09-15.json instead (commit ec674208, 00:09Z); the real 2026-09-15 run overwrote that file the same evening. Same mechanism for every crypto gap below.",
+      "backfill_attempted": [
+        "git: the overwritten blob is a 2026-09-15 00:09Z observation, not a 2026-09-14 one, and relabelling it would misdate it",
+        "upstream: scripts/lthcs_crypto_daily.py has no --as-of mode",
+        "R2: LTHCS is not archived"
+      ],
+      "fillable": false
+    },
+    {
+      "feed": "data/lthcs/",
+      "history": "daily crypto snapshots",
+      "start": "2026-09-16",
+      "end": "2026-09-16",
+      "reason": "Late-started 22:00Z crypto run wrote 2026-09-17.json at 00:00Z (commit 5ad9464a), overwritten by the 2026-09-17 run.",
+      "backfill_attempted": [
+        "git: overwritten blob is a next-day observation",
+        "upstream: no --as-of mode",
+        "R2: LTHCS is not archived"
+      ],
+      "fillable": false
+    },
+    {
+      "feed": "data/lthcs/",
+      "history": "daily crypto snapshots",
+      "start": "2026-09-21",
+      "end": "2026-09-21",
+      "reason": "Late-started 22:00Z crypto run wrote 2026-09-22.json at 00:30Z (commit 9b00c2b8), overwritten by the 2026-09-22 run.",
+      "backfill_attempted": [
+        "git: overwritten blob is a next-day observation",
+        "upstream: no --as-of mode",
+        "R2: LTHCS is not archived"
+      ],
+      "fillable": false
+    },
+    {
+      "feed": "data/lthcs/",
+      "history": "daily crypto snapshots",
+      "start": "2026-09-23",
+      "end": "2026-09-23",
+      "reason": "Late-started 22:00Z crypto run wrote 2026-09-24.json at 00:10Z (commit f1a31573) and no run produced a 2026-09-23 file.",
+      "backfill_attempted": [
+        "git: no blob for this day exists",
+        "upstream: no --as-of mode",
+        "R2: LTHCS is not archived"
+      ],
+      "fillable": false
+    },
+    {
+      "feed": "data/lthcs/",
+      "history": "daily crypto snapshots",
+      "start": "2026-05-28",
+      "end": "2026-08-30",
+      "reason": "Older crypto gaps (2026-05-28, 06-04, 07-16, 08-06, 08-26, 08-30) from the same late-start/next-day-file mechanism or a failed run. Outside the monitor's window; listed for the record.",
+      "backfill_attempted": [
+        "git: no blob for these days",
+        "upstream: no --as-of mode",
+        "R2: LTHCS is not archived"
+      ],
+      "fillable": false
+    },
+    {
+      "feed": "data/lthcs/",
+      "history": "daily index",
+      "start": "2026-05-19",
+      "end": "2026-08-26",
+      "reason": "Equity LTHCS days with no snapshot/index/narratives file: 2026-05-19, 05-28, 06-01, 06-03, 06-07, 06-09, 06-14, 06-21, 06-25, 07-01, 07-19, 08-06, 08-26 (late or failed lthcs-daily runs). The per-ticker history carries --catch-up synthetic entries for them, not real scores.",
+      "backfill_attempted": [
+        "git: no blob for these days",
+        "R2: LTHCS is not archived"
+      ],
+      "fillable": true,
+      "remedy": "python scripts/lthcs_backfill.py --start <day> --end <day> per day (real point-in-time rows; needs SEC_USER_AGENT and network), then drop the day from this list"
+    },
+    {
+      "feed": "data/equity_etf_flows.csv",
+      "history": "daily shares-outstanding rows",
+      "start": "2026-06-05",
+      "end": "2026-06-08",
+      "reason": "The equity ETF flow series starts 2026-06-04 and the cron did not record 2026-06-05 or 2026-06-08. Net flow is derived from day-over-day shares outstanding, which no free upstream publishes historically.",
+      "backfill_attempted": [
+        "upstream: nasdaq/issuer pages publish current shares outstanding only",
+        "git: no commits these days",
+        "R2: data-equity-etf-flows.json archive starts 2026-06-23"
+      ],
+      "fillable": false
+    },
+    {
+      "feed": "R2 archive",
+      "history": "daily payload copies",
+      "start": "2026-08-19",
+      "end": "2026-08-21",
+      "reason": "No pages build ran (wedged concurrency group), so nothing was uploaded to raw/alpine-data/ for these days, for any file.",
+      "backfill_attempted": [
+        "git: deploy-time data-*.json are never committed",
+        "Internet Archive: no captures of the site"
+      ],
+      "fillable": false
+    },
+    {
+      "feed": "data-cfpb.json",
+      "history": "daily commits",
+      "start": "2026-07-17",
+      "end": "2026-08-19",
+      "reason": "No commit on 2026-07-17, 07-20, 07-21, 08-19. The file is overwritten in place, so git history is its commit-level archive and cannot take a back-dated day without rewriting main. The payloads for 07-17, 07-20 and 07-21 survive in R2 (raw/alpine-data/<day>/data-cfpb.json); 08-19 is lost (no deploy ran).",
+      "backfill_attempted": [
+        "git: no commit those days",
+        "R2: copies exist for 07-17, 07-20, 07-21; none for 08-19"
+      ],
+      "fillable": false
+    },
+    {
+      "feed": "data-usaspending.json",
+      "history": "daily commits",
+      "start": "2026-07-20",
+      "end": "2026-07-20",
+      "reason": "No commit on 2026-07-20. Overwritten in place; git cannot take a back-dated day. The 2026-07-20 payload survives in R2 (raw/alpine-data/2026-07-20/data-usaspending.json).",
+      "backfill_attempted": [
+        "git: no commit that day",
+        "R2: a 2026-07-20 copy exists"
+      ],
+      "fillable": false
+    },
+    {
+      "feed": "data-opensky.json",
+      "history": "daily commits",
+      "start": "2026-07-15",
+      "end": "2026-07-19",
+      "reason": "No commit on 2026-07-15, 07-18, 07-19 (the hourly cron did not run). Overwritten in place; git cannot take a back-dated day. The day-end payloads survive in R2 (raw/alpine-data/<day>/data-opensky.json).",
+      "backfill_attempted": [
+        "upstream: anonymous OpenSky serves live state only",
+        "R2: copies exist for all three days"
+      ],
+      "fillable": false
+    }
+  ]
+}
