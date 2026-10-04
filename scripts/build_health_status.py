@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import re
+import importlib
 import sys
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
@@ -792,8 +793,11 @@ def _manifest():
     failing the build)."""
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
-        import data_health  # noqa: E402
-        return data_health
+        # importlib rather than an `import` statement: data_health imports
+        # this module at load time, and a static import here would form a
+        # module-level cycle. Resolving it at call time keeps the dependency
+        # one-way for anything that imports build_health_status.
+        return importlib.import_module("data_health")
     except Exception as exc:  # pragma: no cover - defensive
         print(f"  [health] data_health manifest unavailable: {exc}", file=sys.stderr)
         return None
