@@ -200,12 +200,29 @@ def _pillar_mean_component(
     if not rows:
         return None
     vals: List[float] = []
+    dropped_n = 0
     for row in rows:
+        # A pillar in `dropped_pillars` was not measured for this ticker (its
+        # stored value is null, or a placeholder in pre-2026-10-04 snapshots)
+        # and carried zero weight; averaging it made "Thesis pillar avg 54.3"
+        # out of 215 placeholders and fed that into the composite.
+        if pillar in (row.get("dropped_pillars") or []):
+            dropped_n += 1
+            continue
         subs = row.get("subscores") or {}
         v = _safe_float(subs.get(pillar))
         if v is not None:
             vals.append(v)
     if not vals:
+        if dropped_n:
+            return {
+                "name": _PILLAR_DISPLAY[pillar],
+                "value": "n/a",
+                "delta": 0,
+                "read": "unavailable: dropped from scoring for %d of %d tickers"
+                        % (dropped_n, len(rows)),
+                "unavailable": True,
+            }
         return None
     mean = sum(vals) / len(vals)
     centered = mean - 50.0

@@ -586,7 +586,7 @@ function renderTooltipContent(panel, ctx) {
 
   const { pillarKey, snapshotRow, vardetailRow } = ctx;
   const subscores = (snapshotRow && snapshotRow.subscores) || {};
-  const subScore = Number(subscores[pillarKey]);
+  const subScore = subscores[pillarKey] == null ? NaN : Number(subscores[pillarKey]); // null = dropped
   const dropped = Array.isArray(snapshotRow && snapshotRow.dropped_pillars)
     && snapshotRow.dropped_pillars.includes(pillarKey);
   const atFloor = Number.isFinite(subScore) && subScore <= 1;

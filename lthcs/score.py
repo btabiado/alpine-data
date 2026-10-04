@@ -523,9 +523,16 @@ def compute_lthcs_score(
 
     confidence_level = _confidence_from_flags(data_quality_flags)
 
-    subscores_out: Dict[str, float] = {}
+    # A dropped pillar carried no data: its sub-score is a placeholder the
+    # pillar emits when every input is missing (thesis: 55.0 / 58.8 / 50.0),
+    # already excluded from the composite above. Publishing it as a number
+    # put it in pillar bars, mover subscores and the "Thesis pillar avg"
+    # card as if measured, so it is stored as null (= not measured).
+    subscores_out: Dict[str, Optional[float]] = {}
     for name in PILLAR_ORDER:
-        subscores_out[name] = float(pillar_subscores[name])
+        subscores_out[name] = (None if name in dropped_pillars
+                               and len(dropped_pillars) < len(PILLAR_ORDER)
+                               else float(pillar_subscores[name]))
 
     return {
         "ticker": ticker,

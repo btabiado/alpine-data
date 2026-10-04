@@ -94,15 +94,30 @@ def _recompute_score(
     """
     if not isinstance(subscores, dict):
         return None
+    # A null sub-score is a pillar dropped from scoring (not measured); like
+    # production (lthcs/score.py) it is excluded and the remaining weights
+    # renormalised. Missing everything -> None.
     total = 0.0
+    present_w = 0.0
+    all_w = 0.0
     for i, pillar in enumerate(PILLARS):
-        v = subscores.get(pillar)
-        if v is None:
-            return None
         try:
-            total += float(v) * float(weights[i])
+            w = float(weights[i])
         except (TypeError, ValueError, IndexError):
             return None
+        all_w += w
+        v = subscores.get(pillar)
+        if v is None:
+            continue
+        try:
+            total += float(v) * w
+        except (TypeError, ValueError):
+            return None
+        present_w += w
+    if present_w <= 0:
+        return None
+    if present_w < all_w:
+        total = total * all_w / present_w
     total += float(modifier_sum or 0.0)
     # Clamp to [0, 100], matching lthcs/score.py:compute_lthcs_score.
     if not math.isfinite(total):

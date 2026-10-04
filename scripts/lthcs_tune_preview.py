@@ -353,7 +353,10 @@ def _recompute_composite(
         if name == "des" and new_des is not None:
             sub = float(new_des)
         else:
-            sub = float(subs.get(name, 50.0))
+            raw = subs.get(name, 50.0)
+            # null = dropped pillar; it carried zero effective weight in
+            # production, so the neutral midpoint is inert at that weight.
+            sub = float(50.0 if raw is None else raw)
         contrib = float(w) * sub
         weighted.append(contrib)
         weighted_sum += contrib
