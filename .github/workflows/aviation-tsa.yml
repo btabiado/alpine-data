@@ -1,7 +1,7 @@
 name: aviation-tsa
 
 # Daily refresh for the Aviation tab's "TSA Throughput" sub-view.
-# fetch_tsa.py writes data-tsa.json (stdlib-only: urllib/re/json).
+# fetch_tsa.py writes data-tsa.json (stdlib plus `requests` for the tsa.gov request).
 #
 # Cadence rationale:
 #   TSA publishes its checkpoint table on weekdays, typically by ~9am ET, and the
@@ -43,10 +43,17 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install requests
+        # tsa.gov answers `requests` from GitHub runners where it 403s urllib
+        # (see fetch_tsa.py SOURCES). Same pin as requirements.txt. Everything
+        # else in fetch_tsa.py is standard library, and it falls back to urllib
+        # if this package is missing.
+        run: python -m pip install --disable-pip-version-check requests==2.34.2
+
       - name: Fetch TSA throughput snapshot
-        # fetch_tsa.py uses only the Python standard library (urllib/re/json) —
-        # no pip install step needed. On a fetch/parse failure it exits non-zero
-        # WITHOUT writing, so the prior good data-tsa.json is preserved.
+        # Sources in order: tsa.gov, the bcantoni/tsa-data GitHub mirror, the
+        # Internet Archive copy. On a fetch/parse failure of all three it exits
+        # non-zero WITHOUT writing, so the prior good data-tsa.json is preserved.
         run: python fetch_tsa.py
 
       - name: Commit data changes via signed API commit

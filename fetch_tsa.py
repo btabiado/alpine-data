@@ -12,17 +12,26 @@ WHY A FETCHER (not a browser call):
 SOURCES (tried in order):
   1. https://www.tsa.gov/travel/passenger-volumes
      A two-column table: Date | Numbers (passengers screened that day, current period).
-  2. The Internet Archive's copy of that same page.
-     Since mid-June 2026 www.tsa.gov's Akamai edge answers GitHub Actions runners
-     (and other datacenter IPs) with a plain "403 Access Denied" whatever the
-     User-Agent — an IP-reputation block, so the direct fetch fails every day and
-     the feed went ~107 days stale. The Wayback Machine captures this page roughly
-     daily, so we ask the availability API for the newest capture and read its raw
-     original bytes (the `id_` form: no Wayback toolbar), which the same
-     parse_rows() handles unchanged. The availability API sometimes answers 429 or
-     an empty result from shared IPs; then we ask Wayback for the capture nearest
-     to now, which it redirects to the newest one. We do not try to get past
-     Akamai itself.
+     Fetched with `requests` when it is installed (aviation-tsa.yml installs it),
+     else urllib. From mid-June 2026 every urllib request from GitHub Actions got
+     a plain "403 Access Denied" from www.tsa.gov's Akamai edge, so the feed went
+     ~107 days stale, while the public bcantoni/tsa-data project kept reading the
+     same page daily from GitHub Actions with `requests` and a plain User-Agent.
+     So the block keys on the HTTP client, not only the IP; we use the same
+     client. We send no cookies and solve no challenges: if tsa.gov says no, we
+     move on to the next source.
+  2. The bcantoni/tsa-data daily mirror (MIRROR_URL): a date,passengers CSV of
+     the same tsa.gov table that its GitHub Action commits every day (MIT code;
+     the numbers are U.S. government public data). Read from
+     raw.githubusercontent.com, which GitHub runners always reach.
+  3. The Internet Archive's copy of the tsa.gov page.
+     The Wayback Machine captures this page roughly daily, so we ask the
+     availability API for the newest capture and read its raw original bytes
+     (the `id_` form: no Wayback toolbar), which the same parse_rows() handles
+     unchanged. The availability API sometimes answers 429 or an empty result
+     from shared IPs; then we ask Wayback for the capture nearest to now, which
+     it redirects to the newest one. Some captures are Akamai's own "Access
+     Denied" page, which parses to no rows; the error then names the page title.
 
 OUTPUT:
   data-tsa.json  — { generated, latest:{date,vol}, avg7, series:[{d,v}...], src,
@@ -30,20 +39,26 @@ OUTPUT:
   The client (renderAviationTab -> tsa()) reads this at runtime and falls back to the
   baked-in seed (DATA.aviation.tsa.seed) when the file is missing/empty.
   Provenance fields (added; nothing the client reads was renamed):
-    source              "tsa.gov" or "web.archive.org" — where this table was read
+    source              "tsa.gov", "github.com/bcantoni/tsa-data" or
+                        "web.archive.org" — where this table was read
     as_of               newest date IN THE TABLE (YYYY-MM-DD), never a clock reading,
                         so an old snapshot cannot pass itself off as fresh
-    snapshot_url        the Wayback URL actually read (null when source is tsa.gov)
+    snapshot_url        the mirror or Wayback URL actually read (null for tsa.gov)
     snapshot_timestamp  when the Archive captured it, UTC (null when source is tsa.gov)
 
 FAILURE CONTRACT:
-  On any fetch/parse failure of BOTH sources we DO NOT overwrite an existing good
+  On any fetch/parse failure of ALL sources we DO NOT overwrite an existing good
   data-tsa.json — we exit non-zero, leave the previous snapshot (or the seed) in
   place, and (in GitHub Actions) raise a `TSA not refreshed` warning annotation that
   names the cause. A snapshot whose table ends before the data already on disk never
-  replaces it. Stdlib only.
+  replaces it. Stdlib only, plus `requests` for the tsa.gov request when present.
 """
-import os, sys, re, json, time, datetime, urllib.request, urllib.error
+import os, sys, re, csv, io, json, time, datetime, urllib.request, urllib.error
+
+try:  # optional: tsa.gov answers `requests` where it 403s urllib (see SOURCES)
+    import requests
+except ImportError:  # pragma: no cover - exercised by the urllib-path tests
+    requests = None
 
 URL = "https://www.tsa.gov/travel/passenger-volumes"
 OUT = "data-tsa.json"
@@ -61,11 +76,22 @@ SNAPSHOT_URL = "https://web.archive.org/web/{ts}id_/" + URL
 ARCHIVE_TIMEOUT = 60       # seconds per request
 ARCHIVE_RETRY_PAUSE = 20   # seconds before the single retry of a transient error
 
+# --- GitHub mirror fallback ---------------------------------------------------
+MIRROR_URL = "https://raw.githubusercontent.com/bcantoni/tsa-data/main/tsa.csv"
+MIRROR_TIMEOUT = 30
+
 SRC_DIRECT = "TSA checkpoint travel numbers — tsa.gov/travel/passenger-volumes"
+SRC_MIRROR = SRC_DIRECT + " (read from the bcantoni/tsa-data daily mirror on GitHub)"
 SRC_ARCHIVE = SRC_DIRECT + " (read from the Internet Archive's copy of that page)"
 
 
 def fetch_html(url):
+    if requests is not None:
+        # Same shape as the request that keeps working from GitHub Actions:
+        # requests' defaults plus a User-Agent, nothing else.
+        r = requests.get(url, headers={"User-Agent": UA}, timeout=45)
+        r.raise_for_status()
+        return r.text
     req = urllib.request.Request(url, headers={
         "User-Agent": UA,
         "Accept": "text/html,application/xhtml+xml",
@@ -170,6 +196,38 @@ def fetch_wayback():
     return html, final_url, m.group(1)
 
 
+def fetch_mirror():
+    """Read the bcantoni/tsa-data CSV -> [(M/D/YYYY, volume), ...] newest first.
+
+    Same row shape as parse_rows(), so main() treats both alike. Raises on a
+    fetch error, a missing header, or a file with no usable rows.
+    """
+    req = urllib.request.Request(MIRROR_URL, headers={"User-Agent": ARCHIVE_UA})
+    with urllib.request.urlopen(req, timeout=MIRROR_TIMEOUT) as r:
+        text = r.read().decode("utf-8", "replace")
+    reader = csv.DictReader(io.StringIO(text))
+    if not reader.fieldnames or not {"date", "passengers"} <= set(reader.fieldnames):
+        raise ValueError(f"mirror CSV has unexpected columns: {reader.fieldnames!r}")
+    rows = []
+    for rec in reader:
+        try:
+            d = datetime.date.fromisoformat((rec.get("date") or "").strip())
+            n = int((rec.get("passengers") or "").replace(",", "").strip())
+        except ValueError:
+            continue
+        if n > 0:
+            rows.append((f"{d.month}/{d.day}/{d.year}", n))
+    if not rows:
+        raise ValueError("no rows parsed from the mirror CSV")
+    rows.sort(key=lambda r: date_key(r[0]), reverse=True)
+    return rows
+
+
+def _page_title(html):
+    m = re.search(r"<title[^>]*>(.*?)</title>", html or "", re.S | re.I)
+    return re.sub(r"\s+", " ", m.group(1)).strip()[:80] if m else None
+
+
 def _gh_escape(s):
     """Workflow-command escaping: % CR LF must be encoded or the annotation is
     truncated at the first newline (same rule as lthcs_daily._report_sec_errors)."""
@@ -184,9 +242,9 @@ def warn_not_refreshed(cause):
 
 
 def collect():
-    """Try tsa.gov, then the Internet Archive copy.
+    """Try tsa.gov, then the GitHub mirror, then the Internet Archive copy.
 
-    Returns (rows, provenance) on success, or ([], causes) when both fail.
+    Returns (rows, provenance) on success, or ([], causes) when all fail.
     """
     causes = []
     try:
@@ -198,12 +256,22 @@ def collect():
     except Exception as e:
         causes.append(f"tsa.gov: {_describe(e)}")
         print(f"fetch_tsa: direct fetch failed ({_describe(e)}) — "
+              f"trying the GitHub mirror", file=sys.stderr)
+    try:
+        rows = fetch_mirror()
+        print(f"fetch_tsa: using the bcantoni/tsa-data mirror (table ends {rows[0][0]})")
+        return rows, {"source": "github.com/bcantoni/tsa-data", "src": SRC_MIRROR,
+                      "snapshot_url": MIRROR_URL, "snapshot_timestamp": None}
+    except Exception as e:
+        causes.append(f"mirror: {_describe(e)}")
+        print(f"fetch_tsa: mirror failed ({_describe(e)}) — "
               f"trying the Internet Archive copy", file=sys.stderr)
     try:
         html, snap_url, ts = fetch_wayback()
         rows = parse_rows(html)
         if not rows:
-            raise ValueError(f"no rows parsed from snapshot {ts}")
+            raise ValueError(f"no rows parsed from snapshot {ts} "
+                             f"(page title {_page_title(html)!r}, {len(html)} chars)")
         captured = (datetime.datetime.strptime(ts, "%Y%m%d%H%M%S")
                     .strftime("%Y-%m-%dT%H:%M:%SZ"))
         print(f"fetch_tsa: using Internet Archive snapshot captured {captured}")
