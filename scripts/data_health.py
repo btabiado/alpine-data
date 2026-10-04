@@ -1051,7 +1051,9 @@ def evaluate_history(today: date | None = None,
                     return
         f = hc.check(owner, h, REPO_ROOT, today, gaps, coverage)
         text = hc.summarize(f)
-        if f.error:
+        if f.skipped:
+            status = SKIPPED
+        elif f.error:
             status = UNKNOWN
         elif f.missing or f.field_gaps:
             status = GAP

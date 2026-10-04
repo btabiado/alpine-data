@@ -134,6 +134,7 @@ class Finding:
     disclosed: list[str] = field(default_factory=list)
     error: str | None = None     # the history could not be read at all
     note: str | None = None      # nothing to judge, and why that is not a failure
+    skipped: str | None = None   # not checkable in THIS checkout (see _from_git)
 
     @property
     def ok(self) -> bool:
@@ -338,10 +339,7 @@ def _git_is_shallow(root: Path) -> bool:
 
 
 def _from_git(spec: History, root: Path, since: date):
-    if _git_is_shallow(root):
-        return [], ("git history is shallow or unavailable, so the daily commit "
-                    "record of an overwritten file cannot be read (check out "
-                    "with fetch-depth: 0)")
+    # check() has already skipped shallow / non-repo checkouts.
     try:
         out = subprocess.run(
             ["git", "log", f"--since={since.isoformat()}T00:00:00Z",
@@ -510,6 +508,16 @@ def check(feed: str, spec: History, root: Path, today: date,
     elif spec.source == "json":
         rows, err = _from_json(spec, root)
     elif spec.source == "git":
+        if _git_is_shallow(root):
+            # A shallow clone (tests.yml, daily-audit.yml, a quick local
+            # checkout) holds one commit, which reads as "every day missing".
+            # That is not a finding about the feed, so it is a skip, not a
+            # failure. The run that owns this check, data-health.yml, checks
+            # out with fetch-depth: 0, and tests/test_history_continuity.py
+            # fails if that line ever disappears.
+            f.skipped = ("shallow clone: daily commits are judged by "
+                         "data-health.yml, which checks out full history")
+            return f
         rows, err = _from_git(spec, root, today - timedelta(days=spec.window()))
     elif spec.source == "r2":
         rows, err = _from_r2(spec, r2_coverage)
@@ -549,6 +557,8 @@ def _newest(rows) -> str | None:
 
 def summarize(f: Finding, limit: int = 12) -> str:
     """One human line for a finding: what is missing, doubled or null."""
+    if f.skipped:
+        return f.skipped
     parts = []
     if f.error:
         parts.append(f.error)

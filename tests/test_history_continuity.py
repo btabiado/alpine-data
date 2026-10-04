@@ -270,10 +270,22 @@ def test_git_source_flags_a_day_without_a_commit(hc, tmp_path):
     assert not f.duplicates, "two commits on one day are one overwritten file"
 
 
-def test_git_source_outside_a_repo_is_an_error_not_a_pass(hc, tmp_path):
+def test_git_source_in_a_shallow_or_missing_repo_is_skipped_not_failed(hc, tmp_path):
+    """One commit reads as 'every day missing'. That says nothing about the
+    feed, so it must not page anyone from a shallow CI checkout..."""
     (tmp_path / "feed.json").write_text("{}")
     f = hc.check("x", hc.History("feed.json", hc.DAILY, "git"), tmp_path, TODAY)
-    assert f.error and "fetch-depth" in f.error
+    assert f.skipped and not f.missing and not f.error
+
+
+def test_the_run_that_owns_git_history_checks_out_full_history():
+    """...which is only safe because data-health.yml really does fetch the
+    whole history. If this line goes, the daily-commit check goes blind."""
+    import yaml
+    wf = yaml.safe_load((REPO_ROOT / ".github/workflows/data-health.yml").read_text())
+    steps = wf["jobs"]["check"]["steps"]
+    co = next(s for s in steps if str(s.get("uses", "")).startswith("actions/checkout"))
+    assert (co.get("with") or {}).get("fetch-depth") == 0
 
 
 # ==========================================================================
