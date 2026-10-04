@@ -5,6 +5,15 @@ updates:
     schedule: { interval: "weekly", day: "monday", time: "06:00", timezone: "America/Los_Angeles" }
     open-pull-requests-limit: 5
     labels: ["dependencies", "python"]
+    # numpy 2.5 requires Python >= 3.12, but the repo still supports and tests
+    # Python 3.11 (tests.yml matrix), so a numpy 2.5 bump breaks `test (3.11)`
+    # at "Install dependencies". Ignore rules apply before grouping, so this
+    # also keeps numpy out of the minor-updates group PR. Patch releases of
+    # numpy 2.4.x still come through. Remove this rule when the repo drops
+    # Python 3.11.
+    ignore:
+      - dependency-name: "numpy"
+        versions: [">=2.5"]
     groups:
       patch-updates:
         update-types: ["patch"]
