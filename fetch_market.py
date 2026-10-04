@@ -3915,7 +3915,12 @@ def blockchair_eth_stats() -> dict:
     erc721 = (layer_2.get("erc_721") if isinstance(layer_2, dict) else None) or {}
 
     txs_24h = d.get("transactions_24h")
-    avg_tx_val_eth = d.get("average_transaction_value_24h")
+    # Blockchair's average_transaction_{fee,value}_24h are WEI strings, like
+    # every other ETH amount on this endpoint. They used to be passed through
+    # raw under *_eth_* names, so the Whale tab printed a fee of
+    # "88120340117212.000000 ETH" (and V2's .toFixed() on the string threw).
+    avg_tx_fee_eth = _wei_to_eth(d.get("average_transaction_fee_24h"))
+    avg_tx_val_eth = _wei_to_eth(d.get("average_transaction_value_24h"))
     mkt_px = d.get("market_price_usd")
 
     # Honest on-chain 24h transfer volume in USD: txs * avg-value-per-tx * price.
@@ -3927,7 +3932,7 @@ def blockchair_eth_stats() -> dict:
     # setup friction and this single live value already replaces the misleading
     # CoinGecko trading-volume KPI.
     try:
-        if txs_24h in (None, "") or avg_tx_val_eth in (None, "") or mkt_px in (None, ""):
+        if txs_24h in (None, "") or avg_tx_val_eth is None or mkt_px in (None, ""):
             transfer_volume_24h_usd = None
         else:
             transfer_volume_24h_usd = float(txs_24h) * float(avg_tx_val_eth) * float(mkt_px)
@@ -3937,7 +3942,7 @@ def blockchair_eth_stats() -> dict:
     return {
         "blocks_24h": d.get("blocks_24h"),
         "transactions_24h": txs_24h,
-        "avg_tx_fee_eth_24h": d.get("average_transaction_fee_24h"),
+        "avg_tx_fee_eth_24h": avg_tx_fee_eth,
         "avg_tx_value_eth_24h": avg_tx_val_eth,
         "transfer_volume_24h_usd": transfer_volume_24h_usd,
         "supply_eth": _wei_to_eth(d.get("circulation_approximate")),

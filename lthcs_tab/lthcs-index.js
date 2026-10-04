@@ -160,8 +160,10 @@ function renderComponentsTable(components) {
         <td class="lthcs-index-comp-read">${escapeHtml(c.read || '')}</td>
       </tr>`;
   }).join('');
+  // Wrapped in a scroll box: five columns incl. two 200px bar tracks are
+  // ~645px wide, which pushed the whole page sideways on a phone.
   return `
-    <table class="lthcs-index-table">
+    <div class="lthcs-index-table-wrap"><table class="lthcs-index-table">
       <thead>
         <tr>
           <th scope="col">Component</th>
@@ -172,7 +174,7 @@ function renderComponentsTable(components) {
         </tr>
       </thead>
       <tbody>${rows}</tbody>
-    </table>`;
+    </table></div>`;
 }
 
 function renderIndexInto(host, payload) {
