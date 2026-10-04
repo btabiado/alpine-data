@@ -30,9 +30,14 @@
           <p class="lthcs-subtitle" id="bt-subtitle">Does the framework actually predict forward returns?</p>
         </div>
         <div class="lthcs-header-meta">
+          <!-- The stamp is the age of the backtest RUN's data, not of the
+               page. lthcs-backtest.js pins VALIDATION_DATE, so this page can
+               and does go stale while newer runs land on disk — the tint is
+               what makes that visible instead of silent. -->
           <div class="lthcs-meta-line">
-            <span class="lthcs-meta-label">Validated</span>
+            <span class="lthcs-meta-label">Run data as of</span>
             <span id="bt-generated" class="lthcs-meta-value">&hellip;</span>
+            <span id="bt-fresh-note" class="lthcs-freshnote" hidden></span>
           </div>
           <a href="../help/" class="lthcs-refresh-btn" aria-label="How to read this dashboard" style="text-decoration:none">
             <span aria-hidden="true">&#x2753;</span>

@@ -25,6 +25,8 @@
    ========================================================================= */
 
 import { renderSparkline, bandColorForScore } from '../lthcs_tab/lthcs-sparkline.js';
+// Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
+import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
 
 const DATA_ROOT = '../data/lthcs';
 const SNAPSHOT_DIR = `${DATA_ROOT}/snapshots_crypto`;
@@ -685,12 +687,40 @@ async function main() {
     emptyBox.classList.remove('hidden');
     const probeMarker = emptyBox.querySelector('.lcry-note');
     if (probeMarker) probeMarker.innerHTML = probeMarker.innerHTML.replace('{{PROBE_DAYS}}', String(PROBE_DAYS));
-    genEl.textContent = date;
+    // Even with zero scored rows the snapshot file's date is a real
+    // observation date — stamp and tint it rather than printing it bare.
+    paintComposite(genEl, [{ label: 'snapshot', date }], {
+      detailEl: $('lcry-fresh-note'),
+      what: 'This crypto snapshot',
+      baseClass: 'lthcs-meta-value',
+      title: 'Snapshot found but it scored zero assets.',
+    });
     renderEmpty(universe);
     return;
   }
 
-  genEl.textContent = `${date}${snap.model_version ? ` · ${snap.model_version}` : ''}`;
+  // Freshness stamp. `date` is the snapshot file's own calendar day, which
+  // loadLatestSnapshot() resolved by walking backwards from today — so it is
+  // an observation date, never a fetch or build time. Rule 3: entries whose
+  // pillars were dropped or flagged are counted next to the date.
+  const incomplete = rows.filter((r) => {
+    const flags = (r && r.data_quality_flags) || [];
+    const dropped = (r && r.dropped_pillars) || [];
+    return flags.length > 0 || dropped.length > 0;
+  }).length;
+  paintComposite(
+    genEl,
+    [{ label: 'snapshot', date: snap.calc_date || date }],
+    {
+      detailEl: $('lcry-fresh-note'),
+      stale: incomplete,
+      total: rows.length,
+      staleNoun: 'incomplete',
+      what: 'This crypto snapshot',
+      baseClass: 'lthcs-meta-value',
+      title: snap.model_version ? `Model ${snap.model_version}.` : '',
+    },
+  );
   const { avg } = renderStrip(rows, date);
   renderCards(rows, { avg });
   renderThesis(rows);

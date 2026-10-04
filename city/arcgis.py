@@ -4,12 +4,22 @@ Miami-Dade publishes its open data on an ArcGIS Hub org
 (``gis-mdc.opendata.arcgis.com``) backed by ArcGIS FeatureServers, not Socrata.
 Two feeds matter here (the third Miami feed is FBI/CDE — a different adapter):
 
-  * **Building permits (LIVE).** Layer
-    ``.../BuildingPermit_gdb/FeatureServer/0`` with an ``esriFieldTypeDate``
-    column ``ISSUDATE`` spanning 1982 -> present. ArcGIS has no
-    ``date_trunc``, so monthly counts are assembled with one
-    ``returnCountOnly`` query per calendar month over a date-range predicate
-    (``ISSUDATE >= TIMESTAMP 'YYYY-MM-01 00:00:00' AND ISSUDATE < <next-month>``).
+  * **Building permits (LIVE).** Table
+    ``.../miamidade_permit_data/FeatureServer/0`` ("Building Permits Issued By
+    Miami-Dade County - 2 Previous Years to Present", hub item
+    ``6db5f56e886446df88313ca279e59120``) with an ``esriFieldTypeDateOnly``
+    column ``PermitIssuedDate``. It is a ROLLING ~24-month window, so the
+    first month of coverage is always partial and anything older does not
+    exist — :func:`date_coverage` clamps the requested range to the months
+    the layer actually covers. ArcGIS has no ``date_trunc``, so monthly counts
+    are assembled with one ``returnCountOnly`` query per calendar month over a
+    date-range predicate (``<col> >= TIMESTAMP 'YYYY-MM-01 00:00:00' AND
+    <col> < <next-month>``).
+
+    The previous layer, ``.../BuildingPermit_gdb/FeatureServer/0``
+    (``ISSUDATE``, 1982 -> present), began answering ``code=499 Token
+    Required`` (it is no longer public), which is why Miami's Development
+    pillar was missing from every build. Do not point the registry back at it.
 
   * **311 service requests (STALE).** Table
     ``.../data_311_2023/FeatureServer/0`` is a *frozen 2023 yearly snapshot*
@@ -32,6 +42,7 @@ Live-probe findings (2026-05-31, keyless):
 Public surface:
   * :class:`ArcGISError`
   * :func:`permits_monthly`
+  * :func:`date_coverage`
   * :func:`snapshot_311_monthly`
   * :func:`feed_series`
 
@@ -40,13 +51,19 @@ they default to a module-level :class:`requests.Session`.
 """
 from __future__ import annotations
 
+import calendar
+import json
+from datetime import date, datetime, timezone
 from typing import Optional
 
 import requests
 
+from .redact import redact, safe_url
+
 __all__ = [
     "ArcGISError",
     "permits_monthly",
+    "date_coverage",
     "snapshot_311_monthly",
     "feed_series",
 ]
@@ -139,27 +156,27 @@ def _request_json(session, url: str, params: dict, timeout: int) -> dict:
     try:
         resp = sess.get(url, params=params, timeout=timeout)
     except requests.RequestException as exc:
-        raise ArcGISError(f"ArcGIS request to {url} failed: {exc}") from exc
+        raise ArcGISError(redact(f"ArcGIS request to {safe_url(url)} failed: {exc}")) from exc
 
     # Surface real HTTP errors (the FeatureServer mostly uses 200 + in-band
     # error, but guard the genuine 4xx/5xx path too).
     status = getattr(resp, "status_code", 200)
     if status >= 400:
-        raise ArcGISError(f"ArcGIS request to {url} returned HTTP {status}")
+        raise ArcGISError(redact(f"ArcGIS request to {safe_url(url)} returned HTTP {status}"))
 
     try:
         data = resp.json()
     except ValueError as exc:
-        raise ArcGISError(f"ArcGIS response from {url} was not JSON") from exc
+        raise ArcGISError(redact(f"ArcGIS response from {safe_url(url)} was not JSON")) from exc
 
     if isinstance(data, dict) and "error" in data:
         err = data["error"] or {}
         code = err.get("code", "?")
         message = err.get("message") or ""
         details = "; ".join(err.get("details", []) or [])
-        raise ArcGISError(
-            f"ArcGIS error from {url}: code={code} {message} {details}".strip()
-        )
+        raise ArcGISError(redact(
+            f"ArcGIS error from {safe_url(url)}: code={code} {message} {details}".strip()
+        ))
     return data
 
 
@@ -192,8 +209,8 @@ def permits_monthly(
 
     Args:
         layer_url: FeatureServer layer URL, e.g.
-            ``.../BuildingPermit_gdb/FeatureServer/0`` (no trailing ``/query``).
-        date_field: the ``esriFieldTypeDate`` column to bucket on (``ISSUDATE``).
+            ``.../miamidade_permit_data/FeatureServer/0`` (no trailing ``/query``).
+        date_field: the date / date-only column to bucket on (``PermitIssuedDate``).
         since, until: inclusive 'YYYY-MM' bounds.
         timeout: per-request timeout (seconds).
         session: optional injected HTTP session (defaults to module session).
@@ -228,6 +245,99 @@ def permits_monthly(
             )
         out.append({"month": _fmt_ym(year, month), "n": int(count)})
     return out
+
+
+# ---------------------------------------------------------------------------
+# Coverage: which months does the layer actually hold, completely?
+# ---------------------------------------------------------------------------
+# A month counts as complete when the newest record falls within this many days
+# of its last calendar day (absorbs a weekend for weekday-only permit issuance).
+_COMPLETE_MONTH_SLACK_DAYS = 2
+
+
+def _to_date(value) -> Optional[date]:
+    """Coerce an ArcGIS statistics date value to a :class:`date`.
+
+    ``esriFieldTypeDate`` statistics come back as epoch MILLISECONDS (int);
+    ``esriFieldTypeDateOnly`` ones as ``'YYYY-MM-DD'`` strings. Returns
+    ``None`` for anything else so a surprise shape degrades to "no clamp"
+    rather than a crash.
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        try:
+            return datetime.fromtimestamp(value / 1000.0, tz=timezone.utc).date()
+        except (OverflowError, OSError, ValueError):
+            return None
+    s = str(value).strip()
+    try:
+        return date(int(s[0:4]), int(s[5:7]), int(s[8:10]))
+    except (ValueError, IndexError):
+        return None
+
+
+def date_coverage(
+    layer_url: str,
+    date_field: str,
+    *,
+    timeout: int = 120,
+    session=None,
+) -> tuple[Optional[date], Optional[date]]:
+    """``(earliest, latest)`` non-null value of ``date_field`` on the layer.
+
+    One ``outStatistics`` min/max query. Used to keep the per-month count loop
+    inside the months the layer really holds: a rolling-window table (Miami-Dade
+    permits keep "2 previous years to present") would otherwise report a run of
+    zero months before its window opens, and its newest month is always the
+    in-progress one.
+    """
+    query_url = f"{layer_url.rstrip('/')}/query"
+    out_statistics = json.dumps([
+        {"statisticType": "min", "onStatisticField": date_field,
+         "outStatisticFieldName": "lo"},
+        {"statisticType": "max", "onStatisticField": date_field,
+         "outStatisticFieldName": "hi"},
+    ], separators=(",", ":"))
+    params = {
+        "where": f"{date_field} IS NOT NULL",
+        "outStatistics": out_statistics,
+        "f": "json",
+    }
+    data = _request_json(session, query_url, params, timeout)
+    features = data.get("features") if isinstance(data, dict) else None
+    if not features:
+        raise ArcGISError(f"coverage query returned no features for {date_field}")
+    attrs = features[0].get("attributes", {}) if isinstance(features[0], dict) else {}
+    return _to_date(attrs.get("lo")), _to_date(attrs.get("hi"))
+
+
+def _clamp_to_coverage(since: str, until: str, lo: Optional[date],
+                       hi: Optional[date]) -> tuple[str, str]:
+    """Narrow ``[since..until]`` to the COMPLETE months inside ``[lo..hi]``.
+
+    * The first covered month counts only if coverage starts on its 1st.
+    * The last covered month counts only if coverage runs to within
+      ``_COMPLETE_MONTH_SLACK_DAYS`` of its final day.
+
+    A ``None`` bound leaves that side unclamped. The result may be empty
+    (``since > until``); the caller checks.
+    """
+    sy, sm = _parse_ym(since)
+    uy, um = _parse_ym(until)
+    if lo is not None:
+        first = (lo.year, lo.month) if lo.day == 1 else _next_month(lo.year, lo.month)
+        if first > (sy, sm):
+            sy, sm = first
+    if hi is not None:
+        month_len = calendar.monthrange(hi.year, hi.month)[1]
+        if hi.day >= month_len - _COMPLETE_MONTH_SLACK_DAYS:
+            last = (hi.year, hi.month)
+        else:
+            last = (hi.year, hi.month - 1) if hi.month > 1 else (hi.year - 1, 12)
+        if last < (uy, um):
+            uy, um = last
+    return _fmt_ym(sy, sm), _fmt_ym(uy, um)
 
 
 # ---------------------------------------------------------------------------
@@ -330,7 +440,9 @@ def feed_series(
     just hands over the feed block from ``city_registry.resolved.json``:
 
       * permits (``date_col_status == 'confirmed'``) ->
-        ``(permits_monthly(...), 'ok')``. Requires ``since``/``until``.
+        ``(permits_monthly(...), 'ok')``. Requires ``since``/``until``, which
+        are first narrowed to the complete months the layer actually covers
+        (:func:`date_coverage` + :func:`_clamp_to_coverage`).
       * 311 (``date_col_status == 'stale_source'``) ->
         ``(snapshot_311_monthly(...), 'stale')``. ``since``/``until`` ignored —
         the snapshot is a fixed 2023 year.
@@ -376,6 +488,12 @@ def feed_series(
             raise ArcGISError(
                 "permits feed_series requires since= and until= 'YYYY-MM' bounds"
             )
+        lo, hi = date_coverage(endpoint, date_field, timeout=timeout,
+                               session=session)
+        since, until = _clamp_to_coverage(since, until, lo, hi)
+        if _parse_ym(since) > _parse_ym(until):
+            # The layer covers none of the requested complete months.
+            return [], "ok"
         series = permits_monthly(
             endpoint,
             date_field,

@@ -236,13 +236,19 @@ def score_feed(series, *, polarity, as_of, label, dataset, baseline_months=12,
 # ---------------------------------------------------------------------------
 # per-pillar scoring  ->  matches #/definitions/pillar
 # ---------------------------------------------------------------------------
-def _scored_ds(feed_objs):
-    """Directional contributions of feeds that count toward pillar math:
-    status == 'ok' AND polarity != 0 AND d is not None."""
-    return [f["d"] for f in feed_objs
-            if f.get("status") == "ok"
+def _counts_toward_score(f):
+    """True iff feed ``f`` enters pillar math: status == 'ok' AND polarity != 0
+    AND d is not None. The single definition of "scored", shared by pillar
+    scoring and ``data_health.last_updated`` so the two cannot disagree."""
+    return (f.get("status") == "ok"
             and f.get("polarity") not in (0, None)
-            and f.get("d") is not None]
+            and f.get("d") is not None)
+
+
+def _scored_ds(feed_objs):
+    """Directional contributions of feeds that count toward pillar math
+    (see :func:`_counts_toward_score`)."""
+    return [f["d"] for f in feed_objs if _counts_toward_score(f)]
 
 
 def score_pillar(key, name, feed_objs):
@@ -312,10 +318,44 @@ def score_city(*, id, name, scope, pillar_objs, disclosures, weights=None):
     ``context`` (None in P0) / ``disclosures`` / ``data_health``.
 
     ``data_health.feeds_ok`` counts feeds with status ``ok`` across all
-    pillars; ``feeds_total`` is fixed at 3 (the backbone: one feed per
-    pillar). ``last_updated`` is the max feed ``recent_period`` rendered as an
-    ISO8601 UTC timestamp (start of that month), or ``generated`` now if no
-    feed has scored.
+    pillars; ``feeds_total`` is fixed at 3 (the backbone: one feed per pillar).
+
+    ``last_updated`` — READ THIS BEFORE COMPARING IT TO A CLOCK
+    ---------------------------------------------------------
+    It is the age of the DATA, not of the fetch and not of the file. Every feed
+    here is a MONTHLY series, so the value is a data *month* rendered as the
+    first instant of that month in UTC (``2026-07`` -> ``2026-07-01T00:00:00+00:00``).
+    Even a perfectly healthy city can therefore never read younger than
+    ~28-60 days: the newest COMPLETE month is by definition last month, and
+    several feeds lag a further month on top of that. A monitor that judges
+    this field against an hours-scale budget will report a healthy city as
+    catastrophically stale forever. Budget it in months.
+
+    Which month is chosen: the **OLDEST** ``recent_period`` among the feeds that
+    actually count toward this city's Pulse score (``_counts_toward_score``:
+    status ``ok``, polarity != 0), not the newest. A city Pulse is a composite,
+    and a composite is only as fresh as its oldest input — Chicago's crime feed
+    lags a month, so a Chicago card built partly from March numbers is
+    March-fresh, not April-fresh. Taking the max reported the most flattering
+    feed and hid exactly the rot this field exists to expose.
+
+    Feeds that do NOT count toward the score do not set the age, even when they
+    carry a period: ``stale`` (Miami-Dade's frozen 2023 County 311 snapshot),
+    ``insufficient_history``, and context-only (polarity 0) feeds, as well as
+    ``not_published`` / ``fetch_error`` feeds that have no period at all. This
+    field dates the SCORE, and a feed excluded from the score cannot make the
+    score older: counting the stale 311 snapshot made Miami's card read 2023-12
+    while every number behind its Pulse was current. Those exclusions are
+    disclosed separately and honestly by each feed's own ``status`` / ``note``,
+    ``feeds_ok`` and ``pulse.pillars_present``.
+
+    ``last_updated`` is ``None`` when no scored feed reported a period — which
+    includes a city whose only readings come from stale or otherwise unscored
+    feeds (its Pulse score is null too, so there is no score to date). It is
+    deliberately NOT back-filled with ``datetime.now()``: a clock read is a
+    statement about this process, not about the data, and stamping "now" on a
+    city that produced nothing would make the emptiest city on the page look
+    like the freshest.
     """
     pillar_objs = list(pillar_objs)
     c = _composite(pillar_objs, weights)
@@ -332,24 +372,29 @@ def score_city(*, id, name, scope, pillar_objs, disclosures, weights=None):
         "pillars": pillar_objs,
     }
 
-    # data_health: count ok feeds and find the latest scored period.
+    # data_health: count ok feeds and find the OLDEST period among SCORED feeds.
     feeds_ok = 0
-    latest_period = None
+    oldest_period = None
     for p in pillar_objs:
         for f in p.get("feeds", []):
             if f.get("status") == "ok":
                 feeds_ok += 1
+            if not _counts_toward_score(f):
+                continue  # stale / unscored feeds don't date the score
             rp = f.get("recent_period")
-            if rp is not None and (latest_period is None
-                                   or _parse_month(rp) > _parse_month(latest_period)):
-                latest_period = rp
+            if rp is not None and (oldest_period is None
+                                   or _parse_month(rp) < _parse_month(oldest_period)):
+                oldest_period = rp
 
-    if latest_period is not None:
-        idx = _parse_month(latest_period)
+    if oldest_period is not None:
+        idx = _parse_month(oldest_period)
         year, mon0 = divmod(idx, 12)
         last_updated = datetime(year, mon0 + 1, 1, tzinfo=timezone.utc).isoformat()
     else:
-        last_updated = datetime.now(timezone.utc).isoformat()
+        # No scored feed produced a reading. Absence is not a timestamp — say null.
+        # (This used to be datetime.now(), which dressed an empty city up as
+        # the freshest thing on the page.)
+        last_updated = None
 
     data_health = {
         "feeds_ok": feeds_ok,

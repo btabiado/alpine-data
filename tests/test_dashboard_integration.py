@@ -34,8 +34,23 @@ WHALE_JSON = ROOT / "data" / "whale.json"
 # ---------- helpers ----------
 
 
+# Launcher tabs intentionally have a `data-tab` button but NO matching
+# `<div id="tab-X">` panel — clicking them opens an external page (e.g. the
+# Summit dashboard) rather than toggling an in-page tab body. These are the
+# only tab buttons allowed to lack a body div.
+LAUNCHER_TABS = {"summit"}
+
+
 def _read_dashboard_or_skip() -> str:
     if not DASHBOARD_HTML.exists():
+        # In CI we REQUIRE the built dashboard so this integrity suite can't
+        # silently no-op into a green run. Locally (env unset) keep skipping so
+        # devs aren't forced to build before running the rest of the suite.
+        if os.environ.get("REQUIRE_DASHBOARD") == "1":
+            pytest.fail(
+                f"dashboard.html not built but REQUIRE_DASHBOARD=1 ({DASHBOARD_HTML}); "
+                "build it (python app.py --no-open) before running this suite in CI."
+            )
         pytest.skip(f"dashboard.html not built yet ({DASHBOARD_HTML})")
     return DASHBOARD_HTML.read_text(encoding="utf-8")
 
@@ -75,43 +90,149 @@ def _tab_strip_data_tabs(html: str) -> set[str]:
     return set(pattern.findall(html))
 
 
-def _select_tab_referenced_ids(body: str) -> set[str]:
-    """Tab names referenced in the JS via getElementById('tab-X')."""
-    return set(re.findall(r"""getElementById\(\s*['"]tab-([A-Za-z0-9_-]+)['"]\s*\)""", body))
+def _select_tab_literal_tab_ids(body: str) -> set[str]:
+    """LEGACY per-tab literals inside selectTab: ``getElementById('tab-X')``
+    where ``X`` is a hard-coded tab name (NOT the data-driven
+    ``getElementById('tab-' + btn.dataset.tab)`` expression).
+
+    The toggle refactor replaced ~21 of these literal lines with a single
+    data-driven loop, so for the current build this returns the empty set.
+    We use it to assert the loop is genuinely data-driven (no stray hard-coded
+    panel reference snuck back in that would bypass the strip-derived parity
+    invariant). The ``tab-`` followed by ``' +`` form (the loop's own
+    ``getElementById('tab-' + ...)``) is explicitly NOT a literal and is
+    excluded by requiring a tab-name character right after ``tab-``.
+    """
+    return set(
+        re.findall(
+            r"""getElementById\(\s*['"]tab-([A-Za-z0-9_][A-Za-z0-9_-]*)['"]\s*\)""",
+            body,
+        )
+    )
+
+
+def _has_data_driven_panel_toggle(body: str) -> bool:
+    """True iff selectTab contains the data-driven panel-toggle loop, i.e.
+
+        document.querySelectorAll('.tab[data-tab]').forEach(function(btn){
+          var p = document.getElementById('tab-' + btn.dataset.tab);
+          if (p) { p.classList.toggle('hidden', btn.dataset.tab !== t); }
+        });
+
+    Requires ALL THREE moving parts so deleting/replacing the loop fails:
+    the ``.tab[data-tab]`` selector, the ``getElementById('tab-' + …dataset.tab)``
+    id construction, and the ``classList.toggle('hidden', …dataset.tab !== t)``
+    visibility flip. Tolerant of single/double quotes and ``+`` spacing.
+    """
+    has_selector = re.search(
+        r"""querySelectorAll\(\s*['"]\.tab\[data-tab\]['"]\s*\)""", body
+    )
+    has_id_build = re.search(
+        r"""getElementById\(\s*['"]tab-['"]\s*\+\s*[A-Za-z0-9_.]*dataset\.tab""",
+        body,
+    )
+    has_toggle = re.search(
+        r"""classList\.toggle\(\s*['"]hidden['"]\s*,\s*[A-Za-z0-9_.]*dataset\.tab\s*!==\s*t\s*\)""",
+        body,
+    )
+    return bool(has_selector and has_id_build and has_toggle)
 
 
 # ---------- 1. Tab-routing structural test ----------
 
 
 def test_select_tab_toggles_every_html_tab_div():
-    """Every ``<div id=\"tab-X\">`` must be referenced inside selectTab."""
+    """selectTab must toggle every tab via the data-driven loop, and every
+    tab-strip button (minus launchers) must have a matching panel div.
+
+    The toggle refactor replaced ~21 literal
+    ``getElementById('tab-X').classList.toggle('hidden', t!=='X')`` lines with
+    a single loop over ``.tab[data-tab]`` buttons. So the invariant that
+    actually prevents "click tab → blank page" is no longer "every panel is
+    named in selectTab" — it is:
+
+      (a) selectTab still contains the data-driven toggle loop (selector +
+          ``getElementById('tab-' + …dataset.tab)`` + ``.classList.toggle(
+          'hidden', …dataset.tab !== t)``), AND
+      (b) every tab-strip button's ``data-tab`` (except whitelisted launchers
+          like ``summit``) has a matching ``<div id="tab-X">`` panel.
+
+    (a) fails if someone deletes/guts the loop; (b) fails if someone adds a
+    tab button without a body div — the exact Stocks/POC blank-tab bug.
+    """
     html = _read_dashboard_or_skip()
     body = _extract_select_tab_body(html)
 
-    html_ids = _html_tab_ids(html)
-    assert html_ids, "no <div id=\"tab-X\"> elements found — selector wrong?"
+    # (a) The data-driven loop must be present and intact. Deleting or
+    # replacing it (e.g. reverting to hard-coded lines that miss a tab) fails
+    # here.
+    assert _has_data_driven_panel_toggle(body), (
+        "selectTab() no longer contains the data-driven panel-toggle loop "
+        "(querySelectorAll('.tab[data-tab]') → getElementById('tab-' + "
+        "btn.dataset.tab) → classList.toggle('hidden', btn.dataset.tab !== t)). "
+        "Without it, switching tabs won't show/hide any panel and every tab "
+        "renders blank."
+    )
 
-    referenced = _select_tab_referenced_ids(body)
+    # (b) PARITY — every tab-strip button (minus launchers) needs a body div.
+    buttons = _tab_strip_data_tabs(html)
+    bodies = _html_tab_ids(html)
+    assert buttons, "no data-tab buttons found in tab strip — selector wrong?"
+    assert bodies, 'no <div id="tab-X"> elements found — selector wrong?'
 
-    missing_in_js = sorted(html_ids - referenced)
-    assert not missing_in_js, (
-        "selectTab() is missing toggles for these tab divs declared in HTML: "
-        f"{missing_in_js}. This is the exact class of bug that hid Stocks/POC "
-        "behind a no-op tab button."
+    dead_buttons = sorted((buttons - bodies) - LAUNCHER_TABS)
+    assert not dead_buttons, (
+        "Tab-strip buttons have no matching <div id=\"tab-X\"> panel: "
+        f"{dead_buttons}. The data-driven loop's `if(p)` guard silently skips "
+        "them, so clicking the tab toggles nothing and the page goes blank — "
+        "the exact class of bug that hid Stocks/POC behind a no-op tab button. "
+        f"(If one of these is a launcher tab, add it to LAUNCHER_TABS={sorted(LAUNCHER_TABS)}.)"
     )
 
 
 def test_select_tab_references_only_existing_tab_divs():
-    """Every getElementById('tab-X') in selectTab must point at a real div."""
+    """No orphan panels, and the toggle stays purely data-driven.
+
+    Two real (non-vacuous) regressions are guarded:
+
+    1. ORPHAN PANELS — every ``<div id="tab-X">`` body must correspond to a
+       real ``.tab[data-tab]`` strip button. An orphan panel is an
+       unreachable tab: it exists in the DOM but nothing in the strip toggles
+       it on, so the user can never see it. Fails if a panel is added/renamed
+       without a matching button.
+
+    2. NO DANGLING LITERALS — selectTab must NOT carry leftover hard-coded
+       ``getElementById('tab-X')`` references (the pre-refactor mechanism).
+       The single data-driven loop is the only thing that should toggle
+       panels; a stray literal would silently re-introduce a per-tab special
+       case that bypasses the strip-derived parity invariant above.
+    """
     html = _read_dashboard_or_skip()
     body = _extract_select_tab_body(html)
 
-    html_ids = _html_tab_ids(html)
-    referenced = _select_tab_referenced_ids(body)
+    buttons = _tab_strip_data_tabs(html)
+    bodies = _html_tab_ids(html)
+    assert bodies, 'no <div id="tab-X"> elements found — selector wrong?'
 
-    orphans = sorted(referenced - html_ids)
-    assert not orphans, (
-        f"selectTab() references tab ids with no <div id=\"tab-X\"> body: {orphans}"
+    # 1) Orphan panels — bodies with no strip button are unreachable tabs.
+    orphan_bodies = sorted(bodies - buttons)
+    assert not orphan_bodies, (
+        'Panel <div id="tab-X"> bodies have no matching .tab[data-tab] strip '
+        f"button (unreachable tabs): {orphan_bodies}. The data-driven loop "
+        "iterates the strip buttons, so a panel with no button is never "
+        "toggled and the user can't reach it."
+    )
+
+    # 2) The loop must be the sole toggle mechanism — no leftover per-tab
+    # literals. ``getElementById('tab-' + btn.dataset.tab)`` (the loop's own
+    # expression) is NOT a literal and is excluded by the helper's regex.
+    literals = sorted(_select_tab_literal_tab_ids(body))
+    assert not literals, (
+        "selectTab() still contains hard-coded getElementById('tab-X') "
+        f"references: {literals}. The toggle is supposed to be fully "
+        "data-driven via the .tab[data-tab] loop; a leftover literal "
+        "re-introduces a per-tab special case that bypasses the button↔panel "
+        "parity invariant."
     )
 
 
@@ -126,7 +247,10 @@ def test_every_tab_button_has_a_tab_body():
 
     assert buttons, "no data-tab buttons found in tab strip"
 
-    dead_buttons = sorted(buttons - bodies)
+    # Launcher tabs (e.g. summit) intentionally have a button but no body div —
+    # they open an external page instead of toggling an in-page panel. Subtract
+    # the whitelist so the genuine blank-tab bug class still fails loudly.
+    dead_buttons = sorted((buttons - bodies) - LAUNCHER_TABS)
     orphan_bodies = sorted(bodies - buttons)
 
     assert not dead_buttons, (

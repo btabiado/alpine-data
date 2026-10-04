@@ -287,6 +287,23 @@ def render(meta, vendors, src_path):
     out_path = os.path.join(HERE, "dashboard.html")
     with open(out_path, "w") as f:
         f.write(html)
+    # Standalone "share" build (-> dashboard_standalone.html, deployed at
+    # /summit-share/): identical page with the ONLY escape hatch to the main BDT
+    # dashboard — the desktop "← Back to dashboard" link — removed, so the share
+    # is a sealed Landscape⇄Summit cluster that exposes nothing else. The in-app
+    # "← Back to dashboard" links (href="?") stay: they only return to this
+    # page's own Summit landing, not the main dashboard.
+    BACK_TO_DASH = ('<a class="dl" href="../#overview" '
+                    'title="Return to the main dashboard (Crypto · Overview)">'
+                    '← Back to dashboard</a>')
+    if BACK_TO_DASH not in html:
+        raise SystemExit(
+            "[summit] standalone build: 'Back to dashboard' anchor not found — "
+            "the template changed; update BACK_TO_DASH in build.py so the "
+            "/summit-share/ build stays sealed.")
+    standalone_path = os.path.join(HERE, "dashboard_standalone.html")
+    with open(standalone_path, "w") as f:
+        f.write(html.replace(BACK_TO_DASH, ""))
     return out_path
 
 
@@ -295,6 +312,10 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<!-- Embed mode: when loaded as ?embed (e.g. inside the Competitive Landscape's
+     Summit tabs) hide all nav chrome so only the content shows. Set on <html>
+     in <head> so the buttons never flash before CSS applies. -->
+<script>try{if(new URLSearchParams(location.search).has('embed'))document.documentElement.classList.add('embed');}catch(e){}</script>
 <title>Snowflake Summit 2026 — Partner Scouting Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
@@ -309,6 +330,14 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   header{padding:24px 28px 16px;border-bottom:1px solid var(--border);background:linear-gradient(120deg,#0e1730,#10243f)}
   .brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .navbtns{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+  /* Embed mode (?embed): hide all nav chrome — the top button bar and the
+     in-content "← Back to dashboard" links — so the page drops cleanly into the
+     Competitive Landscape's Summit tabs. Navigation is the landscape's tabs now. */
+  html.embed .navbtns{display:none}
+  html.embed .dl[href="?"]{display:none}        /* in-content "← Back to dashboard" links */
+  html.embed .zoomctl{display:none}             /* page text-zoom control (per-view headers) */
+  html.embed .scoreInfoTrigger{display:none}    /* "ⓘ Scoring" buttons (per-view headers) */
+  html.embed header{padding-top:6px}
   .infobtn{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:9px;padding:7px 11px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap}
   .infobtn:hover,.infobtn[aria-expanded=true]{border-color:var(--accent);color:#dff3ff}
   .scorepop{position:fixed;top:72px;right:18px;z-index:240;width:362px;max-width:calc(100vw - 32px);background:linear-gradient(165deg,#15233f,#0f1830);border:1px solid var(--accent2);border-radius:14px;box-shadow:0 22px 60px rgba(0,0,0,.6);padding:16px 18px 14px;color:var(--text)}

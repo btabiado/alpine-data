@@ -32,7 +32,16 @@
         </div>
         <div class="lthcs-header-meta">
           <div class="lthcs-meta-line">
-            <span class="lthcs-meta-label">Checked at</span>
+            <!-- Two separate things, deliberately not merged. "Data as of"
+                 is the OLDEST cron output this page probed — a real
+                 observation age, tinted. "Probed at" is the browser clock and
+                 is labelled as such so it can never read as a data date. -->
+            <span class="lthcs-meta-label">Data as of</span>
+            <span id="freshness-data-asof" class="lthcs-meta-value">&hellip;</span>
+            <span id="freshness-fresh-note" class="lthcs-freshnote" hidden></span>
+          </div>
+          <div class="lthcs-meta-line">
+            <span class="lthcs-meta-label">Probed at (clock)</span>
             <span id="freshness-asof" class="lthcs-meta-value">&hellip;</span>
           </div>
           <nav class="lhealth-nav" aria-label="Health pages">

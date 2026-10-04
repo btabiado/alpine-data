@@ -44,6 +44,7 @@ Exit code 0 on full pass, 1 on any failure.
 
 from __future__ import annotations
 
+import os
 import re
 import sys
 from pathlib import Path
@@ -115,14 +116,25 @@ def check_inline_js_parses_with_v8(html: str, primary_js: str) -> bool:
     try:
         from py_mini_racer import MiniRacer, JSEvalException
     except ImportError as exc:
-        # Soft-skip rather than hard-fail: a missing optional V8 engine must not
-        # block an otherwise-valid deploy. The structural checks above still run.
+        # HARD-FAIL by default: this is the AUTHORITATIVE JS-parse gate. A
+        # missing V8 engine in CI must NOT silently pass — that's exactly how
+        # the 2026-05-25 unary-plus regression reached prod. Only fall back to
+        # the soft-skip-PASS for local dev, opt-in via ALLOW_NO_V8=1.
+        if os.environ.get("ALLOW_NO_V8") == "1":
+            _log(
+                True,
+                "Inline JS parses via mini-racer (V8) — SKIPPED (engine unavailable)",
+                f"py_mini_racer not importable ({exc}); ALLOW_NO_V8=1 set, skipping (non-fatal)",
+            )
+            return True
         _log(
-            True,
-            "Inline JS parses via mini-racer (V8) — SKIPPED (engine unavailable)",
-            f"py_mini_racer not importable ({exc}); skipping JS-parse check (non-fatal)",
+            False,
+            "Inline JS parses via mini-racer (V8)",
+            f"py_mini_racer not importable ({exc}); this is the authoritative "
+            "JS-parse gate and must not be skipped in CI. Install py_mini_racer, "
+            "or set ALLOW_NO_V8=1 to soft-skip for local dev only.",
         )
-        return True
+        return False
 
     # Collect (body, label) pairs for every inline script with a non-trivial
     # body. The primary (largest) script is parsed first so an error there
@@ -517,6 +529,63 @@ def check_sidecars_coverage(js: str) -> bool:
     return True
 
 
+# Tabs that are *launchers* — their `data-tab` button intentionally has no
+# `<div id="tab-X">` panel because clicking them opens an external page (e.g.
+# the Summit dashboard) instead of toggling an in-page tab body. These are the
+# only data-tab values allowed to lack a matching panel.
+LAUNCHER_TABS = {"summit"}
+
+
+def check_every_tab_button_has_a_panel(html: str) -> bool:
+    """Blank-tab guard: every tab button needs a matching panel div.
+
+    A `<div class="tab ..." data-tab="X">` button in the tab strip must have a
+    corresponding `<div id="tab-X">` panel, EXCEPT for launcher tabs in
+    LAUNCHER_TABS (which open an external page rather than an in-page panel).
+
+    This is the structural counterpart to the JS-runtime "blank tab" saga:
+    new tabs (money_flow / stockflow) shipped with buttons but no panel/toggle
+    and rendered a blank page on click. This validator-level check fails the
+    build before that ever reaches a browser. Mirrors the SIDECARS-coverage
+    check's reporting style.
+    """
+    # Tab-strip buttons: `<div ... class="...tab..." ... data-tab="X">`.
+    btn_pat = re.compile(
+        r'<div[^>]*\bclass=["\'][^"\']*\btab\b[^"\']*["\'][^>]*\bdata-tab=["\']([A-Za-z0-9_-]+)["\']'
+    )
+    buttons = set(btn_pat.findall(html))
+    # Panel bodies: `<div ... id="tab-X">`.
+    body_pat = re.compile(r'<div[^>]*\bid=["\']tab-([A-Za-z0-9_-]+)["\']')
+    bodies = set(body_pat.findall(html))
+
+    if not buttons:
+        _log(False, "Every tab button has a panel", "no data-tab buttons found in tab strip")
+        return False
+
+    # Buttons with no panel, minus the intentional launchers.
+    dead_buttons = sorted((buttons - bodies) - LAUNCHER_TABS)
+    if dead_buttons:
+        for name in dead_buttons:
+            print(
+                f"[FAIL] tab button data-tab='{name}' has no matching "
+                f"<div id=\"tab-{name}\"> panel (blank-tab bug)"
+            )
+        _log(
+            False,
+            "Every tab button has a panel",
+            f"{len(dead_buttons)} button(s) with no panel: {dead_buttons}",
+        )
+        return False
+
+    _log(
+        True,
+        "Every tab button has a panel",
+        f"{len(buttons)} button(s), {len(bodies)} panel(s)"
+        + (f", launchers excluded: {sorted(buttons & LAUNCHER_TABS)}" if (buttons & LAUNCHER_TABS) else ""),
+    )
+    return True
+
+
 def check_state_keys_unique(js: str) -> bool:
     """`const state = { ... }` — top-level keys must not collide.
 
@@ -697,6 +766,7 @@ def validate(path: Path) -> int:
         check_brace_paren_balance(js)[0],
         check_state_keys_unique(js),
         check_sidecars_coverage(js),
+        check_every_tab_button_has_a_panel(html),
     ]
     if all(results):
         print(f"[ok   ] All {path} JS structural checks passed.")

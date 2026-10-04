@@ -12,6 +12,9 @@
    the scrapers all failed) doesn't break the rest of the page.
    ========================================================================= */
 
+// Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
+import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+
 const DATA_ROOT = '../data/lthcs';
 
 /* Cron is hard-coded to match .github/workflows/lthcs-daily.yml. Update
@@ -154,7 +157,10 @@ async function main() {
   // Step 4 — render.
   const universeSize = universe?.tickers?.length || latestSnap?.scores?.length || 168;
 
-  renderHeader(latest);
+  renderHeader(latest, {
+    latestSnap, variableDetail, macroBreadth, macroSectorStrength,
+    insiderToday, holdingsToday, analystToday,
+  });
   renderCadence(datesDesc, latest);
   renderSourceToday({
     latestSnap, insiderToday, holdingsToday, macroBreadth,
@@ -188,8 +194,50 @@ async function fetchLatestWeeklyTrends(latestDate) {
    Section renderers
    ====================================================================== */
 
-function renderHeader(latest) {
-  $('health-generated').textContent = `${latest} · ${isoToday()}`;
+// Freshness stamp for the pipeline-health header.
+//
+// This used to read `${latest} · ${isoToday()}` — a real snapshot date glued
+// to a live clock read. The clock half was not a stamp at all: it aged by
+// zero days no matter how long the cron had been dead, which is exactly the
+// failure mode the honesty contract exists to prevent.
+//
+// The replacement is a composite over the pipeline outputs this page actually
+// probes, so the headline is the OLDEST of them (Rule 2). A source whose file
+// is missing for `latest` has no date and is disclosed as undated (Rule 4) —
+// never quietly skipped, because a missing source is the worst case, not the
+// best one.
+function renderHeader(latest, sources) {
+  const s = sources || {};
+  const components = [
+    { label: 'snapshot', date: s.latestSnap ? (s.latestSnap.calc_date || latest) : null },
+    { label: 'pillars', date: s.variableDetail ? (s.variableDetail.calc_date || latest) : null },
+    { label: 'macro', date: s.macroBreadth ? (s.macroBreadth.as_of || latest) : null },
+    { label: 'insider', date: s.insiderToday ? latest : null },
+    { label: '13F', date: s.holdingsToday ? latest : null },
+    {
+      // Sector strength and analyst breadth are optional pipeline stages that
+      // do not run every day. They are disclosed but do not age the headline,
+      // because the page renders "not produced today" for them either way.
+      label: 'sectors',
+      date: s.macroSectorStrength ? latest : null,
+      contributes: false,
+      tag: 'optional',
+      note: 'optional stage',
+    },
+    {
+      label: 'analysts',
+      date: s.analystToday ? latest : null,
+      contributes: false,
+      tag: 'optional',
+      note: 'optional stage',
+    },
+  ];
+  paintComposite($('health-generated'), components, {
+    detailEl: $('health-fresh-note'),
+    what: 'This pipeline-health view',
+    baseClass: 'lthcs-meta-value',
+    title: 'Newest snapshot on disk: ' + latest + '.',
+  });
 }
 
 function renderCadence(datesDesc, latest) {

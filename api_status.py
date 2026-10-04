@@ -21,6 +21,16 @@ Two ways it's used:
 Pure stdlib (urllib + concurrent.futures) so it stays cheap in CI and adds no
 dependency to the server process.
 
+THE KEY-REPORTING CONTRACT
+Each source that names a ``key_env`` reports a three-state ``key_state``:
+``set`` (the secret reached this process), ``unset`` (the variable was handed to
+us empty — the secret is not configured) and ``not_wired`` (the variable never
+arrived at all — whatever launched us forgot to map it). The last state exists
+because collapsing it into "no key" is what let this page report `key_present=
+false` for nine correctly-configured secrets: the workflow simply never passed
+them, and the page had no vocabulary to say so. Values are never read, printed
+or stored — presence only.
+
 Note on environments with locked-down egress (e.g. Claude Code on the web,
 where only github.com is allowlisted): every target will come back "down" or
 "blocked". That reflects the *probe host's* network policy, not the APIs — run
@@ -55,7 +65,18 @@ PROBE_ATTEMPTS = 2       # 1 retry: gov/city hosts give transient timeouts from 
 # reported as "auth_required" (endpoint live, just gated) rather than down, and
 # the snapshot records whether the key is actually configured.
 #
-# Fields: label, category (≈ dashboard tab/role), url, key_env (None = keyless)
+# *** A key_env named here is a PROMISE that the probe process receives it. ***
+# Naming one that no workflow maps into the step's `env:` is the bug that made
+# this page lie for months: Socrata/Census/BLS/AirNow/FBI-CDE/OpenSky/Reddit all
+# reported "no key" on /health/apis.html even with the repository secret
+# correctly set, because pages.yml handed the probe only five of the fourteen
+# names this file used. ``key_state()`` below now tells those two situations
+# apart, and tests/test_api_status_wiring.py fails the build if a key_env here
+# is not mapped by the workflow step that runs this script.
+#
+# Fields: label, category (≈ dashboard tab/role), url, key_env (None = keyless).
+# Optional: headers (merged over the default UA), body_check ("arcgis": read
+# the body and judge the in-band error envelope ArcGIS sends with HTTP 200).
 TARGETS: list[dict] = [
     # ---- price / market cap ----
     {"label": "CoinGecko",            "category": "Price/MktCap",  "url": "https://api.coingecko.com/api/v3/ping",                                                          "key_env": None},
@@ -92,40 +113,95 @@ TARGETS: list[dict] = [
     # fetch_live.MIRROR_BTC_CSV), so probe that real data path instead.
     {"label": "Farside (ETF mirror)", "category": "ETF Flows",     "url": "https://raw.githubusercontent.com/canadiancode/btc-etf-flows/main/Bitcoin-ETF-Flow-Data/data/BTC_ETF_INFLOWS_OUTFLOWS.csv", "key_env": None},
     # SoSoValue dropped: api.sosovalue.com no longer resolves (DNS NXDOMAIN — the
-    # API subdomain was decommissioned). ETF flows already come from the Farside
-    # mirror above + the CoinGlass fallback below. fetch_live.py still carries a
-    # (now dead) SoSoValue path, harmlessly skipped when SOSOVALUE_API_KEY is unset.
-    {"label": "CoinGlass (ETF flows)","category": "ETF Flows",     "url": "https://open-api-v4.coinglass.com/api/etf/bitcoin/flow-history",                                 "key_env": "COINGLASS_API_KEY"},
+    # API subdomain was decommissioned).
+    #
+    # CoinGlass dropped one step later, for a related reason. Its branch in
+    # fetch_live.fetch_all() is only reached when COINGLASS_API_KEY is set, and
+    # no workflow passes that variable to anything, so fetch_all always takes
+    # the keyless GitHub-mirror path — the one probed directly above. Keeping a
+    # probe (and a key_env) for a branch that never executes reported on a
+    # source the dashboard does not use, and made COINGLASS_API_KEY look like
+    # live plumbing on /health/apis.html.
+    #
+    # Both keys stay named in scripts/check_secrets_present.py, annotated
+    # "(retired…)", deliberately: a user who has them set should be told they
+    # do nothing, rather than told nothing at all.
     # ---- news / social / research ----
     # Reddit hard-blocks datacenter IPs on the keyless public API; the dashboard
     # reaches it via OAuth (REDDIT_CLIENT_ID/SECRET), so a 403 here means
     # "needs credentials from this host", i.e. auth_required rather than down.
     {"label": "Reddit",               "category": "Research",      "url": "https://www.reddit.com/r/CryptoCurrency/about.json",                                            "key_env": "REDDIT_CLIENT_ID", "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
-    {"label": "Santiment",            "category": "Research",      "url": "https://api.santiment.net/graphql",                                                             "key_env": "SANTIMENT_API_KEY"},
+    # Santiment is KEYLESS here on purpose. SANTIMENT_API_KEY used to be named
+    # as this target's key_env and existed nowhere else in the repo — not in a
+    # workflow, not a repository secret, and fetch_market.santiment_metrics()
+    # queries the free public GraphQL tier with no auth header at all. Its only
+    # effect was printing "auth required" on /health/apis.html forever for a key
+    # that unlocked nothing. Claim removed; the probe still reports whether the
+    # endpoint the dashboard actually calls is serving.
+    {"label": "Santiment",            "category": "Research",      "url": "https://api.santiment.net/graphql",                                                             "key_env": None},
     {"label": "SEC EDGAR",            "category": "AI News",       "url": "https://efts.sec.gov/LATEST/search-index?q=ai",                                                 "key_env": None, "headers": {"User-Agent": "BDT-Dashboards/1.0 (open-source dashboard; contact@bdt-dashboards.local)", "Accept": "application/json"}},
     # ---- summit (the standalone Snowflake Summit dashboard is static/baked —
     # no live upstream API; we probe the deployed page itself for "is it up") ----
     {"label": "Summit dashboard",     "category": "Summit",        "url": "https://btabiado.github.io/alpine-data/summit/",                                                 "key_env": None},
     # ---- city pulse (the City tab): Socrata 311/permits/crime per city, plus
-    # Miami via ArcGIS + FBI CDE, and Census/BLS/AirNow context. Socrata's
-    # keyless catalog endpoint is a cheap per-portal ping; SOCRATA_APP_TOKEN
-    # only raises rate limits, so it's an optional key (200 keyless → "up").
-    {"label": "Socrata · Chicago",    "category": "City",          "url": "https://data.cityofchicago.org/api/catalog/v1?limit=1",                                          "key_env": "SOCRATA_APP_TOKEN"},
-    {"label": "Socrata · Los Angeles","category": "City",          "url": "https://data.lacity.org/api/catalog/v1?limit=1",                                                 "key_env": "SOCRATA_APP_TOKEN"},
-    {"label": "Socrata · Seattle",    "category": "City",          "url": "https://data.seattle.gov/api/catalog/v1?limit=1",                                                "key_env": "SOCRATA_APP_TOKEN"},
-    {"label": "Socrata · San Francisco","category": "City",        "url": "https://data.sfgov.org/api/catalog/v1?limit=1",                                                  "key_env": "SOCRATA_APP_TOKEN"},
-    {"label": "Socrata · New York",   "category": "City",          "url": "https://data.cityofnewyork.us/api/catalog/v1?limit=1",                                           "key_env": "SOCRATA_APP_TOKEN"},
-    {"label": "ArcGIS (Miami)",       "category": "City",          "url": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/BuildingPermit_gdb/FeatureServer/0?f=json", "key_env": None},
-    {"label": "FBI Crime Data Explorer","category": "City",        "url": "https://cde.ucr.cjis.gov/LATEST/agency/byStateAbbr/FL",                                          "key_env": "FBI_CDE_API_KEY"},
-    # Probe the median-income variable metadata (the exact ACS field the City
-    # context fetcher pulls) — small + keyless + fast. The /data.json discovery
-    # doc is huge and trips the 8s timeout whenever Census is sluggish.
-    {"label": "Census ACS",           "category": "City",          "url": "https://api.census.gov/data/2023/acs/acs5/variables/B19013_001E.json",                           "key_env": "CENSUS_API_KEY"},
-    {"label": "BLS",                  "category": "City",          "url": "https://api.bls.gov/publicAPI/v2/timeseries/data/LNS14000000",                                   "key_env": "BLS_API_KEY"},
+    # Miami via ArcGIS + FBI CDE, and Census/BLS/AirNow context. Each probe hits
+    # the path the city/*.py fetcher calls, on the host
+    # docs/city/city_registry.resolved.json names. tests/test_api_status_city.py
+    # fails if a probe drifts from the registry or the fetchers again.
+    #
+    # Socrata: a single-row read of one registry dataset per portal (the
+    # building-permits feed, which answers fast on every host), via the same
+    # /resource/{dataset}.json path city/socrata.py reads. The probe used to
+    # ping /api/catalog/v1, which is not portal-specific: every host returns
+    # the same platform-wide catalog. So it kept answering 200 for SF's retired
+    # data.sfgov.org host (urllib follows its 301 to data.sf.gov).
+    # SOCRATA_APP_TOKEN only raises rate limits, so it's an optional key
+    # (200 keyless → "up").
+    {"label": "Socrata · Chicago",    "category": "City",          "url": "https://data.cityofchicago.org/resource/ydr8-5enu.json?$limit=1",                                "key_env": "SOCRATA_APP_TOKEN"},
+    {"label": "Socrata · Los Angeles","category": "City",          "url": "https://data.lacity.org/resource/pi9x-tg5x.json?$limit=1",                                       "key_env": "SOCRATA_APP_TOKEN"},
+    {"label": "Socrata · Seattle",    "category": "City",          "url": "https://data.seattle.gov/resource/76t5-zqzr.json?$limit=1",                                      "key_env": "SOCRATA_APP_TOKEN"},
+    {"label": "Socrata · San Francisco","category": "City",        "url": "https://data.sf.gov/resource/i98e-djp9.json?$limit=1",                                           "key_env": "SOCRATA_APP_TOKEN"},
+    {"label": "Socrata · New York",   "category": "City",          "url": "https://data.cityofnewyork.us/resource/ipu4-2q9a.json?$limit=1",                                 "key_env": "SOCRATA_APP_TOKEN"},
+    # ArcGIS (Miami-Dade building permits): a returnCountOnly query on the
+    # registry's miamidade_permit_data layer, the same /query path
+    # city/arcgis.py uses. ArcGIS reports errors INSIDE an HTTP 200 body, so
+    # body_check reads it. The retired BuildingPermit_gdb layer answers
+    # {"error":{"code":499,"message":"Token Required"}} with HTTP 200, and the
+    # old probe of that layer kept reporting "up". Never point this back at it.
+    {"label": "ArcGIS (Miami)",       "category": "City",          "url": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/miamidade_permit_data/FeatureServer/0/query?where=1%3D1&returnCountOnly=true&f=json", "key_env": None, "body_check": "arcgis"},
+    # FBI CDE (Miami Public Safety): one fixed, already-published month of the
+    # summarized DATA series city/fbi.py reads for ORI FL0130000 (about 1 KB,
+    # vs about 220 KB for the state agency list). Keyless: cde.ucr.cjis.gov/LATEST
+    # serves it without a key (re-verified 2026-10-04), so no key_env.
+    # Naming FBI_CDE_API_KEY here had the page report a key that gates nothing.
+    {"label": "FBI Crime Data Explorer","category": "City",        "url": "https://cde.ucr.cjis.gov/LATEST/summarized/agency/FL0130000/violent-crime?from=01-2025&to=01-2025", "key_env": None},
+    # Census: the median-income variable metadata (the exact ACS field the City
+    # context fetcher pulls) at the registry's ACS vintage, small, keyless and
+    # fast. ACS *data* queries need CENSUS_API_KEY (keyless they 302 to an HTML
+    # missing_key page). The /data.json discovery doc is huge and trips the
+    # timeout whenever Census is sluggish.
+    {"label": "Census ACS",           "category": "City",          "url": "https://api.census.gov/data/2024/acs/acs5/variables/B19013_001E.json",                           "key_env": "CENSUS_API_KEY"},
+    # BLS: one of the LAUS series city/bls.py requests (Miami-Dade unemployment
+    # rate). Keyless works under a low daily cap; BLS_API_KEY lifts it. Caveat:
+    # BLS answers an exhausted keyless quota with HTTP 200 and
+    # "status": "REQUEST_NOT_PROCESSED", which this probe does not inspect.
+    {"label": "BLS",                  "category": "City",          "url": "https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN120860000000003",                          "key_env": "BLS_API_KEY"},
     {"label": "EPA AirNow",           "category": "City",          "url": "https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=40&longitude=-74&distance=25&API_KEY=", "key_env": "AIRNOW_API_KEY"},
     # ---- aviation: OpenSky live ADS-B. Anonymous access works (rate-limited);
     # OPENSKY_CLIENT_ID only raises limits. Tiny bbox keeps the probe cheap.
     {"label": "OpenSky Network",      "category": "Aviation",      "url": "https://opensky-network.org/api/states/all?lamin=45.8&lomin=5.9&lamax=46.0&lomax=6.1",            "key_env": "OPENSKY_CLIENT_ID"},
+    # TSA daily throughput (powers the TSA Throughput sub-view via fetch_tsa.py).
+    # tsa.gov 403s a non-browser UA, so send a real browser UA like the scraper.
+    {"label": "TSA passenger volumes","category": "Aviation",      "url": "https://www.tsa.gov/travel/passenger-volumes",                                                   "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
+    # FRED ENPLANE — the air-travel enplanements series behind the Air Travel
+    # sub-view. Use the FRED *API* host (api.stlouisfed.org, same reliable host
+    # as the Macro FRED probe) rather than the web fredgraph.csv endpoint, which
+    # Akamai tarpits for non-curl clients from CI. Keyed on FRED_API_KEY:
+    # auth_required without a key, up in CI where the secret is set.
+    {"label": "FRED ENPLANE (air travel)","category": "Aviation",  "url": "https://api.stlouisfed.org/fred/series/observations?series_id=ENPLANE&file_type=json&limit=1",     "key_env": "FRED_API_KEY"},
+    # AOPA Air Safety Institute (McSpadden Report) — the GA accident/rate source
+    # behind the Safety sub-view. Browser UA; annual data, probed for reachability.
+    {"label": "AOPA ASI (GA safety)",  "category": "Aviation",      "url": "https://www.aopa.org/training-and-safety/air-safety-institute/accident-analysis/richard-g-mcspadden-report", "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
     # ---- real estate: Zillow + Redfin keyless CSVs, Census gazetteer for metro
     # coords. These are large files; the probe GET reads one byte then closes.
     {"label": "Zillow Research",      "category": "Real Estate",   "url": "https://files.zillowstatic.com/research/public_csvs/zhvi/Metro_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv", "key_env": None},
@@ -152,6 +228,81 @@ TARGETS: list[dict] = [
 ]
 
 
+# Every distinct env var the targets above name. Exported so the wiring test
+# (and anyone auditing the workflow) can enumerate the promise this file makes
+# without re-deriving it from TARGETS by hand — a hand-copied list is exactly
+# how the workflow's env block fell seven names behind in the first place.
+KEY_ENVS: list[str] = sorted({t["key_env"] for t in TARGETS if t.get("key_env")})
+
+# The three states a named key can be in, from the probe process's point of view.
+KEY_SET = "set"              # var present and non-empty — the secret reached us
+KEY_UNSET = "unset"          # var present but empty — wired, secret not configured
+KEY_NOT_WIRED = "not_wired"  # var absent entirely — nobody handed it to this process
+
+
+def key_state(key_env: str | None) -> str | None:
+    """Classify a named key into set / unset / not_wired. Never reads a value.
+
+    This is the fix for the defect that made /health/apis.html unfalsifiable: a
+    source whose key was never plumbed through and a source whose secret is
+    genuinely missing both rendered as a flat "no key", so a page full of "no
+    key" tags could mean "you never set these" OR "we never asked for them" and
+    there was no way to tell which. They are different problems with different
+    owners — one is the user's to fix in repo settings, the other is a workflow
+    bug — and reporting them identically is how the workflow bug survived.
+
+    The observable that separates them is *membership*, not truthiness. GitHub
+    Actions materialises ``FOO: ${{ secrets.FOO }}`` as an env var set to the
+    EMPTY STRING when the secret does not exist, so:
+
+        "FOO" in os.environ  and  value == ""   ->  wired, secret not set
+        "FOO" not in os.environ                 ->  NOT wired: a plumbing bug
+
+    Outside CI (a plain shell, a test runner) nothing is exported, so almost
+    everything reads ``not_wired``. That is still the honest statement — "this
+    process was not given the key" — and the snapshot's ``ci`` flag lets a
+    consumer say so in different words. Whitespace-only counts as unset, matching
+    scripts/check_secrets_present.py, so a stray-newline paste is not "set".
+
+    Returns None for a keyless source (there is nothing to classify).
+    """
+    if not key_env:
+        return None
+    if key_env not in os.environ:
+        return KEY_NOT_WIRED
+    return KEY_SET if (os.environ[key_env] or "").strip() else KEY_UNSET
+
+
+# ArcGIS in-band error codes that mean "this layer needs a token" (498 =
+# invalid token, 499 = token required). ArcGIS's equivalent of a 401/403.
+_ARCGIS_TOKEN_CODES = (498, 499)
+# How much of a body_check target's response to read. ArcGIS error envelopes
+# and returnCountOnly answers are tens of bytes.
+_BODY_CHECK_BYTES = 65536
+
+
+def _arcgis_inband_error(body: bytes) -> tuple[int, str] | None:
+    """``(code, message)`` if an ArcGIS REST body is an error envelope, else None.
+
+    ArcGIS answers token and query failures with HTTP 200 and
+    ``{"error": {"code": N, "message": ...}}``, so the status line alone says
+    "up" for a layer that serves nothing. An unparseable body is not treated
+    as an error here; only an explicit envelope is.
+    """
+    try:
+        doc = json.loads(body.decode("utf-8", "replace"))
+    except ValueError:
+        return None
+    err = doc.get("error") if isinstance(doc, dict) else None
+    if not isinstance(err, dict):
+        return None
+    try:
+        code = int(err.get("code"))
+    except (TypeError, ValueError):
+        code = 500  # an error envelope without a usable code is still an error
+    return code, str(err.get("message") or "")
+
+
 def _verdict(status: int | None, needs_key: bool) -> str:
     """Map an HTTP status (or None for connection failure) to a verdict.
 
@@ -161,6 +312,9 @@ def _verdict(status: int | None, needs_key: bool) -> str:
     blocked       — 401/403 on a keyless source (geo-block, WAF, or egress proxy).
     degraded      — other 4xx/5xx: reachable but erroring.
     down          — no HTTP response at all (DNS / TCP / TLS / timeout).
+
+    ``status`` may also be an ArcGIS in-band error code (see body_check):
+    498/499 (token invalid/required) count as 401/403, anything else as an error.
     """
     if status is None:
         return "down"
@@ -168,12 +322,13 @@ def _verdict(status: int | None, needs_key: bool) -> str:
         return "up"
     if status == 429:
         return "rate_limited"
+    gated = status in (401, 403) or status in _ARCGIS_TOKEN_CODES
     # Key-gated sources commonly answer a *keyless* probe with 400 (missing
     # api_key/params), 401, or 403 — all mean "alive, just needs a key", so
     # surface them as auth_required rather than blocked/degraded.
-    if needs_key and status in (400, 401, 403):
+    if needs_key and (status == 400 or gated):
         return "auth_required"
-    if status in (401, 403):
+    if gated:
         return "blocked"
     return "degraded"
 
@@ -188,8 +343,10 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
     # without it EDGAR returns 403/500).
     headers = {"User-Agent": _UA}
     headers.update(target.get("headers") or {})
+    body_check = target.get("body_check")
     t0 = time.monotonic()
     status: int | None = None
+    inband: tuple[int, str] | None = None
     note = ""
     retried = 0
     # Probe with one retry. GitHub Actions runners intermittently get slow DNS /
@@ -202,8 +359,11 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
             req = urllib.request.Request(url, headers=headers, method="GET")
             with urllib.request.urlopen(req, timeout=timeout, context=_SSL_CTX) as r:
                 status = r.status
-                # Drain a little so keep-alive sockets close cleanly; ignore body.
-                r.read(1)
+                if body_check == "arcgis":
+                    inband = _arcgis_inband_error(r.read(_BODY_CHECK_BYTES))
+                else:
+                    # Drain a little so keep-alive sockets close cleanly; ignore body.
+                    r.read(1)
             note = ""
             break
         except urllib.error.HTTPError as e:
@@ -214,7 +374,14 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
             note = f"{type(e).__name__}: {e}"[:120]
             retried = attempt + 1
     latency_ms = int((time.monotonic() - t0) * 1000)
-    verdict = _verdict(status, needs_key)
+    # `status` stays the real HTTP status (the page's HTTP column); an in-band
+    # error decides the verdict instead and is spelled out in the note.
+    verdict_code = status
+    if inband is not None:
+        verdict_code, message = inband
+        note = f"ArcGIS error {verdict_code} in HTTP {status} body: {message}"[:120]
+    verdict = _verdict(verdict_code, needs_key)
+    kstate = key_state(key_env)
     return {
         "label": target["label"],
         "category": target["category"],
@@ -225,7 +392,16 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
         # An auth_required source counts as reachable for the up/down summary.
         "reachable": verdict in ("up", "auth_required", "rate_limited"),
         "needs_key": needs_key,
-        "key_present": bool(os.environ.get(key_env)) if key_env else None,
+        # key_present is kept (older snapshots and any external reader depend on
+        # it) but it is now derived from key_state, and it is deliberately NOT
+        # the whole truth: False covers both "unset" and "not_wired". Consumers
+        # that want to tell a settings problem from a plumbing bug must read
+        # key_state. health/index.html renders all three distinctly.
+        "key_present": (kstate == KEY_SET) if key_env else None,
+        "key_state": kstate,
+        # Named so the page can say WHICH variable is missing instead of making
+        # the reader guess. A name, never a value.
+        "key_env": key_env,
         "retries": retried,
         "note": note,
     }
@@ -240,6 +416,9 @@ def probe_all(timeout: float = DEFAULT_TIMEOUT, max_workers: int = 12) -> dict:
     def count(*verdicts: str) -> int:
         return sum(1 for s in sources if s["verdict"] in verdicts)
 
+    def keys(state: str) -> int:
+        return sum(1 for s in sources if s["key_state"] == state)
+
     summary = {
         "total": len(sources),
         "up": count("up"),
@@ -249,10 +428,26 @@ def probe_all(timeout: float = DEFAULT_TIMEOUT, max_workers: int = 12) -> dict:
         "blocked": count("blocked"),
         "down": count("down"),
         "reachable": sum(1 for s in sources if s["reachable"]),
+        # Key accounting, so "how many of my keys actually arrived?" is answerable
+        # from the summary alone. keys_not_wired > 0 is a WORKFLOW bug, not a
+        # missing secret — see key_state().
+        "keyed": sum(1 for s in sources if s["needs_key"]),
+        "keys_set": keys(KEY_SET),
+        "keys_unset": keys(KEY_UNSET),
+        "keys_not_wired": keys(KEY_NOT_WIRED),
     }
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "timeout_s": timeout,
+        # Whether this snapshot came from a CI runner. Off a runner, "not_wired"
+        # just means the operator's shell did not export the key, which is
+        # unremarkable; on a runner it means the workflow forgot to map it.
+        "ci": bool(os.environ.get("GITHUB_ACTIONS")),
+        # Names only — never values. Lets the page and the CI log say exactly
+        # which variable never arrived instead of "some key is missing".
+        "unwired_key_envs": sorted(
+            {s["key_env"] for s in sources if s["key_state"] == KEY_NOT_WIRED}
+        ),
         "summary": summary,
         "sources": sources,
     }
@@ -297,13 +492,29 @@ def main() -> int:
         f"{s['degraded']} degraded, {s['blocked']} blocked, {s['down']} down)"
     )
     # Print a compact table to stdout for CI logs / manual runs.
+    key_tag = {KEY_SET: " [key set]", KEY_UNSET: " [no key]",
+               KEY_NOT_WIRED: " [KEY NOT WIRED]"}
     for src in snapshot["sources"]:
         st = src["status"] if src["status"] is not None else "—"
-        key = ""
-        if src["needs_key"]:
-            key = " [key set]" if src["key_present"] else " [no key]"
         print(f"  {src['verdict']:<13} {str(st):>4} {src['latency_ms']:>5}ms  "
-              f"{src['label']}{key}")
+              f"{src['label']}{key_tag.get(src['key_state'], '')}")
+    # Shout about unwired keys. This is a defect in whatever launched us, and it
+    # is invisible in the per-row table if you are skimming: every unwired source
+    # otherwise looks exactly like a source whose secret you never set. On a
+    # runner it is emitted as a ::warning so it lands on the run summary too.
+    unwired = snapshot["unwired_key_envs"]
+    if unwired:
+        names = ", ".join(unwired)
+        if snapshot["ci"]:
+            print(f"::warning title=API key not wired into the probe::"
+                  f"{len(unwired)} key(s) named by api_status.py never reached "
+                  f"this step: {names}. /health/apis.html cannot tell these apart "
+                  f"from unset secrets. Add them to the step's env: block.")
+        print(f"\n  !! {len(unwired)} named key(s) NOT WIRED into this process: "
+              f"{names}")
+        print("     These are reported as 'not wired', NOT as 'no key' — the "
+              "difference is\n     a workflow plumbing bug vs. an unset "
+              "repository secret.")
     return 0
 
 

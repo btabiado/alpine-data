@@ -1,0 +1,675 @@
+{
+  "checked_at": "2026-09-28T16:42:17+00:00",
+  "total_urls": 2192,
+  "counts": {
+    "ok": 1927,
+    "gated": 172,
+    "dead": 26,
+    "unreachable": 67
+  },
+  "dead": [
+    {
+      "url": "http://numbersapi.com/",
+      "code": 404,
+      "services": [
+        "Numbers API (numbersapi.com)"
+      ]
+    },
+    {
+      "url": "https://bible.helloao.org/",
+      "code": 404,
+      "services": [
+        "Free Use Bible API (AO Lab)"
+      ]
+    },
+    {
+      "url": "https://docs.data.nasdaq.com/",
+      "code": 404,
+      "services": [
+        "Nasdaq Data Link (formerly Quandl)"
+      ]
+    },
+    {
+      "url": "https://docs.eudat.eu/b2share/httpapi/",
+      "code": 404,
+      "services": [
+        "EUDAT B2SHARE REST API"
+      ]
+    },
+    {
+      "url": "https://docs.stratz.com/",
+      "code": 404,
+      "services": [
+        "STRATZ (Dota 2)"
+      ]
+    },
+    {
+      "url": "https://efile.fara.gov/api",
+      "code": 404,
+      "services": [
+        "FARA eFile API (DOJ Foreign Agents Registration)"
+      ]
+    },
+    {
+      "url": "https://getbible.net/docs",
+      "code": 404,
+      "services": [
+        "GetBible.net API v2"
+      ]
+    },
+    {
+      "url": "https://github.com/marketplace/models",
+      "code": 404,
+      "services": [
+        "GitHub Models"
+      ]
+    },
+    {
+      "url": "https://help.overton.io/faq/",
+      "code": 404,
+      "services": [
+        "Overton API"
+      ]
+    },
+    {
+      "url": "https://spothero.com/developers",
+      "code": 404,
+      "services": [
+        "SpotHero Developer Platform"
+      ]
+    },
+    {
+      "url": "https://support.travelpayouts.com/hc/en-us/articles/115000150945-Hotel-data-API",
+      "code": 404,
+      "services": [
+        "Hotellook / Travelpayouts Hotel Data API"
+      ]
+    },
+    {
+      "url": "https://websites.psychology.uwa.edu.au/school/mrcdatabase/uwa_mrc.htm",
+      "code": 404,
+      "services": [
+        "MRC Psycholinguistic Database"
+      ]
+    },
+    {
+      "url": "https://www.anaconda.com/docs/reference/api/main",
+      "code": 404,
+      "services": [
+        "Anaconda.org (conda) API"
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/drugs/drug-approvals-and-databases/orange-book-data-files",
+      "code": 404,
+      "services": [
+        "FDA Orange Book Data Files (Approved Drug Products + patents/exclusivity)",
+        "FDA Orange Book Data Files (Approved Drug Products w/ TE Evaluations)",
+        "FDA Orange Book Data Files"
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/drugs/fda-adverse-event-monitoring-system-aems/faers-quarterly-data-files-documentation",
+      "code": 404,
+      "services": [
+        "FDA FAERS/AEMS Quarterly Data Files (bulk download)"
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/drugs/fda-adverse-event-monitoring-system-aems/fda-adverse-event-monitoring-system-aems-public-dashboard",
+      "code": 404,
+      "services": [
+        "FDA FAERS/AEMS Public Dashboard"
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/drugs/fdas-adverse-event-reporting-system-faers/faers-quarterly-data-files-documentation",
+      "code": 404,
+      "services": [
+        "FDA FAERS Quarterly Data Files (bulk download)"
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/drugs/questions-and-answers-fdas-adverse-event-reporting-system-faers/fda-adverse-event-reporting-system-faers-public-dashboard",
+      "code": 404,
+      "services": [
+        "FDA FAERS / AEMS Public Dashboard"
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/drugs/risk-evaluation-and-mitigation-strategies-rems/risk-evaluation-and-mitigation-strategy-rems-public-dashboard",
+      "code": 404,
+      "services": [
+        "FDA REMS Public Dashboard (Risk Evaluation & Mitigation Strategies)"
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/tobacco-products/market-and-distribute-tobacco-product/tobacco-product-applications-metrics-reporting",
+      "code": 404,
+      "services": [
+        "FDA Center for Tobacco Products - Application Metrics & Reporting"
+      ]
+    },
+    {
+      "url": "https://www.first.org/epss/api",
+      "code": 404,
+      "services": [
+        "EPSS API (FIRST.org)"
+      ]
+    },
+    {
+      "url": "https://www.gmicloud.ai/en/models",
+      "code": 404,
+      "services": [
+        "GMI Cloud Inference Engine"
+      ]
+    },
+    {
+      "url": "https://www.langtrace.ai/",
+      "code": 404,
+      "services": [
+        "Langtrace"
+      ]
+    },
+    {
+      "url": "https://www.memobase.io/",
+      "code": 404,
+      "services": [
+        "Memobase"
+      ]
+    },
+    {
+      "url": "https://www.oapen.org/resources/15635975-metadata",
+      "code": 404,
+      "services": [
+        "OAPEN Library REST/OAI API"
+      ]
+    },
+    {
+      "url": "https://www.pantone.com/products/digital-apps/pantone-api",
+      "code": 404,
+      "services": [
+        "Pantone Connect / Pantone API"
+      ]
+    }
+  ],
+  "unreachable": [
+    {
+      "url": "http://www.openthesis.org/",
+      "code": null,
+      "services": [
+        "OpenThesis.org"
+      ]
+    },
+    {
+      "url": "https://api-ccte.epa.gov/docs",
+      "code": null,
+      "services": [
+        "EPA CompTox / Computational Toxicology & Exposure APIs (CTX/CCTE)"
+      ]
+    },
+    {
+      "url": "https://api.fatcat.wiki/",
+      "code": null,
+      "services": [
+        "Fatcat / IA Scholar"
+      ]
+    },
+    {
+      "url": "https://api.fatcat.wiki/redoc",
+      "code": null,
+      "services": [
+        "Fatcat / Internet Archive Scholar API"
+      ]
+    },
+    {
+      "url": "https://api.justyy.workers.dev/api/factor/",
+      "code": 503,
+      "services": [
+        "Integer Factorization API (justyy / HelloACM)"
+      ]
+    },
+    {
+      "url": "https://api.pharmgkb.org/swagger/",
+      "code": null,
+      "services": [
+        "PharmGKB REST API"
+      ]
+    },
+    {
+      "url": "https://api.trade.gov/console/",
+      "code": null,
+      "services": [
+        "ITA Consolidated Screening List (CSL) API (Commerce)"
+      ]
+    },
+    {
+      "url": "https://aqs.epa.gov/aqsweb/documents/data_api.html",
+      "code": null,
+      "services": [
+        "EPA Air Quality System (AQS) API",
+        "EPA Air Quality System (AQS) API",
+        "EPA Air Quality System (AQS) API"
+      ]
+    },
+    {
+      "url": "https://assignment-api.uspto.gov/",
+      "code": null,
+      "services": [
+        "USPTO Patent Assignment Search API"
+      ]
+    },
+    {
+      "url": "https://bcl.nrel.gov/api/",
+      "code": null,
+      "services": [
+        "NREL/NLR Building Component Library API"
+      ]
+    },
+    {
+      "url": "https://biolincc.nhlbi.nih.gov/",
+      "code": 502,
+      "services": [
+        "NHLBI BioLINCC (Biologic Specimen and Data Repository)"
+      ]
+    },
+    {
+      "url": "https://cfpub.epa.gov/ecotox/",
+      "code": null,
+      "services": [
+        "EPA ECOTOX Knowledgebase"
+      ]
+    },
+    {
+      "url": "https://clinical-information.canada.ca/",
+      "code": null,
+      "services": [
+        "Health Canada Clinical Information Portal (Public Release of Clinical Information, PRCI)",
+        "Health Canada Public Release of Clinical Information (PRCI) portal"
+      ]
+    },
+    {
+      "url": "https://collection.britishmuseum.org/",
+      "code": null,
+      "services": [
+        "British Museum Collection (SPARQL/LOD)"
+      ]
+    },
+    {
+      "url": "https://developer.boeing.com/apis/notams-3/",
+      "code": null,
+      "services": [
+        "DTN NOTAMs API / Boeing (Jeppesen) NOTAMs API"
+      ]
+    },
+    {
+      "url": "https://developer.freightos.com/apis",
+      "code": null,
+      "services": [
+        "Freightos Terminal / FBX API"
+      ]
+    },
+    {
+      "url": "https://developer.nrel.gov/docs/",
+      "code": null,
+      "services": [
+        "NREL Developer Network (PVWatts, Utility Rates, OpenEI)",
+        "NREL Developer Network APIs (PVWatts, solar, electricity)"
+      ]
+    },
+    {
+      "url": "https://developer.nrel.gov/docs/energy-optimization/reopt/",
+      "code": null,
+      "services": [
+        "NREL REopt API"
+      ]
+    },
+    {
+      "url": "https://developer.nrel.gov/docs/solar/nsrdb/",
+      "code": null,
+      "services": [
+        "NREL NSRDB (National Solar Radiation Database) API"
+      ]
+    },
+    {
+      "url": "https://developer.nrel.gov/docs/solar/pvwatts/v8/",
+      "code": null,
+      "services": [
+        "PVWatts (NREL Developer Network)"
+      ]
+    },
+    {
+      "url": "https://developer.nrel.gov/docs/transportation/alt-fuel-stations-v1/",
+      "code": null,
+      "services": [
+        "NREL Alternative Fuel Stations API"
+      ]
+    },
+    {
+      "url": "https://developer.nrel.gov/docs/wind/wind-toolkit/",
+      "code": null,
+      "services": [
+        "NREL WIND Toolkit (HSDS)"
+      ]
+    },
+    {
+      "url": "https://docs.aviationapi.com/",
+      "code": null,
+      "services": [
+        "AviationAPI"
+      ]
+    },
+    {
+      "url": "https://docs.wild-card.ai/agentsjson/introduction",
+      "code": null,
+      "services": [
+        "agents.json (Wildcard AI)"
+      ]
+    },
+    {
+      "url": "https://elexicon.wustl.edu/",
+      "code": null,
+      "services": [
+        "English Lexicon Project (ELP)"
+      ]
+    },
+    {
+      "url": "https://en.wikichip.org/",
+      "code": null,
+      "services": [
+        "WikiChip"
+      ]
+    },
+    {
+      "url": "https://fakeapi.platzi.com/",
+      "code": null,
+      "services": [
+        "Platzi Fake Store API"
+      ]
+    },
+    {
+      "url": "https://fatcat.wiki/",
+      "code": null,
+      "services": [
+        "Internet Archive Scholar / Fatcat API"
+      ]
+    },
+    {
+      "url": "https://fred.stlouisfed.org/categories/32217",
+      "code": null,
+      "services": [
+        "FRED (commodity & metals price series)"
+      ]
+    },
+    {
+      "url": "https://fred.stlouisfed.org/docs/api/fred/",
+      "code": null,
+      "services": [
+        "FRED — Federal Reserve Economic Data API",
+        "FRED (Federal Reserve Bank of St. Louis)",
+        "FRED API (manufacturing/IP indicators)"
+      ]
+    },
+    {
+      "url": "https://fred.stlouisfed.org/series/WPU03",
+      "code": null,
+      "services": [
+        "FRED Textile & Apparel Price Indexes"
+      ]
+    },
+    {
+      "url": "https://fred.stlouisfed.org/series/WPU081",
+      "code": null,
+      "services": [
+        "FRED - Lumber & Wood Products PPI (St. Louis Fed)"
+      ]
+    },
+    {
+      "url": "https://gazetteer.dainst.org/",
+      "code": 503,
+      "services": [
+        "iDAI.gazetteer / iDAI.world (DAI)"
+      ]
+    },
+    {
+      "url": "https://gssdataexplorer.norc.org/",
+      "code": null,
+      "services": [
+        "GSS Data Explorer (NORC General Social Survey)",
+        "GSS Data Explorer (NORC, General Social Survey)"
+      ]
+    },
+    {
+      "url": "https://hemp.ams.usda.gov/s/PublicSearchTool",
+      "code": null,
+      "services": [
+        "USDA Hemp eManagement Platform (HeMP) Public/LE Search Tool"
+      ]
+    },
+    {
+      "url": "https://jrct.niph.go.jp/",
+      "code": null,
+      "services": [
+        "jRCT / JPRN (Japan Registry of Clinical Trials)"
+      ]
+    },
+    {
+      "url": "https://maps.bts.dot.gov/services/rest/services/NTAD/MilitaryBases/MapServer",
+      "code": null,
+      "services": [
+        "BTS / NTAD Military Bases (USDOT ArcGIS MapServer)"
+      ]
+    },
+    {
+      "url": "https://maps.bts.dot.gov/services/rest/services/NTAD/MilitaryBases/MapServer/0",
+      "code": null,
+      "services": [
+        "BTS / NTAD Military Bases (USDOT ArcGIS REST)"
+      ]
+    },
+    {
+      "url": "https://matmatch.com/",
+      "code": null,
+      "services": [
+        "Matmatch"
+      ]
+    },
+    {
+      "url": "https://mymarketnews.ams.usda.gov/mars-api/getting-started",
+      "code": null,
+      "services": [
+        "USDA AMS My Market News (MARS API)"
+      ]
+    },
+    {
+      "url": "https://nassgeodata.gmu.edu/CropScape/",
+      "code": null,
+      "services": [
+        "USDA CropScape / Cropland Data Layer"
+      ]
+    },
+    {
+      "url": "https://neuroquery.org/",
+      "code": null,
+      "services": [
+        "NeuroQuery API",
+        "NeuroQuery"
+      ]
+    },
+    {
+      "url": "https://oqmd.org/",
+      "code": null,
+      "services": [
+        "OQMD (Open Quantum Materials Database)"
+      ]
+    },
+    {
+      "url": "https://platform.docs.opentargets.org/data-access/graphql-api",
+      "code": null,
+      "services": [
+        "Open Targets Platform GraphQL API"
+      ]
+    },
+    {
+      "url": "https://play.ht/",
+      "code": null,
+      "services": [
+        "PlayHT (Play.ht) TTS API"
+      ]
+    },
+    {
+      "url": "https://pncp.gov.br/api/pncp/swagger-ui/index.html",
+      "code": null,
+      "services": [
+        "Brazil PNCP (Portal Nacional de Contratacoes Publicas) API"
+      ]
+    },
+    {
+      "url": "https://prime-numbers-api.com/",
+      "code": null,
+      "services": [
+        "Prime Numbers API (prime-numbers-api.com)"
+      ]
+    },
+    {
+      "url": "https://rctportal.niph.go.jp/en",
+      "code": null,
+      "services": [
+        "JPRN / NIPH Clinical Trials Search Portal (Japan)"
+      ]
+    },
+    {
+      "url": "https://remote.universal-robots.com/",
+      "code": null,
+      "services": [
+        "Universal Robots API (UR Cloud)"
+      ]
+    },
+    {
+      "url": "https://sanskritwordnet.chs.harvard.edu/api",
+      "code": null,
+      "services": [
+        "Sanskrit WordNet API (CHS Harvard)"
+      ]
+    },
+    {
+      "url": "https://schema.oasf.agntcy.org/",
+      "code": null,
+      "services": [
+        "AGNTCY — Open Agentic Schema Framework (OASF)"
+      ]
+    },
+    {
+      "url": "https://search.patentsview.org/docs/",
+      "code": null,
+      "services": [
+        "PatentsView PatentSearch API"
+      ]
+    },
+    {
+      "url": "https://snowstorm-training.snomedtools.org/fhir/metadata",
+      "code": null,
+      "services": [
+        "SNOMED CT Snowstorm public training FHIR API"
+      ]
+    },
+    {
+      "url": "https://stats.un.org/SDGAPI/swagger/",
+      "code": null,
+      "services": [
+        "SDMX Global Registry / UNdata2 (added in verify)"
+      ]
+    },
+    {
+      "url": "https://trialstreamer.robotreviewer.net/",
+      "code": null,
+      "services": [
+        "Trialstreamer"
+      ]
+    },
+    {
+      "url": "https://water.weather.gov/ahps/",
+      "code": null,
+      "services": [
+        "NWS / NOAA Advanced Hydrologic Prediction Service (AHPS)"
+      ]
+    },
+    {
+      "url": "https://web.plant.id/plant-identification-api/",
+      "code": null,
+      "services": [
+        "Plant.id (Kindwise)"
+      ]
+    },
+    {
+      "url": "https://www.2dmatpedia.org/",
+      "code": null,
+      "services": [
+        "2DMatPedia"
+      ]
+    },
+    {
+      "url": "https://www.acq.osd.mil/eie/imr/rpid/library.html",
+      "code": null,
+      "services": [
+        "DoD RPID / Base Structure Report (real-property footprint)"
+      ]
+    },
+    {
+      "url": "https://www.brocade.io/",
+      "code": null,
+      "services": [
+        "Brocade.io"
+      ]
+    },
+    {
+      "url": "https://www.clinicalstudydatarequest.com/",
+      "code": null,
+      "services": [
+        "ClinicalStudyDataRequest.com (CSDR)"
+      ]
+    },
+    {
+      "url": "https://www.mousemine.org/mousemine/",
+      "code": 503,
+      "services": [
+        "Mouse Genome Informatics (MGI / MouseMine)"
+      ]
+    },
+    {
+      "url": "https://www.nrcs.usda.gov/resources/data-and-reports/web-soil-survey",
+      "code": null,
+      "services": [
+        "USDA NRCS Web Soil Survey / spatial WMS-WFS"
+      ]
+    },
+    {
+      "url": "https://www.nvr.navy.mil/",
+      "code": null,
+      "services": [
+        "Naval Vessel Register (NVR)"
+      ]
+    },
+    {
+      "url": "https://www.scrapindex.com/historic.html",
+      "code": null,
+      "services": [
+        "ScrapIndex.com (historical scrap commodity prices)"
+      ]
+    },
+    {
+      "url": "https://www.transitland.org/documentation/",
+      "code": null,
+      "services": [
+        "Transitland (Interline)"
+      ]
+    },
+    {
+      "url": "https://yeastmine.yeastgenome.org/yeastmine/",
+      "code": null,
+      "services": [
+        "Saccharomyces Genome Database (YeastMine)"
+      ]
+    }
+  ]
+}

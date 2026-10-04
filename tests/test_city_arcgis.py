@@ -357,8 +357,15 @@ FBI_FEED = {
 }
 
 
+def _coverage(lo, hi):
+    """Statistics payload for the min/max coverage query."""
+    return {"features": [{"attributes": {"lo": lo, "hi": hi}}]}
+
+
 def test_feed_series_permits_returns_ok():
-    session = FakeSession([{"count": 5270}, {"count": 5353}])
+    # Coverage first (wide enough not to clamp), then one count per month.
+    session = FakeSession([_coverage("1982-09-22", "2026-05-21"),
+                           {"count": 5270}, {"count": 5353}])
     series, status = feed_series(
         PERMITS_FEED, since="2026-03", until="2026-04", session=session
     )
@@ -369,7 +376,91 @@ def test_feed_series_permits_returns_ok():
     ]
     # Confirms it used endpoint + date_col from the feed dict.
     assert session.calls[0][0] == PERMITS_URL + "/query"
-    assert "ISSUDATE" in session.calls[0][1]["where"]
+    stats = json.loads(session.calls[0][1]["outStatistics"])
+    assert {s["statisticType"] for s in stats} == {"min", "max"}
+    assert all(s["onStatisticField"] == "ISSUDATE" for s in stats)
+    assert "ISSUDATE" in session.calls[1][1]["where"]
+
+
+# Live shape (2026-10-04) of the replacement Miami-Dade permit table: a rolling
+# "2 previous years to present" window, PermitIssuedDate is esriFieldTypeDateOnly.
+NEW_PERMITS_FEED = dict(
+    PERMITS_FEED,
+    endpoint=("https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/"
+              "miamidade_permit_data/FeatureServer/0"),
+    date_col="PermitIssuedDate", date_col_type="esriFieldTypeDateOnly",
+)
+
+
+def test_rolling_window_is_clamped_to_complete_covered_months():
+    """Without the clamp a 37-month request reports ~14 fake zero months before
+    the window opens, and scores the in-progress month as if it were whole."""
+    months_queried = []
+
+    def respond(params):
+        if "outStatistics" in params:
+            return _coverage("2024-10-03", "2026-10-02")
+        months_queried.append(params["where"])
+        return {"count": 6000}
+
+    series, status = feed_series(NEW_PERMITS_FEED, since="2023-08", until="2026-09",
+                                 session=FakeSession(respond))
+    assert status == "ok"
+    # 2024-10 starts on the 3rd -> partial -> skipped. 2026-10 never requested.
+    assert series[0]["month"] == "2024-11"
+    assert series[-1]["month"] == "2026-09"
+    assert len(series) == 23
+    assert all(r["n"] == 6000 for r in series)
+
+
+def test_unfinished_newest_month_is_not_counted():
+    def respond(params):
+        if "outStatistics" in params:
+            return _coverage("2024-10-01", "2026-09-19")   # stopped mid-September
+        return {"count": 10}
+
+    series, _ = feed_series(NEW_PERMITS_FEED, since="2026-06", until="2026-09",
+                            session=FakeSession(respond))
+    assert [r["month"] for r in series] == ["2026-06", "2026-07", "2026-08"]
+
+
+def test_epoch_millisecond_coverage_is_understood():
+    # esriFieldTypeDate statistics come back as epoch ms.
+    lo = 1727913600000   # 2024-10-03T00:00:00Z
+    hi = 1790812800000   # 2026-10-01T00:00:00Z
+    assert arcgis._to_date(lo).isoformat() == "2024-10-03"
+    assert arcgis._to_date(hi).isoformat() == "2026-10-01"
+    assert arcgis._clamp_to_coverage("2023-08", "2026-09", arcgis._to_date(lo),
+                                     arcgis._to_date(hi)) == ("2024-11", "2026-09")
+
+
+def test_no_overlap_with_coverage_returns_empty_without_counting():
+    session = FakeSession([_coverage("2026-10-01", "2026-10-02")])
+    series, status = feed_series(NEW_PERMITS_FEED, since="2025-01", until="2026-09",
+                                 session=session)
+    assert (series, status) == ([], "ok")
+    assert len(session.calls) == 1
+
+
+def test_coverage_query_failure_is_an_arcgis_error():
+    session = FakeSession([{"error": {"code": 499, "message": "Token Required",
+                                      "details": ["Token Required"]}}])
+    with pytest.raises(ArcGISError) as exc:
+        feed_series(NEW_PERMITS_FEED, since="2026-01", until="2026-02", session=session)
+    assert "499" in str(exc.value)
+
+
+def test_registry_permit_feed_is_the_public_table_not_the_token_gated_layer():
+    """The old BuildingPermit_gdb layer answers code=499 Token Required."""
+    import pathlib
+
+    reg = json.loads((pathlib.Path(__file__).resolve().parents[1] / "docs" / "city"
+                      / "city_registry.resolved.json").read_text())
+    miami = next(c for c in reg["cities"] if c["id"] == "miami")
+    permits = next(f for f in miami["feeds"] if f["pillar"] == "development_economy")
+    assert "BuildingPermit_gdb" not in permits["endpoint"]
+    assert permits["endpoint"].endswith("/miamidade_permit_data/FeatureServer/0")
+    assert permits["date_col"] == "PermitIssuedDate"
 
 
 def test_feed_series_311_returns_stale():

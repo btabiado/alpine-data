@@ -110,21 +110,26 @@ def _yahoo_symbol_variants(ticker: str) -> List[str]:
 
     Yahoo Finance uses ``BRK-B`` (hyphen) for class-share tickers; many
     upstream datasets (S&P, our universe.json) use ``BRK.B`` (dot). When
-    a ticker contains a ``.`` we yield the original first and the
-    hyphen-substituted form as a fallback. Tickers without a dot return a
-    single-element list (no fallback attempted).
+    a ticker contains a ``.`` we yield the hyphen-substituted form first
+    (Yahoo's native convention — the dot form 404s, logging a spurious
+    "possibly delisted" error and burning a rate-limited request every
+    uncached run) and the original dot form as a fallback. Tickers
+    without a dot return a single-element list (no fallback attempted).
+    Only the outbound Yahoo symbol changes — the canonical dot ticker is
+    still used for cache keys, history files, and snapshot rows.
     """
     if "." not in ticker:
         return [ticker]
-    return [ticker, ticker.replace(".", "-")]
+    return [ticker.replace(".", "-"), ticker]
 
 
 def _fetch_prices_from_yahoo(ticker: str, period: str) -> List[Dict[str, Any]]:
     """Hit yfinance (subject to the rate limiter) and normalize the result.
 
-    For tickers containing a ``.`` (e.g. ``BRK.B``) we also try the
-    hyphen variant (``BRK-B``) if the primary returns no rows — Yahoo's
-    symbol convention uses hyphens for class shares.
+    For tickers containing a ``.`` (e.g. ``BRK.B``) we try the hyphen
+    variant (``BRK-B``) first — Yahoo's symbol convention uses hyphens
+    for class shares — and fall back to the dot form if it returns no
+    rows.
     """
     for variant in _yahoo_symbol_variants(ticker):
         _bucket.acquire()

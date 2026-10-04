@@ -9,9 +9,14 @@ Conventions follow tests/conftest.py (repo-root on sys.path) and tests/test_fred
 """
 from __future__ import annotations
 
+import calendar
+import json
+from datetime import date
+from pathlib import Path
+
 import pytest
 
-from city import socrata
+from city import pulse, socrata
 
 
 # --------------------------------------------------------------------------- #
@@ -52,6 +57,12 @@ class FakeSession:
         return self._responses
 
 
+@pytest.fixture(autouse=True)
+def _no_retry_sleep(monkeypatch):
+    """The transient-failure retry path must not make the suite wait."""
+    monkeypatch.setattr(socrata, "_sleep", lambda seconds: None)
+
+
 def _agg_rows(pairs):
     """Build Socrata date_trunc_ym aggregation rows from (month, n) pairs.
 
@@ -82,7 +93,8 @@ def test_monthly_counts_builds_date_trunc_query_and_parses_ascending():
     assert call["url"] == "https://data.cityofchicago.org/resource/ijzp-q8t2.json"
     params = call["params"]
     # date_trunc_ym month bucket aliased m, count(*) AS n.
-    assert params["$select"] == "date_trunc_ym(date) AS m, count(*) AS n"
+    # ...plus the newest record per bucket, used to spot an unfinished month.
+    assert params["$select"] == "date_trunc_ym(date) AS m, count(*) AS n, max(date) AS last"
     assert params["$group"] == "m"
     assert params["$order"] == "m"
     # IS NOT NULL always present; since normalized to Jan-1 of the bare year.
@@ -119,6 +131,119 @@ def test_monthly_counts_extra_where_appended():
     assert "requested_datetime IS NOT NULL" in where
     assert "status = 'Closed'" in where
     assert " AND " in where
+
+
+# --------------------------------------------------------------------------- #
+# 1b. an unfinished newest month is not handed to the scorer
+# --------------------------------------------------------------------------- #
+def _rows_with_last(triples):
+    return [{"m": f"{m}-01T00:00:00.000", "n": str(n), "last": last}
+            for m, n, last in triples]
+
+
+def test_newest_month_cut_short_upstream_is_dropped():
+    """Live LAPD NIBRS shape on 2026-10-04: September stops on the 19th.
+
+    10,097 offenses against a ~18,300 baseline would score as a 45% crime drop.
+    """
+    rows = _rows_with_last([
+        ("2026-07", 19324, "2026-07-31T23:55:00.000"),
+        ("2026-08", 18313, "2026-08-31T23:50:00.000"),
+        ("2026-09", 10097, "2026-09-19T00:00:00.000"),
+    ])
+    out = socrata.monthly_counts("data.lacity.org", "k7nn-b2ep", "date_occ",
+                                 session=FakeSession(FakeResp(rows)))
+    assert out == [{"month": "2026-07", "n": 19324}, {"month": "2026-08", "n": 18313}]
+
+
+def test_newest_month_running_to_month_end_is_kept():
+    # Last record two days before month-end is inside the slack (weekend, holiday).
+    rows = _rows_with_last([
+        ("2026-08", 900, "2026-08-31T00:00:00.000"),
+        ("2026-09", 950, "2026-09-28T00:00:00.000"),
+    ])
+    out = socrata.monthly_counts("data.cityofchicago.org", "ydr8-5enu", "issue_date",
+                                 session=FakeSession(FakeResp(rows)))
+    assert [r["month"] for r in out] == ["2026-08", "2026-09"]
+
+
+def test_only_the_newest_month_is_ever_judged():
+    """An earlier month with a short `last` is complete by definition: the
+    portal already published later data. Only the tail can be unfinished."""
+    rows = _rows_with_last([
+        ("2026-08", 900, "2026-08-12T00:00:00.000"),   # sparse, but followed
+        ("2026-09", 950, "2026-09-30T00:00:00.000"),
+        ("2026-10", 40, "2026-10-03T00:00:00.000"),    # current month: dropped
+    ])
+    out = socrata.monthly_counts("data.sf.gov", "vw6y-z8j6", "requested_datetime",
+                                 session=FakeSession(FakeResp(rows)))
+    assert [r["month"] for r in out] == ["2026-08", "2026-09"]
+
+
+def test_text_date_last_value_is_understood():
+    """NYC DOB issuance_date is TEXT MM/DD/YYYY; max() on it is per-bucket text."""
+    rows = [{"m": "2026-09", "n": "560", "last": "09/30/2026"},
+            {"m": "2026-10", "n": "13", "last": "10/01/2026"},
+            {"m": "2-03-19", "n": "240", "last": "1999-12-03"}]   # junk bucket
+    out = socrata.monthly_counts("data.cityofnewyork.us", "ipu4-2q9a", "issuance_date",
+                                 date_is_text=True, session=FakeSession(FakeResp(rows)))
+    assert out == [{"month": "2026-09", "n": 560}]
+
+
+def test_rows_without_last_are_never_trimmed():
+    rows = _agg_rows([("2026-08", 1), ("2026-09", 2)])
+    out = socrata.monthly_counts("data.sf.gov", "vw6y-z8j6", "requested_datetime",
+                                 session=FakeSession(FakeResp(rows)))
+    assert [r["month"] for r in out] == ["2026-08", "2026-09"]
+
+
+# --------------------------------------------------------------------------- #
+# 1c. transient failures are retried; permanent ones are not
+# --------------------------------------------------------------------------- #
+def test_throttle_then_success_is_retried():
+    rows = _agg_rows([("2026-08", 5)])
+    sess = FakeSession([FakeResp({}, status_code=429, text="slow down"), FakeResp(rows)])
+    out = socrata.monthly_counts("data.sf.gov", "vw6y-z8j6", "requested_datetime",
+                                 session=sess)
+    assert out == [{"month": "2026-08", "n": 5}]
+    assert len(sess.calls) == 2
+
+
+def test_timeout_then_success_is_retried():
+    import requests
+
+    rows = _agg_rows([("2026-08", 5)])
+
+    class FlakySession(FakeSession):
+        def get(self, url, params=None, headers=None, timeout=None):
+            if not self.calls:
+                self.calls.append({"url": url})
+                raise requests.ReadTimeout("Read timed out. (read timeout=120)")
+            return super().get(url, params=params, headers=headers, timeout=timeout)
+
+    sess = FlakySession(FakeResp(rows))
+    out = socrata.monthly_counts("data.lacity.org", "73a2-6ar5", "createddate",
+                                 session=sess)
+    assert out == [{"month": "2026-08", "n": 5}]
+
+
+def test_persistent_gateway_error_gives_up_after_three_attempts():
+    sess = FakeSession(FakeResp({}, status_code=503, text="unavailable"))
+    with pytest.raises(socrata.SocrataError) as exc:
+        socrata.monthly_counts("data.sf.gov", "vw6y-z8j6", "requested_datetime",
+                               session=sess)
+    assert "503" in str(exc.value)
+    assert len(sess.calls) == 3
+
+
+def test_retired_dataset_403_is_not_retried():
+    """LA's y8y3-fqfu answers 403 'You must be logged in' — permanent."""
+    sess = FakeSession(FakeResp({}, status_code=403,
+                                text='{"message":"You must be logged in"}'))
+    with pytest.raises(socrata.SocrataError) as exc:
+        socrata.monthly_counts("data.lacity.org", "y8y3-fqfu", "date_occ", session=sess)
+    assert "403" in str(exc.value)
+    assert len(sess.calls) == 1
 
 
 # --------------------------------------------------------------------------- #
@@ -355,3 +480,236 @@ def test_la_current_311_passes_app_token_header():
     sess = FakeSession(FakeResp(payload))
     socrata.la_current_311_dataset(app_token="tok-1", session=sess)
     assert sess.calls[0]["headers"].get("X-App-Token") == "tok-1"
+
+
+# --------------------------------------------------------------------------- #
+# 7. LA 311 across the year boundary: one dataset per calendar year
+# --------------------------------------------------------------------------- #
+# The bug this guards: feed_series used to union only the NEWEST 'MyLA311 Cases
+# {year}' with the Mar..Dec 2025 bridge file. Once 'MyLA311 Cases 2027' exists
+# that is 2027 + 2025 with all of 2026 missing, so LA City Services can't form
+# a 12-month baseline. Real catalog shape (2026-10-04): both items are
+# type 'filter' views, ids 2cy6-i7zn (2026) and 73a2-6ar5 (Mar..Dec 2025).
+_REGISTRY = Path(__file__).resolve().parent.parent / "docs" / "city" / "city_registry.resolved.json"
+_BRIDGE_ITEM = {"resource": {"id": "73a2-6ar5", "type": "filter",
+                             "name": "MyLA311 Cases March 2025 to December 2025"}}
+_CASES_2026 = {"resource": {"id": "2cy6-i7zn", "type": "filter", "name": "MyLA311 Cases 2026"}}
+
+
+def _la_311_feed():
+    """The real LA 311 feed block from the resolved registry."""
+    reg = json.loads(_REGISTRY.read_text())
+    la = next(c for c in reg["cities"] if c["id"] == "la")
+    return next(f for f in la["feeds"] if f.get("dataset_rotates_yearly"))
+
+
+def _months(first, last):
+    y, m = int(first[:4]), int(first[5:7])
+    out = []
+    while f"{y:04d}-{m:02d}" <= last:
+        out.append(f"{y:04d}-{m:02d}")
+        y, m = (y + 1, 1) if m == 12 else (y, m + 1)
+    return out
+
+
+def _rows(first, last, n, *, partial_last_day=None):
+    """Aggregation rows (with max(date) AS last) for complete months first..last.
+
+    ``partial_last_day`` makes the final month stop on that day (still publishing).
+    """
+    rows = []
+    months = _months(first, last)
+    for i, mo in enumerate(months):
+        day = calendar.monthrange(int(mo[:4]), int(mo[5:7]))[1]
+        if partial_last_day and i == len(months) - 1:
+            day = partial_last_day
+        rows.append({"m": f"{mo}-01T00:00:00.000", "n": str(n),
+                     "last": f"{mo}-{day:02d}T23:59:00.000"})
+    return rows
+
+
+class CatalogSession:
+    """Answers the LA catalog and /resource/<id>.json by URL; unknown ids 404."""
+
+    def __init__(self, catalog, datasets):
+        self.catalog = catalog
+        self.datasets = datasets
+        self.calls = []
+
+    def get(self, url, params=None, headers=None, timeout=None):
+        self.calls.append({"url": url, "params": params or {}})
+        if url == socrata._LA_CATALOG_URL:
+            return self.catalog
+        ds = url.rsplit("/", 1)[-1][: -len(".json")]
+        if ds in self.datasets:
+            canned = self.datasets[ds]
+            return canned if isinstance(canned, FakeResp) else FakeResp(canned)
+        return FakeResp({"error": True}, status_code=404, text="not found")
+
+    def queried(self):
+        return [c["url"].rsplit("/", 1)[-1][: -len(".json")]
+                for c in self.calls if "/resource/" in c["url"]]
+
+    def where_for(self, ds):
+        return next(c["params"]["$where"] for c in self.calls
+                    if c["url"].endswith(f"/resource/{ds}.json"))
+
+
+def _catalog(*items):
+    return FakeResp({"results": list(items), "resultSetSize": len(items)})
+
+
+def _by_month(series):
+    return {row["month"]: row["n"] for row in series}
+
+
+def _score(series, as_of):
+    return pulse.score_feed(series, polarity=-1, as_of=as_of, label="MyLA311 Cases",
+                            dataset="2cy6-i7zn")
+
+
+def test_la_311_registry_names_the_year_of_each_fallback_id():
+    feed = _la_311_feed()
+    assert (feed["dataset"], feed["dataset_year"]) == ("2cy6-i7zn", 2026)
+    assert (feed["baseline_dataset"], feed["baseline_dataset_year"]) == ("73a2-6ar5", 2025)
+
+
+def test_la_311_october_2026_is_unchanged():
+    """today=2026-10-04 (as_of 2026-09, since 2023-08-01): 2026 + the 2025 bridge."""
+    sess = CatalogSession(_catalog(_CASES_2026, _BRIDGE_ITEM), {
+        "2cy6-i7zn": _rows("2026-01", "2026-10", 200, partial_last_day=4),
+        "73a2-6ar5": _rows("2025-03", "2025-12", 190),
+    })
+    out = socrata.feed_series(_la_311_feed(), "data.lacity.org", since="2023-08-01",
+                              session=sess, today=date(2026, 10, 4))
+
+    assert sess.calls[0]["url"] == socrata._LA_CATALOG_URL
+    assert sess.queried() == ["2cy6-i7zn", "73a2-6ar5"]   # nothing for 2023/2024
+    assert [r["month"] for r in out] == _months("2025-03", "2026-09")  # Oct partial trimmed
+    assert _by_month(out)["2025-12"] == 190 and _by_month(out)["2026-09"] == 200
+    scored = _score(out, "2026-09")
+    assert scored["status"] == "ok" and scored["recent_period"] == "2026-09"
+
+
+def test_la_311_january_2027_before_the_2027_dataset_is_published(capsys):
+    """today=2027-01-05, catalog has no 'MyLA311 Cases 2027' yet: use 2026 + 2025."""
+    sess = CatalogSession(_catalog(_CASES_2026, _BRIDGE_ITEM), {
+        "2cy6-i7zn": _rows("2026-01", "2026-12", 200),
+        "73a2-6ar5": _rows("2025-03", "2025-12", 190),
+    })
+    out = socrata.feed_series(_la_311_feed(), "data.lacity.org", since="2023-11-01",
+                              session=sess, today=date(2027, 1, 5))
+
+    assert sess.queried() == ["2cy6-i7zn", "73a2-6ar5"]
+    assert [r["month"] for r in out] == _months("2025-03", "2026-12")
+    scored = _score(out, "2026-12")
+    assert scored["status"] == "ok" and scored["recent_period"] == "2026-12"
+    assert "'MyLA311 Cases 2027' is not in the LA catalog yet" in capsys.readouterr().err
+
+
+def test_la_311_january_2027_with_2027_published_keeps_2026():
+    """today=2027-01-05 with 'MyLA311 Cases 2027' live: 2027 + 2026 + 2025, never 2027 + 2025."""
+    sess = CatalogSession(
+        _catalog({"resource": {"id": "abcd-2027", "name": "MyLA311 Cases 2027"}},
+                 _CASES_2026, _BRIDGE_ITEM),
+        {
+            "abcd-2027": _rows("2027-01", "2027-01", 30, partial_last_day=4),
+            # The fake ignores $where, so these stray rows reach the parser: the
+            # 2026 file must not contribute to 2025-12 or 2027-01.
+            "2cy6-i7zn": (_rows("2025-12", "2025-12", 7) + _rows("2026-01", "2026-12", 200)
+                          + _rows("2027-01", "2027-01", 9, partial_last_day=2)),
+            "73a2-6ar5": _rows("2025-03", "2025-12", 190),
+        },
+    )
+    out = socrata.feed_series(_la_311_feed(), "data.lacity.org", since="2023-11-01",
+                              session=sess, today=date(2027, 1, 5))
+
+    assert sess.queried() == ["abcd-2027", "2cy6-i7zn", "73a2-6ar5"]
+    got = _by_month(out)
+    assert all(got[m] == 200 for m in _months("2026-01", "2026-12"))   # 2026 is present
+    assert got["2025-12"] == 190                 # from the bridge file only
+    assert "2027-01" not in got                  # in progress -> trimmed, not scored
+    # Each yearly dataset is asked for its own calendar year only.
+    where_2026 = sess.where_for("2cy6-i7zn")
+    assert "createddate >= '2026-01-01'" in where_2026
+    assert "createddate < '2027-01-01'" in where_2026
+    scored = _score(out, "2026-12")
+    assert scored["status"] == "ok" and scored["recent_period"] == "2026-12"
+
+
+def test_la_311_old_bug_shape_would_have_lost_the_baseline():
+    """The pre-fix union (2027 + Mar..Dec 2025) cannot score December 2026."""
+    old_union = socrata._merge_series([
+        socrata._parse_rows(_rows("2027-01", "2027-01", 30)),
+        socrata._parse_rows(_rows("2025-03", "2025-12", 190)),
+    ])
+    assert _score(old_union, "2026-12")["status"] == "insufficient_history"
+
+
+def test_la_311_march_2029_resolves_every_prior_year_by_title():
+    """Each year in the window comes from its own catalog title; 2025 is out of range."""
+    years = {2026: "2cy6-i7zn", 2027: "aaaa-2027", 2028: "bbbb-2028", 2029: "cccc-2029"}
+    items = [{"resource": {"id": ds, "name": f"MyLA311 Cases {y}"}} for y, ds in years.items()]
+    sess = CatalogSession(_catalog(*items, _BRIDGE_ITEM), {
+        "2cy6-i7zn": _rows("2026-01", "2026-12", 200),
+        "aaaa-2027": _rows("2027-01", "2027-12", 210),
+        "bbbb-2028": _rows("2028-01", "2028-12", 220),
+        "cccc-2029": _rows("2029-01", "2029-03", 230, partial_last_day=2),
+    })
+    # as_of 2029-02 -> since 2026-01-01
+    out = socrata.feed_series(_la_311_feed(), "data.lacity.org", since="2026-01-01",
+                              session=sess, today=date(2029, 3, 2))
+
+    assert sess.queried() == ["cccc-2029", "bbbb-2028", "aaaa-2027", "2cy6-i7zn"]
+    assert [r["month"] for r in out] == _months("2026-01", "2029-02")
+    assert _score(out, "2029-02")["status"] == "ok"
+
+
+@pytest.mark.parametrize("today, as_of, since", [
+    (date(2026, 10, 4), "2026-09", "2023-08-01"),
+    (date(2027, 1, 5), "2026-12", "2023-11-01"),
+])
+def test_la_311_catalog_failure_falls_back_to_registry_ids(capsys, today, as_of, since):
+    sess = CatalogSession(FakeResp({"err": "x"}, status_code=503, text="down"), {
+        "2cy6-i7zn": _rows("2026-01", as_of, 200),
+        "73a2-6ar5": _rows("2025-03", "2025-12", 190),
+    })
+    out = socrata.feed_series(_la_311_feed(), "data.lacity.org", since=since,
+                              session=sess, today=today)
+
+    catalog_calls = [c for c in sess.calls if c["url"] == socrata._LA_CATALOG_URL]
+    assert len(catalog_calls) == 3                    # the usual retries, then fallback
+    assert sess.queried() == ["2cy6-i7zn", "73a2-6ar5"]
+    assert _score(out, as_of)["status"] == "ok"
+    assert "falling back to the registry dataset ids" in capsys.readouterr().err
+
+
+def test_la_311_catalog_beats_registry_id_but_never_replaces_the_bridge_file():
+    """A catalog 2026 id wins over the registry's; a 'Cases 2025' item is ignored
+    because 2025 belongs to the bridge file (no double counting)."""
+    sess = CatalogSession(
+        _catalog({"resource": {"id": "cases-2025", "name": "MyLA311 Cases 2025"}},
+                 {"resource": {"id": "new2-2026", "name": "MyLA311 Cases 2026"}},
+                 _BRIDGE_ITEM),
+        {
+            "new2-2026": _rows("2026-01", "2026-09", 200),
+            "73a2-6ar5": _rows("2025-03", "2025-12", 190),
+        },
+    )
+    socrata.feed_series(_la_311_feed(), "data.lacity.org", since="2023-08-01",
+                        session=sess, today=date(2026, 10, 4))
+    assert sess.queried() == ["new2-2026", "73a2-6ar5"]
+
+
+def test_la_311_dataset_error_still_raises_after_retries():
+    """A failing yearly dataset keeps the existing behavior: 3 attempts, then
+    SocrataError (which fetch_city turns into fetch_error + the 'City data not
+    refreshed' warning)."""
+    sess = CatalogSession(_catalog(_CASES_2026, _BRIDGE_ITEM), {
+        "2cy6-i7zn": _rows("2026-01", "2026-09", 200),
+        "73a2-6ar5": FakeResp({"err": "x"}, status_code=503, text="down"),
+    })
+    with pytest.raises(socrata.SocrataError, match="HTTP 503"):
+        socrata.feed_series(_la_311_feed(), "data.lacity.org", since="2023-08-01",
+                            session=sess, today=date(2026, 10, 4))
+    assert sess.queried().count("73a2-6ar5") == 3

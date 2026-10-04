@@ -41,6 +41,7 @@ import os
 import random
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -69,11 +70,22 @@ KEEP_INDICES = ("DJIA", "NASDAQ-100", "S&P 500", "S&P 100")
 # IP is being rate-limited by Yahoo (lets verification run at lower concurrency
 # without changing the shipped default).
 try:
-    _MAX_WORKERS = max(1, int(os.environ.get("SMF_WORKERS", "8")))
+    _MAX_WORKERS = max(1, int(os.environ.get("SMF_WORKERS", "6")))
 except ValueError:
-    _MAX_WORKERS = 8
+    _MAX_WORKERS = 6
+# Universe cap (env-overridable). Yahoo's chart API allows ~200 req/hr per IP
+# with generous burst; the full 219-name universe + ANY retry amplification
+# blows past that and gets the IP hard-throttled (observed: 219x5-retries ->
+# 0 scored). Cap under 200 so a single run's call count stays within budget.
+try:
+    _MAX_UNIVERSE = max(1, int(os.environ.get("SMF_MAX", "180")))
+except ValueError:
+    _MAX_UNIVERSE = 180
 _FETCH_TIMEOUT = 25
-_MAX_RETRIES = 5  # retry transient throttling (HTTP 429) with backoff
+# CRITICAL: do NOT retry on HTTP 429. Retrying a rate-limit just multiplies the
+# call count and deepens the ban (that's what zeroed the first run). Retry only
+# genuine transient infra errors (5xx / timeout), and only twice.
+_MAX_RETRIES = 2
 _JITTER_MIN = 0.10  # per-request startup jitter (seconds) to de-burst the pool
 _JITTER_MAX = 0.60
 _USER_AGENT = (
@@ -153,8 +165,11 @@ def _fetch_ohlcv(ticker: str) -> List[Dict[str, Any]]:
     when many workers fire at once.
     """
     time.sleep(random.uniform(_JITTER_MIN, _JITTER_MAX))
+    # URL-encode the path segment — tickers from the universe carry dots
+    # (BRK.B) and the encode also defends against any odd symbol.
+    safe_ticker = urllib.parse.quote(ticker, safe="")
     url = (
-        f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{safe_ticker}"
         "?range=6mo&interval=1d"
     )
     req = urllib.request.Request(url, headers={"User-Agent": _USER_AGENT})
@@ -166,9 +181,12 @@ def _fetch_ohlcv(ticker: str) -> List[Dict[str, Any]]:
                 payload = json.load(resp)
             break
         except urllib.error.HTTPError as exc:
-            # 429 (rate limit) / 5xx are transient: back off and retry. Other
-            # HTTP errors (404 delisted, etc.) are permanent -> give up.
-            if exc.code in (429, 500, 502, 503, 504) and attempt < _MAX_RETRIES - 1:
+            # 429 (rate limit): give up IMMEDIATELY — retrying a rate-limit only
+            # amplifies the call count and deepens the IP ban. Skip the ticker;
+            # the next hourly run (fresh budget) picks it up. Only genuine
+            # transient infra errors (5xx) get a single backoff+retry. 404
+            # (delisted) and everything else are permanent -> give up.
+            if exc.code in (500, 502, 503, 504) and attempt < _MAX_RETRIES - 1:
                 time.sleep((2.0 ** attempt) + random.uniform(0.5, 1.5))
                 continue
             return []
@@ -204,26 +222,29 @@ def _fetch_ohlcv(ticker: str) -> List[Dict[str, Any]]:
 # Per-stock scoring
 # ---------------------------------------------------------------------------
 
-def _score_stock(rec: Dict[str, Any], bars: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-    """Score one stock from its OHLCV bars, or ``None`` when unscoreable.
+def _score_from_mfi_cmf(rec: Dict[str, Any], m: Optional[float], cm: Optional[float],
+                        as_of: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """Build a scored stock dict from a precomputed MFI / CMF pair.
 
-    ``None`` is returned when neither MFI nor CMF can be computed (insufficient
-    bars / bad data) — the caller counts that as a failure rather than emitting a
-    misleading neutral.
+    Shared by both data paths: the standalone fetch (``_score_stock``) and the
+    pages-build piggyback (``build_from_signals``), which reuses the MFI/CMF
+    already computed during the reliable ``stocks_signals`` fetch. Returns
+    ``None`` when neither indicator is available (not scoreable).
+
+    ``as_of`` is the date of the last daily bar MFI/CMF were computed from.
+    It is carried per row so the payload-level stamp can be the OLDEST
+    contributing bar rather than a wall-clock reading — Yahoo's per-ticker
+    fetches fail independently, so rows in one payload can legitimately be
+    days apart.
     """
-    m = mfi(bars, 14)
-    cm = cmf(bars, 20)
-
     if m is not None and cm is not None:
         raw = 0.6 * ((m - 50.0) * 2.0) + 0.4 * (cm * 200.0)
     elif m is not None:
         raw = (m - 50.0) * 2.0
     else:
-        # Neither indicator available -> not scoreable.
         return None
 
     score = float(_clip(round(raw, 1), -100.0, 100.0))
-
     return {
         "symbol": rec.get("ticker"),
         "name": rec.get("name"),
@@ -233,7 +254,30 @@ def _score_stock(rec: Dict[str, Any], bars: List[Dict[str, Any]]) -> Optional[Di
         "cmf": round(cm, 4) if cm is not None else None,
         "indices": _scope_indices(rec),
         "sector": rec.get("sector"),
+        "as_of": as_of if isinstance(as_of, str) and as_of else None,
     }
+
+
+def _last_bar_date(bars: List[Dict[str, Any]]) -> Optional[str]:
+    """``YYYY-MM-DD`` of the newest bar, or None. Yahoo bars are already
+    oldest-first, but take the max defensively rather than trusting order."""
+    dates = [b.get("date") for b in (bars or [])
+             if isinstance(b, dict) and isinstance(b.get("date"), str)]
+    return max(dates)[:10] if dates else None
+
+
+def _oldest_as_of(rows: List[Dict[str, Any]]) -> Optional[str]:
+    """MIN of the per-row observation dates — a composite is only as fresh
+    as its oldest input. None when no row carries a date."""
+    dates = [r.get("as_of") for r in (rows or [])
+             if isinstance(r, dict) and isinstance(r.get("as_of"), str) and r.get("as_of")]
+    return min(dates) if dates else None
+
+
+def _score_stock(rec: Dict[str, Any], bars: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Score one stock from its OHLCV bars, or ``None`` when unscoreable."""
+    return _score_from_mfi_cmf(rec, mfi(bars, 14), cmf(bars, 20),
+                               as_of=_last_bar_date(bars))
 
 
 # ---------------------------------------------------------------------------
@@ -261,8 +305,13 @@ def build_stock_money_flow(limit: Optional[int] = None, write: bool = True) -> D
     universe_count = len(universe)
 
     in_scope = [rec for rec in universe if _in_scope(rec) and rec.get("ticker")]
-    if limit is not None:
-        in_scope = in_scope[:limit]
+    # Prioritise the biggest, most-relevant names: a ticker in more of the index
+    # lists (DJIA ∩ NASDAQ-100 ∩ S&P 100 ∩ S&P 500) is a mega-cap. Keeps Dow +
+    # Nasdaq-100 + the largest S&P names; drops S&P-500-only mid-caps when the
+    # cap bites. Stable secondary sort on ticker.
+    in_scope.sort(key=lambda r: (-len(r.get("index_membership") or []), r.get("ticker", "")))
+    cap = limit if limit is not None else _MAX_UNIVERSE
+    in_scope = in_scope[:cap]
 
     # Fetch all in-scope tickers concurrently (polite: 8 workers + jitter + UA).
     bars_by_ticker: Dict[str, List[Dict[str, Any]]] = {}
@@ -296,21 +345,89 @@ def build_stock_money_flow(limit: Optional[int] = None, write: bool = True) -> D
     stocks.sort(key=lambda s: s["score"], reverse=True)
 
     payload: Dict[str, Any] = {
-        "as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        # Oldest contributing daily bar, NOT the clock. This used to be
+        # datetime.now(): on a weekend, a market holiday, or a run where
+        # Yahoo throttled half the fan-out, that printed today's date over
+        # data that was days old.
+        "as_of": _oldest_as_of(stocks),
         "universe_count": universe_count,
         "scored_count": len(stocks),
         "stocks": stocks,
     }
 
-    if write:
-        try:
-            with open(OUTPUT_PATH, "w", encoding="utf-8") as fh:
-                json.dump(payload, fh, indent=2)
-                fh.write("\n")
-        except OSError:
-            pass
+    return _write_sidecar(payload) if write else payload
 
+
+def _write_sidecar(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Write the sidecar with LAST-GOOD PRESERVATION.
+
+    Yahoo throttles GitHub Actions IPs unpredictably (a run can score 0 from a
+    banned runner IP, or because the pages build already spent the per-IP burst
+    budget on the trading fetch). NEVER overwrite an existing populated sidecar
+    with an empty result — keep the last-good so one successful run sticks and
+    keeps deploying until a future run refreshes it. Returns whatever payload is
+    effectively in force (the new one, or the preserved previous one).
+    """
+    if not payload.get("stocks"):
+        try:
+            with open(OUTPUT_PATH, "r", encoding="utf-8") as fh:
+                prev = json.load(fh)
+            if int(prev.get("scored_count", 0)) > 0:
+                print(f"Stock Flows: scored 0 — preserving last-good ({prev.get('scored_count')} from {prev.get('as_of')}).")
+                return prev
+        except (OSError, ValueError):
+            pass  # no readable previous file -> fall through and write the empty shell
+    try:
+        with open(OUTPUT_PATH, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, indent=2)
+            fh.write("\n")
+    except OSError:
+        pass
     return payload
+
+
+def build_from_signals(signals: Any, write: bool = True) -> Dict[str, Any]:
+    """Build the sidecar from the pages build's already-fetched stocks_signals.
+
+    The reliable path: ``stocks_signals`` (top ~50 most-active) is fetched every
+    pages build via the working Yahoo session and each row carries a precomputed
+    ``mfi`` / ``cmf`` (attached in fetch_market). Here we score those names —
+    zero extra Yahoo calls — keeping only the ones that are members of the Dow /
+    Nasdaq-100 / S&P 500 (cross-referenced against data/lthcs/universe.json).
+    Trades universe breadth (most-active index members, not all 219 constituents)
+    for 100% reliability vs Yahoo's GitHub-Actions IP throttling.
+    """
+    rows = list(signals or [])
+    by_ticker = {
+        rec.get("ticker"): rec
+        for rec in _load_universe()
+        if rec.get("ticker") and _in_scope(rec)
+    }
+    stocks: List[Dict[str, Any]] = []
+    for s in rows:
+        if not isinstance(s, dict):
+            continue
+        rec = by_ticker.get(s.get("symbol"))
+        if rec is None:
+            continue  # not an in-scope index constituent
+        # fetch_market's stocks_signals rows carry `as_of` = the date of
+        # the last Yahoo daily bar their MFI/CMF were computed from. Same
+        # bars, same date — just forwarded.
+        scored = _score_from_mfi_cmf(rec, s.get("mfi"), s.get("cmf"),
+                                     as_of=s.get("as_of"))
+        if scored is not None:
+            stocks.append(scored)
+    stocks.sort(key=lambda x: x["score"], reverse=True)
+    payload: Dict[str, Any] = {
+        # Oldest contributing bar across the scored rows — see
+        # build_stock_money_flow for why this is not a clock reading.
+        "as_of": _oldest_as_of(stocks),
+        "universe_count": len(by_ticker),
+        "scored_count": len(stocks),
+        "source": "stocks_signals (most-active index members)",
+        "stocks": stocks,
+    }
+    return _write_sidecar(payload) if write else payload
 
 
 def main() -> None:

@@ -50,6 +50,29 @@
     .breadcrumb a { color: var(--accent); text-decoration: none; }
     .breadcrumb a:hover { text-decoration: underline; }
     .generated { color: var(--text-faint); font-size: 12px; font-family: var(--mono); }
+    /* Data-freshness stamp. Same three thresholds and the same class names as
+       lthcs_tab/lthcs.css and v2/app.py's .v2-fresh family; this page is
+       deployed standalone under /real-estate/ so the rules are restated
+       against its own tokens rather than imported. */
+    .re-fresh { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; max-width: 100%; }
+    .re-fresh--ok   { color: var(--text-faint); }
+    .re-fresh--warn { color: #E9C04A; }
+    .re-fresh--bad  { color: #E27A5C; }
+    .re-fresh--none { color: var(--text-faint); font-style: italic; }
+    .re-freshnote {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px;
+      margin-top: 4px; font-size: 10px; line-height: 1.3;
+      font-family: var(--mono); max-width: 100%; min-width: 0;
+    }
+    .re-freshnote[hidden] { display: none; }
+    .re-freshnote__lead {
+      color: var(--text-dim); text-transform: uppercase;
+      letter-spacing: 0.4px; font-size: 9px;
+    }
+    .re-freshnote__pill {
+      border: 1px solid var(--border); border-radius: 6px; padding: 1px 5px;
+      white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+    }
     .sources { color: var(--text-dim); font-size: 12px; margin-top: 4px; }
     .sources a { color: var(--accent); text-decoration: none; }
     .sources a:hover { text-decoration: underline; }
@@ -238,6 +261,7 @@
         </div>
       </div>
       <div class="generated" id="generated">loading…</div>
+      <div class="re-freshnote" id="fresh-note" hidden></div>
     </header>
 
     <div id="error-mount"></div>
@@ -786,12 +810,121 @@
       renderChart();
     }
 
-    function formatGenerated(iso) {
-      if (!iso) return '—';
-      const d = new Date(iso);
-      if (isNaN(d)) return iso;
-      const pad = n => String(n).padStart(2, '0');
-      return `updated ${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
+    /* ====================================================================
+       Data-freshness stamp.
+
+       This header used to render `data.generated_at` as
+       "updated 2026-08-02 08:29 UTC". That field is the moment the daily
+       workflow FETCHED the CSVs — a fetch time, which a stamp must never
+       report as if it were the data's age. It read "updated today" every
+       single day, including days when nothing upstream had changed for
+       two months.
+
+       The vendors publish their real vintages in `sources.<v>.last_modified`
+       (an HTTP Last-Modified on the source CSV). Zillow and Redfin KPIs are
+       mixed together in one table and one chart, so the page is a composite
+       and Rule 2 applies: the headline takes the OLDER of the two, and both
+       are disclosed underneath so a stale half cannot hide behind a fresh
+       one. FRED carries no per-series date here, so it is disclosed as
+       undated rather than assumed current.
+
+       The helper below is a verbatim port of lthcs_tab/lthcs-freshness.js
+       (itself a port of v2/app.py). This page deploys standalone under
+       /real-estate/ with no shared-module root, so it is inlined; the
+       thresholds, wording and "as of —" behaviour are identical and
+       tests/test_lthcs_freshness.py holds all three copies to one dialect.
+       ==================================================================== */
+    function reDayUTC(isoDate) {
+      if (isoDate == null) return null;
+      const str = String(isoDate).trim();
+      if (!str) return null;
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(str);
+      if (m) {
+        const y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+        if (!(mo >= 1 && mo <= 12) || !(d >= 1 && d <= 31)) return null;
+        const t = Date.UTC(y, mo - 1, d);
+        if (!isFinite(t)) return null;
+        const chk = new Date(t);
+        if (chk.getUTCFullYear() !== y || chk.getUTCMonth() !== mo - 1 || chk.getUTCDate() !== d) return null;
+        return t;
+      }
+      const parsed = Date.parse(str);
+      if (!isFinite(parsed)) return null;
+      const dt = new Date(parsed);
+      return Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate());
+    }
+    function reYmd(dayMs) {
+      const d = new Date(dayMs);
+      const p2 = n => (n < 10 ? '0' : '') + n;
+      return d.getUTCFullYear() + '-' + p2(d.getUTCMonth() + 1) + '-' + p2(d.getUTCDate());
+    }
+    function reFreshness(isoDate, opts) {
+      const o = opts || {};
+      const warnDays = (typeof o.warnDays === 'number' && isFinite(o.warnDays)) ? o.warnDays : 7;
+      const badDays = (typeof o.badDays === 'number' && isFinite(o.badDays)) ? o.badDays : 21;
+      const label = (o.label == null) ? 'as of' : String(o.label);
+      const dayMs = reDayUTC(isoDate);
+      if (dayMs == null) return { text: label + ' —', tone: 'none', ageDays: null };
+      const now = new Date();
+      const todayMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+      let ageDays = Math.round((todayMs - dayMs) / 86400000);
+      if (!isFinite(ageDays)) return { text: label + ' —', tone: 'none', ageDays: null };
+      if (ageDays < 0) ageDays = 0;
+      const tone = ageDays <= warnDays ? 'ok' : ageDays <= badDays ? 'warn' : 'bad';
+      return {
+        text: label + ' ' + reYmd(dayMs) + ' (' + ageDays + 'd ago)',
+        tone: tone,
+        ageDays: ageDays,
+      };
+    }
+    function reDay(v) { const ms = reDayUTC(v); return ms == null ? null : reYmd(ms); }
+
+    // Paint the composite stamp from the per-source vintages.
+    function renderFreshness(data) {
+      const el = document.getElementById('generated');
+      const noteEl = document.getElementById('fresh-note');
+      const s = (data && data.sources) || {};
+      const comps = [
+        { label: 'Zillow', date: reDay(s.zillow && s.zillow.last_modified) },
+        { label: 'Redfin', date: reDay(s.redfin && s.redfin.last_modified) },
+        { label: 'FRED', date: reDay(s.fred && s.fred.last_modified) },
+      ];
+      const dated = comps.filter(c => c.date).map(c => c.date);
+      // fMin, never fMax: the table is only as current as its stalest vendor.
+      const oldest = dated.length ? dated.slice().sort()[0] : null;
+      const newest = dated.length ? dated.slice().sort()[dated.length - 1] : null;
+      const f = reFreshness(oldest, {});
+      el.textContent = f.text;
+      el.className = 'generated re-fresh re-fresh--' + f.tone;
+      const undated = comps.filter(c => !c.date).length;
+      const spread = (oldest && newest)
+        ? Math.round((reDayUTC(newest) - reDayUTC(oldest)) / 86400000) : null;
+      el.title = 'Stamped with the OLDEST source vintage, not the newest.\n\n'
+        + comps.map(c => c.label + ': ' + (c.date || 'no published date')).join('\n')
+        + (data && data.generated_at
+          ? '\n\nWorkflow last fetched ' + data.generated_at
+            + ' — that is a fetch time, not an observation.'
+          : '')
+        + '\n\nThis is the age of the DATA, not of the page build.';
+      if ((spread != null && spread > 3) || undated > 0) {
+        const leads = [];
+        if (spread != null && spread > 3) leads.push('sources span ' + spread + 'd');
+        if (undated > 0) leads.push(undated + ' undated');
+        noteEl.innerHTML = '<span class="re-freshnote__lead">' + leads.join(' · ') + '</span>'
+          + comps
+            .slice()
+            .sort((a, b) => (!a.date ? -1 : !b.date ? 1 : (a.date < b.date ? -1 : 1)))
+            .map(c => {
+              const tone = c.date ? reFreshness(c.date, {}).tone : 'none';
+              return '<span class="re-freshnote__pill re-fresh--' + tone + '">'
+                + c.label + ' ' + (c.date || '—') + '</span>';
+            })
+            .join('');
+        noteEl.hidden = false;
+      } else {
+        noteEl.textContent = '';
+        noteEl.hidden = true;
+      }
     }
 
     function renderSrcLine() {
@@ -1212,7 +1345,7 @@
         ]);
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         STATE.data = await r.json();
-        document.getElementById('generated').textContent = formatGenerated(STATE.data.generated_at);
+        renderFreshness(STATE.data);
         renderSrcLine();
         buildMetroSelect();
         bindChartToggles();

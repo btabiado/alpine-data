@@ -1,0 +1,64 @@
+{
+  "as_of": "2026-07-16",
+  "band_key": "weakening",
+  "color": "#E27A5C",
+  "components": [
+    {
+      "delta": -28,
+      "name": "Band lean (bullish % minus bearish %)",
+      "read": "universe distributing",
+      "value": "-92.6%"
+    },
+    {
+      "delta": 0,
+      "name": "Adoption pillar avg",
+      "read": "adoption neutral",
+      "value": 50.0
+    },
+    {
+      "delta": 0,
+      "name": "Institutional pillar avg",
+      "read": "institutional steady",
+      "value": 48.5
+    },
+    {
+      "delta": 0,
+      "name": "Financial pillar avg",
+      "read": "fundamentals stable",
+      "value": 50.0
+    },
+    {
+      "delta": 1,
+      "name": "Thesis pillar avg",
+      "read": "narrative mixed",
+      "value": 54.2
+    },
+    {
+      "delta": 0,
+      "name": "DES (demand environment) avg",
+      "read": "macro neutral",
+      "value": 49.0
+    },
+    {
+      "delta": 10,
+      "name": "Macro regime (HY OAS / curve / USD)",
+      "read": "risk-on backdrop",
+      "value": "clean"
+    },
+    {
+      "delta": -7,
+      "name": "Insider conviction breadth",
+      "read": "insiders distributing",
+      "value": "126 active signals"
+    },
+    {
+      "delta": -9,
+      "name": "13F conviction breadth (acc vs dist)",
+      "read": "institutions distributing",
+      "value": "3 vs 58"
+    }
+  ],
+  "label": "LTHCS WEAKENING",
+  "note": "Aggregate of 216-ticker LTHCS universe. Directional read, not a trading signal.",
+  "score": -33
+}

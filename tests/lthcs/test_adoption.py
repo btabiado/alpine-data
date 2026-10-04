@@ -1301,6 +1301,8 @@ def test_tech_sub_bucket_cohort_sizes_match_spec(
     """Spec §2 — bucket counts after Wave A expansion (2026-05-21):
     Hardware=8, Semiconductors=19, Software=18, IT Services=4.
     Pre-Wave A was Hardware=3, Semiconductors=18, otherwise identical.
+    Software dropped to 17 on 2026-06-10 when ANSS was retired
+    (acquired by Synopsys; delisted, active:false).
     Detects accidental reclassifications. Note: Hardware crossed the n=6
     floor with Wave A, which flips AAPL/CSCO/SMCI from maturity_only
     cascade to sector_group_only scoring — accepted with eyes-open."""
@@ -1316,7 +1318,7 @@ def test_tech_sub_bucket_cohort_sizes_match_spec(
     assert counts == {
         "Hardware": 8,
         "Semiconductors": 19,
-        "Software": 18,
+        "Software": 17,
         "IT Services": 4,
     }, f"Bucket counts drifted: {counts}"
 

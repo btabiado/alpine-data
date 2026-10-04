@@ -20,8 +20,8 @@ LICENSE NOTE: OpenSky data is free for research / non-commercial use only.
 
 State-vector index reference (used by positions() and app.py renderer):
   s[0]  icao24        s[1]  callsign       s[2]  origin_country
-  s[3]  time_position s[4]  last_contact   s[5]  latitude
-  s[6]  longitude     s[7]  baro_altitude  s[8]  on_ground
+  s[3]  time_position s[4]  last_contact   s[5]  longitude
+  s[6]  latitude      s[7]  baro_altitude  s[8]  on_ground
   s[9]  velocity      s[10] true_track (heading)
   s[11] vertical_rate s[12] sensors        s[13] geo_altitude
   s[14] squawk        s[15] spi            s[16] position_source
@@ -34,7 +34,7 @@ TOKEN_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protoc
 OUT = os.path.join(os.path.dirname(__file__), "data-opensky.json")
 OUT_POS = os.path.join(os.path.dirname(__file__), "data-opensky-positions.json")
 UA = "alpine-data/aviation-tab (non-commercial)"
-MAX_POINTS = 2000
+MAX_POINTS = 4000
 STR_CAP = 24  # max chars for any external string in positions output
 
 
@@ -114,11 +114,11 @@ def positions(d):
     Each point is:  [lat, lon, alt_ft_or_null, heading_or_null, callsign, origin_country]
 
     State-vector indices used:
-      s[5]  latitude        s[6]  longitude       s[7]  baro_altitude (metres)
+      s[5]  longitude       s[6]  latitude         s[7]  baro_altitude (metres)
       s[8]  on_ground       s[10] true_track       s[1]  callsign
       s[2]  origin_country
 
-    Caps output at MAX_POINTS (2000) and sanitizes external strings to STR_CAP chars.
+    Caps output at MAX_POINTS (4000) and sanitizes external strings to STR_CAP chars.
     """
     sv = [s for s in (d.get("states") or []) if s and len(s) > 10]
     ts = d.get("time") or int(time.time())
@@ -129,7 +129,10 @@ def positions(d):
         # Only airborne aircraft with valid lat/lon
         if s[8] is not False:
             continue
-        lat, lon = s[5], s[6]
+        # OpenSky state vectors order position as s[5]=longitude, s[6]=latitude
+        # (longitude first — a well-known OpenSky gotcha). Unpack accordingly so
+        # the emitted [lat, lon] rows are geographically correct on the map.
+        lon, lat = s[5], s[6]
         if lat is None or lon is None:
             continue
 
@@ -152,12 +155,21 @@ def positions(d):
         points.append([round(lat, 2), round(lon, 2), alt_ft, heading, callsign, origin_country])
 
         if len(points) >= MAX_POINTS:
-            break  # hard cap — already have 2000 points
+            break  # hard cap — already have MAX_POINTS points
+
+    # True count of plottable airborne aircraft in this snapshot, BEFORE the
+    # MAX_POINTS cap — so the map can show the real total alongside how many it
+    # actually plotted (`count`). Same predicate as the append loop above.
+    airborne_total = sum(
+        1 for s in sv
+        if s[8] is False and s[5] is not None and s[6] is not None
+    )
 
     return {
         "ts": ts,
         "tstr": tstr,
-        "count": len(points),
+        "count": len(points),       # how many points are plotted (≤ MAX_POINTS)
+        "airborne": airborne_total,  # true plottable airborne total (pre-cap)
         "points": points,
     }
 

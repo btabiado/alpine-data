@@ -5,6 +5,9 @@
 
 'use strict';
 
+// Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
+import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -121,6 +124,7 @@ const INSIDER_REGIME_LABEL = {
 
 const state = {
   snapshot: null,
+  universe: null,              // raw universe.json doc (kept for its date)
   universeByTicker: {},
   insiderByTicker: {},
   holdingsByTicker: {},
@@ -156,19 +160,12 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
-function formatDate(isoDate) {
-  if (!isoDate) return '—';
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
-  if (!m) return isoDate;
-  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
-  try {
-    return d.toLocaleDateString(undefined, {
-      year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC',
-    });
-  } catch {
-    return isoDate;
-  }
-}
+// formatDate() lived here and rendered a bare localised day ("Aug 1, 2026")
+// for the header stamp. It is gone on purpose: a bare date is exactly the
+// thing the freshness contract forbids (no age, no tint, and no way to tell a
+// one-day-old snapshot from a three-month-old one at a glance). Every stamp
+// on this page now goes through ../lthcs_tab/lthcs-freshness.js. Do not
+// reintroduce a local date formatter for a stamp.
 
 function fmtScore(n) {
   const v = Number(n);
@@ -301,6 +298,9 @@ async function fetchOptional(url) {
 
 async function fetchUniverse() {
   const u = await fetchOptional(UNIVERSE_URL);
+  // Stash the whole document: the freshness stamp discloses the roster's own
+  // `last_updated`, which the caller's ticker array throws away.
+  state.universe = u || null;
   return (u && Array.isArray(u.tickers)) ? u.tickers : [];
 }
 
@@ -871,8 +871,28 @@ function showError(err) {
 }
 
 function renderMeta(snapshot, count) {
-  const lastEl = $('#lthcs-table-last-updated');
-  if (lastEl) lastEl.textContent = formatDate(snapshot && snapshot.calc_date);
+  // Freshness stamp. The table renders the snapshot's scores joined to the
+  // universe roster; the roster is reference data (names/sectors) rather than
+  // an observation, so it is disclosed in the breakdown but never ages the
+  // headline. Rule 2: whatever DOES contribute, the oldest one wins.
+  paintComposite(
+    $('#lthcs-table-last-updated'),
+    [
+      { label: 'scores', date: snapshot && snapshot.calc_date },
+      {
+        label: 'roster',
+        date: state.universe && state.universe.last_updated,
+        contributes: false,
+        tag: 'ref',
+        note: 'reference data — names and sectors only',
+      },
+    ],
+    {
+      detailEl: $('#lthcs-table-fresh-note'),
+      what: 'This table',
+      baseClass: '',
+    },
+  );
   const versionEl = $('#lthcs-table-model-version');
   if (versionEl && snapshot && snapshot.model_version) {
     versionEl.textContent = snapshot.model_version;
