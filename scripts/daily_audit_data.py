@@ -446,10 +446,17 @@ def _failing_statuses(repo_root: Path) -> set[str]:
         spec = importlib.util.spec_from_file_location(
             "_dh_for_audit", repo_root / "scripts" / "data_health.py")
         mod = importlib.util.module_from_spec(spec)
+        # Registered before exec: data_health declares @dataclass types, and
+        # dataclass resolves annotations through sys.modules[cls.__module__];
+        # unregistered, exec raised and this always fell back to the
+        # hard-coded set below, which misses statuses data_health adds
+        # (history continuity's "gap" / "duplicate").
+        sys.modules[spec.name] = mod
         spec.loader.exec_module(mod)
         return {str(s) for s in mod.FAILING_STATUSES}
     except Exception:  # noqa: BLE001
-        return {"stale", "unknown", "missing", "unwatched", "expired"}
+        return {"stale", "unknown", "missing", "unwatched", "expired",
+                "gap", "duplicate"}
 
 
 def _summarize_run(r: dict) -> dict:

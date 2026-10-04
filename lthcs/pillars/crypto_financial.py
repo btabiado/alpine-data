@@ -26,6 +26,7 @@ All math is pure.
 
 from __future__ import annotations
 
+import math
 from typing import Any, Dict, Optional
 
 from lthcs.normalize import bounded_linear
@@ -123,7 +124,7 @@ def compute_crypto_financial(
         cap_change_f: Optional[float] = (
             float(cap_change_pct) if cap_change_pct is not None else None
         )
-        if cap_change_f is not None and cap_change_f != cap_change_f:
+        if cap_change_f is not None and math.isnan(cap_change_f):
             cap_change_f = None
     except (TypeError, ValueError):
         cap_change_f = None
@@ -140,7 +141,7 @@ def compute_crypto_financial(
         inflation_f: Optional[float] = (
             float(inflation_pct) if inflation_pct is not None else None
         )
-        if inflation_f is not None and inflation_f != inflation_f:
+        if inflation_f is not None and math.isnan(inflation_f):
             inflation_f = None
     except (TypeError, ValueError):
         inflation_f = None

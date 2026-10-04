@@ -218,7 +218,7 @@ def _coerce_iso_date(raw: Any) -> Optional[str]:
             if isinstance(d, _dt.date):
                 return d.isoformat()
         except (TypeError, ValueError):
-            pass
+            pass  # date() failed; try the datetime / string paths below
     if isinstance(raw, _dt.datetime):
         return raw.date().isoformat()
     if isinstance(raw, _dt.date):

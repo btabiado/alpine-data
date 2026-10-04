@@ -40,6 +40,7 @@ import statistics
 from datetime import datetime, timezone
 
 __all__ = [
+    "PILLAR_NAMES",
     "score_feed",
     "score_pillar",
     "score_city",

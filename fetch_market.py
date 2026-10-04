@@ -122,10 +122,27 @@ def _coingecko_market_impl(asset_id: str, days: int = 365) -> dict:
     if not j:
         return {"price": [], "volume": [], "market_cap": []}
     return {
-        "price": [{"date": _ts(p[0]), "value": p[1]} for p in j.get("prices", [])],
-        "volume": [{"date": _ts(p[0]), "value": p[1]} for p in j.get("total_volumes", [])],
-        "market_cap": [{"date": _ts(p[0]), "value": p[1]} for p in j.get("market_caps", [])],
+        "price": _one_per_day(j.get("prices", [])),
+        "volume": _one_per_day(j.get("total_volumes", [])),
+        "market_cap": _one_per_day(j.get("market_caps", [])),
     }
+
+
+def _one_per_day(points) -> list[dict]:
+    """[[ms, value], ...] -> one {date, value} per UTC day, the LAST sample
+    of each day winning.
+
+    market_chart's daily series ends with an extra "now" sample, so today's
+    date appeared twice (00:00 and the fetch instant) in price / volume /
+    market_cap and in the ETH/BTC ratio derived from them, which charted two
+    points for one day. The latest sample is the more current reading, and
+    keeping it leaves every series' final value exactly what it was.
+    """
+    by_day: dict[str, float] = {}
+    for p in points or []:
+        if isinstance(p, (list, tuple)) and len(p) >= 2 and p[0] is not None:
+            by_day[_ts(p[0])] = p[1]
+    return [{"date": d, "value": v} for d, v in sorted(by_day.items())]
 
 
 def coingecko_market(asset_id: str, days: int = 365) -> dict:
@@ -1858,7 +1875,14 @@ def _stale_path(funcname: str) -> Path:
     # A few cache keys embed upstream API symbols/ids (e.g. CoinGecko 'symbol'/'id'),
     # so strip path separators + traversal before joining (CodeQL py/path-injection).
     safe = "".join(c if (c.isalnum() or c in "_.-") else "_" for c in Path(str(funcname)).name)
-    return _STALE_DIR / f"{safe}.json"
+    # Normalise and confirm the result is still directly inside the stale dir.
+    # Unreachable with the character filter above; kept as an explicit
+    # containment check so the guarantee doesn't rest on the filter alone.
+    base = os.path.normpath(_STALE_DIR)
+    full = os.path.normpath(os.path.join(base, f"{safe}.json"))
+    if not full.startswith(base + os.sep):
+        raise ValueError(f"unsafe stale-cache key: {funcname!r}")
+    return Path(full)
 
 
 def _stale_save(funcname: str, value) -> None:

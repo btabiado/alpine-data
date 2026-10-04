@@ -321,7 +321,7 @@ def _assign_band(score: float, score_bands: Dict[str, Dict[str, Any]]) -> str:
         s = float(score)
     except (TypeError, ValueError):
         s = 0.0
-    if s != s:
+    if math.isnan(s):
         s = 0.0
     s = max(0.0, min(100.0, s))
     floored = int(math.floor(s))

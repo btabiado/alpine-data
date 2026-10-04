@@ -59,7 +59,7 @@ def norm_segment(c: str) -> str:
 
 
 def load_ns():
-    d = json.load(open(NS_PATH))
+    d = json.loads(NS_PATH.read_text())
     vs = d["vendors"]
     out = []
     for v in vs:
@@ -88,12 +88,12 @@ def load_summit():
     """197 partners, mapped onto the shared taxonomy via the overlay (read-only)."""
     if not SUMMIT_PATH.exists():
         return []
-    d = json.load(open(SUMMIT_PATH))
+    d = json.loads(SUMMIT_PATH.read_text())
     vs = d["vendors"] if isinstance(d, dict) else d
     overlay = {}
     if OVERLAY_PATH.exists():
         try:
-            overlay = json.load(open(OVERLAY_PATH)).get("map", {})
+            overlay = json.loads(OVERLAY_PATH.read_text()).get("map", {})
         except Exception:
             overlay = {}
     out = []

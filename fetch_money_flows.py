@@ -138,7 +138,7 @@ def _norm(x):
         if pd is not None and pd.isna(x):
             return ""
     except Exception:
-        pass
+        pass  # pd.isna() is ambiguous for array-likes; treat as not-NA
     return " ".join(str(x).strip().lower().split())
 
 
@@ -150,7 +150,7 @@ def _to_float(x):
         if pd is not None and pd.isna(x):
             return None
     except Exception:
-        pass
+        pass  # pd.isna() is ambiguous for array-likes; treat as not-NA
     try:
         s = str(x).strip().replace(",", "")
         if s == "" or s in ("-", "--", "n/a", "na"):
@@ -168,13 +168,13 @@ def _parse_date(x):
         if pd is not None and pd.isna(x):
             return None
     except Exception:
-        pass
+        pass  # pd.isna() is ambiguous for array-likes; treat as not-NA
     # Already a datetime/Timestamp?
     try:
         if hasattr(x, "year") and hasattr(x, "month") and hasattr(x, "day"):
             return _dt.date(x.year, x.month, x.day).isoformat()
     except Exception:
-        pass
+        pass  # not a valid date-like object; try string parsing below
     s = str(x).strip()
     for fmt in ("%m/%d/%Y", "%Y-%m-%d", "%m/%d/%y", "%m-%d-%Y"):
         try:
@@ -187,7 +187,7 @@ def _parse_date(x):
         if ts is not None and not pd.isna(ts):
             return ts.date().isoformat()
     except Exception:
-        pass
+        pass  # pandas could not parse it either; report no date
     return None
 
 
@@ -356,20 +356,11 @@ def _find_flows_columns(df):
     (Equity/Bond banner -> Total equity/Domestic/World/Total bond -> sub-rows).
     Returns {"total_equity","domestic_equity","world_equity","total_bond"}.
 
-    Strategy: forward-fill each of the first ~8 header rows across columns, then
-    for each column build a combined 'top mid low' label and match keywords.
+    Strategy: for each column, join the first ~8 header rows into a combined
+    'top mid low' label (no forward-fill, see below) and match keywords.
     """
     nrows, ncols = df.shape
     hdr_rows = list(range(min(nrows, 8)))
-
-    def ffill_row(r):
-        out, cur = [], ""
-        for c in range(ncols):
-            v = _norm(df.iat[r, c])
-            if v:
-                cur = v
-            out.append(cur)
-        return out
 
     # We deliberately do NOT forward-fill the "top" (Equity/Bond) banner because
     # it would smear Equity across bond columns. Instead read each header cell at
