@@ -210,7 +210,13 @@ def test_real_csv_headers_are_the_shape_these_tests_assume():
     assert eth[0] == "date" and eth[-1] == "Total", eth
     # The row shape quoted in the module docstring: date + 13 values.
     assert len(btc) == 14, btc
-    assert len(eth) == 12, eth
+    # 13, not 12: Farside added MSSE to the ETH table after this test was
+    # written (its first flow is 2026-07-28). That is a real fund, not a
+    # repeat of the COL11 defect above -- Total equals the per-fund sum on
+    # every row of the committed CSV, so MSSE is counted once, inside the
+    # total, not added on top of it. This guard tripping on a new listing is
+    # it working: update the count after confirming the sum still holds.
+    assert len(eth) == 13, eth
     for req in BTC_REQUIRE:
         assert req in btc
 
@@ -284,7 +290,7 @@ def test_date_only_row_is_treated_as_no_reading():
 
 
 def test_eth_shape_also_rejects_the_unsettled_row():
-    """Same contract on the narrower ETH table (11 value columns)."""
+    """Same contract on the narrower ETH table (12 value columns since MSSE)."""
     eth_cols = _real_columns("eth_flows.csv")[1:]
     n = len(eth_cols)
     require = ("ETHA", "FETH", "ETHE")
