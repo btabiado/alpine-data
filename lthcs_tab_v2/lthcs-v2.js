@@ -17,7 +17,10 @@
 import { openDetail } from '../lthcs_tab/lthcs-detail.js';
 import { openAbout } from '../lthcs_tab/lthcs-about.js';
 // Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
-import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+import { paintComposite, freshnessHtml } from '../lthcs_tab/lthcs-freshness.js';
+// Build-time file index: lets the sector card read the newest sector_strength
+// file that exists instead of asking for today's (which 404s).
+import { fetchLatestSectorStrength } from '../lthcs_tab/lthcs-files.js';
 
 // ---------------------------------------------------------------------------
 // Constants — paths mirror V1's lthcs-tab.js
@@ -704,7 +707,7 @@ function renderSectors() {
   const host = $('#lthcs-v2-sectors');
   if (!host) return;
   if (!state.sectors || !state.sectors.sectors) {
-    host.innerHTML = '<div class="regime-empty">Sector data unavailable.</div>';
+    host.innerHTML = '<div class="regime-empty">No sector-strength file has been produced yet.</div>';
     return;
   }
   const entries = Object.entries(state.sectors.sectors)
@@ -721,13 +724,19 @@ function renderSectors() {
   const topHTML = top.map((r) => sectorRowHTML(r, 'top')).join('');
   const botHTML = bot.map((r) => sectorRowHTML(r, 'bottom')).join('');
 
+  // The sector stage is optional and has not run daily for months, so the
+  // file's own date is always shown (tinted by age) next to the numbers.
+  const asOf = state.sectorsDate
+    ? freshnessHtml(state.sectorsDate, { label: 'sectors as of', title: 'Date of the newest sector_strength file on disk; this optional pipeline stage does not run every day.' })
+    : '';
   host.innerHTML = (
     `<div class="sectors-col" data-kind="top">` +
       `<h3>Leaders 1m vs SPY</h3>${topHTML}` +
     `</div>` +
     `<div class="sectors-col" data-kind="bottom">` +
       `<h3>Laggards 1m vs SPY</h3>${botHTML}` +
-    `</div>`
+    `</div>` +
+    (asOf ? `<div class="sectors-asof">${asOf}</div>` : '')
   );
 }
 
@@ -986,13 +995,14 @@ async function refresh() {
     Promise.all([
       fetchJSONSafe(`${MACRO_BASE}/breadth_${calcDate}.json`),
       fetchJSONSafe(`${MACRO_BASE}/breadth_sentiment_${calcDate}.json`),
-      fetchJSONSafe(`${MACRO_BASE}/sector_strength_${calcDate}.json`),
+      fetchLatestSectorStrength(MACRO_BASE, calcDate, fetchJSONSafe),
       fetchJSONSafe(`${INSIDER_BASE}/${calcDate}.json`),
       fetchJSONSafe(`${INDEX_BASE}/${calcDate}.json`),
-    ]).then(([breadth, breadthSent, sectors, insider, lthcsIndex]) => {
+    ]).then(([breadth, breadthSent, sectorHit, insider, lthcsIndex]) => {
       state.breadth = breadth || null;
       state.breadthSentiment = breadthSent || null;
-      state.sectors = sectors || null;
+      state.sectors = sectorHit ? sectorHit.data : null;
+      state.sectorsDate = sectorHit ? sectorHit.date : null;
       state.insiderByTicker = (insider && typeof insider === 'object') ? insider : {};
       state.lthcsIndex = (lthcsIndex && typeof lthcsIndex === 'object') ? lthcsIndex : null;
       // The macro + index payloads carry their own observation dates, so the

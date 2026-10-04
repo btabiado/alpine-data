@@ -677,6 +677,13 @@
   text-transform: uppercase;
   letter-spacing: 0.6px;
 }
+/* Templated text written into the LLM file because the LLM was unavailable:
+   neutral amber, not the "LLM" violet. */
+.lthcs-modal-root .lthcs-narrative-llm-badge.is-fallback {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #f5b544;
+}
 
 /* ----- Evidence panel (#19): per-pillar signal accordion ----- */
 .lthcs-modal-root .lthcs-modal-evidence {

@@ -561,7 +561,7 @@ _RESOLVERS = (
     "whaleSentimentAsOf", "signalCardAsOf",
     "overviewFreshness", "defiFreshness", "aiNewsFreshness",
     "moneyFlowFreshness", "stockFlowFreshness", "lthcsFreshness",
-    "cityFreshness", "aviationFreshness",
+    "cityFreshness", "aviationFreshness", "tsaDayIso",
     "computeSignalBreadth",
 )
 
@@ -574,6 +574,9 @@ def resolve(v1_js):
     bodies = "\n".join(extract_function(v1_js, n) for n in _RESOLVERS)
     ctx.eval("""
     var DATA = {}, state = {};
+    // aviationFreshness() reads the TSA live cache and threshold (top-level
+    // `let`/`const` in the page); the harness supplies their initial values.
+    var _tsaLive = null, TSA_STALE_DAYS = 3;
     function etfData(){ return (DATA.__etf) || {}; }
     function whaleData(){ return ((DATA.whale || {}).btc) || {}; }
     function socialData(){ return ((DATA.market || {}).social) || {}; }
@@ -811,6 +814,17 @@ def test_aviation_resolver_refuses_a_prose_vintage(resolve):
     """Rule 5: an unparseable prose vintage is 'as of —' plus disclosure."""
     r = resolve("aviationFreshness", {"aviation": {"asOf": "FAA airman data Dec 31 2025"}})
     assert r["date"] is None
+    assert "FAA airman data Dec 31 2025" in r["title"]
+
+
+def test_aviation_resolver_names_the_tsa_day_when_it_has_one(resolve):
+    """The prose vintage is still refused, but the tab's one daily feed (TSA,
+    'M/D/YYYY') gives the strip an honest, explicitly-labelled date."""
+    r = resolve("aviationFreshness", {"aviation": {
+        "asOf": "FAA airman data Dec 31 2025",
+        "tsa": {"seed": {"date": "6/17/2026"}}}})
+    assert r["date"] == "2026-06-17"
+    assert r["label"] == "TSA data through"
     assert "FAA airman data Dec 31 2025" in r["title"]
 
 
