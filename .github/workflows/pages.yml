@@ -211,6 +211,41 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: Snapshot deploy-time feed history (daily rows)
+        # data-stock-money-flow.json and data-travel.json are rebuilt by this
+        # job and never committed, and neither upstream serves history, so
+        # each build used to throw yesterday's reading away. This appends ONE
+        # compact row-set per observation date (scripts/snapshot_history.py):
+        #   data/stock_money_flow_history.csv   completed trading-day bars only
+        #   data/travel_advisory_levels.csv     one summary row per day
+        #   data/travel_advisory_changes.csv    a row only when a level changes
+        # Append-only by date, so the hourly schedule re-runs it as a no-op and
+        # the commit below fires at most once per new date. ~0.2 MB/year total.
+        # Must run here: the sidecars exist only inside this job.
+        run: python scripts/snapshot_history.py || echo "[history] snapshot failed; continuing"
+        continue-on-error: true
+
+      - name: Commit deploy-time feed history
+        # Same signed API commit as data/composites, with [skip ci]. Nothing is
+        # staged unless the snapshot above appended a new date, so this is a
+        # no-op on every run but the first one after a new observation lands.
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FILES="data/stock_money_flow_history.csv data/travel_advisory_levels.csv data/travel_advisory_changes.csv"
+          for f in $FILES; do
+            if [ -f "$f" ]; then git add -- "$f"; fi
+          done
+          if git diff --cached --quiet -- $FILES; then
+            echo "[history] no new observation date; nothing to commit"
+          else
+            .github/scripts/api-commit.sh \
+              "history: deploy-time feed rows $(date -u +%Y-%m-%d) [skip ci]" \
+              || echo "[history] commit failed; continuing"
+          fi
+        continue-on-error: true
+
       - name: Probe upstream API reachability (live snapshot)
         # Hits each upstream data-source endpoint and writes
         # data/health/api_status.json — the snapshot the static /health/apis.html
