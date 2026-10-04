@@ -1093,6 +1093,14 @@ jobs:
               cp -R landscape/icons _site/landscape/
             fi
           fi
+          # Publish the newest daily audit report at /audit/latest.md and
+          # /audit/latest.json. daily-audit.yml commits it to audit/daily/ once
+          # a day; this just mirrors the committed copy, so a missing report
+          # (before the first audit run) makes this a no-op.
+          if ls audit/daily/latest.* >/dev/null 2>&1; then
+            mkdir -p _site/audit
+            cp audit/daily/latest.* _site/audit/
+          fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BDT Dashboards — static snapshot

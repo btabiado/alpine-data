@@ -1978,8 +1978,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     white-space:nowrap;
     -webkit-overflow-scrolling:touch;
     scrollbar-width:none;
-    -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent);
-            mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent);
+  }
+  /* Right-edge "more this way" fade. This MUST NOT be a mask-image on .tabs:
+     a mask clips everything the element paints, including its position:fixed
+     dropdown panels below the strip, so every menu opened invisibly and taps
+     fell through to the page (19 of 21 tabs unreachable on phones). A sticky
+     overlay pinned to the strip's right edge draws the same fade without
+     touching the menus, and pointer-events:none keeps it out of hit-testing. */
+  .tabs::after{
+    content:"";position:sticky;right:0;flex:0 0 26px;margin-left:-26px;
+    align-self:stretch;pointer-events:none;
+    background:linear-gradient(to right,rgba(0,0,0,0),var(--panel));
   }
   .tabgroup,.tabnav-rule,.tabnav-jumps{flex:0 0 auto}
   .tabnav-rule{margin:0 6px;height:18px}
@@ -10061,20 +10070,53 @@ function renderWhaleAlerts(){
   }).join('');
 }
 
-// Recent ETH whale transactions: ≥ $1M last 24h from Blockchair. Hidden when
-// no data. Mirrors renderWhaleAlerts() (BTC mempool feed) in structure.
+// Recent ETH whale transactions: ≥ $1M in the TRAILING 24h from Blockchair.
+// Rows are re-checked against the window here as well as in the fetcher: an
+// earlier build replayed an unfiltered all-time scan (2015-2022 transfers)
+// under this "last 24h" label, so a row older than 24h is never shown. When
+// nothing qualifies the card says why instead of silently disappearing.
+const ETH_WHALE_WINDOW_MS = 24 * 3600 * 1000;
+function ethWhaleTxTime(t){
+  const s = (t && typeof t.time === 'string') ? t.time.trim() : '';
+  if (!s) return NaN;
+  // Blockchair times are UTC "YYYY-MM-DD HH:MM:SS" with no zone marker.
+  const hasZone = /([zZ]|[+-]\d\d:?\d\d)$/.test(s);
+  return Date.parse(s.replace(' ', 'T') + (hasZone ? '' : 'Z'));
+}
+function recentEthWhaleTxs(txs, nowMs){
+  const now = Number.isFinite(nowMs) ? nowMs : Date.now();
+  return (Array.isArray(txs) ? txs : []).filter(t => {
+    const ms = ethWhaleTxTime(t);
+    return Number.isFinite(ms) && ms >= now - ETH_WHALE_WINDOW_MS && ms <= now + 10 * 60 * 1000;
+  });
+}
 function renderEthWhaleAlerts(){
   const card = document.getElementById('ethWhaleAlertsCard');
   if (!card) return;
-  const txs = (((DATA.whale||{}).eth||{}).large_transactions) || [];
-  if (!txs.length){ card.classList.add('hidden'); return; }
+  const eth = ((DATA.whale||{}).eth) || null;
+  if (!eth){ card.classList.add('hidden'); return; }
+  const raw = Array.isArray(eth.large_transactions) ? eth.large_transactions : [];
+  const txs = recentEthWhaleTxs(raw);
+  const st = eth.large_transactions_status || {};
+  const asOf = st.as_of ? String(st.as_of).replace('T', ' ').slice(0, 16) + ' UTC' : '';
   card.classList.remove('hidden');
   const note = document.getElementById('ethWhaleAlertsNote');
   if (note){
-    note.textContent = `${txs.length} txs ≥ $1M · last 24h`;
+    const cached = st.source === 'stale-cache' ? ' · cached, Blockchair unreachable this build' : '';
+    note.textContent = txs.length
+      ? `${txs.length} txs ≥ $1M · last 24h${cached}`
+      : `≥ $1M · last 24h${asOf ? ' · as of ' + asOf : ''}`;
   }
   const tbody = document.getElementById('ethWhaleAlertsBody');
   if (!tbody) return;
+  if (!txs.length){
+    let why;
+    if (raw.length) why = `The latest Blockchair scan${asOf ? ' (' + asOf + ')' : ''} has no transactions from the last 24 hours.`;
+    else if (st.source === 'live') why = 'No ETH transactions of $1M or more in the last 24 hours.';
+    else why = 'Blockchair was unreachable, so there are no ETH whale transactions from the last 24 hours to show.';
+    tbody.innerHTML = `<tr><td colspan="4" style="color:var(--muted);padding:12px 8px">${escapeHtml(why)}</td></tr>`;
+    return;
+  }
   // Validate ETH tx hash as 0x + 64 hex chars to defang any javascript:/data:
   // scheme injection through the href + innerHTML.
   const isEthTxHash = s => typeof s === 'string' && /^0x[0-9a-fA-F]{64}$/.test(s);
@@ -10085,7 +10127,7 @@ function renderEthWhaleAlerts(){
     const eth = t.value_eth != null ? fmtNum(t.value_eth, 2) : '—';
     const usd = t.value_usd != null ? fmtUSD(t.value_usd, 'auto') : '—';
     const cls = (t.value_usd != null && t.value_usd >= 10_000_000) ? 'green' : '';
-    const time = t.time ? escapeHtml(String(t.time)) : '—';
+    const time = t.time ? escapeHtml(String(t.time)) + ' UTC' : '—';
     const linkCell = hash
       ? `<a href="${txUrl}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortHash} ↗</a>`
       : '—';
@@ -15601,10 +15643,26 @@ function avBootAviation(DATA){
       new Chart($("#c-airports"),{type:"bar",data:{labels:m.airports.labels,datasets:[{data:m.airports.vals,backgroundColor:m.airports.labels.map((l,i)=>i===0?C.amber:"rgba(255,181,71,.55)"),borderRadius:4}]},
         options:base({plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+"M passengers (2024)"}}},scales:{x:{ticks:{color:C.ink,font:{family:AV_MONO,size:11}},grid:{display:false}},y:axes(0,0,null,v=>v+"M").y}})});}
 
+    // ONE fetch of the cron-committed OpenSky snapshot (data-opensky.json),
+    // shared by the summary tile and the Live sub-view. Resolves to the
+    // snapshot, or null when it is missing, unreadable or slow; callers then
+    // fall back to the baked-in D.live.seed and MUST label it as a dated,
+    // stale sample (it was captured once, months ago, and is not "now").
+    let _openskyP=null;
+    function openSky(){
+      if(!_openskyP){
+        const f=fetch("data-opensky.json",{cache:"no-store"}).then(r=>r.ok?r.json():null)
+          .then(s=>(s&&Number.isFinite(Number(s.airborne)))?s:null).catch(()=>null);
+        _openskyP=Promise.race([f,new Promise(r=>setTimeout(()=>r(null),8000))]);
+      }
+      return _openskyP;
+    }
+    function avSeedAsOf(){return String((D.live&&D.live.seed&&D.live.seed.tstr)||"").slice(0,10)||"unknown date";}
+
     function live(){if(drawn.live)return;drawn.live=1;
-      const apply=(s)=>{
+      const apply=(s,isSeed)=>{
         const k=[
-          {label:"Aircraft airborne now",val:s.airborne,delta:"OpenSky · "+s.tstr+(s.ts?" · "+Math.max(0,Math.round((Date.now()/1000-s.ts)/60))+" min ago":""),dir:"up"},
+          {label:"Aircraft airborne now",val:s.airborne,delta:isSeed?("stale seed sample · as of "+avSeedAsOf()):("OpenSky · "+s.tstr+(s.ts?" · "+Math.max(0,Math.round((Date.now()/1000-s.ts)/60))+" min ago":"")),dir:"up"},
           {label:"Total tracked",val:s.tracked,delta:"incl. on-ground",dir:"flat"},
           {label:"On the ground",val:s.ground,delta:"taxiing / parked w/ ADS-B",dir:"flat"},
           {label:"Top country (live)",val:(s.byCountry[0]||["—",0])[0],delta:fmt((s.byCountry[0]||["—",0])[1])+" aircraft",dir:"flat",raw:true}
@@ -15618,7 +15676,7 @@ function avBootAviation(DATA){
         chartTable("c-live-alt",["Altitude band","Airborne (live)"],s.byAlt.map(x=>[x[0],x[1]]));
       };
       // prefer the cron-committed snapshot; fall back to the baked-in seed
-      fetch("data-opensky.json",{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(apply).catch(()=>apply(D.live.seed));}
+      openSky().then(s=>s?apply(s,false):apply(D.live.seed,true));}
 
     // ---- Leaflet, loaded on FIRST USE of the map (was two render-blocking
     // link/script tags on unpkg.com in the document head). Nobody who
@@ -15874,7 +15932,8 @@ function avBootAviation(DATA){
         {v:"airtravel",t:"Air travel",val:(D.airtravel?D.airtravel.kpis[0].val:"—"),s:"2024 enplanements"},
         {v:"safety",t:"GA safety",val:(D.safety?String(D.safety.kpis[2].val):"—"),s:"accidents / 100k hrs"},
         {v:"tsa",t:"TSA screened",val:(D.tsa?D.tsa.kpis[0].val:"—"),s:"passengers · 2025"},
-        {v:"live",t:"Airborne now",val:fmt(D.live.seed.airborne),s:"live OpenSky sample"},
+        // Filled from data-opensky.json below; never the baked-in seed as "live".
+        {v:"live",t:"Airborne now",val:"…",s:"loading OpenSky snapshot"},
         {v:"used",t:"Used market",val:fmt(u),s:"listings sampled"},
         {v:"calc",t:"Cost to own",val:"$/hr",s:"model your true cost"},
         {v:"map",t:"Live map",val:"Map",s:"aircraft positions now"}
@@ -15882,6 +15941,13 @@ function avBootAviation(DATA){
       document.getElementById("av-summary").innerHTML=tiles.map(x=>
         `<div class="scard" data-go="${x.v}" role="button" tabindex="0" aria-label="${escapeHtml(x.t+": "+x.val+", "+x.s)}"><div class="st">${x.t}</div><div class="sv">${x.val}</div><div class="ss">${x.s}</div></div>`).join("");
       document.querySelectorAll("#aviation-tab .scard").forEach(c=>{const g=()=>go(c.dataset.go);c.addEventListener("click",g);c.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();g();}});});
+      openSky().then(s=>{
+        const c=document.querySelector('#av-summary .scard[data-go="live"]'); if(!c) return;
+        const val=s?fmt(Number(s.airborne)):fmt(D.live.seed.airborne);
+        const sub=s?("OpenSky · "+(s.tstr||"time unknown")):("stale seed sample · as of "+avSeedAsOf());
+        c.querySelector(".sv").textContent=val; c.querySelector(".ss").textContent=sub;
+        c.setAttribute("aria-label","Airborne now: "+val+", "+sub);
+      });
     }
 
     const V={pilots,sport,fleet,models,macro,airtravel,safety,tsa,live,map,used,calc,sources};
@@ -21194,6 +21260,18 @@ function travelFmtDate(iso){
   return months[m] + ' ' + d + ', ' + parts[0];
 }
 
+// Risk-indicator pills exist only when fetch_advisories parsed the State
+// Dept HTML table. In its RSS fallback (the table sits behind a bot
+// challenge) every row carries risks:[] because the data is MISSING, not
+// because a country has none. Treat that as "unavailable" so a Level 4
+// country never reads "No specific risk indicators" and the terrorism count
+// is never a fabricated 0. Older payloads without the flag are recognised by
+// their source tag.
+function travelRisksAvailable(t){
+  return !!t && t.risks_available !== false && t.source !== 'rss-fallback';
+}
+const TRAVEL_RISKS_UNAVAILABLE = 'Risk indicators unavailable (source blocked)';
+
 function renderTravelTab(){
   const travel = DATA.travel;
   const loading = document.getElementById('travelLoading');
@@ -21223,7 +21301,12 @@ function renderTravelTab(){
     if (Array.isArray(a.risks) && a.risks.indexOf('T') !== -1) counts.terror++;
   }
 
-  const sub = state.travelSub || 'overview';
+  const risksOk = travelRisksAvailable(travel);
+  let sub = state.travelSub || 'overview';
+  if (!risksOk && sub === 'terror') { sub = 'overview'; state.travelSub = 'overview'; }
+  document.querySelectorAll('.travel-subtab[data-travelsub="terror"]').forEach(b => {
+    b.classList.toggle('hidden', !risksOk);
+  });
 
   // Toggle sub-view visibility
   const overviewEl = document.getElementById('travelOverview');
@@ -21239,13 +21322,13 @@ function renderTravelTab(){
   });
 
   if (sub === 'overview') {
-    renderTravelOverviewV1(advisories, bulletins, counts, travel.generated_at);
+    renderTravelOverviewV1(advisories, bulletins, counts, travel.generated_at, risksOk);
   } else {
-    renderTravelListV1(advisories, sub, counts);
+    renderTravelListV1(advisories, sub, counts, risksOk);
   }
 }
 
-function renderTravelOverviewV1(advisories, bulletins, counts, generatedAt){
+function renderTravelOverviewV1(advisories, bulletins, counts, generatedAt, risksOk = true){
   // Stat cards row — clicking L1/L2/L3/L4 navigates to that level sub-view;
   // Terrorism card opens the Terrorism sub-view.
   const statHost = document.getElementById('travelStatCards');
@@ -21257,11 +21340,13 @@ function renderTravelOverviewV1(advisories, bulletins, counts, generatedAt){
         '<div class="travel-stat__sub">' + escapeHtml(TRAVEL_LEVEL_SHORT[l]) + '</div>' +
       '</button>'
     ).join('') +
-    '<button class="travel-stat travel-stat--terror" data-travelstat="terror" type="button">' +
-      '<div class="travel-stat__num">' + counts.terror + '</div>' +
-      '<div class="travel-stat__label">Terrorism</div>' +
-      '<div class="travel-stat__sub">Flagged destinations &rarr;</div>' +
-    '</button>';
+    (risksOk
+      ? '<button class="travel-stat travel-stat--terror" data-travelstat="terror" type="button">' +
+          '<div class="travel-stat__num">' + counts.terror + '</div>' +
+          '<div class="travel-stat__label">Terrorism</div>' +
+          '<div class="travel-stat__sub">Flagged destinations &rarr;</div>' +
+        '</button>'
+      : '');
     statHost.innerHTML = cards;
   }
 
@@ -21339,7 +21424,7 @@ function renderTravelOverviewV1(advisories, bulletins, counts, generatedAt){
   }
 }
 
-function renderTravelListV1(advisories, sub, counts){
+function renderTravelListV1(advisories, sub, counts, risksOk = true){
   // Determine level filter and whether the segmented L3/L4 control is shown
   let levelSet = null;
   let merged = false;
@@ -21360,7 +21445,9 @@ function renderTravelListV1(advisories, sub, counts){
   if (segment) segment.classList.toggle('hidden', !merged);
   const terrorToggle = document.getElementById('travelTerrorToggle');
   if (terrorToggle) {
-    terrorToggle.classList.toggle('hidden', isTerror); // hidden on the dedicated Terrorism view
+    // Hidden on the dedicated Terrorism view, and whenever risk indicators
+    // are unavailable (filtering on unknown data would show zero rows).
+    terrorToggle.classList.toggle('hidden', isTerror || !risksOk);
     terrorToggle.classList.toggle('active', !!state.travelTerrorOnly);
   }
   // Sync segment active state
@@ -21377,7 +21464,7 @@ function renderTravelListV1(advisories, sub, counts){
   const q = (state.travelQuery || '').toLowerCase();
   const rows = advisories.filter(d => {
     if (levelSet && levelSet.indexOf(d.level) === -1) return false;
-    if ((state.travelTerrorOnly || isTerror) && !(Array.isArray(d.risks) && d.risks.indexOf('T') !== -1)) return false;
+    if (risksOk && (state.travelTerrorOnly || isTerror) && !(Array.isArray(d.risks) && d.risks.indexOf('T') !== -1)) return false;
     if (q && !String(d.name || '').toLowerCase().includes(q)) return false;
     return true;
   });
@@ -21414,7 +21501,9 @@ function renderTravelListV1(advisories, sub, counts){
     const lv = d.level;
     const href = sanitizeUrl(d.url, '#');
     const risks = Array.isArray(d.risks) ? d.risks : [];
-    const chips = risks.length === 0
+    const chips = !risksOk
+      ? '<span class="travel-card__norisk">' + TRAVEL_RISKS_UNAVAILABLE + '</span>'
+      : risks.length === 0
       ? '<span class="travel-card__norisk">No specific risk indicators</span>'
       : risks.map(r => {
           const isT = (r === 'T');
