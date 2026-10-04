@@ -94,9 +94,9 @@ def _recompute_score(
     """
     if not isinstance(subscores, dict):
         return None
-    # A null sub-score is a pillar dropped from scoring (not measured); like
-    # production (lthcs/score.py) it is excluded and the remaining weights
-    # renormalised. Missing everything -> None.
+    # An explicit null sub-score is a pillar dropped from scoring (not
+    # measured); like production (lthcs/score.py) it is excluded and the
+    # remaining weights renormalised. An ABSENT key is a malformed row -> None.
     total = 0.0
     present_w = 0.0
     all_w = 0.0
@@ -106,7 +106,9 @@ def _recompute_score(
         except (TypeError, ValueError, IndexError):
             return None
         all_w += w
-        v = subscores.get(pillar)
+        if pillar not in subscores:
+            return None
+        v = subscores[pillar]
         if v is None:
             continue
         try:

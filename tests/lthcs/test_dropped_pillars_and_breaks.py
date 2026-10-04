@@ -233,3 +233,10 @@ def test_snapshot_carries_methodology_breaks(tmp_path):
     payload = json.loads(path.read_text())
     assert payload["methodology_breaks"][0]["date"] == "2026-10-04"
     assert set(payload) >= {"calc_date", "model_version", "scores"}
+
+
+def test_backtest_recompute_renormalises_over_a_null_pillar():
+    from lthcs import backtest_engine_attribution as bea
+    subs = {p: 60.0 for p in bea.PILLARS}
+    subs["thesis_integrity"] = None            # dropped, published as null
+    assert bea._recompute_score(subs, [0.2] * 5, 0.0) == pytest.approx(60.0)
