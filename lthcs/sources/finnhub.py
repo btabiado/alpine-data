@@ -206,7 +206,7 @@ def _http_get(path: str, params: Dict[str, str]) -> Optional[Any]:
         try:
             body = (resp.text or "")[:200]
         except Exception:
-            pass
+            pass  # response body is optional context for the error raised below
         _logger.warning(
             "Finnhub returned HTTP %s for %s: %s", status, path, body
         )

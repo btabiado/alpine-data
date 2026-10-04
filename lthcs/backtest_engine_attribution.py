@@ -41,7 +41,6 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import pandas as pd
 
-from lthcs import backtest_engine
 from lthcs.backtest_engine import EngineParams, run_backtest
 from lthcs.score import PILLAR_ORDER, assign_band
 

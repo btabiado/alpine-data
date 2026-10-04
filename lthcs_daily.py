@@ -1128,8 +1128,6 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     finnhub_keyless = False
     if state.active_tickers:
         for sym in state.active_tickers:
-            if finnhub_keyless:
-                break
             try:
                 reco_history = finnhub.get_recommendation_trends(sym, **as_of_kw)
             except finnhub.FinnhubAPIKeyMissing:
@@ -1159,10 +1157,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     # so a 2026-04-15 backfill would otherwise be polluted with
     # 2026-05-19's news.
     if state.active_tickers and not as_of and not finnhub_keyless:
-        news_keyless = False
         for sym in state.active_tickers:
-            if news_keyless:
-                break
             # Skip when /stock/recommendation already produced a usable
             # primary signal (>=3 analysts with a real consensus).
             reco = state.recommendation_by_ticker.get(sym) or {}
@@ -1175,7 +1170,6 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             try:
                 raw = finnhub.get_news_sentiment(sym)
             except finnhub.FinnhubAPIKeyMissing:
-                news_keyless = True
                 break
             except finnhub.FinnhubRateLimit:
                 break

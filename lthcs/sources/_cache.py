@@ -111,7 +111,7 @@ class FileCache:
             try:
                 os.unlink(tmp_path)
             except OSError:
-                pass
+                pass  # best-effort temp-file cleanup; the original error is re-raised below
             raise
 
     def delete(self, key: str) -> bool:
@@ -129,5 +129,5 @@ class FileCache:
                 p.unlink()
                 count += 1
             except FileNotFoundError:
-                pass
+                pass  # already gone (concurrent clear); nothing to count
         return count

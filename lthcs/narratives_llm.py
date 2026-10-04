@@ -756,7 +756,7 @@ def _parse_json_envelope(raw_text: str) -> Optional[Dict[str, Any]]:
         if isinstance(parsed, dict):
             return parsed
     except (ValueError, TypeError):
-        pass
+        pass  # not plain JSON; fall through to the next parse strategy
     fence_stripped = re.sub(r"^```(?:json)?\s*", "", text)
     fence_stripped = re.sub(r"\s*```\s*$", "", fence_stripped)
     try:
@@ -764,7 +764,7 @@ def _parse_json_envelope(raw_text: str) -> Optional[Dict[str, Any]]:
         if isinstance(parsed, dict):
             return parsed
     except (ValueError, TypeError):
-        pass
+        pass  # not plain JSON; fall through to the next parse strategy
     match = _JSON_OBJ_RE.search(text)
     if match:
         try:

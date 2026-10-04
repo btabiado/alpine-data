@@ -74,10 +74,9 @@ _FILING_TTL_SECONDS = 30 * 24 * 60 * 60
 # Transaction codes we COUNT toward conviction (open-market discretionary).
 _BUY_CODES = {"P"}
 _SELL_CODES = {"S"}
-# Codes we explicitly drop (mechanical / compensation / planned / gifts /
-# issuer transactions). Anything else (e.g. ``J`` = "other") falls through
-# to the unknown bucket and is also filtered out.
-_FILTERED_CODES = {"A", "M", "F", "G", "D", "I", "C", "E", "H", "K", "L", "O", "U", "V", "W", "X", "Z", "J"}
+# Every other code is dropped: mechanical / compensation / planned / gifts /
+# issuer transactions (A, M, F, G, D, I, C, E, H, K, L, O, U, V, W, X, Z) as
+# well as ``J`` ("other") and anything unrecognised.
 
 # Role-based weights for the conviction score. CEO is weighted most because
 # CEOs control the most information; 10% holders least because they're often

@@ -553,3 +553,20 @@ def test_fetch_cc_per_coin_news_caps_to_top_n(monkeypatch):
     assert call_symbols[-1] == "S24"
     # No coins matched (all empty responses) → `available` flips false.
     assert out["available"] is False
+
+
+# ============================================================================
+# _stale_path — cache keys can embed upstream symbols/ids; the resulting
+# path must always be a single file directly inside the stale dir.
+# ============================================================================
+
+
+def test_stale_path_stays_inside_stale_dir(monkeypatch, tmp_path):
+    stale_dir = tmp_path / ".stale"
+    monkeypatch.setattr(fetch_market, "_STALE_DIR", stale_dir)
+    assert (fetch_market._stale_path("cryptocompare_market_BTC")
+            == stale_dir / "cryptocompare_market_BTC.json")
+    for key in ("../../etc/passwd", "a/b\\c", "..", "", "/abs/path", "x/../../y"):
+        p = fetch_market._stale_path(key)
+        assert p.parent == stale_dir, key
+        assert p.name.endswith(".json"), key

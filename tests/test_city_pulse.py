@@ -795,7 +795,7 @@ def test_insufficient_history_feed_conforms_to_schema():
     try:
         import jsonschema
     except ImportError:
-        pass
+        pass  # jsonschema is optional; the test skips below without it
     if jsonschema is None:
         pytest.skip("jsonschema not installed")
     jsonschema.validate(instance=payload, schema=schema_loaded())

@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-04",
-  "generated_at": "2026-10-04T22:48:01Z",
+  "generated_at": "2026-10-04T22:58:43Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-04",
       "label": null,
-      "note": "40 coins; 8 buy+, 4 sell+",
-      "score": 10,
+      "note": "40 coins; 7 buy+, 5 sell+",
+      "score": 5,
       "stale": false
     },
     "defi_sentiment": {
@@ -55,7 +55,7 @@
       "as_of": "2026-10-04",
       "label": "BALANCED",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": -6,
+      "score": -7,
       "stale": false
     },
     "futures_sentiment_link": {
@@ -101,7 +101,19 @@
       "score": -28,
       "stale": false
     },
-    "whale_sentiment_btc": null,
-    "whale_sentiment_eth": null
+    "whale_sentiment_btc": {
+      "as_of": "2026-10-03",
+      "label": "WHALE DISTRIBUTION",
+      "note": null,
+      "score": -38,
+      "stale": false
+    },
+    "whale_sentiment_eth": {
+      "as_of": "2026-10-03",
+      "label": "WHALE DISTRIBUTION",
+      "note": null,
+      "score": -32,
+      "stale": false
+    }
   }
 }

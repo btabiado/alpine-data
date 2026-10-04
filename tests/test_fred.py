@@ -8,7 +8,7 @@ Covers:
 from __future__ import annotations
 
 from datetime import datetime, timezone
-
+from urllib.parse import urlparse
 
 import fetch_market
 from insights import build_insights
@@ -66,7 +66,7 @@ def test_fetch_fred_skips_dots(monkeypatch):
 
     def _fake_get(url, params=None, headers=None, timeout=None):
         # Sanity check: the URL is the FRED observations endpoint.
-        assert "stlouisfed.org" in url
+        assert urlparse(url).hostname == "api.stlouisfed.org"
         assert params is not None and params.get("api_key") == "test-key-deadbeef"
         return _FakeResp(payload)
 

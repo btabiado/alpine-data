@@ -235,7 +235,7 @@ def fetch_unemployment(city_id, *, api_key=None, session=None) -> Optional[float
         try:
             body = (resp.text or "")[:200]
         except Exception:
-            pass
+            pass  # response body is optional context for the error raised below
         raise BLSError(redact(f"BLS returned HTTP {status} for {series_id}: {body}"))
 
     try:
