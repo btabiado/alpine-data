@@ -1135,10 +1135,15 @@ jobs:
           # /audit/latest.json. daily-audit.yml commits it to audit/daily/ once
           # a day; this just mirrors the committed copy, so a missing report
           # (before the first audit run) makes this a no-op.
-          if ls audit/daily/latest.* >/dev/null 2>&1; then
-            mkdir -p _site/audit
-            cp audit/daily/latest.* _site/audit/
-          fi
+          # Explicit names, not a glob: this step runs with `shopt -s nullglob`
+          # (set above), so an unmatched `latest.*` expands to nothing, `ls`
+          # with no arguments succeeds, and `cp` then fails with no source.
+          for f in audit/daily/latest.md audit/daily/latest.json; do
+            if [ -f "$f" ]; then
+              mkdir -p _site/audit
+              cp "$f" _site/audit/
+            fi
+          done
           # Site-wide 404 page (GitHub Pages serves _site/404.html for any
           # missing path). Dark, mobile-friendly, absolute links home.
           if [ -f site_static/404.html ]; then
