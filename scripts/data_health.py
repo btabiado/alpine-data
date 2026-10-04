@@ -77,6 +77,18 @@ And one hole the old script shared with the dashboard it was guarding:
         oldest input. It lives in build_health_status, not here, so /health/
         and this watchdog resolve age through identical code.
 
+And one hole freshness cannot see at all:
+
+  7. A FRESH NEWEST POINT SAID NOTHING ABOUT THE HISTORY BEHIND IT.
+     data/composites/ lost 2026-08-19..21 and archived whale_sentiment_* as
+     null in every snapshot for two months, and LTHCS crypto lost four
+     September days, all under a green freshness check, because the newest
+     file was always fresh.
+     -> Feeds carry optional `history` specs (scripts/history_continuity.py).
+        The committed-mode run checks the last N days for missing periods,
+        duplicates and null required fields; gaps no real source can fill
+        are disclosed in health/known_gaps.json instead of failing.
+
 Freshness is judged on file CONTENT (last row date / generated_at), never on
 mtime: a stateless CI checkout rewrites every mtime on every run, which would
 make every feed look perpetually fresh. This is inherited from
@@ -99,6 +111,7 @@ Usage
     python scripts/data_health.py --report json       # machine-readable
     python scripts/data_health.py --report issue      # tracking-issue body
     python scripts/data_health.py --remediate         # try to self-heal first
+    python scripts/data_health.py --no-history        # freshness only
 
 Exit codes: 0 = healthy, 1 = at least one feed stale/unknown/unwatched.
 `--report text` and `--report json` carry that verdict. `--report issue` exits
