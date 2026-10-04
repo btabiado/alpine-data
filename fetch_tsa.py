@@ -127,6 +127,11 @@ def archive_get(url):
             if attempt == 2:
                 raise
         time.sleep(ARCHIVE_RETRY_PAUSE)
+    # Unreachable: the last attempt either returns or re-raises. Said out loud
+    # because falling off the end would hand callers None, and every caller
+    # unpacks `text, final_url = archive_get(...)` -- a confusing TypeError far
+    # from the cause. Fail here, by name, if the loop is ever edited wrong.
+    raise RuntimeError("archive_get: retry loop exited without a result")
 
 
 def wayback_latest_timestamp():

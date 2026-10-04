@@ -182,7 +182,10 @@ def test_archive_requests_identify_the_project(env):
     _, _, install = env
     net = install(FakeNet(tsa=[FORBIDDEN], avail=[_availability()], snap=[HTML]))
     fetch_tsa.main()
-    archive_calls = [c for c in net.calls if "archive.org" in c[0]]
+    # Match on the parsed host: a substring test would also accept
+    # "archive.org.example.com" or a path that merely mentions it.
+    archive_calls = [c for c in net.calls
+                     if urllib.parse.urlsplit(c[0]).hostname in ("archive.org", "web.archive.org")]
     assert len(archive_calls) == 2
     for _, headers, timeout in archive_calls:
         assert "+https://github.com/btabiado/alpine-data" in headers["User-agent"]
