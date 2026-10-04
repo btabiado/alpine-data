@@ -1021,3 +1021,72 @@ def test_get_analyst_actions_as_of_invalid_falls_back_to_today() -> None:
         )
     assert baseline == garbage
     assert mock_ticker.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# get_analyst_actions — current yfinance shape (upgrades_downgrades)
+# ---------------------------------------------------------------------------
+#
+# yfinance moved per-firm actions to ``Ticker.upgrades_downgrades`` and made
+# ``Ticker.recommendations`` the monthly summary table; reading the latter
+# returned [] for every ticker. Fixture mirrors the live AAPL frame
+# (2026-10-04): GradeDate index with a time, short action codes.
+
+
+def _upgrades_downgrades_fixture() -> pd.DataFrame:
+    idx = pd.to_datetime([
+        f"{_days_ago(3)} 15:55:51",
+        f"{_days_ago(10)} 11:00:30",
+        f"{_days_ago(12)} 17:40:43",
+        f"{_days_ago(30)} 13:14:37",
+        f"{_days_ago(200)} 09:00:00",
+    ])
+    idx.name = "GradeDate"
+    return pd.DataFrame({
+        "Firm": ["Morgan Stanley", "Needham", "Loop Capital", "TD Cowen", "Old Firm"],
+        "ToGrade": ["Overweight", "Hold", "Buy", "Sell", "Buy"],
+        "FromGrade": ["Overweight", "Hold", "Hold", "Hold", "Hold"],
+        "Action": ["main", "reit", "up", "down", "up"],
+        "priceTargetAction": ["Raises", "", "Raises", "Lowers", ""],
+        "currentPriceTarget": [380.0, 0.0, 400.0, 200.0, 100.0],
+        "priorPriceTarget": [360.0, 0.0, 350.0, 250.0, 90.0],
+    }, index=idx)
+
+
+def _monthly_summary_fixture() -> pd.DataFrame:
+    return pd.DataFrame({
+        "period": ["0m", "-1m"], "strongBuy": [6, 6], "buy": [19, 19],
+        "hold": [13, 13], "sell": [3, 3], "strongSell": [3, 3],
+    })
+
+
+def test_get_analyst_actions_reads_upgrades_downgrades() -> None:
+    mock_ticker = MagicMock()
+    inst = MagicMock()
+    inst.upgrades_downgrades = _upgrades_downgrades_fixture()
+    inst.recommendations = _monthly_summary_fixture()
+    mock_ticker.return_value = inst
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
+        rows = yahoo_events.get_analyst_actions("AAPL", days=90)
+
+    assert [r["firm"] for r in rows] == ["Morgan Stanley", "Needham", "Loop Capital", "TD Cowen"]
+    by = {r["firm"]: r for r in rows}
+    assert set(rows[0]) == {"ticker", "date", "firm", "action", "from_grade",
+                            "to_grade", "direction"}
+    assert by["Loop Capital"]["action"] == "Upgrade"
+    assert by["Loop Capital"]["direction"] == pytest.approx(1.0)
+    assert by["TD Cowen"]["action"] == "Downgrade"
+    assert by["TD Cowen"]["direction"] == pytest.approx(-1.0)
+    assert by["Morgan Stanley"]["direction"] == pytest.approx(0.0)
+    assert by["Morgan Stanley"]["date"] == _days_ago(3)
+    assert by["Morgan Stanley"]["to_grade"] == "Overweight"
+
+
+def test_get_analyst_actions_monthly_summary_alone_yields_no_rows() -> None:
+    mock_ticker = MagicMock()
+    inst = MagicMock()
+    inst.upgrades_downgrades = None
+    inst.recommendations = _monthly_summary_fixture()
+    mock_ticker.return_value = inst
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
+        assert yahoo_events.get_analyst_actions("MSFT", days=90) == []
