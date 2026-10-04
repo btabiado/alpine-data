@@ -105,11 +105,16 @@ SOURCES: dict[str, dict] = {
         # column (a new ETF launches); we only require a core subset so a new
         # fund does not fail the run, and unknown columns are carried through.
         "require": ("IBIT", "FBTC", "GBTC"),
+        # US spot-bitcoin ETFs began trading 2024-01-11. A row dated earlier
+        # cannot be a reading: a hand-pasted 2024-01-01 row duplicating
+        # 2024-01-11 inflated the all-time cumulative by $655.3M for months.
+        "first_trading_day": "2024-01-11",
     },
     "eth": {
         "url": "https://farside.co.uk/ethereum-etf-flow-all-data/",
         "csv": DATA_DIR / "eth_flows.csv",
         "require": ("ETHA", "FETH", "ETHE"),
+        "first_trading_day": "2024-07-23",  # US spot-ether ETFs' first session
     },
 }
 
@@ -361,6 +366,45 @@ def _behaves_like_a_total(rows: list[list[str]], idx: int,
     return considered >= 5 and (agree / considered) >= need
 
 
+def drop_pre_launch(rows: dict[str, list[str]], first_day: str | None) -> list[str]:
+    """Remove (in place) rows dated before the asset's first ETF trading day.
+
+    Returns the dropped dates so the caller can name them on stderr. A flow
+    dated before the funds existed is a paste/parse error by construction.
+    """
+    if not first_day:
+        return []
+    bad = sorted(d for d in rows if d < first_day)
+    for d in bad:
+        del rows[d]
+    return bad
+
+
+def duplicate_value_rows(rows: list[list[str]], min_nonzero: int = 3) -> list[tuple[str, str]]:
+    """Pairs of dates whose per-fund value cells are byte-for-byte identical.
+
+    Only rows with at least ``min_nonzero`` non-zero FUND cells (the trailing
+    Total is excluded) are compared: several funds repeating the exact same
+    flows on two different days is a copy-paste signature, whereas a single
+    fund printing the same number twice (e.g. ETHA -12.8) is a plausible
+    coincidence and must not be flagged.
+    """
+    seen: dict[tuple, str] = {}
+    dupes: list[tuple[str, str]] = []
+    for r in sorted(rows, key=lambda x: x[0]):
+        try:
+            vals = tuple(float(v) for v in r[1:-1])
+        except ValueError:
+            continue
+        if sum(1 for v in vals if v != 0) < min_nonzero:
+            continue
+        if vals in seen:
+            dupes.append((seen[vals], r[0]))
+        else:
+            seen[vals] = r[0]
+    return dupes
+
+
 def read_existing(path: Path) -> tuple[list[str], dict[str, list[str]]]:
     if not path.exists():
         return [], {}
@@ -438,6 +482,16 @@ def refresh(asset: str) -> int:
               file=sys.stderr)
     for r in rows:
         merged[r[0]] = r
+
+    dropped = drop_pre_launch(merged, cfg.get("first_trading_day"))
+    if dropped:
+        print(f"[{asset}] dropping {len(dropped)} row(s) dated before the first "
+              f"ETF trading day {cfg.get('first_trading_day')}: {', '.join(dropped)}",
+              file=sys.stderr)
+    for a, b in duplicate_value_rows(list(merged.values())):
+        # Cannot tell which date is real, so shout instead of guessing.
+        print(f"[{asset}] WARNING: {b} repeats {a}'s per-fund flows exactly — "
+              f"likely a copy-paste row; inspect {path.name}", file=sys.stderr)
 
     out = io.StringIO()
     w = csv.writer(out, lineterminator="\n")

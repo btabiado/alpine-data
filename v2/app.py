@@ -5278,6 +5278,11 @@ function renderCoinbaseIntlPerps(){
   const shorts = perps.filter(p => p && typeof p.funding_rate === 'number' && p.funding_rate < 0)
                       .sort((a,b) => a.funding_rate - b.funding_rate)
                       .slice(0, 6);
+  const cieSt = (DATA.market || {}).coinbase_intl_perps_status || {};
+  const cieWhy = (cieSt.available === false && cieSt.reason)
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">'
+      + 'Coinbase International perps unavailable: ' + escapeHtml(String(cieSt.reason)) + '.</td></tr>'
+    : null;
   const emptyRow = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">'
     + 'No perpetuals in this build\u2019s payload \u2014 an absence, not a reading of zero.</td></tr>';
 
@@ -5300,8 +5305,8 @@ function renderCoinbaseIntlPerps(){
 
   const longsBody  = document.querySelector('#cieLongsTable tbody');
   const shortsBody = document.querySelector('#cieShortsTable tbody');
-  if (longsBody)  longsBody.innerHTML  = longs.length  ? longs.map(rowFor).join('')  : emptyRow;
-  if (shortsBody) shortsBody.innerHTML = shorts.length ? shorts.map(rowFor).join('') : emptyRow;
+  if (longsBody)  longsBody.innerHTML  = longs.length  ? longs.map(rowFor).join('')  : (cieWhy || emptyRow);
+  if (shortsBody) shortsBody.innerHTML = shorts.length ? shorts.map(rowFor).join('') : (cieWhy || emptyRow);
 }
 
 // CADLI BTC reference price chart — 90d daily close from the CoinDesk CADLI
@@ -8058,6 +8063,9 @@ function signalsTop20Freshness(){
 // Coinbase International perp rows now carry the exchange's own quote
 // timestamp (as_of / as_of_ts). Oldest across the rows we actually average.
 function perpsFreshness(){
+  const pfund = (DATA.market || {}).perp_funding;
+  if (pfund) return (pfund.available && pfund.as_of)
+    ? { date: fDay(pfund.as_of), stale: 0, total: (pfund.rows || []).length } : null;
   const perps = ((DATA.market || {}).coinbase_intl_perps) || [];
   if (!Array.isArray(perps) || !perps.length) return null;
   const dates = perps.map(p => fDay(p && (p.as_of || p.as_of_ts))).filter(Boolean);
@@ -13296,7 +13304,9 @@ function renderAiSecFormD(){
     tb.innerHTML = '<tr><td colspan="6" style="padding:14px;color:var(--muted)">No AI-adjacent Form D filings in the last 60 days. EDGAR may be unreachable, or no qualifying issuers filed in that window.</td></tr>';
     return;
   }
-  if (badge) badge.textContent = 'EDGAR · ' + rows.length + ' filings · last 60d';
+  const fdCov = ((DATA.market||{}).ai_funding||{}).form_d_coverage || {};
+  const fdOf = (Number(fdCov.ai_matches) > rows.length) ? (' of ' + fdCov.ai_matches) : '';
+  if (badge) badge.textContent = 'EDGAR · ' + rows.length + fdOf + ' filings · last 60d';
   // Sort by filed_date desc so the freshest deals lead.
   const sorted = rows.slice().sort((a,b) => {
     const da = a && a.filed_date ? Date.parse(a.filed_date) : 0;
@@ -14797,12 +14807,17 @@ function renderOverviewSentiment(){
     components.push(clampScore(avg));
     inputLabels.push('signal avg');
   }
-  // 3) Avg Coinbase Intl perp funding rate. > 0.0001 (0.01%) per +0.0001
-  //    contributes +20; clamp to ±100. Positive funding = crowded longs.
-  const perps = Array.isArray(m.coinbase_intl_perps) ? m.coinbase_intl_perps : [];
-  const rates = perps
-    .map(p => p && Number(p.funding_rate))
-    .filter(v => isFinite(v));
+  // 3) Avg perp funding rate. > 0.0001 (0.01%) per +0.0001 contributes +20;
+  //    clamp to ±100. Positive funding = crowded longs. Sourced from
+  //    market.perp_funding (OKX BTC/ETH/LINK/LTC, fresh rows only): the
+  //    Coinbase Intl perps are paused/delisted and their frozen quotes must not
+  //    vote. Older payloads without perp_funding fall back to the perp rows.
+  const pfund = m.perp_funding || null;
+  const rates = pfund
+    ? ((pfund.available && isFinite(Number(pfund.avg_rate))) ? [Number(pfund.avg_rate)] : [])
+    : (Array.isArray(m.coinbase_intl_perps) ? m.coinbase_intl_perps : [])
+        .map(p => p && Number(p.funding_rate))
+        .filter(v => isFinite(v));
   if (rates.length){
     const avgRate = rates.reduce((a,b)=>a+b,0) / rates.length;
     components.push(clampScore((avgRate / 0.0001) * 20));

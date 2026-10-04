@@ -620,6 +620,12 @@ def build_lthcs_payload() -> dict:
         if isinstance(scores, list) and scores:
             # Top movers by 30d drift (the snapshot field).
             def _drift(row): return row.get("drift_30d") or 0.0
+            def _subs(row):
+                # A pillar in dropped_pillars was not measured: publish null,
+                # never the placeholder older snapshots stored for it.
+                dropped = set(row.get("dropped_pillars") or [])
+                return {k: (None if k in dropped else v)
+                        for k, v in (row.get("subscores") or {}).items()}
             def _row(row):
                 return {
                     "ticker": row.get("ticker"),
@@ -627,7 +633,7 @@ def build_lthcs_payload() -> dict:
                     "band": row.get("band"),
                     "drift_30d": row.get("drift_30d"),
                     "sector": row.get("sector"),
-                    "subscores": row.get("subscores") or {},
+                    "subscores": _subs(row),
                 }
             sorted_by_drift = sorted(
                 [r for r in scores if r.get("ticker")],
@@ -638,6 +644,24 @@ def build_lthcs_payload() -> dict:
                 "gainers": [_row(r) for r in sorted_by_drift[:5]],
                 "decliners": [_row(r) for r in sorted_by_drift[-5:][::-1]],
             }
+            # 30d drift whose window straddles a methodology break mixes a
+            # model/coverage change into the move: say so next to the movers.
+            snap_date = snap.get("calc_date") or snap_file.stem
+            try:
+                from datetime import timedelta as _td30
+                from lthcs import methodology as _meth
+                anchor = (datetime.strptime(snap_date, "%Y-%m-%d")
+                          - _td30(days=30)).strftime("%Y-%m-%d")
+                spanned = _meth.breaks_between(anchor, snap_date)
+            except Exception:
+                spanned = []
+            if spanned:
+                out["movers"]["methodology_breaks"] = spanned
+                out["movers"]["note"] = (
+                    "30d drift spans a methodology change on "
+                    + ", ".join(b["date"] for b in spanned)
+                    + " (" + "; ".join(b["summary"] for b in spanned)
+                    + "): part of these moves is the model change, not the market.")
             out["universe_count"] = len(scores)
             out.setdefault("as_of", snap.get("calc_date"))
             out["available"] = True
@@ -655,6 +679,27 @@ def build_lthcs_payload() -> dict:
         print(f"[lthcs] insights error: {e}", file=sys.stderr)
         out["insights"] = []
     return out
+
+
+def _methodology_breaks_between(start_exclusive, end_inclusive) -> list:
+    """LTHCS methodology breaks inside (start, end]; [] if unavailable."""
+    try:
+        from lthcs import methodology as _meth
+        return _meth.breaks_between(start_exclusive, end_inclusive)
+    except Exception:
+        return []
+
+
+def _methodology_insight(spanned: list, what: str) -> dict:
+    dates = ", ".join(b["date"] for b in spanned)
+    return {
+        "category": "methodology",
+        "icon": "🛠️",
+        "headline": f"Methodology change {dates}: {what} — not a market signal",
+        "detail": "; ".join(b["detail"] for b in spanned),
+        "severity": "medium",
+        "methodology_breaks": [b["date"] for b in spanned],
+    }
 
 
 def compute_lthcs_insights(
@@ -773,7 +818,13 @@ def compute_lthcs_insights(
                         s_today = float(index_today.get("score") or 0)
                         s_yest = float(y.get("score") or 0)
                         delta = s_today - s_yest
-                        if abs(delta) >= 1:
+                        spanned = _methodology_breaks_between(
+                            yest.strftime("%Y-%m-%d"), as_of)
+                        if spanned and abs(delta) >= 1:
+                            candidates.append(_methodology_insight(
+                                spanned, f"Composite Index moved {s_yest:+.0f} → "
+                                         f"{s_today:+.0f} over {back}d"))
+                        elif abs(delta) >= 1:
                             sev = "high" if abs(delta) >= 10 else \
                                   "medium" if abs(delta) >= 5 else "low"
                             arrow = "▲" if delta > 0 else "▼"
@@ -858,6 +909,7 @@ def compute_lthcs_insights(
                 })
 
     # ---- (8): Band moves vs. yesterday ----
+    band_window = None
     if history_dir.exists():
         band_changes = []
         try:
@@ -880,6 +932,7 @@ def compute_lthcs_insights(
                 latest, prev = by_date[0], by_date[1]
                 if latest.get("band") and prev.get("band") and \
                         latest.get("band") != prev.get("band"):
+                    band_window = (prev.get("date"), latest.get("date"))
                     band_changes.append({
                         "ticker": hd.get("ticker") or hp.stem,
                         "from_band": prev.get("band"),
@@ -899,13 +952,21 @@ def compute_lthcs_insights(
                 f"({c['score_delta']:+.1f})"
                 for c in top3
             )
-            candidates.append({
-                "category": "movers",
-                "icon": "📈",
-                "headline": f"{len(band_changes)} tickers shifted band overnight",
-                "detail": tail,
-                "severity": "medium",
-            })
+            # A band shift across a methodology break (2026-10-04: SEC
+            # financial data restored, 98 tickers changed band) is the model
+            # changing, not the market: relabel instead of a movers signal.
+            spanned = _methodology_breaks_between(*band_window) if band_window else []
+            if spanned:
+                candidates.append(_methodology_insight(
+                    spanned, f"{len(band_changes)} tickers shifted band"))
+            else:
+                candidates.append({
+                    "category": "movers",
+                    "icon": "📈",
+                    "headline": f"{len(band_changes)} tickers shifted band overnight",
+                    "detail": tail,
+                    "severity": "medium",
+                })
 
     # ---- Prioritize: high > medium > low, with category diversity ----
     candidates.sort(key=lambda i: SEV_RANK.get(i.get("severity"), 9))
@@ -5992,6 +6053,9 @@ function signalCardAsOfTitle(s){
 // Coinbase International perp rows carry the exchange's own quote timestamp
 // (as_of / as_of_ts). Oldest across the rows we actually average.
 function perpsFreshness(){
+  const pfund = (DATA.market || {}).perp_funding;
+  if (pfund) return (pfund.available && pfund.as_of)
+    ? { date: fDay(pfund.as_of), stale: 0, total: (pfund.rows || []).length } : null;
   const perps = ((DATA.market || {}).coinbase_intl_perps) || [];
   if (!Array.isArray(perps) || !perps.length) return null;
   const dates = perps.map(p => fDay(p && (p.as_of || p.as_of_ts))).filter(Boolean);
@@ -6222,7 +6286,8 @@ function moneyFlowFreshness(){
   const src = mfx.sources || {};
   const parts = [];
   const named = [];
-  const mmfD = fLast((src.mmf || {}).weekly);
+  // A FRED fallback MMF block (ICI blocked) is display-only, not a composite input.
+  const mmfD = (src.mmf || {}).fallback ? null : fLast((src.mmf || {}).weekly);
   if (mmfD){ parts.push(mmfD); named.push('ICI money-market weekly'); }
   const mfD = fLast((src.mf_flows || {}).weekly);
   if (mfD){ parts.push(mfD); named.push('ICI equity mutual-fund weekly'); }
@@ -7124,6 +7189,11 @@ function renderCoinbaseIntlPerps(){
   const shorts = perps.filter(p => p && typeof p.funding_rate === 'number' && p.funding_rate < 0)
                       .sort((a,b) => a.funding_rate - b.funding_rate)
                       .slice(0, 6);
+  const cieSt = (DATA.market || {}).coinbase_intl_perps_status || {};
+  const cieWhy = (cieSt.available === false && cieSt.reason)
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">'
+      + 'Coinbase International perps unavailable: ' + escapeHtml(String(cieSt.reason)) + '.</td></tr>'
+    : null;
   const emptyRow = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">No perpetuals data — wait for next refresh</td></tr>';
 
   function rowFor(p){
@@ -7145,8 +7215,8 @@ function renderCoinbaseIntlPerps(){
 
   const longsBody  = document.querySelector('#cieLongsTable tbody');
   const shortsBody = document.querySelector('#cieShortsTable tbody');
-  if (longsBody)  longsBody.innerHTML  = longs.length  ? longs.map(rowFor).join('')  : emptyRow;
-  if (shortsBody) shortsBody.innerHTML = shorts.length ? shorts.map(rowFor).join('') : emptyRow;
+  if (longsBody)  longsBody.innerHTML  = longs.length  ? longs.map(rowFor).join('')  : (cieWhy || emptyRow);
+  if (shortsBody) shortsBody.innerHTML = shorts.length ? shorts.map(rowFor).join('') : (cieWhy || emptyRow);
 }
 
 // CADLI BTC reference price chart — 90d daily close from the CoinDesk CADLI
@@ -8529,9 +8599,21 @@ function renderMoneyFlowTab(){
     const src = mfx.sources || {};
     const blocks = [];
 
+    // A leg the fetcher could not read ships available:false + a reason;
+    // disclose it instead of silently dropping the block.
+    const unavailBlock = (title, b) => `
+        <div style="padding:8px 0;border-top:1px solid #1f2533">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em">${title}</div>
+          <div style="font-size:11px;color:#fb923c;margin-top:2px">Unavailable — ${escapeHtml(String(b.unavailable_reason))}</div>
+        </div>`;
+    const srcNote = b => b && b.note
+      ? `<div class="sub" style="font-size:10px;color:#fb923c;margin-top:2px">${escapeHtml(String(b.note))}</div>` : '';
+
     // Money-market funds (cash on the sidelines).
     const mmf = src.mmf || null;
-    if (mmf && Array.isArray(mmf.weekly) && mmf.weekly.length){
+    if (mmf && (!Array.isArray(mmf.weekly) || !mmf.weekly.length) && mmf.unavailable_reason){
+      blocks.push(unavailBlock('MONEY-MARKET FUNDS', mmf));
+    } else if (mmf && Array.isArray(mmf.weekly) && mmf.weekly.length){
       const latest = mmf.weekly[mmf.weekly.length - 1] || {};
       const unit = escapeHtml(mmf.unit || 'USD billions');
       // MMF balances are trillions-scale — roll >=$1,000B up to $T for readability.
@@ -8560,12 +8642,15 @@ function renderMoneyFlowTab(){
           </div>
           ${wowHtml}
           <div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">week of ${escapeHtml(latest.date || mmf.as_of || '—')}</div>
+          ${srcNote(mmf)}
         </div>`);
     }
 
     // Equity mutual-fund flows.
     const mf = src.mf_flows || null;
-    if (mf && Array.isArray(mf.weekly) && mf.weekly.length){
+    if (mf && (!Array.isArray(mf.weekly) || !mf.weekly.length) && mf.unavailable_reason){
+      blocks.push(unavailBlock('EQUITY MUTUAL-FUND FLOWS', mf));
+    } else if (mf && Array.isArray(mf.weekly) && mf.weekly.length){
       const latest = mf.weekly[mf.weekly.length - 1] || {};
       const unit = escapeHtml(mf.unit || 'USD billions');
       const fmtB = v => {
@@ -12720,7 +12805,9 @@ function renderAiSecFormD(){
     tb.innerHTML = '<tr><td colspan="6" style="padding:14px;color:var(--muted)">No AI-adjacent Form D filings in the last 60 days. EDGAR may be unreachable, or no qualifying issuers filed in that window.</td></tr>';
     return;
   }
-  if (badge) badge.textContent = 'EDGAR · ' + rows.length + ' filings · last 60d';
+  const fdCov = ((DATA.market||{}).ai_funding||{}).form_d_coverage || {};
+  const fdOf = (Number(fdCov.ai_matches) > rows.length) ? (' of ' + fdCov.ai_matches) : '';
+  if (badge) badge.textContent = 'EDGAR · ' + rows.length + fdOf + ' filings · last 60d';
   // Sort by filed_date desc so the freshest deals lead.
   const sorted = rows.slice().sort((a,b) => {
     const da = a && a.filed_date ? Date.parse(a.filed_date) : 0;
@@ -13993,12 +14080,17 @@ function renderOverviewSentiment(){
     components.push(clampScore(avg));
     inputLabels.push('signal avg');
   }
-  // 3) Avg Coinbase Intl perp funding rate. > 0.0001 (0.01%) per +0.0001
-  //    contributes +20; clamp to ±100. Positive funding = crowded longs.
-  const perps = Array.isArray(m.coinbase_intl_perps) ? m.coinbase_intl_perps : [];
-  const rates = perps
-    .map(p => p && Number(p.funding_rate))
-    .filter(v => isFinite(v));
+  // 3) Avg perp funding rate. > 0.0001 (0.01%) per +0.0001 contributes +20;
+  //    clamp to ±100. Positive funding = crowded longs. Sourced from
+  //    market.perp_funding (OKX BTC/ETH/LINK/LTC, fresh rows only): the
+  //    Coinbase Intl perps are paused/delisted and their frozen quotes must not
+  //    vote. Older payloads without perp_funding fall back to the perp rows.
+  const pfund = m.perp_funding || null;
+  const rates = pfund
+    ? ((pfund.available && isFinite(Number(pfund.avg_rate))) ? [Number(pfund.avg_rate)] : [])
+    : (Array.isArray(m.coinbase_intl_perps) ? m.coinbase_intl_perps : [])
+        .map(p => p && Number(p.funding_rate))
+        .filter(v => isFinite(v));
   if (rates.length){
     const avgRate = rates.reduce((a,b)=>a+b,0) / rates.length;
     components.push(clampScore((avgRate / 0.0001) * 20));

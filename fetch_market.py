@@ -169,9 +169,29 @@ def coingecko_market(asset_id: str, days: int = 365) -> dict:
     return out if isinstance(out, dict) else {"price": [], "volume": [], "market_cap": []}
 
 
-def coinbase_intl_perpetuals() -> list[dict]:
+# A perp row only describes the market if the instrument is actually trading
+# and its quote is recent. On 2026-10-04 every Coinbase International PERP was
+# PAUSED (131) or DELISTED (133) with quotes frozen at 2026-09-03 / 2026-10-01,
+# yet those frozen predicted-funding values kept feeding the Overview
+# "Crypto Market Sentiment" composite as if live.
+CB_INTL_MAX_QUOTE_AGE_H = 24
+_CB_INTL_LAST_STATUS: dict = {}
+
+
+def _parse_iso_utc(ts: Any) -> datetime | None:
+    if not isinstance(ts, str) or not ts:
+        return None
+    try:
+        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def coinbase_intl_perpetuals(now: datetime | None = None) -> list[dict]:
     """Coinbase International Exchange — funding rate + mark price + open
-    interest for every PERP (~246 of them). Public endpoint, no auth.
+    interest for every PERP that is TRADING with a quote < 24h old. Public
+    endpoint, no auth.
 
     Works from US IPs (Binance's /fapi endpoint returns 451 from US, this
     one returns 200). Use case: cross-exchange perpetual positioning view
@@ -180,13 +200,27 @@ def coinbase_intl_perpetuals() -> list[dict]:
     settle at the next funding interval — i.e. forward-looking funding,
     most useful for spotting crowded positioning right now.
 
+    Instruments whose ``trading_state`` is not TRADING (PAUSED/DELISTED) or
+    whose quote is older than ``CB_INTL_MAX_QUOTE_AGE_H`` are dropped; the
+    counts and the reason land in ``_CB_INTL_LAST_STATUS`` (published as
+    ``market.coinbase_intl_perps_status``) so an empty table says why.
+
     Returns rows sorted by funding_rate descending (most crowded long first).
     Empty list on any failure.
     """
+    now = now or datetime.now(timezone.utc)
+    checked_at = now.isoformat(timespec="seconds")
+    _CB_INTL_LAST_STATUS.clear()
     j = _get("https://api.international.coinbase.com/api/v1/instruments")
     if not j or not isinstance(j, list):
+        _CB_INTL_LAST_STATUS.update({"available": False, "checked_at": checked_at,
+                                     "reason": "instruments endpoint unreachable"})
         return []
     out: list[dict] = []
+    total = 0
+    states: dict[str, int] = {}
+    stale_quotes = 0
+    newest_quote: str | None = None
     for it in j:
         if it.get("type") != "PERP":
             continue
@@ -194,6 +228,7 @@ def coinbase_intl_perpetuals() -> list[dict]:
         sym = sym_full.replace("-PERP", "")
         if not sym:
             continue
+        total += 1
         quote = it.get("quote") or {}
         # Coinbase stamps each quote object with its own ISO-8601 UTC
         # `timestamp` (same object that carries predicted_funding), which
@@ -204,6 +239,16 @@ def coinbase_intl_perpetuals() -> list[dict]:
         # upstream timestamp renders as "unavailable" instead of "now".
         q_ts = quote.get("timestamp") or it.get("timestamp")
         q_ts = q_ts if isinstance(q_ts, str) and q_ts else None
+        if q_ts and (newest_quote is None or q_ts > newest_quote):
+            newest_quote = q_ts
+        state = it.get("trading_state")
+        if state is not None and state != "TRADING":
+            states[str(state)] = states.get(str(state), 0) + 1
+            continue
+        q_dt = _parse_iso_utc(q_ts)
+        if q_dt is None or (now - q_dt) > timedelta(hours=CB_INTL_MAX_QUOTE_AGE_H):
+            stale_quotes += 1
+            continue
         try:
             out.append({
                 "symbol":         sym,
@@ -222,6 +267,55 @@ def coinbase_intl_perpetuals() -> list[dict]:
         except (ValueError, TypeError):
             continue
     out.sort(key=lambda r: r["funding_rate"], reverse=True)
+    status = {"available": bool(out), "checked_at": checked_at,
+              "perps_total": total, "trading_fresh": len(out),
+              "excluded_by_state": states, "excluded_stale_quote": stale_quotes,
+              "max_quote_age_hours": CB_INTL_MAX_QUOTE_AGE_H,
+              "newest_quote": newest_quote}
+    if not out:
+        bits = [f"{n} {st}" for st, n in sorted(states.items())]
+        if stale_quotes:
+            bits.append(f"{stale_quotes} with quotes older than {CB_INTL_MAX_QUOTE_AGE_H}h")
+        status["reason"] = (f"no Coinbase International perp is trading with a fresh quote "
+                            f"({', '.join(bits) or 'no PERP instruments'}"
+                            + (f"; newest quote {newest_quote}" if newest_quote else "") + ")")
+    _CB_INTL_LAST_STATUS.update(status)
+    return out
+
+
+def perp_funding_summary(funding_by_symbol: dict, now: datetime | None = None,
+                         max_age_days: int = 2) -> dict:
+    """Perp-funding input for the Overview sentiment composite, from OKX.
+
+    ``funding_by_symbol`` maps a symbol to ``okx_funding`` output (daily mean
+    of OKX's per-settlement rates, oldest->newest). Each symbol contributes its
+    newest row if that row is within ``max_age_days``; ``as_of`` is the OLDEST
+    contributing date (a composite is only as fresh as its oldest input).
+    Replaces the Coinbase International perps, which stopped trading."""
+    now = now or datetime.now(timezone.utc)
+    cutoff = (now - timedelta(days=max_age_days)).strftime("%Y-%m-%d")
+    rows, excluded = [], []
+    for sym, series in (funding_by_symbol or {}).items():
+        last = next((r for r in reversed(series or [])
+                     if isinstance(r, dict) and r.get("rate") is not None
+                     and isinstance(r.get("date"), str)), None)
+        if last is None:
+            excluded.append({"symbol": sym, "reason": "no funding rows"})
+            continue
+        if last["date"][:10] < cutoff:
+            excluded.append({"symbol": sym, "reason": f"newest row {last['date'][:10]} is stale"})
+            continue
+        rows.append({"symbol": sym, "rate": float(last["rate"]), "as_of": last["date"][:10]})
+    out = {
+        "source": "OKX USDT-margined perpetual swaps (daily mean of settlement funding rates)",
+        "available": bool(rows),
+        "rows": rows,
+        "excluded": excluded,
+        "avg_rate": (sum(r["rate"] for r in rows) / len(rows)) if rows else None,
+        "as_of": min(r["as_of"] for r in rows) if rows else None,
+    }
+    if not rows:
+        out["reason"] = "no OKX funding row within %d days" % max_age_days
     return out
 
 
@@ -555,8 +649,50 @@ def coingecko_trending() -> list[dict]:
     return out
 
 
+def _pct_change(now_v, then_v):
+    """Percent change now vs then, or None when either side is unusable."""
+    try:
+        now_f, then_f = float(now_v), float(then_v)
+    except (TypeError, ValueError):
+        return None
+    if then_f == 0:
+        return None
+    return (now_f / then_f - 1.0) * 100.0
+
+
+def _chain_changes_from_history(points: Any) -> dict:
+    """1d/7d/30d % change from a ``/v2/historicalChainTvl/{chain}`` body.
+
+    Compares the newest daily point with the point exactly 1/7/30 UTC days
+    earlier (matched by day, not by list offset, so a gap in the series yields
+    None instead of a change over the wrong span)."""
+    by_day: dict[int, float] = {}
+    for p in points or []:
+        try:
+            by_day[int(p.get("date")) // 86400] = float(p.get("tvl"))
+        except (TypeError, ValueError, AttributeError):
+            continue
+    if not by_day:
+        return {}
+    last = max(by_day)
+    cur = by_day[last]
+    return {
+        "change_1d_pct": _pct_change(cur, by_day.get(last - 1)),
+        "change_7d_pct": _pct_change(cur, by_day.get(last - 7)),
+        "change_1m_pct": _pct_change(cur, by_day.get(last - 30)),
+        "change_as_of": datetime.fromtimestamp(last * 86400, tz=timezone.utc).strftime("%Y-%m-%d"),
+    }
+
+
 def defillama_chains(top: int = 20) -> list[dict]:
-    """TVL across all blockchain ecosystems (Ethereum, Solana, etc.)."""
+    """TVL across all blockchain ecosystems (Ethereum, Solana, etc.).
+
+    DeFiLlama's free ``/v2/chains`` stopped returning ``change_1d/7d/1m``
+    (verified 2026-10-04: only name/tvl/tokenSymbol/gecko_id/cmcId/chainId),
+    which left every chain's change null and starved the TVL-momentum
+    composite. When the snapshot lacks them, the changes are derived per
+    top-N chain from ``/v2/historicalChainTvl/{chain}``; a chain whose
+    history cannot be fetched keeps null (never a guessed 0)."""
     j = _get("https://api.llama.fi/v2/chains")
     if not j or not isinstance(j, list):
         return []
@@ -572,7 +708,22 @@ def defillama_chains(top: int = 20) -> list[dict]:
             "cmc_id": c.get("cmcId"),
         })
     chains.sort(key=lambda x: x.get("tvl_usd") or 0, reverse=True)
-    return chains[:top]
+    chains = chains[:top]
+    for c in chains:
+        if all(c.get(k) is not None for k in ("change_1d_pct", "change_7d_pct", "change_1m_pct")):
+            continue
+        if not c.get("name"):
+            continue
+        hist = _get(f"https://api.llama.fi/v2/historicalChainTvl/{c['name']}")
+        derived = _chain_changes_from_history(hist if isinstance(hist, list) else [])
+        if not derived:
+            continue
+        for k in ("change_1d_pct", "change_7d_pct", "change_1m_pct"):
+            if c.get(k) is None:
+                c[k] = derived.get(k)
+        c["change_source"] = "historicalChainTvl"
+        c["change_as_of"] = derived.get("change_as_of")
+    return chains
 
 
 def defillama_historical_tvl(chain: str = "Ethereum") -> list[dict]:
@@ -590,8 +741,30 @@ def defillama_historical_tvl(chain: str = "Ethereum") -> list[dict]:
     return out[-365:]  # keep last year
 
 
+def _protocols2_enrichment(j: Any) -> tuple[dict, dict]:
+    """(by_name, parent_by_id) from DeFiLlama ``/lite/protocols2``.
+
+    That endpoint still carries ``tvlPrevMonth`` per protocol and a
+    ``parentProtocols`` list with each parent token's ``mcap``."""
+    if not isinstance(j, dict):
+        return {}, {}
+    by_name = {p.get("name"): p for p in (j.get("protocols") or [])
+               if isinstance(p, dict) and p.get("name")}
+    parents = {p.get("id"): p for p in (j.get("parentProtocols") or [])
+               if isinstance(p, dict) and p.get("id")}
+    return by_name, parents
+
+
 def defillama_protocols(top: int = 25) -> list[dict]:
-    """Top DeFi protocols by TVL with 1d/7d/1m changes."""
+    """Top DeFi protocols by TVL with 1d/7d/1m changes.
+
+    ``/protocols`` no longer returns ``change_1m`` (null on 25/25 rows) and
+    reports ``mcap`` only for protocols that own a CoinGecko id, so child
+    protocols (Aave V3, Morpho Blue, ...) read null. Both are filled from
+    ``/lite/protocols2``: ``change_1m`` from its ``tvl``/``tvlPrevMonth`` and
+    ``mcap`` from the parent protocol's token (tagged ``mcap_source``). Rows
+    that still have no value (CEX entries carry no 30d baseline; tokenless
+    entries have no market cap) say why in ``unavailable``."""
     j = _get("https://api.llama.fi/protocols")
     if not j or not isinstance(j, list):
         return []
@@ -608,9 +781,36 @@ def defillama_protocols(top: int = 25) -> list[dict]:
             "change_1m_pct": p.get("change_1m"),
             "mcap_usd": p.get("mcap"),
             "url": p.get("url"),
+            "_parent": p.get("parentProtocol"),
         })
     out.sort(key=lambda x: x.get("tvl_usd") or 0, reverse=True)
-    return out[:top]
+    out = out[:top]
+    by_name: dict = {}
+    parents: dict = {}
+    if any(r.get("change_1m_pct") is None or r.get("mcap_usd") is None for r in out):
+        by_name, parents = _protocols2_enrichment(_get("https://api.llama.fi/lite/protocols2"))
+    for r in out:
+        parent_id = r.pop("_parent", None)
+        lite = by_name.get(r.get("name")) or {}
+        missing: dict = {}
+        if r.get("change_1m_pct") is None:
+            r["change_1m_pct"] = _pct_change(lite.get("tvl"), lite.get("tvlPrevMonth"))
+            if r["change_1m_pct"] is None:
+                missing["change_1m_pct"] = (
+                    "no 30d TVL baseline published for CEX entries"
+                    if (r.get("category") == "CEX") else "no 30d TVL baseline from DeFiLlama")
+        if r.get("mcap_usd") is None:
+            parent = parents.get(parent_id) if parent_id else None
+            if parent and parent.get("mcap") is not None:
+                r["mcap_usd"] = parent.get("mcap")
+                r["mcap_source"] = f"parent token ({parent.get('symbol') or parent.get('name')})"
+            elif not r.get("symbol") or r.get("symbol") == "-":
+                missing["mcap_usd"] = "no token"
+            else:
+                missing["mcap_usd"] = "market cap not reported by DeFiLlama"
+        if missing:
+            r["unavailable"] = missing
+    return out
 
 
 def defillama_yields_stablecoin_top(top: int = 20) -> list[dict]:
@@ -1322,13 +1522,20 @@ def _ai_keyword_hit(name: str) -> bool:
     return False
 
 
+def _sec_headers() -> dict:
+    """SEC fair-access headers. Prefer the operator-supplied SEC_USER_AGENT
+    secret (a real contact, as SEC asks) and fall back to the generic UA."""
+    ua = (os.environ.get("SEC_USER_AGENT") or "").strip() or SEC_UA
+    return {"User-Agent": ua, "Accept": "application/json"}
+
+
 def _sec_get(url: str, params: dict | None = None, timeout: int = 20):
     """SEC-flavored requests.get that always uses the polite UA. Returns
     the parsed JSON (or text for non-JSON endpoints) or None on failure.
     Honors EDGAR's preferred 10 req/sec ceiling implicitly by being called
     serially in the fetcher with a small sleep between calls."""
     try:
-        r = requests.get(url, params=params, headers=SEC_HEADERS, timeout=timeout)
+        r = requests.get(url, params=params, headers=_sec_headers(), timeout=timeout)
         if r.status_code != 200:
             print(f"  [sec] {url} -> {r.status_code}", file=sys.stderr)
             return None
@@ -1400,15 +1607,46 @@ def _parse_form_d_xml(xml_text: str) -> dict:
 
     out["total_offering_amount"] = _ffloat("totalOfferingAmount")
     out["total_amount_sold"]     = _ffloat("totalAmountSold")
-    out["date_of_first_sale"]    = _ftext("dateOfFirstSale")
+    # Live EDGAR schema nests the date: <dateOfFirstSale><value>YYYY-MM-DD
+    # </value></dateOfFirstSale>, or <yetToOccur>true</yetToOccur> when no
+    # sale has happened. Older/flat docs carry the date as direct text.
+    first_sale = _ftext("dateOfFirstSale/value") or _ftext("dateOfFirstSale")
+    if not first_sale and _ftext("dateOfFirstSale/yetToOccur").lower() == "true":
+        first_sale = "yet to occur"
+    out["date_of_first_sale"] = first_sale
     try:
-        ex_nodes = root.findall(".//exemption")
+        # Live schema: <federalExemptionsExclusions><item>06b</item>...;
+        # some docs use <exemption> leaves instead.
+        ex_nodes = (root.findall(".//federalExemptionsExclusions/item")
+                    or root.findall(".//exemption"))
         out["exemptions"] = [
             (n.text or "").strip() for n in ex_nodes if n.text and n.text.strip()
         ]
     except Exception:
         out["exemptions"] = []
     return out
+
+
+# Server-side EDGAR full-text query. The unfiltered Form D firehose is
+# >=10,000 filings per 60 days and EDGAR caps paging at 10,000, so scanning
+# "the first 100 hits" (the old approach) only ever saw ONE filing day. Asking
+# EDGAR for the AI terms instead returns ~200 hits for 60 days, which we page
+# through completely; the issuer-name matcher below then keeps only names
+# that are themselves AI-adjacent (a full-text hit can come from a related
+# person's name or an address).
+_SEC_FTS_QUERY = " OR ".join(
+    f'"{kw}"' if (" " in kw or "." in kw) else kw
+    for kw in ("ai", "artificial intelligence", "machine learning", "neural",
+               "deep learning", "gpt", "llm", "agentic", "robotics",
+               "autonomous", "openai", "anthropic", "inference")
+)
+_SEC_FTS_PAGE = 100          # EDGAR FTS page size (fixed upstream)
+_SEC_FTS_MAX_PAGES = 20      # hard stop: 2,000 hits; a real 60d window is ~2-3 pages
+_SEC_MIN_GAP_S = 0.15        # ~6 req/s, under SEC's 10 req/s fair-access ceiling
+
+# Coverage of the most recent sweep, published next to the rows so the UI can
+# say "N of M" instead of implying the list is the whole window.
+_SEC_FORM_D_LAST_COVERAGE: dict = {}
 
 
 def _fetch_sec_form_d_filings_impl(
@@ -1420,29 +1658,54 @@ def _fetch_sec_form_d_filings_impl(
     optionally enrich each with offering-amount fields from primary_doc.xml.
 
     Steps:
-      1. One full-text search request: `forms=D&dateRange=custom&startdt=...`
-         returns up to 100 hits in chronological order (newest first).
-      2. Filter hits by AI keywords in the issuer display_name.
+      1. Full-text search ``forms=D`` over ``[today-days, today]`` with the AI
+         terms as a server-side OR query, paging with ``from=`` until every
+         hit is read (sleeping between pages for SEC's 10 req/s limit).
+      2. Keep hits whose issuer display_name passes ``_ai_keyword_hit``,
+         de-duplicated by accession, newest first. Exemptions come straight
+         from the hit's ``items`` (e.g. 06B, 3C.7).
       3. Take the top `max_results`. If `enrich_details` is True, fetch
-         each filing's primary_doc.xml (with a 0.15s gap between requests
-         to stay below SEC's 10 req/sec ceiling).
+         each filing's primary_doc.xml for offering amounts and date of
+         first sale.
 
     Returns a list of dicts ready for the AI tab renderer.
     """
     end = datetime.now(timezone.utc).date()
     start = end - timedelta(days=days)
-    params = {
-        "q": "",
+    base = {
+        "q": _SEC_FTS_QUERY,
         "forms": "D",
         "dateRange": "custom",
         "startdt": start.isoformat(),
         "enddt": end.isoformat(),
     }
-    j = _sec_get("https://efts.sec.gov/LATEST/search-index", params=params)
-    if not isinstance(j, dict):
-        return []
-    hits = (((j.get("hits") or {}).get("hits")) or [])
+    hits: list = []
+    total = None
+    pages = 0
+    for page in range(_SEC_FTS_MAX_PAGES):
+        params = dict(base)
+        if page:
+            params["from"] = page * _SEC_FTS_PAGE
+            time.sleep(_SEC_MIN_GAP_S)
+        j = _sec_get("https://efts.sec.gov/LATEST/search-index", params=params)
+        if not isinstance(j, dict):
+            if page == 0:
+                return []
+            break  # keep what earlier pages returned
+        pages += 1
+        h = (j.get("hits") or {})
+        if total is None:
+            t = h.get("total")
+            total = t.get("value") if isinstance(t, dict) else t
+        batch = h.get("hits") or []
+        hits.extend(batch)
+        if len(batch) < _SEC_FTS_PAGE:
+            break
+        if isinstance(total, int) and len(hits) >= total:
+            break
+
     rows: list[dict] = []
+    seen: set = set()
     for h in hits:
         src = h.get("_source") or {}
         names = src.get("display_names") or []
@@ -1460,10 +1723,14 @@ def _fetch_sec_form_d_filings_impl(
         # "0001234567-25-000123:primary_doc.xml" — the part before the colon
         # is the accession number.
         raw_id = h.get("_id") or ""
-        adsh = raw_id.split(":", 1)[0] if raw_id else ""
+        adsh = src.get("adsh") or (raw_id.split(":", 1)[0] if raw_id else "")
+        if adsh and adsh in seen:
+            continue
+        seen.add(adsh)
         ciks = src.get("ciks") or []
         cik = ciks[0] if ciks else ""
         file_date = src.get("file_date") or ""
+        items = [str(x) for x in (src.get("items") or []) if x]
         rows.append({
             "issuer": clean_name,
             "cik": cik,
@@ -1475,10 +1742,25 @@ def _fetch_sec_form_d_filings_impl(
             "total_offering_amount": None,
             "total_amount_sold": None,
             "date_of_first_sale": "",
-            "exemptions": [],
+            # The search hit already carries the claimed exemptions; the XML
+            # pass overwrites them only if it finds its own list.
+            "exemptions": items,
         })
-        if len(rows) >= max_results:
-            break
+
+    rows.sort(key=lambda r: r.get("filed_date") or "", reverse=True)
+    matched = len(rows)
+    rows = rows[:max_results]
+    _SEC_FORM_D_LAST_COVERAGE.clear()
+    _SEC_FORM_D_LAST_COVERAGE.update({
+        "window_days": days,
+        "window": [start.isoformat(), end.isoformat()],
+        "fts_hits_total": total,
+        "fts_hits_scanned": len(hits),
+        "pages": pages,
+        "complete": isinstance(total, int) and len(hits) >= total,
+        "ai_matches": matched,
+        "shown": len(rows),
+    })
 
     if enrich_details and rows:
         for row in rows:
@@ -1486,13 +1768,16 @@ def _fetch_sec_form_d_filings_impl(
                 continue
             url = _sec_primary_doc_url(row["cik"], row["accession"])
             xml_text = _sec_get(url)
-            # Be polite — sleep 0.15s between filing fetches (~6 req/sec
+            # Be polite — sleep between filing fetches (~6 req/sec
             # ceiling, well under SEC's 10 req/sec limit).
-            time.sleep(0.15)
+            time.sleep(_SEC_MIN_GAP_S)
             if not isinstance(xml_text, str):
                 continue
             parsed = _parse_form_d_xml(xml_text)
-            row.update(parsed)
+            # Only overwrite with values the XML actually carried, so the
+            # exemptions taken from the search hit survive an XML without them.
+            row.update({k: v for k, v in parsed.items()
+                        if v not in (None, "", [])})
 
     return rows
 
@@ -1533,13 +1818,17 @@ def fetch_ai_funding() -> dict:
     hn_news = fetch_ai_funding_news_hn(30, 40)
     print(f"    -> {len(hn_news)} HN funding stories")
     print("  AI funding: SEC EDGAR Form D (AI issuers, last 60d)...")
-    form_d = fetch_sec_form_d_filings(60, 20, True)
-    print(f"    -> {len(form_d)} Form D filings (AI-adjacent)")
+    _SEC_FORM_D_LAST_COVERAGE.clear()
+    form_d = fetch_sec_form_d_filings(60, 50, True)
+    form_d_cov = dict(_SEC_FORM_D_LAST_COVERAGE) or {"window_days": 60, "stale_fallback": True}
+    print(f"    -> {len(form_d)} Form D filings (AI-adjacent; "
+          f"{form_d_cov.get('ai_matches', '?')} matched in window)")
     return {
         "yc_companies": yc.get("yc_companies", []),
         "yc_total_ai_count": yc.get("yc_total_ai_count", 0),
         "recent_funding_news": hn_news,
         "form_d_filings": form_d,
+        "form_d_coverage": form_d_cov,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 
@@ -5582,6 +5871,13 @@ async def _fetch_trading_async() -> dict:
         "global": glob,
         "coinbase": cb_spot,
         "coinbase_intl_perps": cb_intl,
+        "coinbase_intl_perps_status": dict(_CB_INTL_LAST_STATUS),
+        # Overview sentiment's perp-funding input (OKX; Coinbase Intl perps
+        # are paused/delisted). See perp_funding_summary.
+        "perp_funding": perp_funding_summary({
+            "BTC": okx_fund_btc, "ETH": okx_fund_eth,
+            "LINK": okx_fund_link, "LTC": okx_fund_ltc,
+        }),
         "defillama": llama,
         "geckoterminal": gt_pools,
         "social": social,

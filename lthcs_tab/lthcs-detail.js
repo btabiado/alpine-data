@@ -477,7 +477,7 @@ function renderDraggingPillar(panel, { snapshotRow, vardetailRows, ticker }) {
       for (const row of vardetailRows) {
         if (!row || (ticker && row.ticker && row.ticker !== ticker)) continue;
         const p = row.pillar;
-        const s = Number(row.sub_score);
+        const s = row.sub_score == null ? NaN : Number(row.sub_score);
         if (!p || !Number.isFinite(s)) continue;
         if (!buckets[p]) buckets[p] = [];
         buckets[p].push(s);
@@ -496,7 +496,7 @@ function renderDraggingPillar(panel, { snapshotRow, vardetailRows, ticker }) {
   let bestScore = Infinity;
   let bestWeight = -Infinity;
   PILLAR_ORDER.forEach((key, i) => {
-    const v = Number(subs[key]);
+    const v = subs[key] == null ? NaN : Number(subs[key]);
     if (!Number.isFinite(v)) return;
     const w = Number(weights[i]);
     const ww = Number.isFinite(w) ? w : 0;
@@ -1361,7 +1361,7 @@ async function ensurePillarSeriesIndex() {
           date,
           composite: Number(row.lthcs_score),
         };
-        for (const p of PILLAR_ORDER) entry[p] = Number(subs[p]);
+        for (const p of PILLAR_ORDER) entry[p] = subs[p] == null ? NaN : Number(subs[p]);
         let arr = byTicker.get(t);
         if (!arr) { arr = []; byTicker.set(t, arr); }
         arr.push(entry);
@@ -1393,7 +1393,7 @@ async function ensurePillarSeriesForTicker(ticker) {
         const j = await r.json();
         const rows = (j && Array.isArray(j.history)) ? j.history.map((row) => {
           const entry = { date: row.date, composite: Number(row.composite) };
-          for (const p of PILLAR_ORDER) entry[p] = Number(row[p]);
+          for (const p of PILLAR_ORDER) entry[p] = row[p] == null ? NaN : Number(row[p]); // null = dropped pillar
           return entry;
         }) : null;
         moduleState.pillarHistoryCache.set(ticker, rows && rows.length ? rows : null);
@@ -1436,7 +1436,8 @@ function renderPillars(panel, { snapshotRow }) {
   const contribs = (snapshotRow && Array.isArray(snapshotRow.weighted_components)) ? snapshotRow.weighted_components : [];
 
   PILLAR_ORDER.forEach((key, i) => {
-    const sub = Number(subscores[key]);
+    // null = pillar dropped from scoring (not measured): NaN, never a 0 bar.
+    const sub = subscores[key] == null ? NaN : Number(subscores[key]);
     const weight = Number(weights[i]);
     const contrib = Number(contribs[i]);
 
@@ -1942,8 +1943,8 @@ function renderEvidence(panel, { snapshotRow, vardetailRows, ticker }) {
   let rendered = 0;
   for (const pillar of PILLAR_ORDER) {
     const row = byPillar.get(pillar);
-    const subFromSnapshot = Number(subscores[pillar]);
-    const subFromRow = row ? Number(row.sub_score) : NaN;
+    const subFromSnapshot = subscores[pillar] == null ? NaN : Number(subscores[pillar]);
+    const subFromRow = (row && row.sub_score != null) ? Number(row.sub_score) : NaN;
     const sub = Number.isFinite(subFromRow) ? subFromRow : subFromSnapshot;
 
     const acc = el('details', { className: 'lthcs-evidence-pillar' });
@@ -2574,7 +2575,7 @@ function renderVardetailRows(bodyEl, rows, ticker) {
     const tbody = el('tbody');
     const components = (row.components && typeof row.components === 'object') ? row.components : {};
     const keys = Object.keys(components);
-    if (Number.isFinite(Number(row.sub_score))) {
+    if (row.sub_score != null && Number.isFinite(Number(row.sub_score))) {
       const tr = el('tr');
       tr.appendChild(el('td', { text: 'sub_score' }));
       tr.appendChild(el('td', { text: fmtScore(row.sub_score) }));

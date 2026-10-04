@@ -111,7 +111,9 @@ def coverage_pct(values: list[float], default: float = DEFAULT_VALUE) -> float:
 
 
 def top_bottom(records: list[dict], pillar: str, k: int = 5) -> tuple[list, list]:
-    have = [r for r in records if pillar in r.get("subscores", {})]
+    # null = pillar dropped for that ticker (not measured): not rankable.
+    have = [r for r in records
+            if isinstance(r.get("subscores", {}).get(pillar), (int, float))]
     ranked = sorted(have, key=lambda r: r["subscores"][pillar])
     bottom = [(r["ticker"], r["subscores"][pillar]) for r in ranked[:k]]
     top = [(r["ticker"], r["subscores"][pillar]) for r in ranked[-k:][::-1]]
@@ -122,7 +124,7 @@ def cohort_means(records: list[dict], pillar: str, cohorts: dict[str, str]) -> d
     buckets: dict[str, list[float]] = defaultdict(list)
     for r in records:
         sub = r.get("subscores", {})
-        if pillar not in sub:
+        if not isinstance(sub.get(pillar), (int, float)):
             continue
         c = cohorts.get(r["ticker"], r.get("maturity_stage", "unknown"))
         buckets[c].append(sub[pillar])
@@ -140,7 +142,7 @@ def collect_pillar_history(
             continue
         for rec in snap.get("scores", []):
             sub = rec.get("subscores", {})
-            if pillar in sub:
+            if isinstance(sub.get(pillar), (int, float)):
                 per_ticker[rec["ticker"]].append(sub[pillar])
     return per_ticker
 
@@ -181,7 +183,8 @@ def build_report(asof: str, snap_dir: Path = SNAP_DIR) -> str:
     )
 
     for pillar in PILLARS:
-        values = [r["subscores"][pillar] for r in records if pillar in r["subscores"]]
+        values = [r["subscores"][pillar] for r in records
+                  if isinstance(r["subscores"].get(pillar), (int, float))]
         s = pillar_stats(values)
         cov = coverage_pct(values)
         top, bottom = top_bottom(records, pillar)

@@ -99,13 +99,26 @@ def _safe_float(x, default: float = 0.0) -> float:
 
 
 def _subscores(score_dict: Dict) -> Dict[str, float]:
-    """Return a {pillar: sub_score} mapping covering every PILLAR_ORDER key.
+    """Return a {pillar: sub_score} mapping for every SCORED pillar.
 
-    Missing pillars default to 50.0 (the neutral midpoint), which lets the
-    generator stay defensive against partial inputs without raising.
+    A pillar listed in ``dropped_pillars`` (or stored as null) carried no
+    data and was excluded from the composite, so it is excluded here too:
+    ranking its placeholder would write "supported by Thesis Integrity at
+    58.8" about a number nobody measured. Pillars simply absent from the
+    dict still default to 50.0 (the neutral midpoint), keeping the generator
+    defensive against partial inputs. If every pillar were dropped the
+    neutral defaults are used so the templates still render.
     """
     raw = score_dict.get("subscores") or {}
-    return {p: _safe_float(raw.get(p), 50.0) for p in PILLAR_ORDER}
+    dropped = set(score_dict.get("dropped_pillars") or [])
+    out = {
+        p: _safe_float(raw.get(p), 50.0)
+        for p in PILLAR_ORDER
+        if p not in dropped and not (p in raw and raw.get(p) is None)
+    }
+    if len(out) < 2:
+        return {p: _safe_float(raw.get(p), 50.0) for p in PILLAR_ORDER}
+    return out
 
 
 def _rank_pillars(
@@ -117,7 +130,7 @@ def _rank_pillars(
     score-only key. Descending sort still preserves PILLAR_ORDER among
     ties because we never compare on the pillar name itself.
     """
-    ordered = [(p, subs[p]) for p in PILLAR_ORDER]
+    ordered = [(p, subs[p]) for p in PILLAR_ORDER if p in subs]
     ordered.sort(key=lambda kv: kv[1], reverse=descending)
     return ordered
 
@@ -185,9 +198,15 @@ def _why_changed(score_dict: Dict, prior: Optional[Dict]) -> str:
 
     # Pillar with the largest absolute one-day delta. PILLAR_ORDER as
     # tie-break (we iterate in PILLAR_ORDER and only replace on strict >).
-    top_driver_pillar = PILLAR_ORDER[0]
+    # Only pillars scored on BOTH days are comparable.
+    common = [p for p in PILLAR_ORDER if p in today_subs and p in prior_subs]
+    if not common:
+        common = list(PILLAR_ORDER)
+        today_subs = {p: today_subs.get(p, 50.0) for p in common}
+        prior_subs = {p: prior_subs.get(p, 50.0) for p in common}
+    top_driver_pillar = common[0]
     top_driver_delta = today_subs[top_driver_pillar] - prior_subs[top_driver_pillar]
-    for p in PILLAR_ORDER[1:]:
+    for p in common[1:]:
         delta = today_subs[p] - prior_subs[p]
         if abs(delta) > abs(top_driver_delta):
             top_driver_pillar = p

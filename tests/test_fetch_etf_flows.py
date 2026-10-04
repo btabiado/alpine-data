@@ -377,3 +377,66 @@ def test_writes_and_merges_without_truncating_history(btc_cfg, monkeypatch):
     assert "2026-06-" in text, "new rows must be written"
     dates = [l.split(",")[0] for l in text.strip().splitlines()[1:]]
     assert dates == sorted(dates), "output must stay date-sorted"
+
+
+# ---------- pre-launch / duplicate-row guard ----------
+#
+# data/btc_flows.csv carried a hand-pasted 2024-01-01 row that duplicated
+# 2024-01-11 (the first day US spot-bitcoin ETFs traded), inflating the
+# all-time cumulative by $655.3M. These pin the guard and the committed data.
+
+def test_drop_pre_launch_removes_rows_before_first_trading_day():
+    rows = {"2024-01-01": ["2024-01-01", "1"], "2024-01-11": ["2024-01-11", "1"]}
+    assert fef.drop_pre_launch(rows, "2024-01-11") == ["2024-01-01"]
+    assert list(rows) == ["2024-01-11"]
+
+
+def test_duplicate_value_rows_flags_multi_fund_copy_but_not_single_fund_repeat():
+    rows = [
+        ["2024-01-11", "111.7", "227", "-95.1", "243.6"],
+        ["2024-01-12", "111.7", "227.0", "-95.1", "243.6"],   # copy-paste
+        ["2026-06-18", "-12.8", "0", "0", "-12.8"],
+        ["2026-06-26", "-12.8", "0", "0", "-12.8"],           # one fund, plausible
+    ]
+    assert fef.duplicate_value_rows(rows) == [("2024-01-11", "2024-01-12")]
+
+
+def test_refresh_drops_a_pre_launch_row_already_on_disk(tmp_path, monkeypatch):
+    csv_path = tmp_path / "btc_flows.csv"
+    csv_path.write_text(
+        "date,IBIT,FBTC,GBTC,Total\n"
+        "2024-01-01,111.7,227.0,-95.1,243.6\n"
+        "2024-01-11,111.7,227,-95.1,243.6\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setitem(fef.SOURCES, "btc", {
+        "url": "https://example.invalid/btc", "csv": csv_path,
+        "require": BTC_REQUIRE, "first_trading_day": "2024-01-11",
+    })
+    rows = "".join(
+        _row(f"{(d % 28) + 1:02d} Jun 2026", "10", "20", "30", "60")
+        for d in range(fef.MIN_ROWS + 5)
+    )
+    monkeypatch.setattr(fef, "fetch_html", lambda _u: _farside_html(rows))
+    assert fef.refresh("btc") == 0
+    text = csv_path.read_text()
+    assert "2024-01-01" not in text
+    assert "2024-01-11" in text
+
+
+@pytest.mark.parametrize("name,first_day", [
+    ("btc_flows.csv", "2024-01-11"),
+    ("eth_flows.csv", "2024-07-23"),
+])
+def test_committed_csv_has_no_pre_launch_or_duplicate_rows(name, first_day):
+    """Read the COMMITTED blob (CI stubs the working-tree CSVs)."""
+    proc = subprocess.run(["git", "show", f"HEAD:data/{name}"],
+                          cwd=REPO_ROOT, capture_output=True, text=True)
+    if proc.returncode != 0:
+        pytest.skip(f"git blob for data/{name} unavailable")
+    lines = proc.stdout.strip().splitlines()[1:]
+    rows = [l.split(",") for l in lines]
+    dates = [r[0] for r in rows]
+    assert not [d for d in dates if d < first_day], "rows before first ETF trading day"
+    assert len(dates) == len(set(dates)), "duplicate dates"
+    assert fef.duplicate_value_rows(rows) == [], "copy-pasted multi-fund rows"
