@@ -550,24 +550,55 @@ def test_data_health_absent_feed_does_not_drag_the_age_down():
     assert city["data_health"]["feeds_ok"] == 1
 
 
-def test_data_health_stale_feed_sets_the_age_even_though_it_is_not_scored():
-    """Miami's exact shape: a frozen 2023 snapshot next to a live 2026 feed.
-
-    The stale feed produced a real (ancient) reading, so it MUST set the age.
-    Under the old max rule Miami read as April-fresh off its working permits
-    feed while its 311 pillar sat on a 2023 yearly snapshot — the container/
-    contents lie, reproduced one level down inside a single city.
-    """
-    live = pulse.score_feed(series_from_baseline(AS_OF, baseline=varied_baseline(100), recent=115),
-                            polarity=1, as_of=AS_OF, label="Permits", dataset="P")
+def _frozen_311_feed():
+    """Miami-Dade's frozen 2023 County 311 snapshot: a real reading, marked
+    ``stale`` by the adapter, and therefore excluded from pillar math."""
     frozen = pulse.score_feed(series_constant("2023-12", value=100, length=13),
                               polarity=-1, as_of=AS_OF, label="311", dataset="X")
     frozen["status"] = "stale"
+    return frozen
+
+
+def test_data_health_stale_unscored_feed_does_not_set_the_age():
+    """Miami's exact shape: a frozen 2023 snapshot next to a live scored feed.
+
+    last_updated dates the SCORE. The stale 311 snapshot never enters pillar
+    math, so it must not make Miami's score look older than it is — counting it
+    pinned the card at 2023-12 while every number behind the Pulse was current.
+    The stale feed stays disclosed through its own status, feeds_ok and
+    pillars_present.
+    """
+    live = pulse.score_feed(series_from_baseline(AS_OF, baseline=varied_baseline(100), recent=115),
+                            polarity=1, as_of=AS_OF, label="Permits", dataset="P")
+    frozen = _frozen_311_feed()
+    assert frozen["recent_period"] == "2023-12"  # it DOES carry a period
     city = pulse.score_city(
         id="miami", name="Miami", scope="county", disclosures=[],
         pillar_objs=[pulse.score_pillar("development_economy", "DE", [live]),
                      pulse.score_pillar("city_services", "CS", [frozen])])
-    assert city["data_health"]["last_updated"].startswith("2023-12-01T00:00:00")
+    assert city["data_health"]["last_updated"].startswith(AS_OF + "-01T00:00:00")
+    assert city["data_health"]["feeds_ok"] == 1
+    assert city["pulse"]["pillars_present"] == 1
+
+
+def test_data_health_is_null_when_only_unscored_feeds_reported():
+    """No scored feed -> no score to date -> null, even though unscored feeds
+    carry periods (stale snapshot, short insufficient_history series, a
+    context-only polarity-0 feed). Never a clock read, never the stale month."""
+    short = pulse.score_feed(series_constant(AS_OF, value=100, length=6),
+                             polarity=1, as_of=AS_OF, label="Permits", dataset="P")
+    assert short["status"] == "insufficient_history" and short["recent_period"] == AS_OF
+    context_only = pulse.score_feed(
+        series_from_baseline(AS_OF, baseline=varied_baseline(100), recent=115),
+        polarity=0, as_of=AS_OF, label="Context", dataset="C")
+    assert context_only["status"] == "ok" and context_only["d"] is None
+    city = pulse.score_city(
+        id="miami", name="Miami", scope="county", disclosures=[],
+        pillar_objs=[pulse.score_pillar("city_services", "CS", [_frozen_311_feed()]),
+                     pulse.score_pillar("development_economy", "DE", [short]),
+                     pulse.score_pillar("public_safety", "PS", [context_only])])
+    assert city["pulse"]["score"] is None
+    assert city["data_health"]["last_updated"] is None
 
 
 def test_data_health_is_null_not_now_when_nothing_reported():

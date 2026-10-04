@@ -280,6 +280,34 @@ def test_stale_snapshot_still_reports_stale_not_fetch_error(monkeypatch):
     assert reason is None
 
 
+def test_stale_unscored_feed_does_not_pin_the_city_age(monkeypatch):
+    """Miami end to end: the frozen 2023 311 snapshot is stale and unscored, so
+    it must not drag last_updated back to 2023-12 while the scored permits feed
+    is current. Drives the real adapter status override inside build_city."""
+    def by_label(feed_cfg, since=None, until=None, timeout=120, session=None):
+        if feed_cfg["label"] == "Miami-Dade 311":
+            return dense("2023-01", "2023-12"), "stale"
+        return dense(since, LIVE_MONTH), "ok"
+
+    monkeypatch.setattr(arcgis, "feed_series", by_label)
+    monkeypatch.setattr(city_context, "build_context", lambda *a, **k: None)
+    cfg = {"id": "miami", "name": "Miami", "scope": "county", "adapter": "arcgis",
+           "feeds": [
+               {"pillar": "city_services", "label": "Miami-Dade 311",
+                "endpoint": "https://example.invalid/311/0", "polarity": -1},
+               {"pillar": "development_economy", "label": "MDC Building Permit",
+                "endpoint": "https://example.invalid/permits/0", "polarity": 1},
+           ]}
+    since = fetch_city._month_minus(LIVE_MONTH, 37) + "-01"
+    city = fetch_city.build_city(cfg, as_of=LIVE_MONTH, since_date=since)
+
+    by = {f["label"]: f for p in city["pulse"]["pillars"] for f in p["feeds"]}
+    assert by["Miami-Dade 311"]["status"] == "stale"
+    assert by["Miami-Dade 311"]["recent_period"] == "2023-12"
+    assert by["MDC Building Permit"]["status"] == "ok"
+    assert city["data_health"]["last_updated"].startswith(LIVE_MONTH)
+
+
 def test_failure_reason_reaches_the_payload_note(monkeypatch):
     """The reason must survive into the artifact.
 

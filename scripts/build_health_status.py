@@ -55,8 +55,10 @@ THRESHOLDS: dict[str, Threshold] = {
     # ~3 days old by Monday morning and ~4 across a Monday holiday.
     "equity_etf_flows.csv": Threshold(96, 168),
     # data-city.json is judged on cities[].data_health.last_updated (see
-    # NESTED_DATE_PATHS), which is the oldest MONTHLY municipal series behind a
-    # city — 311 calls, crime reports, building permits. Those publish a month
+    # NESTED_DATE_PATHS), which is the oldest SCORED monthly municipal series
+    # behind a city — 311 calls, crime reports, building permits. Feeds excluded
+    # from the score (e.g. Miami-Dade's frozen 2023 County 311 snapshot, status
+    # `stale`) do not set it; see city/pulse.py::score_city. Those publish a month
     # at a time and several lag a further month, so the newest COMPLETE month a
     # healthy city can offer is 28-60 days old depending on where in the month
     # you look. Under the inherited DEFAULT (6h/24h) this feed is unsatisfiable
@@ -65,11 +67,8 @@ THRESHOLDS: dict[str, Threshold] = {
     # unnoticed for 45 days, which is the failure this table exists to prevent.
     #
     # 62d/100d: a one-month-lagging series' month-start sits 59-92 days back,
-    # plus cron slack. This deliberately does NOT turn the feed green today —
-    # Miami reads 976d because Miami-Dade publishes County 311 only as frozen
-    # per-year snapshots and the newest is 2023. That one is a real dead
-    # upstream and it SHOULD stay red; the point of this entry is that when it
-    # is red, it is red for a true reason.
+    # plus cron slack. The point of this entry is that when it is red, it is
+    # red for a true reason: a scored feed has genuinely stopped moving.
     "data-city.json": Threshold(62 * 24, 100 * 24),
     # real_estate.json is a once-a-day cron; 12h old is normal, not "stale".
     "real_estate.json": Threshold(30, 48),
@@ -435,8 +434,7 @@ def _content_age_probe(path: Path, now_ts: float) -> AgeProbe:
 # paths deliberately left out and why.
 NESTED_DATE_PATHS: dict[str, tuple[str, ...]] = {
     # THE deep one. city-daily.yml refreshes the top-level stamp every night;
-    # the per-city data_health block underneath it has not moved since April,
-    # and Miami's since 2023-12.
+    # the per-city data_health block underneath it once sat frozen at April.
     "data-city.json": ("cities[].data_health.last_updated",),
     # MUFON's top-level `generated_at` is `_now_iso()` written unconditionally
     # (fetch_mufon.py), including on a run that served all 144 months from the
