@@ -682,6 +682,59 @@ def stage_1_load_config(state: PipelineState) -> bool:
     return True
 
 
+def _note_sec_error(errors: dict, exc: BaseException) -> None:
+    """Tally an SEC EDGAR failure under a key that survives deduplication.
+
+    The SEC fetch used to be wrapped in a bare ``except Exception:`` that
+    logged nothing, so "SEC_USER_AGENT is not set" and "SEC answered 403"
+    produced identical, empty logs. From 2026-06-05 every ticker came back
+    ``sec_unavailable`` and the financial pillar sat at a constant 50 for
+    months with no line anywhere saying why.
+
+    Per-ticker parts are normalized away so ~215 copies of one cause collapse
+    into one key: the request URL (it embeds the CIK), the ticker in the
+    CIK-lookup message, long digit runs (request IDs in SEC's error page) and
+    whitespace. The missing-User-Agent message has no per-ticker part and is
+    kept verbatim. None of these messages contain the User-Agent value itself.
+    """
+    msg = str(exc)
+    msg = re.sub(r"https?://\S+", "<url>", msg)
+    msg = re.sub(r"ticker '[^']*'", "ticker '<sym>'", msg)
+    msg = re.sub(r"\d{6,}", "<n>", msg)
+    msg = re.sub(r"\s+", " ", msg).strip()
+    key = "%s: %s" % (type(exc).__name__, msg[:180])
+    errors[key] = errors.get(key, 0) + 1
+
+
+def _report_sec_errors(errors: dict, n: int) -> None:
+    """Print the distinct SEC failure causes, and annotate the Actions run.
+
+    The annotation is the part that matters operationally: GitHub keeps
+    annotations on the check run where they are readable through the API,
+    whereas full job logs expire and are awkward to fetch. One line naming
+    the top cause is enough to tell a missing secret from a rejected one.
+    """
+    if not errors:
+        return
+    ranked = sorted(errors.items(), key=lambda kv: -kv[1])
+    total = sum(errors.values())
+    print(
+        "  [lthcs_daily] SEC EDGAR: %d of %d revenue fetches raised. Distinct causes:"
+        % (total, n),
+        file=sys.stderr,
+    )
+    for key, cnt in ranked[:5]:
+        print("      %4dx  %s" % (cnt, key), file=sys.stderr)
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        top_key, top_cnt = ranked[0]
+        # Workflow-command escaping: % CR LF must be encoded or the
+        # annotation is truncated at the first newline.
+        body = ("%d/%d SEC revenue fetches failed. Top cause (%dx): %s"
+                % (total, n, top_cnt, top_key))
+        body = body.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+        print("::warning title=SEC EDGAR unavailable::" + body)
+
+
 def stage_2_fetch_data(state: PipelineState) -> bool:
     """Per-ticker source fan-out.
 
@@ -699,6 +752,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         "fred_ok": 0,
         "eia_ok": 0,
     }
+    sec_errors: dict = {}
 
     # Historical-backfill mode: pass as_of=<date> to every source that
     # supports it; warn-and-skip sources that have no historical archive.
@@ -736,8 +790,13 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             state.rev_by_ticker[sym] = rev or []
             if rev:
                 counts["sec_rev_ok"] += 1
-        except Exception:
+        except Exception as e:
+            # Revenue is the fetch that decides ``sec_unavailable`` in Stage 3,
+            # so it is the one that must say why it failed. The gp/ocf/margin
+            # fetches below read the same cached companyfacts payload and fail
+            # for the same reason, so instrumenting them too would only repeat it.
             state.rev_by_ticker[sym] = []
+            _note_sec_error(sec_errors, e)
         try:
             gp = sec_edgar.get_gross_profit_history(sym, **as_of_kw)
             state.gp_by_ticker[sym] = gp or []
@@ -1521,6 +1580,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         % (coverage["fresh"], coverage["stale"], coverage["never_scored"], coverage["scored_today"])
     )
 
+    _report_sec_errors(sec_errors, n)
     print(
         "✓ Stage 2: Fetched %d/%d Yahoo, %d/%d SEC EDGAR, %d/1 FRED, %d/1 EIA, AV=%s%s"
         % (
