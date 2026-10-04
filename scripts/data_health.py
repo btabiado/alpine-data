@@ -83,23 +83,43 @@ make every feed look perpetually fresh. This is inherited from
 build_health_status._content_age_probe and is the one thing the old script got
 unambiguously right.
 
+A feed the deploy regenerates but never commits back (`source=DEPLOYED`) is
+judged in `--mode committed` from the copy the live Pages site serves, fetched
+over HTTPS, not from its repo file: that file is a stale fallback by
+construction, so judging it alarms forever on a feed that is fine. If the
+fetch fails the feed is UNKNOWN ("could not check"), never STALE — a network
+blip says nothing about the data. In `--mode built` (inside pages.yml, before
+the deploy) the freshly built local file is the copy about to be served, so it
+is judged from disk.
+
 Usage
 -----
     python scripts/data_health.py                     # committed artifacts
     python scripts/data_health.py --mode built        # after a pages.yml build
     python scripts/data_health.py --report json       # machine-readable
+    python scripts/data_health.py --report issue      # tracking-issue body
     python scripts/data_health.py --remediate         # try to self-heal first
 
 Exit codes: 0 = healthy, 1 = at least one feed stale/unknown/unwatched.
+`--report text` and `--report json` carry that verdict. `--report issue` exits
+0 whenever it printed the body: it is a formatter the workflow runs AFTER the
+check step has already decided the run is unhealthy, and a non-zero exit there
+failed the step and skipped the step that files the issue (first scheduled
+run, 2026-10-04).
 """
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
 import os
 import shlex
 import subprocess
 import sys
+import tempfile
+import time
+import urllib.error
+import urllib.request
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -134,6 +154,7 @@ __all__ = [
     "_select", "humanize_age", "nested_age_h", "resolve_age",
     # this module's own surface
     "COMMITTED", "BUILT", "STATIC", "DELEGATED",
+    "REPO", "DEPLOYED", "PAGES_BASE_URL", "LiveFetchError", "deployed_url",
     "OK", "STALE", "UNKNOWN", "MISSING", "UNWATCHED", "SUPPRESSED", "EXPIRED",
     "SKIPPED",
     "Feed", "Result", "Suppression",
@@ -152,11 +173,22 @@ REPO_ROOT = Path(os.environ.get("ALPINE_REPO_ROOT")
 # Classification
 # --------------------------------------------------------------------------
 
-COMMITTED = "committed"   # a cron refreshes it and commits it back
+COMMITTED = "committed"   # tracked in git, judged by the daily watchdog (see `source`)
 BUILT = "built"           # pages.yml regenerates it at deploy time
 SERIES = "series"         # a directory of dated files; the NEWEST one is the feed
 STATIC = "static"         # reference data that legitimately does not change
 DELEGATED = "delegated"   # watched by a different system; declared so it is not UNWATCHED
+
+# Which COPY of a COMMITTED feed the daily (`--mode committed`) check judges.
+REPO = "repo"             # the committed file: its own cron commits it back
+DEPLOYED = "deployed"     # the copy the live Pages site serves (see PAGES_BASE_URL)
+
+# Where pages.yml publishes the site. Overridable so a fork, or a test, can
+# point the deployed-copy check somewhere else.
+PAGES_BASE_URL = os.environ.get("ALPINE_PAGES_URL",
+                                "https://btabiado.github.io/alpine-data/")
+LIVE_FETCH_TIMEOUT_S = 20
+LIVE_FETCH_ATTEMPTS = 2
 
 
 @dataclass(frozen=True)
@@ -166,6 +198,13 @@ class Feed:
     `owner` is printed in every alarm so the fix path is obvious rather than
     something to re-derive at 2am. `refresher` is the command the --remediate
     path runs to try to self-heal; None means no safe automatic retry exists.
+
+    `source` says which copy `--mode committed` judges. REPO (the default) is
+    the committed file. DEPLOYED is for a feed pages.yml regenerates at deploy
+    time and never commits back: its repo file is a stale fallback, so the
+    daily check fetches `PAGES_BASE_URL + rel` instead. `built_path` is where a
+    DEPLOYED feed's build writes the copy it publishes at `rel`, when that is
+    not `rel` itself; `--mode built` judges that local file.
     """
     kind: str
     owner: str
@@ -173,6 +212,8 @@ class Feed:
     limit_h: float | None = None    # overrides THRESHOLDS when the cadence is unusual
     justification: str = ""         # required for STATIC and DELEGATED, enforced below
     series_glob: str = "*.json"     # SERIES only: which files in the directory count
+    source: str = REPO              # COMMITTED only: REPO or DEPLOYED, see above
+    built_path: str | None = None   # DEPLOYED only: local file the build publishes at rel
 
 
 @dataclass(frozen=True)
@@ -233,7 +274,16 @@ MANIFEST: dict[str, Feed] = {
         COMMITTED, "real-estate-daily.yml (daily)",
         "python scripts/fetch_real_estate.py"),
     "data/ai_curated.json": Feed(
-        COMMITTED, "insights.py, inside pages.yml"),
+        # Corrected owner. Nothing regenerates this file: it is a hand-curated
+        # snapshot (compiled_at), and fetch_market.load_ai_curated() only READS
+        # it, wiki-enriches it in memory and inlines it into dashboard.html and
+        # v2/dashboard.html as DATA.market.ai_curated. It is not published as a
+        # file (<site>/data/ai_curated.json is a 404), and the live pages carry
+        # the very same compiled_at as the repo copy, so the repo copy IS the
+        # deployed data and REPO is the right source. When it is red, the fix
+        # is a human re-curating it, not a fetcher.
+        COMMITTED, "hand-curated snapshot (manual PR); read and inlined into the "
+                   "built HTML by fetch_market.load_ai_curated, never rewritten"),
     "data/equity_etf_flows.csv": Feed(
         COMMITTED, "money-flow-daily.yml (daily 08:30Z)",
         # Trading-day feed: a 24h limit red-flags it every Saturday and Sunday,
@@ -247,16 +297,25 @@ MANIFEST: dict[str, Feed] = {
         COMMITTED, "etf-flows-daily.yml (daily 09:15Z)",
         "python scripts/fetch_etf_flows.py", limit_h=96.0),
     "data-travel.json": Feed(
-        COMMITTED, "fetch_advisories.py, inside pages.yml",
-        "python fetch_advisories.py"),
+        # DEPLOYED: app.py rewrites the root file on every pages.yml build and
+        # the "Stage site directory" step publishes it, but nothing commits it
+        # back. The repo copy is the 2026-05-28 baseline kept as a fallback.
+        COMMITTED, "fetch_advisories.py, called by app.py inside pages.yml "
+                   "(deployed, never committed back)",
+        "python fetch_advisories.py", source=DEPLOYED),
 
     # --- THE GAP THAT CAUSED THE JUNE FREEZE -------------------------------
     # None of these three was watched. All three froze. That is not a
     # coincidence — they froze *because* nothing was watching, so the V2 build
     # timeout that starved them produced no signal for eight weeks.
     "data-mufon.json": Feed(
-        COMMITTED, "fetch_mufon.py, inside pages.yml (V2 step)",
-        "python fetch_mufon.py"),
+        # DEPLOYED: v2/app.py writes v2/data-mufon.json and the staging step
+        # copies it to the site root; the root repo file is a frozen fallback
+        # (last committed 2026-06-08) that the deploy never reads.
+        COMMITTED, "fetch_mufon.py, called by v2/app.py inside pages.yml "
+                   "(deployed from v2/data-mufon.json, never committed back)",
+        "python fetch_mufon.py", source=DEPLOYED,
+        built_path="v2/data-mufon.json"),
     "data-stock-money-flow.json": Feed(
         # Corrected owner: the standalone daily cron referenced by .gitignore
         # (stock-money-flow-daily.yml) does not exist. pages.yml line ~113
@@ -265,8 +324,20 @@ MANIFEST: dict[str, Feed] = {
         # fetch_market.fetch_all() -> fetch_stock_money_flow.build_from_signals().
         # Pointing an alarm at a workflow that was deleted is how you get an
         # alarm nobody can act on.
+        #
+        # DEPLOYED: written to the repo root inside the build and published by
+        # the staging step, never committed back (last commit 2026-06-08).
         COMMITTED, "fetch_market.py --fetch-market step in pages.yml (via "
-                   "fetch_stock_money_flow.build_from_signals)"),
+                   "fetch_stock_money_flow.build_from_signals; deployed, never "
+                   "committed back)",
+        source=DEPLOYED,
+        # 120h, not the 24h default: `as_of` is the date of the last DAILY BAR
+        # (the oldest across scored tickers), so it only moves on trading days.
+        # At the 15:00Z check, Friday's bar is ~87h old on Monday, and ~111h
+        # on the Tuesday after a Monday market holiday (or the Monday after
+        # Good Friday). 120h covers those without hiding a feed that has
+        # really stopped for a full trading week.
+        limit_h=120.0),
     "snowflake_summit/news.json": Feed(
         COMMITTED, "snowflake_summit/enrich_vendors.py (manual)"),
     "snowflake_summit/vendors.json": Feed(
@@ -395,6 +466,23 @@ SUPPRESSIONS: dict[str, Suppression] = {
                "of the same page. Remove this entry once data-tsa.json is fresh.",
         until=date(2026, 10, 18),
         tracked_in="branch claude/alpine-data-status-check-93q95x-tsa (Wayback fallback)"),
+    # Frozen on purpose, not broken. Since 2026-06-10 nuforc.org answers every
+    # non-browser request with a Cloudflare managed challenge, and NUFORC's
+    # terms forbid automated collection without written consent, so
+    # fetch_mufon.py serves the committed month cache and the dashboard labels
+    # the tab "data through June 9". No code change may route around that
+    # gate (see fetch_mufon.py's docstring). The owner emailed NUFORC for
+    # permission on 2026-10-04. Three months is time for an answer; on expiry,
+    # either wire the sanctioned feed or retire/relabel the map, rather than
+    # extending this by reflex.
+    "data-mufon.json": Suppression(
+        reason="NUFORC blocks automated access (Cloudflare challenge) and its "
+               "terms forbid automated collection without written consent, so "
+               "the UAP map is deliberately frozen at 2026-06-09 and labelled "
+               "that way on the dashboard. Permission requested by email "
+               "2026-10-04; revisit on expiry.",
+        until=date(2027, 1, 4),
+        tracked_in="NUFORC permission request emailed 2026-10-04"),
     # NOTE: the crypto-flow suppressions that used to live here were REMOVED,
     # not renewed. Their stated blocker ("needs COINGLASS_API_KEY; free mirror
     # is dead") stopped being true when scripts/fetch_etf_flows.py landed with
@@ -499,6 +587,15 @@ def verify_manifest() -> list[str]:
                             f"directory")
         if not feed.owner.strip():
             problems.append(f"{rel}: no owner — an alarm nobody owns is noise")
+        if feed.source not in (REPO, DEPLOYED):
+            problems.append(f"{rel}: unknown source {feed.source!r}")
+        if feed.source == DEPLOYED and feed.kind != COMMITTED:
+            problems.append(f"{rel}: source=DEPLOYED applies to COMMITTED feeds "
+                            f"only; a BUILT feed is already judged against the "
+                            f"real file in --mode built")
+        if feed.built_path and feed.source != DEPLOYED:
+            problems.append(f"{rel}: built_path is only meaningful with "
+                            f"source=DEPLOYED")
     for rel in SUPPRESSIONS:
         if rel not in MANIFEST:
             problems.append(f"suppression for {rel!r} has no MANIFEST entry")
@@ -510,14 +607,81 @@ def verify_manifest() -> list[str]:
     return problems
 
 
-def _probe_feed(rel: str, feed: Feed, now: float) -> "tuple[Path, AgeProbe, str]":
+class LiveFetchError(Exception):
+    """The deployed copy of a feed could not be fetched.
+
+    `not_found` separates "the site answered, and this file is not on it"
+    (a real problem: the dashboard tab 404s) from "could not reach the site"
+    (no information about the feed at all).
+    """
+
+    def __init__(self, reason: str, not_found: bool = False) -> None:
+        super().__init__(reason)
+        self.reason = reason
+        self.not_found = not_found
+
+
+def deployed_url(rel: str) -> str:
+    """Where the live Pages site serves a repo-root-relative artifact."""
+    return PAGES_BASE_URL.rstrip("/") + "/" + rel.lstrip("/")
+
+
+def _fetch_deployed(url: str) -> bytes:
+    """GET one deployed artifact, or raise LiveFetchError. Never anything else.
+
+    Every transport failure is folded into LiveFetchError so a flaky network
+    can only ever make one feed UNKNOWN; it must not abort the run and take
+    every other verdict (and the tracking issue) down with it.
+    """
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "alpine-data data_health.py (+https://github.com/btabiado/alpine-data)",
+        "Cache-Control": "no-cache",
+    })
+    reason = "no attempt made"
+    for attempt in range(LIVE_FETCH_ATTEMPTS):
+        try:
+            with urllib.request.urlopen(req, timeout=LIVE_FETCH_TIMEOUT_S) as resp:
+                return resp.read()
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                raise LiveFetchError("HTTP 404", not_found=True) from exc
+            reason = f"HTTP {exc.code}"
+        except (urllib.error.URLError, http.client.HTTPException,
+                OSError, ValueError) as exc:
+            reason = f"{type(exc).__name__}: {getattr(exc, 'reason', exc)}"
+        if attempt + 1 < LIVE_FETCH_ATTEMPTS:
+            time.sleep(2)
+    raise LiveFetchError(reason)
+
+
+def _probe_deployed(rel: str, now: float) -> "tuple[Path, AgeProbe, str, str]":
+    """Age of the copy the live site serves. Raises LiveFetchError.
+
+    The payload is written under its own name into a scratch directory so the
+    exact same resolve_age path (THRESHOLDS by filename, NESTED_DATE_PATHS by
+    rel) judges it as would judge a local file — no second parser to drift.
+    """
+    url = deployed_url(rel)
+    payload = _fetch_deployed(url)
+    with tempfile.TemporaryDirectory(prefix="data-health-") as tmp:
+        judged = Path(tmp) / rel
+        judged.parent.mkdir(parents=True, exist_ok=True)
+        judged.write_bytes(payload)
+        probe = resolve_age(judged, now, rel)
+    return judged, probe, f"{probe.key or 'no stamp'} (deployed copy)", url
+
+
+def _probe_feed(rel: str, feed: Feed, now: float,
+                path: "Path | None" = None) -> "tuple[Path, AgeProbe, str]":
     """Resolve one feed to (path judged, age probe, human source label).
 
     Age comes from build_health_status.resolve_age, which already folds in
     NESTED_DATE_PATHS and takes the older of container and contents — so the
     watchdog and /health/ can never report different ages for the same file.
+    `path` overrides where on disk the feed is read (a DEPLOYED feed's
+    built_path); it is still judged under `rel`.
     """
-    path = REPO_ROOT / rel
+    path = path or REPO_ROOT / rel
     if feed.kind == SERIES:
         members = sorted(p for p in path.glob(feed.series_glob) if p.is_file())
         if not members:
@@ -568,17 +732,50 @@ def evaluate(mode: str, today: date | None = None,
         if feed.kind == BUILT and mode != BUILT:
             continue
 
-        if not path.exists():
-            results.append(Result(rel, MISSING, owner=feed.owner,
-                                  detail=f"expected on disk; refreshed by {feed.owner}"))
-            continue
+        if feed.source == DEPLOYED and mode == COMMITTED:
+            # The repo file is a fallback the deploy never commits back, so
+            # judging it reports the age of the fallback, not of the site.
+            # Judge what the site actually serves.
+            try:
+                judged, probe, source, url = _probe_deployed(rel, now)
+            except LiveFetchError as exc:
+                if exc.not_found:
+                    results.append(Result(
+                        rel, MISSING, owner=feed.owner, source="deployed copy",
+                        detail=f"the live site answered {exc.reason} for "
+                               f"{deployed_url(rel)}: the deploy is not "
+                               f"publishing this feed at all."))
+                else:
+                    results.append(Result(
+                        rel, UNKNOWN, owner=feed.owner, source="deployed copy",
+                        detail=f"could not check: fetching the deployed copy "
+                               f"from {deployed_url(rel)} failed ({exc.reason}). "
+                               f"Not judged against the repo file, which is a "
+                               f"stale fallback pages.yml never commits back. "
+                               f"Re-run, or open the URL to see if the site is up."))
+                continue
+            age_h = probe.age_h
+            detail = f"judged from the deployed copy at {url}"
+            if age_h is not None and probe.note:
+                detail += f"; {probe.note}"
+        else:
+            local = path
+            if feed.source == DEPLOYED and feed.built_path:
+                local = REPO_ROOT / feed.built_path
+            if not local.exists():
+                results.append(Result(rel, MISSING, owner=feed.owner,
+                                      detail=f"expected on disk at "
+                                             f"{local.relative_to(REPO_ROOT).as_posix()}; "
+                                             f"refreshed by {feed.owner}"))
+                continue
 
-        # Hole #6 (container vs contents) is already folded in by resolve_age:
-        # `probe.age_h` is the OLDER of the file's own stamp and whatever its
-        # contents say, and `probe.note` explains it when they disagreed.
-        judged, probe, source = _probe_feed(rel, feed, now)
-        age_h = probe.age_h
-        detail = probe.note if age_h is not None else ""
+            # Hole #6 (container vs contents) is already folded in by
+            # resolve_age: `probe.age_h` is the OLDER of the file's own stamp
+            # and whatever its contents say, and `probe.note` explains it when
+            # they disagreed.
+            judged, probe, source = _probe_feed(rel, feed, now, local)
+            age_h = probe.age_h
+            detail = probe.note if age_h is not None else ""
 
         if age_h is None:
             # Hole #4: this used to exit 0.
@@ -614,19 +811,28 @@ def evaluate(mode: str, today: date | None = None,
     return results
 
 
-def remediate(results: list[Result]) -> list[str]:
+def remediate(results: list[Result], mode: str = COMMITTED) -> list[str]:
     """Try once to self-heal a stale feed by re-running its refresher.
 
     Deliberately conservative: one attempt, only for feeds that declare a
     refresher, and the fetchers themselves all refuse to write a partial or
     regressing parse. A retry that "fixes" the check by writing garbage would
     be far worse than staying red.
+
+    A DEPLOYED feed judged from the live site is not retried in committed
+    mode: re-running its fetcher on this runner cannot change what the site
+    serves, so the "retry exited 0" note would claim a fix that never shipped.
     """
     notes: list[str] = []
     for r in results:
         if r.status not in (STALE, EXPIRED):
             continue
         feed = MANIFEST.get(r.path)
+        if feed and feed.source == DEPLOYED and mode == COMMITTED:
+            notes.append(f"{r.path}: judged from the live site; a local re-run "
+                         f"cannot refresh it. The next pages.yml deploy does — "
+                         f"check that run's logs.")
+            continue
         if not feed or not feed.refresher:
             notes.append(f"{r.path}: no safe automatic retry; needs a human.")
             continue
@@ -783,7 +989,7 @@ def main(argv: list[str] | None = None) -> int:
 
     notes: list[str] = []
     if args.remediate and any(r.fails for r in results):
-        notes = remediate(results)
+        notes = remediate(results, args.mode)
         results = evaluate(args.mode)   # re-evaluate after the retries
 
     if args.report == "json":
@@ -811,6 +1017,15 @@ def main(argv: list[str] | None = None) -> int:
             fh.write(render_text(results, notes))
             fh.write("\n```\n")
 
+    if args.report == "issue":
+        # The issue body is a REPORT, not a verdict. data-health.yml only builds
+        # it after the check step has already found the run unhealthy, so an
+        # unhealthy result here is the expected input, not a failure. Exiting 1
+        # failed the "Build issue body" step, which skipped "Open or update the
+        # tracking issue" — the alarm channel itself — on the very first
+        # scheduled run. The verdict exit code stays on text/json, where
+        # data-health.yml's check step and pages.yml's built step read it.
+        return 0
     return 1 if any(r.fails for r in results) else 0
 
 
