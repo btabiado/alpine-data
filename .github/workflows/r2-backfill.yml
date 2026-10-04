@@ -1,0 +1,317 @@
+name: r2-backfill
+
+# One-off historical backfill — walks git history one calendar day at a time and
+# uploads each day's last commit's data-*.json snapshots to R2 under the true
+# historical date (not today). Useful after the first time alpine-data → R2
+# bridge ships, to seed R2 with prior history.
+#
+# Companion to .github/workflows/pages.yml (forward-only). This walks BACKWARD.
+#
+# Usage: GitHub UI → Actions → "r2-backfill" → "Run workflow"
+#   start_date: earliest day to backfill (YYYY-MM-DD), default 30 days ago
+#   end_date:   latest day to backfill (YYYY-MM-DD), default yesterday
+#   max_days:   safety cap — won't process more than this many days, default 200
+#
+# For each calendar day in [start_date, end_date]:
+#   1. Find latest commit on/before 23:59:59 UTC of that day
+#   2. git checkout that commit (detached HEAD)
+#   3. Run upload_to_r2.py with R2_OVERRIDE_DATE={that day} env
+#   4. Restore main HEAD
+#
+# Idempotent: R2 PUT overwrites — re-running just overwrites the same keys.
+# Safe to abort: each day is independent.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Mode — DELTA fills gaps only (safe to re-run, cheap). REFRESH overwrites everything in range (use after data corruption or schema change)."
+        required: true
+        type: choice
+        default: "delta (only upload missing files — fast on re-runs)"
+        options:
+          - "delta (only upload missing files — fast on re-runs)"
+          - "refresh (full overwrite — re-uploads every file in range)"
+      preset:
+        description: "Preset range (overrides start_date below). Estimates assume ~5 sec/day for refresh; delta is much faster on subsequent runs."
+        required: true
+        type: choice
+        default: "30 days  (~3 min)"
+        options:
+          - "30 days  (~3 min)"
+          - "60 days  (~5 min)"
+          - "90 days  (~8 min)"
+          - "180 days (~15 min)"
+          - "360 days (~30 min)"
+          - "2 years  (~60 min)"
+          - "3 years  (~90 min)"
+          - "4 years  (~120 min)"
+          - "5 years  (~150 min)"
+          - "custom (use start_date/end_date below)"
+      start_date:
+        description: "Custom start date (YYYY-MM-DD). ONLY used when preset = custom."
+        required: false
+        type: string
+      end_date:
+        description: "End date (YYYY-MM-DD). Default = yesterday UTC. Applies to all presets."
+        required: false
+        type: string
+      max_days:
+        description: "Safety cap on # days. Auto-raised for multi-year presets."
+        required: false
+        type: string
+        default: "2000"
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350   # 5h50m — under GH's 6h job cap
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout (full history needed for git log walk)
+        # SHA-pinned per repo policy (no @vN tags allowed) — same pin as pages.yml.
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.x"
+
+      - name: Install boto3
+        run: pip install -q boto3
+
+      - name: Run backfill
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_PRESET: ${{ inputs.preset }}
+          INPUT_START: ${{ inputs.start_date }}
+          INPUT_END: ${{ inputs.end_date }}
+          INPUT_MAX_DAYS: ${{ inputs.max_days }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, subprocess, sys, json
+          from datetime import date, datetime, timedelta, timezone
+
+          # Preset → days-back lookup. Labels match the dropdown options exactly.
+          PRESET_DAYS = {
+              "30 days":  30,
+              "60 days":  60,
+              "90 days":  90,
+              "180 days": 180,
+              "360 days": 360,
+              "2 years":  730,
+              "3 years":  1095,
+              "4 years":  1460,
+              "5 years":  1825,
+          }
+
+          raw_preset = os.environ.get("INPUT_PRESET", "").strip()
+          raw_start  = os.environ.get("INPUT_START", "").strip()
+          raw_end    = os.environ.get("INPUT_END", "").strip()
+          max_days   = int(os.environ.get("INPUT_MAX_DAYS", "2000") or "2000")
+
+          today = datetime.now(timezone.utc).date()
+          end = datetime.strptime(raw_end, "%Y-%m-%d").date() if raw_end else (today - timedelta(days=1))
+
+          # Resolve start: preset wins unless "custom"; custom requires start_date input.
+          preset_key = next((k for k in PRESET_DAYS if raw_preset.startswith(k)), None)
+          if preset_key:
+              days_back = PRESET_DAYS[preset_key]
+              start = end - timedelta(days=days_back - 1)
+              print(f"[backfill] preset='{preset_key}' → {days_back} days back from end")
+          elif "custom" in raw_preset.lower():
+              if not raw_start:
+                  print("::error::preset=custom requires start_date input.")
+                  sys.exit(1)
+              start = datetime.strptime(raw_start, "%Y-%m-%d").date()
+              print(f"[backfill] custom range from start_date input")
+          else:
+              # Fallback (shouldn't happen given choice input is required)
+              start = end - timedelta(days=29)
+              print(f"[backfill] no preset matched — defaulting to 30 days")
+
+          if end < start:
+              print(f"::error::end_date {end} < start_date {start}")
+              sys.exit(1)
+
+          total_days = (end - start).days + 1
+          if total_days > max_days:
+              print(f"::warning::range {total_days} days exceeds max_days {max_days} — trimming to last {max_days} days of range.")
+              start = end - timedelta(days=max_days - 1)
+              total_days = max_days
+
+          print(f"[backfill] range: {start} → {end} ({total_days} days)")
+          processed, skipped, failed, files_uploaded, files_present = 0, 0, 0, 0, 0
+          raw_mode = os.environ.get("INPUT_MODE", "").lower()
+
+          # boto3 client for writing the per-run summary to R2 (records-pulled
+          # tracking for the dashboard job-history table). Optional — wrapped so
+          # a missing dep never breaks the backfill.
+          try:
+              import boto3
+              _ACCOUNT_ID = "d486b561a8eacd568dd8edf9c749ee47"
+              s3 = boto3.client("s3", endpoint_url=f"https://{_ACCOUNT_ID}.r2.cloudflarestorage.com", region_name="auto")
+              bucket_name = os.environ.get("R2_BUCKET_NAME")
+          except Exception:
+              boto3 = None
+              s3 = None
+              bucket_name = None
+
+          # Original HEAD so we restore at the end
+          orig_ref = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          print(f"[backfill] original HEAD: {orig_ref[:10]}")
+
+          # Stash CURRENT upload_to_r2.py to /tmp so we run today's script against
+          # historical data (the script is recent — June 2026 — but the data files
+          # have been generated for over a year). Without this, every historical
+          # commit would skip with "script absent" because upload_to_r2.py didn't
+          # exist back then.
+          import shutil
+          STASHED_SCRIPT = "/tmp/upload_to_r2_stashed.py"
+          if not os.path.exists("upload_to_r2.py"):
+              print("::error::upload_to_r2.py missing from current HEAD — cannot backfill")
+              sys.exit(1)
+          shutil.copy("upload_to_r2.py", STASHED_SCRIPT)
+          print(f"[backfill] stashed current upload_to_r2.py to {STASHED_SCRIPT}")
+
+          cur = start
+          while cur <= end:
+              # Find latest commit on/before this day's end (23:59:59 UTC).
+              # CRITICAL: query against orig_ref (full main history), NOT the
+              # implicit HEAD. After the first checkout HEAD is DETACHED on an old
+              # commit, so a bare `git log --before=X` only sees that commit's
+              # ancestors — it can't look forward to newer commits that actually
+              # have the data files. Result: every day resolved to an early
+              # data-less commit → processed=0 skipped=ALL. Anchoring to orig_ref
+              # (captured before any detach) walks the true main history every time.
+              cutoff = f"{cur.isoformat()}T23:59:59"
+              try:
+                  sha = subprocess.check_output(
+                      ["git", "log", "-1", "--format=%H", f"--before={cutoff}", orig_ref],
+                      text=True,
+                  ).strip()
+              except subprocess.CalledProcessError:
+                  sha = ""
+
+              if not sha:
+                  print(f"[backfill] {cur} — no commit on/before {cutoff}, skipping")
+                  skipped += 1
+                  cur += timedelta(days=1)
+                  continue
+
+              print(f"[backfill] {cur} — checking out {sha[:10]}")
+              try:
+                  # -f (force) + clean BEFORE checkout: the previous iteration
+                  # copied the stashed upload_to_r2.py into the working tree, and
+                  # newer commits added health/ scripts that don't exist in old
+                  # commits. Plain `git checkout` aborts with "untracked working
+                  # tree files would be overwritten" → every day skipped (the
+                  # processed=0 skipped=730 bug). Force + clean clears the path.
+                  subprocess.run(["git", "checkout", "-f", "--quiet", sha], check=True)
+                  subprocess.run(["git", "clean", "-fdq"], check=False)
+              except subprocess.CalledProcessError as e:
+                  print(f"::warning::{cur} — git checkout failed: {e}")
+                  failed += 1
+                  cur += timedelta(days=1)
+                  continue
+
+              # Restore the stashed upload_to_r2.py on top of the historical commit.
+              # This means we always run TODAY's script (with delta/mode support,
+              # R2_OVERRIDE_DATE handling, etc.) against the historical data files.
+              shutil.copy(STASHED_SCRIPT, "upload_to_r2.py")
+
+              # Check the historical commit actually has data files to upload.
+              # Skip days that have no data-*.json at all (very early repo state).
+              import glob
+              if not glob.glob("data-*.json") and not glob.glob("v2/data-*.json"):
+                  print(f"[backfill] {cur} — no data-*.json files in this commit, skipping")
+                  skipped += 1
+                  cur += timedelta(days=1)
+                  continue
+
+              env = os.environ.copy()
+              env["R2_OVERRIDE_DATE"] = cur.isoformat()
+              # Mode flag: delta sets R2_SKIP_IF_PRESENT, refresh leaves it unset.
+              raw_mode = os.environ.get("INPUT_MODE", "").lower()
+              if raw_mode.startswith("delta"):
+                  env["R2_SKIP_IF_PRESENT"] = "true"
+              r = subprocess.run(
+                  ["python3", "upload_to_r2.py"],
+                  env=env, capture_output=True, text=True
+              )
+              # Echo the upload script's last 6 lines of stdout per day for trail
+              for line in (r.stdout or "").strip().splitlines()[-6:]:
+                  print(f"  | {line}")
+              # Parse "uploaded X/Y files, skipped Z" — track new uploads AND
+              # already-present (skipped) so the dashboard can show "X new · total
+              # present". In delta mode a re-run shows 0 new but full present count
+              # (= the records ARE there, just not re-pulled).
+              import re as _re
+              mm = _re.search(r"uploaded (\d+)/\d+ files, skipped (\d+)", r.stdout or "")
+              if mm:
+                  files_uploaded += int(mm.group(1))
+                  files_present += int(mm.group(1)) + int(mm.group(2))
+              if r.returncode != 0:
+                  print(f"::warning::{cur} — upload_to_r2.py exited {r.returncode}")
+                  failed += 1
+              else:
+                  processed += 1
+
+              cur += timedelta(days=1)
+
+          # Restore original HEAD (force + clean — same reason as per-iteration
+          # checkout: stashed/restored files must not block the restore, or the
+          # downstream "Regenerate coverage" step runs on a detached old commit
+          # without the health/ scripts → exit code 2).
+          subprocess.run(["git", "checkout", "-f", "--quiet", orig_ref], check=False)
+          subprocess.run(["git", "clean", "-fdq"], check=False)
+          print(f"[backfill] restored HEAD to {orig_ref[:10]}")
+          print(f"[backfill] DONE — processed={processed} skipped={skipped} failed={failed} of {total_days} days, files_uploaded={files_uploaded}")
+
+          # Write a per-run summary to R2 so the dashboard's job-history table can
+          # show records-pulled per run (GH API only gives runtime/conclusion).
+          # Keyed by GITHUB_RUN_ID; build_backfill_jobs.py reads these back.
+          run_id = os.environ.get("GITHUB_RUN_ID", "").strip()
+          if run_id and boto3:
+              try:
+                  summary = {
+                      "run_id": int(run_id),
+                      "processed_days": processed,
+                      "skipped_days": skipped,
+                      "failed_days": failed,
+                      "total_days": total_days,
+                      "files_uploaded": files_uploaded,
+                      "files_present": files_present,
+                      "mode": "delta" if raw_mode.startswith("delta") else "refresh",
+                      "range_start": start.isoformat(),
+                      "range_end": end.isoformat(),
+                  }
+                  s3.put_object(
+                      Bucket=bucket_name,
+                      Key=f"_backfill_meta/{run_id}.json",
+                      Body=json.dumps(summary).encode(),
+                      ContentType="application/json",
+                  )
+                  print(f"[backfill] wrote run summary to _backfill_meta/{run_id}.json")
+              except Exception as e:
+                  print(f"[backfill] WARN: could not write run summary: {e}")
+          PYEOF
+
+      - name: Regenerate coverage dashboard JSON
+        # Rescan R2 after backfill so /health/r2-coverage.html reflects new
+        # historical cells. Skipped only on hard failure of backfill loop.
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          python3 health/build_r2_coverage.py
+          echo "Coverage JSON regenerated. View at https://btabiado.github.io/alpine-data/health/r2-coverage.html (refreshes on next pages.yml run)."
+        continue-on-error: true

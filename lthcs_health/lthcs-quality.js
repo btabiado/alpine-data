@@ -4,6 +4,9 @@
 //
 // Resolves relative to this HTML file so the page works under /lthcs_health/
 // (dev) and /lthcs/lthcs_health/ (production gh-pages).
+// Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
+import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+
 const SUMMARY_URL = '../data/lthcs/quality_audit/latest_summary.json';
 
 const loadingEl = document.getElementById('lq-loading');
@@ -30,7 +33,27 @@ function freshnessDays(asof) {
 }
 
 function renderPayload(data) {
-  document.getElementById('lq-asof').textContent = data.asof || '?';
+  // Freshness stamp. Two real dates live in this payload: `asof` (the day the
+  // audit ran its checks) and `snapshot_date` (the day of the data it checked).
+  // The audit's verdict is only as trustworthy as the OLDER of the two, so
+  // Rule 2 applies and the composite takes the minimum. `generated_at_utc` is
+  // the writer's build time and is deliberately excluded.
+  paintComposite(
+    document.getElementById('lq-asof'),
+    [
+      { label: 'audit', date: data.asof },
+      { label: 'snapshot', date: data.snapshot_date },
+    ],
+    {
+      detailEl: document.getElementById('lq-fresh-note'),
+      what: 'This quality audit',
+      baseClass: 'lthcs-meta-value',
+      // Monthly cadence, so the daily 7/21 thresholds would scream on a
+      // perfectly healthy audit. Widened to match the cron, same dialect.
+      warnDays: 35,
+      badDays: 45,
+    },
+  );
 
   const age = data.asof ? freshnessDays(data.asof) : null;
   if (age !== null && age > 45) {

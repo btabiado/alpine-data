@@ -29,6 +29,16 @@
           <p class="lthcs-subtitle">Query every band-change event across the LTHCS universe (Phase 5 power-user view)</p>
         </div>
         <div class="lthcs-header-meta">
+          <!-- Search page: there is no page-wide date until a query runs, so
+               the stamp starts at the honest "as of —" and is repainted from
+               whatever series the search actually loaded. Rule 2: across many
+               tickers the result set is only as current as the ticker whose
+               series has fallen furthest behind. -->
+          <div class="lthcs-meta-line">
+            <span class="lthcs-meta-label">Data as of</span>
+            <span id="lthcs-history-asof" class="lthcs-meta-value">&hellip;</span>
+            <span id="lthcs-history-fresh-note" class="lthcs-freshnote" hidden></span>
+          </div>
           <nav class="lthcs-header-nav" aria-label="LTHCS views">
             <a href="../lthcs_tab/" class="lthcs-refresh-btn lthcs-refresh-btn-nav" aria-label="Back to LTHCS hub" style="text-decoration:none">
               <span aria-hidden="true">&larr;</span>

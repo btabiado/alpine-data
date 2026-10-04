@@ -79,6 +79,23 @@ _DEFAULT_JITTER_SECONDS = 1.0
 _BACKOFF_BASE_SECONDS = 30.0
 _BACKOFF_MAX_SECONDS = 600.0
 
+# Overall wall-clock budget, in minutes.
+#
+# Per-ticker retries are bounded (--max-retries), but the TOTAL was not, and the
+# arithmetic does not fit: 219 tickers x (30 + 60 + 120s of backoff + ~4s
+# cadence) is about 13 hours if Google is rate-limiting broadly. GitHub kills a
+# job at 6 hours, so every run since 2026-06-08 hit the ceiling and was
+# cancelled — 12 consecutive weeks, never once completing, and because the kill
+# lands mid-loop the aggregated snapshot was never written and NOTHING was
+# saved.
+#
+# 240 minutes leaves comfortable room under the ceiling. Stopping early is not a
+# failure mode here: the loop already caches each ticker as it succeeds and
+# already treats a missed ticker as "will retry next week", so a budgeted run
+# writes real partial data and the next run resumes from cache. Partial weekly
+# data beats twelve weeks of nothing.
+_DEFAULT_BUDGET_MINUTES = 240.0
+
 _PROGRESS_EVERY = 10  # log every N tickers
 
 _DEFAULT_TIMEFRAME = "today 5-y"  # 5-year horizon, weekly granularity
@@ -159,6 +176,16 @@ def build_argparser() -> argparse.ArgumentParser:
         type=float,
         default=_DEFAULT_CADENCE_SECONDS,
         help=f"Base sleep between tickers in seconds (default: {_DEFAULT_CADENCE_SECONDS}).",
+    )
+    p.add_argument(
+        "--budget-minutes",
+        type=float,
+        default=_DEFAULT_BUDGET_MINUTES,
+        help=(
+            "Overall wall-clock budget. When it is spent the run stops early and "
+            "writes what it collected, instead of being killed with nothing "
+            f"(default: {_DEFAULT_BUDGET_MINUTES:.0f}). 0 disables the budget."
+        ),
     )
     p.add_argument(
         "--jitter",
@@ -378,6 +405,12 @@ def run_batch(args: argparse.Namespace, trend_req_factory: Any = None) -> Dict[s
     eta = _format_eta(total, args.cadence)
     logger.info("Estimated total runtime: %s", eta)
 
+    budget_s = max(0.0, getattr(args, "budget_minutes", _DEFAULT_BUDGET_MINUTES) * 60.0)
+    deadline = (time.monotonic() + budget_s) if budget_s else None
+    if deadline is not None:
+        logger.info("Wall-clock budget: %.0f min", budget_s / 60.0)
+    budget_stopped_at = 0
+
     term_map: Dict[str, str] = {}
     series_map: Dict[str, Dict[str, Any]] = {}
 
@@ -386,6 +419,19 @@ def run_batch(args: argparse.Namespace, trend_req_factory: Any = None) -> Dict[s
     failures = 0
 
     for idx, ticker in enumerate(tickers, start=1):
+        # Stop on the budget rather than on the runner being killed. Breaking
+        # here still falls through to the snapshot write below, so the week gets
+        # whatever was collected; being SIGKILLed at GitHub's 6h ceiling — which
+        # is what happened for 12 straight weeks — writes nothing at all.
+        if deadline is not None and time.monotonic() >= deadline:
+            budget_stopped_at = idx - 1
+            logger.warning(
+                "Wall-clock budget of %.0f min spent after %d/%d tickers; "
+                "stopping early and writing partial results. The remaining %d "
+                "keep their cached values and are retried next week.",
+                budget_s / 60.0, budget_stopped_at, total, total - budget_stopped_at,
+            )
+            break
         term = resolve_search_term(ticker)
         term_map[ticker] = term
 

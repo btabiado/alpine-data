@@ -222,13 +222,20 @@ def _fetch_ohlcv(ticker: str) -> List[Dict[str, Any]]:
 # Per-stock scoring
 # ---------------------------------------------------------------------------
 
-def _score_from_mfi_cmf(rec: Dict[str, Any], m: Optional[float], cm: Optional[float]) -> Optional[Dict[str, Any]]:
+def _score_from_mfi_cmf(rec: Dict[str, Any], m: Optional[float], cm: Optional[float],
+                        as_of: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """Build a scored stock dict from a precomputed MFI / CMF pair.
 
     Shared by both data paths: the standalone fetch (``_score_stock``) and the
     pages-build piggyback (``build_from_signals``), which reuses the MFI/CMF
     already computed during the reliable ``stocks_signals`` fetch. Returns
     ``None`` when neither indicator is available (not scoreable).
+
+    ``as_of`` is the date of the last daily bar MFI/CMF were computed from.
+    It is carried per row so the payload-level stamp can be the OLDEST
+    contributing bar rather than a wall-clock reading — Yahoo's per-ticker
+    fetches fail independently, so rows in one payload can legitimately be
+    days apart.
     """
     if m is not None and cm is not None:
         raw = 0.6 * ((m - 50.0) * 2.0) + 0.4 * (cm * 200.0)
@@ -247,12 +254,30 @@ def _score_from_mfi_cmf(rec: Dict[str, Any], m: Optional[float], cm: Optional[fl
         "cmf": round(cm, 4) if cm is not None else None,
         "indices": _scope_indices(rec),
         "sector": rec.get("sector"),
+        "as_of": as_of if isinstance(as_of, str) and as_of else None,
     }
+
+
+def _last_bar_date(bars: List[Dict[str, Any]]) -> Optional[str]:
+    """``YYYY-MM-DD`` of the newest bar, or None. Yahoo bars are already
+    oldest-first, but take the max defensively rather than trusting order."""
+    dates = [b.get("date") for b in (bars or [])
+             if isinstance(b, dict) and isinstance(b.get("date"), str)]
+    return max(dates)[:10] if dates else None
+
+
+def _oldest_as_of(rows: List[Dict[str, Any]]) -> Optional[str]:
+    """MIN of the per-row observation dates — a composite is only as fresh
+    as its oldest input. None when no row carries a date."""
+    dates = [r.get("as_of") for r in (rows or [])
+             if isinstance(r, dict) and isinstance(r.get("as_of"), str) and r.get("as_of")]
+    return min(dates) if dates else None
 
 
 def _score_stock(rec: Dict[str, Any], bars: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     """Score one stock from its OHLCV bars, or ``None`` when unscoreable."""
-    return _score_from_mfi_cmf(rec, mfi(bars, 14), cmf(bars, 20))
+    return _score_from_mfi_cmf(rec, mfi(bars, 14), cmf(bars, 20),
+                               as_of=_last_bar_date(bars))
 
 
 # ---------------------------------------------------------------------------
@@ -320,7 +345,11 @@ def build_stock_money_flow(limit: Optional[int] = None, write: bool = True) -> D
     stocks.sort(key=lambda s: s["score"], reverse=True)
 
     payload: Dict[str, Any] = {
-        "as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        # Oldest contributing daily bar, NOT the clock. This used to be
+        # datetime.now(): on a weekend, a market holiday, or a run where
+        # Yahoo throttled half the fan-out, that printed today's date over
+        # data that was days old.
+        "as_of": _oldest_as_of(stocks),
         "universe_count": universe_count,
         "scored_count": len(stocks),
         "stocks": stocks,
@@ -381,12 +410,18 @@ def build_from_signals(signals: Any, write: bool = True) -> Dict[str, Any]:
         rec = by_ticker.get(s.get("symbol"))
         if rec is None:
             continue  # not an in-scope index constituent
-        scored = _score_from_mfi_cmf(rec, s.get("mfi"), s.get("cmf"))
+        # fetch_market's stocks_signals rows carry `as_of` = the date of
+        # the last Yahoo daily bar their MFI/CMF were computed from. Same
+        # bars, same date — just forwarded.
+        scored = _score_from_mfi_cmf(rec, s.get("mfi"), s.get("cmf"),
+                                     as_of=s.get("as_of"))
         if scored is not None:
             stocks.append(scored)
     stocks.sort(key=lambda x: x["score"], reverse=True)
     payload: Dict[str, Any] = {
-        "as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        # Oldest contributing bar across the scored rows — see
+        # build_stock_money_flow for why this is not a clock reading.
+        "as_of": _oldest_as_of(stocks),
         "universe_count": len(by_ticker),
         "scored_count": len(stocks),
         "source": "stocks_signals (most-active index members)",

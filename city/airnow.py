@@ -44,6 +44,8 @@ from typing import Optional
 
 import requests
 
+from .redact import redact
+
 __all__ = ["AirNowError", "CITY_LATLON", "fetch_aqi"]
 
 
@@ -159,7 +161,7 @@ def fetch_aqi(city_id, *, api_key=None, session=None) -> "int | None":
             body = (resp.text or "")[:200]
         except Exception:
             pass
-        raise AirNowError(f"AirNow returned HTTP {status}: {body}")
+        raise AirNowError(redact(f"AirNow returned HTTP {status}: {body}"))
 
     try:
         payload = resp.json()
