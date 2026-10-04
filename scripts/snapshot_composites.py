@@ -706,17 +706,53 @@ def stocks_signal_breadth(market: dict) -> dict | None:
     )
 
 
+def _whale_sentiments(whale: dict) -> tuple[dict, dict]:
+    """(BTC, ETH) whale-sentiment composites for a whale tree.
+
+    app.py and v2/app.py compute both at RENDER time (build_payload attaches
+    ``whale["sentiment"]`` and ``whale["eth"]["sentiment"]`` in memory) and
+    never write them back to data/whale.json, which is all this script reads.
+    So every snapshot from 2026-08-02 on archived ``whale_sentiment_btc`` and
+    ``whale_sentiment_eth`` as null while both cards showed a number. Compute
+    them here with the SAME pure functions the builders call, on the same
+    whale tree, so the archive holds the number the card displayed.
+
+    A payload that already carries a sentiment (a future fetch_market that
+    persists it) is used as-is. The ETH function's "available: False / score
+    0 / NO DATA" placeholder is not a reading and is returned as {} — a zero
+    would be archived as a genuine neutral observation.
+    """
+    btc = whale.get("sentiment") if isinstance(whale.get("sentiment"), dict) else None
+    eth_tree = whale.get("eth") if isinstance(whale.get("eth"), dict) else {}
+    eth = eth_tree.get("sentiment") if isinstance(eth_tree.get("sentiment"), dict) else None
+    if (btc is None or eth is None) and whale:
+        try:
+            import fetch_market as _fm
+            if btc is None:
+                btc = _fm.compute_whale_sentiment(whale)
+            if eth is None:
+                eth = _fm.compute_whale_sentiment_eth(whale)
+        except Exception as e:  # never fail the build over a composite
+            print(f"  [composites] whale sentiment recompute skipped: "
+                  f"{type(e).__name__}: {e}")
+    btc = btc if isinstance(btc, dict) else {}
+    eth = eth if isinstance(eth, dict) else {}
+    if eth.get("available") is False:
+        eth = {}
+    return btc, eth
+
+
 def collect() -> dict:
     market = _load(CACHE / "market.json") or {}
     whale = _load(CACHE / "whale.json") or {}
     idx: dict[str, dict | None] = {}
+    ws, wse = _whale_sentiments(whale)
 
     # --- Whale Sentiment Index (BTC) — computed Python-side in fetch_market ---
     # Fallback when the payload predates the provenance fix: the OLDEST last
     # date across the blockchain.info series the composite is built from.
     # Taking one series' last date (or worse, `fetched_at`) would overstate
     # the composite exactly the way this archive exists to catch.
-    ws = (whale or {}).get("sentiment") or {}
     btc = (whale or {}).get("btc") or {}
     idx["whale_sentiment_btc"] = _entry(
         ws.get("score"), ws.get("label"),
@@ -729,7 +765,6 @@ def collect() -> dict:
     )
 
     # --- ETH Whale Sentiment Index ---
-    wse = ((whale or {}).get("eth") or {}).get("sentiment") or {}
     eth_cm = (((whale or {}).get("eth") or {}).get("coin_metrics") or {})
     eth_eds = (((whale or {}).get("eth") or {}).get("etherscan_daily") or {})
     idx["whale_sentiment_eth"] = _entry(

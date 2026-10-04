@@ -59,6 +59,15 @@ THRESHOLDS: dict[str, Threshold] = {
     # equity ETF flows only move on TRADING days, so Friday's row is already
     # ~3 days old by Monday morning and ~4 across a Monday holiday.
     "equity_etf_flows.csv": Threshold(96, 168),
+    # Daily history rows scripts/snapshot_history.py appends for deploy-time
+    # sidecars. The stock file gains a row-set per completed TRADING day (so
+    # it shares the equity cadence); the travel summary gains one per day.
+    # The change log's last row is the last level CHANGE, which can be weeks
+    # old on a perfectly healthy feed, so it is watched through the summary
+    # and only alarms here if nothing has changed for half a year.
+    "stock_money_flow_history.csv": Threshold(96, 168),
+    "travel_advisory_levels.csv": Threshold(30, 48),
+    "travel_advisory_changes.csv": Threshold(2160, 4380),
     # data-city.json is judged on cities[].data_health.last_updated (see
     # NESTED_DATE_PATHS), which is the oldest SCORED monthly municipal series
     # behind a city — 311 calls, crime reports, building permits. Feeds excluded
