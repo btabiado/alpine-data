@@ -66,6 +66,31 @@ KEYS: list[tuple[str, str, str]] = [
     ("ALPHA_VANTAGE_API_KEY", "LTHCS financial pillar",                         "pages, lthcs-daily"),
     ("FINNHUB_API_KEY",       "LTHCS thesis pillar",                            "pages"),
     ("R2_ACCESS_KEY_ID",      "R2 warehouse archive upload",                    "pages, r2-backfill"),
+    # ---- Added 2026-10-04 ---------------------------------------------------
+    # These nine are referenced by `secrets.X` in a workflow but were never in
+    # this table, so the audit printed "17 set/missing" and looked complete
+    # while nine inputs were unreportable. That is not cosmetic: the first row
+    # below silently flattened a whole scoring pillar for four months.
+    #
+    # SEC_USER_AGENT has no default. lthcs/sources/sec_edgar.py raises
+    # SECEdgarError the moment it is empty, every call, and the financial
+    # pillar falls back to its neutral 50 for all ~215 tickers. The snapshots
+    # show that exact signature: per-ticker stdev 17.44 on 2026-06-04, then
+    # 0.00 on 2026-06-05 and every day since. Nothing reported it, because the
+    # one tool that answers "did this reach Actions?" wasn't watching it.
+    ("SEC_USER_AGENT",        "LTHCS financial pillar via SEC EDGAR; SEC REQUIRES a contact-email UA and the fetcher raises without it", "lthcs-daily, lthcs-news-hourly"),
+    ("ANTHROPIC_API_KEY",     "LLM sentiment + narrative generation",           "lthcs-daily"),
+    ("OPENSKY_CLIENT_ID",     "OpenSky OAuth - live aircraft positions",        "aviation-opensky"),
+    ("OPENSKY_CLIENT_SECRET", "OpenSky OAuth - live aircraft positions",        "aviation-opensky"),
+    ("REDDIT_CLIENT_ID",      "Reddit breadth sentiment",                       "pages"),
+    ("REDDIT_CLIENT_SECRET",  "Reddit breadth sentiment",                       "pages"),
+    # The last three reach their consumers RENAMED (boto3 reads AWS_*, gh reads
+    # GH_TOKEN), which is why a literal-name grep never found them. Renaming
+    # happens downstream; whether the secret is set at all is still this
+    # table's question, and it is the question people actually ask.
+    ("R2_SECRET_ACCESS_KEY",  "R2 upload - reaches boto3 as AWS_SECRET_ACCESS_KEY", "pages, r2-backfill"),
+    ("R2_BUCKET_NAME",        "R2 upload - target bucket",                      "pages, r2-backfill"),
+    ("SECURITY_AUDIT_TOKEN",  "security-audit Dependabot + secret-scanning reads - reaches gh as GH_TOKEN", "security-audit"),
 ]
 
 
