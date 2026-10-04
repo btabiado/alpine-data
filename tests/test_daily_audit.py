@@ -275,7 +275,9 @@ def _ux_page(page="v1", vp="phone", **over):
     rec = {"page": page, "path": "/", "viewport": vp, "status": 200, "console_errors": [],
            "page_errors": [], "failed_requests": [], "bad_text": [],
            "overflow": {"overflow": False, "scroll_width": 390},
-           "weight": {"requests": 30, "bytes": 1_500_000}, "tabs": []}
+           "weight": {"requests": 30, "bytes": 1_500_000},
+           "tabs": ([{"id": "overview", "label": "Overview", "via": "direct", "reachable": True,
+                      "switched": True}] if page in ("v1", "v2") else [])}
     rec.update(over)
     return rec
 
@@ -570,7 +572,8 @@ def test_workflow_runs_daily_and_on_demand(wf):
 
 
 def test_workflow_permissions_are_minimal(wf):
-    assert wf["permissions"] == {"contents": "write", "issues": "write", "actions": "read"}
+    assert wf["permissions"] == {"contents": "write", "issues": "write", "actions": "read",
+                                 "checks": "read"}
 
 
 def test_workflow_actions_are_pinned_to_shas(wf):
@@ -650,3 +653,14 @@ def test_unknown_data_health_extensions_are_still_judged(dad):
     got = [r for k, v in extra.items() for r in dad.collect_failing(v, k, failing)]
     assert {(r["section"], r.get("path") or r.get("name"), r["status"]) for r in got} == {
         ("continuity", "data/btc_flows.csv", "stale"), ("history", "composites", "missing")}
+
+
+def test_tab_strip_shrinking_or_vanishing_is_flagged(dar):
+    tabs = [{"id": f"t{i}", "label": f"T{i}", "reachable": True, "switched": True} for i in range(5)]
+    prev = {"date": "2026-10-03", "problems": [], "ux": _ux(_ux_page(tabs=tabs), _ux_page(vp="desktop", tabs=tabs))}
+    today = _ux(_ux_page(tabs=tabs[:2]), _ux_page(vp="desktop", tabs=[]))
+    rep = dar.build_report(_data(), today, prev, "2026-10-04")
+    sev = {p["id"]: p["severity"] for p in rep["problems"]}
+    assert sev["ux:v1:phone:tab-count"] == "P1"
+    assert sev["ux:v1:desktop:no-tabs"] == "P1"
+    assert "ux:v1:desktop:tab-count" not in sev   # zero is reported as no-tabs, once

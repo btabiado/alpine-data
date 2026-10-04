@@ -32,6 +32,8 @@ on:
     # 09:17 UTC: after the overnight crons (lthcs 22:00-23:30, trends 04:00,
     # real-estate 06:00, city/cfpb 07:00, usaspending 07:30, money-flow 08:30).
     # Off the top of the hour, where GitHub's scheduler is most congested.
+    # (On this repo scheduled runs start hours late — the report's schedules
+    # table measures each cron's median delay, this one included.)
     - cron: "17 9 * * *"
   workflow_dispatch:
     inputs:
@@ -44,7 +46,8 @@ on:
 permissions:
   contents: write   # commit audit/daily/* (api-commit.sh)
   issues: write     # open / update / close the tracking issue
-  actions: read     # workflow run history and check-run annotations
+  actions: read     # workflow run history and failed jobs
+  checks: read      # failed jobs' annotations (/check-runs/<job>/annotations)
 
 concurrency:
   group: daily-audit-${{ github.ref }}

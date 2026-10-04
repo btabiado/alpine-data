@@ -78,6 +78,9 @@ BENIGN_CONSOLE = (
     re.compile(r"Content Security Policy directive 'frame-ancestors' is ignored", re.I),
 )
 
+# Pages whose top-level tabs the UX audit opens one by one.
+TABBED_PAGES = ("v1", "v2")
+
 DATED_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.(json|md)$")
 
 # Problem-id prefix -> the section whose failure means "not re-checked today".
@@ -362,6 +365,10 @@ def ux_problems(ux: dict | None) -> list[dict]:
             add(problem(f"ux:{page}:bad-text:{b.get('match')}:{b.get('where')}", P1, "ux",
                         f"{label}: visible \"{b.get('match')}\" in {b.get('where')} — “{_short(b.get('text'), 90)}”",
                         f"during {b.get('step')}"), vp)
+        if page in TABBED_PAGES and not rec.get("tabs"):
+            add(problem(f"ux:{page}:{vp}:no-tabs", P1, "ux",
+                        f"{label} @ {vp}: no tabs found (selector `.tabs [data-tab]`) — "
+                        "the tab audit could not run"), vp)
         w = rec.get("weight") or {}
         if (w.get("bytes") or 0) > HEAVY_BYTES or (w.get("requests") or 0) > HEAVY_REQUESTS:
             add(problem(f"ux:{page}:heavy", P2, "ux",
@@ -399,6 +406,28 @@ def ux_problems(ux: dict | None) -> list[dict]:
     if skipped:
         out.append(problem("audit:ux-budget", P2, "audit",
                            f"UX audit ran out of time; not checked: {', '.join(skipped)}"))
+    return out
+
+
+def tab_count_problems(ux: dict | None, previous: dict | None) -> list[dict]:
+    """Fewer tabs than yesterday means tabs vanished — or moved somewhere the
+    audit no longer looks, which would silently shrink what it checks."""
+    prev_ux = (previous or {}).get("ux") or {}
+    if not isinstance(ux, dict) or not prev_ux:
+        return []
+
+    def counts(doc: dict) -> dict[tuple, int]:
+        return {(r.get("page"), r.get("viewport")): len(r.get("tabs") or [])
+                for r in doc.get("pages") or []
+                if r.get("page") in TABBED_PAGES and not r.get("skipped") and not r.get("error")}
+    before, now = counts(prev_ux), counts(ux)
+    out = []
+    for (page, vp), n in sorted(now.items()):
+        was = before.get((page, vp))
+        if was and 0 < n < was:
+            out.append(problem(f"ux:{page}:{vp}:tab-count", P1, "ux",
+                               f"{PAGE_LABELS.get(page, page)} @ {vp}: {n} tabs found, {was} yesterday",
+                               "a tab was removed, or moved out of `.tabs [data-tab]` where the audit looks"))
     return out
 
 
@@ -718,7 +747,7 @@ def prune(out_dir: Path, today: str, keep_days: int) -> list[str]:
 def build_report(data: dict | None, ux: dict | None, previous: dict | None, today: str,
                  now: datetime | None = None, run_url: str | None = None) -> dict:
     now = now or datetime.now(timezone.utc)
-    problems = data_problems(data) + ux_problems(ux)
+    problems = data_problems(data) + ux_problems(ux) + tab_count_problems(ux, previous)
     # Stable ids must be unique; keep the first occurrence.
     seen: set[str] = set()
     problems = [p for p in problems if not (p["id"] in seen or seen.add(p["id"]))]
