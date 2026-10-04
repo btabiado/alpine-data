@@ -86,7 +86,11 @@ TARGETS: list[dict] = [
     # ---- exchange / derivatives ----
     {"label": "Coinbase Exchange",    "category": "Spot",          "url": "https://api.exchange.coinbase.com/products/BTC-USD/ticker",                                      "key_env": None},
     {"label": "Coinbase Intl (perps)","category": "Futures",       "url": "https://api.international.coinbase.com/api/v1/instruments",                                      "key_env": None},
-    {"label": "CoinDesk CADLI",       "category": "Futures",       "url": "https://data-api.coindesk.com/index/cc/v1/latest/tick?market=cadli&instruments=BTC-USD",         "key_env": None},
+    # CoinDesk Data (ex-CryptoCompare) answers every keyless request with 401
+    # "API key required" since 2026-10. fetch_market.coindesk_cadli() sends
+    # CRYPTOCOMPARE_API_KEY (one CoinDesk Data key covers both hosts), so a
+    # keyless 401 here is auth_required, not blocked. Same path as the fetcher.
+    {"label": "CoinDesk CADLI",       "category": "Futures",       "url": "https://data-api.coindesk.com/index/cc/v1/historical/days?market=cadli&instrument=BTC-USD&limit=1", "key_env": "CRYPTOCOMPARE_API_KEY"},
     {"label": "OKX",                  "category": "Futures",       "url": "https://www.okx.com/api/v5/public/funding-rate?instId=BTC-USD-SWAP",                             "key_env": None},
     {"label": "Deribit",              "category": "Futures",       "url": "https://www.deribit.com/api/v2/public/get_index_price?index_name=btc_usd",                       "key_env": None},
     {"label": "Alternative.me F&G",   "category": "Sentiment",     "url": "https://api.alternative.me/fng/?limit=1",                                                        "key_env": None},
@@ -103,6 +107,8 @@ TARGETS: list[dict] = [
     {"label": "DeFiLlama yields",     "category": "DeFi",          "url": "https://yields.llama.fi/pools",                                                                  "key_env": None},
     {"label": "DeFiLlama prices",     "category": "DeFi",          "url": "https://coins.llama.fi/prices/current/coingecko:bitcoin",                                        "key_env": None},
     {"label": "DeFiLlama stablecoins","category": "DeFi",          "url": "https://stablecoins.llama.fi/stablecoins?includePrices=false",                                   "key_env": None},
+    # 402 here is DeFiLlama's paid-plan wall (bridges are Pro-only since
+    # 2026-10), not an outage; the DeFi tab's bridges card says so.
     {"label": "DeFiLlama bridges",    "category": "DeFi",          "url": "https://bridges.llama.fi/bridges",                                                               "key_env": None},
     # ---- equities / macro ----
     {"label": "Yahoo Finance",        "category": "Stocks",        "url": "https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD?range=1d&interval=1d",                 "key_env": None},
@@ -138,7 +144,14 @@ TARGETS: list[dict] = [
     # effect was printing "auth required" on /health/apis.html forever for a key
     # that unlocked nothing. Claim removed; the probe still reports whether the
     # endpoint the dashboard actually calls is serving.
-    {"label": "Santiment",            "category": "Research",      "url": "https://api.santiment.net/graphql",                                                             "key_env": None},
+    #
+    # A bare GET of /graphql has no query document, so Santiment answers 400
+    # "No query document supplied": the probe reported "degraded" while the
+    # fetcher's POSTs were returning data. GraphQL also accepts GET with
+    # ?query=, so this sends the same getMetric/timeseriesData query the
+    # fetcher POSTs (bitcoin DAA, relative dates so it never ages out of the
+    # free window), URL-encoded.
+    {"label": "Santiment",            "category": "Research",      "url": "https://api.santiment.net/graphql?query=%7BgetMetric%28metric%3A%22daily_active_addresses%22%29%7BtimeseriesData%28slug%3A%22bitcoin%22%2Cfrom%3A%22utc_now-3d%22%2Cto%3A%22utc_now%22%2Cinterval%3A%221d%22%29%7Bdatetime%20value%7D%7D%7D", "key_env": None},
     {"label": "SEC EDGAR",            "category": "AI News",       "url": "https://efts.sec.gov/LATEST/search-index?q=ai",                                                 "key_env": None, "headers": {"User-Agent": "BDT-Dashboards/1.0 (open-source dashboard; contact@bdt-dashboards.local)", "Accept": "application/json"}},
     # ---- summit (the standalone Snowflake Summit dashboard is static/baked —
     # no live upstream API; we probe the deployed page itself for "is it up") ----

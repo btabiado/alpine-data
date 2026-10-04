@@ -80,6 +80,33 @@ def _get(url: str, params: dict | None = None, timeout: int = 25) -> dict | list
         return None
 
 
+def _get_status(url: str, params: dict | None = None, headers: dict | None = None,
+                timeout: int = 25) -> tuple[int | None, Any]:
+    """Like `_get`, but keeps the HTTP status: ``(status, parsed_json_or_None)``.
+
+    `_get` collapses every failure to None, which is fine for a section that
+    only needs "data or nothing". A section that has to TELL the reader why it
+    is empty (a paywall, a missing key) needs the status, so it uses this.
+    ``status`` is None when no HTTP response arrived at all. Only the bare URL
+    and the exception's type are logged: a requests exception message can
+    carry the full query string, and a header-borne key must stay unlogged.
+    """
+    try:
+        r = requests.get(url, params=params, headers=headers or _headers_for(url),
+                         timeout=timeout)
+    except Exception as e:
+        print(f"  [skip] {url} -> {type(e).__name__}", file=sys.stderr)
+        return None, None
+    if r.status_code != 200:
+        print(f"  [skip] {url} -> {r.status_code}", file=sys.stderr)
+        return r.status_code, None
+    try:
+        return 200, r.json()
+    except ValueError:
+        print(f"  [skip] {url} -> 200 with a non-JSON body", file=sys.stderr)
+        return 200, None
+
+
 def _ts(ms: int) -> str:
     return datetime.fromtimestamp(ms / 1000, tz=timezone.utc).strftime("%Y-%m-%d")
 
@@ -597,23 +624,19 @@ def defillama_yields_stablecoin_top(top: int = 20) -> list[dict]:
     return out[:top]
 
 
-def defillama_bridges() -> dict:
-    """Cross-chain bridge daily volume snapshot.
+DEFILLAMA_BRIDGES_URL = "https://bridges.llama.fi/bridges"
 
-    The legacy `api.llama.fi/bridges` route now 404s. DeFiLlama moved the
-    bridges API onto its own subdomain at `bridges.llama.fi/bridges`. If
-    that also fails (rare auth/quota cases), gracefully return an empty
-    list — never raise.
-    """
-    out: dict[str, Any] = {"top_bridges": []}
-    j = _get("https://bridges.llama.fi/bridges")
-    if not j or not isinstance(j, dict):
-        return out
-    bridges = (j.get("bridges") or [])
+
+def _bridges_rows(j: Any) -> list[dict]:
+    """Top-10 bridges by 24h volume from a DeFiLlama ``/bridges`` body."""
+    if not isinstance(j, dict):
+        return []
+    bridges = j.get("bridges") or []
     if not isinstance(bridges, list):
-        return out
-    bridges = sorted(bridges, key=lambda b: (b.get("lastDailyVolume") or 0), reverse=True)
-    out["top_bridges"] = [
+        return []
+    bridges = [b for b in bridges if isinstance(b, dict)]
+    bridges.sort(key=lambda b: (b.get("lastDailyVolume") or 0), reverse=True)
+    return [
         {
             "name": b.get("displayName") or b.get("name"),
             "daily_volume_usd": b.get("lastDailyVolume"),
@@ -623,7 +646,55 @@ def defillama_bridges() -> dict:
         }
         for b in bridges[:10]
     ]
-    return out
+
+
+def _bridges_unavailable_reason(status: int | None) -> str:
+    if status == 402:
+        return ("DeFiLlama moved its bridges API to the paid Pro plan "
+                "(HTTP 402 Payment Required)")
+    if status is None:
+        return "DeFiLlama bridges API did not respond"
+    if status == 200:
+        return "DeFiLlama bridges API returned no bridges"
+    return f"DeFiLlama bridges API returned HTTP {status}"
+
+
+def defillama_bridges(now: datetime | None = None) -> dict:
+    """Cross-chain bridge volume snapshot, or an explicit "unavailable" record.
+
+    The legacy ``api.llama.fi/bridges`` route 404s; the API moved to
+    ``bridges.llama.fi``. Since 2026-10 that host answers every bridges route
+    with HTTP 402 "Upgrade to the paid API plan", and DeFiLlama's API docs now
+    list all bridges endpoints as Pro-only (``pro-api.llama.fi/{key}/bridges/…``,
+    paid subscription). There is no keyless equivalent to fall back to:
+    ``/overview/bridge-aggregators`` is aggregator routing volume and protocol
+    TVL is not volume, so substituting either would put a different metric
+    under this card's title.
+
+    So instead of an empty list the UI silently hides, a failed fetch returns
+    ``available: False`` with the reason, the HTTP status and when it was
+    checked, and the card says so. ``top_bridges`` stays a list in every case
+    (payload schema unchanged); there is no stale-keep, so an empty list here
+    contributes no date to ``defi_provenance``. Never raises.
+    """
+    checked_at = (now or datetime.now(timezone.utc)).isoformat(timespec="seconds")
+    status: int | None = None
+    rows: list[dict] = []
+    try:
+        status, j = _get_status(DEFILLAMA_BRIDGES_URL)
+        if status == 200:
+            rows = _bridges_rows(j)
+    except Exception as e:  # parse surprises must not take down fetch_trading
+        print(f"  [defillama_bridges] {type(e).__name__}", file=sys.stderr)
+    if rows:
+        return {"top_bridges": rows, "available": True, "checked_at": checked_at}
+    return {
+        "top_bridges": [],
+        "available": False,
+        "http_status": status,
+        "reason": _bridges_unavailable_reason(status),
+        "checked_at": checked_at,
+    }
 
 
 def _series_last_date(rows: list | None) -> str | None:
@@ -1456,19 +1527,26 @@ def fetch_ai_funding() -> dict:
     }
 
 
-def coindesk_cadli_ohlc(days: int = 90) -> list[dict]:
-    """CoinDesk cadli BTC-USD daily OHLC — manipulation-resistant aggregate index."""
-    j = _get(
-        "https://data-api.coindesk.com/index/cc/v1/historical/days",
-        {"market": "cadli", "instrument": "BTC-USD", "limit": str(days)},
-    )
-    if not j or not isinstance(j, dict):
+COINDESK_CADLI_URL = "https://data-api.coindesk.com/index/cc/v1/historical/days"
+# CryptoCompare is CoinDesk Data now: one key, issued at developers.coindesk.com,
+# authenticates both min-api.cryptocompare.com and data-api.coindesk.com. The
+# repo already plumbs it under this name (pages.yml fetch + V2 build + probe).
+CADLI_KEY_ENV = "CRYPTOCOMPARE_API_KEY"
+
+
+def _cadli_rows(j: Any) -> list[dict]:
+    """Daily OHLC rows from a CoinDesk index ``historical/days`` body."""
+    if not isinstance(j, dict):
         return []
-    rows = (j.get("Data") or [])
+    rows = j.get("Data") or []
+    if not isinstance(rows, list):
+        return []
     out = []
     for r in rows:
+        if not isinstance(r, dict):
+            continue
         ts = r.get("TIMESTAMP")
-        if not ts:
+        if not ts or r.get("CLOSE") is None:
             continue
         out.append({
             "date": datetime.fromtimestamp(int(ts), tz=timezone.utc).strftime("%Y-%m-%d"),
@@ -1480,6 +1558,67 @@ def coindesk_cadli_ohlc(days: int = 90) -> list[dict]:
         })
     out.sort(key=lambda x: x["date"])
     return out
+
+
+def _cadli_unavailable_reason(status: int | None, key_configured: bool) -> str:
+    if status in (401, 403):
+        if key_configured:
+            return f"CoinDesk Data API rejected the configured API key (HTTP {status})"
+        return (f"CoinDesk Data API now requires an API key (HTTP {status}); "
+                "none is configured for this build")
+    if status == 429:
+        return "CoinDesk Data API rate-limited this build (HTTP 429)"
+    if status is None:
+        return "CoinDesk Data API did not respond"
+    if status == 200:
+        return "CoinDesk Data API returned no CADLI rows"
+    return f"CoinDesk Data API returned HTTP {status}"
+
+
+def coindesk_cadli(days: int = 90, now: datetime | None = None) -> dict:
+    """CoinDesk CADLI BTC-USD daily OHLC plus a status record saying why not.
+
+    Returns ``{"rows": [...], "status": {...}}``. ``rows`` is the series that
+    ships as ``market.cadli_btc`` (shape unchanged); ``status`` ships alongside
+    as ``market.cadli_btc_status``.
+
+    Since 2026-10 the whole CoinDesk Data API (data-api.coindesk.com, and the
+    min-api / data-api cryptocompare.com hosts) answers keyless requests with
+    HTTP 401 "API key required". A free registered key restores it, sent as
+    ``Authorization: Apikey <key>`` (the documented header; never the
+    ``api_key`` query param, which would put the secret into any logged URL).
+    Without one the series is empty, and ``status`` carries the reason so the
+    card states it instead of "wait for next refresh". CADLI is CoinDesk's
+    proprietary index, so no other provider's BTC price is substituted under
+    its name. Never raises.
+    """
+    checked_at = (now or datetime.now(timezone.utc)).isoformat(timespec="seconds")
+    key = os.environ.get(CADLI_KEY_ENV, "").strip()
+    headers = dict(H)
+    if key:
+        headers["Authorization"] = f"Apikey {key}"
+    status: int | None = None
+    rows: list[dict] = []
+    try:
+        status, j = _get_status(
+            COINDESK_CADLI_URL,
+            {"market": "cadli", "instrument": "BTC-USD", "limit": str(days)},
+            headers=headers,
+        )
+        if status == 200:
+            rows = _cadli_rows(j)
+    except Exception as e:  # parse surprises must not take down fetch_trading
+        print(f"  [coindesk_cadli] {type(e).__name__}", file=sys.stderr)
+    st: dict[str, Any] = {
+        "available": bool(rows),
+        "key_env": CADLI_KEY_ENV,
+        "key_configured": bool(key),
+        "checked_at": checked_at,
+    }
+    if not rows:
+        st["http_status"] = status
+        st["reason"] = _cadli_unavailable_reason(status, bool(key))
+    return {"rows": rows, "status": st}
 
 
 def mempool_difficulty_adjustment() -> dict:
@@ -2506,31 +2645,83 @@ def fetch_cc_per_coin_news(markets_top: list[dict], top_n: int = 25) -> dict:
     }
 
 
-def santiment_metrics() -> dict:
+def _santiment_prev() -> dict | None:
+    """The previous run's ``social.santiment`` node from data/market.json."""
+    try:
+        prev = json.loads((CACHE / "market.json").read_text())
+        node = (prev.get("social") or {}).get("santiment")
+        return node if isinstance(node, dict) else None
+    except Exception as e:
+        print(f"  [stale-keep] santiment cache unreadable: {type(e).__name__}", file=sys.stderr)
+        return None
+
+
+def santiment_gate(prev: dict | None, now: datetime) -> str | None:
+    """``None`` = attempt a Santiment fetch now; else the stale_reason to keep the cache.
+
+    At most ONE attempt per UTC day, made by the first run of that day.
+
+    This used to be ``now.hour == 0``: fetch only on the 00:xx UTC run. But
+    GitHub runs the "hourly" pages cron only ~4-6 times a day at drifting
+    times, so on most days no run landed in hour 0 and the panel sat on a
+    2-3 day old snapshot (live on 2026-10-04: fetched 2026-10-02T00:39Z).
+    Keying on "already attempted today" keeps the same budget (one sweep of
+    ~28 calls a day, inside the keyless 1,000 calls/month cap) without
+    depending on which hours GitHub happens to schedule. A failed attempt
+    also counts, so a Santiment outage cannot burn the quota run after run.
+    """
+    if not isinstance(prev, dict):
+        return None
+    last = prev.get("attempted_at")
+    if last is None and prev.get("coins"):
+        last = prev.get("fetched_at")  # nodes written before attempted_at existed
+    if isinstance(last, str) and last[:10] == now.strftime("%Y-%m-%d"):
+        return "daily_gate_attempted_today"
+    return None
+
+
+def santiment_metrics(now: datetime | None = None) -> dict:
     """Santiment GraphQL — free-tier metrics for 4 coins. No API key.
+
+    Fetches at most once per UTC day (see ``santiment_gate``); other runs
+    serve the previous snapshot marked ``stale``. ``fetched_at`` is when the
+    served coins were fetched, ``attempted_at`` when a fetch was last tried.
+    A failed attempt keeps the previous coins (stale, ``stale_reason:
+    fetch_failed``) rather than blanking the panel; every series carries its
+    own dates, which the cards and insights.py read as the data date.
+    """
+    now = now or datetime.now(timezone.utc)
+    now_iso = now.isoformat(timespec="seconds")
+    prev = _santiment_prev()
+    gate = santiment_gate(prev, now)
+    if gate:
+        if prev and prev.get("coins"):
+            return {**prev, "stale": True, "stale_reason": gate}
+        return {"available": False, "reason": gate, "coins": {},
+                "attempted_at": (prev or {}).get("attempted_at"),
+                "fetched_at": now_iso}
+    coins = _santiment_fetch_coins(now)
+    if coins:
+        return {"available": True, "coins": coins,
+                "fetched_at": now_iso, "attempted_at": now_iso}
+    if prev and prev.get("coins"):
+        return {**prev, "stale": True, "stale_reason": "fetch_failed",
+                "attempted_at": now_iso}
+    return {"available": False, "reason": "fetch_failed", "coins": {},
+            "fetched_at": now_iso, "attempted_at": now_iso}
+
+
+def _santiment_fetch_coins(now: datetime) -> dict:
+    """One sweep of the Santiment free tier: ``{sym: {metric series...}}``.
 
     The free tier has a sliding window restriction (now-12mo to now-30d)
     for MOST metrics, but a handful work with recent data (lag=0): DAA,
     dev_activity, active_addresses_24h, dev_contributors. The rest
     (network_growth, mvrv_usd, exchange flows) need a ~35d lag query.
 
-    Budget: 4 slugs × 7 metrics = 28 calls. Gated to fire only on the
-    hourly run at UTC hour 0 (once/day). Other hours return prior good
-    snapshot from cache (marked stale).
+    Budget: 4 slugs x 6 metrics + 2 slugs x 2 BTC/ETH-only = 28 calls.
+    Empty dict when nothing came back.
     """
-    # Daily-only gate (stale-keep otherwise)
-    now_hour = datetime.now(timezone.utc).hour
-    if now_hour != 0:
-        try:
-            prev = json.loads((CACHE / "market.json").read_text())
-            prev_san = ((prev.get("social") or {}).get("santiment")) or None
-            if prev_san and prev_san.get("coins"):
-                return {**prev_san, "stale": True, "stale_reason": f"daily_gate_hour_{now_hour}"}
-        except Exception as e:
-            print(f"  [stale-keep] santiment daily-gate suppressed: {type(e).__name__}", file=sys.stderr)
-        return {"available": False, "reason": f"daily_gate_hour_{now_hour}",
-                "coins": {},
-                "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
     SLUGS = {"btc": "bitcoin", "eth": "ethereum", "link": "chainlink", "ltc": "litecoin"}
     BTC_ETH_ONLY = {"btc", "eth"}
     # (metric_name, output_key, day_lag, slugs_supported)
@@ -2545,7 +2736,6 @@ def santiment_metrics() -> dict:
         ("exchange_inflow",                "exchange_inflow",         35, BTC_ETH_ONLY),
     ]
     out: dict[str, dict] = {sym: {"slug": slug} for sym, slug in SLUGS.items()}
-    now = datetime.now(timezone.utc)
     for metric, key, lag, slugs_ok in SANTIMENT_METRICS:
         # Build per-metric date window (recent vs lagged)
         to_dt = now - timedelta(days=lag) if lag else now
@@ -2584,13 +2774,8 @@ def santiment_metrics() -> dict:
                 print(f"  [santiment] {slug}/{metric} error: {e}", file=sys.stderr)
             time.sleep(0.3)
     # Filter out slugs with no metrics populated
-    out = {sym: data for sym, data in out.items()
-           if any(k for k in data if k not in ("slug",))}
-    return {
-        "available": bool(out),
-        "coins": out,
-        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    }
+    return {sym: data for sym, data in out.items()
+            if any(k for k in data if k not in ("slug",))}
 
 
 def point_of_control(price_series: list[dict], volume_series: list[dict],
@@ -3531,7 +3716,7 @@ def fetch_social() -> dict:
                         on missing key)
       cc_news         — per-coin news sentiment via the keyless data-api
                         (POSITIVE/NEGATIVE/NEUTRAL counts + top headlines)
-      santiment       — DAA + dev-activity (daily-gated at hour=0 UTC)
+      santiment       — DAA + dev-activity (one fetch per UTC day; see santiment_gate)
 
     LunarCrush was removed — their v4 API is gated behind the Builder plan
     (~$240/mo); no free endpoints exist. See commit log for the decision.
@@ -5162,7 +5347,7 @@ async def _fetch_trading_async() -> dict:
         _timed("fetch_ai_news",           _bg_call(fetch_ai_news)),
         _timed("fetch_ai_funding",        _bg_call(fetch_ai_funding)),
         _timed("load_ai_curated",         _bg_call(load_ai_curated)),
-        _timed("coindesk_cadli_ohlc",     _bg_call(coindesk_cadli_ohlc, 90)),
+        _timed("coindesk_cadli",          _bg_call(coindesk_cadli, 90)),
         _timed("yahoo_indices",           _bg_call(yahoo_indices)),
         _timed("fetch_stocks_signals",    _bg_call(fetch_stocks_signals, 50)),
         _timed("fear_greed",              _bg_call(fear_greed)),
@@ -5309,7 +5494,10 @@ async def _fetch_trading_async() -> dict:
         "ai_news": ai_news,
         "ai_funding": ai_funding,
         "ai_curated": ai_curated,
-        "cadli_btc": cadli,
+        "cadli_btc": cadli["rows"],
+        # Why cadli_btc is empty, when it is (the CoinDesk Data API now needs
+        # a key). The Futures card prints `reason` instead of a bare empty state.
+        "cadli_btc_status": cadli["status"],
         "yahoo_indices": yahoo_idx,
         "stocks_signals": stocks_signals,
         "money_flow": money_flow_block,
