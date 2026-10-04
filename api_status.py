@@ -18,8 +18,10 @@ Two ways it's used:
      (``health/apis.html``) has a snapshot to fall back on when there's no
      live server to probe through.
 
-Pure stdlib (urllib + concurrent.futures) so it stays cheap in CI and adds no
-dependency to the server process.
+Stdlib (urllib + concurrent.futures) for every probe except the few that opt
+into ``requests`` with ``"client": "requests"`` (tsa.gov, whose edge 403s
+urllib but serves ``requests``; see TARGETS). ``requests`` is optional: when it
+isn't importable those targets fall back to urllib.
 
 THE KEY-REPORTING CONTRACT
 Each source that names a ``key_env`` reports a three-state ``key_state``:
@@ -50,6 +52,11 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+try:  # optional: only targets with "client": "requests" use it (see TARGETS)
+    import requests
+except ImportError:  # pragma: no cover - exercised via monkeypatch in tests
+    requests = None
+
 REPO_ROOT = Path(__file__).resolve().parent
 OUT_PATH = REPO_ROOT / "data" / "health" / "api_status.json"
 
@@ -76,7 +83,10 @@ PROBE_ATTEMPTS = 2       # 1 retry: gov/city hosts give transient timeouts from 
 #
 # Fields: label, category (≈ dashboard tab/role), url, key_env (None = keyless).
 # Optional: headers (merged over the default UA), body_check ("arcgis": read
-# the body and judge the in-band error envelope ArcGIS sends with HTTP 200).
+# the body and judge the in-band error envelope ArcGIS sends with HTTP 200),
+# client ("requests": probe through the requests library instead of urllib,
+# for a host whose edge blocks urllib's request shape; urllib if requests is
+# not installed).
 TARGETS: list[dict] = [
     # ---- price / market cap ----
     {"label": "CoinGecko",            "category": "Price/MktCap",  "url": "https://api.coingecko.com/api/v3/ping",                                                          "key_env": None},
@@ -192,7 +202,10 @@ TARGETS: list[dict] = [
     {"label": "OpenSky Network",      "category": "Aviation",      "url": "https://opensky-network.org/api/states/all?lamin=45.8&lomin=5.9&lamax=46.0&lomax=6.1",            "key_env": "OPENSKY_CLIENT_ID"},
     # TSA daily throughput (powers the TSA Throughput sub-view via fetch_tsa.py).
     # tsa.gov 403s a non-browser UA, so send a real browser UA like the scraper.
-    {"label": "TSA passenger volumes","category": "Aviation",      "url": "https://www.tsa.gov/travel/passenger-volumes",                                                   "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
+    # Its Akamai edge also 403s urllib requests from GitHub Actions while serving
+    # `requests` (the client fetch_tsa.py switched to in PR #43), so probe with
+    # the same client. Otherwise this row reads "blocked" while the feed works.
+    {"label": "TSA passenger volumes","category": "Aviation",      "url": "https://www.tsa.gov/travel/passenger-volumes",                                                   "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}, "client": "requests"},
     # FRED ENPLANE — the air-travel enplanements series behind the Air Travel
     # sub-view. Use the FRED *API* host (api.stlouisfed.org, same reliable host
     # as the Macro FRED probe) rather than the web fredgraph.csv endpoint, which
@@ -333,6 +346,30 @@ def _verdict(status: int | None, needs_key: bool) -> str:
     return "degraded"
 
 
+def _get_requests(url: str, headers: dict, timeout: float,
+                  body_check: str | None) -> tuple[int, tuple[int, str] | None, str]:
+    """One GET through the requests library -> ``(status, inband_error, note)``.
+
+    Mirrors the urllib path in ``_probe_one``: an HTTP error status is a server
+    reply and is returned (note = reason phrase), while connection-level
+    failures (DNS, TCP, TLS, timeout) raise so the caller retries them.
+    Redirects are followed, as urllib follows them. ``stream=True`` so a healthy
+    reply's body is not downloaded. requests' own default headers (Accept,
+    Accept-Encoding) go out alongside ours, as they do from fetch_tsa.py.
+    """
+    r = requests.get(url, headers=headers, timeout=timeout, stream=True)
+    try:
+        status = r.status_code
+        if status >= 400:
+            return status, None, (r.reason or "")[:80]
+        if body_check == "arcgis":
+            body = r.raw.read(_BODY_CHECK_BYTES, decode_content=True)
+            return status, _arcgis_inband_error(body), ""
+        return status, None, ""
+    finally:
+        r.close()
+
+
 def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> dict:
     url = target["url"]
     key_env = target.get("key_env")
@@ -344,6 +381,9 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
     headers = {"User-Agent": _UA}
     headers.update(target.get("headers") or {})
     body_check = target.get("body_check")
+    # Opt-in per target; everything else stays on urllib. Without requests
+    # installed an opted-in target falls back to urllib too.
+    use_requests = target.get("client") == "requests" and requests is not None
     t0 = time.monotonic()
     status: int | None = None
     inband: tuple[int, str] | None = None
@@ -356,6 +396,9 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
     # is a genuine server reply, so take it as-is and stop.
     for attempt in range(attempts):
         try:
+            if use_requests:
+                status, inband, note = _get_requests(url, headers, timeout, body_check)
+                break
             req = urllib.request.Request(url, headers=headers, method="GET")
             with urllib.request.urlopen(req, timeout=timeout, context=_SSL_CTX) as r:
                 status = r.status
