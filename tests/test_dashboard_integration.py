@@ -306,7 +306,6 @@ _MISSING = object()
 # rebuilt by `python app.py --fetch-market`, not persisted on disk.
 _REQUIRED_NON_EMPTY = [
     "coinbase.btc.price_usd",            # Overview / header price
-    "cadli_btc[0].close",                # Trading chart series
 ]
 _RUNTIME_COMPUTED_NON_EMPTY_MARKET = [
     "stocks_signals[0].symbol",          # Stocks tab top row (runtime-computed)
@@ -361,6 +360,14 @@ def test_market_json_renderer_paths_exist():
     market = _load_json_or_skip(MARKET_JSON)
     for p in _REQUIRED_NON_EMPTY:
         _assert_present_non_empty(market, p, "market.json")
+    # Futures-tab CADLI series. Since 2026-10 the CoinDesk Data API needs a key,
+    # so an empty series is legitimate when the payload says why; an empty one
+    # with no stated reason is still a wiring bug.
+    if (market.get("cadli_btc_status") or {}).get("available") is False:
+        _assert_key_present(market, "cadli_btc", "market.json")
+        assert market["cadli_btc_status"].get("reason"), "cadli_btc empty with no reason"
+    else:
+        _assert_present_non_empty(market, "cadli_btc[0].close", "market.json")
     for p in _REQUIRED_KEY_PRESENT_MARKET:
         _assert_key_present(market, p, "market.json")
     for p in _RUNTIME_COMPUTED_NON_EMPTY_MARKET:

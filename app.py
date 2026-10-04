@@ -4020,7 +4020,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         and technical signals. Sources: Reddit (subscribers + top posts; cloud-IP-blocked, local-only),
         CryptoCompare social (legacy endpoint now auth-gated, may be empty),
         CryptoCompare news sentiment (keyless, POSITIVE/NEGATIVE/NEUTRAL labels),
-        Santiment (daily-active addresses + dev activity, refreshed once a day at 00:00 UTC),
+        Santiment (daily-active addresses + dev activity, fetched once per UTC day),
         and Point of Control (volume profile derived from existing price+volume series).
       </div>
 
@@ -6989,7 +6989,16 @@ function renderCadliChart(){
   const series = (bars || [])
     .filter(b => b && b.date && b.close != null)
     .map(b => ({date: b.date, value: b.close}));
-  if (!chartOrEmpty('cadliBtcChart', series.length > 0, 'No CADLI BTC reference data — wait for next refresh.')) {
+  // cadli_btc_status.reason is set when the fetch failed (since 2026-10 the
+  // CoinDesk Data API answers keyless requests with HTTP 401). Show it, so
+  // the empty state says why instead of promising a refresh that won't come.
+  const cst = (DATA.market || {}).cadli_btc_status || {};
+  const cadliMsg = (cst.available === false && cst.reason)
+    ? 'CADLI BTC reference unavailable: ' + cst.reason + '.'
+      + (cst.checked_at ? ' Checked ' + String(cst.checked_at).slice(0, 16).replace('T', ' ') + ' UTC.' : '')
+      + ' No series in this build \u2014 an absence, not a reading of zero.'
+    : 'No CADLI BTC reference data — wait for next refresh.';
+  if (!chartOrEmpty('cadliBtcChart', series.length > 0, cadliMsg)) {
     destroy('cadliBtc');
     return;
   }
@@ -10710,18 +10719,33 @@ function renderDefi(){
     </tr>`).join('');
   }
 
-  // ---- Optional bridges card (hidden when empty) ----
+  // ---- Bridges card ----
+  // Hidden only when the payload says nothing about bridges (old payloads,
+  // sidecar not loaded yet). When the fetcher reports available:false (since
+  // 2026-10 DeFiLlama serves bridges only on its paid plan: HTTP 402) the
+  // card stays up and says so, rather than vanishing without a word.
   const bridgesCard = document.getElementById('defiBridgesCard');
   const bridgesBody = document.querySelector('#defiBridgesTable tbody');
+  const bridgesMeta = defi.bridges || {};
   if (bridgesCard && bridgesBody) {
     if (bridges.length) {
       bridgesCard.classList.remove('hidden');
+      // fetch_market emits daily_/weekly_volume_usd; the older names are kept
+      // as fallbacks for cached payloads.
       bridgesBody.innerHTML = bridges.slice(0, 15).map((b, i) => `<tr>
         <td style="color:var(--muted)">${i+1}</td>
         <td><strong>${escapeHtml(b.name||b.chain||'')}</strong></td>
-        <td>${fmtUSD(b.volume_24h_usd ?? b.volume_24h ?? b.volume_usd_24h, 'auto')}</td>
-        <td>${fmtUSD(b.volume_7d_usd  ?? b.volume_7d  ?? b.volume_usd_7d,  'auto')}</td>
+        <td>${fmtUSD(b.daily_volume_usd ?? b.volume_24h_usd ?? b.volume_24h ?? b.volume_usd_24h, 'auto')}</td>
+        <td>${fmtUSD(b.weekly_volume_usd ?? b.volume_7d_usd ?? b.volume_7d ?? b.volume_usd_7d, 'auto')}</td>
       </tr>`).join('');
+    } else if (bridgesMeta.available === false && bridgesMeta.reason) {
+      bridgesCard.classList.remove('hidden');
+      const checked = bridgesMeta.checked_at
+        ? ' Checked ' + escapeHtml(String(bridgesMeta.checked_at).slice(0, 16).replace('T', ' ')) + ' UTC.'
+        : '';
+      bridgesBody.innerHTML = `<tr><td colspan="4" style="color:var(--muted);font-size:12px;line-height:1.5;white-space:normal">
+        Unavailable: ${escapeHtml(bridgesMeta.reason)}.${checked} No bridge volumes in this build \u2014 an absence, not a reading of zero.
+      </td></tr>`;
     } else {
       bridgesCard.classList.add('hidden');
       bridgesBody.innerHTML = '';
@@ -14576,6 +14600,12 @@ function renderSantimentCards(){
     const xout = c.exchange_outflow_latest;
     const xin  = c.exchange_inflow_latest;
     const netFlow = (xout != null && xin != null) ? (xout - xin) : null;
+    // Observation date of the same-day (lag 0) rows: the OLDEST last point
+    // among them, so a cached snapshot can't read as today's numbers. The
+    // ~35d rows carry their own pill.
+    const lastDate = ser => (Array.isArray(ser) && ser.length) ? String((ser[ser.length - 1] || {}).date || '').slice(0, 10) : '';
+    const dataThrough = [c.daily_active_addresses, c.active_addresses_24h, c.dev_activity, c.dev_contributors]
+      .map(lastDate).filter(Boolean).sort()[0] || '';
     const row = (label, val, extra, lag) =>
       `<tr><td style="color:var(--muted);font-size:11px">${label}${lag?' ':''}${stalePill(lag)}</td><td class="right" style="font-size:12px;font-variant-numeric:tabular-nums">${val == null ? '—' : (typeof val === 'string' ? val : fmtNumShort(val))} ${extra||''}</td></tr>`;
     return `<div class="card" style="border-left:4px solid ${accent}">
@@ -14592,7 +14622,7 @@ function renderSantimentCards(){
         ${row('MVRV',           mvrv == null ? null : mvrv.toFixed(2), mvrvTag(mvrv), 35)}
         ${row('Net exch flow',  netFlow, flowTag(netFlow), 35)}
       </tbody></table>
-      ${stale ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:6px">cached (daily-gated)</div>' : ''}
+      ${(dataThrough || stale) ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:6px">${dataThrough ? 'data through ' + escapeHtml(dataThrough) : ''}${dataThrough && stale ? ' \u00b7 ' : ''}${stale ? 'cached (fetched once per UTC day)' : ''}</div>` : ''}
     </div>`;
   }).join('');
 }
