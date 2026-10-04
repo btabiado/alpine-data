@@ -1,0 +1,58 @@
+{
+  "as_of": "2026-08-19",
+  "backfilled": "No pages build ran this day, so no snapshot was taken. Entries carrying backfilled_from were reproduced from real historical sources; every other index is null because no record of it survives.",
+  "generated_at": "2026-10-04T22:20:55Z",
+  "indexes": {
+    "crypto_signal_sentiment": null,
+    "etf_flow_sentiment": {
+      "as_of": "2026-08-17",
+      "backfilled_from": "git:428fea6398:data/btc_flows.csv (as committed at the end of 2026-08-19)",
+      "label": "INFLOWS",
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 668 daily rows; backfilled (git); same series as etf_flow_sentiment_btc",
+      "score": 22,
+      "stale": false
+    },
+    "etf_flow_sentiment_btc": {
+      "as_of": "2026-08-17",
+      "backfilled_from": "git:428fea6398:data/btc_flows.csv (as committed at the end of 2026-08-19)",
+      "label": "INFLOWS",
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 668 daily rows; backfilled (git)",
+      "score": 22,
+      "stale": false
+    },
+    "etf_flow_sentiment_eth": {
+      "as_of": "2026-08-17",
+      "backfilled_from": "git:428fea6398:data/eth_flows.csv (as committed at the end of 2026-08-19)",
+      "label": "STRONG INFLOWS",
+      "note": "ETH ETF; 7d+30d net flow sum (60/40); 529 daily rows; backfilled (git)",
+      "score": 52,
+      "stale": false
+    },
+    "lthcs_composite": {
+      "as_of": "2026-08-19",
+      "backfilled_from": "git:c1f3ce2554:data/lthcs/index/2026-08-19.json (newest index file at the end of 2026-08-19)",
+      "label": "LTHCS WEAKENING",
+      "note": "backfilled (git)",
+      "score": -33,
+      "stale": false
+    },
+    "money_flow_index": null,
+    "poc_signal_breadth": null,
+    "whale_sentiment_btc": {
+      "as_of": "2026-08-18",
+      "backfilled_from": "series:https://btabiado.github.io/alpine-data/data-whale.json read 2026-10-04 truncated to the end of 2026-08-19",
+      "label": "WHALE ACCUMULATION",
+      "note": "backfilled (series)",
+      "score": 24,
+      "stale": false
+    },
+    "whale_sentiment_eth": {
+      "as_of": "2026-08-18",
+      "backfilled_from": "series:https://btabiado.github.io/alpine-data/data-whale.json read 2026-10-04 truncated to the end of 2026-08-19",
+      "label": "NEUTRAL",
+      "note": "backfilled (series)",
+      "score": 6,
+      "stale": false
+    }
+  }
+}
