@@ -1393,7 +1393,7 @@ async function ensurePillarSeriesForTicker(ticker) {
         const j = await r.json();
         const rows = (j && Array.isArray(j.history)) ? j.history.map((row) => {
           const entry = { date: row.date, composite: Number(row.composite) };
-          for (const p of PILLAR_ORDER) entry[p] = Number(row[p]);
+          for (const p of PILLAR_ORDER) entry[p] = row[p] == null ? NaN : Number(row[p]); // null = dropped pillar
           return entry;
         }) : null;
         moduleState.pillarHistoryCache.set(ticker, rows && rows.length ? rows : null);
