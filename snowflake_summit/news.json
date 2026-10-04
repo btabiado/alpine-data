@@ -732,15 +732,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Alation",
-   "headline": "Alation at Snowflake Summit 2026 (booth #1303) with attendee session guide",
-   "date": "2026-06-02",
-   "url": "https://www.alation.com/blog/snowflake-summit-2026-guide/",
-   "source": "Alation",
-   "summary": "Alation exhibits at Snowflake Summit 2026 booth #1303 and publishes a guide to dates, keynotes and sessions for the governed agentic-AI theme.",
-   "relevance": "low"
-  },
-  {
    "vendor": "Alteryx",
    "headline": "Alteryx at Snowflake Summit 2026 showing in-Snowflake analytics with built-in governance",
    "date": "2026-06-02",
@@ -1749,15 +1740,6 @@
    "relevance": "high"
   },
   {
-   "vendor": "Kloudgen",
-   "headline": "Kloudgen Advances Enterprise AI with Semantiqa: Automated Semantic and Agent Layers Now on Snowflake Marketplace",
-   "date": "2026-06-04",
-   "url": "https://www.pr.com/press-release/970209",
-   "source": "PR.com",
-   "summary": "Kloudgen announced the expanded availability of Semantiqa on Snowflake Marketplace at Snowflake Summit 26, positioning the tool as a way to automate semantic layer creation and activate enterprise data for AI within a single day. CEO Yash Gupta stated the solution drastically reduces the time from raw data to actionable, interactive discovery by operating natively within Snowflake customer accounts.",
-   "relevance": "high"
-  },
-  {
    "vendor": "KPMG",
    "headline": "KPMG Returns as Sponsor of Snowflake Summit 2026",
    "date": "2026-06-01",
@@ -2305,15 +2287,6 @@
    "source": "SecurityBrief Asia",
    "summary": "RecordPoint acquired Australian AI startup Redactive, which specializes in sensitive data discovery and classification, to strengthen its AI governance and data security capabilities for regulated industries. Redactive, backed by Blackbird and Felicis, had secured clients such as superfund HESTA and PEXA before the acquisition.",
    "relevance": "medium"
-  },
-  {
-   "vendor": "Redpanda",
-   "headline": "Redpanda at Snowflake Summit 2026",
-   "date": "2026-05-31",
-   "url": "https://www.redpanda.com/events/snowflake-summit-2",
-   "source": "Redpanda",
-   "summary": "Redpanda participated as a booth exhibitor at Snowflake Summit 2026 (May 31, San Francisco), showcasing its real-time streaming data platform. The page highlights enterprise customers including Akamai, Cisco, NYSE, and Vodafone.",
-   "relevance": "high"
   },
   {
    "vendor": "Redpanda",
@@ -2989,15 +2962,6 @@
    "source": "VaultSpeed",
    "summary": "VaultSpeed announced availability as a native app on the Snowflake Marketplace, built on the Snowflake Native App Framework, requiring no separate infrastructure or VPN. The platform generates Snowflake-native SQL, Tasks, and Dynamic Tables from metadata and handles CDC patterns, schema drift detection, and lineage tracking automatically.",
    "relevance": "high"
-  },
-  {
-   "vendor": "VaultSpeed",
-   "headline": "VaultSpeed Secures $15.9 Million in Series A Funding to Accelerate Growth",
-   "date": "2023-11-16",
-   "url": "https://www.fortino.vc/news/vaultspeed-secures-159-million-series-funding-accelerate-growth-its-automated-data",
-   "source": "Fortino Ventures",
-   "summary": "VaultSpeed raised $15.9 million (EUR 15.1 million) in a Series A round led by Octopus Ventures, with participation from Fortino Capital, PMV, and BNP Paribas Fortis Private Equity. The Belgian data vault automation company aimed to triple revenue by 2025 and expand its platform partnerships with Snowflake, Microsoft, and Databricks.",
-   "relevance": "medium"
   },
   {
    "vendor": "WisdomAI",

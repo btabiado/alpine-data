@@ -1003,7 +1003,16 @@ HTML_TEMPLATE = r"""<!doctype html>
 })();
 </script>
 <style>
+/* Phone tap targets (audit: < 24px): grow the hit box with padding and pull
+   the layout back with a negative margin, so nothing visibly moves. */
+#aiTopFundedTable td a{display:inline-block;padding:6px 0;margin:-6px 0}
+a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7px 0;margin:-7px 0}
+#pocOverlayToggle{width:20px;height:20px}
+.travel-contact-link{display:inline-block;padding:6px 2px;margin:-6px -2px}
 :root{
+  /* Dark-only page: native controls (scrollbars, selects, date inputs,
+     default link colours) render in their dark variants. */
+  color-scheme:dark;
   --bg:#0b0d12; --panel:#141821; --panel2:#1b2030; --border:#252b3a;
   --text:#e6e8ee; --muted:#8a93a6; --btc:#f7931a; --eth:#627eea; --link:#2a5ada; --ltc:#bfbbbb;
   --green:#22c55e; --red:#ef4444; --amber:#f59e0b; --purple:#a78bfa; --cyan:#06b6d4;
@@ -4292,7 +4301,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">
             Data: NUFORC via community archive — sighting <strong>reports</strong>, not verified phenomena.
             Filed shapes and durations are eyewitness claims. Browse the live database at
-            <a href="https://nuforc.org/" target="_blank" rel="noopener noreferrer">nuforc.org</a>.
+            <a href="https://nuforc.org/" target="_blank" rel="noopener noreferrer" style="color:#60a5fa">nuforc.org</a>.
           </div>
         </div>
       </div>
@@ -5314,7 +5323,18 @@ function renderCadliChart(){
       + (cst.checked_at ? ' Checked ' + String(cst.checked_at).slice(0, 16).replace('T', ' ') + ' UTC.' : '')
       + ' No series in this build \u2014 an absence, not a reading of zero.'
     : 'No CADLI BTC reference series in this build\u2019s payload \u2014 an absence, not a reading of zero.';
-  if (!chartOrEmpty('cadliBtcChart', series.length > 0, cadliMsg)) {
+  const ok = chartOrEmpty('cadliBtcChart', series.length > 0, cadliMsg);
+  // Unavailable: collapse the ~380px chart box to the height of its message
+  // instead of leaving a large empty frame. Restored when data returns.
+  const cv = document.getElementById('cadliBtcChart');
+  const wrap = cv && cv.parentElement;
+  if (wrap){
+    wrap.style.height = ok ? '' : 'auto';
+    wrap.style.minHeight = ok ? '' : '0';
+    const em = wrap.querySelector('.chart-empty');
+    if (em) em.style.position = ok ? 'absolute' : 'static';
+  }
+  if (!ok) {
     destroy('cadliBtc');
     return;
   }
@@ -5436,7 +5456,8 @@ function signalColor(score){
   if (score >= 20) return 'var(--v2-good)';
   if (score > -20) return 'var(--v2-warn)';
   if (score > -50) return 'var(--v2-bad)';
-  return '#b91c1c';
+  // Was #b91c1c: 2.75:1 on the dark panels. #f87171 is 6.4:1.
+  return '#f87171';
 }
 
 function renderSignalCard(asset, container){
@@ -5859,7 +5880,7 @@ function renderTop20Signals(){
     {key:'buy',         glyph:'✓',  label:'BUY',         color:'#22c55e'},
     {key:'hold',        glyph:'◯',  label:'HOLD',        color:'#f59e0b'},
     {key:'sell',        glyph:'↓',  label:'SELL',        color:'#ef4444'},
-    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#b91c1c'},
+    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#f87171'},
   ];
   // Outer #top20SignalCards is an auto-fit grid, so each section becomes a
   // column on laptop widths. Previously every empty bucket consumed a full
@@ -8218,14 +8239,32 @@ function defiFreshness(){
 // date to show, so we say so (rule 5) rather than printing social.fetched_at.
 function socialFreshness(){
   const s = socialData() || {};
-  const santStale = !!((s.santiment || {}).stale);
+  const sant = s.santiment || {};
+  const santStale = !!sant.stale;
+  // Santiment's same-day series (DAA, 24h actives, dev activity, devs) DO
+  // carry observation dates — the Santiment cards print them as "data
+  // through". The strip reports the OLDEST of those across coins (rule 3)
+  // instead of "as of —". Reddit / CryptoCompare stay undated and are
+  // disclosed in the hover.
+  const coins = sant.coins || {};
+  const lasts = [];
+  Object.keys(coins).forEach(k => {
+    const c = coins[k] || {};
+    const per = [c.daily_active_addresses, c.active_addresses_24h, c.dev_activity, c.dev_contributors]
+      .map(ser => fLast(ser)).filter(Boolean);
+    if (per.length) lasts.push(fMin(per));
+  });
   return {
-    date: null,
+    date: lasts.length ? fMin(lasts) : null,
     stale: 0,
     total: 0,
-    title: 'Reddit / CryptoCompare / Santiment ship point-in-time counts with no '
-         + 'observation date. social.fetched_at is fetch time, so it is not shown '
-         + 'as a freshness date.'
+    label: lasts.length ? 'Santiment data through' : 'as of',
+    title: (lasts.length
+             ? 'Oldest last observation across the Santiment on-chain/dev series ('
+               + lasts.length + ' coin' + (lasts.length === 1 ? '' : 's') + '). '
+             : '')
+         + 'Reddit / CryptoCompare ship point-in-time counts with no observation '
+         + 'date; social.fetched_at is fetch time, so it is not shown as a freshness date.'
          + (santStale ? ' Santiment is currently served from its daily-gated cache.' : ''),
   };
 }
@@ -9011,6 +9050,10 @@ function renderDefi(){
   const bridgesBody = document.querySelector('#defiBridgesTable tbody');
   const bridgesMeta = defi.bridges || {};
   if (bridgesCard && bridgesBody) {
+    // The 24h/7d column headers only make sense above real rows; over the
+    // "Unavailable" message they were empty scaffolding.
+    const bridgesHead = document.querySelector('#defiBridgesTable thead');
+    if (bridgesHead) bridgesHead.style.display = bridges.length ? '' : 'none';
     if (bridges.length) {
       bridgesCard.classList.remove('hidden');
       // fetch_market emits daily_/weekly_volume_usd; the older names are kept
@@ -10414,7 +10457,7 @@ function renderStocksTab(){
     {key:'buy',         glyph:'✓',  label:'BUY',         color:'#22c55e'},
     {key:'hold',        glyph:'◯',  label:'HOLD',        color:'#f59e0b'},
     {key:'sell',        glyph:'↓',  label:'SELL',        color:'#ef4444'},
-    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#b91c1c'},
+    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#f87171'},
   ];
   const html = sections.map(sec => {
     const items = byBucket[sec.key];
@@ -14098,13 +14141,22 @@ function paintSentimentCard(prefix, net, label, color, posPct, neuPct, negPct, s
   const barPos = document.getElementById(prefix + 'BarPos');
   const barNeu = document.getElementById(prefix + 'BarNeu');
   const barNeg = document.getElementById(prefix + 'BarNeg');
+  // Grey the reading out when its OLDEST dated input is more than 7 days old:
+  // a vivid "BULLISH +40" over week-old inputs reads as a current call. The
+  // freshness stamp underneath still says exactly how old.
+  const fAge = (fresh && fresh.date) ? freshness(fresh.date, {}).ageDays : null;
+  const staleScore = fAge != null && fAge > 7;
+  const shown = staleScore ? 'var(--muted)' : color;
+  card.classList.toggle('sentiment-stale', staleScore);
   if (scoreEl){
     scoreEl.textContent = (net >= 0 ? '+' : '') + net;
-    scoreEl.style.color = color;
+    scoreEl.style.color = shown;
+    if (staleScore) scoreEl.title = 'Greyed out: the oldest input behind this score is ' + fAge + ' days old.';
+    else scoreEl.removeAttribute('title');
   }
   if (labelEl){
     labelEl.textContent = label;
-    labelEl.style.color = color;
+    labelEl.style.color = shown;
   }
   if (sublineEl){
     sublineEl.textContent = subline;
@@ -14332,6 +14384,10 @@ function refreshCompositeHistoryAffordances(){
       : 'This index has no usable daily history yet — open for the details.');
     card.classList.add('v2-histcard');
     card.setAttribute('data-histcard', key);
+    // The whole card opens the history on click; make that reachable from
+    // the keyboard too (Enter/Space on the focused card — see the keydown
+    // handler next to the delegated click below).
+    if (!card.hasAttribute('tabindex')) card.setAttribute('tabindex', '0');
   });
 }
 
@@ -14641,6 +14697,13 @@ function closeCompositeHistory(){
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeCompositeHistory();
+    // Keyboard twin of the whole-card click: only when the card ITSELF has
+    // focus, so Enter on a link/button inside it keeps its own meaning.
+    if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.hasAttribute
+        && e.target.hasAttribute('data-histcard')){
+      e.preventDefault();
+      openCompositeHistory(e.target.getAttribute('data-histcard'));
+    }
   });
   // FOCUS TRAP (audit V2-E). The modal already declared role="dialog"
   // aria-modal="true", moved focus to its close button on open and restored
@@ -16103,7 +16166,7 @@ function renderTopNewsSentiment(){
     const titleAttr = r.recent
       .map(rc => `${rc.sentiment[0]} · ${(rc.title || '').replace(/"/g, '”').slice(0, 100)}`)
       .join('\n');
-    return `<div class="top-news-sentiment-row" data-tns-symbol="${escapeHtml(r.symbol)}" style="cursor:pointer" title="${escapeHtml(titleAttr || (r.symbol + ': no headline matches'))}">
+    return `<div class="top-news-sentiment-row" data-tns-symbol="${escapeHtml(r.symbol)}" role="button" tabindex="0" aria-label="${escapeHtml(r.symbol)} news sentiment: ${r.total} mention${r.total === 1 ? '' : 's'}, net ${escapeHtml(String(netLbl))} — open headlines" style="cursor:pointer" title="${escapeHtml(titleAttr || (r.symbol + ': no headline matches'))}">
       <div>
         <div class="tns-sym">${escapeHtml(r.symbol)}</div>
         <div class="tns-name">${escapeHtml(r.name)}</div>
@@ -16122,9 +16185,13 @@ function renderTopNewsSentiment(){
   }).join('');
   // Click any row → open the detail modal for that coin. Delegated so
   // re-renders don't need to re-bind.
-  host.querySelectorAll('[data-tns-symbol]').forEach(el =>
-    el.addEventListener('click', () => openNewsSentimentDetail(el.getAttribute('data-tns-symbol')))
-  );
+  host.querySelectorAll('[data-tns-symbol]').forEach(el => {
+    el.addEventListener('click', () => openNewsSentimentDetail(el.getAttribute('data-tns-symbol')));
+    // role=button rows: Enter/Space activate, as for a native button.
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openNewsSentimentDetail(el.getAttribute('data-tns-symbol')); }
+    });
+  });
 }
 
 function renderResearchNews(){
@@ -16919,6 +16986,9 @@ function renderAll(){
   refreshCompositeHistoryAffordances();
 }
 
+// true until the first (boot) selectTab(); see there. `var` (hoisted) so a
+// call that lands before this line runs reads undefined, i.e. "replace".
+var _tabHistReplace = true;
 function selectTab(t){
   state.tab = t;
   // Keep the URL hash in sync so every tab is deep-linkable & shareable
@@ -16930,9 +17000,16 @@ function selectTab(t){
     const _curHash = (location.hash || '').replace(/^#/, '');
     const _wantHash = (t === 'overview') ? '' : t;
     if (_curHash !== _wantHash) {
-      history.replaceState(null, '',
-        _wantHash ? '#' + _wantHash : location.pathname + location.search);
+      const _url = _wantHash ? '#' + _wantHash : location.pathname + location.search;
+      // A user-initiated tab change gets its own history entry, so Back
+      // returns to the previous tab instead of leaving the site after a few
+      // clicks. The first paint (and Back/Forward replays, whose hash already
+      // matches) replace instead. pushState fires no hashchange either, so
+      // the re-entrancy guarantee above still holds.
+      if (_tabHistReplace !== false) history.replaceState(null, '', _url);
+      else history.pushState({ tab: t }, '', _url);
     }
+    _tabHistReplace = false;   // only the very first (boot) paint replaces
   } catch (_) {}
   // Kick off lazy load of any sidecar this tab needs. Fire-and-forget —
   // renderAll() below runs immediately with an empty subtree (the
@@ -17463,7 +17540,21 @@ document.querySelectorAll('.tab').forEach(b => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       selectTab(b.dataset.tab);
+      return;
     }
+    // ARIA tabs pattern (as on /landscape/): Left/Right/Home/End move along
+    // the strip and activate the tab. Hidden tabs are skipped.
+    if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].indexOf(e.key) === -1) return;
+    const strip = Array.prototype.filter.call(
+      document.querySelectorAll('.tab[data-tab]'), t => t.offsetParent !== null);
+    const i = strip.indexOf(b);
+    if (i < 0 || !strip.length) return;
+    const j = e.key === 'Home' ? 0
+            : e.key === 'End' ? strip.length - 1
+            : (i + (e.key === 'ArrowRight' ? 1 : strip.length - 1)) % strip.length;
+    e.preventDefault();
+    strip[j].focus();
+    selectTab(strip[j].dataset.tab);
   });
   // Keyboard focus moving along the strip must drag the strip with it, or a
   // Tab-key user focuses a tab that is scrolled off-screen. Instant, not
@@ -18077,7 +18168,7 @@ function liveComputeSignal(rows){
 function liveSignalColor(label){
   if (label === 'STRONG BUY') return '#16a34a';
   if (label === 'BUY') return 'var(--v2-good)';
-  if (label === 'STRONG SELL') return '#b91c1c';
+  if (label === 'STRONG SELL') return '#f87171';  // text colour; #b91c1c was 2.75:1
   if (label === 'SELL') return 'var(--v2-bad)';
   return 'var(--v2-warn)';
 }
@@ -19497,6 +19588,12 @@ function _tabFromHash(){
 whenChartsReady(function(){
   selectTab(_tabFromHash() || 'overview');
   renderAll();
+});
+// Back/Forward across the entries selectTab() pushes. The Overview entry has
+// no hash, so hashchange's _tabFromHash() alone can't route back to it.
+window.addEventListener('popstate', () => {
+  const h = location.hash ? _tabFromHash() : 'overview';
+  if (h && h !== state.tab) selectTab(h);
 });
 window.addEventListener('hashchange', () => {
   const h = _tabFromHash();

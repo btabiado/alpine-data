@@ -637,8 +637,8 @@
   font-size: 13px;
   text-align: right;
 }
-.lbt-band-stat.pos { color: var(--band-elite, #4cd2c0); }
-.lbt-band-stat.neg { color: var(--band-review, #ff7a7a); }
+.lbt-band-stat.pos { color: var(--band-high-bright, #6FD18C); } /* was --band-elite (#1F3A5F text, 1.55:1) */
+.lbt-band-stat.neg { color: var(--drift-declining-bright, #FF8775); }
 .lbt-band-stat.noise { color: var(--text-secondary); }
 .lbt-band-empty { color: var(--text-secondary); padding-left: 50%; }
 
@@ -696,8 +696,8 @@
   font-size: 13px;
   text-align: right;
 }
-.lbt-attrib-stat.pos { color: var(--band-elite, #4cd2c0); }
-.lbt-attrib-stat.neg { color: var(--band-review, #ff7a7a); }
+.lbt-attrib-stat.pos { color: var(--band-high-bright, #6FD18C); }
+.lbt-attrib-stat.neg { color: var(--drift-declining-bright, #FF8775); }
 .lbt-attrib-stat.noise { color: var(--text-secondary); }
 .lbt-attrib-empty { color: var(--text-secondary); padding-left: 50%; font-size: 12px; }
 
