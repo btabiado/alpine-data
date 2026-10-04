@@ -229,6 +229,10 @@
   background: rgba(255, 255, 255, 0.012);
 }
 
+.lthcs-table tbody tr:focus-visible {
+  outline: 2px solid var(--accent, #6EA8FE);
+  outline-offset: -2px;
+}
 .lthcs-table tbody tr:hover {
   background: var(--bg-card-hover);
 }

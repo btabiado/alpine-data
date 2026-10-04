@@ -1139,6 +1139,11 @@ jobs:
             mkdir -p _site/audit
             cp audit/daily/latest.* _site/audit/
           fi
+          # Site-wide 404 page (GitHub Pages serves _site/404.html for any
+          # missing path). Dark, mobile-friendly, absolute links home.
+          if [ -f site_static/404.html ]; then
+            cp site_static/404.html _site/404.html
+          fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BDT Dashboards — static snapshot

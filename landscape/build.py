@@ -199,6 +199,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <!--__CHARTJS__-->
 <style>
 :root{
+  color-scheme:dark;
   --bg:#0b1020; --panel:#121a30; --panel2:#172241; --border:#243352;
   --text:#e8eeff; --muted:#8da2c8; --accent:#29b5e8; --accent2:#11567f;
   --sub:#f87171;      /* substitute (competitor) */
@@ -241,6 +242,9 @@ header.top .sub{color:var(--muted);font-size:12.5px;margin-top:5px}
 .panel h2{font-size:14px;margin:0 0 12px;font-weight:700;letter-spacing:.3px;color:var(--text)}
 .panel .hint{color:var(--muted);font-size:12.5px;font-weight:400;margin-left:6px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+/* CLS: the KPI tiles are rendered by script; hold one row of tile height so
+   the panels below don't jump ~70px when they appear. */
+#lsKpis:empty{min-height:68px}
 .kpi{background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;text-align:left;cursor:pointer;color:inherit}
 .kpi:hover{border-color:var(--accent)}
 .kpi .n{font-size:26px;font-weight:800;line-height:1}
@@ -336,9 +340,9 @@ tbody tr[role="button"]{cursor:pointer}
   <button class="tab" id="tab-ls" role="tab" aria-selected="true" aria-controls="view-ls">Directory <span class="muted">· all __ALL_TOTAL__</span></button>
   <button class="tab" id="tab-mm" role="tab" aria-selected="false" aria-controls="view-mm" tabindex="-1">Market Map <span class="muted">· all __ALL_TOTAL__</span></button>
   <button class="tab" id="tab-mq" role="tab" aria-selected="false" aria-controls="view-mq" tabindex="-1">Magic Quadrant <span class="muted">· vision × execution</span></button>
-  <button class="tab" id="tab-sp" role="tab" aria-selected="false" aria-controls="view-sp" tabindex="-1">Summit Partners <span class="muted">· 197</span></button>
-  <button class="tab" id="tab-sn" role="tab" aria-selected="false" aria-controls="view-sn" tabindex="-1">Summit News</button>
-  <button class="tab" id="tab-fm" role="tab" aria-selected="false" aria-controls="view-fm" tabindex="-1">Floor Map</button>
+  <button class="tab" id="tab-sp" role="tab" aria-selected="false" aria-controls="view-summit" tabindex="-1">Summit Partners <span class="muted">· 197</span></button>
+  <button class="tab" id="tab-sn" role="tab" aria-selected="false" aria-controls="view-summit" tabindex="-1">Summit News</button>
+  <button class="tab" id="tab-fm" role="tab" aria-selected="false" aria-controls="view-summit" tabindex="-1">Floor Map</button>
 </div>
 
 <main id="main" class="wrap">
@@ -465,15 +469,13 @@ tbody tr[role="button"]{cursor:pointer}
 
 <!-- ===================== SUMMIT TABS (embedded) ===================== -->
 <!-- The Summit 2026 dashboard, embedded via ?embed (nav chrome hidden) so it
-     lives as in-page tabs. iframes lazy-load on first activation (selectTab). -->
-<section class="view" id="view-sp" role="tabpanel" aria-labelledby="tab-sp" hidden>
-  <iframe class="summit-frame" data-src="../summit-share/?embed" title="Snowflake Summit 2026 — Partner Scouting" loading="lazy"></iframe>
-</section>
-<section class="view" id="view-sn" role="tabpanel" aria-labelledby="tab-sn" hidden>
-  <iframe class="summit-frame" data-src="../summit-share/?embed&amp;view=news" title="Snowflake Summit 2026 — Partner News" loading="lazy"></iframe>
-</section>
-<section class="view" id="view-fm" role="tabpanel" aria-labelledby="tab-fm" hidden>
-  <iframe class="summit-frame" data-src="../summit-share/?embed&amp;view=map" title="Snowflake Summit 2026 — Basecamp Floor Map" loading="lazy"></iframe>
+     lives as in-page tabs. ONE iframe serves all three Summit tabs: it loads
+     the ~1 MB page once, on the first Summit tab opened, and later tab
+     switches tell it which view to show via postMessage (handled by
+     setSummitView() in snowflake_summit/build.py). Three iframes used to
+     reload the page per tab (~6.7 MB per session). -->
+<section class="view" id="view-summit" role="tabpanel" aria-labelledby="tab-sp" hidden>
+  <iframe class="summit-frame" id="summitFrame" title="Snowflake Summit 2026 — Partner Scouting" loading="lazy"></iframe>
 </section>
 
 <div class="foot">
@@ -530,15 +532,30 @@ const SHORT={
 
 /* ---------- tabs ---------- */
 const tabs=['tab-ls','tab-mm','tab-mq','tab-sp','tab-sn','tab-fm'].map(id=>document.getElementById(id));
-const views={'tab-ls':'view-ls','tab-mm':'view-mm','tab-mq':'view-mq','tab-sp':'view-sp','tab-sn':'view-sn','tab-fm':'view-fm'};
+const views={'tab-ls':'view-ls','tab-mm':'view-mm','tab-mq':'view-mq','tab-sp':'view-summit','tab-sn':'view-summit','tab-fm':'view-summit'};
+// Summit tab -> the embedded page's view ('' = partner dashboard).
+const SUMMIT_VIEW={'tab-sp':'','tab-sn':'news','tab-fm':'map'};
+const SUMMIT_TITLE={'tab-sp':'Snowflake Summit 2026 — Partner Scouting','tab-sn':'Snowflake Summit 2026 — Partner News','tab-fm':'Snowflake Summit 2026 — Basecamp Floor Map'};
+function showSummitView(tabId){
+  const fr=document.getElementById('summitFrame'); if(!fr)return;
+  const view=SUMMIT_VIEW[tabId];
+  fr.title=SUMMIT_TITLE[tabId];
+  const panel=document.getElementById('view-summit'); if(panel)panel.setAttribute('aria-labelledby',tabId);
+  if(!fr.getAttribute('src')){
+    // First Summit tab opened: load the page straight into the right view.
+    fr.setAttribute('src','../summit-share/?embed'+(view?'&view='+view:''));
+    return;
+  }
+  // Already loaded: switch views in place (same origin) — no reload.
+  try{fr.contentWindow.postMessage({type:'summit-view',view:view},location.origin);}catch(e){}
+}
 function selectTab(t){
-  tabs.forEach(x=>{const on=x===t;x.setAttribute('aria-selected',on);x.tabIndex=on?0:-1;
-    const v=document.getElementById(views[x.id]);v.classList.toggle('active',on);v.hidden=!on;});
+  const activeView=views[t.id];
+  tabs.forEach(x=>{const on=x===t;x.setAttribute('aria-selected',on);x.tabIndex=on?0:-1;});
+  new Set(Object.values(views)).forEach(id=>{const v=document.getElementById(id);if(!v)return;const on=id===activeView;v.classList.toggle('active',on);v.hidden=!on;});
   if(t.id==='tab-mm'){renderMekko();drawMM();}
   if(t.id==='tab-mq'){drawMQ();}
-  // Lazy-load the embedded Summit iframe the first time its tab is opened.
-  const fr=document.querySelector('#'+views[t.id]+' iframe[data-src]');
-  if(fr&&!fr.getAttribute('src'))fr.setAttribute('src',fr.dataset.src);
+  if(SUMMIT_VIEW[t.id]!==undefined)showSummitView(t.id);
 }
 tabs.forEach((t,i)=>{
   t.addEventListener('click',()=>selectTab(t));
@@ -780,8 +797,12 @@ function drawLSCharts(){
     data:{labels:[],datasets:[{label:'Vendors',data:[],backgroundColor:'#fbbf24'}]},
     options:{indexAxis:'y',maintainAspectRatio:false,onHover:_pt,
       onClick:(e,els)=>{if(els.length){const s=curSeg[els[0].index];lsState.seg=(lsState.seg===s?'':s);document.getElementById('lsSeg').value=lsState.seg;applyLS(true);}},
-      plugins:{legend:{display:false},title:{display:true,text:'By stack layer — click to filter'}},
-      scales:{y:{ticks:{font:{size:10},autoSkip:false}}}}});
+      plugins:{legend:{display:false},title:{display:true,text:'By stack layer — click to filter'},
+        // Narrow screens show the SHORT layer name on the axis (the full one
+        // was clipped off the left edge on a phone); the tooltip keeps it whole.
+        tooltip:{callbacks:{title:items=>items.length?curSeg[items[0].dataIndex]:''}}},
+      scales:{y:{ticks:{font:{size:10},autoSkip:false,
+        callback:function(v){const l=this.getLabelForValue(v);return (window.innerWidth<700&&SHORT[l])?SHORT[l]:l;}}}}}});
   relChart=new Chart(document.getElementById('relChart'),{type:'doughnut',
     data:{labels:RELK.map(k=>REL_LABEL[k]),datasets:[{data:[0,0,0],backgroundColor:RELK.map(k=>REL_COLORS[k])}]},
     options:{maintainAspectRatio:false,onHover:_pt,

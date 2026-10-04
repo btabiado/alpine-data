@@ -54,12 +54,17 @@ const PILLAR_LONG = {
 
 const BAND_TOKENS = {
   elite: { color: 'var(--band-elite)', label: 'Elite' },
-  high_confidence: { color: 'var(--band-high)', label: 'High' },
-  constructive: { color: 'var(--band-constructive)', label: 'Constructive' },
-  monitor: { color: 'var(--band-monitor)', label: 'Monitor' },
+  high_confidence: { color: 'var(--band-high)', label: 'High', ink: '#111' },
+  constructive: { color: 'var(--band-constructive)', label: 'Constructive', ink: '#111' },
+  monitor: { color: 'var(--band-monitor)', label: 'Monitor', ink: '#111' },
   weakening: { color: 'var(--band-weakening)', label: 'Weakening' },
   review: { color: 'var(--band-review)', label: 'Review' },
 };
+// Pill text colour for a band fill: white measured 2.4-3.9:1 on the light
+// fills (gold / amber / green), so those get near-black.
+function bandInk(bandKey) {
+  return (BAND_TOKENS[bandKey] || {}).ink || '#fff';
+}
 
 // Human-readable labels for data_quality_flags surfaced in snapshots.
 const FLAG_LABELS = {
@@ -326,7 +331,7 @@ function renderCards(rows, { avg }) {
     // Band chip.
     card.appendChild(el('span', {
       class: 'lcry-card-band',
-      style: `background: ${color};`,
+      style: `background: ${color}; color: ${bandInk(row.band)};`,
       text: bandLabel(row.band),
     }));
 
@@ -520,7 +525,7 @@ async function openDetail(row) {
       el('div', { class: 'lcry-modal-subtitle' }, [
         el('span', {
           class: 'lcry-modal-band',
-          style: `background: ${color};`,
+          style: `background: ${color}; color: ${bandInk(row.band)};`,
           text: bandLabel(row.band),
         }),
         el('span', { class: 'lcry-modal-score', text: fmtScore(row.lthcs_score) ?? 'n/a' }),
