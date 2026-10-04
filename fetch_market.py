@@ -3983,37 +3983,86 @@ _BLOCKCHAIR_NAMES = {
 }
 
 
+# Window the "Recent ETH whale transactions" feed is labelled with. The
+# fetcher, the stale-cache replay and the browser all enforce it, so a row
+# outside it can never be shown under a "last 24h" label.
+ETH_LARGE_TX_WINDOW_HOURS = 24
+# Cache key for the stale replay. The previous key
+# ("blockchair_eth_large_transactions") holds rows from an unfiltered
+# all-time `s=value(desc)` scan (2015-2022 transfers) and is deleted on sight.
+_ETH_LARGE_TX_CACHE_KEY = "blockchair_eth_large_transactions_24h"
+_ETH_LARGE_TX_LEGACY_CACHE_KEY = "blockchair_eth_large_transactions"
+
+
+def _blockchair_time_utc(value) -> datetime | None:
+    """Parse a Blockchair row time ("YYYY-MM-DD HH:MM:SS", UTC) or an ISO
+    string. Returns an aware UTC datetime, or None when unparseable."""
+    if not isinstance(value, str) or not value.strip():
+        return None
+    txt = value.strip().replace("T", " ").replace("Z", "")
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+        try:
+            return datetime.strptime(txt[:19], fmt).replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+    return None
+
+
+def _eth_large_tx_within_window(rows, now: datetime | None = None,
+                                hours: int = ETH_LARGE_TX_WINDOW_HOURS) -> list[dict]:
+    """Keep only rows whose `time` falls inside the trailing `hours` window
+    ending at `now` (UTC). Rows with a missing/unparseable time are dropped:
+    an undated row cannot honestly be called recent."""
+    now = now or datetime.now(timezone.utc)
+    cutoff = now - timedelta(hours=hours)
+    # Small allowance for clock skew between Blockchair and the runner.
+    ceiling = now + timedelta(minutes=10)
+    out: list[dict] = []
+    for r in rows or []:
+        if not isinstance(r, dict):
+            continue
+        t = _blockchair_time_utc(r.get("time"))
+        if t is None or t < cutoff or t > ceiling:
+            continue
+        out.append(r)
+    return out
+
+
 def _blockchair_eth_large_transactions_impl(
-    min_value_usd: float = 1_000_000.0, limit: int = 10
-) -> list[dict]:
+    min_value_usd: float = 1_000_000.0, limit: int = 10,
+    now: datetime | None = None,
+) -> list[dict] | None:
     """Live fetch of large ETH transactions over the last 24h via Blockchair.
 
-    Blockchair's tx search uses a `q=` query language; we ask for txs in the
-    last 24h with value_usd above the threshold. If the query rejects the
-    `value_usd(...)` filter we fall back to a plain top-N-by-value scan.
+    Blockchair's `q=` filter takes an absolute datetime range; the relative
+    form `time(24h)..` is rejected with HTTP 400 "Wrong filtering expression".
+    So the query is `time(<now-24h UTC>..),value_usd(<min>..)`, sorted by USD
+    value. There is deliberately NO unfiltered fallback: the old
+    `s=value(desc)` retry returned the all-time largest transfers (2015-2022)
+    and published them under a "last 24h" label.
 
-    Each row carries hash, native ETH value, USD value, ISO time, and fee
-    in ETH. Returns at most `limit` rows sorted by USD value descending.
+    Returns at most `limit` rows (hash, value_eth, value_usd, time, fee_eth)
+    sorted by USD value descending, re-filtered to the window and threshold
+    client-side. Returns ``[]`` when the query succeeded but nothing
+    qualified, and ``None`` when the request failed.
     """
+    now = now or datetime.now(timezone.utc)
     min_usd = int(max(0, float(min_value_usd or 0)))
+    since = (now - timedelta(hours=ETH_LARGE_TX_WINDOW_HOURS)).strftime("%Y-%m-%d %H:%M:%S")
     base = "https://api.blockchair.com/ethereum/transactions"
 
     j = _get(base, {
-        "q": f"time(24h)..,value_usd({min_usd}..)",
+        "q": f"time({since}..),value_usd({min_usd}..)",
         "s": "value_usd(desc)",
         "limit": str(max(limit, 10)),
     })
-
-    # Fall back to plain top-N-by-value if the query language was rejected
-    # (Blockchair returns 4xx for malformed `q=`; _get logs and returns None).
-    if not j or not isinstance(j, dict) or not j.get("data"):
-        j = _get(base, {"limit": str(max(limit, 10)), "s": "value(desc)"})
-
     if not j or not isinstance(j, dict):
-        return []
-    rows = j.get("data") or []
+        return None
+    rows = j.get("data")
+    if rows is None:
+        return None
     if not isinstance(rows, list):
-        return []
+        return None
 
     out: list[dict] = []
     for r in rows:
@@ -4034,6 +4083,8 @@ def _blockchair_eth_large_transactions_impl(
             fee_eth = float(r.get("fee") or 0) / 1e18
         except (TypeError, ValueError):
             fee_eth = 0.0
+        if value_usd < min_usd:
+            continue
         out.append({
             "hash":      h,
             "value_eth": value_eth,
@@ -4042,32 +4093,64 @@ def _blockchair_eth_large_transactions_impl(
             "fee_eth":   fee_eth,
         })
 
+    out = _eth_large_tx_within_window(out, now)
     out.sort(key=lambda r: r.get("value_usd") or 0, reverse=True)
     return out[:limit]
 
 
-def blockchair_eth_large_transactions(
-    min_value_usd: float = 1_000_000.0, limit: int = 10
-) -> list[dict]:
-    """Stale-fallback wrapper around `_blockchair_eth_large_transactions_impl`.
+def blockchair_eth_large_transactions_with_status(
+    min_value_usd: float = 1_000_000.0, limit: int = 10,
+    now: datetime | None = None,
+) -> dict:
+    """Fetch the last-24h large-tx feed and say where the rows came from.
 
-    On empty result or fetch failure, serves the last good payload from
-    `data/.stale/blockchair_eth_large_transactions.json`. Returns an empty
-    list if no cache exists either — never raises.
+    Returns ``{"rows": [...], "status": {...}}`` where status.source is
+    "live" (query succeeded, possibly with zero qualifying rows),
+    "stale-cache" (query failed; replaying the last good fetch, trimmed to
+    rows still inside the 24h window) or "unavailable" (query failed and no
+    cached row is still recent). Never raises.
     """
-    cache_key = "blockchair_eth_large_transactions"
+    now = now or datetime.now(timezone.utc)
+    # The legacy cache file was filled by the unfiltered all-time scan; never
+    # replay it.
     try:
-        out = _blockchair_eth_large_transactions_impl(min_value_usd, limit)
+        _stale_path(_ETH_LARGE_TX_LEGACY_CACHE_KEY).unlink(missing_ok=True)
+    except OSError:
+        # Best-effort cleanup only: the legacy key is never read again, so a
+        # file we couldn't delete is harmless and must not stop the fetch.
+        pass
+    status = {
+        "window_hours": ETH_LARGE_TX_WINDOW_HOURS,
+        "min_value_usd": float(min_value_usd or 0),
+        "as_of": now.isoformat(timespec="seconds"),
+    }
+    try:
+        out = _blockchair_eth_large_transactions_impl(min_value_usd, limit, now=now)
     except Exception as e:
         print(f"  [blockchair_eth_large_transactions] fatal: {e}", file=sys.stderr)
         out = None
-    if isinstance(out, list) and len(out) > 0:
-        _stale_save(cache_key, out)
-        return out
-    cached = _stale_load(cache_key)
-    if cached is not None:
-        return cached if isinstance(cached, list) else []
-    return out if isinstance(out, list) else []
+    if isinstance(out, list):
+        if out:
+            _stale_save(_ETH_LARGE_TX_CACHE_KEY, out)
+        return {"rows": out, "status": {**status, "source": "live"}}
+    cached = _stale_load(_ETH_LARGE_TX_CACHE_KEY)
+    recent = _eth_large_tx_within_window(cached if isinstance(cached, list) else [], now)
+    if recent:
+        return {"rows": recent[:limit], "status": {**status, "source": "stale-cache"}}
+    return {"rows": [], "status": {**status, "source": "unavailable"}}
+
+
+def blockchair_eth_large_transactions(
+    min_value_usd: float = 1_000_000.0, limit: int = 10,
+    now: datetime | None = None,
+) -> list[dict]:
+    """Rows-only wrapper around `blockchair_eth_large_transactions_with_status`.
+
+    Every row returned is inside the trailing 24h window, whether it came from
+    the live query or the stale cache; an empty list means nothing recent is
+    known. Never raises.
+    """
+    return blockchair_eth_large_transactions_with_status(min_value_usd, limit, now=now)["rows"]
 
 
 def blockchair_chain_stats(chain_slug: str) -> dict:
@@ -5774,7 +5857,7 @@ async def _fetch_whale_async(btc_price_usd: float | None = None) -> dict:
         _timed("glassnode_btc_whale_metrics",      _bg_call(glassnode_btc_whale_metrics)),
         _timed("mempool_whale_transactions",       _whale_tx()),
         _timed("blockchair_eth_stats",             _bg_call(blockchair_eth_stats)),
-        _timed("blockchair_eth_large_transactions", _bg_call(blockchair_eth_large_transactions, 1_000_000)),
+        _timed("blockchair_eth_large_transactions", _bg_call(blockchair_eth_large_transactions_with_status, 1_000_000)),
         _timed("coin_metrics_eth_whale_metrics",   _bg_call(coin_metrics_eth_whale_metrics)),
         _timed("etherscan_eth_daily",              _bg_call(etherscan_eth_daily)),
         _timed("fetch_multichain_whale_stats",     _bg_call(fetch_multichain_whale_stats)),
@@ -5788,7 +5871,8 @@ async def _fetch_whale_async(btc_price_usd: float | None = None) -> dict:
         "eth": {
             "blockchair": eth_bc,
             "coin_metrics": eth_cm,
-            "large_transactions": eth_large_txs,
+            "large_transactions": (eth_large_txs or {}).get("rows") or [],
+            "large_transactions_status": (eth_large_txs or {}).get("status") or {},
             "etherscan_daily": eth_etherscan,
         },
         "multichain": multichain,
