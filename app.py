@@ -6322,11 +6322,28 @@ function metalsFreshness(){
                 + 'Central-bank holdings and mine production are annual and carry '
                 + 'their own as-of on their cards.' };
 }
+// UAP: the newest sighting on file. data_through == date_range[1] (older
+// sidecars only carry the range). Never generated_at — that is the build clock
+// and advances every deploy even while NUFORC is blocking the fetcher, which
+// is how a feed frozen at 2026-06-09 kept looking current. When the last build
+// did not refresh NUFORC the label says so, in text, not only in the hover.
 function mufonFreshness(){
   const mu = DATA.mufon;
-  const range = mu && Array.isArray(mu.date_range) ? mu.date_range : null;
-  if (!range || range.length < 2) return null;
-  return { date: fDay(range[1]), stale: 0, total: 1, label: 'latest sighting' };
+  if (!mu) return null;
+  const range = Array.isArray(mu.date_range) ? mu.date_range : [];
+  const through = fDay(mu.data_through) || fDay(range[1]);
+  if (!through) return null;
+  const refresh = mu.live_refresh || {};
+  const notRefreshed = !!mu._stale || refresh.ok === false;
+  return {
+    date: through, stale: 0, total: 1,
+    label: notRefreshed ? 'not refreshed · data through' : 'data through',
+    title: notRefreshed
+      ? 'NUFORC was not refreshed on the last build'
+        + (refresh.cause ? ' (' + refresh.cause + ')' : '')
+        + ', so this tab shows the sightings already on file.'
+      : 'Newest sighting date on file.',
+  };
 }
 
 // --- tab-level strips ------------------------------------------------------
@@ -18513,7 +18530,9 @@ function renderMufonVelocity(){
     heroHtml
     + '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(162px, 1fr));gap:12px">' + tiles.join('') + '</div>'
     + '<div style="font-size:11px;color:var(--muted);margin-top:13px;line-height:1.5">'
-    +   'Recent windows are anchored to the newest day on file (<strong>'+anchor+'</strong>), <em>not</em> today — NUFORC reports lag ~1–2 weeks, so the latest-day and 7-day tiles run low until reports catch up. YoY compares each window to the same window one year earlier. Counts are <strong>reports</strong>, not verified events.'
+    +   'Recent windows are anchored to the newest day on file (<strong>'+anchor+'</strong>), <em>not</em> today — NUFORC reports lag ~1–2 weeks, so the latest-day and 7-day tiles run low until reports catch up. '
+    +   (m._stale ? '<strong>NUFORC was not refreshed on the last build</strong>, so that day is far older than the usual lag. ' : '')
+    +   'YoY compares each window to the same window one year earlier. Counts are <strong>reports</strong>, not verified events.'
     + '</div>';
 }
 
@@ -18802,7 +18821,9 @@ function renderMufonTrend(){
     ? '—'
     : ((cagr >= 0 ? '+' : '') + (cagr * 100).toFixed(1) + '%/yr CAGR');
 
-  const recentAnchor = (m.date_range && m.date_range[1]) || '—';
+  // recent_buckets_anchor is the day the windows really end on (today only
+  // when the build refreshed NUFORC); date_range[1] is the pre-field fallback.
+  const recentAnchor = m.recent_buckets_anchor || (m.date_range && m.date_range[1]) || '—';
   const recentTxt = '30d ' + recent['30d'].toLocaleString()
     + ' · 60d ' + recent['60d'].toLocaleString()
     + ' · 90d ' + recent['90d'].toLocaleString()
@@ -18852,7 +18873,11 @@ function renderMufonTrend(){
     + '<div style="margin-top:12px;padding:10px 12px;background:var(--bg2,#0f1419);border-left:3px solid var(--v2-warn,#fbbf24);border-radius:4px;font-size:11px;color:var(--muted);line-height:1.5">'
     +   '<strong style="color:var(--v2-warn,#fbbf24)">Note:</strong> '
     +   'Combines the planetsig community mirror (1906-2014) with a direct scrape of NUFORC\'s monthly subndx pages (2014+). '
-    +   'Recent-window counts run through <strong>' + recentAnchor + '</strong> and reflect actual recent activity — they ARE the last 30/60/90/365 days from now. '
+    +   (m._stale
+          ? 'NUFORC was <strong>not refreshed</strong> on the last build'
+            + ((m.live_refresh && m.live_refresh.cause) ? ' (' + escapeHtml(m.live_refresh.cause) + ')' : '')
+            + ', so the recent-window counts end on <strong>' + escapeHtml(recentAnchor) + '</strong>, the newest sighting on file — they are <em>not</em> the last 30/60/90/365 days from now. '
+          : 'Recent-window counts run through <strong>' + recentAnchor + '</strong> and reflect actual recent activity — they ARE the last 30/60/90/365 days from now. ')
     +   'The "most recent partial year" row flags ' + (partialYear || 'the current year') + ' so the 5y CAGR doesn\'t compare a half-year to full ones.'
     + '</div>';
 }
@@ -18928,8 +18953,8 @@ function renderMufonMap(){
       const dr = m.date_range || [null,null];
       note.textContent = (dr[0] && dr[1]) ? ('All records ' + dr[0] + ' to ' + dr[1] + '.') : '';
     } else if (m._stale) {
-      const anchor = (m.date_range && m.date_range[1]) || '—';
-      note.textContent = 'Live scrape unavailable — window anchored to historical mirror cutoff (' + anchor + '), not today.';
+      const anchor = m.recent_buckets_anchor || (m.date_range && m.date_range[1]) || '—';
+      note.textContent = 'NUFORC not refreshed — window ends at the newest sighting on file (' + anchor + '), not today.';
     } else {
       note.textContent = 'Window anchored to today (UTC).';
     }
@@ -19495,7 +19520,7 @@ function renderMufonShapes(){
     +   'Top 15 shapes shown; rarer ones collapse into "other". '
     +   'Series runs ' + (dr[0] || '?') + ' through ' + (dr[1] || '?') + ', '
     +   'combining the planetsig historical mirror with a direct NUFORC subndx scrape'
-    +   (m._stale ? ' <strong>(live scrape unavailable this run — historical only)</strong>' : '')
+    +   (m._stale ? ' <strong>(NUFORC not refreshed this run)</strong>' : '')
     +   '. Range toggle re-slices the stacked area only; the legend totals stay all-time.'
     + '</div>';
 
