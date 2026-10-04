@@ -288,7 +288,10 @@ def test_fetch_stocks_signals_happy_path():
     assert len(out) == 2
     expected_keys = {
         "symbol", "name", "last_price", "change_pct", "volume",
-        "score", "label", "components", "history", "poc",
+        # `as_of` = date of the last daily bar the score was computed from.
+        # These rows carried no observation date at all before, so the V2
+        # stocks sentiment card had nothing honest to stamp itself with.
+        "score", "label", "as_of", "components", "history", "poc",
         "mfi", "cmf",
     }
     for entry in out:

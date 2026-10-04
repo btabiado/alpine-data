@@ -196,6 +196,64 @@ input[type="search"] {
   margin-top: 2px;
 }
 
+/* ---------------------------------------------------------------------------
+   Data-freshness stamps (lthcs-freshness.js)
+
+   Rule 5 of the honesty contract: age is TINTED, not printed bare. Tone is a
+   class, never an inline colour, so every LTHCS page inherits the same three
+   thresholds (<=7d ok, <=21d warn, >21d bad) from one place. `--none` is the
+   "no honest date" state and reads as muted italic so it can't be mistaken
+   for a real observation.
+
+   Mirrors v2/app.py's .v2-fresh family; only the token names differ.
+   --------------------------------------------------------------------------- */
+.lthcs-fresh {
+  font-variant-numeric: tabular-nums;
+  /* Long stamps wrap instead of forcing the header wider than the viewport. */
+  overflow-wrap: anywhere;
+  word-break: normal;
+  max-width: 100%;
+}
+.lthcs-fresh--ok { color: var(--text-secondary); }
+.lthcs-fresh--warn { color: var(--band-constructive-bright); }
+.lthcs-fresh--bad { color: var(--band-weakening-bright); }
+.lthcs-fresh--none { color: var(--text-tertiary); font-style: italic; }
+
+/* Composite disagreement disclosure. Hidden entirely when every contributing
+   input agrees; only appears when the oldest and newest inputs are far apart
+   (or one of them has no readable date at all), so a healthy day stays quiet. */
+.lthcs-freshnote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.3;
+  font-family: var(--font-mono);
+  max-width: 100%;
+  min-width: 0;
+}
+.lthcs-freshnote[hidden] { display: none; }
+.lthcs-freshnote:empty { display: none; }
+.lthcs-freshnote__lead {
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 9px;
+}
+.lthcs-freshnote__pill {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+  background: var(--bg-chip);
+  white-space: nowrap;
+  /* A very long label must shrink rather than push the row past 360px. */
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .lthcs-refresh-btn {
   display: inline-flex;
   align-items: center;

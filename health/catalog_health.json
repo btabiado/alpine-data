@@ -1,13 +1,41 @@
 {
-  "checked_at": "2026-07-01T11:32:29+00:00",
+  "checked_at": "2026-09-28T16:42:17+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1961,
-    "gated": 144,
-    "dead": 14,
-    "unreachable": 73
+    "ok": 1927,
+    "gated": 172,
+    "dead": 26,
+    "unreachable": 67
   },
   "dead": [
+    {
+      "url": "http://numbersapi.com/",
+      "code": 404,
+      "services": [
+        "Numbers API (numbersapi.com)"
+      ]
+    },
+    {
+      "url": "https://bible.helloao.org/",
+      "code": 404,
+      "services": [
+        "Free Use Bible API (AO Lab)"
+      ]
+    },
+    {
+      "url": "https://docs.data.nasdaq.com/",
+      "code": 404,
+      "services": [
+        "Nasdaq Data Link (formerly Quandl)"
+      ]
+    },
+    {
+      "url": "https://docs.eudat.eu/b2share/httpapi/",
+      "code": 404,
+      "services": [
+        "EUDAT B2SHARE REST API"
+      ]
+    },
     {
       "url": "https://docs.stratz.com/",
       "code": 404,
@@ -16,10 +44,31 @@
       ]
     },
     {
-      "url": "https://scholia.toolforge.org/",
+      "url": "https://efile.fara.gov/api",
       "code": 404,
       "services": [
-        "Scholia"
+        "FARA eFile API (DOJ Foreign Agents Registration)"
+      ]
+    },
+    {
+      "url": "https://getbible.net/docs",
+      "code": 404,
+      "services": [
+        "GetBible.net API v2"
+      ]
+    },
+    {
+      "url": "https://github.com/marketplace/models",
+      "code": 404,
+      "services": [
+        "GitHub Models"
+      ]
+    },
+    {
+      "url": "https://help.overton.io/faq/",
+      "code": 404,
+      "services": [
+        "Overton API"
       ]
     },
     {
@@ -102,10 +151,45 @@
       ]
     },
     {
+      "url": "https://www.first.org/epss/api",
+      "code": 404,
+      "services": [
+        "EPSS API (FIRST.org)"
+      ]
+    },
+    {
+      "url": "https://www.gmicloud.ai/en/models",
+      "code": 404,
+      "services": [
+        "GMI Cloud Inference Engine"
+      ]
+    },
+    {
       "url": "https://www.langtrace.ai/",
       "code": 404,
       "services": [
         "Langtrace"
+      ]
+    },
+    {
+      "url": "https://www.memobase.io/",
+      "code": 404,
+      "services": [
+        "Memobase"
+      ]
+    },
+    {
+      "url": "https://www.oapen.org/resources/15635975-metadata",
+      "code": 404,
+      "services": [
+        "OAPEN Library REST/OAI API"
+      ]
+    },
+    {
+      "url": "https://www.pantone.com/products/digital-apps/pantone-api",
+      "code": 404,
+      "services": [
+        "Pantone Connect / Pantone API"
       ]
     }
   ],
@@ -139,6 +223,36 @@
       ]
     },
     {
+      "url": "https://api.justyy.workers.dev/api/factor/",
+      "code": 503,
+      "services": [
+        "Integer Factorization API (justyy / HelloACM)"
+      ]
+    },
+    {
+      "url": "https://api.pharmgkb.org/swagger/",
+      "code": null,
+      "services": [
+        "PharmGKB REST API"
+      ]
+    },
+    {
+      "url": "https://api.trade.gov/console/",
+      "code": null,
+      "services": [
+        "ITA Consolidated Screening List (CSL) API (Commerce)"
+      ]
+    },
+    {
+      "url": "https://aqs.epa.gov/aqsweb/documents/data_api.html",
+      "code": null,
+      "services": [
+        "EPA Air Quality System (AQS) API",
+        "EPA Air Quality System (AQS) API",
+        "EPA Air Quality System (AQS) API"
+      ]
+    },
+    {
       "url": "https://assignment-api.uspto.gov/",
       "code": null,
       "services": [
@@ -160,18 +274,10 @@
       ]
     },
     {
-      "url": "https://cactus.nci.nih.gov/chemical/structure",
-      "code": 503,
-      "services": [
-        "NCI/CADD Chemical Identifier Resolver (Cactus)",
-        "NCI/CADD Chemical Identifier Resolver (Cactus)"
-      ]
-    },
-    {
-      "url": "https://cartblanche.docking.org/",
+      "url": "https://cfpub.epa.gov/ecotox/",
       "code": null,
       "services": [
-        "ZINC (CartBlanche) API"
+        "EPA ECOTOX Knowledgebase"
       ]
     },
     {
@@ -190,17 +296,10 @@
       ]
     },
     {
-      "url": "https://correlatesofwar.org/data-sets/",
+      "url": "https://developer.boeing.com/apis/notams-3/",
       "code": null,
       "services": [
-        "Correlates of War (COW) Project datasets"
-      ]
-    },
-    {
-      "url": "https://data.bts.gov/",
-      "code": null,
-      "services": [
-        "BTS Open Data Platform (USDOT)"
+        "DTN NOTAMs API / Boeing (Jeppesen) NOTAMs API"
       ]
     },
     {
@@ -268,13 +367,6 @@
       ]
     },
     {
-      "url": "https://ecos.fws.gov/ecp/services",
-      "code": null,
-      "services": [
-        "USFWS ECOS Data Services (Environmental Conservation Online System)"
-      ]
-    },
-    {
       "url": "https://elexicon.wustl.edu/",
       "code": null,
       "services": [
@@ -286,6 +378,13 @@
       "code": null,
       "services": [
         "WikiChip"
+      ]
+    },
+    {
+      "url": "https://fakeapi.platzi.com/",
+      "code": null,
+      "services": [
+        "Platzi Fake Store API"
       ]
     },
     {
@@ -333,13 +432,6 @@
       ]
     },
     {
-      "url": "https://getbible.net/docs",
-      "code": null,
-      "services": [
-        "GetBible.net API v2"
-      ]
-    },
-    {
       "url": "https://gssdataexplorer.norc.org/",
       "code": null,
       "services": [
@@ -362,13 +454,6 @@
       ]
     },
     {
-      "url": "https://latinwordnet.exeter.ac.uk/api",
-      "code": null,
-      "services": [
-        "Latin WordNet API (Univ. of Exeter)"
-      ]
-    },
-    {
       "url": "https://maps.bts.dot.gov/services/rest/services/NTAD/MilitaryBases/MapServer",
       "code": null,
       "services": [
@@ -387,13 +472,6 @@
       "code": null,
       "services": [
         "Matmatch"
-      ]
-    },
-    {
-      "url": "https://minorplanetcenter.net/web_service/",
-      "code": null,
-      "services": [
-        "IAU Minor Planet Center Web Service"
       ]
     },
     {
@@ -419,6 +497,13 @@
       ]
     },
     {
+      "url": "https://oqmd.org/",
+      "code": null,
+      "services": [
+        "OQMD (Open Quantum Materials Database)"
+      ]
+    },
+    {
       "url": "https://platform.docs.opentargets.org/data-access/graphql-api",
       "code": null,
       "services": [
@@ -433,10 +518,10 @@
       ]
     },
     {
-      "url": "https://podaac.jpl.nasa.gov/",
+      "url": "https://pncp.gov.br/api/pncp/swagger-ui/index.html",
       "code": null,
       "services": [
-        "NASA PO.DAAC Earthdata"
+        "Brazil PNCP (Portal Nacional de Contratacoes Publicas) API"
       ]
     },
     {
@@ -454,17 +539,10 @@
       ]
     },
     {
-      "url": "https://rest.rgd.mcw.edu/rgdws/",
+      "url": "https://remote.universal-robots.com/",
       "code": null,
       "services": [
-        "Rat Genome Database (RGD) REST API"
-      ]
-    },
-    {
-      "url": "https://roar.eprints.org/",
-      "code": null,
-      "services": [
-        "ROAR (Registry of Open Access Repositories)"
+        "Universal Robots API (UR Cloud)"
       ]
     },
     {
@@ -489,6 +567,13 @@
       ]
     },
     {
+      "url": "https://snowstorm-training.snomedtools.org/fhir/metadata",
+      "code": null,
+      "services": [
+        "SNOMED CT Snowstorm public training FHIR API"
+      ]
+    },
+    {
       "url": "https://stats.un.org/SDGAPI/swagger/",
       "code": null,
       "services": [
@@ -503,13 +588,6 @@
       ]
     },
     {
-      "url": "https://v2.sherpa.ac.uk/opendoar/",
-      "code": null,
-      "services": [
-        "OpenDOAR (Directory of Open Access Repositories)"
-      ]
-    },
-    {
       "url": "https://water.weather.gov/ahps/",
       "code": null,
       "services": [
@@ -521,13 +599,6 @@
       "code": null,
       "services": [
         "Plant.id (Kindwise)"
-      ]
-    },
-    {
-      "url": "https://wordbank.stanford.edu/",
-      "code": null,
-      "services": [
-        "Wordbank (wordbankr)"
       ]
     },
     {
@@ -552,43 +623,15 @@
       ]
     },
     {
-      "url": "https://www.fcc.gov/BroadbandData",
+      "url": "https://www.clinicalstudydatarequest.com/",
       "code": null,
       "services": [
-        "FCC National Broadband Map / Broadband Data Collection (BDC) Public Data API"
-      ]
-    },
-    {
-      "url": "https://www.fcc.gov/ecfs/help/public_api",
-      "code": null,
-      "services": [
-        "FCC ECFS Public API (Electronic Comment Filing System)"
-      ]
-    },
-    {
-      "url": "https://www.fcc.gov/licensing-databases/search-fcc-databases",
-      "code": null,
-      "services": [
-        "FCC Universal Licensing System (ULS) data"
-      ]
-    },
-    {
-      "url": "https://www.fcc.gov/reports-research/developers/license-view-api",
-      "code": null,
-      "services": [
-        "FCC License View API"
-      ]
-    },
-    {
-      "url": "https://www.fcc.gov/reports-research/developers/spectrum-dashboard-api",
-      "code": null,
-      "services": [
-        "FCC Spectrum Dashboard API"
+        "ClinicalStudyDataRequest.com (CSDR)"
       ]
     },
     {
       "url": "https://www.mousemine.org/mousemine/",
-      "code": null,
+      "code": 503,
       "services": [
         "Mouse Genome Informatics (MGI / MouseMine)"
       ]
@@ -608,17 +651,17 @@
       ]
     },
     {
+      "url": "https://www.scrapindex.com/historic.html",
+      "code": null,
+      "services": [
+        "ScrapIndex.com (historical scrap commodity prices)"
+      ]
+    },
+    {
       "url": "https://www.transitland.org/documentation/",
       "code": null,
       "services": [
         "Transitland (Interline)"
-      ]
-    },
-    {
-      "url": "https://www.understandingsociety.ac.uk/documentation/access-data/",
-      "code": 520,
-      "services": [
-        "Understanding Society (UK Household Longitudinal Study)"
       ]
     },
     {

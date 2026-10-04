@@ -11,6 +11,9 @@
 //   ../../data/lthcs/universe.json
 // =============================================================================
 
+// Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
+import { paintComposite } from '../lthcs-freshness.js';
+
 // ----- Constants -------------------------------------------------------------
 
 // Map universe.json `index_membership` strings → short DOM keys.
@@ -25,6 +28,9 @@ const INDEX_KEY_NORMALIZE = {
 const BAND_KEYS = ['elite', 'high', 'constructive', 'monitor', 'weakening', 'review'];
 
 // Path resolution: this module sits in /lthcs/heatmap/, snapshots in /data/lthcs/.
+// The freshness helper sits one level up, in the card view's own directory —
+// pages.yml mirrors lthcs_tab/* to _site/lthcs/, so '../' is the same folder
+// in production as it is under the dev server.
 const DATA_INDEX_URL = '../../data/lthcs/snapshots/index.json';
 const UNIVERSE_URL = '../../data/lthcs/universe.json';
 const snapshotUrlFor = (date) => `../../data/lthcs/snapshots/${date}.json`;
@@ -50,19 +56,12 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
-function formatDate(isoDate) {
-  if (!isoDate) return '—';
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
-  if (!m) return isoDate;
-  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
-  try {
-    return d.toLocaleDateString(undefined, {
-      year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC',
-    });
-  } catch {
-    return isoDate;
-  }
-}
+// formatDate() lived here and rendered a bare localised day ("Aug 1, 2026")
+// for the header stamp. It is gone on purpose: a bare date is exactly the
+// thing the freshness contract forbids (no age, no tint, and no way to tell a
+// one-day-old snapshot from a three-month-old one at a glance). Every stamp
+// on this page now goes through ../lthcs-freshness.js. Do not
+// reintroduce a local date formatter for a stamp.
 
 // ----- State -----------------------------------------------------------------
 
@@ -308,8 +307,31 @@ async function init() {
     state.universeByTicker = buildUniverseIndex(universe);
     state.enrichedScores = enrichScores(snapshot, state.universeByTicker);
 
+    // Freshness stamp. The tiles are the snapshot's scores rendered through
+    // the universe roster's sector map, so both are contributing inputs and
+    // the headline takes the OLDER of the two (Rule 2). The roster is
+    // reference data that changes only at index rebalances, so it is marked
+    // non-contributing: it is disclosed in the breakdown but cannot age the
+    // headline. Never a build or clock time.
     const stamp = $('#hm-last-updated');
-    if (stamp) stamp.textContent = formatDate(snapshot.calc_date);
+    paintComposite(
+      stamp,
+      [
+        { label: 'scores', date: snapshot && snapshot.calc_date },
+        {
+          label: 'roster',
+          date: universe && universe.last_updated,
+          contributes: false,
+          tag: 'ref',
+          note: 'reference data — sector map only',
+        },
+      ],
+      {
+        detailEl: $('#hm-fresh-note'),
+        what: 'This heatmap',
+        baseClass: 'lthcs-meta-value',
+      },
+    );
 
     hideStatusPanes();
     renderAll();

@@ -20,6 +20,9 @@
 // Constants
 // ---------------------------------------------------------------------------
 
+// Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
+import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+
 const SNAPSHOTS_BASE = '../data/lthcs/snapshots';
 const INDEX_URL = `${SNAPSHOTS_BASE}/index.json`;
 
@@ -519,6 +522,33 @@ async function runDiff() {
     state.diff = diff;
     renderKpis(diff.summary);
     renderTable(diff);
+    // Freshness stamp. Unlike the other LTHCS surfaces this is NOT an fMin:
+    // a diff's two endpoints are not simultaneous inputs to one number, they
+    // are a user-chosen baseline and a current state. The staleness question
+    // a reader actually has is "how old is the newer end", so that is what
+    // the headline reports; the baseline is shown untinted beside it so it
+    // can never be mistaken for the stamp.
+    paintComposite(
+      document.getElementById('lthcs-diff-asof'),
+      [
+        { label: 'to', date: snapB && snapB.calc_date ? snapB.calc_date : to },
+        {
+          label: 'from',
+          date: snapA && snapA.calc_date ? snapA.calc_date : from,
+          contributes: false,
+          tag: 'baseline',
+          note: 'user-chosen baseline, not staleness',
+        },
+      ],
+      {
+        detailEl: document.getElementById('lthcs-diff-fresh-note'),
+        what: 'The newer end of this diff',
+        baseClass: 'lthcs-meta-value',
+        // Both endpoints are always worth showing here: the reader picked
+        // them, and seeing the span is the entire point of the page.
+        forceDetail: true,
+      },
+    );
     setStatus(
       `${from} → ${to} · ${diff.summary.total_compared} tickers compared` +
       (diff.summary.tickers_inactive ? ` · ${diff.summary.tickers_inactive} inactive` : '') +

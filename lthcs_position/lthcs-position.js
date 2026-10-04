@@ -15,6 +15,9 @@
    inline but don't auto-exclude (per spec).
    ========================================================================= */
 
+// Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
+import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+
 const DATA_ROOT = '../data/lthcs';
 
 const BAND_MULTIPLIERS = {
@@ -230,7 +233,24 @@ async function loadLatestSnapshot() {
   }
   SNAPSHOT_BY_TICKER = map;
   SNAPSHOT_DATE = latest;
-  $('lpos-snapshot-date').textContent = latest;
+  // Freshness stamp. Position sizes are derived from these composites, so a
+  // stale snapshot means stale sizing — the tint is the whole point.
+  // Rule 3: tickers whose scores carry a data-quality flag are counted.
+  const flagged = snap.scores.filter(
+    (r) => Array.isArray(r.data_quality_flags) && r.data_quality_flags.length > 0,
+  ).length;
+  paintComposite(
+    $('lpos-snapshot-date'),
+    [{ label: 'scores', date: snap.calc_date || latest }],
+    {
+      detailEl: $('lpos-fresh-note'),
+      stale: flagged,
+      total: snap.scores.length,
+      staleNoun: 'flagged',
+      what: 'This sizing view',
+      baseClass: 'lthcs-meta-value',
+    },
+  );
 }
 
 async function fetchJSON(url) {
