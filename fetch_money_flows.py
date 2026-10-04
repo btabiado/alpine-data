@@ -69,6 +69,15 @@ HEADERS = {"User-Agent": UA, "Accept": "application/vnd.ms-excel,*/*"}
 MMF_URL = "https://www.ici.org/mm_summary_data_{year}.xls"
 FLOWS_URL = "https://www.ici.org/flows_data_{year}.xls"
 
+# FRED fallback for the MMF leg. WRMFNS = Retail Money Funds (weekly, NSA,
+# USD billions, Fed H.6). It is the ICI RETAIL leg only — there is no FRED
+# series for total/institutional MMF assets (WIMFSL/WRMFSL were discontinued
+# in 2021) and none at all for ICI's long-term mutual-fund flows.
+FRED_RETAIL_MMF = "WRMFNS"
+FRED_UA = "AlpineDataWorks-feed/1.0 (+https://alpinedataworks.com)"
+FRED_API_URL = "https://api.stlouisfed.org/fred/series/observations"
+FRED_CSV_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
+
 MAX_WEEKS = 52          # keep ~1y of weekly history
 HTTP_TIMEOUT = 60
 MAX_BYTES = 8 * 1024 * 1024  # 8 MB cap; these files are ~50-60 KB
@@ -88,18 +97,25 @@ def _years_to_try():
     return [y, y - 1]
 
 
-def _download_xls(url_tmpl):
+def _download_xls(url_tmpl, errors=None):
     """Return (bytes, resolved_url) for the first year that returns a real .xls,
-    or (None, None) on total failure. Never raises."""
+    or (None, None) on total failure. Never raises. When ``errors`` is a list,
+    a short "<file> -> <why>" entry is appended per failed attempt so the
+    payload can say WHY the leg is missing."""
     for year in _years_to_try():
         url = url_tmpl.format(year=year)
+        fname = url.rsplit("/", 1)[-1]
         try:
             r = requests.get(url, headers=HEADERS, timeout=HTTP_TIMEOUT)
         except Exception as exc:  # network blip
             print(f"  [warn] GET {url} failed: {exc}")
+            if errors is not None:
+                errors.append(f"{fname} -> {type(exc).__name__}")
             continue
         if r.status_code != 200:
             print(f"  [warn] {url} -> HTTP {r.status_code}")
+            if errors is not None:
+                errors.append(f"{fname} -> HTTP {r.status_code}")
             continue
         content = r.content or b""
         if not content or len(content) > MAX_BYTES:
@@ -291,27 +307,122 @@ def _find_mmf_tna_columns(df):
     return cols
 
 
-def fetch_mmf():
+def _fred_series(series_id, timeout=HTTP_TIMEOUT):
+    """[{date, value}] oldest->newest for a FRED series, or [] on failure.
+
+    Uses the FRED API when FRED_API_KEY is set (same as fetch_market), else
+    FRED's keyless fredgraph CSV. Never raises; the key is never logged."""
+    key = (os.environ.get("FRED_API_KEY") or "").strip()
+    rows = []
+    try:
+        if key:
+            start = (_dt.date.today() - _dt.timedelta(days=500)).isoformat()
+            r = requests.get(FRED_API_URL, timeout=timeout, params={
+                "series_id": series_id, "api_key": key, "file_type": "json",
+                "observation_start": start})
+            if r.status_code == 200:
+                for o in (r.json().get("observations") or []):
+                    v = _to_float(o.get("value"))
+                    if o.get("date") and v is not None:
+                        rows.append({"date": o["date"], "value": v})
+        if not rows:
+            # Plain feed UA: FRED's edge drops the browser-like UA used for ICI.
+            r = requests.get(FRED_CSV_URL.format(series=series_id),
+                             headers={"User-Agent": FRED_UA}, timeout=timeout)
+            if r.status_code == 200:
+                for line in r.text.splitlines()[1:]:
+                    parts = line.strip().split(",")
+                    if len(parts) != 2:
+                        continue
+                    v = _to_float(parts[1])
+                    if v is not None and _parse_date(parts[0]):
+                        rows.append({"date": _parse_date(parts[0]), "value": v})
+    except Exception as exc:
+        print(f"  [warn] FRED {series_id} fetch failed: {type(exc).__name__}")
+        return []
+    rows.sort(key=lambda x: x["date"])
+    return rows
+
+
+def _unavailable_shell(shell, reason):
+    """Mark a block explicitly unavailable so the UI can disclose the gap
+    instead of silently omitting it."""
+    out = dict(shell)
+    out["weekly"] = []
+    out["available"] = False
+    out["unavailable_reason"] = reason
+    # No observation exists, so there is no data date to report.
+    out["as_of"] = None
+    return out
+
+
+def mmf_from_fred_retail(fred_rows, ici_reason):
+    """MMF block from FRED WRMFNS (retail money funds, $B), or None.
+
+    Only the retail leg is equivalent, so total/institutional stay null and
+    ``wow_change`` (which the UI and the MFX composite read as the TOTAL
+    week-over-week change) stays null too; the retail change is published
+    under its own name."""
+    rows = [r for r in (fred_rows or []) if r.get("value") is not None]
+    if not rows:
+        return None
+    rows = rows[-MAX_WEEKS:]
+    weekly = [{"date": r["date"], "total": None, "retail": round(r["value"], 2),
+               "institutional": None} for r in rows]
+    retail_wow = (round(rows[-1]["value"] - rows[-2]["value"], 2)
+                  if len(rows) >= 2 else None)
+    return {
+        "as_of": weekly[-1]["date"],
+        "source": "FRED WRMFNS (Retail Money Funds, Fed H.6)",
+        "unit": "USD billions",
+        "weekly": weekly,
+        "wow_change": None,
+        "retail_wow_change": retail_wow,
+        "available": True,
+        "partial": True,
+        "fallback": "fred_wrmfns",
+        "unavailable_fields": ["total", "institutional", "government", "prime"],
+        "ici_unavailable_reason": ici_reason,
+        "note": ("ICI weekly MMF file unavailable (" + ici_reason + "); showing "
+                 "FRED retail money-fund assets only. Total and institutional "
+                 "assets have no free equivalent and are omitted."),
+    }
+
+
+def fetch_mmf(fred_fetch=None):
     """Download + parse ICI weekly MMF assets. Returns:
         {as_of, source, unit, weekly:[{date,total,retail,institutional,
                                         government,prime}, ...], wow_change}
     weekly is oldest->newest (last ~52 wks); values in USD billions.
-    Returns a neutral shell ({...,"weekly":[]}) on any failure."""
+
+    When ICI cannot be read, falls back to FRED WRMFNS for the retail leg
+    (see ``mmf_from_fred_retail``); if that fails too, returns a block marked
+    ``available: False`` with an ``unavailable_reason``."""
     print("[MMF] fetching ICI money-market summary ...")
     shell = {"as_of": _now_iso(), "source": "ICI", "unit": "USD billions",
              "weekly": [], "wow_change": None}
-    content, url = _download_xls(MMF_URL)
+    errors = []
+
+    def _fallback(reason):
+        print(f"  [warn] ICI MMF unavailable ({reason}); trying FRED {FRED_RETAIL_MMF}")
+        fb = mmf_from_fred_retail((fred_fetch or _fred_series)(FRED_RETAIL_MMF), reason)
+        if fb is not None:
+            print(f"  [ok] FRED {FRED_RETAIL_MMF}: {len(fb['weekly'])} weeks through {fb['as_of']}")
+            return fb
+        return _unavailable_shell(shell, reason + "; FRED WRMFNS fallback also failed")
+
+    content, url = _download_xls(MMF_URL, errors)
     if content is None:
         print("  [err] no MMF file downloaded")
-        return shell
+        return _fallback("ICI download failed: " + "; ".join(errors or ["no response"]))
     df = _read_sheet(content)
     if df is None or df.empty:
-        return shell
+        return _fallback("ICI file could not be read")
 
     cols = _find_mmf_tna_columns(df)
     if "total" not in cols:
         print(f"  [err] could not locate MMF TNA columns (found {cols})")
-        return shell
+        return _fallback("ICI layout changed (MMF TNA columns not found)")
     print(f"  [info] MMF columns: {cols}")
 
     weekly = []
@@ -338,7 +449,10 @@ def fetch_mmf():
     # sort oldest->newest, keep last MAX_WEEKS
     weekly.sort(key=lambda x: x["date"])
     weekly = weekly[-MAX_WEEKS:]
+    if not weekly:
+        return _fallback("ICI file parsed but held no weekly rows")
     shell["weekly"] = weekly
+    shell["available"] = True
 
     # as_of = latest data date; wow_change on total
     if weekly:
@@ -409,18 +523,23 @@ def fetch_mf_flows():
     print("[FLOWS] fetching ICI long-term MF flows ...")
     shell = {"as_of": _now_iso(), "source": "ICI", "unit": "USD billions",
              "weekly": []}
-    content, url = _download_xls(FLOWS_URL)
+    # No free equivalent exists for ICI's weekly long-term fund flows, so a
+    # failure is disclosed (available: False + reason), never back-filled.
+    no_alt = "; no free equivalent series"
+    errors = []
+    content, url = _download_xls(FLOWS_URL, errors)
     if content is None:
         print("  [err] no flows file downloaded")
-        return shell
+        return _unavailable_shell(shell, "ICI download failed: "
+                                  + "; ".join(errors or ["no response"]) + no_alt)
     df = _read_sheet(content)
     if df is None or df.empty:
-        return shell
+        return _unavailable_shell(shell, "ICI file could not be read" + no_alt)
 
     cols = _find_flows_columns(df)
     if "total_equity" not in cols:
         print(f"  [err] could not locate flows columns (found {cols})")
-        return shell
+        return _unavailable_shell(shell, "ICI layout changed (flow columns not found)" + no_alt)
     print(f"  [info] flows columns: {cols}")
 
     start = _flows_weekly_start_row(df)
@@ -447,9 +566,11 @@ def fetch_mf_flows():
 
     weekly.sort(key=lambda x: x["date"])
     weekly = weekly[-MAX_WEEKS:]
+    if not weekly:
+        return _unavailable_shell(shell, "ICI file parsed but held no weekly rows" + no_alt)
     shell["weekly"] = weekly
-    if weekly:
-        shell["as_of"] = weekly[-1]["date"]
+    shell["available"] = True
+    shell["as_of"] = weekly[-1]["date"]
     return shell
 
 

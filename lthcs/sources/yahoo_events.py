@@ -266,15 +266,34 @@ def _grade_score(grade: Optional[str]) -> Optional[float]:
     return GRADE_SCORE.get(grade.strip().lower())
 
 
+# yfinance ``Ticker.upgrades_downgrades`` encodes the action as a short code.
+# Expanded to the verb the stems above (and the UI) understand. Exact-match
+# only: partial matching "up" would also hit unrelated text.
+ACTION_CODES: Dict[str, str] = {
+    "up": "Upgrade",
+    "down": "Downgrade",
+    "init": "Initiate",
+    "main": "Maintain",
+    "reit": "Reiterate",
+}
+
+
+def _expand_action_code(action: Optional[str]) -> Optional[str]:
+    if action is None:
+        return None
+    return ACTION_CODES.get(action.strip().lower(), action)
+
+
 def _action_direction(action: Optional[str]) -> float:
     """Map a free-form action string to a direction sign.
 
-    Case-insensitive partial match against the ``ACTION_DIRECTION`` stems.
+    Case-insensitive partial match against the ``ACTION_DIRECTION`` stems
+    (after expanding yfinance short codes such as ``up``/``down``).
     Unknown actions return 0.0 (treated as a hold/neutral).
     """
     if action is None:
         return 0.0
-    a = action.strip().lower()
+    a = (_expand_action_code(action) or "").strip().lower()
     if not a:
         return 0.0
     for stem, direction in ACTION_DIRECTION.items():
@@ -466,7 +485,7 @@ def _parse_recommendations_df(
         if firm is None:
             firm = ""
         action_raw = _coerce_str(row[action_col]) if action_col is not None else None
-        action_text = action_raw or ""
+        action_text = _expand_action_code(action_raw) or ""
         from_grade = _coerce_str(row[from_col]) if from_col is not None else None
         to_grade = _coerce_str(row[to_col]) if to_col is not None else None
 
@@ -497,6 +516,42 @@ def _parse_recommendations_df(
 
     rows.sort(key=lambda r: r["date"], reverse=True)
     return rows
+
+
+def _is_firm_action_table(df: Any) -> bool:
+    """True for a dated per-firm action table (Firm + Action columns)."""
+    if not isinstance(df, _pd.DataFrame) or len(df) == 0:
+        return False
+    return (_column(df, ["Firm", "Analyst"]) is not None
+            and _column(df, ["Action"]) is not None)
+
+
+def _firm_actions_frame(t: Any) -> Any:
+    """Dated firm upgrade/downgrade rows from a ``yf.Ticker``.
+
+    Current yfinance (>=0.2.3x) moved the per-firm history to
+    ``Ticker.upgrades_downgrades`` (index ``GradeDate``, columns ``Firm``,
+    ``ToGrade``, ``FromGrade``, ``Action`` with codes up/down/init/main/reit)
+    and turned ``Ticker.recommendations`` into the monthly strongBuy/buy/...
+    summary, which has no firm or date and parsed to ``[]`` on every ticker.
+    Prefer the new attribute; fall back to ``recommendations`` only when it is
+    still the legacy firm-action table.
+    """
+    try:
+        ud = getattr(t, "upgrades_downgrades", None)
+    except Exception:
+        ud = None
+    if _is_firm_action_table(ud):
+        return ud
+    try:
+        legacy = t.recommendations
+    except Exception:
+        legacy = None
+    if _is_firm_action_table(legacy):
+        return legacy
+    # Neither is a dated firm-action table (e.g. only the monthly summary
+    # exists): there are no actions to report.
+    return None
 
 
 def get_analyst_actions(
@@ -535,7 +590,7 @@ def get_analyst_actions(
         _BUCKET.acquire()
         try:
             t = yf.Ticker(variant)
-            candidate = t.recommendations
+            candidate = _firm_actions_frame(t)
         except Exception:
             candidate = None
         if candidate is not None and len(candidate) > 0:

@@ -381,6 +381,21 @@ def _futures_freshness(a: dict) -> str | None:
 # The nine composites the cards can chart
 # ---------------------------------------------------------------------------
 
+OVERVIEW_MAX_INPUT_LAG_DAYS = 2
+
+
+def _days_between(older, newer) -> int | None:
+    """Whole days from date-ish string ``older`` to ``newer`` (None if either
+    is missing or unparseable)."""
+    from datetime import date as _date
+    try:
+        a = _date.fromisoformat(str(older)[:10])
+        b = _date.fromisoformat(str(newer)[:10])
+    except (TypeError, ValueError):
+        return None
+    return (b - a).days
+
+
 def overview_sentiment(market: dict, top20) -> dict | None:
     """Crypto Market Sentiment — renderOverviewSentiment().
 
@@ -418,14 +433,23 @@ def overview_sentiment(market: dict, top20) -> dict | None:
         else:
             undated += 1
 
-    pf = _perps_freshness(market)
-    rates = [v for v in (_num(p.get("funding_rate"))
-                         for p in (market.get("coinbase_intl_perps") or [])
-                         if isinstance(p, dict)) if v is not None]
+    # Perp funding: market.perp_funding (OKX, fresh rows only) when the
+    # payload has it — the Coinbase Intl perps went PAUSED/DELISTED and their
+    # frozen quotes must not vote. Older payloads fall back to the perp rows.
+    pfund = market.get("perp_funding")
+    if isinstance(pfund, dict):
+        avg = _num(pfund.get("avg_rate")) if pfund.get("available") else None
+        rates = [avg] if avg is not None else []
+        pf = {"date": (pfund.get("as_of") or None) if rates else None}
+    else:
+        pf = _perps_freshness(market)
+        rates = [v for v in (_num(p.get("funding_rate"))
+                             for p in (market.get("coinbase_intl_perps") or [])
+                             if isinstance(p, dict)) if v is not None]
     if rates:
         components.append(_clamp((sum(rates) / len(rates) / 0.0001) * 20))
         if pf["date"]:
-            dated.append(pf["date"])
+            dated.append(str(pf["date"])[:10])
         else:
             undated += 1
 
@@ -440,12 +464,19 @@ def overview_sentiment(market: dict, top20) -> dict | None:
         note += f"; {undated} carrying no observation date"
     if sf["stale"]:
         note += f"; {sf['stale']} of {sf['total']} signal rows cached"
+    # An input dated well behind the fetch that built this payload is a frozen
+    # input (e.g. the paused Coinbase perps stuck at 2026-09-03): flag it.
+    oldest = _oldest(dated)
+    behind = _days_between(oldest, market.get("fetched_at"))
+    old_input = behind is not None and behind > OVERVIEW_MAX_INPUT_LAG_DAYS
+    if old_input:
+        note += f"; oldest input {oldest} is {behind}d behind the fetch"
     return _entry(
         net,
         _bucket(net, ["STRONG BULLISH", "BULLISH", "NEUTRAL", "BEARISH",
                       "STRONG BEARISH"]),
-        _oldest(dated),
-        stale=bool(sf["stale"]),
+        oldest,
+        stale=bool(sf["stale"]) or old_input,
         note=note,
     )
 
