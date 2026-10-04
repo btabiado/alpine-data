@@ -9,6 +9,30 @@
       "score": 55,
       "stale": false
     },
+    "etf_flow_sentiment": {
+      "as_of": "2026-09-18",
+      "backfilled_from": "git:c282eeb321:data/btc_flows.csv (as committed at the end of 2026-09-18)",
+      "label": "OUTFLOWS",
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 691 daily rows; backfilled (git); same series as etf_flow_sentiment_btc",
+      "score": -20,
+      "stale": false
+    },
+    "etf_flow_sentiment_btc": {
+      "as_of": "2026-09-18",
+      "backfilled_from": "git:c282eeb321:data/btc_flows.csv (as committed at the end of 2026-09-18)",
+      "label": "OUTFLOWS",
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 691 daily rows; backfilled (git)",
+      "score": -20,
+      "stale": false
+    },
+    "etf_flow_sentiment_eth": {
+      "as_of": "2026-09-18",
+      "backfilled_from": "git:c282eeb321:data/eth_flows.csv (as committed at the end of 2026-09-18)",
+      "label": "INFLOWS",
+      "note": "ETH ETF; 7d+30d net flow sum (60/40); 552 daily rows; backfilled (git)",
+      "score": 28,
+      "stale": false
+    },
     "lthcs_composite": {
       "as_of": "2026-09-18",
       "label": "LTHCS WEAKENING",
@@ -24,7 +48,21 @@
       "stale": false
     },
     "poc_signal_breadth": null,
-    "whale_sentiment_btc": null,
-    "whale_sentiment_eth": null
+    "whale_sentiment_btc": {
+      "as_of": "2026-09-17",
+      "backfilled_from": "series:https://btabiado.github.io/alpine-data/data-whale.json read 2026-10-04 truncated to the end of 2026-09-18",
+      "label": "NEUTRAL",
+      "note": "backfilled (series)",
+      "score": -1,
+      "stale": false
+    },
+    "whale_sentiment_eth": {
+      "as_of": "2026-09-17",
+      "backfilled_from": "series:https://btabiado.github.io/alpine-data/data-whale.json read 2026-10-04 truncated to the end of 2026-09-18",
+      "label": "NEUTRAL",
+      "note": "backfilled (series)",
+      "score": -4,
+      "stale": false
+    }
   }
 }
