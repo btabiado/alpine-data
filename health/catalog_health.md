@@ -1,7 +1,7 @@
-# Catalog link health — 2026-09-28T16:42:17+00:00
+# Catalog link health — 2026-10-05T17:04:22+00:00
 
 - **Total URLs:** 2192
-- ✅ ok: 1927  ·  🔒 gated (exists, auth/bot-walled): 172  ·  ❌ dead (404/410): 26  ·  ⚠️ unreachable (timeout/5xx): 67
+- ✅ ok: 1914  ·  🔒 gated (exists, auth/bot-walled): 174  ·  ❌ dead (404/410): 27  ·  ⚠️ unreachable (timeout/5xx): 77
 
 ## ❌ Dead (404/410) — review/remove
 - `404` http://numbersapi.com/ — Numbers API (numbersapi.com)
@@ -13,6 +13,7 @@
 - `404` https://getbible.net/docs — GetBible.net API v2
 - `404` https://github.com/marketplace/models — GitHub Models
 - `404` https://help.overton.io/faq/ — Overton API
+- `404` https://pipedream.com/docs/rest-api/ — Pipedream (REST API)
 - `404` https://spothero.com/developers — SpotHero Developer Platform
 - `404` https://support.travelpayouts.com/hc/en-us/articles/115000150945-Hotel-data-API — Hotellook / Travelpayouts Hotel Data API
 - `404` https://websites.psychology.uwa.edu.au/school/mrcdatabase/uwa_mrc.htm — MRC Psycholinguistic Database
@@ -34,16 +35,17 @@
 ## ⚠️ Unreachable (timeout/5xx/000) — often transient or bot-blocked
 - `None` http://www.openthesis.org/ — OpenThesis.org
 - `None` https://api-ccte.epa.gov/docs — EPA CompTox / Computational Toxicology & Exposure APIs (CTX/CCTE)
+- `None` https://api.archives-ouvertes.fr/docs — HAL API (Archives Ouvertes)
+- `None` https://api.archives-ouvertes.fr/docs/search — HAL Theses API (CCSD/CNRS)
 - `None` https://api.fatcat.wiki/ — Fatcat / IA Scholar
 - `None` https://api.fatcat.wiki/redoc — Fatcat / Internet Archive Scholar API
-- `503` https://api.justyy.workers.dev/api/factor/ — Integer Factorization API (justyy / HelloACM)
+- `None` https://api.medrxiv.org/ — medRxiv API
 - `None` https://api.pharmgkb.org/swagger/ — PharmGKB REST API
 - `None` https://api.trade.gov/console/ — ITA Consolidated Screening List (CSL) API (Commerce)
-- `None` https://aqs.epa.gov/aqsweb/documents/data_api.html — EPA Air Quality System (AQS) API, EPA Air Quality System (AQS) API, EPA Air Quality System (AQS) API
+- `None` https://apps.fas.usda.gov/opendatawebv2/ — USDA FAS OpenData (PSD/ESR/GATS)
 - `None` https://assignment-api.uspto.gov/ — USPTO Patent Assignment Search API
 - `None` https://bcl.nrel.gov/api/ — NREL/NLR Building Component Library API
 - `502` https://biolincc.nhlbi.nih.gov/ — NHLBI BioLINCC (Biologic Specimen and Data Repository)
-- `None` https://cfpub.epa.gov/ecotox/ — EPA ECOTOX Knowledgebase
 - `None` https://clinical-information.canada.ca/ — Health Canada Clinical Information Portal (Public Release of Clinical Information, PRCI), Health Canada Public Release of Clinical Information (PRCI) portal
 - `None` https://collection.britishmuseum.org/ — British Museum Collection (SPARQL/LOD)
 - `None` https://developer.boeing.com/apis/notams-3/ — DTN NOTAMs API / Boeing (Jeppesen) NOTAMs API
@@ -67,17 +69,23 @@
 - `503` https://gazetteer.dainst.org/ — iDAI.gazetteer / iDAI.world (DAI)
 - `None` https://gssdataexplorer.norc.org/ — GSS Data Explorer (NORC General Social Survey), GSS Data Explorer (NORC, General Social Survey)
 - `None` https://hemp.ams.usda.gov/s/PublicSearchTool — USDA Hemp eManagement Platform (HeMP) Public/LE Search Tool
+- `None` https://iiif.bodleian.ox.ac.uk/iiif/ — Digital Bodleian / Oxford IIIF (added in verify)
 - `None` https://jrct.niph.go.jp/ — jRCT / JPRN (Japan Registry of Clinical Trials)
 - `None` https://maps.bts.dot.gov/services/rest/services/NTAD/MilitaryBases/MapServer — BTS / NTAD Military Bases (USDOT ArcGIS MapServer)
 - `None` https://maps.bts.dot.gov/services/rest/services/NTAD/MilitaryBases/MapServer/0 — BTS / NTAD Military Bases (USDOT ArcGIS REST)
 - `None` https://matmatch.com/ — Matmatch
+- `None` https://modeldb.science/ — ModelDB
 - `None` https://mymarketnews.ams.usda.gov/mars-api/getting-started — USDA AMS My Market News (MARS API)
 - `None` https://nassgeodata.gmu.edu/CropScape/ — USDA CropScape / Cropland Data Layer
+- `None` https://ndltd.org/thesis-resources/global-etd-search/ — NDLTD Global ETD Search
 - `None` https://neuroquery.org/ — NeuroQuery API, NeuroQuery
-- `None` https://oqmd.org/ — OQMD (Open Quantum Materials Database)
+- `503` https://openei.org/services/doc/rest/util_rates/ — OpenEI Utility Rate Database (URDB) API, OpenEI Utility Rate Database (URDB) API
+- `None` https://optimade.openmaterialsdb.se/ — Open Materials Database (OMDB)
+- `502` https://oqmd.org/ — OQMD (Open Quantum Materials Database)
+- `502` https://oqmd.org/api/ — OQMD (Open Quantum Materials Database) API, OQMD (Open Quantum Materials Database)
 - `None` https://platform.docs.opentargets.org/data-access/graphql-api — Open Targets Platform GraphQL API
 - `None` https://play.ht/ — PlayHT (Play.ht) TTS API
-- `None` https://pncp.gov.br/api/pncp/swagger-ui/index.html — Brazil PNCP (Portal Nacional de Contratacoes Publicas) API
+- `None` https://podaac.jpl.nasa.gov/ — NASA PO.DAAC Earthdata
 - `None` https://prime-numbers-api.com/ — Prime Numbers API (prime-numbers-api.com)
 - `None` https://rctportal.niph.go.jp/en — JPRN / NIPH Clinical Trials Search Portal (Japan)
 - `None` https://remote.universal-robots.com/ — Universal Robots API (UR Cloud)
@@ -86,16 +94,19 @@
 - `None` https://search.patentsview.org/docs/ — PatentsView PatentSearch API
 - `None` https://snowstorm-training.snomedtools.org/fhir/metadata — SNOMED CT Snowstorm public training FHIR API
 - `None` https://stats.un.org/SDGAPI/swagger/ — SDMX Global Registry / UNdata2 (added in verify)
+- `None` https://tle.ivanstanojevic.me/api/tle/ — TLE API (tle.ivanstanojevic.me)
 - `None` https://trialstreamer.robotreviewer.net/ — Trialstreamer
 - `None` https://water.weather.gov/ahps/ — NWS / NOAA Advanced Hydrologic Prediction Service (AHPS)
 - `None` https://web.plant.id/plant-identification-api/ — Plant.id (Kindwise)
+- `None` https://wiki.cancerimagingarchive.net/display/Public/TCIA+Application+Programming+Interface+(API)+Guides — The Cancer Imaging Archive (TCIA) REST API
 - `None` https://www.2dmatpedia.org/ — 2DMatPedia
 - `None` https://www.acq.osd.mil/eie/imr/rpid/library.html — DoD RPID / Base Structure Report (real-property footprint)
 - `None` https://www.brocade.io/ — Brocade.io
 - `None` https://www.clinicalstudydatarequest.com/ — ClinicalStudyDataRequest.com (CSDR)
-- `503` https://www.mousemine.org/mousemine/ — Mouse Genome Informatics (MGI / MouseMine)
+- `None` https://www.crystallography.net/ — Crystallography Open Database (COD)
+- `502` https://www.mousemine.org/mousemine/ — Mouse Genome Informatics (MGI / MouseMine)
 - `None` https://www.nrcs.usda.gov/resources/data-and-reports/web-soil-survey — USDA NRCS Web Soil Survey / spatial WMS-WFS
 - `None` https://www.nvr.navy.mil/ — Naval Vessel Register (NVR)
-- `None` https://www.scrapindex.com/historic.html — ScrapIndex.com (historical scrap commodity prices)
+- `None` https://www.searates.com/integrations/api-container-tracking/ — SeaRates Tracking API
 - `None` https://www.transitland.org/documentation/ — Transitland (Interline)
 - `None` https://yeastmine.yeastgenome.org/yeastmine/ — Saccharomyces Genome Database (YeastMine)

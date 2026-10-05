@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-09-28T16:42:17+00:00",
+  "checked_at": "2026-10-05T17:04:22+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1927,
-    "gated": 172,
-    "dead": 26,
-    "unreachable": 67
+    "ok": 1914,
+    "gated": 174,
+    "dead": 27,
+    "unreachable": 77
   },
   "dead": [
     {
@@ -69,6 +69,13 @@
       "code": 404,
       "services": [
         "Overton API"
+      ]
+    },
+    {
+      "url": "https://pipedream.com/docs/rest-api/",
+      "code": 404,
+      "services": [
+        "Pipedream (REST API)"
       ]
     },
     {
@@ -209,6 +216,20 @@
       ]
     },
     {
+      "url": "https://api.archives-ouvertes.fr/docs",
+      "code": null,
+      "services": [
+        "HAL API (Archives Ouvertes)"
+      ]
+    },
+    {
+      "url": "https://api.archives-ouvertes.fr/docs/search",
+      "code": null,
+      "services": [
+        "HAL Theses API (CCSD/CNRS)"
+      ]
+    },
+    {
       "url": "https://api.fatcat.wiki/",
       "code": null,
       "services": [
@@ -223,10 +244,10 @@
       ]
     },
     {
-      "url": "https://api.justyy.workers.dev/api/factor/",
-      "code": 503,
+      "url": "https://api.medrxiv.org/",
+      "code": null,
       "services": [
-        "Integer Factorization API (justyy / HelloACM)"
+        "medRxiv API"
       ]
     },
     {
@@ -244,12 +265,10 @@
       ]
     },
     {
-      "url": "https://aqs.epa.gov/aqsweb/documents/data_api.html",
+      "url": "https://apps.fas.usda.gov/opendatawebv2/",
       "code": null,
       "services": [
-        "EPA Air Quality System (AQS) API",
-        "EPA Air Quality System (AQS) API",
-        "EPA Air Quality System (AQS) API"
+        "USDA FAS OpenData (PSD/ESR/GATS)"
       ]
     },
     {
@@ -271,13 +290,6 @@
       "code": 502,
       "services": [
         "NHLBI BioLINCC (Biologic Specimen and Data Repository)"
-      ]
-    },
-    {
-      "url": "https://cfpub.epa.gov/ecotox/",
-      "code": null,
-      "services": [
-        "EPA ECOTOX Knowledgebase"
       ]
     },
     {
@@ -447,6 +459,13 @@
       ]
     },
     {
+      "url": "https://iiif.bodleian.ox.ac.uk/iiif/",
+      "code": null,
+      "services": [
+        "Digital Bodleian / Oxford IIIF (added in verify)"
+      ]
+    },
+    {
       "url": "https://jrct.niph.go.jp/",
       "code": null,
       "services": [
@@ -475,6 +494,13 @@
       ]
     },
     {
+      "url": "https://modeldb.science/",
+      "code": null,
+      "services": [
+        "ModelDB"
+      ]
+    },
+    {
       "url": "https://mymarketnews.ams.usda.gov/mars-api/getting-started",
       "code": null,
       "services": [
@@ -489,6 +515,13 @@
       ]
     },
     {
+      "url": "https://ndltd.org/thesis-resources/global-etd-search/",
+      "code": null,
+      "services": [
+        "NDLTD Global ETD Search"
+      ]
+    },
+    {
       "url": "https://neuroquery.org/",
       "code": null,
       "services": [
@@ -497,9 +530,32 @@
       ]
     },
     {
-      "url": "https://oqmd.org/",
+      "url": "https://openei.org/services/doc/rest/util_rates/",
+      "code": 503,
+      "services": [
+        "OpenEI Utility Rate Database (URDB) API",
+        "OpenEI Utility Rate Database (URDB) API"
+      ]
+    },
+    {
+      "url": "https://optimade.openmaterialsdb.se/",
       "code": null,
       "services": [
+        "Open Materials Database (OMDB)"
+      ]
+    },
+    {
+      "url": "https://oqmd.org/",
+      "code": 502,
+      "services": [
+        "OQMD (Open Quantum Materials Database)"
+      ]
+    },
+    {
+      "url": "https://oqmd.org/api/",
+      "code": 502,
+      "services": [
+        "OQMD (Open Quantum Materials Database) API",
         "OQMD (Open Quantum Materials Database)"
       ]
     },
@@ -518,10 +574,10 @@
       ]
     },
     {
-      "url": "https://pncp.gov.br/api/pncp/swagger-ui/index.html",
+      "url": "https://podaac.jpl.nasa.gov/",
       "code": null,
       "services": [
-        "Brazil PNCP (Portal Nacional de Contratacoes Publicas) API"
+        "NASA PO.DAAC Earthdata"
       ]
     },
     {
@@ -581,6 +637,13 @@
       ]
     },
     {
+      "url": "https://tle.ivanstanojevic.me/api/tle/",
+      "code": null,
+      "services": [
+        "TLE API (tle.ivanstanojevic.me)"
+      ]
+    },
+    {
       "url": "https://trialstreamer.robotreviewer.net/",
       "code": null,
       "services": [
@@ -599,6 +662,13 @@
       "code": null,
       "services": [
         "Plant.id (Kindwise)"
+      ]
+    },
+    {
+      "url": "https://wiki.cancerimagingarchive.net/display/Public/TCIA+Application+Programming+Interface+(API)+Guides",
+      "code": null,
+      "services": [
+        "The Cancer Imaging Archive (TCIA) REST API"
       ]
     },
     {
@@ -630,8 +700,15 @@
       ]
     },
     {
+      "url": "https://www.crystallography.net/",
+      "code": null,
+      "services": [
+        "Crystallography Open Database (COD)"
+      ]
+    },
+    {
       "url": "https://www.mousemine.org/mousemine/",
-      "code": 503,
+      "code": 502,
       "services": [
         "Mouse Genome Informatics (MGI / MouseMine)"
       ]
@@ -651,10 +728,10 @@
       ]
     },
     {
-      "url": "https://www.scrapindex.com/historic.html",
+      "url": "https://www.searates.com/integrations/api-container-tracking/",
       "code": null,
       "services": [
-        "ScrapIndex.com (historical scrap commodity prices)"
+        "SeaRates Tracking API"
       ]
     },
     {
