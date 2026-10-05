@@ -421,7 +421,6 @@ def resolve_cohort(
     chain.extend(strat.get("fallback_chain") or [])
 
     last_cohort: List[str] = []
-    last_label = "universe"
     for idx, step in enumerate(chain):
         cohort = _resolve_step(
             step,

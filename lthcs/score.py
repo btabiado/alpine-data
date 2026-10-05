@@ -35,6 +35,7 @@ All functions are pure (no I/O).
 from __future__ import annotations
 
 import logging
+import math
 from typing import Any, Dict, List, Optional, Tuple
 
 _LOG = logging.getLogger(__name__)
@@ -123,7 +124,7 @@ def _parse_trigger_expression(expr: str) -> Optional[Tuple[str, str, float]]:
             threshold = float(rhs)
         except (TypeError, ValueError):
             return None
-        if threshold != threshold:  # NaN
+        if math.isnan(threshold):  # NaN
             return None
         return (metric, op, threshold)
     return None
@@ -196,7 +197,7 @@ def _load_volatility_modifier_config(
             _VOLATILITY_MAGNITUDE,
         )
         return defaults
-    if magnitude != magnitude:  # NaN
+    if math.isnan(magnitude):  # NaN
         _LOG.warning(
             "volatility_modifier.magnitude is NaN; falling back to default."
         )
@@ -242,7 +243,7 @@ def compute_macro_adjustment(ten_y_30d_change_bp: Optional[float]) -> float:
         bp = float(ten_y_30d_change_bp)
     except (TypeError, ValueError):
         return 0.0
-    if bp != bp:  # NaN
+    if math.isnan(bp):  # NaN
         return 0.0
     if bp > _MACRO_THRESHOLD_BP:
         return -_MACRO_MAGNITUDE
@@ -264,7 +265,7 @@ def _percentile(values: List[float], pct: float) -> Optional[float]:
             f = float(v)
         except (TypeError, ValueError):
             continue
-        if f != f:  # NaN
+        if math.isnan(f):  # NaN
             continue
         cleaned.append(f)
     if not cleaned:
@@ -301,7 +302,7 @@ def compute_volatility_modifier(
         ticker_v = float(ticker_volatility)
     except (TypeError, ValueError):
         return 0.0
-    if ticker_v != ticker_v:  # NaN
+    if math.isnan(ticker_v):  # NaN
         return 0.0
     if not universe_volatilities:
         return 0.0
@@ -334,13 +335,11 @@ def assign_band(score: float, score_bands: Dict[str, Dict[str, Any]]) -> str:
 
     Out-of-range inputs are clamped to [0, 100] before lookup.
     """
-    import math
-
     try:
         s = float(score)
     except (TypeError, ValueError):
         s = 0.0
-    if s != s:  # NaN
+    if math.isnan(s):  # NaN
         s = 0.0
     s = max(0.0, min(100.0, s))
     floored = int(math.floor(s))
@@ -384,7 +383,7 @@ def compute_drift(
         cur = float(current_score)
     except (TypeError, ValueError):
         cur = 0.0
-    if cur != cur:
+    if math.isnan(cur):
         cur = 0.0
     priors = prior_scores or {}
     out: Dict[str, float] = {}
@@ -398,7 +397,7 @@ def compute_drift(
         except (TypeError, ValueError):
             out["drift_" + win] = 0.0
             continue
-        if pv != pv:
+        if math.isnan(pv):
             out["drift_" + win] = 0.0
             continue
         out["drift_" + win] = round(cur - pv, 1)
@@ -523,9 +522,16 @@ def compute_lthcs_score(
 
     confidence_level = _confidence_from_flags(data_quality_flags)
 
-    subscores_out: Dict[str, float] = {}
+    # A dropped pillar carried no data: its sub-score is a placeholder the
+    # pillar emits when every input is missing (thesis: 55.0 / 58.8 / 50.0),
+    # already excluded from the composite above. Publishing it as a number
+    # put it in pillar bars, mover subscores and the "Thesis pillar avg"
+    # card as if measured, so it is stored as null (= not measured).
+    subscores_out: Dict[str, Optional[float]] = {}
     for name in PILLAR_ORDER:
-        subscores_out[name] = float(pillar_subscores[name])
+        subscores_out[name] = (None if name in dropped_pillars
+                               and len(dropped_pillars) < len(PILLAR_ORDER)
+                               else float(pillar_subscores[name]))
 
     return {
         "ticker": ticker,

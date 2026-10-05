@@ -18,6 +18,7 @@ sections 3 and 7 for the storage layout and snapshot row schema.
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import tempfile
@@ -91,7 +92,7 @@ def _atomic_write_json(path: Path, payload: Any) -> None:
         try:
             os.unlink(tmp_path)
         except OSError:
-            pass
+            pass  # best-effort temp-file cleanup; the original error is re-raised below
         raise
 
 
@@ -149,8 +150,12 @@ class LthcsPersist:
         scores: List[Dict],
         *,
         overwrite: bool = False,
+        extra: Optional[Dict[str, Any]] = None,
     ) -> Path:
         """Write ``snapshots/<calc_date>.json`` atomically.
+
+        ``extra`` adds top-level keys (e.g. ``methodology_breaks``) without
+        letting them overwrite the four core keys.
 
         Raises ``FileExistsError`` if the file already exists and
         ``overwrite`` is False. ``scores`` is the list of dicts returned
@@ -170,6 +175,8 @@ class LthcsPersist:
             "weights_profile_default": str(weights_profile_default),
             "scores": scores,
         }
+        for k, v in (extra or {}).items():
+            payload.setdefault(k, v)
         _atomic_write_json(path, payload)
         return path
 
@@ -279,10 +286,15 @@ class LthcsPersist:
             raise FileExistsError(
                 "narratives_llm for %s already exists at %s" % (calc_date, path)
             )
+        # Top-level provenance so a reader (and the UI badge) can tell an
+        # all-template file from an LLM one without parsing every row:
+        # model_version names the CONFIGURED model even when it wrote none.
+        from lthcs.narratives_llm import fallback_summary  # local: avoid cycle
         payload: Dict[str, Any] = {
             "calc_date": calc_date,
             "model_version": str(model_version),
             "meta": dict(meta or {}),
+            **fallback_summary(narratives),
             "narratives": narratives,
         }
         _atomic_write_json(path, payload)
@@ -301,8 +313,16 @@ class LthcsPersist:
         calc_date: str,
         *,
         windows: tuple = ("1d", "7d", "30d", "90d"),
+        breaks: tuple = (),
     ) -> Dict[str, Optional[float]]:
         """Return prior LTHCS scores for drift computation.
+
+        ``breaks`` lists methodology-break dates (``lthcs.methodology``). A
+        window whose anchor falls BEFORE a break that is on or before
+        ``calc_date`` is re-anchored at the break: the prior becomes the first
+        history score dated on/after the break (drift since the methodology
+        changed), or None when the break is ``calc_date`` itself (no
+        comparable prior exists, so drift reads 0 rather than the break jump).
 
         For each window in ``windows`` (a tuple of strings like ``"30d"``),
         looks up the per-ticker history entry whose date is closest to
@@ -357,12 +377,21 @@ class LthcsPersist:
                 s_val = float(s_raw)
             except (TypeError, ValueError):
                 continue
-            if s_val != s_val:  # NaN guard
+            if math.isnan(s_val):  # NaN guard
                 continue
             usable.append((d_dt, s_val))
         if not usable:
             return out
         usable.sort(key=lambda t: t[0])
+
+        break_dts: List[Any] = []
+        for b in breaks or ():
+            try:
+                b_dt = _date_cls.fromisoformat(str(b)[:10])
+            except ValueError:
+                continue
+            if b_dt <= calc_dt:
+                break_dts.append(b_dt)
 
         for win in windows:
             try:
@@ -373,10 +402,20 @@ class LthcsPersist:
             # Nearest-prior lookup: latest entry with date <= target_dt.
             # Since `usable` is ascending, walk back from the end.
             picked: Optional[float] = None
+            picked_dt = None
             for d_dt, s_val in reversed(usable):
                 if d_dt <= target_dt:
-                    picked = s_val
+                    picked, picked_dt = s_val, d_dt
                     break
+            spanned = [b for b in break_dts
+                       if picked_dt is not None and picked_dt < b]
+            if spanned:
+                latest_break = max(spanned)
+                if latest_break >= calc_dt:
+                    picked = None
+                else:
+                    picked = next((s_val for d_dt, s_val in usable
+                                   if d_dt >= latest_break), None)
             out[win] = picked
         return out
 

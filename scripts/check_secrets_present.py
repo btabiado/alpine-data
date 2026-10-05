@@ -93,7 +93,10 @@ KEYS: list[tuple[str, str, str]] = [
     # this branch, nothing under lthcs/ or in scripts/lthcs_crypto_daily.py reads
     # CRYPTOCOMPARE_API_KEY. The claim is therefore just "pages" (V1 fetch, V2
     # build, and the api-status probe).
-    ("CRYPTOCOMPARE_API_KEY", "Per-coin OHLCV -> POC + signal-breadth chart",   "pages"),
+    # A CoinDesk Data key (CryptoCompare runs on CoinDesk Data now; free keys at
+    # developers.coindesk.com). Both hosts 401 keyless requests since 2026-10.
+    ("CRYPTOCOMPARE_API_KEY", "Per-coin OHLCV -> POC + signal-breadth chart; "
+                              "CADLI BTC reference chart; CC social/news",   "pages"),
     ("GLASSNODE_API_KEY",     "True BTC whale-cohort metrics",                  "pages"),
     ("COINMETRICS_API_KEY",   "ETH whale series on the Whale tab",              "pages"),
     ("ETHERSCAN_API_KEY",     "ETH blocks/day chart on the Whale tab",          "pages"),

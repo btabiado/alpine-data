@@ -565,8 +565,8 @@ function computePillarAccents(snapshotRowsByTicker) {
       for (let j = i + 1; j < tickers.length; j++) {
         const a = snapshotRowsByTicker[tickers[i]];
         const b = snapshotRowsByTicker[tickers[j]];
-        const va = Number(a && a.subscores && a.subscores[pk]);
-        const vb = Number(b && b.subscores && b.subscores[pk]);
+        const va = (a && a.subscores && a.subscores[pk] != null) ? Number(a.subscores[pk]) : NaN;
+        const vb = (b && b.subscores && b.subscores[pk] != null) ? Number(b.subscores[pk]) : NaN;
         if (!Number.isFinite(va) || !Number.isFinite(vb)) continue;
         if (Math.abs(va - vb) > PILLAR_DIFF_THRESHOLD) {
           accents.get(pk).add(tickers[i]);
@@ -775,7 +775,7 @@ function buildColumn({ ticker, idx, total, row, universeEntry, accents }) {
   // Pillar bars
   const pillarsWrap = el('div', { className: 'lthcs-compare-col-pillars' });
   PILLAR_ORDER.forEach((pk) => {
-    const sub = Number((row.subscores && row.subscores[pk]));
+    const sub = (row.subscores && row.subscores[pk] != null) ? Number(row.subscores[pk]) : NaN; // null = dropped pillar
     const isAccent = accents.get(pk) && accents.get(pk).has(ticker);
     const rowEl = el('div', {
       className: 'lthcs-compare-pillar-row' + (isAccent ? ' is-accent' : ''),
@@ -853,7 +853,7 @@ function buildThesisLine(row) {
   let lowKey = null;
   let lowVal = Infinity;
   for (const pk of PILLAR_ORDER) {
-    const v = Number(subs[pk]);
+    const v = subs[pk] == null ? NaN : Number(subs[pk]);
     if (!Number.isFinite(v)) continue;
     if (v > topVal) { topVal = v; topKey = pk; }
     if (v < lowVal) { lowVal = v; lowKey = pk; }

@@ -122,7 +122,7 @@ def _fetch_from_fred(
         try:
             body = resp.text[:200]
         except Exception:
-            pass
+            pass  # response body is optional context for the error raised below
         raise FredAPIError(
             f"FRED API returned HTTP {resp.status_code} for series "
             f"{series_id!r}: {body}"

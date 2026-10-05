@@ -74,7 +74,9 @@ def extract_largest_script(html: str) -> tuple[str, int]:
     # (we only parse our own build artifact so it's not exploitable, but
     # the alert is legitimate; note CodeQL inspects the regex STRING and
     # doesn't trust a runtime re.IGNORECASE kwarg, hence the inline flag).
-    pat = re.compile(r"(?i)<script(?P<attrs>[^>]*)>(?P<body>.*?)</script>", re.DOTALL)
+    # `</script[^>]*>` also accepts end tags browsers honour such as
+    # `</script >` (CodeQL py/bad-tag-filter).
+    pat = re.compile(r"(?i)<script(?P<attrs>[^>]*)>(?P<body>.*?)</script[^>]*>", re.DOTALL)
     best_body = ""
     best_start = -1
     for m in pat.finditer(html):
@@ -143,8 +145,9 @@ def check_inline_js_parses_with_v8(html: str, primary_js: str) -> bool:
     # would otherwise miss.
     # (?i) inline case-insensitive flag + re.DOTALL. CodeQL py/bad-tag-filter
     # inspects the regex string itself and doesn't trust runtime IGNORECASE,
-    # so the flag goes in the pattern rather than as a re.compile kwarg.
-    pat = re.compile(r"(?i)<script(?P<attrs>[^>]*)>(?P<body>.*?)</script>", re.DOTALL)
+    # so the flag goes in the pattern rather than as a re.compile kwarg, and
+    # `</script[^>]*>` accepts end tags like `</script >` too.
+    pat = re.compile(r"(?i)<script(?P<attrs>[^>]*)>(?P<body>.*?)</script[^>]*>", re.DOTALL)
     bodies: list[tuple[str, str]] = []
     seen_primary = False
     for m in pat.finditer(html):

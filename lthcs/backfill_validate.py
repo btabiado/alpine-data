@@ -412,6 +412,8 @@ def _check_one_date(
             if row.get("pillar") != "thesis_integrity":
                 continue
             sub = row.get("sub_score")
+            if sub is None and row.get("dropped"):
+                continue  # dropped pillar: null by design (not measured)
             if not _is_finite_number(sub) or not (0 <= float(sub) <= 100):
                 stats["thesis_renorm_issues"] += 1
                 report.add(Finding(

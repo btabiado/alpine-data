@@ -87,7 +87,7 @@ city with no usable KPI. This integer is what the producer writes into
 """
 from __future__ import annotations
 
-import statistics
+import math
 
 __all__ = [
     "score_context",
@@ -138,7 +138,7 @@ def _coerce_number(value):
         return None
     f = float(value)
     # Reject NaN / +-inf (NaN != NaN).
-    if f != f or f in (float("inf"), float("-inf")):
+    if math.isnan(f) or f in (float("inf"), float("-inf")):
         return None
     return f
 
@@ -249,25 +249,25 @@ def context_score_disclosures() -> list:
         for kpi, d in KPI_DIRECTIONS.items()
     )
     return [
-        "City Context is a cross-city comparison of LEVELS, not a "
-        "quality-of-life ranking and not a verdict on which city is 'best' to "
-        "live in.",
-        "City Context and City Pulse are two separate numbers shown side by "
-        "side and are never merged: Pulse measures a city against its own "
-        "history (momentum); Context compares cities to each other (levels).",
+        ("City Context is a cross-city comparison of LEVELS, not a "
+         "quality-of-life ranking and not a verdict on which city is 'best' to "
+         "live in."),
+        ("City Context and City Pulse are two separate numbers shown side by "
+         "side and are never merged: Pulse measures a city against its own "
+         "history (momentum); Context compares cities to each other (levels)."),
         "The composite is an editorial construction: each included KPI is "
         "equal-weighted by default. Included KPIs and their 'better' direction: "
         + included + ".",
-        "median_home_value is intentionally EXCLUDED: its direction is "
-        "ambiguous (a high value reads as desirable to owners but unaffordable "
-        "to renters/buyers) and affordability is already captured by "
-        "median_rent. It is shown in the Context strip but left out of the "
-        "score.",
-        "Each KPI is min-max normalized to 0-100 across only the cities that "
-        "report it (best value scores 100, worst scores 0; on a '-' KPI the "
-        "scale is flipped so lower is better).",
-        "Coverage honesty: a city is scored on the mean of the KPIs it has and "
-        "is never penalized or imputed for a missing KPI; a KPI reported by "
-        "fewer than two cities can't be normalized and is dropped for everyone; "
-        "a city with no usable KPI has no Context score.",
+        ("median_home_value is intentionally EXCLUDED: its direction is "
+         "ambiguous (a high value reads as desirable to owners but unaffordable "
+         "to renters/buyers) and affordability is already captured by "
+         "median_rent. It is shown in the Context strip but left out of the "
+         "score."),
+        ("Each KPI is min-max normalized to 0-100 across only the cities that "
+         "report it (best value scores 100, worst scores 0; on a '-' KPI the "
+         "scale is flipped so lower is better)."),
+        ("Coverage honesty: a city is scored on the mean of the KPIs it has and "
+         "is never penalized or imputed for a missing KPI; a KPI reported by "
+         "fewer than two cities can't be normalized and is dropped for everyone; "
+         "a city with no usable KPI has no Context score."),
     ]

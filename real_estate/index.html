@@ -13,13 +13,14 @@
           crossorigin="anonymous"></script>
   <style>
     :root {
+      color-scheme: dark; /* dark-only page: native controls follow */
       --bg: #0b0e14;
       --bg-elev: #141923;
       --bg-elev-2: #1c2230;
       --border: #2a3142;
       --text: #e6e8ee;
       --text-dim: #9aa3b2;
-      --text-faint: #6b7280;
+      --text-faint: #8b93a1; /* was #6b7280 (3.3-3.9:1 on panels) */
       --good: #10b981;
       --bad: #ef4444;
       --neutral: #60a5fa;
@@ -91,6 +92,12 @@
     h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin: 28px 0 12px; font-weight: 600; }
 
     .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    /* CLS: the two KPI rows fill after real_estate.json loads (~1.3s) and
+       used to shove the map + chart down ~370px. Hold their height while
+       empty. */
+    #kpi-row-1:empty { min-height: 166px; }
+    #kpi-row-2:empty { min-height: 144px; }
+    @media (max-width: 640px) { #kpi-row-1:empty { min-height: 470px; } #kpi-row-2:empty { min-height: 450px; } }
     @media (max-width: 1024px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 640px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
 
@@ -146,6 +153,11 @@
     tr:last-child td { border-bottom: none; }
     tbody tr { cursor: pointer; }
     tbody tr:hover { background: var(--bg-elev-2); }
+    tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--bg-elev-2); }
+    /* Wide-table safety: the metro table scrolls inside this box on a phone
+       instead of pushing the page sideways. */
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; margin-top: 12px; }
+    .table-scroll > table { margin-top: 0; }
     td.mono { font-family: var(--mono); font-size: 12px; }
     td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 12px; }
     td.metro-cell { font-weight: 600; }
@@ -222,6 +234,7 @@
     .fav-btn {
       background: transparent; border: none; color: var(--text-faint); cursor: pointer;
       font-size: 16px; line-height: 1; padding: 2px 6px; border-radius: 4px;
+      min-width: 28px; min-height: 28px;
     }
     .fav-btn:hover { color: var(--warn); background: rgba(245, 158, 11, 0.08); }
     .fav-btn.is-fav { color: var(--warn); }
@@ -689,7 +702,8 @@
 
       const bodyHtml = orderedRows.map(r => {
         const pinned = STATE.favorites.has(r._id);
-        const starHtml = `<td class="fav-cell"><button class="fav-btn${pinned ? ' is-fav' : ''}" data-fav="${escapeHtml(r._id)}" title="${pinned ? 'Unpin' : 'Pin to My Markets'}" aria-pressed="${pinned}">${pinned ? '★' : '☆'}</button></td>`;
+        const favName = (pinned ? 'Unpin ' : 'Pin ') + (r.metro_short || 'metro') + (pinned ? ' from' : ' to') + ' My Markets';
+        const starHtml = `<td class="fav-cell"><button type="button" class="fav-btn${pinned ? ' is-fav' : ''}" data-fav="${escapeHtml(r._id)}" title="${pinned ? 'Unpin' : 'Pin to My Markets'}" aria-label="${escapeHtml(favName)}" aria-pressed="${pinned}">${pinned ? '★' : '☆'}</button></td>`;
         const tds = TABLE_COLS.map(c => {
           if (c.key === 'metro') {
             return `<td class="metro-cell">${escapeHtml(r.metro_short)}<span class="state">${escapeHtml(r.state)}</span></td>`;
@@ -703,10 +717,14 @@
           }
           return `<td class="${cls}">${escapeHtml(txt)}</td>`;
         }).join('');
-        return `<tr data-id="${escapeHtml(r._id)}"${pinned ? ' class="pinned"' : ''}>${starHtml}${tds}</tr>`;
+        // tabindex + role: the row is the "inspect this metro" control, so it
+        // has to be reachable and operable without a mouse (Enter/Space below).
+        return `<tr data-id="${escapeHtml(r._id)}" tabindex="0" role="button" aria-label="Inspect ${escapeHtml(r.metro_short || '')} ${escapeHtml(r.state || '')}"${pinned ? ' class="pinned"' : ''}>${starHtml}${tds}</tr>`;
       }).join('');
 
-      mount.innerHTML = `<table><thead><tr>${headHtml}</tr></thead><tbody>${bodyHtml}</tbody></table>`;
+      // .table-scroll: 12 columns are ~765px wide; without the wrapper the
+      // table widened the whole page on a phone instead of scrolling itself.
+      mount.innerHTML = `<div class="table-scroll"><table><thead><tr>${headHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`;
 
       mount.querySelectorAll('th[data-col]').forEach(th => {
         th.addEventListener('click', () => {
@@ -734,12 +752,17 @@
         });
       });
       mount.querySelectorAll('tbody tr').forEach(tr => {
-        tr.addEventListener('click', () => {
+        const inspect = () => {
           const id = tr.dataset.id;
           const sel = document.getElementById('metro-select');
           sel.value = id;
           sel.dispatchEvent(new Event('change'));
           window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+        tr.addEventListener('click', inspect);
+        tr.addEventListener('keydown', (e) => {
+          if (e.target !== tr) return;  // let the star button handle its own keys
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inspect(); }
         });
       });
     }

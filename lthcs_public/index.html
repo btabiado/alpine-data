@@ -7,7 +7,7 @@
          X-Content-Type-Options + Referrer-Policy are best-effort meta-tag
          equivalents since GitHub Pages can't set HTTP headers. See
          docs/lthcs-csp-sri-2026-05-20.md for the rationale and how to test. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>LTHCS &middot; Public Data Index</title>
@@ -81,6 +81,7 @@
         </p>
         <div id="lpub-loading" class="lpub-loading">Loading manifest&hellip;</div>
         <div id="lpub-error" class="lpub-error hidden" role="alert"></div>
+        <div class="lpub-table-wrap">
         <table id="lpub-endpoints-table" class="lpub-table hidden" aria-label="Public data endpoints">
           <thead>
             <tr>
@@ -91,6 +92,7 @@
           </thead>
           <tbody id="lpub-endpoints-body"></tbody>
         </table>
+        </div>
       </section>
 
       <section class="lthcs-section lpub-license" aria-label="License">

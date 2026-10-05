@@ -36,6 +36,15 @@ name: data-health
 # serves. A failed fetch reports the feed as UNKNOWN ("could not check"),
 # never as stale.
 #
+# HISTORY CONTINUITY
+# The same committed-mode run also checks that every feed's accumulated
+# history actually accumulated: one entry per expected day / trading day /
+# month over the last ~5 weeks (13 months for monthly series), no duplicates,
+# and no null in the composite indexes the cards chart. A gap that no real
+# source can fill is disclosed in health/known_gaps.json (published at
+# /health/known_gaps.json) and reported without failing. See
+# scripts/history_continuity.py.
+#
 # Auto-remediation deliberately commits nothing on its own. It re-runs the
 # owning fetcher; the fetchers themselves refuse to write a partial or
 # regressing parse. If a retry succeeds, the feed's normal cron picks up the
@@ -79,9 +88,15 @@ env:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest becomes 26.04 on 2026-10-19 and setup-python needs a toolcache build for the image
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # Full history: the continuity check reads `git log` for feeds that
+          # are overwritten in place (cfpb, usaspending, city, real estate,
+          # opensky), where the commit record IS the daily archive. A shallow
+          # clone would make every one of them report UNKNOWN.
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0

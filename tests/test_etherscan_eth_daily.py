@@ -10,6 +10,7 @@ Covers:
 """
 from __future__ import annotations
 
+from urllib.parse import urlparse
 
 import fetch_market
 
@@ -64,7 +65,7 @@ def test_etherscan_eth_daily_happy_path(monkeypatch):
         calls["count"] += 1
         # Sanity-check we're hitting the Etherscan v2 endpoint with the
         # right module/action and that the apikey is being forwarded.
-        assert "etherscan.io" in url
+        assert urlparse(url).hostname == "api.etherscan.io"
         assert params is not None
         assert params.get("module") == "block"
         assert params.get("action") == "getblocknobytime"
@@ -141,6 +142,8 @@ def test_fetch_whale_exposes_etherscan_daily_key(monkeypatch):
     monkeypatch.setattr(fetch_market, "mempool_whale_transactions", lambda *_: [])
     monkeypatch.setattr(fetch_market, "blockchair_eth_stats", lambda: {})
     monkeypatch.setattr(fetch_market, "blockchair_eth_large_transactions", lambda *_: {})
+    monkeypatch.setattr(fetch_market, "blockchair_eth_large_transactions_with_status",
+                        lambda *_: {"rows": [], "status": {"source": "unavailable"}})
     monkeypatch.setattr(fetch_market, "coin_metrics_eth_whale_metrics", lambda: {})
     monkeypatch.setattr(fetch_market, "fetch_multichain_whale_stats", lambda: {})
 
