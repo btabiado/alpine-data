@@ -7,7 +7,7 @@
          X-Content-Type-Options + Referrer-Policy are best-effort meta-tag
          equivalents since GitHub Pages can't set HTTP headers. See
          docs/lthcs-csp-sri-2026-05-20.md for the rationale and how to test. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>LTHCS &middot; Backtest Validation</title>
@@ -166,10 +166,10 @@
               The tiles read summary.rolling_sharpe_latest and compare to the
               prior window step (▲/▼ indicator).
             -->
-            <h3 class="lbt-h3 lbt-h3-rolling">Rolling Sharpe</h3>
+            <h2 class="lbt-h3 lbt-h3-rolling">Rolling Sharpe</h2>
             <p class="lbt-note">Annualized Sharpe over trailing 5d (week) / 21d (month) / 63d (quarter) windows. ▲/▼ compares to the previous non-overlapping window — tells you if calibration tweaks are pulling the curve up or down.</p>
             <div class="lbt-roll-sharpe" id="engine-rolling-sharpe"></div>
-            <h3 class="lbt-h3">Per-band sub-portfolio total return</h3>
+            <h2 class="lbt-h3">Per-band sub-portfolio total return</h2>
             <p class="lbt-note">Each row simulates &ldquo;long-only that band&rdquo;. Higher LTHCS bands should compound faster than lower bands &mdash; this is the framework's smell test.</p>
             <div id="engine-band-chart" class="lbt-band-chart"></div>
           </div>

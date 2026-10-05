@@ -30,6 +30,7 @@ synthetic ``sector_weights`` dicts are passed in directly as fixtures.
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -126,7 +127,7 @@ def _safe_float(x: Any) -> Optional[float]:
     except (TypeError, ValueError):
         return None
     # NaN / inf -> None (treat as missing).
-    if f != f or f in (float("inf"), float("-inf")):
+    if math.isnan(f) or f in (float("inf"), float("-inf")):
         return None
     return f
 

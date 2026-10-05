@@ -24,6 +24,7 @@
 import {
   renderSparkline,
   bandColorForScore,
+  bandInkForScore,
 } from '../lthcs_tab/lthcs-sparkline.js';
 
 // ---------------------------------------------------------------------------
@@ -383,6 +384,8 @@ function renderRow(entry, rank, isPillarBoard) {
   bandCell.className = 'lb-row-band';
   const bandColor = bandColorForScore(entry.composite);
   if (bandColor) bandCell.style.background = bandColor;
+  const bandInk = bandInkForScore(entry.composite);
+  if (bandInk) bandCell.style.color = bandInk;
   bandCell.textContent = BAND_LABEL[entry.band] || (entry.band || '');
   li.appendChild(bandCell);
 

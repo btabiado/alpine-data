@@ -54,6 +54,7 @@ import argparse
 import copy
 import hashlib
 import json
+import math
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -226,7 +227,7 @@ def _safe_float(v: Any) -> Optional[float]:
     except (TypeError, ValueError):
         return None
     # NaN/inf -> None so the JSON consumer can render 'n/a'.
-    if f != f or f in (float("inf"), float("-inf")):
+    if math.isnan(f) or f in (float("inf"), float("-inf")):
         return None
     return f
 

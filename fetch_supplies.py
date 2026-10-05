@@ -315,6 +315,8 @@ def parse_pola_year_table(html: str, year: int) -> list[dict]:
             continue
         ym = f"{year:04d}-{mm}"
         rec: dict[str, Any] = {"month": ym}
+        raw: dict[str, float] = {}
+        unparsed: dict[str, str] = {}
         for idx, cell in enumerate(cells):
             if idx == 0:
                 continue
@@ -323,13 +325,31 @@ def parse_pola_year_table(html: str, year: int) -> list[dict]:
             key = col_keys[idx]
             if not key:
                 continue
-            v = _parse_teu_value(_clean_cell(cell))
+            text = _clean_cell(cell)
+            v = _parse_teu_value(text)
             if v is None:
+                if text:
+                    unparsed[key] = text
                 continue
+            raw[key] = v
             # Round to whole TEU — the publisher's sub-unit precision (the
             # .25 / .15 fragments from partial-day reporting) is noise for a
             # macro indicator.
             rec[key] = int(round(v))
+        # A malformed TOTAL cell beside two clean sub-totals. Real case: the
+        # 2020 page prints November's total as "889.,748.15", so the month
+        # shipped with no `total` and the chart dropped it. The page's own
+        # identity is total = total imports + total exports, and here it is
+        # cross-checked by the page's calendar-year total (9,213,395.95 less
+        # the other eleven months = 889,746.15 = 466,067.40 + 423,678.75).
+        # Only a cell that is PRESENT but unparseable is derived; a blank
+        # total (a month still in progress) stays absent.
+        if ("total" not in rec and "total" in unparsed
+                and "total_imports" in raw and "total_exports" in raw):
+            rec["total"] = int(round(raw["total_imports"] + raw["total_exports"]))
+            rec["total_derived"] = (
+                f"total_imports + total_exports; published cell "
+                f"{unparsed['total']!r} is malformed")
         # Skip rows where we got no data at all (future months in current
         # calendar year render as blank/&nbsp; cells).
         if "total" not in rec and "loaded_imports" not in rec:

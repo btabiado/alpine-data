@@ -54,7 +54,7 @@ REPO_ROOT = Path(__file__).resolve().parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from lthcs import MODEL_VERSION, narratives, score
+from lthcs import MODEL_VERSION, methodology, narratives, score
 from lthcs.index_aggregate import compute_lthcs_index
 from lthcs.persist import LthcsPersist
 from lthcs.pillars import adoption, des, financial, institutional, thesis
@@ -144,6 +144,12 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         "--skip-thesis",
         action="store_true",
         help="Skip Alpha Vantage call entirely (Thesis falls back to neutral 50).",
+    )
+    p.add_argument(
+        "--sector-etf",
+        action="store_true",
+        help="Fetch sector ETF relative strength even with --skip-thesis "
+             "(it uses yfinance, not the Alpha Vantage quota).",
     )
     p.add_argument(
         "--catch-up",
@@ -888,8 +894,11 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     # Sector ETF relative strength (XLK/XLF/XLE/... vs SPY).
     # Additive: persisted today; downstream Adoption / Thesis consumption
     # in a follow-up commit. Skip in --skip-thesis runs to keep test
-    # pipelines fast (yfinance can be slow under flaky network).
-    if not state.args.skip_thesis:
+    # pipelines fast (yfinance can be slow under flaky network). The daily
+    # workflow passes --skip-thesis to save the Alpha Vantage quota, which
+    # silently stopped this yfinance fetch after 2026-05-18; --sector-etf
+    # turns it back on without touching that quota.
+    if not state.args.skip_thesis or getattr(state.args, "sector_etf", False):
         try:
             state.sector_strength = sector_etf.fetch_sector_strength(**as_of_kw)
             counts["sector_etf_ok"] = len(state.sector_strength.get("sectors", {}))
@@ -1128,8 +1137,6 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     finnhub_keyless = False
     if state.active_tickers:
         for sym in state.active_tickers:
-            if finnhub_keyless:
-                break
             try:
                 reco_history = finnhub.get_recommendation_trends(sym, **as_of_kw)
             except finnhub.FinnhubAPIKeyMissing:
@@ -1159,10 +1166,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     # so a 2026-04-15 backfill would otherwise be polluted with
     # 2026-05-19's news.
     if state.active_tickers and not as_of and not finnhub_keyless:
-        news_keyless = False
         for sym in state.active_tickers:
-            if news_keyless:
-                break
             # Skip when /stock/recommendation already produced a usable
             # primary signal (>=3 analysts with a real consensus).
             reco = state.recommendation_by_ticker.get(sym) or {}
@@ -1175,7 +1179,6 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             try:
                 raw = finnhub.get_news_sentiment(sym)
             except finnhub.FinnhubAPIKeyMissing:
-                news_keyless = True
                 break
             except finnhub.FinnhubRateLimit:
                 break
@@ -1928,7 +1931,12 @@ def stage_6_compute_final_scores(state: PipelineState) -> bool:
         prior_scores: Optional[Dict[str, Optional[float]]] = None
         if persist is not None:
             try:
-                prior_scores = persist.read_prior_scores(sym, state.calc_date)
+                # Drift windows are re-anchored at methodology breaks so a
+                # model/coverage change (2026-10-04 SEC restore) is never
+                # reported as a market move. See lthcs/methodology.py.
+                prior_scores = persist.read_prior_scores(
+                    sym, state.calc_date,
+                    breaks=tuple(methodology.break_dates()))
             except Exception:
                 prior_scores = None
             if prior_scores and any(v is not None for v in prior_scores.values()):
@@ -1970,6 +1978,53 @@ def stage_6_compute_final_scores(state: PipelineState) -> bool:
     return True
 
 
+def _dropped_by_ticker(snapshot_rows: Any) -> Dict[str, set]:
+    return {r.get("ticker"): set(r.get("dropped_pillars") or [])
+            for r in (snapshot_rows or []) if isinstance(r, dict)}
+
+
+def _vardetail_row(sym: str, pillar_name: str, components: Dict[str, Any],
+                   result: Dict[str, Any], *, dropped: bool) -> Dict[str, Any]:
+    """One variable_detail row. A pillar dropped from scoring publishes
+    ``sub_score: null`` + ``dropped: true`` (its components stay, so the
+    evidence panel can still show WHICH inputs were missing)."""
+    row = {
+        "ticker": sym,
+        "pillar": pillar_name,
+        "components": components,
+        "sub_score": None if dropped else float(result.get("sub_score", 50.0)),
+        "data_quality": dict(result.get("data_quality") or {}),
+    }
+    if dropped:
+        row["dropped"] = True
+    return row
+
+
+def _snapshot_extras(calc_date: Any) -> Dict[str, Any]:
+    """Top-level snapshot keys beyond the core four: the methodology breaks
+    that can still sit inside a drift window, so readers can annotate."""
+    return {"methodology_breaks": methodology.recent_breaks(str(calc_date))}
+
+
+def _prior_snapshot_by_ticker(state: PipelineState) -> Dict[str, Dict[str, Any]]:
+    """Ticker -> row from the newest snapshot strictly before calc_date.
+
+    Stage 7 and 7.5b used to build narratives without it, so every
+    narrative's why_changed read "no prior snapshot available for
+    component-delta analysis" even with a year of snapshots on disk.
+    Empty dict when there is none (first run) or it cannot be read."""
+    persist = getattr(state, "persist", None) or LthcsPersist()
+    try:
+        dates = [d for d in persist.list_snapshot_dates() if d < str(state.calc_date)]
+        if not dates:
+            return {}
+        snap = persist.read_snapshot(dates[0])  # list is newest-first
+    except Exception:
+        return {}
+    return {r.get("ticker"): r for r in (snap.get("scores") or [])
+            if isinstance(r, dict) and r.get("ticker")}
+
+
 def stage_7_generate_narratives(state: PipelineState) -> bool:
     """Stage 7: always-templated narratives (production source).
 
@@ -1981,9 +2036,11 @@ def stage_7_generate_narratives(state: PipelineState) -> bool:
     them with a localStorage toggle.
     """
     state.narrative_rows = []
+    prior_by_ticker = _prior_snapshot_by_ticker(state)
     for row in state.snapshot_rows:
         try:
-            narr = narratives.generate_narratives(row)
+            narr = narratives.generate_narratives(
+                row, prior_score_dict=prior_by_ticker.get(row.get("ticker")))
         except Exception:
             continue
         state.narrative_rows.append(narr)
@@ -2044,6 +2101,7 @@ def stage_7p5b_llm_narratives_shadow(state: PipelineState) -> bool:
             insider_by_ticker=state.insider_by_ticker,
             holdings_by_ticker=state.holdings_by_ticker,
             macro_breadth=state.breadth_snapshot,
+            prior_snapshot_by_ticker=_prior_snapshot_by_ticker(state),
             # No persist here -- Stage 8 owns the on-disk write via
             # LthcsPersist.write_narratives_llm. We just collect rows.
             persist=False,
@@ -2117,6 +2175,7 @@ def stage_8_persist(state: PipelineState) -> bool:
     # Build variable_detail rows -- one per (ticker, pillar) for V1.
     state.variable_detail_rows = []
     shadow_by_ticker = state.llm_sentiment_shadow_by_ticker or {}
+    dropped_by_ticker = _dropped_by_ticker(state.snapshot_rows)
     for sym, pillars in state.pillar_results.items():
         for pillar_name, result in pillars.items():
             components = dict(result.get("components") or {})
@@ -2138,15 +2197,9 @@ def stage_8_persist(state: PipelineState) -> bool:
                     components["llm_sentiment_shadow_fallback"] = bool(
                         shadow_sig.get("fallback")
                     )
-            state.variable_detail_rows.append(
-                {
-                    "ticker": sym,
-                    "pillar": pillar_name,
-                    "components": components,
-                    "sub_score": float(result.get("sub_score", 50.0)),
-                    "data_quality": dict(result.get("data_quality") or {}),
-                }
-            )
+            state.variable_detail_rows.append(_vardetail_row(
+                sym, pillar_name, components, result,
+                dropped=pillar_name in dropped_by_ticker.get(sym, ())))
 
     if state.args.dry_run:
         print(
@@ -2177,6 +2230,7 @@ def stage_8_persist(state: PipelineState) -> bool:
             DEFAULT_WEIGHTS_PROFILE,
             state.snapshot_rows,
             overwrite=state.args.force,
+            extra=_snapshot_extras(state.calc_date),
         )
         persist.write_variable_detail(
             state.calc_date,
@@ -2458,9 +2512,13 @@ def _build_news_only_pillar_results(
                 # neutral so compute_lthcs_score still has a value.
                 pillars[pillar_name] = _neutral_pillar_result(sym, pillar_name)
                 continue
+            prior_sub = prior.get("sub_score")
             pillars[pillar_name] = {
                 "ticker": sym,
-                "sub_score": float(prior.get("sub_score", 50.0)),
+                # null = the pillar was dropped (unmeasured) on the prior run;
+                # the pillar math needs a float, and a dropped pillar carries
+                # zero weight, so the neutral midpoint is inert here.
+                "sub_score": float(50.0 if prior_sub is None else prior_sub),
                 "components": dict(prior.get("components") or {}),
                 "data_quality": dict(prior.get("data_quality") or {}),
             }
@@ -2701,9 +2759,10 @@ def run_news_only(args: argparse.Namespace) -> int:
 
         refreshed[sym] = row
 
-        prior_thesis = float(
-            (prior_row.get("subscores") or {}).get("thesis_integrity", 50.0)
-        )
+        # A dropped pillar is stored as null (not a stub), so the prior may
+        # be None; treat that as the neutral midpoint for this delta.
+        prior_thesis_raw = (prior_row.get("subscores") or {}).get("thesis_integrity")
+        prior_thesis = float(50.0 if prior_thesis_raw is None else prior_thesis_raw)
         new_thesis = float(subs.get("thesis_integrity", 50.0))
         thesis_delta_by_ticker[sym] = new_thesis - prior_thesis
 
@@ -2732,18 +2791,13 @@ def run_news_only(args: argparse.Namespace) -> int:
     # NOT refresh this run, pass through prior variable_detail rows
     # verbatim. Only the refreshed subset gets new pillar rows.
     refreshed_vd: Dict[str, List[Dict[str, Any]]] = {}
+    dropped_by_ticker = _dropped_by_ticker(state.snapshot_rows)
     for sym, pillars in state.pillar_results.items():
         rows: List[Dict[str, Any]] = []
         for pillar_name, result in pillars.items():
-            rows.append(
-                {
-                    "ticker": sym,
-                    "pillar": pillar_name,
-                    "components": dict(result.get("components") or {}),
-                    "sub_score": float(result.get("sub_score", 50.0)),
-                    "data_quality": dict(result.get("data_quality") or {}),
-                }
-            )
+            rows.append(_vardetail_row(
+                sym, pillar_name, dict(result.get("components") or {}), result,
+                dropped=pillar_name in dropped_by_ticker.get(sym, ())))
         refreshed_vd[sym] = rows
 
     state.variable_detail_rows = []
@@ -2769,6 +2823,7 @@ def run_news_only(args: argparse.Namespace) -> int:
         r.get("ticker"): r for r in state.snapshot_rows if isinstance(r, dict)
     }
     n_regen = 0
+    yesterday_by_ticker = _prior_snapshot_by_ticker(state)
     for prior_n in prior_narratives.get("narratives", []):
         if not isinstance(prior_n, dict):
             continue
@@ -2790,7 +2845,8 @@ def run_news_only(args: argparse.Namespace) -> int:
             new_narratives.append(existing)
             continue
         try:
-            narr = narratives.generate_narratives(row)
+            narr = narratives.generate_narratives(
+                row, prior_score_dict=yesterday_by_ticker.get(sym))
             new_narratives.append(narr)
             n_regen += 1
         except Exception:
@@ -2815,6 +2871,7 @@ def run_news_only(args: argparse.Namespace) -> int:
             DEFAULT_WEIGHTS_PROFILE,
             state.snapshot_rows,
             overwrite=True,  # news-only always overwrites today's snapshot
+            extra=_snapshot_extras(state.calc_date),
         )
         persist.write_variable_detail(
             state.calc_date,

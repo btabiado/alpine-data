@@ -77,6 +77,18 @@ And one hole the old script shared with the dashboard it was guarding:
         oldest input. It lives in build_health_status, not here, so /health/
         and this watchdog resolve age through identical code.
 
+And one hole freshness cannot see at all:
+
+  7. A FRESH NEWEST POINT SAID NOTHING ABOUT THE HISTORY BEHIND IT.
+     data/composites/ lost 2026-08-19..21 and archived whale_sentiment_* as
+     null in every snapshot for two months, and LTHCS crypto lost four
+     September days, all under a green freshness check, because the newest
+     file was always fresh.
+     -> Feeds carry optional `history` specs (scripts/history_continuity.py).
+        The committed-mode run checks the last N days for missing periods,
+        duplicates and null required fields; gaps no real source can fill
+        are disclosed in health/known_gaps.json instead of failing.
+
 Freshness is judged on file CONTENT (last row date / generated_at), never on
 mtime: a stateless CI checkout rewrites every mtime on every run, which would
 make every feed look perpetually fresh. This is inherited from
@@ -99,6 +111,7 @@ Usage
     python scripts/data_health.py --report json       # machine-readable
     python scripts/data_health.py --report issue      # tracking-issue body
     python scripts/data_health.py --remediate         # try to self-heal first
+    python scripts/data_health.py --no-history        # freshness only
 
 Exit codes: 0 = healthy, 1 = at least one feed stale/unknown/unwatched.
 `--report text` and `--report json` carry that verdict. `--report issue` exits
@@ -141,6 +154,11 @@ from build_health_status import (  # noqa: E402  (path set above)
     resolve_age,
 )
 from build_health_status import NESTED_DATE_PATHS as _NESTED_DATE_PATHS  # noqa: E402
+import history_continuity as hc  # noqa: E402  (path set above)
+
+# Short names for the manifest below; bound from the one module import so the
+# module isn't imported with both `import` and `from ... import`.
+DAILY, MONTHLY, TRADING, History = hc.DAILY, hc.MONTHLY, hc.TRADING, hc.History
 
 # `_select` and `nested_age_h` are re-exports, not dead imports: the age
 # resolution they implement lives in build_health_status so /health/ and this
@@ -157,9 +175,10 @@ __all__ = [
     "REPO", "DEPLOYED", "PAGES_BASE_URL", "LiveFetchError", "deployed_url",
     "OK", "STALE", "UNKNOWN", "MISSING", "UNWATCHED", "SUPPRESSED", "EXPIRED",
     "SKIPPED",
-    "Feed", "Result", "Suppression",
-    "MANIFEST", "SUPPRESSIONS",
-    "discover", "evaluate", "remediate",
+    "Feed", "Result", "Suppression", "History",
+    "MANIFEST", "SUPPRESSIONS", "ARCHIVES",
+    "GAP", "DUPLICATE", "DISCLOSED",
+    "discover", "evaluate", "evaluate_history", "remediate",
     "render_text", "render_issue", "main",
 ]
 
@@ -214,6 +233,11 @@ class Feed:
     series_glob: str = "*.json"     # SERIES only: which files in the directory count
     source: str = REPO              # COMMITTED only: REPO or DEPLOYED, see above
     built_path: str | None = None   # DEPLOYED only: local file the build publishes at rel
+    # Where this feed's ACCUMULATED history lives and how often it must grow
+    # (scripts/history_continuity.py). Judged by evaluate_history() in the
+    # daily committed-mode run: a missing day/month or a duplicate in the last
+    # N days fails, unless health/known_gaps.json discloses it as unfillable.
+    history: tuple[History, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -233,19 +257,61 @@ class Suppression:
 # being checked in the daily cron (which is how a feed rots), and a BUILT feed
 # marked COMMITTED fails forever against a placeholder (which trains everyone
 # to ignore the alarm). Both failure modes have already happened in this repo.
+# Composite indexes the dashboard charts from data/composites/. Each must be
+# non-null in every daily snapshot (see the data/composites/ entry below).
+COMPOSITE_REQUIRED_FIELDS: tuple[str, ...] = (
+    "indexes.whale_sentiment_btc",
+    "indexes.whale_sentiment_eth",
+    "indexes.money_flow_index",
+    "indexes.crypto_signal_sentiment",
+    "indexes.poc_signal_breadth",
+    "indexes.lthcs_composite",
+    "indexes.etf_flow_sentiment_btc",
+    "indexes.etf_flow_sentiment_eth",
+    # first written 2026-10-04 (PR #25 follow-up made these cards clickable)
+    "indexes.overview_sentiment@2026-10-04",
+    "indexes.defi_sentiment@2026-10-04",
+    "indexes.stocks_signal_breadth@2026-10-04",
+    "indexes.futures_sentiment_btc@2026-10-04",
+    "indexes.futures_sentiment_eth@2026-10-04",
+)
+
+
 MANIFEST: dict[str, Feed] = {
     # --- committed by their own cron ---------------------------------------
     "data-tsa.json": Feed(
-        COMMITTED, "aviation-tsa.yml (daily 14:10Z)", "python fetch_tsa.py"),
+        COMMITTED, "aviation-tsa.yml (daily 14:10Z)", "python fetch_tsa.py",
+        # The page publishes a trailing window; fetch_tsa rewrites it whole,
+        # so continuity here means "no hole inside the window we serve".
+        history=(History("data-tsa.json", DAILY, "json", label="checkpoint series",
+                         series_key="series", date_field="d"),)),
     "data-city.json": Feed(
-        COMMITTED, "city-daily.yml (daily 06:00Z)", "python fetch_city.py"),
+        COMMITTED, "city-daily.yml (daily 06:00Z)", "python fetch_city.py",
+        # Upstream (Socrata) monthly counts, re-pulled whole each run. A month
+        # missing mid-series is a month the portal returned no rows for.
+        history=(
+            History("data-city.json", MONTHLY, "json", label="scored feed series",
+                    rows="cities[].pulse.pillars[].feeds[]", series_key="series",
+                    date_field="month", group="dataset"),
+            History("data-city.json", MONTHLY, "json", label="extended feed series",
+                    rows="cities[].extended[]", series_key="series",
+                    date_field="month", group="dataset"),
+            History("data-city.json", DAILY, "git", label="daily commits"),
+        )),
+    # Overwritten in place each day: git history IS the archive, so a day
+    # without a commit is a day whose snapshot was never stored.
     "data-cfpb.json": Feed(
-        COMMITTED, "cfpb-daily.yml (daily)", "python scripts/fetch_cfpb.py"),
+        COMMITTED, "cfpb-daily.yml (daily)", "python scripts/fetch_cfpb.py",
+        history=(History("data-cfpb.json", DAILY, "git", label="daily commits"),)),
     "data-usaspending.json": Feed(
         COMMITTED, "usaspending-daily.yml (daily)",
-        "python scripts/fetch_usaspending.py"),
+        "python scripts/fetch_usaspending.py",
+        history=(History("data-usaspending.json", DAILY, "git",
+                         label="daily commits"),)),
     "data-opensky.json": Feed(
-        COMMITTED, "aviation-opensky.yml (hourly)", "python fetch_opensky.py"),
+        COMMITTED, "aviation-opensky.yml (hourly)", "python fetch_opensky.py",
+        history=(History("data-opensky.json", DAILY, "git",
+                         label="daily commits"),)),
     "data-opensky-positions.json": Feed(
         COMMITTED, "aviation-opensky.yml (hourly)", "python fetch_opensky.py"),
     "data-aviation.json": Feed(
@@ -272,7 +338,14 @@ MANIFEST: dict[str, Feed] = {
         limit_h=400 * 24.0),
     "data/real_estate.json": Feed(
         COMMITTED, "real-estate-daily.yml (daily)",
-        "python scripts/fetch_real_estate.py"),
+        "python scripts/fetch_real_estate.py",
+        history=(
+            History("data/real_estate.json", MONTHLY, "json",
+                    label="metro 5y monthly history",
+                    rows="metros[].history_5y_monthly", series_key="labels",
+                    date_field=""),
+            History("data/real_estate.json", DAILY, "git", label="daily commits"),
+        )),
     "data/ai_curated.json": Feed(
         # Corrected owner. Nothing regenerates this file: it is a hand-curated
         # snapshot (compiled_at), and fetch_market.load_ai_curated() only READS
@@ -282,20 +355,66 @@ MANIFEST: dict[str, Feed] = {
         # the very same compiled_at as the repo copy, so the repo copy IS the
         # deployed data and REPO is the right source. When it is red, the fix
         # is a human re-curating it, not a fetcher.
-        COMMITTED, "hand-curated snapshot (manual PR); read and inlined into the "
-                   "built HTML by fetch_market.load_ai_curated, never rewritten"),
+        #
+        # Limit: 90 days, from THRESHOLDS["ai_curated.json"] (shared with
+        # /health/). It was the 24h default, which judged a quarterly hand
+        # snapshot as if it were an hourly feed. No keyless source publishes
+        # private-company valuations, so this cannot be automated without a
+        # paid API. Refresh = re-verify every row against its source_url (or a
+        # newer primary source), keep the schema, bump compiled_at.
+        COMMITTED, "hand-curated snapshot (manual PR, re-curate quarterly); read "
+                   "and inlined into the built HTML by "
+                   "fetch_market.load_ai_curated, never rewritten"),
+    # Trading-day feeds. No limit_h: build_health_status measures their last
+    # row on a WEEKDAY clock (TRADING_DAY_FEEDS) and THRESHOLDS gives the
+    # budget (56 weekday hours), shared with /health/. The old flat 96h wall-
+    # clock limit here disagreed with /health/'s 48h, which read Friday's
+    # complete data as "critical 2.8d" every weekend.
     "data/equity_etf_flows.csv": Feed(
         COMMITTED, "money-flow-daily.yml (daily 08:30Z)",
-        # Trading-day feed: a 24h limit red-flags it every Saturday and Sunday,
-        # which is noise. Friday's row is ~3d old by Monday; a Monday holiday
-        # pushes it to ~4d.
-        limit_h=96.0),
+        # One row per (trading day, ticker). There is no free upstream for
+        # past shares-outstanding, so a missed day here is lost for good —
+        # which is exactly why it must be caught the day it happens.
+        history=(History("data/equity_etf_flows.csv", TRADING, "csv",
+                         label="daily shares-outstanding rows",
+                         key_fields=("ticker",)),)),
     "data/btc_flows.csv": Feed(
         COMMITTED, "etf-flows-daily.yml (daily 09:15Z)",
-        "python scripts/fetch_etf_flows.py", limit_h=96.0),
+        "python scripts/fetch_etf_flows.py",
+        history=(History("data/btc_flows.csv", TRADING, "csv",
+                         label="daily flow rows"),)),
     "data/eth_flows.csv": Feed(
         COMMITTED, "etf-flows-daily.yml (daily 09:15Z)",
-        "python scripts/fetch_etf_flows.py", limit_h=96.0),
+        "python scripts/fetch_etf_flows.py",
+        history=(History("data/eth_flows.csv", TRADING, "csv",
+                         label="daily flow rows"),)),
+    # --- daily history of deploy-time sidecars (scripts/snapshot_history.py,
+    #     committed by pages.yml) ------------------------------------------
+    # The two sidecars below are rebuilt every deploy and never committed, and
+    # neither upstream serves history, so before these files each build threw
+    # yesterday's reading away. Append-only, one row-set per observation date.
+    "data/stock_money_flow_history.csv": Feed(
+        COMMITTED, "scripts/snapshot_history.py, committed by pages.yml "
+                   "('Commit deploy-time feed history')",
+        "python scripts/snapshot_history.py",
+        # Same trading-day cadence as the sidecar it records (see its 120h).
+        limit_h=120.0,
+        history=(History("data/stock_money_flow_history.csv", TRADING, "csv",
+                         label="daily ticker rows", key_fields=("symbol",)),)),
+    "data/travel_advisory_levels.csv": Feed(
+        COMMITTED, "scripts/snapshot_history.py, committed by pages.yml "
+                   "('Commit deploy-time feed history')",
+        "python scripts/snapshot_history.py", limit_h=48.0,
+        history=(History("data/travel_advisory_levels.csv", DAILY, "csv",
+                         label="daily level counts"),)),
+    "data/travel_advisory_changes.csv": Feed(
+        DELEGATED, "scripts/snapshot_history.py, committed by pages.yml",
+        justification="Change log: a row only when a country's advisory "
+                      "level changes, so its newest row is the last CHANGE, "
+                      "not the last observation, and can be weeks old on a "
+                      "healthy feed. The same step writes "
+                      "data/travel_advisory_levels.csv every day, which is "
+                      "watched for freshness and continuity above."),
     "data-travel.json": Feed(
         # DEPLOYED: app.py rewrites the root file on every pages.yml build and
         # the "Stage site directory" step publishes it, but nothing commits it
@@ -339,14 +458,26 @@ MANIFEST: dict[str, Feed] = {
         # really stopped for a full trading week.
         limit_h=120.0),
     "snowflake_summit/news.json": Feed(
-        COMMITTED, "snowflake_summit/enrich_vendors.py (manual)"),
+        # Owner corrected: pages.yml runs the enricher (Google News RSS) on
+        # every deploy and its "Commit Summit news feed" step commits the file
+        # back, at most ~daily (when the newest item's day moves, or the copy
+        # is >24h old). Judged by `generated`, the newest headline's date.
+        COMMITTED, "snowflake_summit/enrich_vendors.py inside pages.yml, "
+                   "committed back by its 'Commit Summit news feed' step"),
     "snowflake_summit/vendors.json": Feed(
         # Found by the drift detector this PR added to _content_age_probe, not
         # by reading the directory: its only stamp is nested at
         # `_meta.generated`, so /health/ was scoring it off mtime and this
         # monitor did not cover it at all. Exactly the class of miss the
         # detector exists to surface.
-        COMMITTED, "snowflake_summit/enrich_vendors.py (manual)"),
+        #
+        # Owner corrected: enrich_vendors.py never writes this file (its
+        # Wikidata facts go to the gitignored enrichment.json and are merged at
+        # build time). It is Bryan's hand-curated partner directory; a manual
+        # refresh re-verifies market caps / funding events and bumps
+        # `_meta.generated`. 90d limit (THRESHOLDS["vendors.json"]).
+        COMMITTED, "hand-curated Summit partner directory (manual PR, "
+                   "re-verify quarterly and bump _meta.generated)"),
     "snowflake_summit/floorplan.json": Feed(
         STATIC, "hand-authored from the Summit venue map",
         justification="Booth geometry for a conference that already happened: "
@@ -366,7 +497,15 @@ MANIFEST: dict[str, Feed] = {
         "python scripts/snapshot_composites.py",
         # One snapshot per pages build. 48h tolerates a quiet weekend without
         # tolerating a genuinely dead snapshotter.
-        limit_h=48.0),
+        limit_h=48.0,
+        # One file per day, and the indexes the cards chart must actually be
+        # IN it: every archived snapshot carried whale_sentiment_* = null for
+        # two months behind a green freshness check, because a file with nulls
+        # in it is still a fresh file. Keys the snapshotter only started
+        # writing on 2026-10-04 are required from that day on.
+        history=(History(
+            "data/composites/", DAILY, "files", label="daily snapshots",
+            required_fields=COMPOSITE_REQUIRED_FIELDS),)),
 
     # --- regenerated at deploy time (gitignored placeholders in the repo) ---
     # NOT exempt. See hole #3: market-derived files are rewritten hourly while
@@ -375,16 +514,28 @@ MANIFEST: dict[str, Feed] = {
     "data-metals.json": Feed(BUILT, "fetch_metals.py, inside pages.yml"),
     "data-supplies.json": Feed(BUILT, "fetch_supplies.py, inside pages.yml"),
     "data-cpi.json": Feed(BUILT, "fetch_cpi.py, inside pages.yml"),
+    # The four build artifacts the built-mode check reported as UNWATCHED.
+    "data-defi.json": Feed(
+        BUILT, "app.py / v2/app.py lazy sidecar from fetch_market's DeFi subtree"),
+    "data-mmf.json": Feed(
+        BUILT, "fetch_money_flows.py, via fetch_market.build_money_flow_payload "
+               "inside pages.yml (ICI; FRED WRMFNS fallback)"),
+    "data-mf-flows.json": Feed(
+        BUILT, "fetch_money_flows.py, via fetch_market.build_money_flow_payload "
+               "inside pages.yml (ICI; no fallback — available:false when blocked)"),
+    "data-equity-etf-flows.json": Feed(
+        BUILT, "fetch_equity_etf_flows.py, via fetch_market.build_money_flow_payload "
+               "inside pages.yml"),
     "data-travel-fetch-status.json": Feed(
         BUILT, "fetch_advisories.py (status record added in PR #24)"),
     "data/ai_curated_wiki.json": Feed(BUILT, "insights.py / wiki_enrich, inside pages.yml"),
     "data/market.json": Feed(BUILT, "fetch_market.py, inside pages.yml"),
     "data/whale.json": Feed(BUILT, "fetch_market.py, inside pages.yml"),
     "data/coinbase.json": Feed(BUILT, "fetch_coinbase.py, inside pages.yml"),
-    "data/cpi.json": Feed(BUILT, "fetch_cpi.py, inside pages.yml"),
-    "data/metals.json": Feed(BUILT, "fetch_metals.py, inside pages.yml"),
-    "data/supplies.json": Feed(BUILT, "fetch_supplies.py, inside pages.yml"),
-    "data/shares.json": Feed(BUILT, "shares.py, inside pages.yml"),
+    # data/cpi.json, data/metals.json and data/supplies.json were listed here
+    # and reported MISSING on every build: nothing writes them. fetch_cpi /
+    # fetch_metals / fetch_supplies dual-write v2/data-X.json and the root
+    # data-X.json (their DEFAULT_OUT_V1), which are the entries above.
     "data/insights_history.json": Feed(BUILT, "insights.py, inside pages.yml"),
 
     # --- legitimately static ------------------------------------------------
@@ -407,8 +558,27 @@ MANIFEST: dict[str, Feed] = {
                       "field because there is no refresh to date."),
 
     # --- watched by a different system --------------------------------------
+    "data/shares.json": Feed(
+        DELEGATED, "server.py / share.py (shares.create), local runtime only",
+        justification="The share-link store written by the local server and "
+                      "share.py CLI when someone mints a link. It is gitignored "
+                      "and never produced by pages.yml, so as a BUILT feed it "
+                      "read MISSING on every build. It is state, not a feed."),
     "data/lthcs/": Feed(
         DELEGATED, "lthcs-daily.yml and friends",
+        # Freshness is delegated; continuity is not. LTHCS has its own
+        # freshness checks but nothing that notices a MISSING day, and four
+        # crypto days in September were lost to a cron that started after
+        # midnight UTC and wrote the next day's file instead.
+        history=(
+            History("data/lthcs/index/", DAILY, "files", label="daily index"),
+            History("data/lthcs/snapshots/", DAILY, "files",
+                    label="daily equity snapshots"),
+            History("data/lthcs/snapshots_crypto/", DAILY, "files",
+                    label="daily crypto snapshots"),
+            History("data/lthcs/narratives/", DAILY, "files",
+                    label="daily narratives"),
+        ),
         justification="LTHCS has its own freshness pipeline "
                       "(scripts/lthcs_audit_data_quality.py, "
                       "tests/test_lthcs_freshness.py) and ~thousands of dated "
@@ -501,6 +671,17 @@ SUPPRESSIONS: dict[str, Suppression] = {
 }
 
 
+# Archives that are not themselves a MANIFEST artifact. The R2 bucket holds a
+# daily copy of every deploy-time data-*.json (upload_to_r2.py in pages.yml),
+# which is the ONLY record of feeds the deploy regenerates and never commits.
+# Its per-file daily presence is published by the pages build as
+# health/r2-coverage.json, so the committed-mode run reads the deployed copy.
+ARCHIVES: dict[str, History] = {
+    "R2 archive": History("health/r2-coverage.json", DAILY, "r2",
+                          label="daily payload copies"),
+}
+
+
 # --------------------------------------------------------------------------
 # Evaluation
 # --------------------------------------------------------------------------
@@ -508,8 +689,13 @@ SUPPRESSIONS: dict[str, Suppression] = {
 OK, STALE, UNKNOWN, MISSING, UNWATCHED, SUPPRESSED, EXPIRED, SKIPPED = (
     "ok", "stale", "unknown", "missing", "unwatched", "suppressed", "expired",
     "skipped")
+# History continuity (evaluate_history). GAP covers missing periods AND
+# required fields that are null; DISCLOSED is a gap health/known_gaps.json
+# already explains as unfillable, reported but never failed.
+GAP, DUPLICATE, DISCLOSED = "gap", "duplicate", "disclosed"
 
-FAILING_STATUSES = frozenset({STALE, UNKNOWN, MISSING, UNWATCHED, EXPIRED})
+FAILING_STATUSES = frozenset({STALE, UNKNOWN, MISSING, UNWATCHED, EXPIRED,
+                              GAP, DUPLICATE})
 
 
 @dataclass
@@ -530,6 +716,8 @@ class Result:
         age = humanize_age(self.age_h) if self.age_h is not None else "?"
         lim = humanize_age(self.limit_h) if self.limit_h is not None else "?"
         base = f"{self.path}: {age} old (limit {lim})"
+        if self.age_h is None and self.limit_h is None and "[history:" in self.path:
+            base = self.path   # continuity has no age; the detail says what broke
         if self.source:
             base += f" via {self.source}"
         if self.owner:
@@ -596,6 +784,14 @@ def verify_manifest() -> list[str]:
         if feed.built_path and feed.source != DEPLOYED:
             problems.append(f"{rel}: built_path is only meaningful with "
                             f"source=DEPLOYED")
+        for h in feed.history:
+            problems.extend(f"{rel}: {p}" for p in _verify_history(h))
+        names = [h.name for h in feed.history]
+        if len(names) != len(set(names)):
+            problems.append(f"{rel}: history specs need distinct labels "
+                            f"(known_gaps.json refers to them by name)")
+    for name, h in ARCHIVES.items():
+        problems.extend(f"archive {name}: {p}" for p in _verify_history(h))
     for rel in SUPPRESSIONS:
         if rel not in MANIFEST:
             problems.append(f"suppression for {rel!r} has no MANIFEST entry")
@@ -605,6 +801,32 @@ def verify_manifest() -> list[str]:
         if not specs:
             problems.append(f"nested date path for {rel!r} is empty")
     return problems
+
+
+def _verify_history(h: History) -> list[str]:
+    out = []
+    if h.cadence not in hc.CADENCES:
+        out.append(f"history {h.name!r}: unknown cadence {h.cadence!r}")
+    if h.source not in hc.SOURCES:
+        out.append(f"history {h.name!r}: unknown source {h.source!r}")
+    if h.source == "files" and not h.path.endswith("/"):
+        out.append(f"history {h.name!r}: a files history names a directory "
+                   f"and must end with '/'")
+    if h.source != "files" and h.path.endswith("/"):
+        out.append(f"history {h.name!r}: only a files history names a directory")
+    if h.required_fields and h.source != "files":
+        out.append(f"history {h.name!r}: required_fields applies to files "
+                   f"histories only")
+    if h.source == "json" and not h.series_key:
+        out.append(f"history {h.name!r}: a json history needs series_key")
+    return out
+
+
+def history_specs() -> dict[str, tuple[History, ...]]:
+    """Every History spec by owner name: MANIFEST rels plus ARCHIVES."""
+    specs = {rel: f.history for rel, f in MANIFEST.items() if f.history}
+    specs.update({name: (h,) for name, h in ARCHIVES.items()})
+    return specs
 
 
 class LiveFetchError(Exception):
@@ -697,10 +919,15 @@ def _probe_feed(rel: str, feed: Feed, now: float,
 
 
 def evaluate(mode: str, today: date | None = None,
-             now_ts: float | None = None) -> list[Result]:
+             now_ts: float | None = None, history: bool = True) -> list[Result]:
     now = now_ts if now_ts is not None else datetime.now(timezone.utc).timestamp()
     today = today or datetime.fromtimestamp(now, timezone.utc).date()
     results: list[Result] = []
+    if history and mode == COMMITTED:
+        # Continuity is judged once a day, by the committed-mode run. Every
+        # history it reads is committed (or, for R2, published), so judging
+        # it again inside every hourly deploy would only repeat the verdict.
+        results.extend(evaluate_history(today))
 
     for problem in verify_manifest():
         results.append(Result("MANIFEST", UNWATCHED, detail=problem))
@@ -777,6 +1004,15 @@ def evaluate(mode: str, today: date | None = None,
             age_h = probe.age_h
             detail = probe.note if age_h is not None else ""
 
+        if probe.unavailable_reason and age_h is None:
+            # The payload says its upstream is gone (e.g. ici.org 403). Still
+            # a failure — the feed is not being served — but say WHY instead of
+            # blaming the parser.
+            results.append(Result(
+                rel, UNKNOWN, owner=feed.owner, source=source,
+                detail=f"payload marks itself unavailable: {probe.unavailable_reason}"))
+            continue
+
         if age_h is None:
             # Hole #4: this used to exit 0.
             results.append(Result(
@@ -785,6 +1021,12 @@ def evaluate(mode: str, today: date | None = None,
                         "cannot evaluate this feed, which is worse than stale: "
                         "an upstream schema change looks identical to health. "
                         f"Parser says: {probe.note}")))
+            continue
+
+        if probe.unavailable_reason:
+            results.append(Result(
+                rel, STALE, age_h, None, feed.owner, source=source,
+                detail=f"payload marks itself unavailable: {probe.unavailable_reason}"))
             continue
 
         limit = feed.limit_h or THRESHOLDS.get(judged.name, DEFAULT).stale_h
@@ -809,6 +1051,69 @@ def evaluate(mode: str, today: date | None = None,
             results.append(Result(rel, STALE, age_h, limit, feed.owner, detail, source))
 
     return results
+
+
+def _history_path(owner: str, h: History) -> str:
+    return f"{owner} [history: {h.name}]"
+
+
+def evaluate_history(today: date | None = None,
+                     r2_coverage: "dict | None" = None) -> list[Result]:
+    """History continuity for every MANIFEST feed with `history` specs, plus
+    ARCHIVES. One Result per spec: OK, GAP (missing period or null required
+    field), DUPLICATE, DISCLOSED (only known, unfillable gaps), UNKNOWN (the
+    history could not be read), or SUPPRESSED when the feed is under a live
+    mute. See scripts/history_continuity.py for what each source reads."""
+    today = today or datetime.now(timezone.utc).date()
+    gaps = hc.load_known_gaps(REPO_ROOT)
+    out: list[Result] = []
+    for problem in hc.verify_known_gaps(gaps, history_specs()):
+        out.append(Result(hc.KNOWN_GAPS_REL, UNWATCHED, detail=problem))
+
+    def judge(owner: str, h: History, feed: "Feed | None") -> None:
+        coverage = None
+        if h.source == "r2":
+            coverage = r2_coverage
+            if coverage is None:
+                try:
+                    coverage = json.loads(_fetch_deployed(deployed_url(h.path)))
+                except (LiveFetchError, ValueError) as exc:
+                    reason = getattr(exc, "reason", str(exc))
+                    out.append(Result(
+                        _history_path(owner, h), UNKNOWN, source="deployed copy",
+                        detail=f"could not check: {deployed_url(h.path)} -> "
+                               f"{reason}. Not a gap, a blind spot."))
+                    return
+        f = hc.check(owner, h, REPO_ROOT, today, gaps, coverage)
+        text = hc.summarize(f)
+        if f.skipped:
+            status = SKIPPED
+        elif f.error:
+            status = UNKNOWN
+        elif f.missing or f.field_gaps:
+            status = GAP
+        elif f.duplicates:
+            status = DUPLICATE
+        elif f.disclosed:
+            status = DISCLOSED
+        else:
+            status = OK
+        owner_txt = feed.owner if feed else "pages.yml (upload_to_r2.py)"
+        sup = SUPPRESSIONS.get(owner)
+        if status in FAILING_STATUSES and sup and today <= sup.until:
+            text = f"{status}: {text} — muted until {sup.until.isoformat()}: {sup.reason}"
+            status = SUPPRESSED
+        out.append(Result(_history_path(owner, h), status, owner=owner_txt,
+                          detail=text,
+                          source=f"{h.source} {h.cadence}, last {h.window()}d"))
+
+    for rel in sorted(MANIFEST):
+        feed = MANIFEST[rel]
+        for h in feed.history:
+            judge(rel, h, feed)
+    for name, h in ARCHIVES.items():
+        judge(name, h, None)
+    return out
 
 
 def remediate(results: list[Result], mode: str = COMMITTED) -> list[str]:
@@ -907,6 +1212,11 @@ def render_text(results: list[Result], notes: list[str]) -> str:
     section(UNKNOWN, "UNEVALUABLE - monitor is blind here", "UNKNOWN")
     section(MISSING, "MISSING - expected on disk", "MISSING")
     section(UNWATCHED, "UNWATCHED - not classified in MANIFEST", "UNWATCH")
+    section(DISCLOSED, "history: known unfillable gaps (health/known_gaps.json)",
+            "KNOWN  ")
+    section(GAP, "HISTORY GAP - a day/month is missing or a required field is null",
+            "GAP    ")
+    section(DUPLICATE, "HISTORY DUPLICATE - one period recorded twice", "DUP    ")
 
     if notes:
         parts.append("\nremediation:")
@@ -983,14 +1293,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--report", choices=["text", "json", "issue"], default="text")
     ap.add_argument("--remediate", action="store_true",
                     help="attempt one self-heal per stale feed before reporting")
+    ap.add_argument("--no-history", action="store_true",
+                    help="skip the history-continuity checks (committed mode "
+                         "runs them by default)")
     args = ap.parse_args(argv)
+    history = not args.no_history
 
-    results = evaluate(args.mode)
+    results = evaluate(args.mode, history=history)
 
     notes: list[str] = []
     if args.remediate and any(r.fails for r in results):
         notes = remediate(results, args.mode)
-        results = evaluate(args.mode)   # re-evaluate after the retries
+        results = evaluate(args.mode, history=history)   # re-evaluate after the retries
 
     if args.report == "json":
         print(json.dumps({

@@ -59,6 +59,7 @@ network: SEC EDGAR rows are passed in directly as fixtures.
 
 from __future__ import annotations
 
+import math
 from datetime import date as _date
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -148,7 +149,7 @@ def _is_valid_growth_value(value: Any) -> bool:
         f = float(value)
     except (TypeError, ValueError):
         return False
-    return f == f  # NaN check
+    return not math.isnan(f)  # NaN check
 
 # --- Bank-specific constants ------------------------------------------------
 #
@@ -253,7 +254,7 @@ def _safe_float(x: Any) -> Optional[float]:
         f = float(x)
     except (TypeError, ValueError):
         return None
-    if f != f or f in (float("inf"), float("-inf")):
+    if math.isnan(f) or f in (float("inf"), float("-inf")):
         return None
     return f
 
@@ -808,7 +809,7 @@ def _filter_peer_growths_to_cohort(
             f = float(g)
         except (TypeError, ValueError):
             continue
-        if f != f:  # NaN
+        if math.isnan(f):  # NaN
             continue
         peer_values.append(f)
     return peer_values
@@ -837,7 +838,7 @@ def _cohort_nii_growths(
             f = float(g)
         except (TypeError, ValueError):
             continue
-        if f != f:  # NaN
+        if math.isnan(f):  # NaN
             continue
         out.append(f)
     return out
@@ -952,10 +953,10 @@ def _compute_bank_financial(
     if raw_focal_rev is not None:
         try:
             f = float(raw_focal_rev)
-            if f == f:  # not NaN
+            if not math.isnan(f):  # not NaN
                 rev_growth_val = f
         except (TypeError, ValueError):
-            pass
+            pass  # non-numeric focal growth; leave rev_growth_val unset
     has_rev = rev_growth_val is not None
 
     if use_cohort:
@@ -1134,7 +1135,7 @@ def _compute_bank_financial(
                 f = float(g)
             except (TypeError, ValueError):
                 continue
-            if f != f:  # NaN
+            if math.isnan(f):  # NaN
                 continue
             peer_values.append(f)
 
@@ -1353,7 +1354,7 @@ def compute_financial(
                 f = float(g)
             except (TypeError, ValueError):
                 continue
-            if f != f:  # NaN
+            if math.isnan(f):  # NaN
                 continue
             peer_values.append(f)
         peer_cohort_size = len(peer_values) + (1 if ticker in cohort_set else 0)
@@ -1384,7 +1385,7 @@ def compute_financial(
                     f = float(g)
                 except (TypeError, ValueError):
                     continue
-                if f != f:  # NaN
+                if math.isnan(f):  # NaN
                     continue
                 peer_values.append(f)
     else:
@@ -1398,7 +1399,7 @@ def compute_financial(
                 f = float(g)
             except (TypeError, ValueError):
                 continue
-            if f != f:  # NaN
+            if math.isnan(f):  # NaN
                 continue
             peer_values.append(f)
 

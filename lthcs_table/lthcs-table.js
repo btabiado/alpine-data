@@ -517,7 +517,7 @@ function rowHTML(row) {
   const maturityStage = escapeHtml(row.maturityStage || '');
 
   return (
-    `<tr data-ticker="${ticker}">` +
+    `<tr data-ticker="${ticker}" tabindex="0" aria-label="Open ${ticker} detail">` +
       `<td class="lthcs-col-star" data-align="left">` +
         `<button type="button" class="lthcs-table-star" data-star="${ticker}" ` +
                 `aria-pressed="${starPressed}" aria-label="Star ${ticker}">${starChar}</button>` +
@@ -767,6 +767,16 @@ function wireHeader() {
 function wireBody() {
   const tbody = $('#lthcs-table-body');
   if (!tbody) return;
+  // Rows open the detail modal on click; make that reachable by keyboard.
+  // Only when the ROW itself has focus, so Enter/Space on the star button
+  // keeps toggling the star.
+  tbody.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const tr = e.target;
+    if (!tr || !tr.matches || !tr.matches('tr[data-ticker]')) return;
+    e.preventDefault();
+    tr.click();
+  });
   tbody.addEventListener('click', async (e) => {
     // Star toggle takes precedence — stops the row click from opening
     // the detail modal.

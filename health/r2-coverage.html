@@ -7,13 +7,14 @@
   <meta name="description" content="What's archived in ADW R2 warehouse: source × date heatmap." />
   <style>
     :root {
+      color-scheme: dark;
       --bg: #0b1220;
       --bg-elev: #131c2e;
       --bg-elev-2: #1a2440;
       --border: #243049;
       --text: #e2e8f0;
       --text-dim: #94a3b8;
-      --text-faint: #64748b;
+      --text-faint: #8b9ab0; /* was #64748b (3.2:1) */
       --accent: #60a5fa;
       --present: #10b981;   /* green */
       --present-recent: #34d399;
@@ -39,6 +40,10 @@
       display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 12px; margin: 20px 0 32px;
     }
+    /* CLS: hold the stat row's height until the JSON arrives (it used to
+       appear at ~0.3s and push the legend + heatmap down ~100px). */
+    .summary:empty { min-height: 102px; }
+    @media (max-width: 560px) { .summary:empty { min-height: 310px; } }
     .stat {
       background: var(--bg-elev); border: 1px solid var(--border);
       border-radius: 8px; padding: 14px 16px;

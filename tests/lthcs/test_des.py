@@ -11,7 +11,6 @@ from typing import Any, Dict
 
 import pytest
 
-from lthcs.pillars import des
 from lthcs.pillars.des import (
     compute_des,
     load_sector_weights,

@@ -26,7 +26,7 @@ try:
 
     load_dotenv(REPO_ROOT / ".env")
 except ImportError:
-    pass
+    pass  # python-dotenv is optional; env vars may already be set
 
 from lthcs.pillars import des, thesis
 from lthcs.sources import alpha_vantage, eia, fred
@@ -139,7 +139,6 @@ def main() -> int:
         print("  → confirms the pillar code path is working end-to-end on real AV data.")
     except Exception as exc:  # noqa: BLE001
         print(f"  {sample_ticker} thesis check failed: {type(exc).__name__}: {exc}")
-        av_response = None  # will skip thesis section below
 
     # Compute per-ticker DES (cheap, all from cached macro inputs)
     des_results = []

@@ -163,16 +163,37 @@ def score_asset(
 
     documented_weights = get_maturity_weights(profile, weights_config)
 
-    # Drop the Thesis pillar's weight when all three thesis components
-    # are missing (the V1 default — funding rate / L-S ratio aren't
-    # wired into a per-asset crypto field yet). Mirrors the equity
-    # `thesis_unavailable` renorm path.
+    # Drop (and renormalise away) every pillar that carries no information
+    # for THIS asset, instead of scoring its placeholder:
+    #
+    #   * any pillar whose inputs are ALL missing (data_quality all False) —
+    #     it emits a neutral 50.0 that is not a measurement. Thesis is the
+    #     V1 default (funding / L-S not wired per asset); Adoption Momentum
+    #     was 50.0 for 9 of 10 coins on 2026-10-04 at ~0.12-0.53 weight.
+    #   * DES when its only asset-specific input (exchange reserves) is
+    #     missing: what remains (stablecoin supply, macro overlay) is
+    #     market-wide, so every coin got the identical 56.9 — a constant
+    #     added to all ten scores, not a per-asset reading.
+    #
+    # Mirrors the equity `thesis_unavailable` renorm path.
     data_quality_flags: List[str] = []
-    thesis_dq = pillars["thesis_integrity"].get("data_quality") or {}
-    if not any(thesis_dq.values()):
-        data_quality_flags.append("thesis_unavailable")
+    dropped: set = set()
+    for name, flag in (("thesis_integrity", "thesis_unavailable"),
+                       ("adoption_momentum", "adoption_unavailable"),
+                       ("institutional_confidence", "institutional_unavailable"),
+                       ("financial_evolution", "financial_unavailable"),
+                       ("des", "des_unavailable")):
+        dq = pillars[name].get("data_quality") or {}
+        if dq and not any(dq.values()):
+            data_quality_flags.append(flag)
+            dropped.add(name)
+    des_dq = pillars["des"].get("data_quality") or {}
+    if "des" not in dropped and des_dq and not des_dq.get("has_exchange_reserves"):
+        data_quality_flags.append("des_asset_inputs_unavailable")
+        dropped.add("des")
+    if len(dropped) >= len(PILLAR_ORDER):
+        dropped = set()  # nothing left to renormalise onto: keep the raw blend
 
-    dropped = {"thesis_integrity"} if "thesis_unavailable" in data_quality_flags else set()
     if dropped and len(dropped) < len(PILLAR_ORDER):
         retained_sum = sum(
             w for w, n in zip(documented_weights, PILLAR_ORDER) if n not in dropped
@@ -190,6 +211,8 @@ def score_asset(
         contrib = w * subscores[n]
         weighted_components.append(float(contrib))
         weighted_sum += contrib
+    # Published sub-scores: a dropped pillar was not measured -> null.
+    subscores_out = {n: (None if n in dropped else v) for n, v in subscores.items()}
 
     final = round(max(0.0, min(100.0, weighted_sum)), 1)
     band = assign_band(final, weights_config.get("score_bands", {}))
@@ -209,7 +232,7 @@ def score_asset(
         "drift_90d": drift["drift_90d"],
         "confidence_level": confidence_level,
         "data_quality_flags": data_quality_flags,
-        "subscores": subscores,
+        "subscores": subscores_out,
         "modifiers": {
             "macro_adj": 0.0,
             "sector_adj": 0.0,

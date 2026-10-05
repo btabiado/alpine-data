@@ -14,6 +14,7 @@ dead fetcher is visible in the Actions UI rather than silently stale.
 """
 import json
 import sys
+import urllib.parse
 import urllib.request
 import urllib.error
 from datetime import datetime, timezone, timedelta
@@ -37,6 +38,19 @@ def cfpb_count(product: str, min_d: str, max_d: str) -> int:
     return int(total or 0)
 
 
+# (payload key, CFPB product name). The names must match the CFPB product
+# taxonomy EXACTLY: the API answers an unknown/retired name with a count of 0,
+# not an error. "Credit card or prepaid card" was retired and split into
+# "Credit card" and "Prepaid card" — querying the old name published zeros for
+# months (verified live 2026-10-04: 0 vs 92,619 + 6,119 trailing 12 months).
+PRODUCTS = [
+    ("student_loan", "Student loan"),
+    ("mortgage", "Mortgage"),
+    ("credit_card", "Credit card"),
+    ("prepaid_card", "Prepaid card"),
+]
+
+
 def main() -> int:
     now = datetime.now(timezone.utc)
     iso = lambda d: d.strftime("%Y-%m-%d")
@@ -54,14 +68,16 @@ def main() -> int:
 
     # Student loan is the ADW-397 signal; fetch a couple of adjacent categories
     # cheaply too so the feed is reusable for future products.
-    for key, product in [
-        ("student_loan", "Student loan"),
-        ("mortgage", "Mortgage"),
-        ("credit_card", "Credit card or prepaid card"),
-    ]:
+    for key, product in PRODUCTS:
         try:
             r3 = cfpb_count(product, iso(d90), iso(now))
             r12 = cfpb_count(product, iso(d365), iso(now))
+            if r12 == 0:
+                # A national product category with zero complaints in a year is
+                # a renamed/retired taxonomy entry, not a real reading.
+                print(f"warn: {key} ({product!r}) returned 0 complaints in 12 "
+                      f"months — product name likely retired upstream",
+                      file=sys.stderr)
             out["products"][key] = {
                 "product": product,
                 "complaints_recent_3mo": r3,
@@ -89,5 +105,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    import urllib.parse  # noqa: E402 (kept local so the top stays stdlib-obvious)
     sys.exit(main())

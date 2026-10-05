@@ -98,7 +98,13 @@ def audit_pillar_distributions(today_snap):
     print(f"  Universe size: {n}")
     out = {}
     for p in ["adoption_momentum", "institutional_confidence", "financial_evolution", "thesis_integrity", "des"]:
-        xs = [s["subscores"][p] for s in scores]
+        # null = dropped pillar (not measured); excluded from the stats.
+        xs = [s["subscores"][p] for s in scores
+              if isinstance(s["subscores"].get(p), (int, float))]
+        if not xs:
+            print(f"\n  {p}\n    n=0 (dropped from scoring for every ticker)")
+            out[p] = {"n": 0}
+            continue
         n_at_50 = sum(1 for x in xs if abs(x - 50.0) < 0.0001)
         s = stats(xs)
         s["n_at_50"] = n_at_50

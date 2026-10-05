@@ -148,8 +148,11 @@ def validate_snapshot_for_date(date_str: str, universe: Universe) -> bool:
         s = row.get("lthcs_score")
         if not (isinstance(s, (int, float)) and 0 <= s <= 100):
             out_of_range.append(f"{ticker} lthcs_score={s}")
+        dropped = set(row.get("dropped_pillars") or [])
         for k in PILLAR_KEYS:
             v = (row.get("subscores") or {}).get(k)
+            if v is None and k in dropped:
+                continue  # dropped pillar: published as null by design
             if not (isinstance(v, (int, float)) and 0 <= v <= 100):
                 out_of_range.append(f"{ticker} {k}={v}")
     if out_of_range:
