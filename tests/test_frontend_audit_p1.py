@@ -159,6 +159,7 @@ def test_trend_index_reproduces_the_browser_trend_for_every_committed_ticker(bui
             depth += {"{": 1, "}": -1}.get(src[j], 0)
             if depth == 0:
                 return src[start:j + 1]
+        raise AssertionError(f"unbalanced braces in {name}()")
 
     consts = re.search(r"const TREND_FLAT_THRESHOLD = [^;]+;", src).group(0) + \
         re.search(r"const TREND_FALLBACK_DAYS = [^;]+;", src).group(0)
