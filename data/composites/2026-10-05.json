@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-05",
-  "generated_at": "2026-10-05T00:36:11Z",
+  "generated_at": "2026-10-05T01:02:39Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-04",
       "label": null,
-      "note": "40 coins; 8 buy+, 4 sell+",
-      "score": 10,
+      "note": "40 coins; 8 buy+, 3 sell+",
+      "score": 12,
       "stale": false
     },
     "defi_sentiment": {
@@ -41,14 +41,14 @@
       "as_of": "2026-10-04",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": -15,
+      "score": -17,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-10-04",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": -15,
+      "score": -17,
       "stale": false
     },
     "futures_sentiment_eth": {
@@ -114,6 +114,12 @@
       "note": null,
       "score": -50,
       "stale": false
+    }
+  },
+  "unavailable": {
+    "indexes.poc_signal_breadth": {
+      "reason": "market.poc_top comes from CryptoCompare histoday (compute_poc_top_markets), which answers keyless requests with 401 since 2026-10; CRYPTOCOMPARE_API_KEY is not configured, so there is nothing to average.",
+      "requires_env": "CRYPTOCOMPARE_API_KEY"
     }
   }
 }
