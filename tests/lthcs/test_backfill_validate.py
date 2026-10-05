@@ -345,3 +345,123 @@ def test_repair_suggestions_only_for_failed_dates(tmp_path, lbv):
     suggestions = lbv.render_repair_suggestions(report)
     assert any("2026-01-02" in s for s in suggestions)
     assert not any("2026-01-01" in s for s in suggestions)
+
+
+# ---------------------------------------------------------------------------
+# Universe growth, unscored-ticker diagnostics, known_gaps disclosures
+# ---------------------------------------------------------------------------
+
+def test_ticker_added_mid_range_is_not_absent_or_missing_history(tmp_path, lbv):
+    """A ticker that joined on day 2 is neither 'absent' on day 1 nor
+    'missing history' for day 1 (the universe grew; nothing was lost)."""
+    root = _build_root(tmp_path, ("AAPL", "MSFT", "NVDA"))
+    _write_day(root, "2026-01-01", ("AAPL",))
+    _write_day(root, "2026-01-02", ("AAPL", "MSFT", "NVDA"))
+    _write_history(root, "AAPL", ["2026-01-01", "2026-01-02"])
+    _write_history(root, "MSFT", ["2026-01-02"])
+    _write_history(root, "NVDA", ["2026-01-02"])
+
+    report, _, hist, _ = lbv.run_validation(
+        root, start=date(2026, 1, 1), end=date(2026, 1, 2),
+        sample_tickers=["AAPL", "MSFT", "NVDA"],
+    )
+    assert report.exit_code() == 0, [f.message for f in report.findings]
+    assert hist["MSFT"]["expected"] == 1
+
+
+def test_ticker_dropped_after_joining_still_warns(tmp_path, lbv):
+    """Two tickers scored on day 1 and gone on day 2 are a real coverage hole."""
+    root = _build_root(tmp_path, ("AAPL", "MSFT", "NVDA"))
+    _write_day(root, "2026-01-01", ("AAPL", "MSFT", "NVDA"))
+    _write_day(root, "2026-01-02", ("AAPL",))
+    for t in ("AAPL", "MSFT", "NVDA"):
+        _write_history(root, t, ["2026-01-01", "2026-01-02"])
+    report, _, _, _ = lbv.run_validation(
+        root, start=date(2026, 1, 1), end=date(2026, 1, 2), sample_tickers=["AAPL"],
+    )
+    cov = [f for f in report.warnings if f.check == "ticker_coverage"]
+    assert len(cov) == 1 and "2026-01-02" in cov[0].message
+
+
+def test_never_scored_active_tickers_still_warn(tmp_path, lbv):
+    root = _build_root(tmp_path, ("AAPL", "MSFT", "NVDA"))
+    _write_day(root, "2026-01-01", ("AAPL",))
+    _write_history(root, "AAPL", ["2026-01-01"])
+    report, _, _, _ = lbv.run_validation(
+        root, start=date(2026, 1, 1), end=date(2026, 1, 1), sample_tickers=["AAPL"],
+    )
+    assert any(f.check == "ticker_coverage" for f in report.warnings)
+
+
+def test_variable_detail_rows_for_unscored_tickers_are_not_counted(tmp_path, lbv):
+    """variable_detail may carry rows for tickers the quality gate dropped."""
+    root = _build_root(tmp_path, ("AAPL", "MSFT"))
+    _write_day(root, "2026-01-01", ("AAPL", "MSFT"))
+    vd_path = root / "variable_detail" / "2026-01-01.json"
+    vd = json.loads(vd_path.read_text())
+    vd["variables"] += [{"ticker": "ZZZZ", "pillar": p, "components": {}, "sub_score": 50.0}
+                        for p in PILLARS]
+    vd_path.write_text(json.dumps(vd))
+    for t in ("AAPL", "MSFT"):
+        _write_history(root, t, ["2026-01-01"])
+    report, per_date, _, _ = lbv.run_validation(
+        root, start=date(2026, 1, 1), end=date(2026, 1, 1), sample_tickers=["AAPL"],
+    )
+    assert not [f for f in report.warnings if f.check == "variable_detail_rowcount"]
+    assert per_date[0]["variable_detail_rows"] == 10
+
+
+def _known_gaps(tmp_path, **gap):
+    entry = {"feed": "data/lthcs/", "history": "daily index",
+             "start": "2026-01-02", "end": "2026-01-02",
+             "reason": "lthcs-daily did not run that day; nothing to restore",
+             "backfill_attempted": ["git"], "fillable": True}
+    entry.update(gap)
+    p = tmp_path / "known_gaps.json"
+    p.write_text(json.dumps({"gaps": [entry]}))
+    return p
+
+
+def test_missing_snapshot_disclosed_in_known_gaps_does_not_fail(tmp_path, lbv):
+    tickers = ("AAPL", "MSFT")
+    root = _build_root(tmp_path, tickers)
+    _write_day(root, "2026-01-01", tickers)
+    _write_day(root, "2026-01-03", tickers)
+    for t in tickers:
+        _write_history(root, t, ["2026-01-01", "2026-01-02", "2026-01-03"])
+    report, _, _, _ = lbv.run_validation(
+        root, start=date(2026, 1, 1), end=date(2026, 1, 3),
+        sample_tickers=list(tickers), known_gaps_path=_known_gaps(tmp_path),
+    )
+    assert report.exit_code() == 0, [f.message for f in report.findings]
+    assert [f.detail["date"] for f in report.disclosed] == ["2026-01-02"]
+    text = lbv.render_report(report, [], {}, [])
+    assert "[DISCLOSED] 1 known gap(s)" in text
+
+
+def test_known_gap_for_another_history_does_not_mute(tmp_path, lbv):
+    """The crypto snapshot disclosures share the feed but not the history."""
+    tickers = ("AAPL",)
+    root = _build_root(tmp_path, tickers)
+    _write_day(root, "2026-01-01", tickers)
+    _write_history(root, "AAPL", ["2026-01-01", "2026-01-02"])
+    report, _, _, _ = lbv.run_validation(
+        root, start=date(2026, 1, 1), end=date(2026, 1, 2), sample_tickers=["AAPL"],
+        known_gaps_path=_known_gaps(tmp_path, history="daily crypto snapshots"),
+    )
+    assert any(f.check == "snapshot_exists" for f in report.failures)
+
+
+def test_repo_known_gaps_not_applied_to_a_synthetic_root(tmp_path, lbv, monkeypatch):
+    """Without an explicit path, only the repo's own data/lthcs reads the
+    repo's known_gaps.json; a synthetic tree is judged on its own."""
+    gaps = _known_gaps(tmp_path)
+    monkeypatch.setattr(lbv, "KNOWN_GAPS_PATH", gaps)
+    tickers = ("AAPL",)
+    root = _build_root(tmp_path, tickers)
+    _write_day(root, "2026-01-01", tickers)
+    _write_history(root, "AAPL", ["2026-01-01", "2026-01-02"])
+    report, _, _, _ = lbv.run_validation(
+        root, start=date(2026, 1, 1), end=date(2026, 1, 2), sample_tickers=["AAPL"],
+    )
+    assert any(f.check == "snapshot_exists" for f in report.failures)

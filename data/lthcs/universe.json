@@ -357,7 +357,8 @@
       "sector": "Financials",
       "industry": "Banks",
       "maturity_stage": "standard_compounder",
-      "active": true
+      "active": false,
+      "inactive_reason": "BNY Mellon now trades as BNY: Yahoo has had no quote for BK since 2026-07-10 (\"Quote not found for symbol: BK\") and SEC company_tickers maps CIK 1390777 to BNY. Unscored since 2026-07-10; re-add as BNY to resume scoring."
     },
     {
       "ticker": "BKNG",
@@ -811,7 +812,8 @@
       "sector": "Communication Services",
       "industry": "Video Games",
       "maturity_stage": "standard_compounder",
-      "active": true
+      "active": false,
+      "inactive_reason": "Electronic Arts taken private (PIF / Silver Lake / Affinity Partners); delisted, no Yahoo quote and no SEC ticker since 2026-08-15, unscored since."
     },
     {
       "ticker": "EMR",
