@@ -714,3 +714,42 @@ def test_every_registry_key_the_cards_claim_is_written(sc):
         for key in keys:
             assert f'"{key}"' in writer or f"'{key}'" in writer, \
                 f"{app_file} charts {key}; snapshot_composites.py never writes it"
+
+
+# ---------- unavailable-by-design disclosure ----------
+
+def test_key_gated_null_index_is_marked_unavailable_while_key_unset(sc):
+    marks = sc.unavailable_by_design({"poc_signal_breadth": None}, env={})
+    assert marks["indexes.poc_signal_breadth"]["requires_env"] == "CRYPTOCOMPARE_API_KEY"
+    assert len(marks["indexes.poc_signal_breadth"]["reason"]) > 30
+
+
+def test_no_marker_once_the_key_is_set_or_the_index_has_a_value(sc):
+    """Key configured and still null = a real gap: no excuse is written."""
+    assert sc.unavailable_by_design({"poc_signal_breadth": None},
+                                    env={"CRYPTOCOMPARE_API_KEY": "k"}) == {}
+    assert sc.unavailable_by_design({"poc_signal_breadth": {"score": 3}}, env={}) == {}
+
+
+def test_main_writes_the_marker_and_backfills_it_into_todays_file(sc, tmp_path, monkeypatch):
+    """A file written before the marker existed (same indexes) is rewritten
+    once to carry it; after that the run is idempotent again."""
+    monkeypatch.delenv("CRYPTOCOMPARE_API_KEY", raising=False)
+    monkeypatch.setattr(sc, "CACHE", tmp_path)
+    out_dir = tmp_path / "composites"
+    monkeypatch.setattr(sc, "OUT_DIR", out_dir)
+    monkeypatch.setattr(sc, "REPO_ROOT", tmp_path)
+    _write_caches(tmp_path, {"fear_greed": [{"date": "2026-08-02", "value": 66}]})
+    assert sc.main() == 0
+    f = next(out_dir.glob("*.json"))
+    doc = json.loads(f.read_text())
+    assert doc["indexes"]["poc_signal_breadth"] is None
+    assert "indexes.poc_signal_breadth" in doc["unavailable"]
+
+    del doc["unavailable"]                       # as written by the old code
+    f.write_text(json.dumps(doc))
+    assert sc.main() == 0
+    assert "unavailable" in json.loads(f.read_text())
+    before = f.read_bytes()
+    assert sc.main() == 0
+    assert f.read_bytes() == before

@@ -92,6 +92,7 @@ from __future__ import annotations
 import csv
 import json
 import math
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -773,6 +774,32 @@ def _whale_sentiments(whale: dict) -> tuple[dict, dict]:
     return btc, eth
 
 
+# Indexes whose upstream needs an API key this deployment may not have. While
+# the key is unset, a null index is unavailable BY DESIGN, and the snapshot
+# says so in `unavailable` so scripts/history_continuity.py discloses the
+# null instead of paging a new gap every day. Once the key is set the marker
+# is not written, and a null that persists is a real gap again.
+KEY_GATED: dict[str, tuple[str, str]] = {
+    "poc_signal_breadth": (
+        "CRYPTOCOMPARE_API_KEY",
+        "market.poc_top comes from CryptoCompare histoday (compute_poc_top_markets), "
+        "which answers keyless requests with 401 since 2026-10; "
+        "CRYPTOCOMPARE_API_KEY is not configured, so there is nothing to average.",
+    ),
+}
+
+
+def unavailable_by_design(idx: dict, env=None) -> dict:
+    """{"indexes.<key>": {"reason", "requires_env"}} for each null KEY_GATED
+    index whose key is unset in `env` (default os.environ)."""
+    env = os.environ if env is None else env
+    out = {}
+    for key, (var, reason) in KEY_GATED.items():
+        if idx.get(key) is None and not str(env.get(var, "")).strip():
+            out[f"indexes.{key}"] = {"reason": reason, "requires_env": var}
+    return out
+
+
 def collect() -> dict:
     market = _load(CACHE / "market.json") or {}
     whale = _load(CACHE / "whale.json") or {}
@@ -961,6 +988,9 @@ def main() -> int:
         "generated_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "indexes": idx,
     }
+    unavailable = unavailable_by_design(idx)
+    if unavailable:
+        payload["unavailable"] = unavailable
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     out = OUT_DIR / f"{today}.json"
@@ -970,7 +1000,7 @@ def main() -> int:
     # ignoring `generated_at`, which changes every run by definition. Without
     # this the repo would take 24 no-op commits a day.
     prev = _load(out)
-    if prev and prev.get("indexes") == idx:
+    if prev and prev.get("indexes") == idx and prev.get("unavailable") == (unavailable or None):
         print(f"{out.relative_to(REPO_ROOT)} already current — no change")
         return 0
 

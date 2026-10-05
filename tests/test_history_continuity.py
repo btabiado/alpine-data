@@ -463,3 +463,79 @@ def test_history_rows_render_in_text_and_issue_reports(dh, tmp_path, monkeypatch
     text = dh.render_text(rows, [])
     assert "HISTORY GAP" in text and "2026-09-14" in text and "? old" not in text
     assert "data/snaps/ [history:" in dh.render_issue(rows, [])
+
+
+# ==========================================================================
+# unavailable BY DESIGN: disclosed while the key is missing, a gap once set
+# ==========================================================================
+
+_POC = "indexes.poc_signal_breadth"
+_KEY = "CRYPTOCOMPARE_API_KEY"
+
+
+def _poc_files(hc, tmp_path, marker=None):
+    """Ten daily composites with poc_signal_breadth null; returns the spec."""
+    def body(d):
+        doc = {"indexes": {"poc_signal_breadth": None}}
+        if marker is not None:
+            doc["unavailable"] = {_POC: marker}
+        return doc
+    _files(tmp_path, "c/", _days("2026-09-25", "2026-10-04"), body)
+    return hc.History("c/", hc.DAILY, label="daily snapshots", required_fields=(_POC,))
+
+
+def test_payload_unavailable_marker_discloses_a_null_field(hc, tmp_path, monkeypatch):
+    monkeypatch.delenv(_KEY, raising=False)
+    spec = _poc_files(hc, tmp_path, {"reason": "upstream needs an API key that is not configured",
+                                 "requires_env": _KEY})
+    f = hc.check("x", spec, tmp_path, TODAY)
+    assert f.ok and not f.field_gaps and len(f.disclosed) == 10
+    assert "10 unavailable by design" in hc.summarize(f)
+
+
+def test_payload_marker_stops_excusing_once_the_key_is_set(hc, tmp_path, monkeypatch):
+    monkeypatch.setenv(_KEY, "configured")
+    spec = _poc_files(hc, tmp_path, {"reason": "upstream needs an API key that is not configured",
+                                 "requires_env": _KEY})
+    f = hc.check("x", spec, tmp_path, TODAY)
+    assert not f.ok and len(f.field_gaps) == 10
+
+
+def test_a_marker_without_a_real_reason_mutes_nothing(hc, tmp_path, monkeypatch):
+    monkeypatch.delenv(_KEY, raising=False)
+    for marker in ({"reason": ""}, {"requires_env": _KEY}, True, "n/a"):
+        spec = _poc_files(hc, tmp_path, marker)
+        assert len(hc.check("x", spec, tmp_path, TODAY).field_gaps) == 10, marker
+
+
+def test_open_ended_known_gap_holds_until_its_env_var_is_set(hc, tmp_path, monkeypatch):
+    spec = _poc_files(hc, tmp_path)
+    gaps = [{"feed": "x", "history": "daily snapshots", "field": _POC,
+             "start": "2026-09-28", "end": None, "until_env": _KEY}]
+    monkeypatch.delenv(_KEY, raising=False)
+    f = hc.check("x", spec, tmp_path, TODAY, gaps)
+    # before `start` is still a gap; from `start` on, open-ended, disclosed
+    assert [p for _, p in f.field_gaps] == _days("2026-09-25", "2026-09-27")
+    assert len(f.disclosed) == 7
+    monkeypatch.setenv(_KEY, "configured")
+    assert len(hc.check("x", spec, tmp_path, TODAY, gaps).field_gaps) == 10
+
+
+def test_until_env_also_ends_a_dated_known_gap(hc, tmp_path, monkeypatch):
+    spec = _poc_files(hc, tmp_path)
+    gaps = [{"feed": "x", "history": "daily snapshots", "field": _POC,
+             "start": "2026-09-25", "end": "2026-10-04", "until_env": _KEY}]
+    monkeypatch.setenv(_KEY, "configured")
+    assert len(hc.check("x", spec, tmp_path, TODAY, gaps).field_gaps) == 10
+
+
+def test_verify_known_gaps_open_end_needs_until_env(hc):
+    specs = {"data/composites/": (hc.History("data/composites/", hc.DAILY,
+                                             label="daily snapshots"),)}
+    base = {"feed": "data/composites/", "history": "daily snapshots",
+            "field": _POC, "start": "2026-10-05", "end": None,
+            "reason": "upstream needs a key that is not configured yet",
+            "backfill_attempted": ["upstream: 401 without a key"]}
+    assert hc.verify_known_gaps([{**base, "until_env": _KEY}], specs) == []
+    assert hc.verify_known_gaps([base], specs)
+    assert hc.verify_known_gaps([{**base, "until_env": "  "}], specs)
