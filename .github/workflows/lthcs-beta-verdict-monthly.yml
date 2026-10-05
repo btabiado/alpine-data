@@ -60,19 +60,38 @@ jobs:
 
       - name: Run β verdict
         id: verdict
+        # Exit codes of lthcs_beta_verdict.py: 0 = PASS/HOLD, 1 = FAIL
+        # verdict, 2 = internal error (missing baseline etc.).
+        #
+        # A FAIL verdict is the research answer this job exists to produce,
+        # not a broken job, so it is reported as a warning annotation plus
+        # the Job Summary and the run stays green. Only exit 2 (the verdict
+        # could not be computed) fails the run. This used to run under
+        # `set -e`, so a FAIL verdict aborted the step BEFORE the report was
+        # copied into the Job Summary: every run since 2026-07-01 went red
+        # and hid the very verdict it computed.
         run: |
-          set -e
+          set +e
           python scripts/lthcs_beta_verdict.py \
             --since "${{ steps.window.outputs.since }}" \
             --end   "${{ steps.window.outputs.end }}" \
             --horizon 21 \
             --output-dir "$RUNNER_TEMP/beta_verdict"
-          # Echo the markdown report into the Job Summary so the
-          # verdict is visible without clicking through artifacts.
-          report=$(ls "$RUNNER_TEMP/beta_verdict"/beta_fix_verdict_*.md | head -n1)
+          rc=$?
+          set -e
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          # Echo the markdown report into the Job Summary so the verdict is
+          # visible without clicking through artifacts.
+          report=$(ls "$RUNNER_TEMP/beta_verdict"/beta_fix_verdict_*.md 2>/dev/null | head -n1)
           if [ -n "$report" ] && [ -f "$report" ]; then
             cat "$report" >> "$GITHUB_STEP_SUMMARY"
           fi
+          case "$rc" in
+            0) ;;
+            1) echo "::warning title=LTHCS beta-fix verdict: FAIL::Composite IC fell or the Adoption inversion deepened; see the Job Summary." ;;
+            *) echo "::error title=LTHCS beta-fix verdict could not be computed::lthcs_beta_verdict.py exited $rc"
+               exit "$rc" ;;
+          esac
 
       - name: Upload verdict artifact
         if: always()
