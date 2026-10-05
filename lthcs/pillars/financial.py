@@ -182,9 +182,25 @@ def _is_valid_growth_value(value: Any) -> bool:
 #            still benchmarks against the cohort for revenue growth.
 #
 # Notable exclusions and why (still skipped):
-#   V/MA/AXP/PYPL -- payment networks, not banks.
+#   V/MA/AXP/PYPL -- payment networks, not banks. (AXP does file the bank
+#            concept family -- NII, NoninterestIncome and Deposits, current
+#            through 2026-06-30 -- so it passes the 2026-10 test below; it
+#            stays out on this earlier decision until someone revisits it.)
 #   BRK.B -- conglomerate.
 #   PRU/MET/TRV/AIG/AFL/ALL -- insurance, different model.
+#
+# S&P 500 sync follow-up (2026-10-05): every ACTIVE universe ticker whose
+# SEC companyfacts (10-K / 10-Q) carry current facts -- a period ending in
+# 2025 or later -- for all three of an NII concept this pipeline reads
+# (sec_edgar._BANK_NET_INTEREST_INCOME_CONCEPTS), NoninterestIncome and
+# Deposits (a deposit-taking balance sheet) was added: the regional banks
+# CFG, FITB, HBAN, KEY, MTB, RF, the diversified bank PNC, the custody
+# banks NTRS and STT, the card issuer SYF (COF precedent) and RJF
+# (brokerage with a bank subsidiary, SCHW precedent). IBKR files NII and
+# NoninterestIncome but no Deposits and stays out. Evidence per Financials
+# ticker: data/lthcs/universe_candidate/mapping_2026-10-05/_bank_xbrl_check.json.
+# SCHW (no current NoninterestIncome) and BLK (no bank concepts) do not
+# pass that test; they stay on the May 2026 audit decision above.
 BANK_TICKERS = frozenset({
     "JPM",
     "BAC",
@@ -200,6 +216,18 @@ BANK_TICKERS = frozenset({
     "COF",
     "SCHW",
     "BLK",
+    # S&P 500 sync follow-up (2026-10-05), verified against SEC XBRL:
+    "CFG",
+    "FITB",
+    "HBAN",
+    "KEY",
+    "MTB",
+    "NTRS",
+    "PNC",
+    "RF",
+    "RJF",
+    "STT",
+    "SYF",
 })
 
 # Bank PCL / total-revenue ratio bounds. ``invert=True`` (lower is
