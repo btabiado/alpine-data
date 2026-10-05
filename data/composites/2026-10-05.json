@@ -1,6 +1,6 @@
 {
   "as_of": "2026-10-05",
-  "generated_at": "2026-10-05T02:17:43Z",
+  "generated_at": "2026-10-05T02:41:35Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-04",
@@ -10,7 +10,7 @@
       "stale": false
     },
     "defi_sentiment": {
-      "as_of": "2026-10-04",
+      "as_of": "2026-10-05",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
       "score": 6,
