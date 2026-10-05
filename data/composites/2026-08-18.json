@@ -49,18 +49,18 @@
     },
     "poc_signal_breadth": null,
     "whale_sentiment_btc": {
-      "as_of": "2026-08-17",
-      "backfilled_from": "series:https://btabiado.github.io/alpine-data/data-whale.json read 2026-10-04 truncated to the end of 2026-08-18",
-      "label": "WHALE ACCUMULATION",
-      "note": "backfilled (series)",
-      "score": 39,
+      "as_of": "2026-08-16",
+      "backfilled_from": "r2:raw/alpine-data/2026-08-18/data-whale.json",
+      "label": "NEUTRAL",
+      "note": "backfilled (r2)",
+      "score": 19,
       "stale": false
     },
     "whale_sentiment_eth": {
       "as_of": "2026-08-17",
-      "backfilled_from": "series:https://btabiado.github.io/alpine-data/data-whale.json read 2026-10-04 truncated to the end of 2026-08-18",
+      "backfilled_from": "r2:raw/alpine-data/2026-08-18/data-whale.json",
       "label": "NEUTRAL",
-      "note": "backfilled (series)",
+      "note": "backfilled (r2)",
       "score": 9,
       "stale": false
     }
