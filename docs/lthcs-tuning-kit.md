@@ -310,6 +310,38 @@ Adds AI-tier softening to a specific name not yet in `ticker_overrides`. Single-
 
 ---
 
+## Band calibration from the live distribution
+
+`scripts/lthcs_calibrate_bands.py` re-derives the `score_bands` cutoffs as
+integer quantiles of the real composite distribution instead of the
+hand-set 85/80/70/60/50. Default target shares (top-down): elite 5%,
+high_confidence 10%, constructive 25%, monitor 30%, weakening 20%,
+review 10%. These keep the quality audit's starvation checks (elite /
+high_confidence non-empty) and review-overflow checks (>=40% critical,
+>=50% skewed, >15% band-audit SHIFT-UP) green on a healthy day.
+
+```sh
+python3 scripts/lthcs_calibrate_bands.py                 # read-only report
+python3 scripts/lthcs_calibrate_bands.py --snapshots 5   # pool the last 5 days
+python3 scripts/lthcs_calibrate_bands.py --write         # apply + provenance
+```
+
+- Refuses to run below 400 scored tickers (`--min-tickers` to override) so
+  it cannot calibrate on the old ~219-name universe by accident.
+- Bands stay contiguous over 0-100, at least `--min-width` (3) points wide,
+  keys/labels/colors untouched; the result is schema-validated.
+- `--write` adds a `score_bands_calibration` block to weights.json
+  (snapshot dates, ticker count, method, targets, previous cutoffs, date).
+- Every consumer reads the cutoffs from weights.json (`lthcs/bands.py` in
+  Python, `lthcs_tab/lthcs-bands.js` in the front-end), so one `--write`
+  moves narratives, the LLM prompt, audits, legends and chart guides
+  together. Crypto shares the same bands.
+- This is a relative calibration: it fixes *how many* names sit in each
+  band, so band membership becomes a rank signal. Recalibrate deliberately
+  (e.g. after a universe change), not daily.
+
+---
+
 ## Anti-patterns — don't do these
 
 1. **Don't tune bands to make distributions look pretty.** If a band is empty, that's information. The first instinct when the elite tier is empty should be to investigate (run the diagnostic), not to lower the threshold.

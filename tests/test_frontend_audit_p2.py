@@ -133,8 +133,13 @@ def test_band_ink_is_dark_on_light_fills():
     js = (ROOT / "lthcs_tab" / "lthcs-sparkline.js").read_text(encoding="utf-8")
     fn = js[js.index("export function bandInkForScore"):]
     fn = fn[:fn.index("\n}\n") + 2]
+    # bandInkForScore resolves the band via lthcs-bands.js (live weights.json
+    # cutoffs); load that module's pure helpers, minus the fetch loader.
+    bands = (ROOT / "lthcs_tab" / "lthcs-bands.js").read_text(encoding="utf-8")
+    bands = bands[:bands.index("const WEIGHTS_URL")] + bands[bands.index("/** Current band config"):]
     mr = pytest.importorskip("py_mini_racer", reason="V8 needed")
     ctx = mr.MiniRacer()
+    ctx.eval(bands.replace("export ", "").replace("'use strict';", ""))
     ctx.eval(fn.replace("export ", ""))
     assert ctx.call("bandInkForScore", 95) == "#fff"     # elite (navy)
     assert ctx.call("bandInkForScore", 75) == "#111"     # constructive (gold)

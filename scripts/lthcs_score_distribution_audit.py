@@ -60,17 +60,16 @@ PILLAR_ORDER = (
     "des",
 )
 
-# Documented band thresholds from lthcs/score.py / weights.json. Kept here
-# as a *read-only* compile-time copy so the audit can run even if weights.json
-# is being touched concurrently by a sibling task (it is — GG owns that file).
-DEFAULT_BANDS = [
-    ("review", 0, 49),
-    ("weakening", 50, 59),
-    ("monitor", 60, 69),
-    ("constructive", 70, 79),
-    ("high_confidence", 80, 84),
-    ("elite", 85, 100),
-]
+# Band thresholds, lowest first, read from weights.json -> score_bands via
+# lthcs.bands (falls back to the documented defaults if the file is
+# unreadable). Read once at import; a band recalibration needs no edit here.
+def _live_bands() -> List[Tuple[str, int, int]]:
+    from lthcs.bands import load_score_bands, ordered_bands
+
+    return list(reversed(ordered_bands(load_score_bands(WEIGHTS_PATH))))
+
+
+DEFAULT_BANDS = _live_bands()
 
 # 10-point histogram bins covering [0, 100]. The last bin is (90, 100)
 # inclusive of 100; all others are right-open (e.g. 80-89 = [80, 90)).

@@ -238,32 +238,32 @@
           <div class="lhlp-bands">
             <div class="lhlp-band" data-band="elite">
               <div class="lhlp-band-name">Elite</div>
-              <div class="lhlp-band-range">&ge; +60</div>
+              <div class="lhlp-band-range">85&ndash;100</div>
               <div class="lhlp-band-blurb">All five pillars firmly positive. The strongest read.</div>
             </div>
             <div class="lhlp-band" data-band="high">
               <div class="lhlp-band-name">High Confidence</div>
-              <div class="lhlp-band-range">+30 to +60</div>
+              <div class="lhlp-band-range">80&ndash;84</div>
               <div class="lhlp-band-blurb">Most pillars positive, maybe one mixed. Solid long-term posture.</div>
             </div>
             <div class="lhlp-band" data-band="constructive">
               <div class="lhlp-band-name">Constructive</div>
-              <div class="lhlp-band-range">+10 to +30</div>
+              <div class="lhlp-band-range">70&ndash;79</div>
               <div class="lhlp-band-blurb">More green than red. Watchable but not high-conviction.</div>
             </div>
             <div class="lhlp-band" data-band="monitor">
               <div class="lhlp-band-name">Monitor</div>
-              <div class="lhlp-band-range">&minus;10 to +10</div>
+              <div class="lhlp-band-range">60&ndash;69</div>
               <div class="lhlp-band-blurb">Mixed signals &mdash; the default neutral zone. Mostly noise.</div>
             </div>
             <div class="lhlp-band" data-band="weakening">
               <div class="lhlp-band-name">Weakening</div>
-              <div class="lhlp-band-range">&minus;30 to &minus;10</div>
+              <div class="lhlp-band-range">50&ndash;59</div>
               <div class="lhlp-band-blurb">Multiple pillars softening. Worth a fresh look at the thesis.</div>
             </div>
             <div class="lhlp-band" data-band="review">
               <div class="lhlp-band-name">Review</div>
-              <div class="lhlp-band-range">&le; &minus;30</div>
+              <div class="lhlp-band-range">0&ndash;49</div>
               <div class="lhlp-band-blurb">Broadly negative read. Re-underwrite or reduce.</div>
             </div>
           </div>
@@ -571,5 +571,6 @@
     <!-- Back-to-top UI affordance; extracted to an external file so the page
          can run under a strict CSP (`script-src 'self'`, no 'unsafe-inline'). -->
     <script src="./lthcs-help-back-top.js" defer></script>
+    <script type="module" src="./lthcs-help-bands.js"></script>
   </body>
 </html>
