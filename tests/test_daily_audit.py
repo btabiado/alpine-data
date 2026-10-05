@@ -583,7 +583,7 @@ def test_workflow_actions_are_pinned_to_shas(wf):
         assert re.fullmatch(r"[\w.-]+/[\w.-]+@[0-9a-f]{40}", u), u
     text = WORKFLOW.read_text()
     assert "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0" in text
-    assert "actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0" in text
+    assert "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0" in text
 
 
 def _step(wf, needle):
