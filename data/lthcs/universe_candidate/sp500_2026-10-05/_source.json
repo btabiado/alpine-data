@@ -1,0 +1,53 @@
+{
+ "fetched_at": "2026-10-05",
+ "sp500": {
+  "url": "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies",
+  "revision_id": 1376729338,
+  "page_last_edited": "2026-09-25T22:49Z",
+  "rows": 503,
+  "file": "_constituents_sp500.csv",
+  "note": "First table ('S&P 500 component stocks'). 503 rows = 500 companies incl. dual share classes (GOOGL/GOOG, FOXA/FOX, NWSA/NWS)."
+ },
+ "djia": {
+  "url": "https://en.wikipedia.org/wiki/Historical_components_of_the_Dow_Jones_Industrial_Average",
+  "revision_id": 1369743926,
+  "page_last_edited": "2026-08-16T21:54Z",
+  "latest_change": "2026-06-29: Alphabet (Class A, GOOGL) replaced Verizon (VZ). Confirmed by S&P Dow Jones Indices press release 'Alphabet Set to Join and Honeywell International to Remain in Dow Jones Industrial Average' (2026-06-23, press.spglobal.com).",
+  "components": [
+   "AAPL",
+   "AMGN",
+   "AMZN",
+   "AXP",
+   "BA",
+   "CAT",
+   "CRM",
+   "CSCO",
+   "CVX",
+   "DIS",
+   "GOOGL",
+   "GS",
+   "HD",
+   "HON",
+   "IBM",
+   "JNJ",
+   "JPM",
+   "KO",
+   "MCD",
+   "MMM",
+   "MRK",
+   "MSFT",
+   "NKE",
+   "NVDA",
+   "PG",
+   "SHW",
+   "TRV",
+   "UNH",
+   "V",
+   "WMT"
+  ]
+ },
+ "exchange": {
+  "url": "https://www.sec.gov/files/company_tickers_exchange.json",
+  "file": "_sec_exchange.json"
+ }
+}

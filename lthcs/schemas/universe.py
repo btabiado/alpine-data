@@ -22,9 +22,15 @@ MaturityStage = Literal[
     "recovery_operational",
     "recovery_earnings",
     "recovery_rerating",
+    # Banks / insurers / exchanges / asset managers. weights.json has had
+    # this profile since v1.3.0; the schema lagged behind it.
+    "financial",
 ]
 
-Exchange = Literal["NYSE", "NASDAQ", "AMEX"]
+# CBOE: Cboe Global Markets lists on its own exchange (S&P 500 member).
+Exchange = Literal["NYSE", "NASDAQ", "AMEX", "CBOE"]
+
+TechSubBucket = Literal["Hardware", "Semiconductors", "Software", "IT Services"]
 
 
 class UniverseEntry(BaseModel):
@@ -46,6 +52,14 @@ class UniverseEntry(BaseModel):
     # "growth_compounder: AI capex (+65%)" for NVDA. Documentation only;
     # not consumed by scoring code.
     maturity_note: Optional[str] = None
+    # Technology-sector cohort split used by lthcs.peer_groups (spec §5).
+    tech_sub_bucket: Optional[TechSubBucket] = None
+    # Provenance fields written by the universe-expansion tooling
+    # (scripts/lthcs_universe_expand.py, scripts/lthcs_universe_sp500_sync.py).
+    # Documentation only; scoring reads peer groups from peer_groups.json.
+    sector_group: Optional[str] = None
+    cik: Optional[str] = Field(default=None, pattern=r"^\d{10}$")
+    source: Optional[str] = None
 
     @field_validator("ticker")
     @classmethod

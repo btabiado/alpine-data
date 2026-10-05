@@ -1,0 +1,707 @@
+{
+ "added": [
+  "A",
+  "ACGL",
+  "ADM",
+  "AEE",
+  "AES",
+  "AFL",
+  "AIG",
+  "AIZ",
+  "AJG",
+  "AKAM",
+  "ALB",
+  "ALGN",
+  "ALL",
+  "ALLE",
+  "AMCR",
+  "AME",
+  "AMP",
+  "AON",
+  "AOS",
+  "APA",
+  "APD",
+  "APO",
+  "APP",
+  "APTV",
+  "ARE",
+  "ARES",
+  "ATO",
+  "AVY",
+  "AWK",
+  "AXON",
+  "AZO",
+  "BALL",
+  "BAX",
+  "BBY",
+  "BDX",
+  "BE",
+  "BEN",
+  "BF.B",
+  "BG",
+  "BNY",
+  "BR",
+  "BRO",
+  "BXP",
+  "CAH",
+  "CARR",
+  "CASY",
+  "CBOE",
+  "CBRE",
+  "CCI",
+  "CCL",
+  "CF",
+  "CFG",
+  "CHD",
+  "CHRW",
+  "CIEN",
+  "CINF",
+  "CLX",
+  "CMG",
+  "CMS",
+  "CNC",
+  "CNP",
+  "COHR",
+  "COIN",
+  "COO",
+  "COR",
+  "CPAY",
+  "CPRT",
+  "CPT",
+  "CRH",
+  "CRL",
+  "CTVA",
+  "CVNA",
+  "D",
+  "DAL",
+  "DD",
+  "DECK",
+  "DELL",
+  "DG",
+  "DGX",
+  "DHI",
+  "DLR",
+  "DLTR",
+  "DOC",
+  "DOV",
+  "DOW",
+  "DPZ",
+  "DRI",
+  "DTE",
+  "DVA",
+  "DVN",
+  "EBAY",
+  "ECHO",
+  "ED",
+  "EFX",
+  "EG",
+  "EIX",
+  "EL",
+  "EME",
+  "EQT",
+  "ERIE",
+  "ES",
+  "ESS",
+  "ETR",
+  "EVRG",
+  "EW",
+  "EXE",
+  "EXPD",
+  "EXPE",
+  "EXR",
+  "FDS",
+  "FDXF",
+  "FE",
+  "FERG",
+  "FFIV",
+  "FICO",
+  "FIS",
+  "FISV",
+  "FITB",
+  "FIX",
+  "FLEX",
+  "FOX",
+  "FOXA",
+  "FRT",
+  "FSLR",
+  "FTV",
+  "GDDY",
+  "GEN",
+  "GIS",
+  "GL",
+  "GNRC",
+  "GPC",
+  "GPN",
+  "GRMN",
+  "GWW",
+  "HAL",
+  "HAS",
+  "HBAN",
+  "HIG",
+  "HII",
+  "HONA",
+  "HOOD",
+  "HPE",
+  "HPQ",
+  "HRL",
+  "HSIC",
+  "HST",
+  "HSY",
+  "HUBB",
+  "HUM",
+  "IBKR",
+  "IEX",
+  "IFF",
+  "INCY",
+  "INVH",
+  "IP",
+  "IQV",
+  "IR",
+  "IRM",
+  "IT",
+  "IVZ",
+  "J",
+  "JBHT",
+  "JBL",
+  "JKHY",
+  "KEY",
+  "KEYS",
+  "KIM",
+  "KMB",
+  "KR",
+  "KVUE",
+  "L",
+  "LDOS",
+  "LEN",
+  "LH",
+  "LHX",
+  "LII",
+  "LITE",
+  "LNT",
+  "LUV",
+  "LVS",
+  "LYB",
+  "LYV",
+  "MAA",
+  "MAS",
+  "MGM",
+  "MKC",
+  "MLM",
+  "MOS",
+  "MRNA",
+  "MRSH",
+  "MSCI",
+  "MSI",
+  "MTB",
+  "MTD",
+  "NCLH",
+  "NDAQ",
+  "NDSN",
+  "NI",
+  "NRG",
+  "NTAP",
+  "NTRS",
+  "NUE",
+  "NVR",
+  "NWS",
+  "NWSA",
+  "O",
+  "OKE",
+  "OMC",
+  "OTIS",
+  "OXY",
+  "P",
+  "PCG",
+  "PEG",
+  "PFG",
+  "PHM",
+  "PKG",
+  "PLTR",
+  "PNR",
+  "PNW",
+  "PODD",
+  "PPG",
+  "PPL",
+  "PRU",
+  "PSA",
+  "PSKY",
+  "PTC",
+  "Q",
+  "RCL",
+  "RDDT",
+  "REG",
+  "RF",
+  "RJF",
+  "RL",
+  "RMD",
+  "ROK",
+  "ROL",
+  "RSG",
+  "RVTY",
+  "SBAC",
+  "SJM",
+  "SNA",
+  "SNDK",
+  "SOLV",
+  "SPGI",
+  "SRE",
+  "STE",
+  "STLD",
+  "STT",
+  "STZ",
+  "SW",
+  "SWK",
+  "SWKS",
+  "SYF",
+  "SYY",
+  "TDG",
+  "TDY",
+  "TECH",
+  "TEL",
+  "TER",
+  "TFC",
+  "TKO",
+  "TPL",
+  "TPR",
+  "TRGP",
+  "TRMB",
+  "TROW",
+  "TSCO",
+  "TSN",
+  "TXT",
+  "TYL",
+  "UAL",
+  "UDR",
+  "UHS",
+  "ULTA",
+  "URI",
+  "VEEV",
+  "VICI",
+  "VLTO",
+  "VMC",
+  "VMRK",
+  "VRSN",
+  "VRT",
+  "VST",
+  "VTR",
+  "VTRS",
+  "WAB",
+  "WAT",
+  "WEC",
+  "WRB",
+  "WSM",
+  "WST",
+  "WTW",
+  "WY",
+  "WYNN",
+  "XYL",
+  "XYZ",
+  "YUM",
+  "ZBH",
+  "ZBRA",
+  "ZTS"
+ ],
+ "restored": [
+  {
+   "ticker": "BNY",
+   "from": "BK"
+  }
+ ],
+ "index_changes": [
+  {
+   "ticker": "GOOGL",
+   "from": [
+    "S&P 500",
+    "S&P 100",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100",
+    "NASDAQ-100",
+    "DJIA"
+   ]
+  },
+  {
+   "ticker": "LCID",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "MDB",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "TEAM",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "TTD",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "VZ",
+   "from": [
+    "S&P 500",
+    "S&P 100",
+    "DJIA"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100"
+   ]
+  },
+  {
+   "ticker": "ZS",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "NASDAQ-100"
+   ]
+  }
+ ],
+ "exchange_changes": [
+  {
+   "ticker": "AZN",
+   "from": "NASDAQ",
+   "to": "NYSE"
+  },
+  {
+   "ticker": "KHC",
+   "from": "NASDAQ",
+   "to": "NYSE"
+  },
+  {
+   "ticker": "WMT",
+   "from": "NYSE",
+   "to": "NASDAQ"
+  },
+  {
+   "ticker": "ANET",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "APH",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "BSX",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "BX",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "CB",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "CI",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "CME",
+   "from": null,
+   "to": "NASDAQ"
+  },
+  {
+   "ticker": "CMI",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "CSX",
+   "from": null,
+   "to": "NASDAQ"
+  },
+  {
+   "ticker": "ECL",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "ELV",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "EOG",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "EQIX",
+   "from": null,
+   "to": "NASDAQ"
+  },
+  {
+   "ticker": "ETN",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "FCX",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "FDX",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "GEV",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "GLW",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "HCA",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "HLT",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "HWM",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "ICE",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "ITW",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "JCI",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "KKR",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "KMI",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "MCK",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "MCO",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "MPC",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "MPWR",
+   "from": null,
+   "to": "NASDAQ"
+  },
+  {
+   "ticker": "NEM",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "NOC",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "NSC",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "PGR",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "PH",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "PLD",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "PNC",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "PSX",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "PWR",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "SLB",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "STX",
+   "from": null,
+   "to": "NASDAQ"
+  },
+  {
+   "ticker": "SYK",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "TJX",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "TT",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "UBER",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "VLO",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "WDC",
+   "from": null,
+   "to": "NASDAQ"
+  },
+  {
+   "ticker": "WELL",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "WM",
+   "from": null,
+   "to": "NYSE"
+  },
+  {
+   "ticker": "WMB",
+   "from": null,
+   "to": "NYSE"
+  }
+ ],
+ "industry_filled": [
+  "ANET",
+  "APH",
+  "BSX",
+  "BX",
+  "CB",
+  "CI",
+  "CME",
+  "CMI",
+  "CSX",
+  "ECL",
+  "ELV",
+  "EOG",
+  "EQIX",
+  "ETN",
+  "FCX",
+  "FDX",
+  "GEV",
+  "GLW",
+  "HCA",
+  "HLT",
+  "HWM",
+  "ICE",
+  "ITW",
+  "JCI",
+  "KKR",
+  "KMI",
+  "MCK",
+  "MCO",
+  "MPC",
+  "MPWR",
+  "NEM",
+  "NOC",
+  "NSC",
+  "PGR",
+  "PH",
+  "PLD",
+  "PNC",
+  "PSX",
+  "PWR",
+  "SLB",
+  "STX",
+  "SYK",
+  "TJX",
+  "TT",
+  "UBER",
+  "VLO",
+  "WDC",
+  "WELL",
+  "WM",
+  "WMB"
+ ]
+}

@@ -250,6 +250,8 @@ function driftArrow(direction) {
 }
 
 function sparklineFor(direction) {
+  // No 30-day prior (new ticker): draw nothing rather than a flat line.
+  if (direction === 'insufficient') return '';
   if (direction === 'improving') return SPARKLINE_IMPROVING;
   if (direction === 'declining') return SPARKLINE_DECLINING;
   return SPARKLINE_STABLE;
@@ -446,6 +448,11 @@ async function fetchTrendMap(tickers, calcDate) {
     if (indexed && Array.isArray(indexed[ticker])) {
       return [ticker, computeTrend({ history: indexed[ticker] }, calcDate, row.score)];
     }
+    // The index is built from every history file at deploy time for this
+    // exact calc date, so a ticker absent from it has no history file yet
+    // (new to the universe). Fetching would only 404 — one request per new
+    // ticker, ~300 on the day the S&P 500 expansion lands.
+    if (indexed) return [ticker, { delta: null, direction: 'unknown', periodDays: null }];
     const url = `${HISTORY_BASE}/${encodeURIComponent(ticker)}.json`;
     try {
       const res = await fetch(url, { cache: 'no-store' });
@@ -498,7 +505,11 @@ function enrichScores(snapshot, universeByTicker) {
   const scores = (snapshot && snapshot.scores) || [];
   return scores.map((row) => {
     const uni = universeByTicker[row.ticker] || {};
-    const direction = classifyDrift(row.drift_30d);
+    // drift_30d is a 0.0 placeholder when the snapshot has no 30-day prior
+    // for this ticker (drift_unavailable, written by lthcs_daily stage 6);
+    // classify it apart from "stable" so it never reads as a flat trend.
+    const noPrior30 = Array.isArray(row.drift_unavailable) && row.drift_unavailable.includes('30d');
+    const direction = noPrior30 ? 'insufficient' : classifyDrift(row.drift_30d);
     const uiBand = uiBandFor(row.band);
     const driver = topDriver(row.subscores);
     const indexMembership = Array.isArray(uni.index_membership) ? uni.index_membership : [];
@@ -516,6 +527,7 @@ function enrichScores(snapshot, universeByTicker) {
       uiBand,
       drift30d: Number(row.drift_30d) || 0,
       driftDirection: direction,
+      isNew: row.history_points === 0,  // first day in the universe: no score history
       subscores: row.subscores || {},
       topDriverKey: driver ? driver.key : null,
       topDriverValue: driver ? driver.value : null,
@@ -692,12 +704,17 @@ function cardHTML(row) {
   const trendDir = trend.direction || 'unknown';
   const trendArrowChar = trendArrow(trendDir);
   const trendValue = formatTrendValue(trend.delta, trendDir);
-  const trendPeriodLabel = (trendDir === 'unknown' || !trend.periodDays)
-    ? '30d'
-    : `${trend.periodDays}d`;
-  const trendAria = trendDir === 'unknown'
-    ? 'Score trend unavailable'
-    : `${trendPeriodLabel} score change ${trendValue}`;
+  const isNewTicker = trendDir === 'unknown' && row.isNew;
+  const trendPeriodLabel = isNewTicker
+    ? 'New'
+    : (trendDir === 'unknown' || !trend.periodDays)
+      ? '30d'
+      : `${trend.periodDays}d`;
+  const trendAria = isNewTicker
+    ? 'New to the LTHCS universe: not enough score history for a trend yet'
+    : trendDir === 'unknown'
+      ? 'Score trend unavailable'
+      : `${trendPeriodLabel} score change ${trendValue}`;
 
   const driverLine = row.topDriverKey
     ? `Top: ${escapeHtml(pillarDisplayName(row.topDriverKey))} ${formatScore(row.topDriverValue)}`

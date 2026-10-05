@@ -268,11 +268,37 @@ async function fetchUniverse() {
   return (await fetchJSONSafe(UNIVERSE_URL)) || { tickers: [] };
 }
 
+// Deploy-time trimmed copy of every history/by_ticker file (built by
+// scripts/build_lthcs_site_index.py; same file the /lthcs/ card view uses).
+// One request instead of one per ticker — ~515 at S&P 500 scale.
+const TREND_INDEX_URL = HISTORY_BASE.replace(/by_ticker$/, 'trend_index.json');
+
+// The trend index, or null when it is absent (local dev), unreadable, or
+// built for a different calc date than the snapshot on screen (its rows are
+// trimmed relative to its own `latest`, so they are only exact for that day).
+async function fetchTrendIndex(calcDate) {
+  try {
+    const res = await fetch(TREND_INDEX_URL, { cache: 'no-store' });
+    if (!res.ok) return null;
+    const doc = await res.json();
+    if (!doc || doc.latest !== calcDate || !doc.tickers || typeof doc.tickers !== 'object') return null;
+    return doc.tickers;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchTrendMap(rows, calcDate) {
   if (!Array.isArray(rows) || !rows.length) return {};
+  const indexed = await fetchTrendIndex(calcDate);
   const fetches = rows.map(async (row) => {
     const ticker = row && row.ticker;
     if (!ticker) return [null, { delta: null, direction: 'unknown' }];
+    if (indexed && Array.isArray(indexed[ticker])) {
+      return [ticker, computeTrend({ history: indexed[ticker] }, calcDate, row.score)];
+    }
+    // Absent from a current index = no history file yet (new ticker).
+    if (indexed) return [ticker, { delta: null, direction: 'unknown' }];
     const url = `${HISTORY_BASE}/${encodeURIComponent(ticker)}.json`;
     try {
       const res = await fetch(url, { cache: 'no-store' });
@@ -309,7 +335,9 @@ function enrichScores(snapshot, universeByTicker) {
   const scores = (snapshot && snapshot.scores) || [];
   return scores.map((row) => {
     const uni = universeByTicker[row.ticker] || {};
-    const direction = classifyDrift(row.drift_30d);
+    // No 30-day prior (new ticker): not "stable" — the 0.0 is a placeholder.
+    const noPrior30 = Array.isArray(row.drift_unavailable) && row.drift_unavailable.includes('30d');
+    const direction = noPrior30 ? 'insufficient' : classifyDrift(row.drift_30d);
     const uiBand = uiBandFor(row.band);
     const indexMembership = Array.isArray(uni.index_membership) ? uni.index_membership : [];
     const indices = indexMembership.map((s) => INDEX_KEY_NORMALIZE[s]).filter(Boolean);

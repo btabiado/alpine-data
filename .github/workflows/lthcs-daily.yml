@@ -28,7 +28,16 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-24.04  # pinned: ubuntu-latest becomes 26.04 on 2026-10-19 and setup-python needs a toolcache build for the image
-    timeout-minutes: 60
+    # Sized for the ~515-active-ticker S&P 500 universe (2026-10-05). The
+    # pipeline is a sequential per-ticker fan-out (Yahoo + SEC EDGAR
+    # companyfacts / 8-K / Form 4 behind a shared SEC rate bucket), so it
+    # scales ~linearly: 30.7 min for 217 tickers on 2026-10-04 (run
+    # 37171345131, SEC working) -> ~75 min at 515, plus ~8 min for the
+    # throttled api-commit blob uploads (~540 files at 0.8 s). 180 leaves
+    # >2x headroom for a cold cache / SEC slowdowns while staying well under
+    # GitHub's 360-minute job ceiling. Finnhub is not on the critical path:
+    # FINNHUB_API_KEY is unset in this repo, so those calls short-circuit.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -46,6 +55,20 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      # Carry immutable SEC documents (13F filing extracts + per-filing
+      # indexes, Form 4 filing bodies) between nightly runs so the larger
+      # universe does not re-download them every night. Only entries with a
+      # TTL > 7 days survive the prune step below; prices, news and SEC
+      # submissions/companyfacts are always fetched fresh. The 13F extract
+      # cache is keyed by the CUSIP map so editing that map starts cold.
+      - name: Restore long-lived LTHCS response cache
+        uses: actions/cache/restore@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: .cache/lthcs
+          key: lthcs-sec-docs-v1-${{ hashFiles('data/lthcs/13f_cusip_map.json') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            lthcs-sec-docs-v1-${{ hashFiles('data/lthcs/13f_cusip_map.json') }}-
 
       - name: Run LTHCS daily pipeline (with --catch-up to fill any gaps)
         env:
@@ -108,3 +131,14 @@ jobs:
           # cron anyway).
           .github/scripts/api-commit.sh \
             "lthcs: daily snapshot $(date -u +%Y-%m-%d) [skip ci]"
+
+      - name: Prune response cache to long-lived entries
+        if: always()
+        run: python scripts/lthcs_prune_cache.py --root .cache/lthcs --min-ttl-days 7
+
+      - name: Save long-lived LTHCS response cache
+        if: always()
+        uses: actions/cache/save@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: .cache/lthcs
+          key: lthcs-sec-docs-v1-${{ hashFiles('data/lthcs/13f_cusip_map.json') }}-${{ github.run_id }}-${{ github.run_attempt }}

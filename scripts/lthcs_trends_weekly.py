@@ -240,6 +240,46 @@ def load_universe(path: Path) -> List[str]:
     return out
 
 
+def order_least_recently_covered(
+    tickers: List[str],
+    trends_dir: Path,
+    *,
+    exclude_week: Optional[str] = None,
+) -> List[str]:
+    """Reorder ``tickers`` so the ones covered least recently come first.
+
+    "Covered" = present with a non-empty ``series`` in a weekly snapshot
+    under ``trends_dir`` (``YYYY-Www.json``). Never-covered tickers lead;
+    ties keep universe order. Scheduling only: no data is carried between
+    weeks. Without this, a ~515-ticker universe processed alphabetically
+    under Google's rate limit would refresh A-F every week and never reach
+    the rest of the alphabet.
+    """
+    last: Dict[str, str] = {}
+    try:
+        files = sorted(Path(trends_dir).glob("*-W*.json"))
+    except OSError:
+        files = []
+    for f in files:
+        week = f.stem
+        if exclude_week and week == exclude_week:
+            continue
+        try:
+            with f.open("r", encoding="utf-8") as fh:
+                snap = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        rows = snap.get("tickers") if isinstance(snap, dict) else None
+        if not isinstance(rows, dict):
+            continue
+        for t, blob in rows.items():
+            if isinstance(blob, dict) and blob.get("series"):
+                if week > last.get(t.upper(), ""):
+                    last[t.upper()] = week
+    order = {t: i for i, t in enumerate(tickers)}
+    return sorted(tickers, key=lambda t: (last.get(t.upper(), ""), order[t]))
+
+
 # ---------------------------------------------------------------------------
 # Per-ticker cache
 # ---------------------------------------------------------------------------
@@ -389,7 +429,10 @@ def run_batch(args: argparse.Namespace, trend_req_factory: Any = None) -> Dict[s
     if args.tickers:
         tickers = [t.strip().upper() for t in args.tickers.split(",") if t.strip()]
     else:
-        tickers = load_universe(args.universe)
+        tickers = order_least_recently_covered(
+            load_universe(args.universe), Path(args.data_root) / "trends",
+            exclude_week=week,
+        )
 
     if not tickers:
         logger.warning("No tickers to process. Exiting.")

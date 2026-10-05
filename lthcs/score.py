@@ -404,6 +404,30 @@ def compute_drift(
     return out
 
 
+def drift_windows_without_prior(
+    prior_scores: Optional[Dict[str, Optional[float]]],
+) -> List[str]:
+    """Windows whose drift is 0.0 only because no comparable prior exists.
+
+    :func:`compute_drift` keeps its numeric contract (0.0 for a missing
+    prior), so consumers cannot tell "flat" from "no history" by the number
+    alone. This list makes the difference explicit: a ticker added to the
+    universe today reports every window here, and the UI / narratives show
+    "not enough history" instead of a flat trend.
+    """
+    priors = prior_scores or {}
+    out: List[str] = []
+    for win in _DRIFT_WINDOWS:
+        prev = priors.get(win)
+        try:
+            pv = float(prev) if prev is not None else None
+        except (TypeError, ValueError):
+            pv = None
+        if pv is None or math.isnan(pv):
+            out.append(win)
+    return out
+
+
 # --- Confidence -------------------------------------------------------------
 
 def _confidence_from_flags(data_quality_flags: Optional[List[str]]) -> str:
@@ -541,6 +565,7 @@ def compute_lthcs_score(
         "drift_7d": drift["drift_7d"],
         "drift_30d": drift["drift_30d"],
         "drift_90d": drift["drift_90d"],
+        "drift_unavailable": drift_windows_without_prior(prior_scores),
         "confidence_level": confidence_level,
         "data_quality_flags": list(data_quality_flags or []),
         "subscores": subscores_out,

@@ -1,0 +1,1209 @@
+{
+  "failed": [],
+  "failed_count": 0,
+  "generated_at": "2026-10-05T01:26:07Z",
+  "passed": [
+    {
+      "ticker": "A",
+      "warnings": []
+    },
+    {
+      "ticker": "ACGL",
+      "warnings": []
+    },
+    {
+      "ticker": "ADM",
+      "warnings": []
+    },
+    {
+      "ticker": "AEE",
+      "warnings": []
+    },
+    {
+      "ticker": "AES",
+      "warnings": []
+    },
+    {
+      "ticker": "AFL",
+      "warnings": []
+    },
+    {
+      "ticker": "AIG",
+      "warnings": []
+    },
+    {
+      "ticker": "AIZ",
+      "warnings": []
+    },
+    {
+      "ticker": "AJG",
+      "warnings": []
+    },
+    {
+      "ticker": "AKAM",
+      "warnings": []
+    },
+    {
+      "ticker": "ALB",
+      "warnings": []
+    },
+    {
+      "ticker": "ALGN",
+      "warnings": []
+    },
+    {
+      "ticker": "ALL",
+      "warnings": []
+    },
+    {
+      "ticker": "ALLE",
+      "warnings": []
+    },
+    {
+      "ticker": "AMCR",
+      "warnings": []
+    },
+    {
+      "ticker": "AME",
+      "warnings": []
+    },
+    {
+      "ticker": "AMP",
+      "warnings": []
+    },
+    {
+      "ticker": "AON",
+      "warnings": []
+    },
+    {
+      "ticker": "AOS",
+      "warnings": []
+    },
+    {
+      "ticker": "APA",
+      "warnings": []
+    },
+    {
+      "ticker": "APD",
+      "warnings": []
+    },
+    {
+      "ticker": "APO",
+      "warnings": []
+    },
+    {
+      "ticker": "APP",
+      "warnings": []
+    },
+    {
+      "ticker": "APTV",
+      "warnings": []
+    },
+    {
+      "ticker": "ARE",
+      "warnings": []
+    },
+    {
+      "ticker": "ARES",
+      "warnings": []
+    },
+    {
+      "ticker": "ATO",
+      "warnings": []
+    },
+    {
+      "ticker": "AVY",
+      "warnings": []
+    },
+    {
+      "ticker": "AWK",
+      "warnings": []
+    },
+    {
+      "ticker": "AXON",
+      "warnings": []
+    },
+    {
+      "ticker": "AZO",
+      "warnings": []
+    },
+    {
+      "ticker": "BALL",
+      "warnings": []
+    },
+    {
+      "ticker": "BAX",
+      "warnings": []
+    },
+    {
+      "ticker": "BBY",
+      "warnings": []
+    },
+    {
+      "ticker": "BDX",
+      "warnings": []
+    },
+    {
+      "ticker": "BE",
+      "warnings": []
+    },
+    {
+      "ticker": "BEN",
+      "warnings": []
+    },
+    {
+      "ticker": "BF.B",
+      "warnings": []
+    },
+    {
+      "ticker": "BG",
+      "warnings": []
+    },
+    {
+      "ticker": "BNY",
+      "warnings": []
+    },
+    {
+      "ticker": "BR",
+      "warnings": []
+    },
+    {
+      "ticker": "BRO",
+      "warnings": []
+    },
+    {
+      "ticker": "BXP",
+      "warnings": []
+    },
+    {
+      "ticker": "CAH",
+      "warnings": []
+    },
+    {
+      "ticker": "CARR",
+      "warnings": []
+    },
+    {
+      "ticker": "CASY",
+      "warnings": []
+    },
+    {
+      "ticker": "CBOE",
+      "warnings": []
+    },
+    {
+      "ticker": "CBRE",
+      "warnings": []
+    },
+    {
+      "ticker": "CCI",
+      "warnings": []
+    },
+    {
+      "ticker": "CCL",
+      "warnings": []
+    },
+    {
+      "ticker": "CF",
+      "warnings": []
+    },
+    {
+      "ticker": "CFG",
+      "warnings": []
+    },
+    {
+      "ticker": "CHD",
+      "warnings": []
+    },
+    {
+      "ticker": "CHRW",
+      "warnings": []
+    },
+    {
+      "ticker": "CIEN",
+      "warnings": []
+    },
+    {
+      "ticker": "CINF",
+      "warnings": []
+    },
+    {
+      "ticker": "CLX",
+      "warnings": []
+    },
+    {
+      "ticker": "CMG",
+      "warnings": []
+    },
+    {
+      "ticker": "CMS",
+      "warnings": []
+    },
+    {
+      "ticker": "CNC",
+      "warnings": []
+    },
+    {
+      "ticker": "CNP",
+      "warnings": []
+    },
+    {
+      "ticker": "COHR",
+      "warnings": []
+    },
+    {
+      "ticker": "COIN",
+      "warnings": []
+    },
+    {
+      "ticker": "COO",
+      "warnings": []
+    },
+    {
+      "ticker": "COR",
+      "warnings": []
+    },
+    {
+      "ticker": "CPAY",
+      "warnings": []
+    },
+    {
+      "ticker": "CPRT",
+      "warnings": []
+    },
+    {
+      "ticker": "CPT",
+      "warnings": []
+    },
+    {
+      "ticker": "CRH",
+      "warnings": []
+    },
+    {
+      "ticker": "CRL",
+      "warnings": []
+    },
+    {
+      "ticker": "CTVA",
+      "warnings": []
+    },
+    {
+      "ticker": "CVNA",
+      "warnings": []
+    },
+    {
+      "ticker": "D",
+      "warnings": []
+    },
+    {
+      "ticker": "DAL",
+      "warnings": []
+    },
+    {
+      "ticker": "DD",
+      "warnings": []
+    },
+    {
+      "ticker": "DECK",
+      "warnings": []
+    },
+    {
+      "ticker": "DELL",
+      "warnings": []
+    },
+    {
+      "ticker": "DG",
+      "warnings": []
+    },
+    {
+      "ticker": "DGX",
+      "warnings": []
+    },
+    {
+      "ticker": "DHI",
+      "warnings": []
+    },
+    {
+      "ticker": "DLR",
+      "warnings": []
+    },
+    {
+      "ticker": "DLTR",
+      "warnings": []
+    },
+    {
+      "ticker": "DOC",
+      "warnings": []
+    },
+    {
+      "ticker": "DOV",
+      "warnings": []
+    },
+    {
+      "ticker": "DOW",
+      "warnings": []
+    },
+    {
+      "ticker": "DPZ",
+      "warnings": []
+    },
+    {
+      "ticker": "DRI",
+      "warnings": []
+    },
+    {
+      "ticker": "DTE",
+      "warnings": []
+    },
+    {
+      "ticker": "DVA",
+      "warnings": []
+    },
+    {
+      "ticker": "DVN",
+      "warnings": []
+    },
+    {
+      "ticker": "EBAY",
+      "warnings": []
+    },
+    {
+      "ticker": "ECHO",
+      "warnings": []
+    },
+    {
+      "ticker": "ED",
+      "warnings": []
+    },
+    {
+      "ticker": "EFX",
+      "warnings": []
+    },
+    {
+      "ticker": "EG",
+      "warnings": []
+    },
+    {
+      "ticker": "EIX",
+      "warnings": []
+    },
+    {
+      "ticker": "EL",
+      "warnings": []
+    },
+    {
+      "ticker": "EME",
+      "warnings": []
+    },
+    {
+      "ticker": "EQT",
+      "warnings": []
+    },
+    {
+      "ticker": "ERIE",
+      "warnings": []
+    },
+    {
+      "ticker": "ES",
+      "warnings": []
+    },
+    {
+      "ticker": "ESS",
+      "warnings": []
+    },
+    {
+      "ticker": "ETR",
+      "warnings": []
+    },
+    {
+      "ticker": "EVRG",
+      "warnings": []
+    },
+    {
+      "ticker": "EW",
+      "warnings": []
+    },
+    {
+      "ticker": "EXE",
+      "warnings": []
+    },
+    {
+      "ticker": "EXPD",
+      "warnings": []
+    },
+    {
+      "ticker": "EXPE",
+      "warnings": []
+    },
+    {
+      "ticker": "EXR",
+      "warnings": []
+    },
+    {
+      "ticker": "FDS",
+      "warnings": []
+    },
+    {
+      "ticker": "FDXF",
+      "warnings": []
+    },
+    {
+      "ticker": "FE",
+      "warnings": []
+    },
+    {
+      "ticker": "FERG",
+      "warnings": []
+    },
+    {
+      "ticker": "FFIV",
+      "warnings": []
+    },
+    {
+      "ticker": "FICO",
+      "warnings": []
+    },
+    {
+      "ticker": "FIS",
+      "warnings": []
+    },
+    {
+      "ticker": "FISV",
+      "warnings": []
+    },
+    {
+      "ticker": "FITB",
+      "warnings": []
+    },
+    {
+      "ticker": "FIX",
+      "warnings": []
+    },
+    {
+      "ticker": "FLEX",
+      "warnings": []
+    },
+    {
+      "ticker": "FOX",
+      "warnings": []
+    },
+    {
+      "ticker": "FOXA",
+      "warnings": []
+    },
+    {
+      "ticker": "FRT",
+      "warnings": []
+    },
+    {
+      "ticker": "FSLR",
+      "warnings": []
+    },
+    {
+      "ticker": "FTV",
+      "warnings": []
+    },
+    {
+      "ticker": "GDDY",
+      "warnings": []
+    },
+    {
+      "ticker": "GEN",
+      "warnings": []
+    },
+    {
+      "ticker": "GIS",
+      "warnings": []
+    },
+    {
+      "ticker": "GL",
+      "warnings": []
+    },
+    {
+      "ticker": "GNRC",
+      "warnings": []
+    },
+    {
+      "ticker": "GPC",
+      "warnings": []
+    },
+    {
+      "ticker": "GPN",
+      "warnings": []
+    },
+    {
+      "ticker": "GRMN",
+      "warnings": []
+    },
+    {
+      "ticker": "GWW",
+      "warnings": []
+    },
+    {
+      "ticker": "HAL",
+      "warnings": []
+    },
+    {
+      "ticker": "HAS",
+      "warnings": []
+    },
+    {
+      "ticker": "HBAN",
+      "warnings": []
+    },
+    {
+      "ticker": "HIG",
+      "warnings": []
+    },
+    {
+      "ticker": "HII",
+      "warnings": []
+    },
+    {
+      "ticker": "HONA",
+      "warnings": []
+    },
+    {
+      "ticker": "HOOD",
+      "warnings": []
+    },
+    {
+      "ticker": "HPE",
+      "warnings": []
+    },
+    {
+      "ticker": "HPQ",
+      "warnings": []
+    },
+    {
+      "ticker": "HRL",
+      "warnings": []
+    },
+    {
+      "ticker": "HSIC",
+      "warnings": []
+    },
+    {
+      "ticker": "HST",
+      "warnings": []
+    },
+    {
+      "ticker": "HSY",
+      "warnings": []
+    },
+    {
+      "ticker": "HUBB",
+      "warnings": []
+    },
+    {
+      "ticker": "HUM",
+      "warnings": []
+    },
+    {
+      "ticker": "IBKR",
+      "warnings": []
+    },
+    {
+      "ticker": "IEX",
+      "warnings": []
+    },
+    {
+      "ticker": "IFF",
+      "warnings": []
+    },
+    {
+      "ticker": "INCY",
+      "warnings": []
+    },
+    {
+      "ticker": "INVH",
+      "warnings": []
+    },
+    {
+      "ticker": "IP",
+      "warnings": []
+    },
+    {
+      "ticker": "IQV",
+      "warnings": []
+    },
+    {
+      "ticker": "IR",
+      "warnings": []
+    },
+    {
+      "ticker": "IRM",
+      "warnings": []
+    },
+    {
+      "ticker": "IT",
+      "warnings": []
+    },
+    {
+      "ticker": "IVZ",
+      "warnings": []
+    },
+    {
+      "ticker": "J",
+      "warnings": []
+    },
+    {
+      "ticker": "JBHT",
+      "warnings": []
+    },
+    {
+      "ticker": "JBL",
+      "warnings": []
+    },
+    {
+      "ticker": "JKHY",
+      "warnings": []
+    },
+    {
+      "ticker": "KEY",
+      "warnings": []
+    },
+    {
+      "ticker": "KEYS",
+      "warnings": []
+    },
+    {
+      "ticker": "KIM",
+      "warnings": []
+    },
+    {
+      "ticker": "KMB",
+      "warnings": []
+    },
+    {
+      "ticker": "KR",
+      "warnings": []
+    },
+    {
+      "ticker": "KVUE",
+      "warnings": []
+    },
+    {
+      "ticker": "L",
+      "warnings": []
+    },
+    {
+      "ticker": "LDOS",
+      "warnings": []
+    },
+    {
+      "ticker": "LEN",
+      "warnings": []
+    },
+    {
+      "ticker": "LH",
+      "warnings": []
+    },
+    {
+      "ticker": "LHX",
+      "warnings": []
+    },
+    {
+      "ticker": "LII",
+      "warnings": []
+    },
+    {
+      "ticker": "LITE",
+      "warnings": []
+    },
+    {
+      "ticker": "LNT",
+      "warnings": []
+    },
+    {
+      "ticker": "LUV",
+      "warnings": []
+    },
+    {
+      "ticker": "LVS",
+      "warnings": []
+    },
+    {
+      "ticker": "LYB",
+      "warnings": []
+    },
+    {
+      "ticker": "LYV",
+      "warnings": []
+    },
+    {
+      "ticker": "MAA",
+      "warnings": []
+    },
+    {
+      "ticker": "MAS",
+      "warnings": []
+    },
+    {
+      "ticker": "MGM",
+      "warnings": []
+    },
+    {
+      "ticker": "MKC",
+      "warnings": []
+    },
+    {
+      "ticker": "MLM",
+      "warnings": []
+    },
+    {
+      "ticker": "MOS",
+      "warnings": []
+    },
+    {
+      "ticker": "MRNA",
+      "warnings": []
+    },
+    {
+      "ticker": "MRSH",
+      "warnings": []
+    },
+    {
+      "ticker": "MSCI",
+      "warnings": []
+    },
+    {
+      "ticker": "MSI",
+      "warnings": []
+    },
+    {
+      "ticker": "MTB",
+      "warnings": []
+    },
+    {
+      "ticker": "MTD",
+      "warnings": []
+    },
+    {
+      "ticker": "NCLH",
+      "warnings": []
+    },
+    {
+      "ticker": "NDAQ",
+      "warnings": []
+    },
+    {
+      "ticker": "NDSN",
+      "warnings": []
+    },
+    {
+      "ticker": "NI",
+      "warnings": []
+    },
+    {
+      "ticker": "NRG",
+      "warnings": []
+    },
+    {
+      "ticker": "NTAP",
+      "warnings": []
+    },
+    {
+      "ticker": "NTRS",
+      "warnings": []
+    },
+    {
+      "ticker": "NUE",
+      "warnings": []
+    },
+    {
+      "ticker": "NVR",
+      "warnings": []
+    },
+    {
+      "ticker": "NWS",
+      "warnings": []
+    },
+    {
+      "ticker": "NWSA",
+      "warnings": []
+    },
+    {
+      "ticker": "O",
+      "warnings": []
+    },
+    {
+      "ticker": "OKE",
+      "warnings": []
+    },
+    {
+      "ticker": "OMC",
+      "warnings": []
+    },
+    {
+      "ticker": "OTIS",
+      "warnings": []
+    },
+    {
+      "ticker": "OXY",
+      "warnings": []
+    },
+    {
+      "ticker": "P",
+      "warnings": []
+    },
+    {
+      "ticker": "PCG",
+      "warnings": []
+    },
+    {
+      "ticker": "PEG",
+      "warnings": []
+    },
+    {
+      "ticker": "PFG",
+      "warnings": []
+    },
+    {
+      "ticker": "PHM",
+      "warnings": []
+    },
+    {
+      "ticker": "PKG",
+      "warnings": []
+    },
+    {
+      "ticker": "PLTR",
+      "warnings": []
+    },
+    {
+      "ticker": "PNR",
+      "warnings": []
+    },
+    {
+      "ticker": "PNW",
+      "warnings": []
+    },
+    {
+      "ticker": "PODD",
+      "warnings": []
+    },
+    {
+      "ticker": "PPG",
+      "warnings": []
+    },
+    {
+      "ticker": "PPL",
+      "warnings": []
+    },
+    {
+      "ticker": "PRU",
+      "warnings": []
+    },
+    {
+      "ticker": "PSA",
+      "warnings": []
+    },
+    {
+      "ticker": "PSKY",
+      "warnings": []
+    },
+    {
+      "ticker": "PTC",
+      "warnings": []
+    },
+    {
+      "ticker": "Q",
+      "warnings": []
+    },
+    {
+      "ticker": "RCL",
+      "warnings": []
+    },
+    {
+      "ticker": "RDDT",
+      "warnings": []
+    },
+    {
+      "ticker": "REG",
+      "warnings": []
+    },
+    {
+      "ticker": "RF",
+      "warnings": []
+    },
+    {
+      "ticker": "RJF",
+      "warnings": []
+    },
+    {
+      "ticker": "RL",
+      "warnings": []
+    },
+    {
+      "ticker": "RMD",
+      "warnings": []
+    },
+    {
+      "ticker": "ROK",
+      "warnings": []
+    },
+    {
+      "ticker": "ROL",
+      "warnings": []
+    },
+    {
+      "ticker": "RSG",
+      "warnings": []
+    },
+    {
+      "ticker": "RVTY",
+      "warnings": []
+    },
+    {
+      "ticker": "SBAC",
+      "warnings": []
+    },
+    {
+      "ticker": "SJM",
+      "warnings": []
+    },
+    {
+      "ticker": "SNA",
+      "warnings": []
+    },
+    {
+      "ticker": "SNDK",
+      "warnings": []
+    },
+    {
+      "ticker": "SOLV",
+      "warnings": []
+    },
+    {
+      "ticker": "SPGI",
+      "warnings": []
+    },
+    {
+      "ticker": "SRE",
+      "warnings": []
+    },
+    {
+      "ticker": "STE",
+      "warnings": []
+    },
+    {
+      "ticker": "STLD",
+      "warnings": []
+    },
+    {
+      "ticker": "STT",
+      "warnings": []
+    },
+    {
+      "ticker": "STZ",
+      "warnings": []
+    },
+    {
+      "ticker": "SW",
+      "warnings": []
+    },
+    {
+      "ticker": "SWK",
+      "warnings": []
+    },
+    {
+      "ticker": "SWKS",
+      "warnings": []
+    },
+    {
+      "ticker": "SYF",
+      "warnings": []
+    },
+    {
+      "ticker": "SYY",
+      "warnings": []
+    },
+    {
+      "ticker": "TDG",
+      "warnings": []
+    },
+    {
+      "ticker": "TDY",
+      "warnings": []
+    },
+    {
+      "ticker": "TECH",
+      "warnings": []
+    },
+    {
+      "ticker": "TEL",
+      "warnings": []
+    },
+    {
+      "ticker": "TER",
+      "warnings": []
+    },
+    {
+      "ticker": "TFC",
+      "warnings": []
+    },
+    {
+      "ticker": "TKO",
+      "warnings": []
+    },
+    {
+      "ticker": "TPL",
+      "warnings": []
+    },
+    {
+      "ticker": "TPR",
+      "warnings": []
+    },
+    {
+      "ticker": "TRGP",
+      "warnings": []
+    },
+    {
+      "ticker": "TRMB",
+      "warnings": []
+    },
+    {
+      "ticker": "TROW",
+      "warnings": []
+    },
+    {
+      "ticker": "TSCO",
+      "warnings": []
+    },
+    {
+      "ticker": "TSN",
+      "warnings": []
+    },
+    {
+      "ticker": "TXT",
+      "warnings": []
+    },
+    {
+      "ticker": "TYL",
+      "warnings": []
+    },
+    {
+      "ticker": "UAL",
+      "warnings": []
+    },
+    {
+      "ticker": "UDR",
+      "warnings": []
+    },
+    {
+      "ticker": "UHS",
+      "warnings": []
+    },
+    {
+      "ticker": "ULTA",
+      "warnings": []
+    },
+    {
+      "ticker": "URI",
+      "warnings": []
+    },
+    {
+      "ticker": "VEEV",
+      "warnings": []
+    },
+    {
+      "ticker": "VICI",
+      "warnings": []
+    },
+    {
+      "ticker": "VLTO",
+      "warnings": []
+    },
+    {
+      "ticker": "VMC",
+      "warnings": []
+    },
+    {
+      "ticker": "VMRK",
+      "warnings": []
+    },
+    {
+      "ticker": "VRSN",
+      "warnings": []
+    },
+    {
+      "ticker": "VRT",
+      "warnings": []
+    },
+    {
+      "ticker": "VST",
+      "warnings": []
+    },
+    {
+      "ticker": "VTR",
+      "warnings": []
+    },
+    {
+      "ticker": "VTRS",
+      "warnings": []
+    },
+    {
+      "ticker": "WAB",
+      "warnings": []
+    },
+    {
+      "ticker": "WAT",
+      "warnings": []
+    },
+    {
+      "ticker": "WEC",
+      "warnings": []
+    },
+    {
+      "ticker": "WRB",
+      "warnings": []
+    },
+    {
+      "ticker": "WSM",
+      "warnings": []
+    },
+    {
+      "ticker": "WST",
+      "warnings": []
+    },
+    {
+      "ticker": "WTW",
+      "warnings": []
+    },
+    {
+      "ticker": "WY",
+      "warnings": []
+    },
+    {
+      "ticker": "WYNN",
+      "warnings": []
+    },
+    {
+      "ticker": "XYL",
+      "warnings": []
+    },
+    {
+      "ticker": "XYZ",
+      "warnings": []
+    },
+    {
+      "ticker": "YUM",
+      "warnings": []
+    },
+    {
+      "ticker": "ZBH",
+      "warnings": []
+    },
+    {
+      "ticker": "ZBRA",
+      "warnings": []
+    },
+    {
+      "ticker": "ZTS",
+      "warnings": []
+    }
+  ],
+  "passed_count": 300,
+  "total": 300
+}

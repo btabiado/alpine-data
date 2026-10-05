@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "as_of": "2026-05-19",
-  "description": "Externalized ticker -> CUSIP map for the LTHCS Institutional Confidence pillar (Tier 3 #13 Phase 1). CUSIPs sourced from public 10-K cover pages and the OpenFIGI free tier. Multiple CUSIPs per ticker handle share classes / re-organizations. Each entry's name_aliases drive the fallback issuer-name match path in sec_13f._extract_holdings_for_universe when CUSIP matching fails.",
+  "as_of": "2026-10-05",
+  "description": "Externalized ticker -> CUSIP map for the LTHCS Institutional Confidence pillar (Tier 3 #13 Phase 1). CUSIPs sourced from public 10-K cover pages and the OpenFIGI free tier. Multiple CUSIPs per ticker handle share classes / re-organizations. Each entry's name_aliases drive the fallback issuer-name match path in sec_13f._extract_holdings_for_universe when CUSIP matching fails. 2026-10-05 S&P 500 sync: CUSIPs for added tickers (and the 50 Wave A placeholders) matched by issuer name + share class against the SEC Official List of Section 13(f) Securities, 2026 Q2 (https://www.sec.gov/files/investment/13flist2026q2-txt.txt); only unambiguous matches were written, the rest keep empty cusips and fall back to name_aliases.",
   "tickers": {
     "AAPL": {
       "cusips": [
@@ -1401,133 +1401,177 @@
       ]
     },
     "ANET": {
-      "cusips": [],
+      "cusips": [
+        "040413205"
+      ],
       "name_aliases": [
         "arista networks"
       ]
     },
     "APH": {
-      "cusips": [],
+      "cusips": [
+        "032095101"
+      ],
       "name_aliases": [
         "amphenol"
       ]
     },
     "BSX": {
-      "cusips": [],
+      "cusips": [
+        "101137107"
+      ],
       "name_aliases": [
         "boston scientific"
       ]
     },
     "BX": {
-      "cusips": [],
+      "cusips": [
+        "09260D107"
+      ],
       "name_aliases": [
         "blackstone"
       ]
     },
     "CB": {
-      "cusips": [],
+      "cusips": [
+        "H1467J104"
+      ],
       "name_aliases": [
         "chubb limited"
       ]
     },
     "CI": {
-      "cusips": [],
+      "cusips": [
+        "125523100"
+      ],
       "name_aliases": [
         "the cigna"
       ]
     },
     "CME": {
-      "cusips": [],
+      "cusips": [
+        "12572Q105"
+      ],
       "name_aliases": [
         "cme"
       ]
     },
     "CMI": {
-      "cusips": [],
+      "cusips": [
+        "231021106"
+      ],
       "name_aliases": [
         "cummins"
       ]
     },
     "CSX": {
-      "cusips": [],
+      "cusips": [
+        "126408103"
+      ],
       "name_aliases": [
         "csx"
       ]
     },
     "ECL": {
-      "cusips": [],
+      "cusips": [
+        "278865100"
+      ],
       "name_aliases": [
         "ecolab"
       ]
     },
     "ELV": {
-      "cusips": [],
+      "cusips": [
+        "036752103"
+      ],
       "name_aliases": [
         "elevance health"
       ]
     },
     "EOG": {
-      "cusips": [],
+      "cusips": [
+        "26875P101"
+      ],
       "name_aliases": [
         "eog resources"
       ]
     },
     "EQIX": {
-      "cusips": [],
+      "cusips": [
+        "29444U700"
+      ],
       "name_aliases": [
         "equinix"
       ]
     },
     "ETN": {
-      "cusips": [],
+      "cusips": [
+        "G29183103"
+      ],
       "name_aliases": [
         "eaton"
       ]
     },
     "FCX": {
-      "cusips": [],
+      "cusips": [
+        "35671D857"
+      ],
       "name_aliases": [
         "freeport-mcmoran"
       ]
     },
     "FDX": {
-      "cusips": [],
+      "cusips": [
+        "31428X106"
+      ],
       "name_aliases": [
         "fedex"
       ]
     },
     "GEV": {
-      "cusips": [],
+      "cusips": [
+        "36828A101"
+      ],
       "name_aliases": [
         "ge vernova"
       ]
     },
     "GLW": {
-      "cusips": [],
+      "cusips": [
+        "219350105"
+      ],
       "name_aliases": [
         "corning"
       ]
     },
     "HCA": {
-      "cusips": [],
+      "cusips": [
+        "40412C101"
+      ],
       "name_aliases": [
         "hca healthcare"
       ]
     },
     "HLT": {
-      "cusips": [],
+      "cusips": [
+        "43300A203"
+      ],
       "name_aliases": [
         "hilton worldwide"
       ]
     },
     "HWM": {
-      "cusips": [],
+      "cusips": [
+        "443201108"
+      ],
       "name_aliases": [
         "howmet aerospace"
       ]
     },
     "ICE": {
-      "cusips": [],
+      "cusips": [
+        "45866F104"
+      ],
       "name_aliases": [
         "intercontinental exchange"
       ]
@@ -1539,55 +1583,73 @@
       ]
     },
     "JCI": {
-      "cusips": [],
+      "cusips": [
+        "G51502105"
+      ],
       "name_aliases": [
         "johnson controls international"
       ]
     },
     "KKR": {
-      "cusips": [],
+      "cusips": [
+        "48251W104"
+      ],
       "name_aliases": [
         "kkr"
       ]
     },
     "KMI": {
-      "cusips": [],
+      "cusips": [
+        "49456B101"
+      ],
       "name_aliases": [
         "kinder morgan"
       ]
     },
     "MCK": {
-      "cusips": [],
+      "cusips": [
+        "58155Q103"
+      ],
       "name_aliases": [
         "mckesson"
       ]
     },
     "MCO": {
-      "cusips": [],
+      "cusips": [
+        "615369105"
+      ],
       "name_aliases": [
         "moody's"
       ]
     },
     "MPC": {
-      "cusips": [],
+      "cusips": [
+        "56585A102"
+      ],
       "name_aliases": [
         "marathon petroleum"
       ]
     },
     "MPWR": {
-      "cusips": [],
+      "cusips": [
+        "609839105"
+      ],
       "name_aliases": [
         "monolithic power systems"
       ]
     },
     "NEM": {
-      "cusips": [],
+      "cusips": [
+        "651639106"
+      ],
       "name_aliases": [
         "newmont"
       ]
     },
     "NOC": {
-      "cusips": [],
+      "cusips": [
+        "666807102"
+      ],
       "name_aliases": [
         "northrop grumman"
       ]
@@ -1599,105 +1661,2481 @@
       ]
     },
     "PGR": {
-      "cusips": [],
+      "cusips": [
+        "743315103"
+      ],
       "name_aliases": [
         "the progressive"
       ]
     },
     "PH": {
-      "cusips": [],
+      "cusips": [
+        "701094104"
+      ],
       "name_aliases": [
         "parker-hannifin"
       ]
     },
     "PLD": {
-      "cusips": [],
+      "cusips": [
+        "74340W103"
+      ],
       "name_aliases": [
         "prologis"
       ]
     },
     "PNC": {
-      "cusips": [],
+      "cusips": [
+        "693475105"
+      ],
       "name_aliases": [
         "the pnc financial services"
       ]
     },
     "PSX": {
-      "cusips": [],
+      "cusips": [
+        "718546104"
+      ],
       "name_aliases": [
         "phillips 66"
       ]
     },
     "PWR": {
-      "cusips": [],
+      "cusips": [
+        "74762E102"
+      ],
       "name_aliases": [
         "quanta services"
       ]
     },
     "SLB": {
-      "cusips": [],
+      "cusips": [
+        "806857108"
+      ],
       "name_aliases": [
         "slb"
       ]
     },
     "STX": {
-      "cusips": [],
+      "cusips": [
+        "G7997R103"
+      ],
       "name_aliases": [
         "seagate technology"
       ]
     },
     "SYK": {
-      "cusips": [],
+      "cusips": [
+        "863667101"
+      ],
       "name_aliases": [
         "stryker"
       ]
     },
     "TJX": {
-      "cusips": [],
+      "cusips": [
+        "872540109"
+      ],
       "name_aliases": [
         "the tjx companies"
       ]
     },
     "TT": {
-      "cusips": [],
+      "cusips": [
+        "G8994E103"
+      ],
       "name_aliases": [
         "trane technologies"
       ]
     },
     "UBER": {
-      "cusips": [],
+      "cusips": [
+        "90353T100"
+      ],
       "name_aliases": [
         "uber technologies"
       ]
     },
     "VLO": {
-      "cusips": [],
+      "cusips": [
+        "91913Y100"
+      ],
       "name_aliases": [
         "valero energy"
       ]
     },
     "WDC": {
-      "cusips": [],
+      "cusips": [
+        "958102105"
+      ],
       "name_aliases": [
         "western digital"
       ]
     },
     "WELL": {
-      "cusips": [],
+      "cusips": [
+        "95040Q104"
+      ],
       "name_aliases": [
         "welltower"
       ]
     },
     "WM": {
-      "cusips": [],
+      "cusips": [
+        "94106L109"
+      ],
       "name_aliases": [
         "waste management"
       ]
     },
     "WMB": {
-      "cusips": [],
+      "cusips": [
+        "969457100"
+      ],
       "name_aliases": [
         "the williams companies"
+      ]
+    },
+    "A": {
+      "cusips": [
+        "00846U101"
+      ],
+      "name_aliases": [
+        "agilent technologies"
+      ]
+    },
+    "ACGL": {
+      "cusips": [
+        "G0450A105"
+      ],
+      "name_aliases": [
+        "arch capital"
+      ]
+    },
+    "ADM": {
+      "cusips": [
+        "039483102"
+      ],
+      "name_aliases": [
+        "archer-daniels-midland"
+      ]
+    },
+    "AEE": {
+      "cusips": [
+        "023608102"
+      ],
+      "name_aliases": [
+        "ameren"
+      ]
+    },
+    "AES": {
+      "cusips": [
+        "00130H105"
+      ],
+      "name_aliases": [
+        "the aes"
+      ]
+    },
+    "AFL": {
+      "cusips": [
+        "001055102"
+      ],
+      "name_aliases": [
+        "aflac"
+      ]
+    },
+    "AIG": {
+      "cusips": [
+        "026874784"
+      ],
+      "name_aliases": [
+        "american international"
+      ]
+    },
+    "AIZ": {
+      "cusips": [
+        "04621X108"
+      ],
+      "name_aliases": [
+        "assurant"
+      ]
+    },
+    "AJG": {
+      "cusips": [],
+      "name_aliases": [
+        "arthur j. gallagher"
+      ]
+    },
+    "AKAM": {
+      "cusips": [
+        "00971T101"
+      ],
+      "name_aliases": [
+        "akamai technologies"
+      ]
+    },
+    "ALB": {
+      "cusips": [
+        "012653101"
+      ],
+      "name_aliases": [
+        "albemarle"
+      ]
+    },
+    "ALGN": {
+      "cusips": [
+        "016255101"
+      ],
+      "name_aliases": [
+        "align technology"
+      ]
+    },
+    "ALL": {
+      "cusips": [
+        "020002101"
+      ],
+      "name_aliases": [
+        "the allstate"
+      ]
+    },
+    "ALLE": {
+      "cusips": [
+        "G0176J109"
+      ],
+      "name_aliases": [
+        "allegion"
+      ]
+    },
+    "AMCR": {
+      "cusips": [
+        "G0250X149"
+      ],
+      "name_aliases": [
+        "amcor"
+      ]
+    },
+    "AME": {
+      "cusips": [
+        "031100100"
+      ],
+      "name_aliases": [
+        "ametek"
+      ]
+    },
+    "AMP": {
+      "cusips": [
+        "03076C106"
+      ],
+      "name_aliases": [
+        "ameriprise financial"
+      ]
+    },
+    "AON": {
+      "cusips": [
+        "G0403H108"
+      ],
+      "name_aliases": [
+        "aon"
+      ]
+    },
+    "AOS": {
+      "cusips": [
+        "831865209"
+      ],
+      "name_aliases": [
+        "a. o. smith"
+      ]
+    },
+    "APA": {
+      "cusips": [
+        "03743Q108"
+      ],
+      "name_aliases": [
+        "apa"
+      ]
+    },
+    "APD": {
+      "cusips": [
+        "009158106"
+      ],
+      "name_aliases": [
+        "air products and chemicals"
+      ]
+    },
+    "APO": {
+      "cusips": [
+        "03769M106"
+      ],
+      "name_aliases": [
+        "apollo global management"
+      ]
+    },
+    "APP": {
+      "cusips": [
+        "03831W108"
+      ],
+      "name_aliases": [
+        "applovin"
+      ]
+    },
+    "APTV": {
+      "cusips": [
+        "G3265R107"
+      ],
+      "name_aliases": [
+        "aptiv"
+      ]
+    },
+    "ARE": {
+      "cusips": [],
+      "name_aliases": [
+        "alexandria real estate equities"
+      ]
+    },
+    "ARES": {
+      "cusips": [
+        "03990B101"
+      ],
+      "name_aliases": [
+        "ares management"
+      ]
+    },
+    "ATO": {
+      "cusips": [
+        "049560105"
+      ],
+      "name_aliases": [
+        "atmos energy"
+      ]
+    },
+    "AVY": {
+      "cusips": [
+        "053611109"
+      ],
+      "name_aliases": [
+        "avery dennison"
+      ]
+    },
+    "AWK": {
+      "cusips": [],
+      "name_aliases": [
+        "american water works"
+      ]
+    },
+    "AXON": {
+      "cusips": [
+        "05464C101"
+      ],
+      "name_aliases": [
+        "axon enterprise"
+      ]
+    },
+    "AZO": {
+      "cusips": [
+        "053332102"
+      ],
+      "name_aliases": [
+        "autozone"
+      ]
+    },
+    "BALL": {
+      "cusips": [
+        "058498106"
+      ],
+      "name_aliases": [
+        "ball"
+      ]
+    },
+    "BAX": {
+      "cusips": [
+        "071813109"
+      ],
+      "name_aliases": [
+        "baxter international"
+      ]
+    },
+    "BBY": {
+      "cusips": [
+        "086516101"
+      ],
+      "name_aliases": [
+        "best buy"
+      ]
+    },
+    "BDX": {
+      "cusips": [
+        "075887109"
+      ],
+      "name_aliases": [
+        "becton, dickinson and"
+      ]
+    },
+    "BE": {
+      "cusips": [
+        "093712107"
+      ],
+      "name_aliases": [
+        "bloom energy"
+      ]
+    },
+    "BEN": {
+      "cusips": [
+        "354613101"
+      ],
+      "name_aliases": [
+        "franklin resources"
+      ]
+    },
+    "BF.B": {
+      "cusips": [
+        "115637209"
+      ],
+      "name_aliases": [
+        "brown-forman"
+      ]
+    },
+    "BG": {
+      "cusips": [
+        "H11356104"
+      ],
+      "name_aliases": [
+        "bunge global"
+      ]
+    },
+    "BNY": {
+      "cusips": [
+        "064058100"
+      ],
+      "name_aliases": [
+        "the bank of new york mellon"
+      ]
+    },
+    "BR": {
+      "cusips": [
+        "11133T103"
+      ],
+      "name_aliases": [
+        "broadridge financial solutions"
+      ]
+    },
+    "BRO": {
+      "cusips": [
+        "115236101"
+      ],
+      "name_aliases": [
+        "brown & brown"
+      ]
+    },
+    "BXP": {
+      "cusips": [
+        "101121101"
+      ],
+      "name_aliases": [
+        "bxp"
+      ]
+    },
+    "CAH": {
+      "cusips": [
+        "14149Y108"
+      ],
+      "name_aliases": [
+        "cardinal health"
+      ]
+    },
+    "CARR": {
+      "cusips": [
+        "14448C104"
+      ],
+      "name_aliases": [
+        "carrier global"
+      ]
+    },
+    "CASY": {
+      "cusips": [
+        "147528103"
+      ],
+      "name_aliases": [
+        "casey's general stores"
+      ]
+    },
+    "CBOE": {
+      "cusips": [
+        "12503M108"
+      ],
+      "name_aliases": [
+        "cboe global markets"
+      ]
+    },
+    "CBRE": {
+      "cusips": [
+        "12504L109"
+      ],
+      "name_aliases": [
+        "cbre"
+      ]
+    },
+    "CCI": {
+      "cusips": [
+        "22822V101"
+      ],
+      "name_aliases": [
+        "crown castle"
+      ]
+    },
+    "CCL": {
+      "cusips": [],
+      "name_aliases": [
+        "carnival"
+      ]
+    },
+    "CF": {
+      "cusips": [
+        "125269100"
+      ],
+      "name_aliases": [
+        "cf industries"
+      ]
+    },
+    "CFG": {
+      "cusips": [
+        "174610105"
+      ],
+      "name_aliases": [
+        "citizens financial"
+      ]
+    },
+    "CHD": {
+      "cusips": [
+        "171340102"
+      ],
+      "name_aliases": [
+        "church & dwight"
+      ]
+    },
+    "CHRW": {
+      "cusips": [
+        "12541W209"
+      ],
+      "name_aliases": [
+        "c.h. robinson worldwide"
+      ]
+    },
+    "CIEN": {
+      "cusips": [
+        "171779309"
+      ],
+      "name_aliases": [
+        "ciena"
+      ]
+    },
+    "CINF": {
+      "cusips": [
+        "172062101"
+      ],
+      "name_aliases": [
+        "cincinnati financial"
+      ]
+    },
+    "CLX": {
+      "cusips": [
+        "189054109"
+      ],
+      "name_aliases": [
+        "the clorox"
+      ]
+    },
+    "CMG": {
+      "cusips": [
+        "169656105"
+      ],
+      "name_aliases": [
+        "chipotle mexican grill"
+      ]
+    },
+    "CMS": {
+      "cusips": [
+        "125896100"
+      ],
+      "name_aliases": [
+        "cms energy"
+      ]
+    },
+    "CNC": {
+      "cusips": [
+        "15135B101"
+      ],
+      "name_aliases": [
+        "centene"
+      ]
+    },
+    "CNP": {
+      "cusips": [
+        "15189T107"
+      ],
+      "name_aliases": [
+        "centerpoint energy"
+      ]
+    },
+    "COHR": {
+      "cusips": [
+        "19247G107"
+      ],
+      "name_aliases": [
+        "coherent"
+      ]
+    },
+    "COIN": {
+      "cusips": [
+        "19260Q107"
+      ],
+      "name_aliases": [
+        "coinbase global"
+      ]
+    },
+    "COO": {
+      "cusips": [
+        "216648501"
+      ],
+      "name_aliases": [
+        "the cooper companies"
+      ]
+    },
+    "COR": {
+      "cusips": [
+        "03073E105"
+      ],
+      "name_aliases": [
+        "cencora"
+      ]
+    },
+    "CPAY": {
+      "cusips": [
+        "219948106"
+      ],
+      "name_aliases": [
+        "corpay"
+      ]
+    },
+    "CPRT": {
+      "cusips": [
+        "217204106"
+      ],
+      "name_aliases": [
+        "copart"
+      ]
+    },
+    "CPT": {
+      "cusips": [
+        "133131102"
+      ],
+      "name_aliases": [
+        "camden property trust"
+      ]
+    },
+    "CRH": {
+      "cusips": [
+        "G25508105"
+      ],
+      "name_aliases": [
+        "crh"
+      ]
+    },
+    "CRL": {
+      "cusips": [],
+      "name_aliases": [
+        "charles river laboratories"
+      ]
+    },
+    "CTVA": {
+      "cusips": [
+        "22052L104"
+      ],
+      "name_aliases": [
+        "corteva"
+      ]
+    },
+    "CVNA": {
+      "cusips": [
+        "146869102"
+      ],
+      "name_aliases": [
+        "carvana"
+      ]
+    },
+    "D": {
+      "cusips": [
+        "25746U109"
+      ],
+      "name_aliases": [
+        "dominion energy"
+      ]
+    },
+    "DAL": {
+      "cusips": [
+        "247361702"
+      ],
+      "name_aliases": [
+        "delta air lines"
+      ]
+    },
+    "DD": {
+      "cusips": [],
+      "name_aliases": [
+        "dupont de nemours"
+      ]
+    },
+    "DECK": {
+      "cusips": [
+        "243537107"
+      ],
+      "name_aliases": [
+        "deckers outdoor"
+      ]
+    },
+    "DELL": {
+      "cusips": [
+        "24703L202"
+      ],
+      "name_aliases": [
+        "dell technologies"
+      ]
+    },
+    "DG": {
+      "cusips": [
+        "256677105"
+      ],
+      "name_aliases": [
+        "dollar general"
+      ]
+    },
+    "DGX": {
+      "cusips": [
+        "74834L100"
+      ],
+      "name_aliases": [
+        "quest diagnostics"
+      ]
+    },
+    "DHI": {
+      "cusips": [
+        "23331A109"
+      ],
+      "name_aliases": [
+        "d.r. horton"
+      ]
+    },
+    "DLR": {
+      "cusips": [
+        "253868103"
+      ],
+      "name_aliases": [
+        "digital realty trust"
+      ]
+    },
+    "DLTR": {
+      "cusips": [
+        "256746108"
+      ],
+      "name_aliases": [
+        "dollar tree"
+      ]
+    },
+    "DOC": {
+      "cusips": [
+        "42250P103"
+      ],
+      "name_aliases": [
+        "healthpeak properties"
+      ]
+    },
+    "DOV": {
+      "cusips": [
+        "260003108"
+      ],
+      "name_aliases": [
+        "dover"
+      ]
+    },
+    "DOW": {
+      "cusips": [
+        "260557103"
+      ],
+      "name_aliases": [
+        "dow"
+      ]
+    },
+    "DPZ": {
+      "cusips": [
+        "25754A201"
+      ],
+      "name_aliases": [
+        "domino's pizza"
+      ]
+    },
+    "DRI": {
+      "cusips": [
+        "237194105"
+      ],
+      "name_aliases": [
+        "darden restaurants"
+      ]
+    },
+    "DTE": {
+      "cusips": [
+        "233331107"
+      ],
+      "name_aliases": [
+        "dte energy"
+      ]
+    },
+    "DVA": {
+      "cusips": [
+        "23918K108"
+      ],
+      "name_aliases": [
+        "davita"
+      ]
+    },
+    "DVN": {
+      "cusips": [
+        "25179M103"
+      ],
+      "name_aliases": [
+        "devon energy"
+      ]
+    },
+    "EBAY": {
+      "cusips": [
+        "278642103"
+      ],
+      "name_aliases": [
+        "ebay"
+      ]
+    },
+    "ECHO": {
+      "cusips": [
+        "278768106"
+      ],
+      "name_aliases": [
+        "echostar"
+      ]
+    },
+    "ED": {
+      "cusips": [
+        "209115104"
+      ],
+      "name_aliases": [
+        "consolidated edison"
+      ]
+    },
+    "EFX": {
+      "cusips": [
+        "294429105"
+      ],
+      "name_aliases": [
+        "equifax"
+      ]
+    },
+    "EG": {
+      "cusips": [
+        "G3223R108"
+      ],
+      "name_aliases": [
+        "everest"
+      ]
+    },
+    "EIX": {
+      "cusips": [
+        "281020107"
+      ],
+      "name_aliases": [
+        "edison international"
+      ]
+    },
+    "EL": {
+      "cusips": [],
+      "name_aliases": [
+        "the est\u00e9e lauder companies"
+      ]
+    },
+    "EME": {
+      "cusips": [
+        "29084Q100"
+      ],
+      "name_aliases": [
+        "emcor"
+      ]
+    },
+    "EQT": {
+      "cusips": [
+        "26884L109"
+      ],
+      "name_aliases": [
+        "eqt"
+      ]
+    },
+    "ERIE": {
+      "cusips": [],
+      "name_aliases": [
+        "erie indemnity"
+      ]
+    },
+    "ES": {
+      "cusips": [
+        "30040W108"
+      ],
+      "name_aliases": [
+        "eversource energy"
+      ]
+    },
+    "ESS": {
+      "cusips": [
+        "297178105"
+      ],
+      "name_aliases": [
+        "essex property trust"
+      ]
+    },
+    "ETR": {
+      "cusips": [
+        "29364G103"
+      ],
+      "name_aliases": [
+        "entergy"
+      ]
+    },
+    "EVRG": {
+      "cusips": [
+        "30034W106"
+      ],
+      "name_aliases": [
+        "evergy"
+      ]
+    },
+    "EW": {
+      "cusips": [
+        "28176E108"
+      ],
+      "name_aliases": [
+        "edwards lifesciences"
+      ]
+    },
+    "EXE": {
+      "cusips": [
+        "165167735"
+      ],
+      "name_aliases": [
+        "expand energy"
+      ]
+    },
+    "EXPD": {
+      "cusips": [],
+      "name_aliases": [
+        "expeditors international of washington"
+      ]
+    },
+    "EXPE": {
+      "cusips": [
+        "30212P303"
+      ],
+      "name_aliases": [
+        "expedia"
+      ]
+    },
+    "EXR": {
+      "cusips": [
+        "30225T102"
+      ],
+      "name_aliases": [
+        "extra space storage"
+      ]
+    },
+    "FDS": {
+      "cusips": [],
+      "name_aliases": [
+        "factset research systems"
+      ]
+    },
+    "FDXF": {
+      "cusips": [],
+      "name_aliases": [
+        "fedex freight holding"
+      ]
+    },
+    "FE": {
+      "cusips": [
+        "337932107"
+      ],
+      "name_aliases": [
+        "firstenergy"
+      ]
+    },
+    "FERG": {
+      "cusips": [
+        "31488V107"
+      ],
+      "name_aliases": [
+        "ferguson enterprises"
+      ]
+    },
+    "FFIV": {
+      "cusips": [
+        "315616102"
+      ],
+      "name_aliases": [
+        "f5"
+      ]
+    },
+    "FICO": {
+      "cusips": [
+        "303250104"
+      ],
+      "name_aliases": [
+        "fair isaac"
+      ]
+    },
+    "FIS": {
+      "cusips": [],
+      "name_aliases": [
+        "fidelity national information services"
+      ]
+    },
+    "FISV": {
+      "cusips": [
+        "337738108"
+      ],
+      "name_aliases": [
+        "fiserv"
+      ]
+    },
+    "FITB": {
+      "cusips": [
+        "316773100"
+      ],
+      "name_aliases": [
+        "fifth third bancorp"
+      ]
+    },
+    "FIX": {
+      "cusips": [
+        "199908104"
+      ],
+      "name_aliases": [
+        "comfort systems usa"
+      ]
+    },
+    "FLEX": {
+      "cusips": [
+        "Y2573F102"
+      ],
+      "name_aliases": [
+        "flex"
+      ]
+    },
+    "FOX": {
+      "cusips": [
+        "35137L204"
+      ],
+      "name_aliases": [
+        "fox"
+      ]
+    },
+    "FOXA": {
+      "cusips": [
+        "35137L105"
+      ],
+      "name_aliases": [
+        "fox"
+      ]
+    },
+    "FRT": {
+      "cusips": [
+        "313745101"
+      ],
+      "name_aliases": [
+        "federal realty investment trust"
+      ]
+    },
+    "FSLR": {
+      "cusips": [
+        "336433107"
+      ],
+      "name_aliases": [
+        "first solar"
+      ]
+    },
+    "FTV": {
+      "cusips": [
+        "34959J108"
+      ],
+      "name_aliases": [
+        "fortive"
+      ]
+    },
+    "GDDY": {
+      "cusips": [
+        "380237107"
+      ],
+      "name_aliases": [
+        "godaddy"
+      ]
+    },
+    "GEN": {
+      "cusips": [
+        "668771108"
+      ],
+      "name_aliases": [
+        "gen digital"
+      ]
+    },
+    "GIS": {
+      "cusips": [
+        "370334104"
+      ],
+      "name_aliases": [
+        "general mills"
+      ]
+    },
+    "GL": {
+      "cusips": [
+        "37959E102"
+      ],
+      "name_aliases": [
+        "globe life"
+      ]
+    },
+    "GNRC": {
+      "cusips": [
+        "368736104"
+      ],
+      "name_aliases": [
+        "generac"
+      ]
+    },
+    "GPC": {
+      "cusips": [
+        "372460105"
+      ],
+      "name_aliases": [
+        "genuine parts"
+      ]
+    },
+    "GPN": {
+      "cusips": [],
+      "name_aliases": [
+        "global payments"
+      ]
+    },
+    "GRMN": {
+      "cusips": [
+        "H2906T109"
+      ],
+      "name_aliases": [
+        "garmin"
+      ]
+    },
+    "GWW": {
+      "cusips": [
+        "384802104"
+      ],
+      "name_aliases": [
+        "w.w. grainger"
+      ]
+    },
+    "HAL": {
+      "cusips": [
+        "406216101"
+      ],
+      "name_aliases": [
+        "halliburton"
+      ]
+    },
+    "HAS": {
+      "cusips": [
+        "418056107"
+      ],
+      "name_aliases": [
+        "hasbro"
+      ]
+    },
+    "HBAN": {
+      "cusips": [
+        "446150104"
+      ],
+      "name_aliases": [
+        "huntington bancshares"
+      ]
+    },
+    "HIG": {
+      "cusips": [
+        "416515104"
+      ],
+      "name_aliases": [
+        "the hartford financial services"
+      ]
+    },
+    "HII": {
+      "cusips": [
+        "446413106"
+      ],
+      "name_aliases": [
+        "huntington ingalls industries"
+      ]
+    },
+    "HONA": {
+      "cusips": [],
+      "name_aliases": [
+        "honeywell aerospace"
+      ]
+    },
+    "HOOD": {
+      "cusips": [
+        "770700102"
+      ],
+      "name_aliases": [
+        "robinhood markets"
+      ]
+    },
+    "HPE": {
+      "cusips": [
+        "42824C109"
+      ],
+      "name_aliases": [
+        "hewlett packard enterprise"
+      ]
+    },
+    "HPQ": {
+      "cusips": [
+        "40434L105"
+      ],
+      "name_aliases": [
+        "hp"
+      ]
+    },
+    "HRL": {
+      "cusips": [
+        "440452100"
+      ],
+      "name_aliases": [
+        "hormel foods"
+      ]
+    },
+    "HSIC": {
+      "cusips": [],
+      "name_aliases": [
+        "henry schein"
+      ]
+    },
+    "HST": {
+      "cusips": [
+        "44107P104"
+      ],
+      "name_aliases": [
+        "host hotels & resorts"
+      ]
+    },
+    "HSY": {
+      "cusips": [
+        "427866108"
+      ],
+      "name_aliases": [
+        "the hershey"
+      ]
+    },
+    "HUBB": {
+      "cusips": [
+        "443510607"
+      ],
+      "name_aliases": [
+        "hubbell"
+      ]
+    },
+    "HUM": {
+      "cusips": [
+        "444859102"
+      ],
+      "name_aliases": [
+        "humana"
+      ]
+    },
+    "IBKR": {
+      "cusips": [
+        "45841N107"
+      ],
+      "name_aliases": [
+        "interactive brokers"
+      ]
+    },
+    "IEX": {
+      "cusips": [
+        "45167R104"
+      ],
+      "name_aliases": [
+        "idex"
+      ]
+    },
+    "IFF": {
+      "cusips": [
+        "459506101"
+      ],
+      "name_aliases": [
+        "international flavors & fragrances"
+      ]
+    },
+    "INCY": {
+      "cusips": [
+        "45337C102"
+      ],
+      "name_aliases": [
+        "incyte"
+      ]
+    },
+    "INVH": {
+      "cusips": [
+        "46187W107"
+      ],
+      "name_aliases": [
+        "invitation homes"
+      ]
+    },
+    "IP": {
+      "cusips": [
+        "460146103"
+      ],
+      "name_aliases": [
+        "international paper"
+      ]
+    },
+    "IQV": {
+      "cusips": [
+        "46266C105"
+      ],
+      "name_aliases": [
+        "iqvia"
+      ]
+    },
+    "IR": {
+      "cusips": [
+        "45687V106"
+      ],
+      "name_aliases": [
+        "ingersoll rand"
+      ]
+    },
+    "IRM": {
+      "cusips": [],
+      "name_aliases": [
+        "iron mountain"
+      ]
+    },
+    "IT": {
+      "cusips": [
+        "366651107"
+      ],
+      "name_aliases": [
+        "gartner"
+      ]
+    },
+    "IVZ": {
+      "cusips": [
+        "G491BT108"
+      ],
+      "name_aliases": [
+        "invesco"
+      ]
+    },
+    "J": {
+      "cusips": [
+        "46982L108"
+      ],
+      "name_aliases": [
+        "jacobs solutions"
+      ]
+    },
+    "JBHT": {
+      "cusips": [
+        "445658107"
+      ],
+      "name_aliases": [
+        "j.b. hunt transport services"
+      ]
+    },
+    "JBL": {
+      "cusips": [
+        "466313103"
+      ],
+      "name_aliases": [
+        "jabil"
+      ]
+    },
+    "JKHY": {
+      "cusips": [],
+      "name_aliases": [
+        "jack henry & associates"
+      ]
+    },
+    "KEY": {
+      "cusips": [
+        "493267108"
+      ],
+      "name_aliases": [
+        "keycorp"
+      ]
+    },
+    "KEYS": {
+      "cusips": [
+        "49338L103"
+      ],
+      "name_aliases": [
+        "keysight technologies"
+      ]
+    },
+    "KIM": {
+      "cusips": [
+        "49446R109"
+      ],
+      "name_aliases": [
+        "kimco realty"
+      ]
+    },
+    "KMB": {
+      "cusips": [
+        "494368103"
+      ],
+      "name_aliases": [
+        "kimberly-clark"
+      ]
+    },
+    "KR": {
+      "cusips": [
+        "501044101"
+      ],
+      "name_aliases": [
+        "the kroger"
+      ]
+    },
+    "KVUE": {
+      "cusips": [
+        "49177J102"
+      ],
+      "name_aliases": [
+        "kenvue"
+      ]
+    },
+    "L": {
+      "cusips": [
+        "540424108"
+      ],
+      "name_aliases": [
+        "loews"
+      ]
+    },
+    "LDOS": {
+      "cusips": [
+        "525327102"
+      ],
+      "name_aliases": [
+        "leidos"
+      ]
+    },
+    "LEN": {
+      "cusips": [
+        "526057104"
+      ],
+      "name_aliases": [
+        "lennar"
+      ]
+    },
+    "LH": {
+      "cusips": [
+        "504922105"
+      ],
+      "name_aliases": [
+        "labcorp"
+      ]
+    },
+    "LHX": {
+      "cusips": [
+        "502431109"
+      ],
+      "name_aliases": [
+        "l3harris technologies"
+      ]
+    },
+    "LII": {
+      "cusips": [
+        "526107107"
+      ],
+      "name_aliases": [
+        "lennox international"
+      ]
+    },
+    "LITE": {
+      "cusips": [
+        "55024U109"
+      ],
+      "name_aliases": [
+        "lumentum"
+      ]
+    },
+    "LNT": {
+      "cusips": [
+        "018802108"
+      ],
+      "name_aliases": [
+        "alliant energy"
+      ]
+    },
+    "LUV": {
+      "cusips": [],
+      "name_aliases": [
+        "southwest airlines"
+      ]
+    },
+    "LVS": {
+      "cusips": [
+        "517834107"
+      ],
+      "name_aliases": [
+        "las vegas sands"
+      ]
+    },
+    "LYB": {
+      "cusips": [
+        "N53745100"
+      ],
+      "name_aliases": [
+        "lyondellbasell industries n.v"
+      ]
+    },
+    "LYV": {
+      "cusips": [
+        "538034109"
+      ],
+      "name_aliases": [
+        "live nation entertainment"
+      ]
+    },
+    "MAA": {
+      "cusips": [],
+      "name_aliases": [
+        "mid-america apartment communities"
+      ]
+    },
+    "MAS": {
+      "cusips": [
+        "574599106"
+      ],
+      "name_aliases": [
+        "masco"
+      ]
+    },
+    "MGM": {
+      "cusips": [
+        "552953101"
+      ],
+      "name_aliases": [
+        "mgm resorts international"
+      ]
+    },
+    "MKC": {
+      "cusips": [
+        "579780206"
+      ],
+      "name_aliases": [
+        "mccormick"
+      ]
+    },
+    "MLM": {
+      "cusips": [
+        "573284106"
+      ],
+      "name_aliases": [
+        "martin marietta materials"
+      ]
+    },
+    "MOS": {
+      "cusips": [
+        "61945C103"
+      ],
+      "name_aliases": [
+        "the mosaic"
+      ]
+    },
+    "MRNA": {
+      "cusips": [
+        "60770K107"
+      ],
+      "name_aliases": [
+        "moderna"
+      ]
+    },
+    "MRSH": {
+      "cusips": [
+        "571748102"
+      ],
+      "name_aliases": [
+        "marsh mclennan"
+      ]
+    },
+    "MSCI": {
+      "cusips": [
+        "55354G100"
+      ],
+      "name_aliases": [
+        "msci"
+      ]
+    },
+    "MSI": {
+      "cusips": [
+        "620076307"
+      ],
+      "name_aliases": [
+        "motorola solutions"
+      ]
+    },
+    "MTB": {
+      "cusips": [],
+      "name_aliases": [
+        "m&t bank"
+      ]
+    },
+    "MTD": {
+      "cusips": [
+        "592688105"
+      ],
+      "name_aliases": [
+        "mettler-toledo international"
+      ]
+    },
+    "NCLH": {
+      "cusips": [
+        "G66721104"
+      ],
+      "name_aliases": [
+        "norwegian cruise line"
+      ]
+    },
+    "NDAQ": {
+      "cusips": [
+        "631103108"
+      ],
+      "name_aliases": [
+        "nasdaq"
+      ]
+    },
+    "NDSN": {
+      "cusips": [
+        "655663102"
+      ],
+      "name_aliases": [
+        "nordson"
+      ]
+    },
+    "NI": {
+      "cusips": [
+        "65473P105"
+      ],
+      "name_aliases": [
+        "nisource"
+      ]
+    },
+    "NRG": {
+      "cusips": [
+        "629377508"
+      ],
+      "name_aliases": [
+        "nrg energy"
+      ]
+    },
+    "NTAP": {
+      "cusips": [
+        "64110D104"
+      ],
+      "name_aliases": [
+        "netapp"
+      ]
+    },
+    "NTRS": {
+      "cusips": [
+        "665859104"
+      ],
+      "name_aliases": [
+        "northern trust"
+      ]
+    },
+    "NUE": {
+      "cusips": [
+        "670346105"
+      ],
+      "name_aliases": [
+        "nucor"
+      ]
+    },
+    "NVR": {
+      "cusips": [],
+      "name_aliases": [
+        "nvr"
+      ]
+    },
+    "NWS": {
+      "cusips": [
+        "65249B208"
+      ],
+      "name_aliases": [
+        "news"
+      ]
+    },
+    "NWSA": {
+      "cusips": [
+        "65249B109"
+      ],
+      "name_aliases": [
+        "news"
+      ]
+    },
+    "O": {
+      "cusips": [
+        "756109104"
+      ],
+      "name_aliases": [
+        "realty income"
+      ]
+    },
+    "OKE": {
+      "cusips": [
+        "682680103"
+      ],
+      "name_aliases": [
+        "oneok"
+      ]
+    },
+    "OMC": {
+      "cusips": [
+        "681919106"
+      ],
+      "name_aliases": [
+        "omnicom"
+      ]
+    },
+    "OTIS": {
+      "cusips": [
+        "68902V107"
+      ],
+      "name_aliases": [
+        "otis worldwide"
+      ]
+    },
+    "OXY": {
+      "cusips": [
+        "674599105"
+      ],
+      "name_aliases": [
+        "occidental petroleum"
+      ]
+    },
+    "P": {
+      "cusips": [
+        "74624M102"
+      ],
+      "name_aliases": [
+        "everpure"
+      ]
+    },
+    "PCG": {
+      "cusips": [
+        "69331C108"
+      ],
+      "name_aliases": [
+        "pg&e"
+      ]
+    },
+    "PEG": {
+      "cusips": [
+        "744573106"
+      ],
+      "name_aliases": [
+        "public service enterprise"
+      ]
+    },
+    "PFG": {
+      "cusips": [
+        "74251V102"
+      ],
+      "name_aliases": [
+        "principal financial"
+      ]
+    },
+    "PHM": {
+      "cusips": [],
+      "name_aliases": [
+        "pultegroup"
+      ]
+    },
+    "PKG": {
+      "cusips": [],
+      "name_aliases": [
+        "packaging of america"
+      ]
+    },
+    "PLTR": {
+      "cusips": [
+        "69608A108"
+      ],
+      "name_aliases": [
+        "palantir technologies"
+      ]
+    },
+    "PNR": {
+      "cusips": [
+        "G7S00T104"
+      ],
+      "name_aliases": [
+        "pentair"
+      ]
+    },
+    "PNW": {
+      "cusips": [
+        "723484101"
+      ],
+      "name_aliases": [
+        "pinnacle west capital"
+      ]
+    },
+    "PODD": {
+      "cusips": [
+        "45784P101"
+      ],
+      "name_aliases": [
+        "insulet"
+      ]
+    },
+    "PPG": {
+      "cusips": [
+        "693506107"
+      ],
+      "name_aliases": [
+        "ppg industries"
+      ]
+    },
+    "PPL": {
+      "cusips": [
+        "69351T106"
+      ],
+      "name_aliases": [
+        "ppl"
+      ]
+    },
+    "PRU": {
+      "cusips": [
+        "744320102"
+      ],
+      "name_aliases": [
+        "prudential financial"
+      ]
+    },
+    "PSA": {
+      "cusips": [
+        "74460D109"
+      ],
+      "name_aliases": [
+        "public storage"
+      ]
+    },
+    "PSKY": {
+      "cusips": [
+        "69932A204"
+      ],
+      "name_aliases": [
+        "paramount skydance"
+      ]
+    },
+    "PTC": {
+      "cusips": [
+        "69370C100"
+      ],
+      "name_aliases": [
+        "ptc"
+      ]
+    },
+    "Q": {
+      "cusips": [
+        "74743L100"
+      ],
+      "name_aliases": [
+        "qnity electronics"
+      ]
+    },
+    "RCL": {
+      "cusips": [
+        "V7780T103"
+      ],
+      "name_aliases": [
+        "royal caribbean cruises"
+      ]
+    },
+    "RDDT": {
+      "cusips": [
+        "75734B100"
+      ],
+      "name_aliases": [
+        "reddit"
+      ]
+    },
+    "REG": {
+      "cusips": [
+        "758849103"
+      ],
+      "name_aliases": [
+        "regency centers"
+      ]
+    },
+    "RF": {
+      "cusips": [
+        "7591EP100"
+      ],
+      "name_aliases": [
+        "regions financial"
+      ]
+    },
+    "RJF": {
+      "cusips": [
+        "754730109"
+      ],
+      "name_aliases": [
+        "raymond james financial"
+      ]
+    },
+    "RL": {
+      "cusips": [
+        "751212101"
+      ],
+      "name_aliases": [
+        "ralph lauren"
+      ]
+    },
+    "RMD": {
+      "cusips": [
+        "761152107"
+      ],
+      "name_aliases": [
+        "resmed"
+      ]
+    },
+    "ROK": {
+      "cusips": [
+        "773903109"
+      ],
+      "name_aliases": [
+        "rockwell automation"
+      ]
+    },
+    "ROL": {
+      "cusips": [
+        "775711104"
+      ],
+      "name_aliases": [
+        "rollins"
+      ]
+    },
+    "RSG": {
+      "cusips": [
+        "760759100"
+      ],
+      "name_aliases": [
+        "republic services"
+      ]
+    },
+    "RVTY": {
+      "cusips": [
+        "714046109"
+      ],
+      "name_aliases": [
+        "revvity"
+      ]
+    },
+    "SBAC": {
+      "cusips": [
+        "78410G104"
+      ],
+      "name_aliases": [
+        "sba communications"
+      ]
+    },
+    "SJM": {
+      "cusips": [],
+      "name_aliases": [
+        "the j. m. smucker"
+      ]
+    },
+    "SNA": {
+      "cusips": [
+        "833034101"
+      ],
+      "name_aliases": [
+        "snap-on"
+      ]
+    },
+    "SNDK": {
+      "cusips": [
+        "80004C200"
+      ],
+      "name_aliases": [
+        "sandisk"
+      ]
+    },
+    "SOLV": {
+      "cusips": [
+        "83444M101"
+      ],
+      "name_aliases": [
+        "solventum"
+      ]
+    },
+    "SPGI": {
+      "cusips": [
+        "78409V104"
+      ],
+      "name_aliases": [
+        "s&p global"
+      ]
+    },
+    "SRE": {
+      "cusips": [
+        "816851109"
+      ],
+      "name_aliases": [
+        "sempra"
+      ]
+    },
+    "STE": {
+      "cusips": [
+        "G8473T100"
+      ],
+      "name_aliases": [
+        "steris"
+      ]
+    },
+    "STLD": {
+      "cusips": [
+        "858119100"
+      ],
+      "name_aliases": [
+        "steel dynamics"
+      ]
+    },
+    "STT": {
+      "cusips": [],
+      "name_aliases": [
+        "state street"
+      ]
+    },
+    "STZ": {
+      "cusips": [
+        "21036P108"
+      ],
+      "name_aliases": [
+        "constellation brands"
+      ]
+    },
+    "SW": {
+      "cusips": [
+        "G8267P108"
+      ],
+      "name_aliases": [
+        "smurfit westrock"
+      ]
+    },
+    "SWK": {
+      "cusips": [
+        "854502101"
+      ],
+      "name_aliases": [
+        "stanley black & decker"
+      ]
+    },
+    "SWKS": {
+      "cusips": [
+        "83088M102"
+      ],
+      "name_aliases": [
+        "skyworks solutions"
+      ]
+    },
+    "SYF": {
+      "cusips": [
+        "87165B103"
+      ],
+      "name_aliases": [
+        "synchrony financial"
+      ]
+    },
+    "SYY": {
+      "cusips": [
+        "871829107"
+      ],
+      "name_aliases": [
+        "sysco"
+      ]
+    },
+    "TDG": {
+      "cusips": [
+        "893641100"
+      ],
+      "name_aliases": [
+        "transdigm"
+      ]
+    },
+    "TDY": {
+      "cusips": [
+        "879360105"
+      ],
+      "name_aliases": [
+        "teledyne technologies"
+      ]
+    },
+    "TECH": {
+      "cusips": [
+        "09073M104"
+      ],
+      "name_aliases": [
+        "bio-techne"
+      ]
+    },
+    "TEL": {
+      "cusips": [
+        "G87052109"
+      ],
+      "name_aliases": [
+        "te connectivity"
+      ]
+    },
+    "TER": {
+      "cusips": [
+        "880770102"
+      ],
+      "name_aliases": [
+        "teradyne"
+      ]
+    },
+    "TFC": {
+      "cusips": [
+        "89832Q109"
+      ],
+      "name_aliases": [
+        "truist financial"
+      ]
+    },
+    "TKO": {
+      "cusips": [
+        "87256C101"
+      ],
+      "name_aliases": [
+        "tko"
+      ]
+    },
+    "TPL": {
+      "cusips": [
+        "88262P102"
+      ],
+      "name_aliases": [
+        "texas pacific land"
+      ]
+    },
+    "TPR": {
+      "cusips": [
+        "876030107"
+      ],
+      "name_aliases": [
+        "tapestry"
+      ]
+    },
+    "TRGP": {
+      "cusips": [
+        "87612G101"
+      ],
+      "name_aliases": [
+        "targa resources"
+      ]
+    },
+    "TRMB": {
+      "cusips": [
+        "896239100"
+      ],
+      "name_aliases": [
+        "trimble"
+      ]
+    },
+    "TROW": {
+      "cusips": [
+        "74144T108"
+      ],
+      "name_aliases": [
+        "t. rowe price"
+      ]
+    },
+    "TSCO": {
+      "cusips": [
+        "892356106"
+      ],
+      "name_aliases": [
+        "tractor supply"
+      ]
+    },
+    "TSN": {
+      "cusips": [
+        "902494103"
+      ],
+      "name_aliases": [
+        "tyson foods"
+      ]
+    },
+    "TXT": {
+      "cusips": [
+        "883203101"
+      ],
+      "name_aliases": [
+        "textron"
+      ]
+    },
+    "TYL": {
+      "cusips": [
+        "902252105"
+      ],
+      "name_aliases": [
+        "tyler technologies"
+      ]
+    },
+    "UAL": {
+      "cusips": [],
+      "name_aliases": [
+        "united airlines"
+      ]
+    },
+    "UDR": {
+      "cusips": [
+        "902653104"
+      ],
+      "name_aliases": [
+        "udr"
+      ]
+    },
+    "UHS": {
+      "cusips": [
+        "913903100"
+      ],
+      "name_aliases": [
+        "universal health services"
+      ]
+    },
+    "ULTA": {
+      "cusips": [
+        "90384S303"
+      ],
+      "name_aliases": [
+        "ulta beauty"
+      ]
+    },
+    "URI": {
+      "cusips": [
+        "911363109"
+      ],
+      "name_aliases": [
+        "united rentals"
+      ]
+    },
+    "VEEV": {
+      "cusips": [
+        "922475108"
+      ],
+      "name_aliases": [
+        "veeva systems"
+      ]
+    },
+    "VICI": {
+      "cusips": [
+        "925652109"
+      ],
+      "name_aliases": [
+        "vici properties"
+      ]
+    },
+    "VLTO": {
+      "cusips": [
+        "92338C103"
+      ],
+      "name_aliases": [
+        "veralto"
+      ]
+    },
+    "VMC": {
+      "cusips": [
+        "929160109"
+      ],
+      "name_aliases": [
+        "vulcan materials"
+      ]
+    },
+    "VMRK": {
+      "cusips": [],
+      "name_aliases": [
+        "vivmark residential"
+      ]
+    },
+    "VRSN": {
+      "cusips": [
+        "92343E102"
+      ],
+      "name_aliases": [
+        "verisign"
+      ]
+    },
+    "VRT": {
+      "cusips": [
+        "92537N108"
+      ],
+      "name_aliases": [
+        "vertiv"
+      ]
+    },
+    "VST": {
+      "cusips": [
+        "92840M102"
+      ],
+      "name_aliases": [
+        "vistra"
+      ]
+    },
+    "VTR": {
+      "cusips": [
+        "92276F100"
+      ],
+      "name_aliases": [
+        "ventas"
+      ]
+    },
+    "VTRS": {
+      "cusips": [
+        "92556V106"
+      ],
+      "name_aliases": [
+        "viatris"
+      ]
+    },
+    "WAB": {
+      "cusips": [],
+      "name_aliases": [
+        "westinghouse air brake technologies"
+      ]
+    },
+    "WAT": {
+      "cusips": [
+        "941848103"
+      ],
+      "name_aliases": [
+        "waters"
+      ]
+    },
+    "WEC": {
+      "cusips": [
+        "92939U106"
+      ],
+      "name_aliases": [
+        "wec energy"
+      ]
+    },
+    "WRB": {
+      "cusips": [
+        "084423102"
+      ],
+      "name_aliases": [
+        "w. r. berkley"
+      ]
+    },
+    "WSM": {
+      "cusips": [
+        "969904101"
+      ],
+      "name_aliases": [
+        "williams-sonoma"
+      ]
+    },
+    "WST": {
+      "cusips": [],
+      "name_aliases": [
+        "west pharmaceutical services"
+      ]
+    },
+    "WTW": {
+      "cusips": [
+        "G96629103"
+      ],
+      "name_aliases": [
+        "willis towers watson public limited"
+      ]
+    },
+    "WY": {
+      "cusips": [
+        "962166104"
+      ],
+      "name_aliases": [
+        "weyerhaeuser"
+      ]
+    },
+    "WYNN": {
+      "cusips": [
+        "983134107"
+      ],
+      "name_aliases": [
+        "wynn resorts, limited"
+      ]
+    },
+    "XYL": {
+      "cusips": [
+        "98419M100"
+      ],
+      "name_aliases": [
+        "xylem"
+      ]
+    },
+    "XYZ": {
+      "cusips": [
+        "852234103"
+      ],
+      "name_aliases": [
+        "block"
+      ]
+    },
+    "YUM": {
+      "cusips": [
+        "988498101"
+      ],
+      "name_aliases": [
+        "yum! brands"
+      ]
+    },
+    "ZBH": {
+      "cusips": [
+        "98956P102"
+      ],
+      "name_aliases": [
+        "zimmer biomet"
+      ]
+    },
+    "ZBRA": {
+      "cusips": [
+        "989207105"
+      ],
+      "name_aliases": [
+        "zebra technologies"
+      ]
+    },
+    "ZTS": {
+      "cusips": [
+        "98978V103"
+      ],
+      "name_aliases": [
+        "zoetis"
       ]
     }
   }

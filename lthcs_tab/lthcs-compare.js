@@ -809,13 +809,15 @@ function buildColumn({ ticker, idx, total, row, universeEntry, accents }) {
     ['30d', row.drift_30d],
     ['90d', row.drift_90d],
   ];
+  const noPrior = new Set(row.drift_unavailable || []);
   for (const [label, value] of driftFields) {
     const stat = el('div', { className: 'lthcs-compare-drift-stat' });
     stat.appendChild(el('span', { className: 'lthcs-compare-drift-label', text: label }));
+    const missing = noPrior.has(label);  // no comparable prior: not a flat 0.0
     stat.appendChild(el('span', {
       className: 'lthcs-compare-drift-val',
-      text: fmtDrift(value),
-      attrs: { 'data-direction': driftDirection(value) },
+      text: missing ? '—' : fmtDrift(value),
+      attrs: { 'data-direction': missing ? 'unknown' : driftDirection(value) },
     }));
     driftWrap.appendChild(stat);
   }

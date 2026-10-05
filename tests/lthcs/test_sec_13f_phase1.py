@@ -452,6 +452,10 @@ def test_build_cusip_lookup_covers_full_universe_from_json() -> None:
     siblings = {
         "GOOG": {"GOOGL"},   # Class C CUSIP appears on both
         "GOOGL": {"GOOG"},
+        # Ticker change, same security: BNY Mellon traded as BK until
+        # 2026-07; the inactive BK entry keeps its (identical) CUSIP.
+        "BK": {"BNY"},
+        "BNY": {"BK"},
     }
     unresolved: list = []
     for ticker in tickers:

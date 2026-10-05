@@ -196,6 +196,7 @@ BANK_TICKERS = frozenset({
     "TFC",
     # Audit-driven cohort expansion (May 2026):
     "BK",
+    "BNY",  # BNY Mellon's current ticker (BK retired 2026-07); same company
     "COF",
     "SCHW",
     "BLK",
