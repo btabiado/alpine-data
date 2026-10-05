@@ -668,7 +668,7 @@
           ${t.inputs.map(i => `
             <div class="input ${i.status || 'missing'}">
               <span>${escapeHtml(i.name)}</span>
-              <span class="age">${escapeHtml(i.age_human || '—')}</span>
+              <span class="age"${i.cadence ? ` title="Source publishes ${escapeHtml(i.cadence)}; this age is expected"` : ''}>${escapeHtml(i.age_human || '—')}${i.cadence ? ` · ${escapeHtml(i.cadence)}` : ''}</span>
             </div>
           `).join('')}
         </div>
@@ -699,7 +699,7 @@
               <tr>
                 <td class="mono">${escapeHtml(r.name)}</td>
                 <td><span class="status-pill ${r.status}">${r.status}</span></td>
-                <td class="num">${escapeHtml(r.age_human || '—')}</td>
+                <td class="num">${escapeHtml(r.age_human || '—')}${r.cadence ? ` <span class="note-cell" style="display:inline">(${escapeHtml(r.cadence)})</span>` : ''}</td>
                 <td class="num">${formatBytes(r.size_bytes)}</td>
                 <td class="mono" title="${escapeHtml(r.mtime_iso || '')}">${formatTime(r.mtime_iso)}</td>
               </tr>

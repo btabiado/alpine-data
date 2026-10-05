@@ -16239,7 +16239,13 @@ function avBootAviation(DATA){
       });
     });
     // Entry render: as-of stamp + summary tiles + default (Pilots) sub-view.
-    document.getElementById("av-asof-stamp").textContent=D.asOf;
+    // The stamp names each source vintage plus its publication cadence when
+    // asOfComponents records one: the FAA airman roll is an ANNUAL study
+    // stamped Dec 31, so "Dec 31 2025" in October is the current roll, not a
+    // stale fetch. Falls back to the prose asOf when components are absent.
+    const avComps=(D.asOfComponents&&typeof D.asOfComponents==="object")?Object.values(D.asOfComponents):[];
+    const avStamp=avComps.filter(c=>c&&c.prose).map(c=>c.prose+(c.cadence?" ("+c.cadence+")":"")).join(" · ");
+    document.getElementById("av-asof-stamp").textContent=avStamp||D.asOf;
     // TSA is the tab's one daily feed; load it up front so the freshness
     // strip shows "TSA data through <date>" rather than "as of —".
     loadTsaLive().then(()=>{ try{ if(state&&state.tab==='aviation') renderTabFreshness(); }catch(_){} });

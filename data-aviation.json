@@ -4,7 +4,9 @@
   "asOfComponents": {
     "airmen": {
       "date": "2025-12-31",
-      "prose": "FAA airman data Dec 31 2025"
+      "prose": "FAA airman data Dec 31 2025",
+      "cadence": "annual",
+      "cadence_source": "FAA U.S. Civil Airmen Statistics is 'an annual study' (faa.gov/data_research/aviation_data_statistics/civil_airmen_statistics); checked 2026-10-05: newest roll listed is 2025, page last updated 2026-04-07"
     },
     "registry": {
       "date": "2026-05-21",

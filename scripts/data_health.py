@@ -238,6 +238,11 @@ class Feed:
     # daily committed-mode run: a missing day/month or a duplicate in the last
     # N days fails, unless health/known_gaps.json discloses it as unfillable.
     history: tuple[History, ...] = ()
+    # How often the UNDERLYING data is published, when that is slower than any
+    # cron (e.g. "annual"). Reported next to the age wherever the feed is
+    # shown, so a long age on a slow source reads as expected, not broken.
+    # Documentation only: limit_h is still what fails the feed.
+    cadence: str = ""
 
 
 @dataclass(frozen=True)
@@ -335,7 +340,16 @@ MANIFEST: dict[str, Feed] = {
         # (registry, market snapshot) could freeze for over a year without
         # tripping this check. Fixing that properly means watching the three
         # components separately, which needs an owner for the file first.
-        limit_h=400 * 24.0),
+        #
+        # Checked 2026-10-05: faa.gov's U.S. Civil Airmen Statistics page calls
+        # it "an annual study", lists "2025 Active Civil Airmen Statistics" as
+        # the newest roll and was last updated 2026-04-07. So 2025-12-31 IS the
+        # current vintage (age ~279d is expected), and if the 2026 roll posts
+        # as late as the 2025 one did, this 400d limit fires ~2027-02-04, some
+        # weeks before it can be refreshed. That alarm is then "annual roll
+        # due: check faa.gov", not rot; it is left on purpose.
+        limit_h=400 * 24.0,
+        cadence="annual"),
     "data/real_estate.json": Feed(
         COMMITTED, "real-estate-daily.yml (daily)",
         "python scripts/fetch_real_estate.py",
@@ -707,6 +721,7 @@ class Result:
     owner: str = ""
     detail: str = ""
     source: str = ""     # which date field the age came from
+    cadence: str = ""    # Feed.cadence, echoed so reports can say it
 
     @property
     def fails(self) -> bool:
@@ -720,6 +735,8 @@ class Result:
             base = self.path   # continuity has no age; the detail says what broke
         if self.source:
             base += f" via {self.source}"
+        if self.cadence:
+            base += f" [cadence: {self.cadence}]"
         if self.owner:
             base += f" - {self.owner}"
         if self.detail:
@@ -1031,7 +1048,8 @@ def evaluate(mode: str, today: date | None = None,
 
         limit = feed.limit_h or THRESHOLDS.get(judged.name, DEFAULT).stale_h
         if age_h <= limit:
-            results.append(Result(rel, OK, age_h, limit, feed.owner, detail, source))
+            results.append(Result(rel, OK, age_h, limit, feed.owner, detail, source,
+                                  cadence=feed.cadence))
             continue
 
         sup = SUPPRESSIONS.get(rel)
@@ -1048,7 +1066,8 @@ def evaluate(mode: str, today: date | None = None,
                        f"blocker: {sup.reason} — re-validate that this is still "
                        f"true, then fix it or consciously extend the mute."))
         else:
-            results.append(Result(rel, STALE, age_h, limit, feed.owner, detail, source))
+            results.append(Result(rel, STALE, age_h, limit, feed.owner, detail, source,
+                                  cadence=feed.cadence))
 
     return results
 
@@ -1314,7 +1333,7 @@ def main(argv: list[str] | None = None) -> int:
             "results": [
                 {"path": r.path, "status": r.status, "age_h": r.age_h,
                  "limit_h": r.limit_h, "owner": r.owner, "detail": r.detail,
-                 "source": r.source}
+                 "source": r.source, "cadence": r.cadence}
                 for r in results
             ],
             "remediation": notes,
