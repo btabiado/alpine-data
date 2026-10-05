@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-05",
-  "generated_at": "2026-10-05T01:50:25Z",
+  "generated_at": "2026-10-05T02:17:43Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-04",
       "label": null,
-      "note": "40 coins; 7 buy+, 3 sell+",
-      "score": 10,
+      "note": "40 coins; 7 buy+, 6 sell+",
+      "score": 2,
       "stale": false
     },
     "defi_sentiment": {
@@ -41,14 +41,14 @@
       "as_of": "2026-10-04",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": -17,
+      "score": -18,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-10-04",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": -17,
+      "score": -18,
       "stale": false
     },
     "futures_sentiment_eth": {
@@ -73,7 +73,7 @@
       "stale": false
     },
     "lthcs_composite": {
-      "as_of": "2026-10-04",
+      "as_of": "2026-10-05",
       "label": "LTHCS NEUTRAL",
       "note": null,
       "score": -22,
@@ -109,7 +109,7 @@
       "stale": false
     },
     "whale_sentiment_eth": {
-      "as_of": "2026-10-03",
+      "as_of": "2026-10-04",
       "label": "STRONG WHALE DUMP",
       "note": null,
       "score": -50,
