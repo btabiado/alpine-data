@@ -121,8 +121,10 @@ def test_cadli_is_retired_everywhere():
     remain; the keyed probe that reported auth_required is gone with it."""
     assert not hasattr(fetch_market, "coindesk_cadli")
     assert not hasattr(fetch_market, "COINDESK_CADLI_URL")
-    assert not [t for t in api_status.TARGETS
-                if "coindesk.com" in t["url"] or "cryptocompare.com" in t["url"]]
+    retired = ("coindesk.com", "cryptocompare.com")
+    hosts = [(urllib.parse.urlsplit(t["url"]).hostname or "") for t in api_status.TARGETS]
+    assert not [h for h in hosts
+                if any(h == d or h.endswith("." + d) for d in retired)]
     for rel in ("fetch_market.py", "app.py", "v2/app.py", "server.py", "api_status.py"):
         src = (ROOT / rel).read_text()
         for host in ("data-api.coindesk.com", "min-api.cryptocompare.com",

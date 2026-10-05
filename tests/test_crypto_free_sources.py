@@ -364,7 +364,7 @@ def test_alpine_index_excludes_stablecoins_wrapped_rwa_and_exchange_series():
 
 
 def test_alpine_index_monthly_reconstitution_is_recorded():
-    dates = [d for d in _days(40) if True]
+    dates = list(_days(40))
     # "b" overtakes "c" in market cap during the window; selection only
     # changes at the first close of a new calendar month.
     top = [{"id": x, "symbol": x, "name": x.upper()} for x in ("a", "b", "c")]

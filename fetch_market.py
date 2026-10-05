@@ -2651,6 +2651,7 @@ def google_news_rss(query: str, *, timeout: int = 15) -> tuple[int | None, list[
                 ts = int(dt.timestamp())
                 date_str = dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M")
         except (TypeError, ValueError, IndexError):
+            # Unparseable pubDate: keep the headline, undated (ts=None).
             pass
         items.append({
             "title": title[:240],
@@ -3473,9 +3474,9 @@ def binance_us_daily_series(symbol: str, days: int = 180, today=None) -> dict | 
 
 
 _DAILY_FALLBACK_FETCHERS = {
-    "coinbase": lambda sym, days, today: coinbase_daily_series(sym, days, today),
-    "kraken": lambda sym, days, today: kraken_daily_series(sym, days, today),
-    "binance_us": lambda sym, days, today: binance_us_daily_series(sym, days, today),
+    "coinbase": coinbase_daily_series,
+    "kraken": kraken_daily_series,
+    "binance_us": binance_us_daily_series,
 }
 
 
