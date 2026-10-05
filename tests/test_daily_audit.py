@@ -581,9 +581,11 @@ def test_workflow_actions_are_pinned_to_shas(wf):
     assert uses
     for u in uses:
         assert re.fullmatch(r"[\w.-]+/[\w.-]+@[0-9a-f]{40}", u), u
+    # Each pin carries its human-readable version as a trailing comment.
+    # Match the shape, not specific versions, so Dependabot bumps pass.
     text = WORKFLOW.read_text()
-    assert "actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0" in text
-    assert "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0" in text
+    for action in ("actions/checkout", "actions/setup-python"):
+        assert re.search(rf"{action}@[0-9a-f]{{40}} # v\d+(\.\d+)*\b", text), action
 
 
 def _step(wf, needle):
