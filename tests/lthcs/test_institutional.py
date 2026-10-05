@@ -858,6 +858,36 @@ def test_combined_insider_holdings_cap_binding_at_minus_seven() -> None:
     assert result["sub_score"] == pytest.approx(round(base_sub - 7.0, 1))
 
 
+def test_sub_score_clamped_to_100_when_adjustment_overshoots() -> None:
+    """Top-ranked momentum (base 100) + the +12 cap was published as 112.
+    The pillar is a [0, 100] scale: clamp it (v1.1.1; FTNT 100.8 on
+    2026-10-04/05), while components keep the unclamped parts."""
+    peers = _peer_momentums_universe("FTNT", 0.90)   # above every peer
+    insider = _insider(regime="strong_buying", conviction_score=0.97,
+                       cluster_buying=True, ceo_cfo_action="buying")
+    holdings = _holdings(conviction_signal="accumulating", signal_score=0.8)
+    result = institutional.compute_institutional(
+        "FTNT", 0.90, peers, insider_data=insider, holdings_data=holdings)
+    comps = result["components"]
+    assert comps["base_sub_score"] == pytest.approx(100.0)
+    assert comps["combined_adjustment_pts"] == pytest.approx(12.0)
+    assert result["sub_score"] == 100.0
+
+
+def test_sub_score_clamped_to_0_when_adjustment_undershoots() -> None:
+    """Bottom-ranked momentum (base 0) + the -7 floor was published as -7."""
+    peers = _peer_momentums_universe("ON", -0.90)    # below every peer
+    insider = _insider(regime="heavy_selling", conviction_score=-1.0,
+                       cluster_buying=False, ceo_cfo_action="selling")
+    holdings = _holdings(conviction_signal="distributing", signal_score=-0.9)
+    result = institutional.compute_institutional(
+        "ON", -0.90, peers, insider_data=insider, holdings_data=holdings)
+    comps = result["components"]
+    assert comps["base_sub_score"] == pytest.approx(0.0)
+    assert comps["combined_adjustment_pts"] == pytest.approx(-7.0)
+    assert result["sub_score"] == 0.0
+
+
 def test_holdings_component_detail_surfaces_qoq_fields() -> None:
     """The holdings component dict must expose share_change_pct + net_buyers/sellers."""
     peers = _peer_momentums_universe("AAPL", 0.0)

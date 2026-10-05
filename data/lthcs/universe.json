@@ -17,7 +17,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0001090872",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AAPL",
@@ -90,7 +91,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0000947484",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ACN",
@@ -150,7 +152,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Food, Beverage & Tobacco",
       "cik": "0000007084",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ADP",
@@ -194,7 +197,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $28B, rev growth -6%, trailing EPS 5.68, first trade 1998-01-02)",
       "sector_group": "Utilities",
       "cik": "0001002910",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AEP",
@@ -223,7 +227,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0000874761",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AFL",
@@ -239,7 +244,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0000004977",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AIG",
@@ -255,7 +261,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0000005272",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AIZ",
@@ -271,7 +278,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0001267238",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AJG",
@@ -287,7 +295,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0000354190",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AKAM",
@@ -304,7 +313,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Software & Services",
       "cik": "0001086222",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ALB",
@@ -320,7 +330,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0000915913",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ALGN",
@@ -336,7 +347,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0001097149",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ALL",
@@ -352,7 +364,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0000899051",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ALLE",
@@ -368,7 +381,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0001579241",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AMAT",
@@ -400,7 +414,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $19B, rev growth +26%, trailing EPS 2.38, first trade 2012-05-15)",
       "sector_group": "Materials",
       "cik": "0001748790",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AMD",
@@ -432,7 +447,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0001037868",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AMGN",
@@ -463,7 +479,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Diversified Financials",
       "cik": "0000820027",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AMT",
@@ -540,7 +557,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0000315293",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AOS",
@@ -556,7 +574,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0000091142",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "APA",
@@ -572,7 +591,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $15B, rev growth +9%, trailing EPS 4.73, first trade 1979-05-15)",
       "sector_group": "Energy",
       "cik": "0001841666",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "APD",
@@ -588,7 +608,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0000002969",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -620,7 +641,8 @@
       "maturity_note": "financial (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was financial): Asset manager with a retirement-services insurer (Athene): squarely the seed definition of financial (banks / insurance / asset managers). Revenue swings are insurance / investment-result driven (FY2023 +198% on the Athene merger, FY2024 -20%, FY2025 +22.7%), not a growth-company profile; GAAP profitable (FY2025 net income $3.49B). Kept financial. Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Diversified Financials",
       "cik": "0001858681",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "APP",
@@ -637,7 +659,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $90B, rev growth +53%, trailing EPS 13.01, first trade 2021-04-15)",
       "sector_group": "Media & Entertainment",
       "cik": "0001751008",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "APTV",
@@ -653,7 +676,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Automobiles & Components",
       "cik": "0001521332",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ARE",
@@ -669,7 +693,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0001035443",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ARES",
@@ -685,7 +710,8 @@
       "maturity_note": "financial: Financials-sector convention of the seed/Wave A (Yahoo 2026-10-05: mcap $39B, rev growth +10%, trailing EPS 2.17, first trade 2014-05-02)",
       "sector_group": "Diversified Financials",
       "cik": "0001176948",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ARM",
@@ -728,7 +754,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0000731802",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AVGO",
@@ -760,7 +787,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0000008818",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AWK",
@@ -776,7 +804,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0001410636",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AXON",
@@ -793,7 +822,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0001069183",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "AXP",
@@ -859,7 +889,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Retailing",
       "cik": "0000866787",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "BA",
@@ -903,7 +934,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0000009389",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "BAX",
@@ -919,7 +951,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0000010456",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "BBY",
@@ -935,7 +968,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Retailing",
       "cik": "0000764478",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "BDX",
@@ -951,7 +985,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0000010795",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "BE",
@@ -967,7 +1002,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $85B, rev growth +166%, trailing EPS 0.76, first trade 2018-07-25)",
       "sector_group": "Capital Goods",
       "cik": "0001664703",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "BEN",
@@ -983,7 +1019,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Diversified Financials",
       "cik": "0000038777",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "BF.B",
@@ -999,7 +1036,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Food, Beverage & Tobacco",
       "cik": "0000014693",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "BG",
@@ -1015,7 +1053,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Food, Beverage & Tobacco",
       "cik": "0001996862",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "BIIB",
@@ -1111,7 +1150,8 @@
       "maturity_note": "Restored: same company as inactive entry BK (ticker change); stage copied from it. History starts fresh under BNY \u2014 BK scores are not re-labelled.",
       "sector_group": "Diversified Financials",
       "cik": "0001390777",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "BR",
@@ -1127,7 +1167,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Software & Services",
       "cik": "0001383312",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "BRK.B",
@@ -1157,7 +1198,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0000079282",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -1203,7 +1245,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0001037540",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "C",
@@ -1233,7 +1276,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0000721371",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CARR",
@@ -1249,7 +1293,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0001783180",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CASY",
@@ -1265,7 +1310,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $23B, rev growth +24%, trailing EPS 20.76, first trade 1983-10-20)",
       "sector_group": "Food & Staples Retailing",
       "cik": "0000726958",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CAT",
@@ -1310,7 +1356,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Diversified Financials",
       "cik": "0001374310",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CBRE",
@@ -1326,7 +1373,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0001138118",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CCEP",
@@ -1354,7 +1402,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0001051470",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CCL",
@@ -1370,7 +1419,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Services",
       "cik": "0000815097",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CDNS",
@@ -1426,7 +1476,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0001324404",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CFG",
@@ -1442,7 +1493,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Banks",
       "cik": "0000759944",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CHD",
@@ -1458,7 +1510,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Household & Personal Products",
       "cik": "0000313927",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CHRW",
@@ -1474,7 +1527,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Transportation",
       "cik": "0001043277",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CHTR",
@@ -1518,7 +1572,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $55B, rev growth +37%, trailing EPS 4.47, first trade 1997-02-07)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0000936395",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CINF",
@@ -1534,7 +1589,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0000020286",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CL",
@@ -1562,7 +1618,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Household & Personal Products",
       "cik": "0000021076",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CMCSA",
@@ -1607,7 +1664,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Services",
       "cik": "0001058090",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -1638,7 +1696,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0000811156",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CNC",
@@ -1654,7 +1713,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0001071739",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CNP",
@@ -1670,7 +1730,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0001130310",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "COF",
@@ -1700,7 +1761,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $66B, rev growth +34%, trailing EPS 4.12, first trade 1987-10-02)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0000820318",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "COIN",
@@ -1716,7 +1778,8 @@
       "maturity_note": "financial (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was financial): Exchange: the seed and Wave A class every exchange (CME, ICE, NDAQ, CBOE) and processor as financial (51 of 52 Financials). Not a growth profile on SEC data: FY2025 revenue +9.4%, TTM to 2026-06-30 -10.4%, TTM GAAP net loss -$0.99B; listed 2021-04-14, so the IPO<5y clause no longer applies. Kept financial. Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Diversified Financials",
       "cik": "0001679788",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "COO",
@@ -1732,7 +1795,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0000711404",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "COP",
@@ -1761,7 +1825,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0001140859",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "COST",
@@ -1792,7 +1857,8 @@
       "maturity_note": "financial (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was financial): Payment processor: seed precedent (FI, FIS, GPN, JKHY) is financial. Fails the >20% growth test on the fiscal-year measure the pipeline uses (FY2025 revenue +13.9%, 3y CAGR 9.7%; only the acquisition-boosted TTM window reaches +20.4%); GAAP profitable, public since 2010. Kept financial. Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Diversified Financials",
       "cik": "0001175454",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CPRT",
@@ -1809,7 +1875,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Commercial & Professional Services",
       "cik": "0000900075",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CPT",
@@ -1825,7 +1892,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0000906345",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CRH",
@@ -1841,7 +1909,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $55B, rev growth +6%, trailing EPS 5.66, first trade 1989-07-13)",
       "sector_group": "Materials",
       "cik": "0000849395",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CRL",
@@ -1857,7 +1926,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Pharmaceuticals, Biotechnology & Life Sciences",
       "cik": "0001100682",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CRM",
@@ -1975,7 +2045,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0001755672",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CVNA",
@@ -1991,7 +2062,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Retailing",
       "cik": "0001690820",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "CVS",
@@ -2034,7 +2106,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0000715957",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DAL",
@@ -2050,7 +2123,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Transportation",
       "cik": "0000027904",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DASH",
@@ -2080,7 +2154,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0001666700",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DDOG",
@@ -2124,7 +2199,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Durables & Apparel",
       "cik": "0000910521",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DELL",
@@ -2142,7 +2218,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $358B, rev growth +58%, trailing EPS 17.2, first trade 2016-08-17)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0001571996",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DG",
@@ -2158,7 +2235,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Retailing",
       "cik": "0000029534",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DGX",
@@ -2174,7 +2252,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0001022079",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DHI",
@@ -2190,7 +2269,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Durables & Apparel",
       "cik": "0000882184",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DHR",
@@ -2234,7 +2314,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0001297996",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DLTR",
@@ -2250,7 +2331,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Retailing",
       "cik": "0000935703",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DOC",
@@ -2266,7 +2348,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0000765880",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DOV",
@@ -2282,7 +2365,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0000029905",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DOW",
@@ -2298,7 +2382,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0001751788",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DPZ",
@@ -2314,7 +2399,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Services",
       "cik": "0001286681",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DRI",
@@ -2330,7 +2416,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Services",
       "cik": "0000940944",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DTE",
@@ -2346,7 +2433,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0000936340",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DUK",
@@ -2375,7 +2463,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0000927066",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DVN",
@@ -2391,7 +2480,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Energy",
       "cik": "0001090012",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "DXCM",
@@ -2434,7 +2524,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Retailing",
       "cik": "0001065088",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ECHO",
@@ -2450,7 +2541,8 @@
       "maturity_note": "recovery_stabilization (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was recovery_stabilization): Revenue down three straight years (FY2025 -5.2%, 3y CAGR -7.0%, TTM -5.2%); GAAP net loss FY2025 -$14.50B (incl. a $5.78B indefinite-lived intangible impairment) and TTM -$4.77B even after a +$8.46B Q2 2026 quarter; listed since 2008. The literal pre_profit_growth clause (negative GAAP earnings) is rejected: revenue is shrinking and the company is not pre-profit. Operational stress is in the numbers. Kept recovery_stabilization. Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Telecommunication Services",
       "cik": "0001415404",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -2481,7 +2573,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0001047862",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "EFX",
@@ -2497,7 +2590,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Commercial & Professional Services",
       "cik": "0000033185",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "EG",
@@ -2513,7 +2607,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0001095073",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "EIX",
@@ -2529,7 +2624,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0000827052",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "EL",
@@ -2545,7 +2641,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Household & Personal Products",
       "cik": "0001001250",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -2576,7 +2673,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $35B, rev growth +20%, trailing EPS 32.12, first trade 1995-01-10)",
       "sector_group": "Capital Goods",
       "cik": "0000105634",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "EMR",
@@ -2635,7 +2733,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Energy",
       "cik": "0000033213",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ERIE",
@@ -2651,7 +2750,8 @@
       "maturity_note": "financial: Financials-sector convention of the seed/Wave A (Yahoo 2026-10-05: mcap $12B, rev growth +3%, trailing EPS 11.03, first trade 1995-10-02)",
       "sector_group": "Insurance",
       "cik": "0000922621",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ES",
@@ -2667,7 +2767,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0000072741",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ESS",
@@ -2683,7 +2784,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0000920522",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -2714,7 +2816,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0000065984",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "EVRG",
@@ -2730,7 +2833,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0001711269",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "EW",
@@ -2746,7 +2850,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0001099800",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "EXC",
@@ -2775,7 +2880,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $20B, rev growth -11%, trailing EPS 11.6, first trade 2021-02-10)",
       "sector_group": "Energy",
       "cik": "0000895126",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "EXPD",
@@ -2791,7 +2897,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Transportation",
       "cik": "0000746515",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "EXPE",
@@ -2807,7 +2914,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Services",
       "cik": "0001324424",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "EXR",
@@ -2823,7 +2931,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0001289490",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "F",
@@ -2892,7 +3001,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Diversified Financials",
       "cik": "0001013237",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -2924,7 +3034,8 @@
       "maturity_note": "standard_compounder (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was growth_compounder): Spin-off, not an IPO, so the heuristic's 'IPO <5y ago' growth clause does not apply; no growth either: revenue FY2026 (May) -1.1%, FY2025 -5.6%. GAAP profitable (FY2026 net income $0.66B), market cap $16.9B (inside the $5B-$200B standard band). Not mature (<$200B), not pre-profit or in recovery. Changed to standard_compounder. (The seed applied the IPO clause literally to the SOLV / VLTO spin-offs; those entries are unchanged here.) Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Transportation",
       "cik": "0002082247",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "FE",
@@ -2940,7 +3051,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0001031296",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "FERG",
@@ -2956,7 +3068,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $43B, rev growth +5%, trailing EPS 10.16, first trade 2010-01-05)",
       "sector_group": "Capital Goods",
       "cik": "0002011641",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "FFIV",
@@ -2973,7 +3086,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0001048695",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "FICO",
@@ -2990,7 +3104,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Software & Services",
       "cik": "0000814547",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "FIS",
@@ -3006,7 +3121,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Diversified Financials",
       "cik": "0001136893",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "FISV",
@@ -3022,7 +3138,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20); seed listed this company as FI before its ticker change",
       "sector_group": "Diversified Financials",
       "cik": "0000798354",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "FITB",
@@ -3038,7 +3155,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Banks",
       "cik": "0000035527",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "FIX",
@@ -3054,7 +3172,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $61B, rev growth +50%, trailing EPS 40.64, first trade 1997-06-27)",
       "sector_group": "Capital Goods",
       "cik": "0001035983",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "FLEX",
@@ -3071,7 +3190,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $43B, rev growth +21%, trailing EPS 2.59, first trade 1994-03-18)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0000866374",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "FOX",
@@ -3087,7 +3207,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Media & Entertainment",
       "cik": "0001754301",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "FOXA",
@@ -3103,7 +3224,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Media & Entertainment",
       "cik": "0001754301",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "FRT",
@@ -3119,7 +3241,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0000034903",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "FSLR",
@@ -3136,7 +3259,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0001274494",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "FTNT",
@@ -3167,7 +3291,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $17B, rev growth +8%, trailing EPS 1.9, first trade 2016-07-05)",
       "sector_group": "Capital Goods",
       "cik": "0001659166",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "GD",
@@ -3197,7 +3322,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $12B, rev growth +7%, trailing EPS 6.72, first trade 2015-03-31)",
       "sector_group": "Software & Services",
       "cik": "0001609711",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "GE",
@@ -3240,7 +3366,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Software & Services",
       "cik": "0000849399",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -3323,7 +3450,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Food, Beverage & Tobacco",
       "cik": "0000040704",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "GL",
@@ -3339,7 +3467,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0000320335",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -3384,7 +3513,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0001474735",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "GOOG",
@@ -3431,7 +3561,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Retailing",
       "cik": "0000040987",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "GPN",
@@ -3447,7 +3578,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Diversified Financials",
       "cik": "0001123360",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "GRMN",
@@ -3463,7 +3595,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Durables & Apparel",
       "cik": "0001121788",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "GS",
@@ -3494,7 +3627,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0000277135",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "HAL",
@@ -3510,7 +3644,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Energy",
       "cik": "0000045012",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "HAS",
@@ -3526,7 +3661,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Durables & Apparel",
       "cik": "0000046080",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "HBAN",
@@ -3542,7 +3678,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Banks",
       "cik": "0000049196",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -3588,7 +3725,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0000874766",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "HII",
@@ -3604,7 +3742,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0001501585",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -3650,7 +3789,8 @@
       "maturity_note": "standard_compounder (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was growth_compounder): Spin-off, not an IPO, so the 'IPO <5y ago' growth clause does not apply; revenue +5.4% YoY in its first 10-Q (quarter to 2026-06-27: $4.52B vs $4.29B); GAAP net income positive ($0.25B that quarter); market cap $49.0B (inside the $5B-$200B band). Changed to standard_compounder. (SOLV / VLTO, earlier spin-offs the seed put in growth_compounder, are unchanged here.) Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Capital Goods",
       "cik": "0002089271",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "HOOD",
@@ -3666,7 +3806,8 @@
       "maturity_note": "growth_compounder (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was financial): Retail broker, not a bank / insurer / asset manager (the seed's definition of financial), and growth is its defining trait on every SEC measure: revenue FY2025 +51.6%, FY2024 +58.2%, 3y CAGR 48.8%, TTM +38.3%; GAAP profitable since FY2024 (FY2025 net income $1.88B, TTM $2.07B). Meets the heuristic's growth_compounder clause (>20% YoY); the seed's one Financials exception (MSCI -> growth_compounder) is the precedent. Changed to growth_compounder. Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Diversified Financials",
       "cik": "0001783879",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "HPE",
@@ -3683,7 +3824,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0001645590",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "HPQ",
@@ -3700,7 +3842,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0000047217",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "HRL",
@@ -3716,7 +3859,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Food, Beverage & Tobacco",
       "cik": "0000048465",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "HSIC",
@@ -3732,7 +3876,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0001000228",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "HST",
@@ -3748,7 +3893,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0001070750",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "HSY",
@@ -3764,7 +3910,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Food, Beverage & Tobacco",
       "cik": "0000047111",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "HUBB",
@@ -3780,7 +3927,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0000048898",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "HUM",
@@ -3796,7 +3944,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0000049071",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -3827,7 +3976,8 @@
       "maturity_note": "financial (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was financial): Broker, so the growth test decides; it falls just short on the fiscal-year measure: total net revenues FY2025 +19.7% (TTM +21.3%, 3y CAGR 26.5%). GAAP profitable (FY2025 net income to common $0.98B), public since 2007. Kept financial (default for Financials); borderline, re-check on the FY2026 10-K. Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Diversified Financials",
       "cik": "0001381197",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "IBM",
@@ -3887,7 +4037,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0000832101",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "IFF",
@@ -3903,7 +4054,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0000051253",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ILMN",
@@ -3931,7 +4083,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Pharmaceuticals, Biotechnology & Life Sciences",
       "cik": "0000879169",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "INTC",
@@ -3978,7 +4131,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0001687229",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "IP",
@@ -3994,7 +4148,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0000051434",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "IQV",
@@ -4010,7 +4165,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Pharmaceuticals, Biotechnology & Life Sciences",
       "cik": "0001478242",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "IR",
@@ -4026,7 +4182,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0001699150",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "IRM",
@@ -4042,7 +4199,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0001020569",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ISRG",
@@ -4074,7 +4232,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Software & Services",
       "cik": "0000749251",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -4105,7 +4264,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Diversified Financials",
       "cik": "0000914208",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "J",
@@ -4121,7 +4281,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Commercial & Professional Services",
       "cik": "0000052988",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "JBHT",
@@ -4137,7 +4298,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Transportation",
       "cik": "0000728535",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "JBL",
@@ -4154,7 +4316,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0000898293",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -4185,7 +4348,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Diversified Financials",
       "cik": "0000779152",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "JNJ",
@@ -4244,7 +4408,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Banks",
       "cik": "0000091576",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "KEYS",
@@ -4261,7 +4426,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0001601046",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "KHC",
@@ -4289,7 +4455,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0000879101",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -4335,7 +4502,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Household & Personal Products",
       "cik": "0000055785",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -4381,7 +4549,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Food & Staples Retailing",
       "cik": "0000056873",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "KVUE",
@@ -4397,7 +4566,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Household & Personal Products",
       "cik": "0001944048",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "L",
@@ -4413,7 +4583,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0000060086",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "LCID",
@@ -4465,7 +4636,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Commercial & Professional Services",
       "cik": "0001336920",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "LEN",
@@ -4481,7 +4653,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Durables & Apparel",
       "cik": "0000920760",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "LH",
@@ -4497,7 +4670,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0000920148",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "LHX",
@@ -4513,7 +4687,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0000202058",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "LII",
@@ -4529,7 +4704,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $12B, rev growth +3%, trailing EPS 22.68, first trade 1999-07-29)",
       "sector_group": "Capital Goods",
       "cik": "0001069202",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "LIN",
@@ -4561,7 +4737,8 @@
       "maturity_note": "pre_profit_growth: negative GAAP EPS with >20% revenue growth (Yahoo 2026-10-05: mcap $97B, rev growth +109%, trailing EPS -92.96, first trade 2015-07-23)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0001633978",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "LLY",
@@ -4604,7 +4781,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0000352541",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "LOW",
@@ -4661,7 +4839,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Transportation",
       "cik": "0000092380",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "LVS",
@@ -4677,7 +4856,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Services",
       "cik": "0001300514",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "LYB",
@@ -4693,7 +4873,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0001489393",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "LYV",
@@ -4709,7 +4890,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Media & Entertainment",
       "cik": "0001335258",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "MA",
@@ -4739,7 +4921,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $14B, rev growth +1%, trailing EPS 3.42, first trade 1994-01-28)",
       "sector_group": "Real Estate",
       "cik": "0000912595",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "MAR",
@@ -4768,7 +4951,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0000062996",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "MCD",
@@ -4948,7 +5132,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Services",
       "cik": "0000789570",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "MKC",
@@ -4964,7 +5149,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Food, Beverage & Tobacco",
       "cik": "0000063754",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "MLM",
@@ -4980,7 +5166,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0000916076",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "MMM",
@@ -5037,7 +5224,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0001285785",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -5100,7 +5288,8 @@
       "maturity_note": "recovery_stabilization (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was recovery_stabilization): Revenue collapsed from $19.26B (FY2022) to $1.94B (FY2025; -40% FY2025, TTM -27.6%); GAAP losses FY2023-FY2025 and TTM (-$3.15B); IPO 2018. Not pre_profit_growth (GAAP profits of $12.2B / $8.4B in FY2021-22; revenue shrinking) and not yet recovery_rerating (no trough: revenue still falling). Kept recovery_stabilization; note the TTM loss has not narrowed yet (-$3.15B vs -$2.90B). Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Pharmaceuticals, Biotechnology & Life Sciences",
       "cik": "0001682852",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "MRSH",
@@ -5116,7 +5305,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20); seed listed this company as MMC before its ticker change",
       "sector_group": "Insurance",
       "cik": "0000062709",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "MRVL",
@@ -5161,7 +5351,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Diversified Financials",
       "cik": "0001408198",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "MSFT",
@@ -5195,7 +5386,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0000068505",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "MTB",
@@ -5211,7 +5403,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Banks",
       "cik": "0000036270",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "MTD",
@@ -5227,7 +5420,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Pharmaceuticals, Biotechnology & Life Sciences",
       "cik": "0001037646",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "MU",
@@ -5259,7 +5453,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Services",
       "cik": "0001513761",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "NDAQ",
@@ -5275,7 +5470,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Diversified Financials",
       "cik": "0001120193",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "NDSN",
@@ -5291,7 +5487,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0000072331",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "NEE",
@@ -5349,7 +5546,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0001111711",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "NKE",
@@ -5408,7 +5606,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0001013871",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -5440,7 +5639,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0001002047",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "NTRS",
@@ -5456,7 +5656,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Banks",
       "cik": "0000073124",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "NUE",
@@ -5472,7 +5673,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0000073309",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "NVDA",
@@ -5505,7 +5707,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Durables & Apparel",
       "cik": "0000906163",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "NWS",
@@ -5521,7 +5724,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Media & Entertainment",
       "cik": "0001564708",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "NWSA",
@@ -5537,7 +5741,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Media & Entertainment",
       "cik": "0001564708",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "NXPI",
@@ -5567,7 +5772,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0000726728",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ODFL",
@@ -5596,7 +5802,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Energy",
       "cik": "0001039684",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "OMC",
@@ -5612,7 +5819,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Media & Entertainment",
       "cik": "0000029989",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ON",
@@ -5669,7 +5877,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0001781335",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "OXY",
@@ -5685,7 +5894,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Energy",
       "cik": "0000797468",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "P",
@@ -5702,7 +5912,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $47B, rev growth +38%, trailing EPS 0.73, first trade 2015-10-06)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0001474432",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "PANW",
@@ -5760,7 +5971,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $37B, rev growth +0%, trailing EPS 1.38, first trade 1972-06-01)",
       "sector_group": "Utilities",
       "cik": "0001004980",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "PDD",
@@ -5788,7 +6000,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0000788784",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "PEP",
@@ -5833,7 +6046,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0001126328",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "PG",
@@ -5894,7 +6108,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Durables & Apparel",
       "cik": "0000822416",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "PKG",
@@ -5910,7 +6125,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0000075677",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -5944,7 +6160,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $454B, rev growth +93%, trailing EPS 1.16, first trade 2020-09-30)",
       "sector_group": "Software & Services",
       "cik": "0001321655",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "PM",
@@ -5988,7 +6205,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0000077360",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "PNW",
@@ -6004,7 +6222,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0000764622",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "PODD",
@@ -6020,7 +6239,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $9B, rev growth +24%, trailing EPS 5.34, first trade 2007-05-15)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0001145197",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "PPG",
@@ -6036,7 +6256,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0000079879",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "PPL",
@@ -6052,7 +6273,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0000922224",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "PRU",
@@ -6068,7 +6290,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0001137774",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "PSA",
@@ -6084,7 +6307,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0001393311",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "PSKY",
@@ -6100,7 +6324,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20); seed listed this company as PARA before its ticker change",
       "sector_group": "Media & Entertainment",
       "cik": "0002041610",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -6132,7 +6357,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Software & Services",
       "cik": "0000857005",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -6178,7 +6404,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $28B, rev growth +22%, trailing EPS 2.8, first trade 2025-10-27)",
       "sector_group": "Semiconductors & Semiconductor Equipment",
       "cik": "0002058873",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "QCOM",
@@ -6210,7 +6437,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Services",
       "cik": "0000884887",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "RDDT",
@@ -6226,7 +6454,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $28B, rev growth +61%, trailing EPS 4.3, first trade 2024-03-21)",
       "sector_group": "Media & Entertainment",
       "cik": "0001713445",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "REG",
@@ -6242,7 +6471,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $13B, rev growth +9%, trailing EPS 2.97, first trade 1993-10-29)",
       "sector_group": "Real Estate",
       "cik": "0000910606",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "REGN",
@@ -6271,7 +6501,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Banks",
       "cik": "0001281761",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "RJF",
@@ -6287,7 +6518,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Diversified Financials",
       "cik": "0000720005",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "RL",
@@ -6303,7 +6535,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Durables & Apparel",
       "cik": "0001037038",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "RMD",
@@ -6319,7 +6552,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0000943819",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ROK",
@@ -6335,7 +6569,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0001024478",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ROL",
@@ -6351,7 +6586,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Commercial & Professional Services",
       "cik": "0000084839",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ROP",
@@ -6393,7 +6629,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Commercial & Professional Services",
       "cik": "0001060391",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "RTX",
@@ -6422,7 +6659,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Pharmaceuticals, Biotechnology & Life Sciences",
       "cik": "0000031791",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "SBAC",
@@ -6438,7 +6676,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $17B, rev growth +2%, trailing EPS 9.27, first trade 1999-06-16)",
       "sector_group": "Real Estate",
       "cik": "0001034054",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "SBUX",
@@ -6494,7 +6733,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Food, Beverage & Tobacco",
       "cik": "0000091419",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -6539,7 +6779,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0000091440",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "SNDK",
@@ -6558,7 +6799,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $252B, rev growth +372%, trailing EPS 73.76, first trade 2025-02-13)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0002023554",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "SNPS",
@@ -6601,7 +6843,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0001964738",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "SPG",
@@ -6629,7 +6872,8 @@
       "maturity_note": "financial: Financials-sector convention of the seed/Wave A (Yahoo 2026-10-05: mcap $114B, rev growth +10%, trailing EPS 16.43, first trade 1973-02-21)",
       "sector_group": "Diversified Financials",
       "cik": "0000064040",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "SRE",
@@ -6645,7 +6889,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0001032208",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "STE",
@@ -6661,7 +6906,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0001757898",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "STLD",
@@ -6677,7 +6923,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0001022671",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "STT",
@@ -6693,7 +6940,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Banks",
       "cik": "0000093751",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -6726,7 +6974,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Food, Beverage & Tobacco",
       "cik": "0000016918",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "SW",
@@ -6742,7 +6991,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $22B, rev growth +1%, trailing EPS 0.95, first trade 2008-06-17)",
       "sector_group": "Materials",
       "cik": "0002005951",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "SWK",
@@ -6758,7 +7008,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0000093556",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "SWKS",
@@ -6775,7 +7026,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Semiconductors & Semiconductor Equipment",
       "cik": "0000004127",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "SYF",
@@ -6791,7 +7043,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Diversified Financials",
       "cik": "0001601712",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -6822,7 +7075,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Food & Staples Retailing",
       "cik": "0000096021",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "T",
@@ -6852,7 +7106,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0001260221",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "TDY",
@@ -6869,7 +7124,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0001094285",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "TEAM",
@@ -6922,7 +7178,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Pharmaceuticals, Biotechnology & Life Sciences",
       "cik": "0000842023",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "TEL",
@@ -6939,7 +7196,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0001385157",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "TER",
@@ -6957,7 +7215,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Semiconductors & Semiconductor Equipment",
       "cik": "0000097210",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "TFC",
@@ -6973,7 +7232,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Banks",
       "cik": "0000092230",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "TGT",
@@ -7016,7 +7276,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $33B, rev growth +18%, trailing EPS 2.86, first trade 1999-10-19)",
       "sector_group": "Media & Entertainment",
       "cik": "0001973266",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "TMO",
@@ -7059,7 +7320,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Energy",
       "cik": "0001811074",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "TPR",
@@ -7075,7 +7337,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Durables & Apparel",
       "cik": "0001116132",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "TRGP",
@@ -7091,7 +7354,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Energy",
       "cik": "0001389170",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "TRMB",
@@ -7108,7 +7372,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0000864749",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "TROW",
@@ -7124,7 +7389,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Diversified Financials",
       "cik": "0001113169",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "TRV",
@@ -7154,7 +7420,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Retailing",
       "cik": "0000916365",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "TSLA",
@@ -7184,7 +7451,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Food, Beverage & Tobacco",
       "cik": "0000100493",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -7287,7 +7555,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0000217346",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "TYL",
@@ -7304,7 +7573,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Software & Services",
       "cik": "0000860731",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "UAL",
@@ -7320,7 +7590,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Transportation",
       "cik": "0000100517",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -7352,7 +7623,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0000074208",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "UHS",
@@ -7368,7 +7640,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0000352915",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ULTA",
@@ -7384,7 +7657,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Retailing",
       "cik": "0001403568",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "UNH",
@@ -7440,7 +7714,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0001067701",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "USB",
@@ -7484,7 +7759,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $44B, rev growth +18%, trailing EPS 6.1, first trade 2013-10-16)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0001393052",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "VICI",
@@ -7500,7 +7776,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0001705696",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -7531,7 +7808,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0001967680",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "VMC",
@@ -7547,7 +7825,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Materials",
       "cik": "0001396009",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "VMRK",
@@ -7563,7 +7842,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20); seed listed this company as EQR: Vivmark Residential is the renamed Equity Residential (same SEC CIK 906107; 8-K 2026-08-17: AvalonBay merged in, name and ticker changed). Seed stage for EQR (and AVB) is standard_compounder.",
       "sector_group": "Real Estate",
       "cik": "0000906107",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "VRSK",
@@ -7592,7 +7872,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Software & Services",
       "cik": "0001014473",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "VRT",
@@ -7608,7 +7889,8 @@
       "maturity_note": "growth_compounder: revenue growth >20% YoY (Yahoo 2026-10-05: mcap $97B, rev growth +24%, trailing EPS 4.42, first trade 2018-08-02)",
       "sector_group": "Capital Goods",
       "cik": "0001674101",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "VRTX",
@@ -7637,7 +7919,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0001692819",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "VTR",
@@ -7653,7 +7936,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0000740260",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "VTRS",
@@ -7669,7 +7953,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Pharmaceuticals, Biotechnology & Life Sciences",
       "cik": "0001792044",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "VZ",
@@ -7699,7 +7984,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0000943452",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "WAT",
@@ -7715,7 +8001,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Pharmaceuticals, Biotechnology & Life Sciences",
       "cik": "0001000697",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "WBA",
@@ -7789,7 +8076,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Utilities",
       "cik": "0000783325",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "active": true,
@@ -7880,7 +8168,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0000011544",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "WSM",
@@ -7896,7 +8185,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $27B, rev growth +7%, trailing EPS 9.75, first trade 1983-07-07)",
       "sector_group": "Retailing",
       "cik": "0000719955",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "WST",
@@ -7912,7 +8202,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0000105770",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "WTW",
@@ -7928,7 +8219,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Insurance",
       "cik": "0001140536",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "WY",
@@ -7944,7 +8236,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Real Estate",
       "cik": "0000106535",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "WYNN",
@@ -7960,7 +8253,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Services",
       "cik": "0001174922",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "XEL",
@@ -8002,7 +8296,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Capital Goods",
       "cik": "0001524472",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "XYZ",
@@ -8018,7 +8313,8 @@
       "maturity_note": "financial: Financials-sector convention of the seed/Wave A (Yahoo 2026-10-05: mcap $45B, rev growth +9%, trailing EPS 0.56, first trade 2015-11-19)",
       "sector_group": "Diversified Financials",
       "cik": "0001512673",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "YUM",
@@ -8034,7 +8330,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Consumer Services",
       "cik": "0001041061",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ZBH",
@@ -8050,7 +8347,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Health Care Equipment & Services",
       "cik": "0001136869",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ZBRA",
@@ -8067,7 +8365,8 @@
       "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20)",
       "sector_group": "Technology Hardware & Equipment",
       "cik": "0000877212",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     },
     {
       "ticker": "ZS",
@@ -8121,7 +8420,8 @@
       "maturity_note": "standard_compounder (Yahoo 2026-10-05: mcap $29B, rev growth -0%, trailing EPS 6.08, first trade 2013-02-01)",
       "sector_group": "Pharmaceuticals, Biotechnology & Life Sciences",
       "cik": "0001555280",
-      "source": "sp500_sync_2026-10-05"
+      "source": "sp500_sync_2026-10-05",
+      "added_on": "2026-10-05"
     }
   ]
 }

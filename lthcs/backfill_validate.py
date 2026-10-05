@@ -34,6 +34,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import random
 import sys
 from dataclasses import dataclass, field, asdict
@@ -165,13 +166,58 @@ def _load_json(path: Path) -> Any:
         return json.load(fh)
 
 
-def _load_active_universe(data_root: Path) -> List[str]:
+def _load_universe_entries(data_root: Path) -> List[dict]:
     universe_path = data_root / "universe.json"
     if not universe_path.exists():
         return []
     data = _load_json(universe_path)
     tickers = data.get("tickers", []) if isinstance(data, dict) else []
-    return [t["ticker"] for t in tickers if t.get("active", True)]
+    return [t for t in tickers if isinstance(t, dict) and t.get("ticker")]
+
+
+def _load_active_universe(data_root: Path) -> List[str]:
+    return [t["ticker"] for t in _load_universe_entries(data_root) if t.get("active", True)]
+
+
+def _universe_added_on(data_root: Path) -> dict:
+    """{ticker: YYYY-MM-DD} for active entries that record ``added_on``.
+
+    A value that is not an ISO date is ignored (the ticker then falls back to
+    the first-scored rule), never guessed at.
+    """
+    out: dict = {}
+    for t in _load_universe_entries(data_root):
+        if not t.get("active", True) or not t.get("added_on"):
+            continue
+        try:
+            out[t["ticker"]] = _parse_date(str(t["added_on"])[:10]).isoformat()
+        except ValueError:
+            continue
+    return out
+
+
+def expected_from(ticker: str, first_seen: dict, added_on: dict) -> Optional[str]:
+    """First snapshot date on which ``ticker`` must be scored, or None for
+    "every date" (no evidence of when it joined).
+
+    Two pieces of evidence, the earlier wins:
+
+    * the first snapshot that scored it (``first_seen``): it was in the
+      universe from then on;
+    * the day AFTER its universe ``added_on`` date. Not the add date itself:
+      the snapshot for that date can predate the change (2026-10-05's was cut
+      at 01:59Z, the S&P 500 sync added 300 tickers at 02:08Z), and a
+      snapshot has no generation time to tell the two apart.
+
+    A ticker with neither (never scored, no add date) is expected on every
+    date, so a name the pipeline silently never scores keeps warning.
+    """
+    candidates = []
+    if first_seen.get(ticker):
+        candidates.append(first_seen[ticker])
+    if added_on.get(ticker):
+        candidates.append((_parse_date(added_on[ticker]) + timedelta(days=1)).isoformat())
+    return min(candidates) if candidates else None
 
 
 def load_known_gap_days(path: Path) -> dict:
@@ -280,7 +326,7 @@ def _check_one_date(
     score_bands: dict,
     report: Report,
     history_sample: List[str],
-    first_seen: Optional[dict] = None,
+    expected_since: Optional[dict] = None,
     known_gap_days: Optional[dict] = None,
 ) -> dict:
     """Run all per-date checks for a single date.
@@ -387,12 +433,12 @@ def _check_one_date(
             ))
 
     # Ticker coverage vs universe — warn if under-covered. A ticker only
-    # counts from the first day any snapshot scored it (it had not joined the
-    # universe before that); one never scored anywhere always counts.
-    first_seen = first_seen or {}
+    # counts from the date it joined (see expected_from: first scored, or the
+    # day after its universe added_on); one with no such evidence always counts.
+    expected_since = expected_since or {}
     expected_today = {
         t for t in active_universe
-        if t not in first_seen or first_seen[t] <= date_str
+        if expected_since.get(t) is None or expected_since[t] <= date_str
     }
     missing_from_universe = expected_today - seen_tickers
     if active_universe and len(missing_from_universe) > 1:
@@ -402,7 +448,9 @@ def _check_one_date(
             severity=SEVERITY_WARN,
             message=(
                 f"{date_str}: {len(scores_rows)} scored, "
-                f"{len(missing_from_universe)} active-universe tickers absent"
+                f"{len(missing_from_universe)} active-universe tickers absent "
+                f"({', '.join(sorted(missing_from_universe)[:5])}"
+                f"{', ...' if len(missing_from_universe) > 5 else ''})"
             ),
             detail={
                 "date": date_str,
@@ -529,20 +577,24 @@ def _check_history_continuity(
     sample_tickers: List[str],
     expected_dates: List[str],
     report: Report,
-    first_seen: Optional[dict] = None,
+    expected_since: Optional[dict] = None,
 ) -> dict:
     out: dict = {}
     hist_root = data_root / "history" / "by_ticker"
-    first_seen = first_seen or {}
+    expected_since = expected_since or {}
 
     for ticker in sample_tickers:
         # Only the days since the ticker joined the universe are expected.
-        joined = first_seen.get(ticker)
+        joined = expected_since.get(ticker)
         ticker_dates = [d for d in expected_dates if joined is None or d >= joined]
         expected_set = set(ticker_dates)
         path = hist_root / f"{ticker}.json"
         info = {"ticker": ticker, "found": 0, "expected": len(ticker_dates), "missing": []}
         out[ticker] = info
+        if not ticker_dates:
+            # Joined after the checked range: there is no history to have yet.
+            info["expected_from"] = joined
+            continue
         if not path.exists():
             report.add(Finding(
                 check="history_continuity",
@@ -706,7 +758,9 @@ def render_report(report: Report, per_date_stats: List[dict], history_stats: dic
         expected = info.get("expected", 0)
         missing = info.get("missing", [])
         marker = "OK" if not missing and found == expected else "FAIL"
-        lines.append(f"  [{marker}] {t}: {found} / {expected} dates")
+        note = (f" (joined the universe after the range; expected from {info['expected_from']})"
+                if info.get("expected_from") and not expected else "")
+        lines.append(f"  [{marker}] {t}: {found} / {expected} dates{note}")
     lines.append("")
 
     # Skipped-sources audit (backfill mode)
@@ -744,6 +798,135 @@ def render_repair_suggestions(report: Report) -> List[str]:
             f"  python scripts/lthcs_backfill.py --start {d} --end {d} --force"
         )
     return out
+
+
+# ---------------------------------------------------------------------------
+# GitHub Actions rendering (step summary + annotations)
+# ---------------------------------------------------------------------------
+
+# Every check, in report order, with the label the step summary shows.
+CHECK_LABELS = (
+    ("snapshot_exists", "Snapshot files"),
+    ("ticker_coverage", "Ticker coverage"),
+    ("score_sanity", "Score sanity"),
+    ("band_consistency", "Band consistency"),
+    ("variable_detail_exists", "Variable-detail files"),
+    ("variable_detail_rowcount", "Variable-detail row counts"),
+    ("narratives_exists", "Narrative files"),
+    ("narratives_rowcount", "Narrative row counts"),
+    ("history_continuity", "History continuity (sampled)"),
+    ("thesis_renormalization", "Backfill Thesis sub-scores"),
+)
+# One annotation per failing check, trimmed to this many characters: the
+# Actions UI truncates long annotations anyway, and the step summary and the
+# uploaded JSON carry the full list.
+ANNOTATION_MAX_CHARS = 500
+ANNOTATION_SAMPLES = 3
+
+
+def _checks_in_report(report: Report) -> List[tuple]:
+    known = [c for c, _ in CHECK_LABELS]
+    labels = dict(CHECK_LABELS)
+    extra = sorted({f.check for f in report.findings} - set(known))
+    return [(c, labels.get(c, c)) for c in known + extra]
+
+
+def _trim(text: str, limit: int) -> str:
+    text = " ".join(str(text).split())
+    return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"
+
+
+def _gh_escape_data(s: str) -> str:
+    return s.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
+def _gh_escape_property(s: str) -> str:
+    return _gh_escape_data(s).replace(":", "%3A").replace(",", "%2C")
+
+
+def github_annotations(report: Report) -> List[str]:
+    """``::error`` workflow commands, one per check that turned the run red.
+
+    A check with only warnings gets one too: the workflow fails on exit 1
+    (warnings) as well as exit 2, so a warning is just as much the reason the
+    run is red, and without an annotation the run page shows only an exit code.
+    """
+    out: List[str] = []
+    for check, label in _checks_in_report(report):
+        fails = [f for f in report.findings if f.check == check and f.severity == SEVERITY_FAIL]
+        warns = [f for f in report.findings if f.check == check and f.severity == SEVERITY_WARN]
+        if not fails and not warns:
+            continue
+        counts = ", ".join(
+            part for part in (
+                f"{len(fails)} failure(s)" if fails else "",
+                f"{len(warns)} warning(s)" if warns else "",
+            ) if part
+        )
+        shown = (fails + warns)[:ANNOTATION_SAMPLES]
+        more = len(fails) + len(warns) - len(shown)
+        body = f"{label}: {counts}: " + " | ".join(f.message for f in shown)
+        if more:
+            body += f" (+{more} more in the job summary / JSON report)"
+        title = f"lthcs-validate {'FAIL' if fails else 'WARN'}: {check}"
+        out.append(f"::error title={_gh_escape_property(title)}::"
+                   f"{_gh_escape_data(_trim(body, ANNOTATION_MAX_CHARS))}")
+    return out
+
+
+def _md_cell(text: str) -> str:
+    return _trim(text, 300).replace("|", "\\|")
+
+
+def render_markdown_summary(report: Report, history_stats: dict, sample_tickers: List[str]) -> str:
+    """Markdown for $GITHUB_STEP_SUMMARY: verdict, one row per check, and the
+    first findings of every failing check, readable without the job log."""
+    code = report.exit_code()
+    verdict = {0: "PASS", 1: "WARN", 2: "FAIL"}[code]
+    n = len(report.dates_checked)
+    lines = [
+        f"## LTHCS backfill validation: {verdict} (exit {code})",
+        "",
+        f"Range {report.start} → {report.end} ({n} day{'s' if n != 1 else ''}) · "
+        f"active universe {report.active_universe_size} · "
+        f"{len(report.failures)} failure(s), {len(report.warnings)} warning(s), "
+        f"{len(report.disclosed)} disclosed",
+        "",
+        "| Check | Result | First finding |",
+        "|---|---|---|",
+    ]
+    for check, label in _checks_in_report(report):
+        mine = [f for f in report.findings if f.check == check]
+        fails = [f for f in mine if f.severity == SEVERITY_FAIL]
+        warns = [f for f in mine if f.severity == SEVERITY_WARN]
+        disclosed = [f for f in mine if f.severity == SEVERITY_DISCLOSED]
+        if fails:
+            result = f"❌ {len(fails)} failure(s)" + (f", {len(warns)} warning(s)" if warns else "")
+        elif warns:
+            result = f"⚠️ {len(warns)} warning(s)"
+        else:
+            result = "✅ ok"
+        if disclosed:
+            result += f" ({len(disclosed)} disclosed in health/known_gaps.json)"
+        first = (fails + warns)[0].message if (fails or warns) else ""
+        lines.append(f"| {label} | {result} | {_md_cell(first)} |")
+    if sample_tickers:
+        sampled = ", ".join(
+            f"{t} {history_stats.get(t, {}).get('found', 0)}/{history_stats.get(t, {}).get('expected', 0)}"
+            for t in sample_tickers
+        )
+        lines += ["", f"History continuity sample (found/expected days): {sampled}"]
+    for check, label in _checks_in_report(report):
+        bad = [f for f in report.findings
+               if f.check == check and f.severity in (SEVERITY_FAIL, SEVERITY_WARN)]
+        if not bad:
+            continue
+        lines += ["", f"<details><summary>{label}: {len(bad)} finding(s)</summary>", ""]
+        lines += [f"- {_trim(f.message, 300)}" for f in bad[:20]]
+        if len(bad) > 20:
+            lines.append(f"- … and {len(bad) - 20} more (see the uploaded JSON report)")
+        lines += ["", "</details>"]
+    return "\n".join(lines) + "\n"
 
 
 # ---------------------------------------------------------------------------
@@ -788,6 +971,9 @@ def run_validation(
     score_bands = _load_score_bands(data_root)
     active_set = set(universe)
     first_seen = _ticker_first_seen(snap_dir)
+    added_on = _universe_added_on(data_root)
+    expected_since = {t: expected_from(t, first_seen, added_on)
+                      for t in set(universe) | set(first_seen)}
     if known_gaps_path is None and data_root.resolve() == (_REPO_ROOT / "data" / "lthcs").resolve():
         known_gaps_path = KNOWN_GAPS_PATH
     known_gap_days = load_known_gap_days(known_gaps_path) if known_gaps_path else {}
@@ -801,20 +987,26 @@ def run_validation(
         dates_checked=dates,
     )
 
-    # Pick 5 sample tickers for history continuity.
+    # Pick 5 sample tickers for history continuity, from the tickers that
+    # have at least one expected day in the range: a ticker that joined after
+    # ``end`` has no history to check, so sampling it would check nothing.
     if sample_tickers is None:
         rng = random.Random(rng_seed)
-        candidate_universe = universe or ["AAPL", "MSFT", "NVDA", "JPM", "XOM"]
+        end_str = end.isoformat()
+        candidate_universe = [
+            t for t in universe
+            if expected_since.get(t) is None or expected_since[t] <= end_str
+        ] or ([] if universe else ["AAPL", "MSFT", "NVDA", "JPM", "XOM"])
         sample_tickers = rng.sample(candidate_universe, k=min(5, len(candidate_universe)))
 
     per_date_stats: List[dict] = []
     for d in _daterange(start, end):
         stats = _check_one_date(d, data_root, active_set, score_bands, report, sample_tickers,
-                                first_seen=first_seen, known_gap_days=known_gap_days)
+                                expected_since=expected_since, known_gap_days=known_gap_days)
         per_date_stats.append(stats)
 
     history_stats = _check_history_continuity(data_root, sample_tickers, dates, report,
-                                              first_seen=first_seen)
+                                              expected_since=expected_since)
 
     return report, per_date_stats, history_stats, sample_tickers
 
@@ -859,6 +1051,9 @@ def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p.add_argument("--repair", action="store_true", help="Print repair suggestions for problem dates")
     p.add_argument("--verbose", action="store_true", help="Verbose output (currently a no-op; reserved)")
     p.add_argument("--no-json", action="store_true", help="Don't write the JSON report file")
+    p.add_argument("--github", action="store_true",
+                   help="GitHub Actions: print one ::error annotation per failing check and "
+                        "append a markdown summary to $GITHUB_STEP_SUMMARY")
     return p.parse_args(argv)
 
 
@@ -880,6 +1075,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("Repair suggestions (not auto-executed):")
         for line in render_repair_suggestions(report):
             print(line)
+
+    if args.github:
+        for line in github_annotations(report):
+            print(line)
+        summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+        if summary_path:
+            try:
+                with open(summary_path, "a", encoding="utf-8") as fh:
+                    fh.write(render_markdown_summary(report, history_stats, sample_tickers))
+            except OSError as e:
+                print(f"(step summary could not be written: {e})", file=sys.stderr)
 
     # Write JSON report next to the data root (skippable for tests).
     if not args.no_json:
