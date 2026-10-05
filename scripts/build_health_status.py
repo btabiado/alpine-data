@@ -113,6 +113,13 @@ THRESHOLDS: dict[str, Threshold] = {
     # The point of this entry stays the same: when it is red, it is red for a
     # true reason.
     "data-city.json": Threshold(62 * 24, 160 * 24),
+    # data-aviation.json is dated by its OLDEST component, the FAA airman roll:
+    # an ANNUAL study stamped Dec 31 (data_health MANIFEST, cadence "annual").
+    # Under the manifest-derived default (fresh = limit/2 = 200d) it turned
+    # amber every July on the current roll, the "looks broken" light this
+    # table exists to remove. Fresh while the roll is under a year old; the
+    # critical limit stays data_health's 400d.
+    "data-aviation.json": Threshold(365 * 24, 400 * 24),
     # real_estate.json is a once-a-day cron; 12h old is normal, not "stale".
     "real_estate.json": Threshold(30, 48),
     # metro_coords.json is STATIC reference data — Census CBSA gazetteer
@@ -857,6 +864,9 @@ def collect_manifest_feeds(root: Path = REPO_ROOT) -> list[dict]:
             "stale_h": t.stale_h,
             **_provenance_fields(probe),
         }
+        if getattr(feed, "cadence", ""):
+            # A slow source's age reads as expected only if the page says why.
+            row["cadence"] = feed.cadence
         sup = dh.SUPPRESSIONS.get(rel)
         if sup is not None and today <= sup.until:
             # Same mute data_health honours: the age is still reported, the

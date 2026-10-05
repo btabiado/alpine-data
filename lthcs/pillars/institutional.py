@@ -818,7 +818,13 @@ def compute_institutional(
         combined_adj = _COMBINED_ADJ_FLOOR
 
     adjusted_sub_score = base_sub_score + combined_adj
-    sub_score = round(float(adjusted_sub_score), 1)
+    # base is a [0, 100] blend and the adjustment is capped to [-7, +12], so
+    # the sum spans [-7, 112]. Until v1.1.1 it was published unclamped (e.g.
+    # FTNT 100.8, PANW 107.0, ON -5.1; 292 values in the 2026-05-18..10-05
+    # snapshots, left as published). A sub-score is a [0, 100] scale like every
+    # other pillar's: clamp it. variable_detail keeps base_sub_score and
+    # combined_adjustment_pts, so the unclamped sum stays visible there.
+    sub_score = round(min(100.0, max(0.0, float(adjusted_sub_score))), 1)
 
     return {
         "ticker": ticker,

@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from datetime import date
 from pathlib import Path
 from typing import Tuple
 
@@ -138,7 +139,17 @@ def validate_snapshot_for_date(date_str: str, universe: Universe) -> bool:
         return False
 
     snap_tickers = {row.get("ticker") for row in scores if isinstance(row, dict)}
-    active_tickers = {t.ticker for t in universe.tickers if t.active}
+    # A ticker added to universe.json ON or after this date is not expected in
+    # it: the day's snapshot can predate the change (2026-10-05's was cut at
+    # 01:59Z, the S&P 500 sync added 300 tickers at 02:08Z). Same rule as
+    # lthcs.backfill_validate.expected_from.
+    try:
+        day = date.fromisoformat(date_str)
+    except ValueError:
+        day = None
+    not_yet = {t.ticker for t in universe.tickers
+               if t.active and t.added_on is not None and day is not None and t.added_on >= day}
+    active_tickers = {t.ticker for t in universe.tickers if t.active} - not_yet
 
     # 2. Every active universe ticker has a score.
     missing = sorted(active_tickers - snap_tickers)
@@ -149,7 +160,9 @@ def validate_snapshot_for_date(date_str: str, universe: Universe) -> bool:
         )
         all_ok = False
     else:
-        _print_ok(f"snapshot covers all {len(active_tickers)} active universe tickers")
+        _print_ok(f"snapshot covers all {len(active_tickers)} active universe tickers"
+                  + (f" ({len(not_yet)} added on/after {date_str} not expected yet)"
+                     if not_yet else ""))
 
     # 3. Every score and sub-score is in [0, 100].
     out_of_range = []

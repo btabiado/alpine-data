@@ -465,3 +465,143 @@ def test_repo_known_gaps_not_applied_to_a_synthetic_root(tmp_path, lbv, monkeypa
         root, start=date(2026, 1, 1), end=date(2026, 1, 2), sample_tickers=["AAPL"],
     )
     assert any(f.check == "snapshot_exists" for f in report.failures)
+
+
+# ---------------------------------------------------------------------------
+# Universe add dates (added_on) and GitHub Actions rendering
+# ---------------------------------------------------------------------------
+
+def _set_added_on(root: Path, **added: str) -> None:
+    p = root / "universe.json"
+    u = json.loads(p.read_text())
+    for e in u["tickers"]:
+        if e["ticker"] in added:
+            e["added_on"] = added[e["ticker"]]
+    p.write_text(json.dumps(u))
+
+
+def test_ticker_added_on_the_snapshot_day_is_not_expected_until_the_next(tmp_path, lbv):
+    """2026-10-05: the snapshot was cut at 01:59Z and the S&P 500 sync added
+    300 tickers at 02:08Z. A snapshot has no generation time, so neither the
+    add day nor any earlier day may count them absent, and with no expected
+    day they have no history to sample."""
+    root = _build_root(tmp_path, ("AAPL", "MSFT", "NVDA"))
+    _set_added_on(root, MSFT="2026-01-02", NVDA="2026-01-02")
+    for d in ("2026-01-01", "2026-01-02"):
+        _write_day(root, d, ("AAPL",))
+    _write_history(root, "AAPL", ["2026-01-01", "2026-01-02"])
+
+    report, _, hist, sample = lbv.run_validation(
+        root, start=date(2026, 1, 1), end=date(2026, 1, 2),
+    )
+    assert report.exit_code() == 0, [f.message for f in report.findings]
+    assert sample == ["AAPL"]
+    # Sampled explicitly anyway, a not-yet-expected ticker needs no file.
+    report, _, hist, _ = lbv.run_validation(
+        root, start=date(2026, 1, 1), end=date(2026, 1, 2), sample_tickers=["MSFT"],
+    )
+    assert report.exit_code() == 0
+    assert hist["MSFT"] == {"ticker": "MSFT", "found": 0, "expected": 0,
+                            "missing": [], "expected_from": "2026-01-03"}
+
+
+def test_added_ticker_still_unscored_the_next_day_warns_and_fails_history(tmp_path, lbv):
+    root = _build_root(tmp_path, ("AAPL", "MSFT", "NVDA"))
+    _set_added_on(root, MSFT="2026-01-01", NVDA="2026-01-01")
+    for d in ("2026-01-01", "2026-01-02"):
+        _write_day(root, d, ("AAPL",))
+    _write_history(root, "AAPL", ["2026-01-01", "2026-01-02"])
+
+    report, _, hist, _ = lbv.run_validation(
+        root, start=date(2026, 1, 1), end=date(2026, 1, 2), sample_tickers=["MSFT"],
+    )
+    cov = [f for f in report.warnings if f.check == "ticker_coverage"]
+    assert [f.detail["date"] for f in cov] == ["2026-01-02"]
+    assert "MSFT, NVDA" in cov[0].message
+    assert hist["MSFT"]["expected"] == 1
+    assert any(f.check == "history_continuity" for f in report.failures)
+
+
+def test_scored_before_its_add_date_counts_from_first_score(tmp_path, lbv):
+    """The earlier evidence wins: a ticker scored before its recorded add
+    date (backfilled, or re-added) is expected from its first score, so the
+    add date cannot excuse a gap after that."""
+    root = _build_root(tmp_path, ("AAPL", "MSFT", "NVDA"))
+    _set_added_on(root, MSFT="2026-01-03", NVDA="2026-01-03")
+    _write_day(root, "2026-01-01", ("AAPL", "MSFT", "NVDA"))
+    _write_day(root, "2026-01-02", ("AAPL",))
+    _write_day(root, "2026-01-03", ("AAPL", "MSFT", "NVDA"))
+    for t in ("AAPL", "MSFT", "NVDA"):
+        _write_history(root, t, ["2026-01-01", "2026-01-02", "2026-01-03"])
+    report, _, _, _ = lbv.run_validation(
+        root, start=date(2026, 1, 1), end=date(2026, 1, 3), sample_tickers=["AAPL"],
+    )
+    cov = [f for f in report.warnings if f.check == "ticker_coverage"]
+    assert [f.detail["date"] for f in cov] == ["2026-01-02"]
+    assert lbv.expected_from("MSFT", {"MSFT": "2026-01-01"}, {"MSFT": "2026-01-03"}) == "2026-01-01"
+
+
+def test_unparseable_added_on_is_ignored_not_guessed(tmp_path, lbv):
+    root = _build_root(tmp_path, ("AAPL", "MSFT", "NVDA"))
+    _set_added_on(root, MSFT="late May 2026", NVDA="late May 2026")
+    _write_day(root, "2026-01-01", ("AAPL",))
+    _write_history(root, "AAPL", ["2026-01-01"])
+    report, _, _, _ = lbv.run_validation(
+        root, start=date(2026, 1, 1), end=date(2026, 1, 1), sample_tickers=["AAPL"],
+    )
+    assert any(f.check == "ticker_coverage" for f in report.warnings)
+
+
+def _failing_report(lbv):
+    report = lbv.Report(start="2026-01-01", end="2026-01-30", data_root="x",
+                        active_universe_size=3)
+    for i in range(30):
+        report.add(lbv.Finding("ticker_coverage", lbv.SEVERITY_WARN,
+                               f"2026-01-{i + 1:02d}: 1 scored, 300 active-universe tickers absent "
+                               + "x" * 200))
+    report.add(lbv.Finding("history_continuity", lbv.SEVERITY_FAIL,
+                           "history file missing for SW at data/lthcs/history/by_ticker/SW.json"))
+    report.add(lbv.Finding("snapshot_exists", lbv.SEVERITY_DISCLOSED, "missing (disclosed)",
+                           {"date": "2026-01-05"}))
+    return report
+
+
+def test_github_annotations_one_error_per_failing_check_trimmed(lbv):
+    lines = lbv.github_annotations(_failing_report(lbv))
+    assert len(lines) == 2   # coverage + history; the disclosed gap is not a failure
+    assert lines[0].startswith("::error title=lthcs-validate WARN%3A ticker_coverage::")
+    assert lines[1].startswith("::error title=lthcs-validate FAIL%3A history_continuity::")
+    for line in lines:
+        message = line.split("::", 2)[2]
+        assert "\n" not in line
+        assert len(message) <= lbv.ANNOTATION_MAX_CHARS
+    assert "30 warning(s)" in lines[0]
+    assert "history file missing for SW" in lines[1]
+
+
+def test_markdown_summary_has_a_row_per_check_and_the_findings(lbv):
+    md = lbv.render_markdown_summary(_failing_report(lbv), {"SW": {"found": 0, "expected": 30}}, ["SW"])
+    assert md.startswith("## LTHCS backfill validation: FAIL (exit 2)")
+    for _, label in lbv.CHECK_LABELS:
+        assert f"| {label} |" in md
+    assert "❌ 1 failure(s)" in md and "⚠️ 30 warning(s)" in md
+    assert "(1 disclosed in health/known_gaps.json)" in md
+    assert "SW 0/30" in md
+    assert "… and 10 more" in md
+
+
+def test_cli_github_flag_annotates_and_writes_step_summary(tmp_path, lbv, monkeypatch, capsys):
+    tickers = ("AAPL", "MSFT")
+    root = _build_root(tmp_path, tickers)
+    _write_day(root, "2026-01-01", tickers)
+    _write_day(root, "2026-01-03", tickers)
+    for t in tickers:
+        _write_history(root, t, ["2026-01-01", "2026-01-02", "2026-01-03"])
+    summary = tmp_path / "summary.md"
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
+    rc = lbv.main(["--data-root", str(root), "--start", "2026-01-01", "--end", "2026-01-03",
+                   "--no-json", "--github"])
+    out = capsys.readouterr().out
+    assert rc == 2
+    assert "::error title=lthcs-validate FAIL%3A snapshot_exists::" in out
+    assert "missing snapshot for 2026-01-02" in summary.read_text()

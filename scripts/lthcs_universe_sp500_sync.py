@@ -478,6 +478,9 @@ def build(candidate_dir: Path, run_date: Optional[str] = None, apply_exiles: boo
             "sector_group": group,
             "cik": str(int(r["CIK"])).zfill(10),
             "source": "sp500_sync_%s" % TODAY,
+            # Validators expect a ticker from the snapshot AFTER this date
+            # (lthcs.backfill_validate, lthcs.validate --date).
+            "added_on": TODAY,
         })
         entry["_peer_group"] = peer_group_for(t, sector, sub, entry.get("tech_sub_bucket"))
         new_entries.append(entry)

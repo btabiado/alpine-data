@@ -119,3 +119,47 @@ def test_the_monitor_can_actually_read_it(av):
     assert resolved == av["data_date"], (
         f"the probe dated the file from {probe.key!r} -> {resolved}, but "
         f"data_date says {av['data_date']}")
+
+
+# --- cadence: an annual roll must read as annual, not as a broken fetch ------
+#
+# data_date is the FAA airman roll (Dec 31), an annual study; ~9-15 months of
+# age is its normal state. The 2026-10-05 daily audit listed the file as
+# "as_of 2025-12-31 (279d)" and /health/ showed it amber from July on.
+
+
+def test_the_component_that_dates_the_file_states_its_cadence(av):
+    comps = av.get("asOfComponents") or {}
+    oldest = [c for c in comps.values() if c.get("date") == av.get("data_date")]
+    assert oldest and all(c.get("cadence") == "annual" for c in oldest), (
+        "the component behind data_date must say it is annual, or a ~1-year "
+        "age reads as a broken feed")
+
+
+def _scripts_module(name: str):
+    import importlib
+    import sys
+    sys.path.insert(0, str(ROOT / "scripts"))
+    return importlib.import_module(name)
+
+
+def test_monitors_report_the_annual_cadence(av):
+    dh = _scripts_module("data_health")
+    bhs = _scripts_module("build_health_status")
+    feed = dh.MANIFEST["data-aviation.json"]
+    assert feed.cadence == "annual"
+    # data_health's fail limit is unchanged; /health/ is fresh for a year.
+    assert feed.limit_h == 400 * 24.0
+    t = bhs.threshold_for("data-aviation.json", feed.limit_h)
+    assert (t.fresh_h, t.stale_h) == (365 * 24, 400 * 24)
+    rows = {r["name"]: r for r in bhs.collect_manifest_feeds()}
+    assert rows["data-aviation.json"]["cadence"] == "annual"
+    r = dh.Result("data-aviation.json", dh.OK, 6672.0, feed.limit_h, cadence=feed.cadence)
+    assert "[cadence: annual]" in r.line()
+
+
+def test_site_stamp_shows_each_vintage_with_its_cadence():
+    src = (ROOT / "app.py").read_text(encoding="utf-8")
+    block = src.split('// Entry render: as-of stamp', 1)[1].split('summary();', 1)[0]
+    assert "asOfComponents" in block and "c.cadence" in block
+    assert 'textContent=avStamp||D.asOf' in block

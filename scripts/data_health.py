@@ -238,6 +238,11 @@ class Feed:
     # daily committed-mode run: a missing day/month or a duplicate in the last
     # N days fails, unless health/known_gaps.json discloses it as unfillable.
     history: tuple[History, ...] = ()
+    # How often the UNDERLYING data is published, when that is slower than any
+    # cron (e.g. "annual"). Reported next to the age wherever the feed is
+    # shown, so a long age on a slow source reads as expected, not broken.
+    # Documentation only: limit_h is still what fails the feed.
+    cadence: str = ""
 
 
 @dataclass(frozen=True)
@@ -284,7 +289,12 @@ MANIFEST: dict[str, Feed] = {
         # The page publishes a trailing window; fetch_tsa rewrites it whole,
         # so continuity here means "no hole inside the window we serve".
         history=(History("data-tsa.json", DAILY, "json", label="checkpoint series",
-                         series_key="series", date_field="d"),)),
+                         series_key="series", date_field="d"),),
+        # Age is measured from the newest checkpoint date, and TSA posts
+        # yesterday's count, so a healthy file is already ~24h old at fetch
+        # time and the 14:10Z cron routinely starts hours late. 48h tolerates
+        # that and still flags a single missed day.
+        limit_h=48.0),
     "data-city.json": Feed(
         COMMITTED, "city-daily.yml (daily 06:00Z)", "python fetch_city.py",
         # Upstream (Socrata) monthly counts, re-pulled whole each run. A month
@@ -335,7 +345,16 @@ MANIFEST: dict[str, Feed] = {
         # (registry, market snapshot) could freeze for over a year without
         # tripping this check. Fixing that properly means watching the three
         # components separately, which needs an owner for the file first.
-        limit_h=400 * 24.0),
+        #
+        # Checked 2026-10-05: faa.gov's U.S. Civil Airmen Statistics page calls
+        # it "an annual study", lists "2025 Active Civil Airmen Statistics" as
+        # the newest roll and was last updated 2026-04-07. So 2025-12-31 IS the
+        # current vintage (age ~279d is expected), and if the 2026 roll posts
+        # as late as the 2025 one did, this 400d limit fires ~2027-02-04, some
+        # weeks before it can be refreshed. That alarm is then "annual roll
+        # due: check faa.gov", not rot; it is left on purpose.
+        limit_h=400 * 24.0,
+        cadence="annual"),
     "data/real_estate.json": Feed(
         COMMITTED, "real-estate-daily.yml (daily)",
         "python scripts/fetch_real_estate.py",
@@ -622,20 +641,6 @@ NESTED_DATE_PATHS = _NESTED_DATE_PATHS
 # been renewed three times is telling you the fix is never coming, and should
 # either be fixed properly or the feed retired from the dashboard.
 SUPPRESSIONS: dict[str, Suppression] = {
-    # Re-validated on expiry (2026-10-04), not extended reflexively: the old
-    # reason ("no code change can fix it from CI") stopped being true, and the
-    # decision it was waiting on was made -- the feed stays. tsa.gov is behind
-    # Akamai, which refuses datacenter IPs outright (a plain 403, not a JS
-    # challenge), so the fix reads the Internet Archive's near-daily snapshot of
-    # the same public page instead. Two weeks is enough for that fix to land
-    # and refresh the file; if data-tsa.json is still stale on expiry, the
-    # fallback did not work and this should come back as a real failure.
-    "data-tsa.json": Suppression(
-        reason="tsa.gov (Akamai) 403s datacenter IPs incl. GitHub Actions. Fix in "
-               "flight: fetch_tsa.py falls back to the Internet Archive snapshot "
-               "of the same page. Remove this entry once data-tsa.json is fresh.",
-        until=date(2026, 10, 18),
-        tracked_in="branch claude/alpine-data-status-check-93q95x-tsa (Wayback fallback)"),
     # Frozen on purpose, not broken. Since 2026-06-10 nuforc.org answers every
     # non-browser request with a Cloudflare managed challenge, and NUFORC's
     # terms forbid automated collection without written consent, so
@@ -707,6 +712,7 @@ class Result:
     owner: str = ""
     detail: str = ""
     source: str = ""     # which date field the age came from
+    cadence: str = ""    # Feed.cadence, echoed so reports can say it
 
     @property
     def fails(self) -> bool:
@@ -720,6 +726,8 @@ class Result:
             base = self.path   # continuity has no age; the detail says what broke
         if self.source:
             base += f" via {self.source}"
+        if self.cadence:
+            base += f" [cadence: {self.cadence}]"
         if self.owner:
             base += f" - {self.owner}"
         if self.detail:
@@ -1031,7 +1039,8 @@ def evaluate(mode: str, today: date | None = None,
 
         limit = feed.limit_h or THRESHOLDS.get(judged.name, DEFAULT).stale_h
         if age_h <= limit:
-            results.append(Result(rel, OK, age_h, limit, feed.owner, detail, source))
+            results.append(Result(rel, OK, age_h, limit, feed.owner, detail, source,
+                                  cadence=feed.cadence))
             continue
 
         sup = SUPPRESSIONS.get(rel)
@@ -1048,7 +1057,8 @@ def evaluate(mode: str, today: date | None = None,
                        f"blocker: {sup.reason} — re-validate that this is still "
                        f"true, then fix it or consciously extend the mute."))
         else:
-            results.append(Result(rel, STALE, age_h, limit, feed.owner, detail, source))
+            results.append(Result(rel, STALE, age_h, limit, feed.owner, detail, source,
+                                  cadence=feed.cadence))
 
     return results
 
@@ -1314,7 +1324,7 @@ def main(argv: list[str] | None = None) -> int:
             "results": [
                 {"path": r.path, "status": r.status, "age_h": r.age_h,
                  "limit_h": r.limit_h, "owner": r.owner, "detail": r.detail,
-                 "source": r.source}
+                 "source": r.source, "cadence": r.cadence}
                 for r in results
             ],
             "remediation": notes,
