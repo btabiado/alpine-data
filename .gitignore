@@ -171,3 +171,4 @@ snowflake_summit/enrichment.json
 data/lthcs/file_index.json
 data/lthcs/health_summary.json
 data/lthcs/history/pillars_by_ticker/
+data/lthcs/history/trend_index.json

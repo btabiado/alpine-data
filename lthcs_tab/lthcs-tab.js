@@ -410,17 +410,42 @@ async function fetchUniverse() {
   }
 }
 
-// Task 1: load per-ticker history files in parallel. Returns
+// Deploy-time trimmed copy of every history/by_ticker file (built by
+// scripts/build_lthcs_site_index.py). One request instead of one per ticker.
+const TREND_INDEX_URL = '../data/lthcs/history/trend_index.json';
+
+// The trend index, or null when it is absent (local dev), unreadable, or
+// built for a different calc date than the snapshot on screen (its rows are
+// trimmed relative to its own `latest`, so they are only exact for that day).
+async function fetchTrendIndex(calcDate) {
+  try {
+    const res = await fetch(TREND_INDEX_URL, { cache: 'no-store' });
+    if (!res.ok) return null;
+    const doc = await res.json();
+    if (!doc || doc.latest !== calcDate || !doc.tickers || typeof doc.tickers !== 'object') return null;
+    return doc.tickers;
+  } catch {
+    return null;
+  }
+}
+
+// Task 1: per-ticker 30d score-trend deltas. Returns
 //   { TICKER: { delta, direction }, ... }
-// Each fetch is best-effort — a missing or malformed file just yields an
+// Reads the trend index first; only tickers it does not cover (or every
+// ticker, when it is missing) fall back to their own history file. Each
+// fetch is best-effort — a missing or malformed file just yields an
 // "unknown" trend for that ticker.
 async function fetchTrendMap(tickers, calcDate) {
   if (!Array.isArray(tickers) || !tickers.length) return {};
+  const indexed = await fetchTrendIndex(calcDate);
 
   // Encode each ticker for the URL path (handles edge cases like "BRK.B").
   const fetches = tickers.map(async (row) => {
     const ticker = row && row.ticker;
     if (!ticker) return [null, { delta: null, direction: 'unknown' }];
+    if (indexed && Array.isArray(indexed[ticker])) {
+      return [ticker, computeTrend({ history: indexed[ticker] }, calcDate, row.score)];
+    }
     const url = `${HISTORY_BASE}/${encodeURIComponent(ticker)}.json`;
     try {
       const res = await fetch(url, { cache: 'no-store' });

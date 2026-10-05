@@ -28,6 +28,12 @@ disk, and writes three small artifacts next to the data:
       Per-ticker pillar sub-score history ({date, composite, <pillar>...}),
       the series the detail modal's pillar chips plot.
 
+  data/lthcs/history/trend_index.json
+      Every ticker's composite-score rows the /lthcs/ cards need for their
+      30-day trend pill, in one file. The index page used to fetch all 215
+      history/by_ticker/<T>.json files on first load (249 requests in all)
+      to compute one delta per card.
+
 None of these are committed (see .gitignore); they are regenerated on every
 deploy from the committed data, so they can never drift from it. The pages
 fall back to their old behaviour when a file is missing (e.g. local dev).
@@ -40,7 +46,7 @@ import argparse
 import json
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 DATE_FILE = re.compile(r"^(?:(?P<prefix>[A-Za-z0-9_]+?)_)?(?P<date>\d{4}-\d{2}-\d{2})\.json$")
@@ -199,6 +205,44 @@ def build_pillar_history(root: Path, index: dict) -> dict[str, list]:
     return by
 
 
+TREND_LOOKBACK_DAYS = 30   # max(TREND_FALLBACK_DAYS) in lthcs_tab/lthcs-tab.js
+
+
+def build_trend_index(root: Path, index: dict, lookback: int = TREND_LOOKBACK_DAYS) -> dict | None:
+    """{ticker: [{date, score}]} trimmed so the browser's anchor pick is
+    unchanged. pickAnchorForLookback() takes the newest row on or before
+    (calc_date - N days) for N <= lookback, so it only ever reads rows after
+    latest - lookback plus the newest row at or before that cutoff. Keeping
+    exactly those gives the same anchor as the full file for calc_date =
+    latest (the page only uses the index when its `latest` matches)."""
+    latest = ((index.get("dated") or {}).get("snapshots") or {}).get("latest")
+    hist_dir = root / "history" / "by_ticker"
+    if not latest or not hist_dir.is_dir():
+        return None
+    cutoff = (datetime.strptime(latest, "%Y-%m-%d")
+              - timedelta(days=lookback)).strftime("%Y-%m-%d")
+    out: dict[str, list] = {}
+    for f in sorted(hist_dir.glob("*.json")):
+        doc = _load(f)
+        rows = doc.get("history") if isinstance(doc, dict) else None
+        if not isinstance(rows, list):
+            continue
+        ticker = str(doc.get("ticker") or f.stem)
+        if not SAFE_TICKER.match(ticker):
+            continue
+        clean = sorted(
+            ({"date": r["date"], "score": r["score"]} for r in rows
+             if isinstance(r, dict) and isinstance(r.get("date"), str)
+             and isinstance(r.get("score"), (int, float)) and r["score"] == r["score"]),
+            key=lambda r: r["date"])
+        before = [r for r in clean if r["date"] <= cutoff]
+        out[ticker] = before[-1:] + [r for r in clean if r["date"] > cutoff]
+    return {"schema": 1, "latest": latest, "lookback_days": lookback,
+            "note": ("Trimmed copy of history/by_ticker/*.json for the /lthcs/ "
+                     "trend pills; the per-ticker files remain the source."),
+            "tickers": out}
+
+
 SAFE_TICKER = re.compile(r"^[A-Za-z0-9.\-^=]{1,15}$")
 
 
@@ -226,9 +270,14 @@ def main(argv=None) -> int:
             json.dumps({"ticker": t, "pillars": list(PILLARS), "history": rows}, separators=(",", ":")),
             encoding="utf-8")
         written += 1
+    trend = build_trend_index(root, index)
+    if trend is not None:
+        (root / "history" / "trend_index.json").write_text(
+            json.dumps(trend, separators=(",", ":")), encoding="utf-8")
     print(f"[lthcs-index] file_index: {len(index['dated'])} dated keys, "
           f"{len(index['backtest_files'])} backtest files; health_summary: "
-          f"{len(summary['days']) if summary else 0} days; pillar history: {written} tickers")
+          f"{len(summary['days']) if summary else 0} days; pillar history: {written} tickers; "
+          f"trend index: {len(trend['tickers']) if trend else 0} tickers")
     return 0
 
 
