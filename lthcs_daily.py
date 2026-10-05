@@ -1929,7 +1929,20 @@ def stage_6_compute_final_scores(state: PipelineState) -> bool:
         flags = list(state.data_quality_flags.get(sym, []))
 
         prior_scores: Optional[Dict[str, Optional[float]]] = None
+        # Real (non-synthetic) scored days before today. 0 = the ticker is
+        # new to the universe; the UI shows "new / not enough history"
+        # instead of reading its 0.0 drifts as a flat trend.
+        history_points: Optional[int] = None
         if persist is not None:
+            try:
+                hist_rows = (persist.read_history(sym) or {}).get("history") or []
+                history_points = sum(
+                    1 for r in hist_rows
+                    if isinstance(r, dict) and not r.get("synthetic")
+                    and isinstance(r.get("date"), str) and r["date"] < state.calc_date
+                )
+            except Exception:
+                history_points = None
             try:
                 # Drift windows are re-anchored at methodology breaks so a
                 # model/coverage change (2026-10-04 SEC restore) is never
@@ -1958,6 +1971,8 @@ def stage_6_compute_final_scores(state: PipelineState) -> bool:
         except Exception as exc:
             print("  warning: scoring failed for %s: %s" % (sym, exc))
             continue
+        if history_points is not None:
+            row["history_points"] = history_points
         state.snapshot_rows.append(row)
 
     # Band distribution
@@ -2264,7 +2279,11 @@ def stage_8_persist(state: PipelineState) -> bool:
         # synthetic entries land between the previous real snapshot and
         # today's new one. No-op when no gap exists.
         if state.args.catch_up:
-            synthetic_total = persist.fill_history_gaps(today=state.calc_date)
+            # Active universe only: an inactive (delisted / renamed) ticker
+            # must not keep receiving flat synthetic rows after it stopped
+            # being scored (BK/EA accumulated 96/62 such rows before this).
+            synthetic_total = persist.fill_history_gaps(
+                today=state.calc_date, tickers=state.active_tickers)
             if state.args.verbose and synthetic_total:
                 print("  catch-up filled %d synthetic entries" % synthetic_total)
         history_count = persist.rebuild_history_for_all_tickers(
@@ -2756,6 +2775,15 @@ def run_news_only(args: argparse.Namespace) -> int:
         # the drift columns.
         for k in ("drift_1d", "drift_7d", "drift_30d", "drift_90d"):
             row[k] = prior_row.get(k, 0.0)
+        # Same for the drift-availability markers the daily run wrote
+        # (compute_lthcs_score above had no priors, so its own list would
+        # wrongly claim every window is unavailable).
+        if "drift_unavailable" in prior_row:
+            row["drift_unavailable"] = prior_row.get("drift_unavailable")
+        else:
+            row.pop("drift_unavailable", None)
+        if "history_points" in prior_row:
+            row["history_points"] = prior_row.get("history_points")
 
         refreshed[sym] = row
 

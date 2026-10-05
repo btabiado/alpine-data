@@ -439,13 +439,19 @@ function renderHero(panel, { snapshotRow }) {
     ['30d', snapshotRow && snapshotRow.drift_30d],
     ['90d', snapshotRow && snapshotRow.drift_90d],
   ];
+  // Windows with no comparable prior (e.g. a ticker new to the universe)
+  // carry a 0.0 placeholder; show "—" instead of a fake flat reading.
+  const noPrior = new Set((snapshotRow && snapshotRow.drift_unavailable) || []);
   for (const [label, value] of driftFields) {
     const stat = el('div', { className: 'lthcs-modal-drift-stat' });
     stat.appendChild(el('span', { className: 'lthcs-modal-drift-stat-label', text: label }));
+    const missing = noPrior.has(label);
     const v = el('span', {
       className: 'lthcs-modal-drift-stat-value',
-      text: fmtDrift(value),
-      attrs: { 'data-direction': driftDirection(value) },
+      text: missing ? '—' : fmtDrift(value),
+      attrs: missing
+        ? { 'data-direction': 'unknown', title: 'Not enough score history for this window yet' }
+        : { 'data-direction': driftDirection(value) },
     });
     stat.appendChild(v);
     driftRow.appendChild(stat);

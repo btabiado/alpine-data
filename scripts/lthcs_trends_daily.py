@@ -82,7 +82,7 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 # Reuse helpers from the weekly script so behaviour stays consistent.
-from scripts.lthcs_trends_weekly import _iso_week_str, _is_rate_limit_error, _per_ticker_cache_path, _write_per_ticker_cache, fetch_one_live, load_universe
+from scripts.lthcs_trends_weekly import _iso_week_str, _is_rate_limit_error, _per_ticker_cache_path, _write_per_ticker_cache, fetch_one_live, load_universe, order_least_recently_covered
 from lthcs.sources.google_trends import resolve_search_term  # noqa: E402
 
 
@@ -596,7 +596,13 @@ def run_daily_batch(
     if args.tickers:
         universe = [t.strip().upper() for t in args.tickers.split(",") if t.strip()]
     else:
-        universe = load_universe(args.universe)
+        # Least-recently-covered first, so the daily 30-ticker slices rotate
+        # through the whole ~515-name universe instead of the same
+        # alphabetical head every week.
+        universe = order_least_recently_covered(
+            load_universe(args.universe), Path(args.data_root) / "trends",
+            exclude_week=week,
+        )
     if not universe:
         logger.warning("Empty universe. Nothing to do.")
         return {"week": week, "as_of": as_of, "term_map": {}, "tickers": {}}

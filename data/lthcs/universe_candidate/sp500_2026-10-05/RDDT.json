@@ -1,0 +1,32 @@
+{
+  "checks": {
+    "cik": "resolved",
+    "cusip": "missing",
+    "finnhub": {
+      "detail": "skipped (FINNHUB_API_KEY not set)",
+      "ok": false
+    },
+    "yahoo": {
+      "detail": "yfinance ok (5 rows)",
+      "ok": true
+    }
+  },
+  "errors": [],
+  "generated_at": "2026-10-05T01:26:07Z",
+  "passed": true,
+  "record": {
+    "active": true,
+    "cik": "0001713445",
+    "index_membership": [
+      "S&P 500"
+    ],
+    "maturity_stage": "growth_compounder",
+    "name": "Reddit, Inc.",
+    "sector": "Communication Services",
+    "sector_group": "Media & Entertainment",
+    "source": "universe_expand",
+    "ticker": "RDDT"
+  },
+  "ticker": "RDDT",
+  "warnings": []
+}

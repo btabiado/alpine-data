@@ -463,16 +463,18 @@ def test_cohort_size_floor_semiconductors_and_software_clear(
 
     Pre-Wave A, Hardware was intentionally pinned at n=3 to force the
     AAPL cohort cascade; Wave A added ANET/APH/GLW/STX/WDC and the
-    cascade is no longer in force — accepted with eyes-open."""
+    cascade is no longer in force — accepted with eyes-open.
+
+    S&P 500 sync (2026-10-05): IT Services grew 4 -> 8 (AKAM, GDDY, IT,
+    VRSN) and now clears the floor as well, so ACN/CDW/CTSH/IBM leave the
+    maturity_only cascade for a real sector-group cohort — accepted with
+    eyes-open; revisit in the post-first-run peer-group audit."""
     groups = peer_groups_config["sector_groups"]
     floor = int(peer_groups_config.get("min_cohort_size", 6))
     assert len(groups["tech_semiconductors"]["tickers"]) >= floor
     assert len(groups["tech_software"]["tickers"]) >= floor
     assert len(groups["tech_hardware"]["tickers"]) >= floor
-    assert len(groups["tech_it_services"]["tickers"]) < floor, (
-        "IT Services is expected to fall below floor (n=4 per spec §3); "
-        "growing it past 6 would change the cascade behaviour — re-check."
-    )
+    assert len(groups["tech_it_services"]["tickers"]) >= floor
 
 
 def test_distribution_software_subbucket_tighter_than_parent_tech() -> None:

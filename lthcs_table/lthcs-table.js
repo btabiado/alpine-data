@@ -304,11 +304,37 @@ async function fetchUniverse() {
   return (u && Array.isArray(u.tickers)) ? u.tickers : [];
 }
 
+// Deploy-time trimmed copy of every history/by_ticker file (built by
+// scripts/build_lthcs_site_index.py; same file the /lthcs/ card view uses).
+// One request instead of one per ticker — ~515 at S&P 500 scale.
+const TREND_INDEX_URL = HISTORY_BASE.replace(/by_ticker$/, 'trend_index.json');
+
+// The trend index, or null when it is absent (local dev), unreadable, or
+// built for a different calc date than the snapshot on screen (its rows are
+// trimmed relative to its own `latest`, so they are only exact for that day).
+async function fetchTrendIndex(calcDate) {
+  try {
+    const res = await fetch(TREND_INDEX_URL, { cache: 'no-store' });
+    if (!res.ok) return null;
+    const doc = await res.json();
+    if (!doc || doc.latest !== calcDate || !doc.tickers || typeof doc.tickers !== 'object') return null;
+    return doc.tickers;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchTrendMap(rows, calcDate) {
   if (!Array.isArray(rows) || !rows.length || !calcDate) return {};
+  const indexed = await fetchTrendIndex(calcDate);
   const fetches = rows.map(async (row) => {
     const ticker = row && row.ticker;
     if (!ticker) return [null, { delta: null, direction: 'unknown', periodDays: null }];
+    if (indexed && Array.isArray(indexed[ticker])) {
+      return [ticker, computeTrend({ history: indexed[ticker] }, calcDate, row.score)];
+    }
+    // Absent from a current index = no history file yet (new ticker).
+    if (indexed) return [ticker, { delta: null, direction: 'unknown', periodDays: null }];
     const url = `${HISTORY_BASE}/${encodeURIComponent(ticker)}.json`;
     try {
       const res = await fetch(url, { cache: 'no-store' });
@@ -349,6 +375,8 @@ function enrichRows(snapshot, universeByTicker, insiderByTicker, holdingsByTicke
     const uiBand = BAND_SNAPSHOT_TO_UI[row.band] || row.band || 'review';
     const indicesRaw = Array.isArray(uni.index_membership) ? uni.index_membership : [];
     const indices = indicesRaw.map((s) => INDEX_KEY_NORMALIZE[s]).filter(Boolean);
+    // Drift windows with no comparable prior (new ticker / methodology break).
+    const noPrior = new Set(Array.isArray(row.drift_unavailable) ? row.drift_unavailable : []);
 
     return {
       ticker: row.ticker,
@@ -361,10 +389,12 @@ function enrichRows(snapshot, universeByTicker, insiderByTicker, holdingsByTicke
       uiBand,
       bandLabel: BAND_LABEL[uiBand] || uiBand,
       bandRank: BAND_SORT_RANK[uiBand] != null ? BAND_SORT_RANK[uiBand] : -1,
-      drift1d: Number.isFinite(Number(row.drift_1d)) ? Number(row.drift_1d) : null,
-      drift7d: Number.isFinite(Number(row.drift_7d)) ? Number(row.drift_7d) : null,
-      drift30d: Number(row.drift_30d) || 0,
-      driftDirection: classifyDriftFromDelta(row.drift_30d),
+      drift1d: (!noPrior.has('1d') && Number.isFinite(Number(row.drift_1d))) ? Number(row.drift_1d) : null,
+      drift7d: (!noPrior.has('7d') && Number.isFinite(Number(row.drift_7d))) ? Number(row.drift_7d) : null,
+      // null (rendered "—", sorted last) when the snapshot has no 30-day
+      // prior for this ticker — e.g. new to the universe — instead of 0.0.
+      drift30d: noPrior.has('30d') ? null : (Number(row.drift_30d) || 0),
+      driftDirection: noPrior.has('30d') ? 'insufficient' : classifyDriftFromDelta(row.drift_30d),
       maturityStage: row.maturity_stage || '',
       maturityLabel: MATURITY_LABEL[row.maturity_stage] || row.maturity_stage || '—',
       subAdopt: Number(sub.adoption_momentum),

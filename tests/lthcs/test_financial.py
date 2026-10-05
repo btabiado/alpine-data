@@ -1681,7 +1681,10 @@ def test_bank_tickers_expanded_to_twelve() -> None:
     assert "BLK" in financial.BANK_TICKERS
     for sym in ("JPM", "BAC", "WFC", "C", "GS", "MS", "USB", "TFC"):
         assert sym in financial.BANK_TICKERS
-    assert len(financial.BANK_TICKERS) == 12
+    # BNY = BK's current ticker (2026-07 change); both stay listed so the
+    # inactive BK history and the active BNY row route the same way.
+    assert "BNY" in financial.BANK_TICKERS
+    assert len(financial.BANK_TICKERS) == 13
 
 
 def test_bank_cohort_percentile_includes_expansion_members() -> None:

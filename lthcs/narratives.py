@@ -160,14 +160,24 @@ def _todays_take(score_dict: Dict, ranked_desc: List[Tuple[str, float]]) -> str:
     top_pillar, top_score = ranked_desc[0]
     top_name = HUMAN_PILLAR_NAMES[top_pillar]
 
+    no_prior = set(score_dict.get("drift_unavailable") or ())
+    if "30d" in no_prior:
+        # No comparable 30-day prior (new to the universe, or a methodology
+        # break): say so rather than print the 0.0 placeholder as "flat".
+        if score_dict.get("history_points") == 0:
+            trend = "new to the LTHCS universe, no score history yet"
+        else:
+            trend = "not enough history yet for a 30-day trend"
+    else:
+        trend = "{:+.1f} over 30 days".format(drift_30d)
     return (
         "{ticker} {action} at {score:.1f} "
-        "({drift_30d:+.1f} over 30 days), supported by {top_name} at {top_score:.1f}."
+        "({trend}), supported by {top_name} at {top_score:.1f}."
     ).format(
         ticker=ticker,
         action=action,
         score=score,
-        drift_30d=drift_30d,
+        trend=trend,
         top_name=top_name,
         top_score=top_score,
     )
@@ -178,6 +188,11 @@ def _why_changed(score_dict: Dict, prior: Optional[Dict]) -> str:
     drift_1d = _safe_float(score_dict.get("drift_1d"))
 
     if prior is None:
+        if "1d" in set(score_dict.get("drift_unavailable") or ()):
+            return (
+                "Score is at {score:.1f}; no prior snapshot available for "
+                "component-delta analysis."
+            ).format(score=score)
         return (
             "Score is at {score:.1f} (drift over 1d {drift_1d:+.1f}); "
             "no prior snapshot available for component-delta analysis."

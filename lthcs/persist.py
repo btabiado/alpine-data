@@ -24,7 +24,7 @@ import re
 import tempfile
 from datetime import date as _date_cls, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 
 # ---------------------------------------------------------------------------
@@ -525,7 +525,13 @@ class LthcsPersist:
     # Catch-up / gap-fill
     # ------------------------------------------------------------------
 
-    def fill_history_gaps(self, today: str, *, max_entries: int = 365) -> int:
+    def fill_history_gaps(
+        self,
+        today: str,
+        *,
+        max_entries: int = 365,
+        tickers: Optional[Iterable[str]] = None,
+    ) -> int:
         """Forward-fill missing days between each ticker's last entry and ``today``.
 
         For every per-ticker history file under ``history/by_ticker/``:
@@ -544,10 +550,20 @@ class LthcsPersist:
         from. Each ticker is written atomically so a crash mid-loop never
         leaves a half-rewritten file.
 
+        ``tickers`` (optional) limits the fill to those symbols — the daily
+        pipeline passes the ACTIVE universe so a delisted / renamed ticker
+        (inactive in universe.json) stops getting flat synthetic rows the
+        moment it stops being scored. ``None`` keeps the legacy behaviour of
+        filling every history file.
+
         Returns the total number of synthetic entries written across all
         tickers. Use the count to detect when catch-up was active (>0)
         vs. a quiet no-op (==0).
         """
+        only: Optional[set] = (
+            {self.history_path(str(t)).name for t in tickers}
+            if tickers is not None else None
+        )
         _validate_calc_date(today)
         try:
             today_dt = _date_cls.fromisoformat(today)
@@ -566,6 +582,8 @@ class LthcsPersist:
             if entry.suffix != ".json":
                 continue
             if entry.name.startswith(".tmp-"):
+                continue
+            if only is not None and entry.name not in only:
                 continue
 
             try:

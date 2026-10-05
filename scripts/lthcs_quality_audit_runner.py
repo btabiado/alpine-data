@@ -299,9 +299,12 @@ def _cross_cutting_alerts(snapshot: Dict[str, Any]) -> List[str]:
         return alerts
     # Drift_30d regression check: HH's recent fix should make drift_30d non-zero
     # for >=80% of tickers. If everything is zero again, flag it.
-    with_drift = sum(1 for r in records if isinstance(r.get("drift_30d"), (int, float)))
+    # Rows with no 30-day prior (new to the universe) carry a 0.0
+    # placeholder, not a measured drift — leave them out of the ratio.
+    measured = [r for r in records if "30d" not in (r.get("drift_unavailable") or ())]
+    with_drift = sum(1 for r in measured if isinstance(r.get("drift_30d"), (int, float)))
     nonzero_drift = sum(
-        1 for r in records
+        1 for r in measured
         if isinstance(r.get("drift_30d"), (int, float)) and abs(float(r["drift_30d"])) > 1e-9
     )
     if with_drift and nonzero_drift / with_drift < 0.20:

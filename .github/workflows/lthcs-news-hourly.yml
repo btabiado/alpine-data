@@ -62,7 +62,9 @@ concurrency:
 jobs:
   run:
     runs-on: ubuntu-24.04  # pinned: ubuntu-latest becomes 26.04 on 2026-10-19 and setup-python needs a toolcache build for the image
-    timeout-minutes: 30
+    # ~7 min for 217 tickers (per-ticker 8-K + Yahoo earnings) -> ~17 min
+    # at the ~515-ticker S&P 500 universe; 45 keeps 2.5x headroom.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:

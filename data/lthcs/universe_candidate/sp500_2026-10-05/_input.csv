@@ -1,0 +1,301 @@
+ticker,name,sector,sector_group,maturity_stage,index_membership,tech_sub_bucket,cik
+A,"Agilent Technologies, Inc.",Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0001090872
+ACGL,Arch Capital Group Ltd.,Financials,Insurance,financial,S&P 500,,0000947484
+ADM,Archer-Daniels-Midland Company,Consumer Staples,"Food, Beverage & Tobacco",mature_compounder,S&P 500,,0000007084
+AEE,Ameren Corporation,Utilities,Utilities,standard_compounder,S&P 500,,0001002910
+AES,The AES Corporation,Utilities,Utilities,standard_compounder,S&P 500,,0000874761
+AFL,Aflac Incorporated,Financials,Insurance,financial,S&P 500,,0000004977
+AIG,"American International Group, Inc.",Financials,Insurance,financial,S&P 500,,0000005272
+AIZ,"Assurant, Inc.",Financials,Insurance,financial,S&P 500,,0001267238
+AJG,Arthur J. Gallagher & Co.,Financials,Insurance,financial,S&P 500,,0000354190
+AKAM,"Akamai Technologies, Inc.",Technology,Software & Services,standard_compounder,S&P 500,IT Services,0001086222
+ALB,Albemarle Corporation,Materials,Materials,recovery_rerating,S&P 500,,0000915913
+ALGN,"Align Technology, Inc.",Health Care,Health Care Equipment & Services,growth_compounder,S&P 500,,0001097149
+ALL,The Allstate Corporation,Financials,Insurance,financial,S&P 500,,0000899051
+ALLE,Allegion plc,Industrials,Capital Goods,standard_compounder,S&P 500,,0001579241
+AMCR,Amcor plc,Materials,Materials,growth_compounder,S&P 500,,0001748790
+AME,"AMETEK, Inc.",Industrials,Capital Goods,standard_compounder,S&P 500,,0001037868
+AMP,"Ameriprise Financial, Inc.",Financials,Diversified Financials,financial,S&P 500,,0000820027
+AON,Aon plc,Financials,Insurance,financial,S&P 500,,0000315293
+AOS,A. O. Smith Corporation,Industrials,Capital Goods,standard_compounder,S&P 500,,0000091142
+APA,APA Corporation,Energy,Energy,standard_compounder,S&P 500,,0001841666
+APD,"Air Products and Chemicals, Inc.",Materials,Materials,mature_compounder,S&P 500,,0000002969
+APO,"Apollo Global Management, Inc.",Financials,Diversified Financials,financial,S&P 500,,0001858681
+APP,AppLovin Corporation,Communication Services,Media & Entertainment,growth_compounder,S&P 500,,0001751008
+APTV,Aptiv PLC,Consumer Discretionary,Automobiles & Components,standard_compounder,S&P 500,,0001521332
+ARE,"Alexandria Real Estate Equities, Inc.",Real Estate,Real Estate,standard_compounder,S&P 500,,0001035443
+ARES,Ares Management Corporation,Financials,Diversified Financials,financial,S&P 500,,0001176948
+ATO,Atmos Energy Corporation,Utilities,Utilities,standard_compounder,S&P 500,,0000731802
+AVY,Avery Dennison Corporation,Materials,Materials,standard_compounder,S&P 500,,0000008818
+AWK,"American Water Works Company, Inc.",Utilities,Utilities,standard_compounder,S&P 500,,0001410636
+AXON,"Axon Enterprise, Inc.",Industrials,Capital Goods,growth_compounder,S&P 500,,0001069183
+AZO,"AutoZone, Inc.",Consumer Discretionary,Retailing,mature_compounder,S&P 500,,0000866787
+BALL,Ball Corporation,Materials,Materials,standard_compounder,S&P 500,,0000009389
+BAX,Baxter International Inc.,Health Care,Health Care Equipment & Services,recovery_stabilization,S&P 500,,0000010456
+BBY,"Best Buy Co., Inc.",Consumer Discretionary,Retailing,standard_compounder,S&P 500,,0000764478
+BDX,"Becton, Dickinson and Company",Health Care,Health Care Equipment & Services,mature_compounder,S&P 500,,0000010795
+BE,Bloom Energy Corporation,Industrials,Capital Goods,growth_compounder,S&P 500,,0001664703
+BEN,"Franklin Resources, Inc.",Financials,Diversified Financials,financial,S&P 500,,0000038777
+BF.B,Brown-Forman Corporation,Consumer Staples,"Food, Beverage & Tobacco",mature_compounder,S&P 500,,0000014693
+BG,Bunge Global SA,Consumer Staples,"Food, Beverage & Tobacco",standard_compounder,S&P 500,,0001996862
+BNY,The Bank of New York Mellon Corporation,Financials,Diversified Financials,standard_compounder,S&P 500,,0001390777
+BR,"Broadridge Financial Solutions, Inc.",Industrials,Software & Services,standard_compounder,S&P 500,,0001383312
+BRO,"Brown & Brown, Inc.",Financials,Insurance,financial,S&P 500,,0000079282
+BXP,"BXP, Inc.",Real Estate,Real Estate,standard_compounder,S&P 500,,0001037540
+CAH,"Cardinal Health, Inc.",Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0000721371
+CARR,Carrier Global Corporation,Industrials,Capital Goods,standard_compounder,S&P 500,,0001783180
+CASY,"Casey's General Stores, Inc.",Consumer Staples,Food & Staples Retailing,growth_compounder,S&P 500,,0000726958
+CBOE,"Cboe Global Markets, Inc.",Financials,Diversified Financials,financial,S&P 500,,0001374310
+CBRE,"CBRE Group, Inc.",Real Estate,Real Estate,standard_compounder,S&P 500,,0001138118
+CCI,Crown Castle Inc.,Real Estate,Real Estate,standard_compounder,S&P 500,,0001051470
+CCL,Carnival Corporation,Consumer Discretionary,Consumer Services,recovery_stabilization,S&P 500,,0000815097
+CF,"CF Industries Holdings, Inc.",Materials,Materials,standard_compounder,S&P 500,,0001324404
+CFG,"Citizens Financial Group, Inc.",Financials,Banks,financial,S&P 500,,0000759944
+CHD,"Church & Dwight Co., Inc.",Consumer Staples,Household & Personal Products,standard_compounder,S&P 500,,0000313927
+CHRW,"C.H. Robinson Worldwide, Inc.",Industrials,Transportation,standard_compounder,S&P 500,,0001043277
+CIEN,Ciena Corporation,Technology,Technology Hardware & Equipment,growth_compounder,S&P 500,Hardware,0000936395
+CINF,Cincinnati Financial Corporation,Financials,Insurance,financial,S&P 500,,0000020286
+CLX,The Clorox Company,Consumer Staples,Household & Personal Products,standard_compounder,S&P 500,,0000021076
+CMG,"Chipotle Mexican Grill, Inc.",Consumer Discretionary,Consumer Services,growth_compounder,S&P 500,,0001058090
+CMS,CMS Energy Corporation,Utilities,Utilities,standard_compounder,S&P 500,,0000811156
+CNC,Centene Corporation,Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0001071739
+CNP,"CenterPoint Energy, Inc.",Utilities,Utilities,standard_compounder,S&P 500,,0001130310
+COHR,Coherent Corp.,Technology,Technology Hardware & Equipment,growth_compounder,S&P 500,Hardware,0000820318
+COIN,"Coinbase Global, Inc.",Financials,Diversified Financials,financial,S&P 500,,0001679788
+COO,"The Cooper Companies, Inc.",Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0000711404
+COR,"Cencora, Inc.",Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0001140859
+CPAY,"Corpay, Inc.",Financials,Diversified Financials,financial,S&P 500,,0001175454
+CPRT,"Copart, Inc.",Industrials,Commercial & Professional Services,growth_compounder,S&P 500,,0000900075
+CPT,Camden Property Trust,Real Estate,Real Estate,standard_compounder,S&P 500,,0000906345
+CRH,CRH plc,Materials,Materials,standard_compounder,S&P 500,,0000849395
+CRL,Charles River Laboratories,Health Care,"Pharmaceuticals, Biotechnology & Life Sciences",standard_compounder,S&P 500,,0001100682
+CTVA,"Corteva, Inc.",Materials,Materials,standard_compounder,S&P 500,,0001755672
+CVNA,Carvana Co.,Consumer Discretionary,Retailing,recovery_rerating,S&P 500,,0001690820
+D,"Dominion Energy, Inc.",Utilities,Utilities,standard_compounder,S&P 500,,0000715957
+DAL,"Delta Air Lines, Inc.",Industrials,Transportation,recovery_stabilization,S&P 500,,0000027904
+DD,"DuPont de Nemours, Inc.",Industrials,Materials,standard_compounder,S&P 500,,0001666700
+DECK,Deckers Outdoor Corporation,Consumer Discretionary,Consumer Durables & Apparel,growth_compounder,S&P 500,,0000910521
+DELL,Dell Technologies Inc.,Technology,Technology Hardware & Equipment,growth_compounder,S&P 500,Hardware,0001571996
+DG,Dollar General Corporation,Consumer Staples,Retailing,recovery_stabilization,S&P 500,,0000029534
+DGX,Quest Diagnostics Incorporated,Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0001022079
+DHI,"D.R. Horton, Inc.",Consumer Discretionary,Consumer Durables & Apparel,standard_compounder,S&P 500,,0000882184
+DLR,"Digital Realty Trust, Inc.",Real Estate,Real Estate,standard_compounder,S&P 500,,0001297996
+DLTR,"Dollar Tree, Inc.",Consumer Staples,Retailing,recovery_stabilization,S&P 500,,0000935703
+DOC,"Healthpeak Properties, Inc.",Real Estate,Real Estate,standard_compounder,S&P 500,,0000765880
+DOV,Dover Corporation,Industrials,Capital Goods,standard_compounder,S&P 500,,0000029905
+DOW,Dow Inc.,Materials,Materials,standard_compounder,S&P 500,,0001751788
+DPZ,"Domino's Pizza, Inc.",Consumer Discretionary,Consumer Services,standard_compounder,S&P 500,,0001286681
+DRI,"Darden Restaurants, Inc.",Consumer Discretionary,Consumer Services,standard_compounder,S&P 500,,0000940944
+DTE,DTE Energy Company,Utilities,Utilities,standard_compounder,S&P 500,,0000936340
+DVA,DaVita Inc.,Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0000927066
+DVN,Devon Energy Corporation,Energy,Energy,standard_compounder,S&P 500,,0001090012
+EBAY,eBay Inc.,Consumer Discretionary,Retailing,standard_compounder,S&P 500,,0001065088
+ECHO,EchoStar Corporation,Communication Services,Telecommunication Services,recovery_stabilization,S&P 500,,0001415404
+ED,"Consolidated Edison, Inc.",Utilities,Utilities,standard_compounder,S&P 500,,0001047862
+EFX,Equifax Inc.,Industrials,Commercial & Professional Services,standard_compounder,S&P 500,,0000033185
+EG,"Everest Group, Ltd.",Financials,Insurance,financial,S&P 500,,0001095073
+EIX,Edison International,Utilities,Utilities,standard_compounder,S&P 500,,0000827052
+EL,The Estée Lauder Companies Inc.,Consumer Staples,Household & Personal Products,recovery_stabilization,S&P 500,,0001001250
+EME,"EMCOR Group, Inc.",Industrials,Capital Goods,standard_compounder,S&P 500,,0000105634
+EQT,EQT Corporation,Energy,Energy,standard_compounder,S&P 500,,0000033213
+ERIE,Erie Indemnity Company,Financials,Insurance,financial,S&P 500,,0000922621
+ES,Eversource Energy,Utilities,Utilities,standard_compounder,S&P 500,,0000072741
+ESS,"Essex Property Trust, Inc.",Real Estate,Real Estate,standard_compounder,S&P 500,,0000920522
+ETR,Entergy Corporation,Utilities,Utilities,standard_compounder,S&P 500,,0000065984
+EVRG,"Evergy, Inc.",Utilities,Utilities,standard_compounder,S&P 500,,0001711269
+EW,Edwards Lifesciences Corporation,Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0001099800
+EXE,Expand Energy Corporation,Energy,Energy,standard_compounder,S&P 500,,0000895126
+EXPD,Expeditors International of Washington,Industrials,Transportation,standard_compounder,S&P 500,,0000746515
+EXPE,"Expedia Group, Inc.",Consumer Discretionary,Consumer Services,standard_compounder,S&P 500,,0001324424
+EXR,Extra Space Storage Inc.,Real Estate,Real Estate,standard_compounder,S&P 500,,0001289490
+FDS,FactSet Research Systems Inc.,Financials,Diversified Financials,financial,S&P 500,,0001013237
+FDXF,"FedEx Freight Holding Company, Inc.",Industrials,Transportation,growth_compounder,S&P 500,,0002082247
+FE,FirstEnergy Corp.,Utilities,Utilities,standard_compounder,S&P 500,,0001031296
+FERG,Ferguson Enterprises Inc.,Industrials,Capital Goods,standard_compounder,S&P 500,,0002011641
+FFIV,"F5, Inc.",Technology,Technology Hardware & Equipment,standard_compounder,S&P 500,Hardware,0001048695
+FICO,Fair Isaac Corporation,Technology,Software & Services,growth_compounder,S&P 500,Software,0000814547
+FIS,Fidelity National Information Services,Financials,Diversified Financials,financial,S&P 500,,0001136893
+FISV,Fiserv,Financials,Diversified Financials,financial,S&P 500,,0000798354
+FITB,Fifth Third Bancorp,Financials,Banks,financial,S&P 500,,0000035527
+FIX,"Comfort Systems USA, Inc.",Industrials,Capital Goods,growth_compounder,S&P 500,,0001035983
+FLEX,Flex Ltd.,Technology,Technology Hardware & Equipment,growth_compounder,S&P 500,Hardware,0000866374
+FOX,Fox Corporation (Class B),Communication Services,Media & Entertainment,standard_compounder,S&P 500,,0001754301
+FOXA,Fox Corporation (Class A),Communication Services,Media & Entertainment,standard_compounder,S&P 500,,0001754301
+FRT,Federal Realty Investment Trust,Real Estate,Real Estate,standard_compounder,S&P 500,,0000034903
+FSLR,"First Solar, Inc.",Technology,Technology Hardware & Equipment,growth_compounder,S&P 500,Semiconductors,0001274494
+FTV,Fortive Corporation,Industrials,Capital Goods,standard_compounder,S&P 500,,0001659166
+GDDY,GoDaddy Inc.,Technology,Software & Services,standard_compounder,S&P 500,IT Services,0001609711
+GEN,Gen Digital Inc.,Technology,Software & Services,standard_compounder,S&P 500,Software,0000849399
+GIS,"General Mills, Inc.",Consumer Staples,"Food, Beverage & Tobacco",mature_compounder,S&P 500,,0000040704
+GL,Globe Life Inc.,Financials,Insurance,financial,S&P 500,,0000320335
+GNRC,Generac Holdings Inc.,Industrials,Capital Goods,recovery_stabilization,S&P 500,,0001474735
+GPC,Genuine Parts Company,Consumer Discretionary,Retailing,standard_compounder,S&P 500,,0000040987
+GPN,Global Payments Inc.,Financials,Diversified Financials,financial,S&P 500,,0001123360
+GRMN,Garmin Ltd.,Consumer Discretionary,Consumer Durables & Apparel,standard_compounder,S&P 500,,0001121788
+GWW,"W.W. Grainger, Inc.",Industrials,Capital Goods,mature_compounder,S&P 500,,0000277135
+HAL,Halliburton Company,Energy,Energy,standard_compounder,S&P 500,,0000045012
+HAS,"Hasbro, Inc.",Consumer Discretionary,Consumer Durables & Apparel,recovery_stabilization,S&P 500,,0000046080
+HBAN,Huntington Bancshares Incorporated,Financials,Banks,financial,S&P 500,,0000049196
+HIG,The Hartford Financial Services Group,Financials,Insurance,financial,S&P 500,,0000874766
+HII,"Huntington Ingalls Industries, Inc.",Industrials,Capital Goods,standard_compounder,S&P 500,,0001501585
+HONA,Honeywell Aerospace Inc.,Industrials,Capital Goods,growth_compounder,S&P 500,,0002089271
+HOOD,"Robinhood Markets, Inc.",Financials,Diversified Financials,financial,S&P 500,,0001783879
+HPE,Hewlett Packard Enterprise Company,Technology,Technology Hardware & Equipment,standard_compounder,S&P 500,Hardware,0001645590
+HPQ,HP Inc.,Technology,Technology Hardware & Equipment,standard_compounder,S&P 500,Hardware,0000047217
+HRL,Hormel Foods Corporation,Consumer Staples,"Food, Beverage & Tobacco",standard_compounder,S&P 500,,0000048465
+HSIC,"Henry Schein, Inc.",Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0001000228
+HST,"Host Hotels & Resorts, Inc.",Real Estate,Real Estate,standard_compounder,S&P 500,,0001070750
+HSY,The Hershey Company,Consumer Staples,"Food, Beverage & Tobacco",mature_compounder,S&P 500,,0000047111
+HUBB,Hubbell Incorporated,Industrials,Capital Goods,standard_compounder,S&P 500,,0000048898
+HUM,Humana Inc.,Health Care,Health Care Equipment & Services,recovery_stabilization,S&P 500,,0000049071
+IBKR,"Interactive Brokers Group, Inc.",Financials,Diversified Financials,financial,S&P 500,,0001381197
+IEX,IDEX Corporation,Industrials,Capital Goods,standard_compounder,S&P 500,,0000832101
+IFF,International Flavors & Fragrances Inc.,Materials,Materials,recovery_stabilization,S&P 500,,0000051253
+INCY,Incyte Corporation,Health Care,"Pharmaceuticals, Biotechnology & Life Sciences",standard_compounder,S&P 500,,0000879169
+INVH,Invitation Homes Inc.,Real Estate,Real Estate,standard_compounder,S&P 500,,0001687229
+IP,International Paper Company,Materials,Materials,standard_compounder,S&P 500,,0000051434
+IQV,IQVIA Holdings Inc.,Health Care,"Pharmaceuticals, Biotechnology & Life Sciences",standard_compounder,S&P 500,,0001478242
+IR,Ingersoll Rand Inc.,Industrials,Capital Goods,standard_compounder,S&P 500,,0001699150
+IRM,Iron Mountain Incorporated,Real Estate,Real Estate,standard_compounder,S&P 500,,0001020569
+IT,"Gartner, Inc.",Technology,Software & Services,growth_compounder,S&P 500,IT Services,0000749251
+IVZ,Invesco Ltd.,Financials,Diversified Financials,financial,S&P 500,,0000914208
+J,Jacobs Solutions Inc.,Industrials,Commercial & Professional Services,standard_compounder,S&P 500,,0000052988
+JBHT,"J.B. Hunt Transport Services, Inc.",Industrials,Transportation,standard_compounder,S&P 500,,0000728535
+JBL,Jabil Inc.,Technology,Technology Hardware & Equipment,standard_compounder,S&P 500,Hardware,0000898293
+JKHY,"Jack Henry & Associates, Inc.",Financials,Diversified Financials,financial,S&P 500,,0000779152
+KEY,KeyCorp,Financials,Banks,financial,S&P 500,,0000091576
+KEYS,"Keysight Technologies, Inc.",Technology,Technology Hardware & Equipment,standard_compounder,S&P 500,Hardware,0001601046
+KIM,Kimco Realty Corporation,Real Estate,Real Estate,standard_compounder,S&P 500,,0000879101
+KMB,Kimberly-Clark Corporation,Consumer Staples,Household & Personal Products,mature_compounder,S&P 500,,0000055785
+KR,The Kroger Co.,Consumer Staples,Food & Staples Retailing,standard_compounder,S&P 500,,0000056873
+KVUE,Kenvue Inc.,Consumer Staples,Household & Personal Products,growth_compounder,S&P 500,,0001944048
+L,Loews Corporation,Financials,Insurance,financial,S&P 500,,0000060086
+LDOS,"Leidos Holdings, Inc.",Industrials,Commercial & Professional Services,standard_compounder,S&P 500,,0001336920
+LEN,Lennar Corporation,Consumer Discretionary,Consumer Durables & Apparel,standard_compounder,S&P 500,,0000920760
+LH,Labcorp Holdings Inc.,Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0000920148
+LHX,"L3Harris Technologies, Inc.",Industrials,Capital Goods,standard_compounder,S&P 500,,0000202058
+LII,Lennox International Inc.,Industrials,Capital Goods,standard_compounder,S&P 500,,0001069202
+LITE,Lumentum Holdings Inc.,Technology,Technology Hardware & Equipment,pre_profit_growth,S&P 500,Hardware,0001633978
+LNT,Alliant Energy Corporation,Utilities,Utilities,standard_compounder,S&P 500,,0000352541
+LUV,Southwest Airlines Co.,Industrials,Transportation,recovery_stabilization,S&P 500,,0000092380
+LVS,Las Vegas Sands Corp.,Consumer Discretionary,Consumer Services,recovery_stabilization,S&P 500,,0001300514
+LYB,LyondellBasell Industries N.V.,Materials,Materials,standard_compounder,S&P 500,,0001489393
+LYV,"Live Nation Entertainment, Inc.",Communication Services,Media & Entertainment,growth_compounder,S&P 500,,0001335258
+MAA,"Mid-America Apartment Communities, Inc.",Real Estate,Real Estate,standard_compounder,S&P 500,,0000912595
+MAS,Masco Corporation,Industrials,Capital Goods,standard_compounder,S&P 500,,0000062996
+MGM,MGM Resorts International,Consumer Discretionary,Consumer Services,recovery_stabilization,S&P 500,,0000789570
+MKC,"McCormick & Company, Incorporated",Consumer Staples,"Food, Beverage & Tobacco",standard_compounder,S&P 500,,0000063754
+MLM,"Martin Marietta Materials, Inc.",Materials,Materials,standard_compounder,S&P 500,,0000916076
+MOS,The Mosaic Company,Materials,Materials,standard_compounder,S&P 500,,0001285785
+MRNA,"Moderna, Inc.",Health Care,"Pharmaceuticals, Biotechnology & Life Sciences",recovery_stabilization,S&P 500,,0001682852
+MRSH,Marsh McLennan,Financials,Insurance,financial,S&P 500,,0000062709
+MSCI,MSCI Inc.,Financials,Diversified Financials,growth_compounder,S&P 500,,0001408198
+MSI,"Motorola Solutions, Inc.",Technology,Technology Hardware & Equipment,standard_compounder,S&P 500,Hardware,0000068505
+MTB,M&T Bank Corporation,Financials,Banks,financial,S&P 500,,0000036270
+MTD,Mettler-Toledo International Inc.,Health Care,"Pharmaceuticals, Biotechnology & Life Sciences",standard_compounder,S&P 500,,0001037646
+NCLH,Norwegian Cruise Line Holdings Ltd.,Consumer Discretionary,Consumer Services,recovery_stabilization,S&P 500,,0001513761
+NDAQ,"Nasdaq, Inc.",Financials,Diversified Financials,financial,S&P 500,,0001120193
+NDSN,Nordson Corporation,Industrials,Capital Goods,standard_compounder,S&P 500,,0000072331
+NI,NiSource Inc.,Utilities,Utilities,standard_compounder,S&P 500,,0001111711
+NRG,"NRG Energy, Inc.",Utilities,Utilities,standard_compounder,S&P 500,,0001013871
+NTAP,"NetApp, Inc.",Technology,Technology Hardware & Equipment,standard_compounder,S&P 500,Hardware,0001002047
+NTRS,Northern Trust Corporation,Financials,Banks,financial,S&P 500,,0000073124
+NUE,Nucor Corporation,Materials,Materials,standard_compounder,S&P 500,,0000073309
+NVR,"NVR, Inc.",Consumer Discretionary,Consumer Durables & Apparel,standard_compounder,S&P 500,,0000906163
+NWS,News Corporation (Class B),Communication Services,Media & Entertainment,standard_compounder,S&P 500,,0001564708
+NWSA,News Corporation (Class A),Communication Services,Media & Entertainment,standard_compounder,S&P 500,,0001564708
+O,Realty Income Corporation,Real Estate,Real Estate,standard_compounder,S&P 500,,0000726728
+OKE,"ONEOK, Inc.",Energy,Energy,standard_compounder,S&P 500,,0001039684
+OMC,Omnicom Group Inc.,Communication Services,Media & Entertainment,standard_compounder,S&P 500,,0000029989
+OTIS,Otis Worldwide Corporation,Industrials,Capital Goods,standard_compounder,S&P 500,,0001781335
+OXY,Occidental Petroleum Corporation,Energy,Energy,standard_compounder,S&P 500,,0000797468
+P,"Everpure, Inc.",Technology,Technology Hardware & Equipment,growth_compounder,S&P 500,Hardware,0001474432
+PCG,PG&E Corporation,Utilities,Utilities,standard_compounder,S&P 500,,0001004980
+PEG,Public Service Enterprise Group,Utilities,Utilities,standard_compounder,S&P 500,,0000788784
+PFG,"Principal Financial Group, Inc.",Financials,Insurance,financial,S&P 500,,0001126328
+PHM,"PulteGroup, Inc.",Consumer Discretionary,Consumer Durables & Apparel,standard_compounder,S&P 500,,0000822416
+PKG,Packaging Corporation of America,Materials,Materials,standard_compounder,S&P 500,,0000075677
+PLTR,Palantir Technologies Inc.,Technology,Software & Services,growth_compounder,S&P 500,Software,0001321655
+PNR,Pentair plc,Industrials,Capital Goods,standard_compounder,S&P 500,,0000077360
+PNW,Pinnacle West Capital Corporation,Utilities,Utilities,standard_compounder,S&P 500,,0000764622
+PODD,Insulet Corporation,Health Care,Health Care Equipment & Services,growth_compounder,S&P 500,,0001145197
+PPG,"PPG Industries, Inc.",Materials,Materials,standard_compounder,S&P 500,,0000079879
+PPL,PPL Corporation,Utilities,Utilities,standard_compounder,S&P 500,,0000922224
+PRU,"Prudential Financial, Inc.",Financials,Insurance,financial,S&P 500,,0001137774
+PSA,Public Storage,Real Estate,Real Estate,standard_compounder,S&P 500,,0001393311
+PSKY,Paramount Skydance Corporation,Communication Services,Media & Entertainment,recovery_rerating,S&P 500,,0002041610
+PTC,PTC Inc.,Technology,Software & Services,growth_compounder,S&P 500,Software,0000857005
+Q,"Qnity Electronics, Inc.",Technology,Semiconductors & Semiconductor Equipment,growth_compounder,S&P 500,Semiconductors,0002058873
+RCL,Royal Caribbean Cruises Ltd.,Consumer Discretionary,Consumer Services,recovery_stabilization,S&P 500,,0000884887
+RDDT,"Reddit, Inc.",Communication Services,Media & Entertainment,growth_compounder,S&P 500,,0001713445
+REG,Regency Centers Corporation,Real Estate,Real Estate,standard_compounder,S&P 500,,0000910606
+RF,Regions Financial Corporation,Financials,Banks,financial,S&P 500,,0001281761
+RJF,"Raymond James Financial, Inc.",Financials,Diversified Financials,financial,S&P 500,,0000720005
+RL,Ralph Lauren Corporation,Consumer Discretionary,Consumer Durables & Apparel,standard_compounder,S&P 500,,0001037038
+RMD,ResMed Inc.,Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0000943819
+ROK,"Rockwell Automation, Inc.",Industrials,Capital Goods,standard_compounder,S&P 500,,0001024478
+ROL,"Rollins, Inc.",Industrials,Commercial & Professional Services,standard_compounder,S&P 500,,0000084839
+RSG,"Republic Services, Inc.",Industrials,Commercial & Professional Services,mature_compounder,S&P 500,,0001060391
+RVTY,"Revvity, Inc.",Health Care,"Pharmaceuticals, Biotechnology & Life Sciences",standard_compounder,S&P 500,,0000031791
+SBAC,SBA Communications Corporation,Real Estate,Real Estate,standard_compounder,S&P 500,,0001034054
+SJM,The J. M. Smucker Company,Consumer Staples,"Food, Beverage & Tobacco",standard_compounder,S&P 500,,0000091419
+SNA,Snap-on Incorporated,Industrials,Capital Goods,standard_compounder,S&P 500,,0000091440
+SNDK,Sandisk Corporation,Technology,Technology Hardware & Equipment,growth_compounder,S&P 500,Hardware,0002023554
+SOLV,Solventum Corporation,Health Care,Health Care Equipment & Services,growth_compounder,S&P 500,,0001964738
+SPGI,S&P Global Inc.,Financials,Diversified Financials,financial,S&P 500,,0000064040
+SRE,Sempra,Utilities,Utilities,standard_compounder,S&P 500,,0001032208
+STE,STERIS plc,Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0001757898
+STLD,"Steel Dynamics, Inc.",Materials,Materials,standard_compounder,S&P 500,,0001022671
+STT,State Street Corporation,Financials,Banks,financial,S&P 500,,0000093751
+STZ,"Constellation Brands, Inc.",Consumer Staples,"Food, Beverage & Tobacco",standard_compounder,S&P 500,,0000016918
+SW,Smurfit Westrock Plc,Materials,Materials,standard_compounder,S&P 500,,0002005951
+SWK,"Stanley Black & Decker, Inc.",Industrials,Capital Goods,recovery_stabilization,S&P 500,,0000093556
+SWKS,"Skyworks Solutions, Inc.",Technology,Semiconductors & Semiconductor Equipment,standard_compounder,S&P 500,Semiconductors,0000004127
+SYF,Synchrony Financial,Financials,Diversified Financials,financial,S&P 500,,0001601712
+SYY,Sysco Corporation,Consumer Staples,Food & Staples Retailing,standard_compounder,S&P 500,,0000096021
+TDG,TransDigm Group Incorporated,Industrials,Capital Goods,growth_compounder,S&P 500,,0001260221
+TDY,Teledyne Technologies Incorporated,Technology,Technology Hardware & Equipment,standard_compounder,S&P 500,Hardware,0001094285
+TECH,Bio-Techne Corporation,Health Care,"Pharmaceuticals, Biotechnology & Life Sciences",standard_compounder,S&P 500,,0000842023
+TEL,TE Connectivity Ltd.,Technology,Technology Hardware & Equipment,standard_compounder,S&P 500,Hardware,0001385157
+TER,"Teradyne, Inc.",Technology,Semiconductors & Semiconductor Equipment,standard_compounder,S&P 500,Semiconductors,0000097210
+TFC,Truist Financial Corporation,Financials,Banks,financial,S&P 500,,0000092230
+TKO,"TKO Group Holdings, Inc.",Communication Services,Media & Entertainment,standard_compounder,S&P 500,,0001973266
+TPL,Texas Pacific Land Corporation,Energy,Energy,growth_compounder,S&P 500,,0001811074
+TPR,"Tapestry, Inc.",Consumer Discretionary,Consumer Durables & Apparel,standard_compounder,S&P 500,,0001116132
+TRGP,Targa Resources Corp.,Energy,Energy,standard_compounder,S&P 500,,0001389170
+TRMB,Trimble Inc.,Technology,Technology Hardware & Equipment,standard_compounder,S&P 500,Software,0000864749
+TROW,"T. Rowe Price Group, Inc.",Financials,Diversified Financials,financial,S&P 500,,0001113169
+TSCO,Tractor Supply Company,Consumer Discretionary,Retailing,standard_compounder,S&P 500,,0000916365
+TSN,"Tyson Foods, Inc.",Consumer Staples,"Food, Beverage & Tobacco",standard_compounder,S&P 500,,0000100493
+TXT,Textron Inc.,Industrials,Capital Goods,standard_compounder,S&P 500,,0000217346
+TYL,"Tyler Technologies, Inc.",Technology,Software & Services,growth_compounder,S&P 500,Software,0000860731
+UAL,"United Airlines Holdings, Inc.",Industrials,Transportation,recovery_stabilization,S&P 500,,0000100517
+UDR,"UDR, Inc.",Real Estate,Real Estate,standard_compounder,S&P 500,,0000074208
+UHS,"Universal Health Services, Inc.",Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0000352915
+ULTA,"Ulta Beauty, Inc.",Consumer Discretionary,Retailing,standard_compounder,S&P 500,,0001403568
+URI,"United Rentals, Inc.",Industrials,Capital Goods,standard_compounder,S&P 500,,0001067701
+VEEV,Veeva Systems Inc.,Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0001393052
+VICI,VICI Properties Inc.,Real Estate,Real Estate,growth_compounder,S&P 500,,0001705696
+VLTO,Veralto Corporation,Industrials,Capital Goods,growth_compounder,S&P 500,,0001967680
+VMC,Vulcan Materials Company,Materials,Materials,standard_compounder,S&P 500,,0001396009
+VMRK,Vivmark Residential,Real Estate,Real Estate,standard_compounder,S&P 500,,0000906107
+VRSN,"VeriSign, Inc.",Technology,Software & Services,standard_compounder,S&P 500,IT Services,0001014473
+VRT,Vertiv Holdings Co,Industrials,Capital Goods,growth_compounder,S&P 500,,0001674101
+VST,Vistra Corp.,Utilities,Utilities,growth_compounder,S&P 500,,0001692819
+VTR,"Ventas, Inc.",Real Estate,Real Estate,standard_compounder,S&P 500,,0000740260
+VTRS,Viatris Inc.,Health Care,"Pharmaceuticals, Biotechnology & Life Sciences",recovery_stabilization,S&P 500,,0001792044
+WAB,Westinghouse Air Brake Technologies,Industrials,Capital Goods,standard_compounder,S&P 500,,0000943452
+WAT,Waters Corporation,Health Care,"Pharmaceuticals, Biotechnology & Life Sciences",standard_compounder,S&P 500,,0001000697
+WEC,"WEC Energy Group, Inc.",Utilities,Utilities,standard_compounder,S&P 500,,0000783325
+WRB,W. R. Berkley Corporation,Financials,Insurance,financial,S&P 500,,0000011544
+WSM,"Williams-Sonoma, Inc.",Consumer Discretionary,Retailing,standard_compounder,S&P 500,,0000719955
+WST,"West Pharmaceutical Services, Inc.",Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0000105770
+WTW,Willis Towers Watson Public Limited,Financials,Insurance,financial,S&P 500,,0001140536
+WY,Weyerhaeuser Company,Real Estate,Real Estate,standard_compounder,S&P 500,,0000106535
+WYNN,"Wynn Resorts, Limited",Consumer Discretionary,Consumer Services,recovery_stabilization,S&P 500,,0001174922
+XYL,Xylem Inc.,Industrials,Capital Goods,standard_compounder,S&P 500,,0001524472
+XYZ,"Block, Inc.",Financials,Diversified Financials,financial,S&P 500,,0001512673
+YUM,"Yum! Brands, Inc.",Consumer Discretionary,Consumer Services,standard_compounder,S&P 500,,0001041061
+ZBH,"Zimmer Biomet Holdings, Inc.",Health Care,Health Care Equipment & Services,standard_compounder,S&P 500,,0001136869
+ZBRA,Zebra Technologies Corporation,Technology,Technology Hardware & Equipment,standard_compounder,S&P 500,Hardware,0000877212
+ZTS,Zoetis Inc.,Health Care,"Pharmaceuticals, Biotechnology & Life Sciences",standard_compounder,S&P 500,,0001555280

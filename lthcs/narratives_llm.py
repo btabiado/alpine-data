@@ -507,14 +507,18 @@ def build_user_message(
         }
     else:
         prior_block = {"available": False}
+    # A window with no comparable prior (e.g. a ticker new to the universe)
+    # is sent as null, not as the 0.0 placeholder, so the model never
+    # narrates a flat trend that was never measured.
+    no_prior = set(snapshot_row.get("drift_unavailable") or ())
     payload: Dict[str, Any] = {
         "ticker": ticker,
         "sector": snapshot_row.get("sector"),
         "lthcs_score": snapshot_row.get("lthcs_score"),
         "band": snapshot_row.get("band"),
-        "drift_1d": snapshot_row.get("drift_1d"),
-        "drift_7d": snapshot_row.get("drift_7d"),
-        "drift_30d": snapshot_row.get("drift_30d"),
+        "drift_1d": None if "1d" in no_prior else snapshot_row.get("drift_1d"),
+        "drift_7d": None if "7d" in no_prior else snapshot_row.get("drift_7d"),
+        "drift_30d": None if "30d" in no_prior else snapshot_row.get("drift_30d"),
         "confidence_level": snapshot_row.get("confidence_level"),
         "subscores": {k: (None if v is None else round(float(v), 1))
                       for k, v in subs.items()},
