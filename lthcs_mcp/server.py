@@ -19,7 +19,11 @@ import sys
 from typing import Optional
 
 try:
-    from mcp.server.fastmcp import FastMCP
+    try:
+        # mcp >= 2 renamed FastMCP to MCPServer.
+        from mcp.server.mcpserver import MCPServer as FastMCP
+    except ImportError:
+        from mcp.server.fastmcp import FastMCP  # mcp 1.x
 except ImportError as exc:  # pragma: no cover - import-time guard
     sys.stderr.write(
         "ERROR: the 'mcp' Python SDK is not installed.\n"
