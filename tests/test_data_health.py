@@ -728,15 +728,17 @@ def test_wiring_scan_ignores_comments_but_not_code():
     #
     # This used to assert COINGECKO_API_KEY was wired NOWHERE, which stopped
     # being true once it was genuinely wired into pages.yml and
-    # lthcs-crypto-daily.yml. CRYPTOCOMPARE_API_KEY is the live example of the
-    # same property, and a sharper one: lthcs-crypto-daily.yml names it in the
-    # comment explaining why it was removed, while mapping it nowhere. So the
-    # scanner must report `pages` (where it IS mapped) and must NOT report
-    # lthcs-crypto-daily — proving it reads the env block, not the prose above
-    # it, within a single file.
-    cryptocompare = _workflows_wiring("CRYPTOCOMPARE_API_KEY")
-    assert "pages" in cryptocompare
-    assert "lthcs-crypto-daily" not in cryptocompare
+    # lthcs-crypto-daily.yml. CRYPTOCOMPARE_API_KEY is now the live example,
+    # and a sharp one: since its retirement (2026-10) pages.yml,
+    # lthcs-crypto-daily.yml, data-health.yml and daily-audit.yml all still
+    # NAME it in comments explaining why it is gone, while none maps it. The
+    # scanner must therefore report nothing at all for it — proving it reads
+    # env blocks, not the prose above them — while still seeing FRED's real
+    # mapping above.
+    assert any("CRYPTOCOMPARE_API_KEY" in wf.read_text()
+               for wf in WORKFLOWS.glob("*.yml") if wf.stem != "secrets-check"), (
+        "the prose this check relies on is gone; pick another retired key")
+    assert _workflows_wiring("CRYPTOCOMPARE_API_KEY") == set()
 
 
 def test_secret_workflow_annotations_match_reality(secrets_mod):

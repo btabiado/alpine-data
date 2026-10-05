@@ -63,16 +63,19 @@ def test_airnow_empty_param_is_replaced_not_duplicated(monkeypatch):
     assert [v for k, v in pairs if k == "API_KEY"] == [SECRET]
 
 
-def test_header_keys_for_cryptocompare_and_socrata(monkeypatch):
+def test_header_keys_for_coinmetrics_and_socrata(monkeypatch):
+    # Was CryptoCompare ("Apikey {key}"); that probe was removed in 2026-10
+    # with every CryptoCompare dependency. CoinMetrics exercises the same
+    # header + format path.
     calls = []
-    monkeypatch.setenv("CRYPTOCOMPARE_API_KEY", SECRET)
+    monkeypatch.setenv("COINMETRICS_API_KEY", SECRET)
     monkeypatch.setenv("SOCRATA_APP_TOKEN", SECRET)
     monkeypatch.setattr(api_status.urllib.request, "urlopen", _recording_urlopen(calls))
-    api_status._probe_one(_target("CryptoCompare CCCAGG"), timeout=1, attempts=1)
+    api_status._probe_one(_target("CoinMetrics"), timeout=1, attempts=1)
     api_status._probe_one(_target("Socrata · Chicago"), timeout=1, attempts=1)
     h0 = {k.lower(): v for k, v in calls[0]["headers"].items()}
     h1 = {k.lower(): v for k, v in calls[1]["headers"].items()}
-    assert h0["authorization"] == f"Apikey {SECRET}"
+    assert h0["authorization"] == f"Api-Key {SECRET}"
     assert h1["x-app-token"] == SECRET
     assert SECRET not in calls[0]["url"] and SECRET not in calls[1]["url"]
 

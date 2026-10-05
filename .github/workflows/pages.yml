@@ -6,7 +6,9 @@ on:
   schedule:
     # Hourly live-data refresh. GitHub cron is best-effort and can drift
     # 5–15 min under fleet load. Frequent enough to feel fresh, conservative
-    # on free-tier rate limits (CoinGecko 30/min, CryptoCompare keyless).
+    # on free-tier rate limits (CoinGecko Demo: 30/min and ~10k/month — the
+    # top-50 daily series are cached per UTC day so only the first run of a
+    # day spends those calls; see fetch_market.fetch_top_daily_series).
     - cron: "0 * * * *"
   workflow_dispatch: {}
 
@@ -101,7 +103,13 @@ jobs:
           # secret to light up the corresponding sections on the public mirror:
           #   FRED            macro overlay (DXY/SPX/Gold/10Y/M2)
           #   GLASSNODE       true BTC whale-cohort metrics (replaces bitinfocharts)
-          #   CRYPTOCOMPARE   per-coin social + news sentiment + dev stats
+          #   (CRYPTOCOMPARE_API_KEY is no longer mapped: since 2026-10 every
+          #   CryptoCompare/CoinDesk dependency was replaced with free sources
+          #   — CoinGecko, Coinbase/Kraken/Binance.US candles, Google News RSS,
+          #   GitHub REST — and nothing reads that variable any more.)
+          #   GITHUB_TOKEN    the job's own token, sent ONLY to api.github.com
+          #                   for the Research tab's repository stats (keyless
+          #                   works too, at 60 requests/hour per runner IP).
           #   REDDIT_*        subreddit subscriber counts (cloud IPs are normally
           #                   blocked; OAuth bypasses that)
           #   COINMETRICS     ETH whale active addresses / tx count / transfer
@@ -118,7 +126,7 @@ jobs:
           COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
-          CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           COINMETRICS_API_KEY: ${{ secrets.COINMETRICS_API_KEY }}
@@ -191,12 +199,10 @@ jobs:
         #
         # Idempotent — it only rewrites today's file when an index actually
         # moved, so the hourly schedule doesn't produce 24 no-op commits.
-        env:
-          # Read for presence only: while it is unset a null
-          # poc_signal_breadth is written with an `unavailable` reason
-          # (unavailable by design), so the continuity monitor discloses it
-          # rather than paging a new gap every day.
-          CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
+        #
+        # No key is read here any more: poc_signal_breadth comes from free
+        # sources (CoinGecko + exchange candles) since 2026-10, so a null is a
+        # real gap again, not "unavailable by design".
         run: python scripts/snapshot_composites.py || echo "[composites] snapshot failed; continuing"
         continue-on-error: true
 
@@ -289,7 +295,9 @@ jobs:
         # "wired, not configured" instead of guessing.
         env:
           # --- already wired ---
-          CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
+          # (CRYPTOCOMPARE_API_KEY removed 2026-10: no probe names it any more —
+          # the CryptoCompare/CoinDesk probes were replaced by the free sources
+          # that actually feed the dashboard.)
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
           COINMETRICS_API_KEY: ${{ secrets.COINMETRICS_API_KEY }}
           GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
@@ -544,7 +552,6 @@ jobs:
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
-          CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           COINMETRICS_API_KEY: ${{ secrets.COINMETRICS_API_KEY }}

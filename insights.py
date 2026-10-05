@@ -176,7 +176,7 @@ FRESHNESS_MAX_AGE_DAYS = {
     # signals.compute_signal stamps `as_of` with the last daily CLOSE it
     # scored. Crypto trades 24/7 so a bar exists every calendar day, but a
     # build that runs just after 00:00 UTC still sees yesterday's close as the
-    # newest, and CoinGecko/CryptoCompare occasionally publish a day late.
+    # newest, and CoinGecko occasionally publishes a day late.
     # 3 -> tolerates a 2-day-old close: 1 day of normal boundary lag plus one
     # day of upstream slack. A real freeze is caught on day 3.
     "signals": 3,
@@ -204,14 +204,16 @@ FRESHNESS_MAX_AGE_DAYS = {
     # is roughly current.
     "whale_eth_scan": 2,
     # market.poc is recomputed each build from the same daily price/volume
-    # series in market[asset] that `signals` scores. This is the series that
-    # froze at 2026-06-09 behind CryptoCompare's silent failure, so it gets
-    # the identical budget: 3 -> tolerates 2 days.
+    # series in market[asset] that `signals` scores. The top-50 POC series
+    # froze at 2026-06-09 behind CryptoCompare's silent failure (it now comes
+    # from CoinGecko + exchange candles), so it gets the identical budget:
+    # 3 -> tolerates 2 days.
     "poc": 3,
-    # CryptoCompare news list — refetched every hourly build, and stale-kept
-    # with the PREVIOUS leg's `fetched_at` when it fails, so the timestamp is
-    # a true data age. A sentiment read over "the last 50 headlines" stops
-    # describing the present almost immediately; 2 -> tolerates 1 day.
+    # Headline sentiment (Google News RSS, scored by Alpine Data's keyword
+    # rule) — refetched every hourly build, and stale-kept with the PREVIOUS
+    # leg's `fetched_at` when it fails, so the timestamp is a true data age. A
+    # read over "the last 7 days of headlines" stops describing the present
+    # quickly; 2 -> tolerates 1 day.
     "social_news": 2,
     # Reddit about.json — hourly, same stale-keep semantics. "Active users" is
     # an instantaneous gauge, so 2 -> tolerates 1 day is already generous.
@@ -1204,7 +1206,7 @@ def _poc_insights(payload: dict) -> list[dict]:
 
     FRESHNESS: this is the generator the mid-2026 freeze hit hardest. POC is
     recomputed each build from ``market[asset].price`` / ``.volume``; when
-    CryptoCompare started failing silently those series stopped advancing and
+    an upstream started failing silently those series stopped advancing and
     the whole tab kept publishing a 2026-06-09 volume profile as live market
     structure. Every rule here is anchored to the CURRENT price — rule 2
     prints "price $X sits between..." and rule 4 prints "% away" — so a frozen
@@ -1305,16 +1307,16 @@ def _poc_insights(payload: dict) -> list[dict]:
 
 def _social_insights(payload: dict) -> list[dict]:
     """Social/Research tab rules. Operates on payload['market']['social'],
-    which holds reddit, cryptocompare social, cc_news, and santiment subtrees.
+    which holds reddit, community_dev, headline_sentiment and santiment subtrees.
 
     Each rule is defensive — the social fetcher can return ``available: False``
     or partial data on any leg, and we silently skip those rules.
 
     FRESHNESS: the four rules here all describe attention RIGHT NOW —
-    "sentiment skews bullish (last 50 headlines)", "active-user spike",
+    "headline sentiment skews bullish (7 days)", "active-user spike",
     "on-chain attention surging". ``fetch_social`` stamps the OUTER dict with
     a build-time ``fetched_at`` that is always "now" and therefore useless as
-    an age signal; but each LEG (reddit / cc_news / santiment) carries its own
+    an age signal; but each LEG (reddit / headline_sentiment / santiment) carries its own
     ``fetched_at``, and ``_social_stale_fallback`` restores a failed leg with
     ``{**prev, "stale": True}``, which preserves the previous leg's timestamp.
     So the per-leg ``fetched_at`` is a true data age and that is what we gate
@@ -1335,13 +1337,14 @@ def _social_insights(payload: dict) -> list[dict]:
         return _is_fresh(_as_day(node.get("fetched_at")),
                          max_age_days=max_age_days)
 
-    cc_news_fresh = _leg_fresh("cc_news", SOCIAL_NEWS_MAX_AGE_DAYS)
+    cc_news_fresh = _leg_fresh("headline_sentiment", SOCIAL_NEWS_MAX_AGE_DAYS)
     reddit_fresh = _leg_fresh("reddit", SOCIAL_REDDIT_MAX_AGE_DAYS)
 
-    # Rule 1: CryptoCompare news sentiment skew. Per coin, when sentiment is
-    # one-sided (net_score |≥5| with >=10 articles), emit a directional
-    # insight. Only the strongest coin per call.
-    cc_news = ((social.get("cc_news") or {}).get("coins")) or {}
+    # Rule 1: headline sentiment skew (Google News headlines, last 7 days,
+    # scored by Alpine Data's own keyword rule — fetch_market.headline_sentiment).
+    # Per coin, when sentiment is one-sided (net_score |≥5| with >=10
+    # headlines), emit a directional insight. Only the strongest coin per call.
+    cc_news = ((social.get("headline_sentiment") or {}).get("coins")) or {}
     if isinstance(cc_news, dict) and cc_news and cc_news_fresh:
         candidates: list[tuple[int, str, dict]] = []
         for sym, coin in cc_news.items():
@@ -1361,8 +1364,9 @@ def _social_insights(payload: dict) -> list[dict]:
             direction = "bullish" if net > 0 else "bearish"
             out.append({
                 "kind": "trend", "asset": sym, "severity": sev,
-                "headline": f"{sym.upper()} news sentiment skews {direction}: {pos} positive vs {neg} negative (net {net:+d})",
-                "detail": "CryptoCompare news-sentiment net score from last 50 headlines.",
+                "headline": f"{sym.upper()} headline sentiment skews {direction}: {pos} positive vs {neg} negative (net {net:+d})",
+                "detail": (f"Alpine Data keyword score of {coin.get('article_count') or 0} Google News headlines "
+                           "from the last 7 days (not a vendor's sentiment labels)."),
             })
 
     # Rule 2: Reddit subreddit activity spike — when /r/<sub> active users are
@@ -1441,8 +1445,8 @@ def _social_insights(payload: dict) -> list[dict]:
     # so it needs BOTH legs current. One frozen leg would manufacture a
     # permanent, very confident-looking agreement.
     try:
-        # Reuse cc_news strongest candidate if it exists.
-        cc_coins = (((social.get("cc_news") or {}).get("coins")) or {}
+        # Reuse the headline-sentiment strongest candidate if it exists.
+        cc_coins = (((social.get("headline_sentiment") or {}).get("coins")) or {}
                     if (cc_news_fresh and reddit_fresh) else {})
         strongest = None
         for sym, coin in cc_coins.items():
@@ -1711,7 +1715,8 @@ def _market_insights(payload: dict) -> list[dict]:
 
     # Coinbase vs CoinGecko price divergence (cross-source sanity check).
     # Replaces the old CryptoCompare-based version we removed when CC's free
-    # tier sunset. Coinbase is a US-regulated exchange spot price; CoinGecko
+    # tier sunset (CryptoCompare is no longer used anywhere since 2026-10).
+    # Coinbase is a US-regulated exchange spot price; CoinGecko
     # is an aggregator. A ≥0.5% drift between them usually means one venue
     # is leading the other (arbitrage opportunity proxy).
     cb = market.get("coinbase") or {}

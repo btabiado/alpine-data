@@ -399,28 +399,37 @@ def test_coin_metrics_eth_whale_metrics_partial_metrics():
 
 
 # ============================================================================
-# fetch_cc_per_coin_news + _score_news_item_sentiment
+# fetch_headline_sentiment_by_coin + _score_news_item_sentiment
 # ============================================================================
 #
 # The Research-tab "Top-25 news sentiment" card used to rely solely on the 5
-# RSS feeds in `crypto_news_rss`, which only name ~14 of the top-25 coins.
-# fetch_cc_per_coin_news asks CryptoCompare's /news/v1/article/list endpoint
-# for articles tagged to each coin's category, scores them with the same
-# POS/NEG keyword lists the frontend uses for RSS items, and emits per-coin
-# aggregated counts. The frontend merges these on top of RSS counts.
+# RSS feeds in `crypto_news_rss`, which only name ~14 of the top-25 coins. It
+# then added CryptoCompare's per-coin news list, which needs a paid key since
+# 2026-10. fetch_headline_sentiment_by_coin now runs one Google News RSS search
+# per coin, scores the headlines with the same POS/NEG keyword lists the
+# frontend uses for RSS items (Alpine Data's own rule), drops headlines already
+# in the publisher-feed corpus, and emits per-coin aggregated counts.
 #
 # All HTTP is mocked via `unittest.mock.patch` on `fetch_market.requests.get`.
 
 from unittest.mock import MagicMock
 
 
-def _mock_cc_news_response(articles: list[dict], status_code: int = 200):
-    """Build a MagicMock that quacks like a `requests.Response` for the
-    CryptoCompare news endpoint. The endpoint wraps articles in
-    `{"Data": [...]}`."""
+def _gnews_rss(titles: list[tuple[str, str]]) -> bytes:
+    """Google News-shaped RSS: (title, publisher) pairs; title carries the
+    " - Publisher" suffix exactly like the real feed."""
+    items = "".join(
+        f"<item><title>{t} - {src}</title><link>https://news.google.com/rss/articles/{i}</link>"
+        f"<pubDate>Mon, 05 Oct 2026 0{i % 10}:00:00 GMT</pubDate>"
+        f'<source url="https://example.com">{src}</source></item>'
+        for i, (t, src) in enumerate(titles))
+    return f"<rss><channel>{items}</channel></rss>".encode()
+
+
+def _mock_gnews_response(titles, status_code: int = 200):
     resp = MagicMock()
     resp.status_code = status_code
-    resp.json.return_value = {"Data": articles}
+    resp.content = _gnews_rss(titles)
     return resp
 
 
@@ -448,110 +457,113 @@ def test_score_news_item_sentiment_neither_returns_neutral():
     assert fetch_market._score_news_item_sentiment(item) == "NEUTRAL"
 
 
-def test_fetch_cc_per_coin_news_aggregates_pos_neg_neu_correctly():
-    """Three articles in one CC response — one positive, one negative, one
-    neutral — must aggregate into pos=1, neg=1, neu=1, net=0."""
+def test_score_news_item_sentiment_matches_whole_words_only():
+    """Substring matching used to score "against" as a gain, "finance" as a
+    fine, "path" as an ATH and "window" as a win. Whole words only now."""
+    for title in ("Analysts bet against the dollar on Yahoo Finance",
+                  "Developers outline a path through the next window",
+                  "Download the winter report"):
+        assert fetch_market._score_news_item_sentiment({"title": title}) == "NEUTRAL", title
+    assert fetch_market._score_news_item_sentiment({"title": "SEC delays decision"}) == "NEGATIVE"
+    assert fetch_market._score_news_item_sentiment({"title": "Price hits all-time high"}) == "POSITIVE"
+
+
+def test_headline_sentiment_by_coin_aggregates_pos_neg_neu_correctly():
+    """Three headlines for one coin — one positive, one negative, one
+    neutral — aggregate into pos=1, neg=1, neu=1, net=0, and the publisher
+    suffix never reaches the scorer."""
     coins = [{"symbol": "TON", "name": "Toncoin"}]
-    articles = [
-        {"TITLE": "TON network sees record inflows after partnership",
-         "BODY": "", "URL": "u1", "PUBLISHED_ON": 1700000000,
-         "SOURCE_DATA": {"NAME": "TestSrc"}},
-        {"TITLE": "TON validator hack drains funds", "BODY": "",
-         "URL": "u2", "PUBLISHED_ON": 1700000100,
-         "SOURCE_DATA": {"NAME": "TestSrc"}},
-        {"TITLE": "TON quarterly report released", "BODY": "",
-         "URL": "u3", "PUBLISHED_ON": 1700000200,
-         "SOURCE_DATA": {"NAME": "TestSrc"}},
-    ]
+    titles = [("Toncoin sees record inflows after partnership", "Decrypt"),
+              ("Toncoin validator hack drains funds", "CoinDesk"),
+              ("Toncoin quarterly report released", "Yahoo Finance")]
     with patch.object(fetch_market.requests, "get",
-                      return_value=_mock_cc_news_response(articles)):
-        out = fetch_market._fetch_cc_per_coin_news_impl(coins, sleep_between=0)
+                      return_value=_mock_gnews_response(titles)) as g:
+        out = fetch_market._fetch_headline_sentiment_by_coin_impl(coins, sleep_between=0)
+    assert g.call_args.kwargs["params"]["q"] == '"Toncoin" crypto when:7d'
     assert out["available"] is True
     row = out["coins"]["TON"]
-    assert row["total"] == 3
-    assert row["positive"] == 1
-    assert row["negative"] == 1
-    assert row["neutral"] == 1
-    assert row["net_score"] == 0
-    assert row["symbol"] == "TON"
-    assert row["name"] == "Toncoin"
-    # `recent` is capped at 5 with sentiment + url copied over.
+    assert (row["total"], row["positive"], row["negative"], row["neutral"],
+            row["net_score"]) == (3, 1, 1, 1, 0)
+    assert row["symbol"] == "TON" and row["name"] == "Toncoin"
     assert len(row["recent"]) == 3
     assert {r["sentiment"] for r in row["recent"]} == {"POSITIVE", "NEGATIVE", "NEUTRAL"}
+    assert {r["source"] for r in row["recent"]} == {"Decrypt", "CoinDesk", "Yahoo Finance"}
+    assert all(" - " not in r["title"] for r in row["recent"])
+    assert out["method"]["computed_by"].startswith("Alpine Data")
 
 
-def test_fetch_cc_per_coin_news_skips_400_unknown_category():
-    """CC returns HTTP 400 for unknown categories (e.g. FIGR_HELOC, USDS).
-    The fetcher must skip the coin silently and continue with the rest."""
-    coins = [
-        {"symbol": "FIGR_HELOC", "name": "Figure Heloc"},  # 400
-        {"symbol": "BTC", "name": "Bitcoin"},               # 200
-    ]
-    bad = _mock_cc_news_response([], status_code=400)
-    good = _mock_cc_news_response([
-        {"TITLE": "Bitcoin rally continues amid record inflows",
-         "BODY": "", "URL": "u", "PUBLISHED_ON": 1700000000,
-         "SOURCE_DATA": {"NAME": "Src"}},
-    ])
+def test_headline_sentiment_by_coin_drops_headlines_already_in_rss(tmp_path, monkeypatch):
+    """The frontend ADDS these counts to its own RSS counts, so a headline
+    that is also in market.news must not be counted here."""
+    monkeypatch.setattr(fetch_market, "_STALE_DIR", tmp_path / ".stale")
+    monkeypatch.setattr(fetch_market.time, "sleep", lambda *_a: None)
+    coins = [{"symbol": "BTC", "name": "Bitcoin"}]
+    titles = [("Bitcoin rally continues", "CoinDesk"), ("Bitcoin miners sell", "The Block")]
+    news = [{"title": "Bitcoin rally continues"}]
+    with patch.object(fetch_market.requests, "get",
+                      return_value=_mock_gnews_response(titles)):
+        out = fetch_market.fetch_headline_sentiment_by_coin(coins, 25, news)
+    row = out["coins"]["BTC"]
+    assert row["total"] == 1 and row["excluded_duplicates"] == 1
+    assert row["recent"][0]["title"] == "Bitcoin miners sell"
+
+
+def test_headline_sentiment_by_coin_skips_failed_coin():
+    """A non-200 for one coin is skipped; the rest still score."""
+    coins = [{"symbol": "FIGR_HELOC", "name": "Figure Heloc"},
+             {"symbol": "BTC", "name": "Bitcoin"}]
+    bad = _mock_gnews_response([], status_code=503)
+    good = _mock_gnews_response([("Bitcoin rally continues amid record inflows", "Src")])
     with patch.object(fetch_market.requests, "get", side_effect=[bad, good]):
-        out = fetch_market._fetch_cc_per_coin_news_impl(coins, sleep_between=0)
+        out = fetch_market._fetch_headline_sentiment_by_coin_impl(coins, sleep_between=0)
     assert "FIGR_HELOC" not in out["coins"]
-    assert "BTC" in out["coins"]
     assert out["coins"]["BTC"]["positive"] == 1
 
 
-def test_fetch_cc_per_coin_news_empty_articles_omits_coin():
-    """When CC returns Data=[] (no articles for a coin) the coin must be
-    omitted from `out.coins` so the frontend `if (cc[sym])` check stays cheap
-    and the merged row falls back to RSS-only behavior."""
+def test_headline_sentiment_by_coin_empty_feed_omits_coin():
+    """No headlines → the coin is omitted (frontend checks `if (rows[sym])`)
+    and the result says unavailable rather than reporting zeros."""
     coins = [{"symbol": "XYZ", "name": "Nothing"}]
     with patch.object(fetch_market.requests, "get",
-                      return_value=_mock_cc_news_response([])):
-        out = fetch_market._fetch_cc_per_coin_news_impl(coins, sleep_between=0)
+                      return_value=_mock_gnews_response([])):
+        out = fetch_market._fetch_headline_sentiment_by_coin_impl(coins, sleep_between=0)
     assert out["available"] is False
     assert out["coins"] == {}
 
 
-def test_fetch_cc_per_coin_news_passes_api_key_header_when_set(monkeypatch):
-    """`CRYPTOCOMPARE_API_KEY` env var must travel as an `Authorization:
-    Apikey <key>` header so the higher free-tier quota applies."""
-    monkeypatch.setenv("CRYPTOCOMPARE_API_KEY", "my-test-key")
+def test_headline_sentiment_by_coin_sends_no_credentials(monkeypatch):
+    """Google News is keyless: no Authorization header, ever (the old CC
+    fetcher sent CRYPTOCOMPARE_API_KEY; nothing reads it now)."""
+    monkeypatch.setenv("CRYPTOCOMPARE_API_KEY", "should-not-travel")
     captured: dict = {}
 
     def fake_get(url, params=None, headers=None, timeout=None):
-        captured["url"] = url
-        captured["params"] = params
-        captured["headers"] = headers
-        return _mock_cc_news_response([])  # empty so we don't aggregate
+        captured.update(url=url, params=params, headers=headers)
+        return _mock_gnews_response([])
 
     with patch.object(fetch_market.requests, "get", side_effect=fake_get):
-        fetch_market._fetch_cc_per_coin_news_impl(
-            [{"symbol": "BTC", "name": "Bitcoin"}], sleep_between=0,
-        )
-    assert "Authorization" in captured["headers"]
-    assert captured["headers"]["Authorization"] == "Apikey my-test-key"
-    assert captured["params"]["categories"] == "BTC"
+        fetch_market._fetch_headline_sentiment_by_coin_impl(
+            [{"symbol": "BTC", "name": "Bitcoin"}], sleep_between=0)
+    assert captured["url"] == fetch_market.GOOGLE_NEWS_RSS
+    assert "Authorization" not in captured["headers"]
+    assert "should-not-travel" not in repr(captured)
 
 
-def test_fetch_cc_per_coin_news_caps_to_top_n(monkeypatch):
-    """fetch_cc_per_coin_news (the public wrapper) must only fan out to the
-    first N entries of markets_top (default 25), not the whole list."""
+def test_headline_sentiment_by_coin_caps_to_top_n():
+    """The public wrapper only fans out to the first N entries of markets_top."""
     coins = [{"symbol": f"S{i}", "name": f"Coin{i}"} for i in range(40)]
-    call_symbols: list[str] = []
+    queries: list[str] = []
 
     def fake_get(url, params=None, headers=None, timeout=None):
-        call_symbols.append(params.get("categories"))
-        return _mock_cc_news_response([])  # all empty; we only count calls
+        queries.append(params.get("q"))
+        return _mock_gnews_response([])
 
-    monkeypatch.delenv("CRYPTOCOMPARE_API_KEY", raising=False)
-    with patch.object(fetch_market.requests, "get", side_effect=fake_get):
-        out = fetch_market._fetch_cc_per_coin_news_impl(
-            coins[:25], sleep_between=0,
-        )
-    assert len(call_symbols) == 25
-    assert call_symbols[0] == "S0"
-    assert call_symbols[-1] == "S24"
-    # No coins matched (all empty responses) → `available` flips false.
+    with patch.object(fetch_market.requests, "get", side_effect=fake_get), \
+         patch.object(fetch_market.time, "sleep"), \
+         patch.object(fetch_market, "_stale_load", return_value=None):
+        out = fetch_market.fetch_headline_sentiment_by_coin(coins, top_n=25)
+    assert len(queries) == 25
+    assert queries[0].startswith('"Coin0"') and queries[-1].startswith('"Coin24"')
     assert out["available"] is False
 
 

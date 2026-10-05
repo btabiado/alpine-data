@@ -98,17 +98,22 @@ PROBE_ATTEMPTS = 2       # 1 retry: gov/city hosts give transient timeouts from 
 TARGETS: list[dict] = [
     # ---- price / market cap ----
     {"label": "CoinGecko",            "category": "Price/MktCap",  "url": "https://api.coingecko.com/api/v3/ping",                                                          "key_env": None},
-    {"label": "CryptoCompare CCCAGG", "category": "Price/MktCap",  "url": "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD",                                "key_env": "CRYPTOCOMPARE_API_KEY", "key_auth": {"header": "Authorization", "format": "Apikey {key}"}},
-    {"label": "CryptoCompare data-api","category": "Research",     "url": "https://data-api.cryptocompare.com/asset/v1/top/list?page=1&page_size=1",                       "key_env": "CRYPTOCOMPARE_API_KEY", "key_auth": {"header": "Authorization", "format": "Apikey {key}"}},
+    # The daily close/volume/market-cap path behind the top-50 POC table, the
+    # signal-breadth chart and the Alpine Large-Cap Crypto Index (same endpoint
+    # fetch_market.coingecko_daily_series calls; keyless here, the fetcher adds
+    # the Demo key). CryptoCompare / CoinDesk Data were removed in 2026-10:
+    # every endpoint needs a paid key and nothing reads them any more.
+    {"label": "CoinGecko market_chart","category": "Price/MktCap", "url": "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=2&interval=daily", "key_env": None},
     {"label": "GeckoTerminal",        "category": "Price/MktCap",  "url": "https://api.geckoterminal.com/api/v2/networks",                                                  "key_env": None},
     # ---- exchange / derivatives ----
     {"label": "Coinbase Exchange",    "category": "Spot",          "url": "https://api.exchange.coinbase.com/products/BTC-USD/ticker",                                      "key_env": None},
     {"label": "Coinbase Intl (perps)","category": "Futures",       "url": "https://api.international.coinbase.com/api/v1/instruments",                                      "key_env": None},
-    # CoinDesk Data (ex-CryptoCompare) answers every keyless request with 401
-    # "API key required" since 2026-10. fetch_market.coindesk_cadli() sends
-    # CRYPTOCOMPARE_API_KEY (one CoinDesk Data key covers both hosts), so a
-    # keyless 401 here is auth_required, not blocked. Same path as the fetcher.
-    {"label": "CoinDesk CADLI",       "category": "Futures",       "url": "https://data-api.coindesk.com/index/cc/v1/historical/days?market=cadli&instrument=BTC-USD&limit=1", "key_env": "CRYPTOCOMPARE_API_KEY", "key_auth": {"header": "Authorization", "format": "Apikey {key}"}},
+    # Keyless daily-candle fallbacks for the top-50 series when CoinGecko fails
+    # for a coin (fetch_market.crypto_daily_series), and for the browser's
+    # "look up any crypto". Same paths the fetchers call.
+    {"label": "Coinbase candles",     "category": "Price/MktCap",  "url": "https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=86400",                "key_env": None},
+    {"label": "Kraken OHLC",          "category": "Price/MktCap",  "url": "https://api.kraken.com/0/public/OHLC?pair=BTCUSD&interval=1440",                               "key_env": None},
+    {"label": "Binance.US klines",    "category": "Price/MktCap",  "url": "https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=1",                      "key_env": None},
     {"label": "OKX",                  "category": "Futures",       "url": "https://www.okx.com/api/v5/public/funding-rate?instId=BTC-USD-SWAP",                             "key_env": None},
     {"label": "Deribit",              "category": "Futures",       "url": "https://www.deribit.com/api/v2/public/get_index_price?index_name=btc_usd",                       "key_env": None},
     {"label": "Alternative.me F&G",   "category": "Sentiment",     "url": "https://api.alternative.me/fng/?limit=1",                                                        "key_env": None},
@@ -170,6 +175,13 @@ TARGETS: list[dict] = [
     # fetcher POSTs (bitcoin DAA, relative dates so it never ages out of the
     # free window), URL-encoded.
     {"label": "Santiment",            "category": "Research",      "url": "https://api.santiment.net/graphql?query=%7BgetMetric%28metric%3A%22daily_active_addresses%22%29%7BtimeseriesData%28slug%3A%22bitcoin%22%2Cfrom%3A%22utc_now-3d%22%2Cto%3A%22utc_now%22%2Cinterval%3A%221d%22%29%7Bdatetime%20value%7D%7D%7D", "key_env": None},
+    # Research tab: Google News RSS search feeds Alpine Data's own headline
+    # sentiment (fetch_market.google_news_rss), and GitHub's REST API the
+    # community + developer stats card (keyless probe: one call per build is
+    # far under the 60/hour anonymous limit; the fetcher sends the Actions
+    # GITHUB_TOKEN when the workflow maps it).
+    {"label": "Google News RSS",      "category": "Research",      "url": "https://news.google.com/rss/search?q=%22Bitcoin%22+crypto+when:7d&hl=en-US&gl=US&ceid=US:en", "key_env": None},
+    {"label": "GitHub REST",          "category": "Research",      "url": "https://api.github.com/repos/bitcoin/bitcoin",                                                   "key_env": None, "headers": {"Accept": "application/vnd.github+json"}},
     {"label": "SEC EDGAR",            "category": "AI News",       "url": "https://efts.sec.gov/LATEST/search-index?q=ai",                                                 "key_env": None, "headers": {"User-Agent": "BDT-Dashboards/1.0 (open-source dashboard; contact@bdt-dashboards.local)", "Accept": "application/json"}},
     # ---- summit (the standalone Snowflake Summit dashboard is static/baked —
     # no live upstream API; we probe the deployed page itself for "is it up") ----

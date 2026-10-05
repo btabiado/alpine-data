@@ -9,7 +9,7 @@ Local, live web dashboard for actively monitoring BTC, ETH, LINK, and the broade
 3. **Crypto Signals** — transparent rules-based composite score (−100…+100) per asset with full component breakdown. Top-25 grouped by bucket (Strong Buy → Strong Sell), per-coin signal box + 90-day history chart, plus a 90-day breadth chart. Not investment advice.
 4. **Whale Activity** — BTC on-chain proxies, mining pool concentration, Lightning Network, difficulty adjustment. BTC/ETH switcher with a separate ETH panel (24h EIP-1559 burn, largest tx, ERC-20/721 activity, supply, **ETH Whale Sentiment Index** parallel to BTC's, and an optional 90-day ETH blocks/day chart from Etherscan) plus a dedicated **ETH whale-tx feed** (top 10 recent transactions ≥$1M USD via Blockchair). Whale Alerts feed scans mempool.space for BTC transactions ≥$1M in the latest block. A **multi-chain whale snapshot** beneath the BTC panel surfaces 24h network stats + largest single tx for LTC, BCH, and DOGE.
 5. **Point of Control** — volume-weighted price levels for the **top 50 by market cap** across 30d / 90d / 180d windows. Cards are sorted by signal score (Strong Buy → Strong Sell) and filterable via chips. Click any card to open a full breakdown modal with the POC ladder, migration sparkline, and naked POCs; desktop view has a fullscreen toggle on the volume profile chart.
-6. **Research** — Reddit subreddit stats, CryptoCompare social/news depth, Santiment daily active addresses, plus per-coin top-25 news sentiment with a click-to-expand article modal.
+6. **Research** — Reddit subreddit stats, community + developer stats (CoinGecko watchlists/votes, GitHub repo stats), headline sentiment computed by Alpine Data from Google News headlines, Santiment daily active addresses, plus per-coin top-25 news sentiment with a click-to-expand article modal.
 7. **DeFi** — KPI strip (total TVL, 24h change, top chain share, dominant category) above a chain selector for **Ethereum / Solana / Arbitrum / Base**. Selecting a chain swaps the panel below to that chain's TVL sparkline, protocols filtered to that chain, and the chain's share of the total. Stablecoin yields and 365-day TVL history per chain surface beneath the per-chain view. Payload is lazy-loaded on first tab-select (see [Performance](#performance)).
 8. **ETF Flows** — daily/weekly/monthly/YoY net flows from US spot BTC and ETH ETFs, per-fund detail.
 9. **Futures** — price, volume, funding rate, open interest, long/short ratio, implied vol (DVOL), Fear & Greed, dominance, ETH/BTC, live news feed. Naked POC overlays on the price chart; 30d POC drift sparkline in each POC card. Side-by-side **crowded longs / crowded shorts** tables built from Coinbase International Exchange perpetual funding rates (246 perps), and CoinDesk CADLI as the regulated reference index used in derivatives settlement. Perpetuals explainer is collapsible on mobile.
@@ -26,11 +26,12 @@ For a stable public share-link host (your own subdomain over a named Cloudflare 
 ## Data sources
 
 - **Price + market cap**: CoinGecko (BTC/ETH/LINK price+vol+mcap, top 25 markets, trending, global stats)
-- **Cross-exchange price**: CryptoCompare CCCAGG (BTC/ETH/LINK aggregate)
-- **Coinbase data feeds the dashboard from three places:**
+- **Top-50 daily closes + volume** (Point of Control table, signal-breadth chart): CoinGecko `market_chart` (aggregate USD volume) with keyless Coinbase → Kraken → Binance.US candle fallbacks; complete UTC days only, cached per coin per UTC day so the CoinGecko Demo budget is spent at most once a day per coin. Each coin records which source it came from; a fallback is labelled as exchange-only volume.
+- **Coinbase data feeds the dashboard from these places:**
   - **Coinbase Exchange spot** (`api.exchange.coinbase.com`) — bid/ask, 24h range, 24h volume per asset (BTC/ETH/LINK/LTC). Used for the spot quote tiles and a cross-exchange price-divergence sanity check.
   - **Coinbase International Exchange perpetuals** (`api.international.coinbase.com`) — funding rate, mark price, open interest, and volume across all 246 PERP instruments. Surfaced in the **Futures** tab as the crowded longs / crowded shorts tables.
-  - **CoinDesk CADLI** (`data-api.coindesk.com`) — manipulation-resistant daily OHLC index. CADLI is the regulated reference index used in derivatives settlement; shown in the Futures tab alongside the perp positioning view.
+  - **Coinbase Exchange daily candles** — the first keyless fallback for the top-50 daily series (and the browser's "look up any crypto") when CoinGecko has no series for a coin.
+- **Alpine Large-Cap Crypto Index** (Futures tab) — Alpine Data's own market-cap-weighted index of the 10 largest eligible coins (stablecoins, wrapped/staked tokens and tokenized real-world assets excluded), computed from CoinGecko daily closes and market caps, 100 = first day of the 90-day window, reconstituted monthly; method, constituents, changes and uncomputed days ship with the payload. It replaced the CoinDesk CADLI chart (CADLI is CoinDesk's proprietary index and its API needs a paid key since 2026-10) and is not CADLI.
 - **Derivatives**: OKX (funding rate, open interest, long/short ratio)
 - **Options-implied vol**: Deribit DVOL (BTC, ETH)
 - **Sentiment**: Alternative.me Fear & Greed
@@ -42,7 +43,7 @@ For a stable public share-link host (your own subdomain over a named Cloudflare 
 - **Blockchair**: free public endpoints — used for BTC supplementary stats, ETH large transactions, and the LTC/BCH/DOGE multi-chain snapshot
 - **US equities**: Yahoo Finance (top-20 most-active US stocks → daily OHLCV for the Stocks tab signal scores)
 - **DeFi**: DeFiLlama (TVL by chain, top 25 protocols, top stablecoin yields, 365-day historical TVL across 4 chains)
-- **News + social**: RSS from CoinDesk, Cointelegraph, Decrypt, The Block, Bitcoin Magazine (25 deduped headlines); CryptoCompare social/news depth (optional key); Reddit subreddit stats (optional OAuth, RSS-only fallback)
+- **News + social**: RSS from CoinDesk, Cointelegraph, Decrypt, The Block, Bitcoin Magazine (deduped headlines); Google News RSS per coin, scored by Alpine Data's own committed keyword rule (no vendor labels, no LLM); CoinGecko community counts + GitHub REST repo stats; Reddit subreddit stats (optional OAuth, RSS-only fallback)
 - **AI news + funding**: RSS from AI-focused outlets; **SEC EDGAR Form D** filings filtered to AI-adjacent issuers (last 60d, keyless); Wikipedia infobox enrichment for top-funded AI companies
 - **Research metrics**: Santiment (daily active addresses, optional)
 - **ETF flows**: Farside Investors via paste workflow + GitHub mirror fallback
@@ -212,7 +213,9 @@ All optional. Core dashboard runs with none of these set; the dashboard surfaces
 | `CHAT_MODEL` | `chat.py` | Defaults to `claude-haiku-4-5-20251001` |
 | `FRED_API_KEY` | `fetch_market.py` | Macro overlay (DXY, S&P 500, Gold, 10Y, M2) hidden |
 | `GLASSNODE_API_KEY` | `fetch_market.py` | True whale-cohort metrics off; free on-chain proxies still shown |
-| `CRYPTOCOMPARE_API_KEY` | `fetch_market.py` | A CoinDesk Data API key (CryptoCompare now runs on CoinDesk Data; free keys at developers.coindesk.com, one key covers both hosts). Since 2026-10 data-api.coindesk.com and the cryptocompare.com hosts answer keyless requests with HTTP 401, so unset means no CADLI BTC reference chart on the Futures tab (the card states why), no top-25 daily OHLCV for the Point of Control tab, and no CryptoCompare social/news sentiment |
+| `CRYPTOCOMPARE_API_KEY` | *(retired 2026-10)* | Nothing. Every CryptoCompare/CoinDesk dependency (top-50 OHLCV, CADLI chart, social/dev stats, news sentiment) was replaced with free sources; no code reads it |
+| `COINGECKO_API_KEY` | `fetch_market.py`, `lthcs/sources/crypto_data.py` | Demo key (sent only to api.coingecko.com). Unset = keyless CoinGecko (~5-30 calls/min), so the daily top-50 sweep falls back to exchange candles more often |
+| `GITHUB_TOKEN` | `fetch_market.py` (Actions token) | Sent only to api.github.com for the Research tab's repo stats; unset = anonymous GitHub API (60 requests/hour per IP) |
 | `COINMETRICS_API_KEY` | `fetch_market.py` | ETH whale series omitted from Whale tab |
 | `ETHERSCAN_API_KEY` | `fetch_market.py` | 90-day ETH blocks-per-day chart on the Whale tab hidden; gas oracle still works (separate keyless endpoint) |
 | `REDDIT_CLIENT_ID` + `REDDIT_CLIENT_SECRET` | `fetch_market.py` | Reddit subscriber counts unavailable; public dashboard falls back to RSS post titles only |

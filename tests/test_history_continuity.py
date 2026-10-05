@@ -470,7 +470,10 @@ def test_history_rows_render_in_text_and_issue_reports(dh, tmp_path, monkeypatch
 # ==========================================================================
 
 _POC = "indexes.poc_signal_breadth"
-_KEY = "CRYPTOCOMPARE_API_KEY"
+# A stand-in env var. The mechanism is generic; its first user
+# (poc_signal_breadth on CRYPTOCOMPARE_API_KEY) was retired in 2026-10 when
+# the series moved to free sources, and nothing waits on a key today.
+_KEY = "EXAMPLE_GATED_API_KEY"
 
 
 def _poc_files(hc, tmp_path, marker=None):

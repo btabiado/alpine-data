@@ -6,8 +6,11 @@ Live state on 2026-10-04 (data/health/api_status.json):
   keyless equivalent, so the card must SAY it is unavailable (it used to hide
   itself, leaving no trace that a panel had gone).
 * CoinDesk CADLI -> HTTP 401 "API key required". The whole CoinDesk Data API
-  is keyed now; the fetcher sends CRYPTOCOMPARE_API_KEY when it is set and
-  otherwise ships a status record with the reason.
+  is keyed now and the owner will not buy a plan, so the CADLI chart was
+  RETIRED (2026-10) and its slot shows Alpine Data's own Large-Cap Crypto
+  Index instead (tests/test_crypto_free_sources.py). What is checked here is
+  that nothing still calls CoinDesk and the replacement states its reason
+  when empty.
 * Santiment -> HTTP 400 from the PROBE only: a bare GET of /graphql has no
   query document. The fetcher worked, but its hour-0 gate missed most days
   because GitHub fires the hourly cron only a few times a day.
@@ -110,81 +113,23 @@ def test_bridges_probe_hits_the_fetcher_url():
 
 
 # --------------------------------------------------------------------------
-# CoinDesk CADLI
+# CoinDesk CADLI (retired) -> Alpine Large-Cap Crypto Index
 # --------------------------------------------------------------------------
 
-CADLI_BODY = {"Data": [
-    {"TIMESTAMP": 1790985600, "OPEN": 2, "HIGH": 3, "LOW": 1, "CLOSE": 2.5, "VOLUME": 10},
-    {"TIMESTAMP": 1790899200, "OPEN": 1, "HIGH": 2, "LOW": 0.5, "CLOSE": 1.5, "VOLUME": 9},
-    {"TIMESTAMP": None, "CLOSE": 4},           # no timestamp -> dropped
-    {"TIMESTAMP": 1791072000, "CLOSE": None},  # no close -> dropped, never zero-filled
-]}
-
-
-class _Recorder:
-    def __init__(self, result):
-        self.result = result
-        self.calls: list[dict] = []
-
-    def __call__(self, url, params=None, headers=None, timeout=25):
-        self.calls.append({"url": url, "params": dict(params or {}),
-                           "headers": dict(headers or {})})
-        return self.result
-
-
-def test_cadli_rows_parse_sort_and_drop_incomplete():
-    rows = fetch_market._cadli_rows(CADLI_BODY)
-    assert [r["date"] for r in rows] == ["2026-10-02", "2026-10-03"]
-    assert rows[1] == {"date": "2026-10-03", "open": 2, "high": 3, "low": 1,
-                       "close": 2.5, "volume": 10}
-    for junk in (None, [], {"Data": {}}, {"Data": None}):
-        assert fetch_market._cadli_rows(junk) == []
-
-
-def test_cadli_without_key_reports_why(monkeypatch):
-    monkeypatch.delenv("CRYPTOCOMPARE_API_KEY", raising=False)
-    rec = _Recorder((401, None))
-    monkeypatch.setattr(fetch_market, "_get_status", rec)
-    out = fetch_market.coindesk_cadli(90, now=NOW)
-    assert out["rows"] == []
-    st = out["status"]
-    assert st["available"] is False and st["http_status"] == 401
-    assert st["key_configured"] is False and st["key_env"] == "CRYPTOCOMPARE_API_KEY"
-    assert "requires an API key" in st["reason"]
-    assert st["checked_at"] == "2026-10-04T19:27:00+00:00"
-    assert "Authorization" not in rec.calls[0]["headers"]
-
-
-def test_cadli_sends_key_as_header_never_query(monkeypatch):
-    secret = "sekrit-test-value"
-    monkeypatch.setenv("CRYPTOCOMPARE_API_KEY", f"  {secret}\n")
-    rec = _Recorder((200, CADLI_BODY))
-    monkeypatch.setattr(fetch_market, "_get_status", rec)
-    out = fetch_market.coindesk_cadli(90, now=NOW)
-    call = rec.calls[0]
-    assert call["url"] == fetch_market.COINDESK_CADLI_URL
-    assert call["headers"]["Authorization"] == f"Apikey {secret}"
-    assert "api_key" not in call["params"]
-    assert call["params"] == {"market": "cadli", "instrument": "BTC-USD", "limit": "90"}
-    assert [r["close"] for r in out["rows"]] == [1.5, 2.5]
-    assert out["status"]["available"] is True and "reason" not in out["status"]
-    assert secret not in repr(out)            # the payload is published
-
-
-def test_cadli_rejected_key_is_named(monkeypatch):
-    monkeypatch.setenv("CRYPTOCOMPARE_API_KEY", "bad")
-    monkeypatch.setattr(fetch_market, "_get_status", lambda *a, **k: (401, None))
-    st = fetch_market.coindesk_cadli(90, now=NOW)["status"]
-    assert st["key_configured"] is True
-    assert "rejected the configured API key" in st["reason"]
-
-
-def test_cadli_probe_matches_fetcher_and_is_key_gated():
-    t = _target("CoinDesk CADLI")
-    assert t["url"].split("?")[0] == fetch_market.COINDESK_CADLI_URL
-    assert t["key_env"] == fetch_market.CADLI_KEY_ENV
-    # Keyless 401 on a key-gated source = live but gated, not "blocked".
-    assert api_status._verdict(401, needs_key=True) == "auth_required"
+def test_cadli_is_retired_everywhere():
+    """No fetcher, no probe and no dashboard call to the CoinDesk Data API
+    remain; the keyed probe that reported auth_required is gone with it."""
+    assert not hasattr(fetch_market, "coindesk_cadli")
+    assert not hasattr(fetch_market, "COINDESK_CADLI_URL")
+    retired = ("coindesk.com", "cryptocompare.com")
+    hosts = [(urllib.parse.urlsplit(t["url"]).hostname or "") for t in api_status.TARGETS]
+    assert not [h for h in hosts
+                if any(h == d or h.endswith("." + d) for d in retired)]
+    for rel in ("fetch_market.py", "app.py", "v2/app.py", "server.py", "api_status.py"):
+        src = (ROOT / rel).read_text()
+        for host in ("data-api.coindesk.com", "min-api.cryptocompare.com",
+                     "data-api.cryptocompare.com"):
+            assert host not in src, f"{rel} still references {host}"
 
 
 # --------------------------------------------------------------------------
@@ -302,9 +247,11 @@ def test_santiment_probe_sends_a_query_document():
 @pytest.mark.parametrize("rel", ["app.py", "v2/app.py"])
 def test_dashboards_disclose_unavailable_sources(rel):
     src = (ROOT / rel).read_text()
-    # CADLI empty state reads the fetcher's reason.
-    cadli_fn = src.split("function renderCadliChart(){", 1)[1].split("\n}\n", 1)[0]
-    assert "cadli_btc_status" in cadli_fn and "cst.reason" in cadli_fn
+    # The Alpine index (CADLI's replacement) states the fetcher's reason when
+    # it is not computed, instead of a bare empty chart.
+    idx_fn = src.split("function renderAlpineIndexChart(){", 1)[1].split("\n}\n", 1)[0]
+    assert "idx.available === false && idx.reason" in idx_fn
+    assert "renderCadliChart" not in src and "cadli_btc" not in src
     # Bridges card stays visible with the reason instead of hiding.
     assert "bridgesMeta.available === false && bridgesMeta.reason" in src
     assert "escapeHtml(bridgesMeta.reason)" in src

@@ -717,23 +717,41 @@ def test_every_registry_key_the_cards_claim_is_written(sc):
 
 
 # ---------- unavailable-by-design disclosure ----------
+#
+# poc_signal_breadth used to be KEY_GATED on CRYPTOCOMPARE_API_KEY while
+# market.poc_top came from CryptoCompare histoday. Since 2026-10 it comes from
+# free sources (CoinGecko + exchange candles), so a null is a real gap again.
+# The generic mechanism stays and is exercised with a stand-in entry.
 
-def test_key_gated_null_index_is_marked_unavailable_while_key_unset(sc):
-    marks = sc.unavailable_by_design({"poc_signal_breadth": None}, env={})
-    assert marks["indexes.poc_signal_breadth"]["requires_env"] == "CRYPTOCOMPARE_API_KEY"
-    assert len(marks["indexes.poc_signal_breadth"]["reason"]) > 30
+_EXAMPLE_KEY = "EXAMPLE_GATED_API_KEY"
 
 
-def test_no_marker_once_the_key_is_set_or_the_index_has_a_value(sc):
+def test_poc_signal_breadth_is_no_longer_key_gated(sc):
+    assert "poc_signal_breadth" not in sc.KEY_GATED
+    assert all(var != "CRYPTOCOMPARE_API_KEY" for var, _ in sc.KEY_GATED.values())
+    assert sc.unavailable_by_design({"poc_signal_breadth": None}, env={}) == {}
+
+
+def test_key_gated_null_index_is_marked_unavailable_while_key_unset(sc, monkeypatch):
+    monkeypatch.setattr(sc, "KEY_GATED", {"some_index": (
+        _EXAMPLE_KEY, "upstream needs a key that this deployment does not have")})
+    marks = sc.unavailable_by_design({"some_index": None}, env={})
+    assert marks["indexes.some_index"]["requires_env"] == _EXAMPLE_KEY
+    assert len(marks["indexes.some_index"]["reason"]) > 30
+
+
+def test_no_marker_once_the_key_is_set_or_the_index_has_a_value(sc, monkeypatch):
     """Key configured and still null = a real gap: no excuse is written."""
-    assert sc.unavailable_by_design({"poc_signal_breadth": None},
-                                    env={"CRYPTOCOMPARE_API_KEY": "k"}) == {}
-    assert sc.unavailable_by_design({"poc_signal_breadth": {"score": 3}}, env={}) == {}
+    monkeypatch.setattr(sc, "KEY_GATED", {"some_index": (
+        _EXAMPLE_KEY, "upstream needs a key that this deployment does not have")})
+    assert sc.unavailable_by_design({"some_index": None}, env={_EXAMPLE_KEY: "k"}) == {}
+    assert sc.unavailable_by_design({"some_index": {"score": 3}}, env={}) == {}
 
 
-def test_main_writes_the_marker_and_backfills_it_into_todays_file(sc, tmp_path, monkeypatch):
-    """A file written before the marker existed (same indexes) is rewritten
-    once to carry it; after that the run is idempotent again."""
+def test_main_drops_the_retired_marker_from_todays_file(sc, tmp_path, monkeypatch):
+    """A file written while poc_signal_breadth was still key-gated (same
+    indexes, plus the old `unavailable` marker) is rewritten ONCE without
+    the marker — a null today is a real gap — and is idempotent after that."""
     monkeypatch.delenv("CRYPTOCOMPARE_API_KEY", raising=False)
     monkeypatch.setattr(sc, "CACHE", tmp_path)
     out_dir = tmp_path / "composites"
@@ -744,12 +762,14 @@ def test_main_writes_the_marker_and_backfills_it_into_todays_file(sc, tmp_path, 
     f = next(out_dir.glob("*.json"))
     doc = json.loads(f.read_text())
     assert doc["indexes"]["poc_signal_breadth"] is None
-    assert "indexes.poc_signal_breadth" in doc["unavailable"]
+    assert "unavailable" not in doc
 
-    del doc["unavailable"]                       # as written by the old code
+    doc["unavailable"] = {"indexes.poc_signal_breadth": {     # as the old code wrote it
+        "reason": "market.poc_top comes from CryptoCompare histoday ...",
+        "requires_env": "CRYPTOCOMPARE_API_KEY"}}
     f.write_text(json.dumps(doc))
     assert sc.main() == 0
-    assert "unavailable" in json.loads(f.read_text())
+    assert "unavailable" not in json.loads(f.read_text())
     before = f.read_bytes()
     assert sc.main() == 0
     assert f.read_bytes() == before

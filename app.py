@@ -3382,16 +3382,18 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
           <div class="chart-wrap"><canvas id="lsChart"></canvas></div>
         </div>
       </div>
-      <!-- CADLI BTC reference price — 90d daily closes from the CoinDesk
-           CADLI Cryptocurrency Real-Time Index. This is the regulated
-           reference price used in derivatives settlement, so it sits with
-           the rest of the futures-positioning surface. -->
+      <!-- Alpine Large-Cap Crypto Index — Alpine Data's OWN cap-weighted index of
+           the 10 largest eligible coins, computed from CoinGecko daily closes +
+           market caps (fetch_market.compute_alpine_index). It took this slot from
+           the CoinDesk CADLI chart, whose API needs a paid key since 2026-10. It is
+           not CADLI and must never be labelled as CoinDesk's. -->
       <div class="chart-card">
         <div class="head">
-          <h2>CADLI BTC reference price <span class="tag">CoinDesk</span></h2>
-          <span class="desc">90d OHLC from the CoinDesk CADLI Cryptocurrency Real-Time Index used in regulated derivatives pricing</span>
+          <h2>Alpine Large-Cap Crypto Index <span class="tag">Alpine Data &middot; CoinGecko</span></h2>
+          <span class="desc">Our own market-cap-weighted index of the 10 largest eligible coins (no stablecoins, wrapped or tokenized assets), 100 = first day shown. Replaces the CoinDesk CADLI chart, which now needs a paid CoinDesk key.</span>
         </div>
-        <div class="chart-wrap"><canvas id="cadliBtcChart"></canvas></div>
+        <div class="chart-wrap"><canvas id="alpineIndexChart"></canvas></div>
+        <div id="alpineIndexMeta" class="sub" style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5"></div>
       </div>
       <!-- Coinbase International Exchange perpetuals positioning: two side-by-side
            tables surfacing the most crowded LONGS (highest funding) and SHORTS
@@ -4129,7 +4131,7 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
       <div class="head">
         <h2 style="margin:0;font-size:15px">News sentiment — Top 25 by market cap <span class="tag">RSS</span></h2>
         <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px">Click any row for the full headline breakdown</div>
-        <span class="desc">Per-coin mention counts + POSITIVE / NEGATIVE / NEUTRAL split, text-matched against the latest headlines (CoinDesk · Cointelegraph · Decrypt · The Block · Bitcoin Magazine)</span>
+        <span class="desc">Per-coin mention counts + POSITIVE / NEGATIVE / NEUTRAL split computed by Alpine Data (whole-word keyword rule) over the latest publisher headlines (CoinDesk · Cointelegraph · Decrypt · The Block · Bitcoin Magazine RSS) plus each coin's Google News headlines from the last 7 days</span>
       </div>
       <div id="topNewsSentimentCards" class="top-news-sentiment-grid"></div>
     </div>
@@ -4141,7 +4143,7 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
       <div id="researchNewsHost"></div>
     </div>
     <div id="socialEmpty" class="empty hidden">
-      No research data yet — all free sources (Reddit, CryptoCompare, Santiment) returned empty.
+      No research data yet — all free sources (Reddit, CoinGecko, GitHub, Google News, Santiment) returned empty.
       Check back later — the site rebuilds every few hours.
     </div>
     <div id="socialContent">
@@ -4149,19 +4151,19 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
       <div class="note">
         <strong>Research</strong> — one consolidated page for free social, dev, on-chain, news,
         and technical signals. Sources: Reddit (subscribers + top posts; cloud-IP-blocked, local-only),
-        CryptoCompare social (legacy endpoint now auth-gated, may be empty),
-        CryptoCompare news sentiment (keyless, POSITIVE/NEGATIVE/NEUTRAL labels),
+        community + developer stats (CoinGecko watchlist counts and votes, GitHub repository stats),
+        headline sentiment computed by Alpine Data from Google News headlines (a committed keyword rule, not a vendor's labels),
         Santiment (daily-active addresses + dev activity, fetched once per UTC day),
         and Point of Control (volume profile derived from existing price+volume series).
       </div>
 
-      <!-- ===== CryptoCompare social + dev stats ===== -->
+      <!-- ===== Community + developer stats (CoinGecko + GitHub) ===== -->
       <div class="chart-card" style="padding:12px 16px">
         <div class="head">
-          <h2 style="margin:0;font-size:15px">Social + developer stats <span class="tag">CryptoCompare</span></h2>
-          <span class="desc">Twitter followers · Reddit subscribers · GitHub stars / forks / open PRs</span>
+          <h2 style="margin:0;font-size:15px">Community + developer stats <span class="tag">CoinGecko &middot; GitHub</span></h2>
+          <span class="desc">CoinGecko watchlists and user votes · GitHub stars / forks / watchers / open issues + PRs / commits in the last 30 days. Twitter and Reddit counts are not shown: CoinGecko stopped publishing them on 2026-08-28 and no free source replaces them (Reddit subscribers are on the Reddit cards). Refreshed once per UTC day.</span>
         </div>
-        <div class="row" id="ccSocialCards" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div>
+        <div class="row" id="communityDevCards" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div>
       </div>
 
       <!-- ===== Reddit pulse ===== -->
@@ -5486,7 +5488,7 @@ const fmtUSD = (n, unit='M') => {
 const fmtSigned = n => (n>=0?'+':'') + fmtUSD(n);
 const fmtPct = (n, d=2) => n==null?'—':(n*100).toFixed(d)+'%';
 const fmtNum = (n, d=2) => n==null?'—':n.toLocaleString(undefined,{maximumFractionDigits:d});
-// Defang URLs from third-party APIs (news, Reddit, CryptoCompare, image CDNs)
+// Defang URLs from third-party APIs (news, Reddit, Google News, image CDNs)
 // before interpolating into href/src. Rejects javascript:, data:, vbscript:,
 // file:, and any non-http(s) scheme. Pass '' as fallback for img src.
 const sanitizeUrl = (u, fallback='#') =>
@@ -6232,7 +6234,7 @@ function defiFreshness(){
   };
 }
 
-// Research tab: reddit / CryptoCompare social / Santiment are all bare
+// Research tab: reddit / CoinGecko community counts / Santiment are all bare
 // snapshots — no per-observation date anywhere in the subtree, and Santiment
 // is daily-gated and served from cache 23 hours out of 24. There is no honest
 // date to show, so we say so (rule 5) rather than printing social.fetched_at.
@@ -6243,7 +6245,7 @@ function socialFreshness(){
   // Santiment's same-day series (DAA, 24h actives, dev activity, devs) DO
   // carry observation dates — the Santiment cards print them as "data
   // through". The strip reports the OLDEST of those across coins (rule 3)
-  // instead of "as of —". Reddit / CryptoCompare stay undated and are
+  // instead of "as of —". Reddit / CoinGecko community counts stay undated and are
   // disclosed in the hover.
   const coins = sant.coins || {};
   const lasts = [];
@@ -6262,7 +6264,7 @@ function socialFreshness(){
              ? 'Oldest last observation across the Santiment on-chain/dev series ('
                + lasts.length + ' coin' + (lasts.length === 1 ? '' : 's') + '). '
              : '')
-         + 'Reddit / CryptoCompare ship point-in-time counts with no observation '
+         + 'Reddit / CoinGecko community counts are point-in-time with no observation '
          + 'date; social.fetched_at is fetch time, so it is not shown as a freshness date.'
          + (santStale ? ' Santiment is currently served from its daily-gated cache.' : ''),
   };
@@ -7227,29 +7229,64 @@ function renderCoinbaseIntlPerps(){
   if (shortsBody) shortsBody.innerHTML = shorts.length ? shorts.map(rowFor).join('') : (cieWhy || emptyRow);
 }
 
-// CADLI BTC reference price chart — 90d daily close from the CoinDesk CADLI
-// Cryptocurrency Real-Time Index. CADLI is the regulated reference price
-// used in derivatives settlement, so it lives on the Futures tab alongside
-// funding/OI. Data shape: [{date, open, high, low, close, volume}, ...] —
-// we map close→value and re-use the shared lineChart() helper.
-function renderCadliChart(){
-  const bars = (DATA.market || {}).cadli_btc || [];
-  const series = (bars || [])
-    .filter(b => b && b.date && b.close != null)
-    .map(b => ({date: b.date, value: b.close}));
-  // cadli_btc_status.reason is set when the fetch failed (since 2026-10 the
-  // CoinDesk Data API answers keyless requests with HTTP 401). Show it, so
-  // the empty state says why instead of promising a refresh that won't come.
-  const cst = (DATA.market || {}).cadli_btc_status || {};
-  const cadliMsg = (cst.available === false && cst.reason)
-    ? 'CADLI BTC reference unavailable: ' + cst.reason + '.'
-      + (cst.checked_at ? ' Checked ' + String(cst.checked_at).slice(0, 16).replace('T', ' ') + ' UTC.' : '')
-      + ' No series in this build \u2014 an absence, not a reading of zero.'
-    : 'No CADLI BTC reference data — wait for next refresh.';
-  const ok = chartOrEmpty('cadliBtcChart', series.length > 0, cadliMsg);
+// Alpine Large-Cap Crypto Index — Alpine Data's OWN market-cap-weighted index
+// of the 10 largest eligible coins, computed in fetch_market.compute_alpine_index
+// from CoinGecko daily closes + market caps. It took this slot from the
+// CoinDesk CADLI chart (CADLI is CoinDesk's proprietary index and its API
+// needs a paid key since 2026-10). It is NOT CADLI and is never labelled as
+// CoinDesk's. The line under the chart always prints the base date,
+// constituents + weights, constituent changes, uncomputed days and the method,
+// so the number never appears without how it was made.
+function alpineIndexMetaHtml(idx, ok){
+  if (!idx || !idx.name) return '';
+  const m = idx.method || {};
+  const series = (idx.series || []).filter(p => p && p.value != null);
+  const last = series.length ? series[series.length - 1] : null;
+  const lines = [];
+  if (ok && last){
+    const ch = Number(idx.change_pct);
+    lines.push('100 = close of ' + escapeHtml(idx.base_date || '') + ' &middot; '
+      + escapeHtml(last.date) + ': <strong>' + Number(last.value).toFixed(2) + '</strong>'
+      + (isFinite(ch) ? ' (' + (ch >= 0 ? '+' : '') + ch.toFixed(2) + '%)' : ''));
+  }
+  const cons = (idx.constituents || []).map(c => escapeHtml(c.symbol || '')
+    + (c.weight_pct != null ? ' ' + Number(c.weight_pct).toFixed(1) + '%' : '')).join(' &middot; ');
+  if (cons) lines.push('Constituents and weights on ' + escapeHtml(idx.as_of || '') + ': ' + cons);
+  if (ok){
+    const changes = (idx.constituent_changes || []).map(c => escapeHtml(c.date) + ' +'
+      + escapeHtml((c.added || []).join(', ') || '—') + ' / −'
+      + escapeHtml((c.removed || []).join(', ') || '—')).join('; ');
+    lines.push('Constituent changes in this window: ' + (changes || 'none'));
+    const gaps = (idx.gaps || []).map(g => escapeHtml(g.date)).join(', ');
+    if (gaps) lines.push('Days not computed (a constituent had no CoinGecko price): ' + gaps);
+  }
+  const excl = Object.keys(idx.excluded || {}).map(why => escapeHtml(why) + ': '
+    + escapeHtml(((idx.excluded || {})[why] || []).join(', '))).join(' &middot; ');
+  const method = ['summary', 'universe', 'eligibility', 'selection', 'weighting', 'data', 'caveats']
+    .filter(k => m[k])
+    .map(k => '<div style="margin-top:4px"><strong>' + k + '</strong>: ' + escapeHtml(m[k]) + '</div>')
+    .join('');
+  return lines.map(l => '<div>' + l + '</div>').join('')
+    + '<details style="margin-top:4px"><summary style="cursor:pointer">Method, exclusions and caveats</summary>'
+    + method
+    + (excl ? '<div style="margin-top:4px"><strong>excluded this run</strong>: ' + excl + '</div>' : '')
+    + '<div style="margin-top:4px">Computed by Alpine Data from ' + escapeHtml(idx.source || 'CoinGecko')
+    + '. Not CoinDesk CADLI and not any licensed benchmark.</div>'
+    + '</details>';
+}
+
+function renderAlpineIndexChart(){
+  const idx = (DATA.market || {}).alpine_index || {};
+  const series = (idx.series || [])
+    .filter(p => p && p.date && p.value != null)
+    .map(p => ({date: p.date, value: Number(p.value)}));
+  const msg = (idx.available === false && idx.reason)
+    ? 'Alpine Large-Cap Crypto Index not computed in this build: ' + idx.reason
+    : 'No Alpine Large-Cap Crypto Index series in this build — an absence, not a reading of zero.';
+  const ok = chartOrEmpty('alpineIndexChart', idx.available !== false && series.length > 1, msg);
   // Unavailable: collapse the ~380px chart box to the height of its message
   // instead of leaving a large empty frame. Restored when data returns.
-  const cv = document.getElementById('cadliBtcChart');
+  const cv = document.getElementById('alpineIndexChart');
   const wrap = cv && cv.parentElement;
   if (wrap){
     wrap.style.height = ok ? '' : 'auto';
@@ -7257,11 +7294,13 @@ function renderCadliChart(){
     const em = wrap.querySelector('.chart-empty');
     if (em) em.style.position = ok ? 'absolute' : 'static';
   }
+  const meta = document.getElementById('alpineIndexMeta');
+  if (meta) meta.innerHTML = alpineIndexMetaHtml(idx, ok);
   if (!ok) {
-    destroy('cadliBtc');
+    destroy('alpineIndex');
     return;
   }
-  lineChart('cadliBtcChart', 'cadliBtc', series, '#f7931a', v => fmtUSD(v, 'auto'));
+  lineChart('alpineIndexChart', 'alpineIndex', series, '#a78bfa', v => fmtNum(v, 2));
 }
 
 // Toggle an empty-state placeholder inside a chart's .chart-wrap container.
@@ -14380,7 +14419,18 @@ function renderPocSentimentIndex(){
     const cachedNote = (pocFresh && pocFresh.stale > 0)
       ? ` · ${pocFresh.stale} of ${pocFresh.total} served from cache`
       : '';
-    sublineEl.textContent = `${considered} coins with migration data${cachedNote} · positive = POCs drifting higher (broad accumulation) · negative = drifting lower (broad distribution)`;
+    // Which API each coin's price/volume came from (fetch_market.crypto_daily_series):
+    // CoinGecko's cross-venue volume, or ONE exchange's volume when CoinGecko
+    // failed for that coin. Disclosed because the two are different measurements.
+    const bySrc = {};
+    list.forEach(c => { if (c && c.source) bySrc[c.source] = (bySrc[c.source] || 0) + 1; });
+    const exch = list.filter(c => c && c.volume_basis === 'exchange')
+      .map(c => String(c.symbol || '').toUpperCase() + ' (' + String(c.source || '').replace('_us', '.US') + ')');
+    const srcNote = Object.keys(bySrc).length
+      ? ` · price/volume: ${bySrc.coingecko || 0} CoinGecko (aggregate volume)`
+        + (exch.length ? `, ${exch.length} exchange-only volume: ${exch.join(', ')}` : '')
+      : '';
+    sublineEl.textContent = `${considered} coins with migration data${cachedNote}${srcNote} · positive = POCs drifting higher (broad accumulation) · negative = drifting lower (broad distribution)`;
   }
   paintCompositeFreshness('pocSentiment', pocFresh || {
     date: null, title: 'No dated signal history on the loaded POC rows.' });
@@ -14448,10 +14498,15 @@ function renderPocTopCards(){
     // pushes the page sideways. The COUNT is disclosed visibly above the grid
     // (tab strip + #pocSentimentFresh) and the detail modal carries the
     // per-coin date; this makes the individual offender identifiable on hover.
-    const cardTitle = c.stale === true
+    const volNote = c.volume_basis === 'exchange'
+      ? 'Volume from ' + String(c.source || 'one exchange').replace('_us', '.US')
+        + ' only (CoinGecko had no series for this coin on this run), so this '
+        + 'profile reflects one exchange, not the whole market. '
+      : '';
+    const cardTitle = volNote + (c.stale === true
       ? 'Served from cache — fetch_market could not refresh this coin on the '
         + 'last run, so these numbers repeat an earlier fetch. Click for full breakdown.'
-      : 'Click for full breakdown';
+      : 'Click for full breakdown');
     const cid = escapeHtml(String(c.coin_id || c.symbol || ''));
     const sym = escapeHtml(String(c.symbol || c.coin_id || '').toUpperCase());
     const imgUrl = sanitizeUrl(c.image, '');
@@ -14844,16 +14899,32 @@ function closePocDetail(){
   });
 })();
 
-// ===== CryptoCompare social + dev stats =====
-function renderCCSocialCards(){
-  const cc = (socialData().cryptocompare || {}).coins || {};
-  const host = document.getElementById('ccSocialCards');
+// ===== Community + developer stats (CoinGecko + GitHub) =====
+// Was CryptoCompare social (paid CoinDesk key since 2026-10). CoinGecko stopped
+// returning community_data / developer_data on 2026-08-28, so the card shows only
+// what a free source publishes: CoinGecko watchlist users + its users' vote split,
+// and GitHub repository stats. Twitter/X and Reddit fields have no free source
+// here and are left out (Reddit subscribers are on the Reddit cards below).
+function renderCommunityDevCards(){
+  const node = socialData().community_dev || {};
+  const cc = node.coins || {};
+  const host = document.getElementById('communityDevCards');
   if (!host) return;
+  // Only fields a free source actually published are rendered. A missing
+  // value is left out, never shown as 0 or a dash pretending to be a reading.
+  const row = (label, html) => html == null ? '' :
+    `<tr><td class="sub" style="color:var(--muted)">${label}</td><td class="right">${html}</td></tr>`;
+  const num = v => (v == null || !isFinite(Number(v))) ? null : `<strong>${fmtNumShort(Number(v))}</strong>`;
+  const votes = c => (c.coingecko_votes_up_pct == null) ? null
+    : `${Number(c.coingecko_votes_up_pct).toFixed(0)}% / ${Number(c.coingecko_votes_down_pct || 0).toFixed(0)}%`;
+  const repo = c => c.github_repo
+    ? `<a href="${sanitizeUrl('https://github.com/' + c.github_repo)}" target="_blank" rel="noopener" style="color:var(--text)">${escapeHtml(c.github_repo)}</a>` : null;
+  const pushed = c => c.github_pushed_at ? escapeHtml(String(c.github_pushed_at).slice(0, 10)) : null;
   host.innerHTML = RESEARCH_ASSETS.map(a => {
     const c = cc[a];
     const accent = RESEARCH_ACCENT(a);
     if (!c){
-      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">No data available.</div></div>`;
+      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">No CoinGecko or GitHub data in this build.</div></div>`;
     }
     return `<div class="card" style="border-left:4px solid ${accent}">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
@@ -14862,14 +14933,18 @@ function renderCCSocialCards(){
       </div>
       <table style="margin-top:8px;font-size:11px;width:100%">
         <tbody>
-          <tr><td class="sub" style="color:var(--muted)">Twitter followers</td><td class="right"><strong>${fmtNumShort(c.twitter_followers)}</strong></td></tr>
-          <tr><td class="sub" style="color:var(--muted)">Reddit subs</td><td class="right"><strong>${fmtNumShort(c.reddit_subscribers)}</strong></td></tr>
-          <tr><td class="sub" style="color:var(--muted)">Reddit active</td><td class="right">${fmtNumShort(c.reddit_active_users)}</td></tr>
-          <tr><td class="sub" style="color:var(--muted)">GitHub stars</td><td class="right"><strong>${fmtNumShort(c.github_stars)}</strong></td></tr>
-          <tr><td class="sub" style="color:var(--muted)">GitHub forks</td><td class="right">${fmtNumShort(c.github_forks)}</td></tr>
-          <tr><td class="sub" style="color:var(--muted)">Open PRs / issues</td><td class="right">${fmtNumShort(c.github_open_pulls)} / ${fmtNumShort(c.github_open_issues)}</td></tr>
+          ${row('CoinGecko watchlists', num(c.coingecko_watchlist_users))}
+          ${row('CoinGecko votes up / down', votes(c))}
+          ${row('GitHub repo', repo(c))}
+          ${row('GitHub stars', num(c.github_stars))}
+          ${row('GitHub forks', num(c.github_forks))}
+          ${row('GitHub watchers', num(c.github_watchers))}
+          ${row('Open issues + PRs', num(c.github_open_issues_and_prs))}
+          ${row('Commits, last 30 days', num(c.github_commits_30d))}
+          ${row('Last push', pushed(c))}
         </tbody>
       </table>
+      <div class="sub" style="font-size:10px;color:var(--muted);margin-top:6px">${escapeHtml((c.sources || []).join(' + '))}${node.observed_date ? ' &middot; observed ' + escapeHtml(node.observed_date) : ''}</div>
     </div>`;
   }).join('');
 }
@@ -14991,21 +15066,26 @@ function renderSantimentCards(){
   }).join('');
 }
 
-// Keyword lists for headline sentiment scoring (same approach the Python
-// `_AI_NEWS_*` lists use server-side for the AI tab). Lowercased; matched
-// substring-wise against title+body. POSITIVE iff ≥1 positive hit and 0
-// negative hits, NEGATIVE iff the reverse, otherwise NEUTRAL.
+// Keyword lists for headline sentiment scoring — Alpine Data's own rule, the
+// same lists and the same rule as fetch_market._NEWS_POS_KEYWORDS_PER_COIN /
+// _NEWS_NEG_KEYWORDS_PER_COIN / _score_news_item_sentiment, which score the
+// Google News headlines merged in from news_sentiment_by_coin
+// (tests/test_crypto_free_sources.py checks they stay identical). Lowercased;
+// matched as WHOLE words/phrases against title+body — substring matching
+// scored "against" as a gain, "finance" as a fine and "path" as an ATH.
+// POSITIVE iff ≥1 positive hit and 0 negative hits, NEGATIVE iff the reverse,
+// otherwise NEUTRAL.
 const _NEWS_POS_KEYWORDS = [
   'rally', 'surge', 'soars', 'soar', 'jumps', 'jump', 'gains', 'gain',
   'breakout', 'breakthrough', 'launches', 'launch', 'partnership', 'adopts',
   'adoption', 'approves', 'approved', 'approval', 'wins', 'win', 'milestone',
-  'record', 'all-time high', 'ath', 'bullish', 'rally', 'upgrade', 'upgraded',
+  'record', 'all-time high', 'ath', 'bullish', 'upgrade', 'upgraded',
   'beats', 'inflows', 'inflow', 'buys', 'accumulate', 'accumulation',
   'recovery', 'rebounds', 'rebound', 'outperform', 'green', 'institutional',
   'etf approval'
 ];
 const _NEWS_NEG_KEYWORDS = [
-  'hack', 'hacked', 'exploit', 'exploited', 'lawsuit', 'sued', 'sec ', 'fine',
+  'hack', 'hacked', 'exploit', 'exploited', 'lawsuit', 'sued', 'sec', 'fine',
   'crash', 'plunge', 'plunges', 'dump', 'dumps', 'tumbles', 'tumble', 'sinks',
   'sink', 'slide', 'slides', 'falls', 'fall', 'loses', 'loss', 'losses',
   'fraud', 'investigation', 'probe', 'ban', 'banned', 'banning', 'breach',
@@ -15018,17 +15098,20 @@ const _NEWS_NEG_KEYWORDS = [
 // Score a single news item by keyword presence. Mirrors `compute_ai_sentiment`
 // in fetch_market.py so the Research tab uses the same POS/NEG/NEU contract
 // as the AI News tab.
+function _newsKwRe(list){
+  const esc = w => String(w).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const alts = Array.from(new Set(list.map(w => String(w).trim().toLowerCase()).filter(Boolean)))
+    .sort((x, y) => y.length - x.length).map(esc);
+  return new RegExp('(?:^|[^a-z0-9])(?:' + alts.join('|') + ')(?![a-z0-9])');
+}
+const _NEWS_POS_RE = _newsKwRe(_NEWS_POS_KEYWORDS);
+const _NEWS_NEG_RE = _newsKwRe(_NEWS_NEG_KEYWORDS);
 function scoreNewsItemSentiment(item){
   const title = (item && item.title) || '';
   const body  = (item && item.body)  || '';
   const text = (title + ' ' + (body || '')).toLowerCase();
-  let hasPos = false, hasNeg = false;
-  for (let i = 0; i < _NEWS_POS_KEYWORDS.length; i++){
-    if (text.indexOf(_NEWS_POS_KEYWORDS[i]) !== -1){ hasPos = true; break; }
-  }
-  for (let i = 0; i < _NEWS_NEG_KEYWORDS.length; i++){
-    if (text.indexOf(_NEWS_NEG_KEYWORDS[i]) !== -1){ hasNeg = true; break; }
-  }
+  const hasPos = _NEWS_POS_RE.test(text);
+  const hasNeg = _NEWS_NEG_RE.test(text);
   if (hasPos && !hasNeg) return 'POSITIVE';
   if (hasNeg && !hasPos) return 'NEGATIVE';
   return 'NEUTRAL';
@@ -15077,11 +15160,12 @@ const _NEWS_COIN_ALIASES = {
 //          then by net_score desc, capped at `topN`.
 function groupNewsBySymbol(news, marketsTop, topN, ccByCoin){
   const coins = (marketsTop || []).slice(0, topN || 25);
-  // CC per-coin sentiment (backend-aggregated; see fetch_cc_per_coin_news in
-  // fetch_market.py) lets us score coins that aren't named in the 5 RSS
-  // feeds we pull. We merge CC counts on TOP of RSS counts below so the
-  // row total reflects the union. Empty/missing payload is fine — we
-  // degrade to RSS-only.
+  // Per-coin Google News headline counts (backend-aggregated by Alpine Data's
+  // keyword rule; see fetch_headline_sentiment_by_coin in fetch_market.py) let
+  // us score coins that aren't named in the 5 publisher feeds. The backend
+  // drops any headline already in DATA.market.news, so adding its counts to
+  // the RSS counts below never counts one headline twice. Empty/missing
+  // payload is fine — we degrade to RSS-only.
   const cc = (ccByCoin && typeof ccByCoin === 'object') ? ccByCoin : {};
   const safeNews = (news && news.length) ? news : [];
   if (!coins.length) return [];
@@ -15144,11 +15228,11 @@ function groupNewsBySymbol(news, marketsTop, topN, ccByCoin){
       allItems.push(entry);
       if (recent.length < 3) recent.push(entry);
     }
-    // Merge CC backend-aggregated counts (already scored server-side using
-    // the same POS/NEG keyword lists as scoreNewsItemSentiment above). CC
-    // items are appended to allItems so the click-to-expand modal shows
-    // both RSS and CC headlines; `source` is tagged 'CC: <publisher>' so
-    // the user can tell where each row came from.
+    // Merge the backend's Google News counts (scored server-side with the
+    // same lists and rule as scoreNewsItemSentiment above). Its recent items
+    // are appended to allItems so the click-to-expand modal shows both;
+    // `source` is tagged 'Google News: <publisher>' so the reader can tell
+    // where each row came from.
     const ccRow = cc[m.symbol];
     if (ccRow){
       pos += (ccRow.positive || 0);
@@ -15160,7 +15244,7 @@ function groupNewsBySymbol(news, marketsTop, topN, ccByCoin){
         const entry = {
           title:     r.title  || '',
           body:      r.body   || '',
-          source:    r.source ? ('CC: ' + r.source) : 'CryptoCompare',
+          source:    r.source ? ('Google News: ' + r.source) : 'Google News',
           date:      r.date   || '',
           sentiment: r.sentiment || 'NEUTRAL',
           url:       r.url    || '',
@@ -15201,17 +15285,18 @@ function openNewsSentimentDetail(symbol){
   const body  = document.getElementById('newsSentimentDetailBody');
   const title = document.getElementById('newsSentimentDetailTitle');
   if (!modal || !body || !title) return;
-  // CryptoCompare deep data — only populated for RESEARCH_ASSETS (btc/eth/link/ltc).
-  // When available we surface the richer view (7d trend, keyword chips, top
-  // articles) above the RSS-matched headlines list.
-  const ccCoin = ((socialData().cc_news || {}).coins || {})[lower] || null;
+  // Headline-sentiment deep data (Google News, scored by Alpine Data's keyword
+  // rule) — only populated for RESEARCH_ASSETS (btc/eth/link/ltc). When
+  // available we surface the richer view (7d trend, keyword chips, latest
+  // headlines) above the RSS-matched headlines list.
+  const ccCoin = ((socialData().headline_sentiment || {}).coins || {})[lower] || null;
   if (!row && !ccCoin){
     title.textContent = upper + ' · news sentiment';
     body.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No matched headlines for this coin.</div>';
     modal.classList.remove('hidden');
     return;
   }
-  // Prefer row metadata; fall back to CC if row missing (shouldn't happen for
+  // Prefer row metadata; fall back to the deep data if row missing (shouldn't happen for
   // top-25 but defensive).
   const sym = (row && row.symbol) || upper;
   const nm  = (row && row.name) || '';
@@ -15224,7 +15309,7 @@ function openNewsSentimentDetail(symbol){
   const netColor = rsv.net_score > 0 ? '#22c55e' : rsv.net_score < 0 ? '#ef4444' : 'var(--muted)';
   const netTxt = rsv.total === 0 ? '—' : (rsv.net_score > 0 ? '+' : '') + rsv.net_score;
 
-  // --- Optional CryptoCompare deep section (only for the 4 covered coins) ---
+  // --- Optional headline-sentiment deep section (only for the 4 covered coins) ---
   let ccBlock = '';
   if (ccCoin){
     const ccTotal = (ccCoin.positive || 0) + (ccCoin.negative || 0) + (ccCoin.neutral || 0) || 1;
@@ -15259,7 +15344,7 @@ function openNewsSentimentDetail(symbol){
       return `<span style="border:1px solid ${bg};color:${bg};border-radius:10px;padding:2px 8px;margin:2px 4px 0 0;font-size:11px;display:inline-block">${escapeHtml(k.kw)} <span style="opacity:.65">${k.count}</span></span>`;
     }).join('');
     const chipsBlock = chips ? `<div style="margin-top:10px;line-height:1.8">${chips}</div>` : '';
-    // Top articles from CC (different from RSS-matched — these are CC's curated picks).
+    // Latest Google News headlines for this coin (different from the RSS-matched list below).
     // Neutral = muted grey (not amber). Amber = caution per the palette
     // spec; using it for NEUTRAL made neutral headlines look like warnings.
     const SENT_COLOR = {POSITIVE: '#22c55e', NEGATIVE: '#ef4444', NEUTRAL: '#94a3b8'};
@@ -15274,15 +15359,15 @@ function openNewsSentimentDetail(symbol){
     }).join('');
     const articlesBlock = articles
       ? `<div style="margin-top:12px">
-          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;margin-bottom:4px">CRYPTOCOMPARE TOP ARTICLES</div>
+          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;margin-bottom:4px">LATEST GOOGLE NEWS HEADLINES</div>
           ${articles}
         </div>`
       : '';
     ccBlock = `
       <div style="background:#0e1118;border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:14px">
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap">
-          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em">CRYPTOCOMPARE · DEEP COVERAGE</div>
-          <div style="font-size:11px;color:${ccNetColor};font-weight:700">net ${ccNetTxt} · ${ccCoin.article_count || 0} articles</div>
+          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em">HEADLINE SENTIMENT · COMPUTED BY ALPINE DATA</div>
+          <div style="font-size:11px;color:${ccNetColor};font-weight:700">net ${ccNetTxt} · ${ccCoin.article_count || 0} Google News headlines, last 7 days${ccCoin.sample_capped ? ' (capped sample)' : ''}</div>
         </div>
         <div style="display:flex;height:10px;margin-top:8px;border-radius:3px;overflow:hidden;background:#1f2533">
           <div style="background:#22c55e;width:${ccPosPct}%"></div>
@@ -15297,6 +15382,7 @@ function openNewsSentimentDetail(symbol){
         ${sparkBlock}
         ${chipsBlock}
         ${articlesBlock}
+        <div class="sub" style="font-size:10px;color:var(--muted);margin-top:8px;line-height:1.4">Method: a headline is positive if it contains a word from our committed positive list and none from the negative list, negative if the reverse, otherwise neutral. Headlines from Google News RSS search; the 7-day bars count headlines in this sample, not every article published. Not CoinDesk or CryptoCompare labels, not an LLM.</div>
       </div>`;
   }
 
@@ -15351,7 +15437,7 @@ function renderTopNewsSentiment(){
   if (!host) return;
   const news = ((DATA.market || {}).news) || [];
   const marketsTop = ((DATA.market || {}).markets_top) || [];
-  // CC backend-aggregated per-coin counts. Keyed by uppercase symbol; lifts
+  // Backend Google News per-coin counts. Keyed by uppercase symbol; lifts
   // coverage for coins not named in our 5 RSS feeds (FIGR_HELOC, USDS, LEO,
   // XMR, TON, XLM, DAI, etc.). Missing/empty payload → RSS-only behavior.
   const ccByCoin = (((DATA.market || {}).news_sentiment_by_coin) || {}).coins || {};
@@ -15440,15 +15526,15 @@ function renderSocial(){
   const social = socialData();
   const poc = (DATA.market||{}).poc || {};
   const hasAny =
-    Object.keys((social.cryptocompare||{}).coins||{}).length ||
-    Object.keys((social.cc_news||{}).coins||{}).length ||
+    Object.keys((social.community_dev||{}).coins||{}).length ||
+    Object.keys((social.headline_sentiment||{}).coins||{}).length ||
     Object.keys((social.reddit||{}).subreddits||{}).length ||
     Object.keys((social.santiment||{}).coins||{}).length ||
     Object.keys(poc).length;
   document.getElementById('socialEmpty').classList.toggle('hidden', !!hasAny);
   document.getElementById('socialContent').classList.toggle('hidden', !hasAny);
   // #socialAsOf is the ONE non-header place a fetch clock is rendered, and it
-  // has to say so out loud. Reddit / CryptoCompare / Santiment ship
+  // has to say so out loud. Reddit / CoinGecko / Santiment ship
   // point-in-time counts with no observation date anywhere in the subtree
   // (see socialFreshness), so there is no honest "as of" for this tab - the
   // tab strip above says "as of -" and this line explains what the timestamp
@@ -15469,13 +15555,13 @@ function renderSocial(){
   // Top-15 news-sentiment card sources data from DATA.market.news +
   // markets_top — independent of the social aggregate (`hasAny`), so render
   // it before the early return so the card still appears when reddit /
-  // santiment / cc_news all returned empty.
+  // santiment / headline_sentiment all returned empty.
   renderTopNewsSentiment();
   if (!hasAny) return;
-  renderCCSocialCards();
+  renderCommunityDevCards();
   // renderCCNewsCards removed — the always-on top 4 deep cards (BTC/ETH/LINK/LTC)
   // were folded into the Top-25 click-to-expand modal. Click any row for the
-  // detail; CC-covered coins surface the richer 7d trend + chips + curated
+  // detail; the 4 research coins surface the richer 7d trend + chips + latest
   // articles inside the modal alongside the RSS-matched headlines.
   renderRedditCards();
   renderSantimentCards();
@@ -15567,7 +15653,7 @@ function renderAll(){
   }
   if (state.tab === 'trading' && !trEmpty){
     renderFuturesSentiment();
-    renderTradingKpis(); renderPriceVol(); renderFunding(); renderOI(); renderLS(); renderCoinbaseIntlPerps(); renderCadliChart(); renderDvol(); renderFng(); renderEthBtc(); renderGlobalTable();
+    renderTradingKpis(); renderPriceVol(); renderFunding(); renderOI(); renderLS(); renderCoinbaseIntlPerps(); renderAlpineIndexChart(); renderDvol(); renderFng(); renderEthBtc(); renderGlobalTable();
   } else if (state.tab === 'trading'){
     renderFuturesSentiment();
   }
@@ -17270,38 +17356,126 @@ if (IS_SHARE) {
 })();
 
 // ============ UNIVERSAL SYMBOL SEARCH (header → consolidated modal) ============
-// Searches: stocks_signals, signals_top20, poc_top, news, cc_news sentiment.
+// Searches: stocks_signals, signals_top20, poc_top, news, headline sentiment.
 // Renders only the sections that match. On cache miss, falls back to a live
-// CryptoCompare browser fetch (CORS-ok) so users can look up any crypto.
+// keyless browser fetch (CoinGecko, then Coinbase / Kraken / Binance.US; all
+// CORS-open) so users can look up any crypto.
 
 // --- live crypto helpers (cache-miss fallback for lookupSymbol) ---
-async function liveCryptoLookup(symbol){
-  const sym = String(symbol || '').toUpperCase();
-  if (!sym) throw new Error('empty symbol');
-  const url = 'https://min-api.cryptocompare.com/data/v2/histoday?fsym=' +
-              encodeURIComponent(sym) + '&tsym=USD&limit=180';
+// Keyless, CORS-open sources only — no key ever ships to the browser.
+//   1) CoinGecko public API: /search resolves the ticker to a coin id (best
+//      market-cap rank wins), then /market_chart gives daily closes plus
+//      AGGREGATE USD volume across the venues CoinGecko tracks.
+//   2) Coinbase Exchange, 3) Kraken, 4) Binance.US daily candles by ticker —
+//      only when CoinGecko has nothing or is rate-limited. Their volume is that
+//      ONE exchange's volume, and the result says so.
+// Only complete UTC days are used (CoinGecko's 00:00 UTC point is labelled with
+// the day it closes; each exchange's still-open candle is dropped), matching
+// the server-side fetch_market.crypto_daily_series. This used to call
+// CryptoCompare histoday, which answers 401 without a paid key since 2026-10.
+function _liveTodayUtc(){
+  return new Date().toISOString().slice(0, 10);
+}
+function _liveDayOf(ms){
+  return new Date(ms).toISOString().slice(0, 10);
+}
+async function _liveFetchJson(url){
   const resp = await fetch(url, { method: 'GET' });
   if (!resp.ok) throw new Error('http ' + resp.status);
-  const j = await resp.json();
-  if (!j || j.Response !== 'Success' || !j.Data || !Array.isArray(j.Data.Data)){
-    throw new Error('non-success response');
+  return await resp.json();
+}
+async function _liveCoinGecko(sym){
+  const s = await _liveFetchJson('https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(sym));
+  const hits = ((s && s.coins) || []).filter(c => c && String(c.symbol || '').toUpperCase() === sym && c.id);
+  if (!hits.length) throw new Error('no CoinGecko coin with ticker ' + sym);
+  hits.sort((a, b) => (a.market_cap_rank == null) - (b.market_cap_rank == null)
+                      || (a.market_cap_rank || 0) - (b.market_cap_rank || 0));
+  const coin = hits[0];
+  const j = await _liveFetchJson('https://api.coingecko.com/api/v3/coins/' + encodeURIComponent(coin.id)
+    + '/market_chart?vs_currency=usd&days=180&interval=daily');
+  const today = _liveTodayUtc();
+  const byDay = (pts) => {
+    const out = {};
+    (pts || []).forEach(p => {
+      if (!Array.isArray(p) || p.length < 2 || p[1] == null) return;
+      const d = new Date(p[0]);
+      if (d.getUTCHours() || d.getUTCMinutes() || d.getUTCSeconds()) return;  // intraday = partial day
+      const day = _liveDayOf(p[0] - 86400000);                               // 00:00 sample = previous day's close
+      if (day < today) out[day] = Number(p[1]);
+    });
+    return out;
+  };
+  const px = byDay(j && j.prices), vol = byDay(j && j.total_volumes);
+  const rows = Object.keys(px).sort().filter(d => px[d] > 0).map(d => ({
+    date: d, close: px[d], volume_usd: vol[d] || 0,
+  }));
+  return { rows, source: 'coingecko', volumeBasis: 'aggregate', coinId: coin.id, name: coin.name || '' };
+}
+async function _liveCoinbase(sym){
+  const j = await _liveFetchJson('https://api.exchange.coinbase.com/products/' + encodeURIComponent(sym) + '-USD/candles?granularity=86400');
+  const today = _liveTodayUtc();
+  const rows = (Array.isArray(j) ? j : []).map(r => ({
+    date: _liveDayOf(Number(r[0]) * 1000), close: Number(r[4]), volume_usd: Number(r[5]) * Number(r[4]),
+  })).filter(r => r.date < today && r.close > 0).sort((a, b) => a.date < b.date ? -1 : 1).slice(-180);
+  return { rows, source: 'coinbase', volumeBasis: 'exchange', coinId: null, name: '' };
+}
+async function _liveKraken(sym){
+  const since = Math.floor(Date.now() / 1000) - 182 * 86400;
+  const j = await _liveFetchJson('https://api.kraken.com/0/public/OHLC?pair=' + encodeURIComponent(sym) + 'USD&interval=1440&since=' + since);
+  if (!j || (j.error && j.error.length)) throw new Error('kraken: ' + ((j && j.error) || []).join(','));
+  const key = Object.keys(j.result || {}).find(k => k !== 'last');
+  const today = _liveTodayUtc();
+  const rows = ((j.result || {})[key] || []).map(r => {
+    const close = Number(r[4]), vwap = Number(r[5]), v = Number(r[6]);
+    return { date: _liveDayOf(Number(r[0]) * 1000), close, volume_usd: v * (vwap > 0 ? vwap : close) };
+  }).filter(r => r.date < today && r.close > 0).slice(-180);
+  return { rows, source: 'kraken', volumeBasis: 'exchange', coinId: null, name: '' };
+}
+async function _liveBinanceUs(sym){
+  let j = null;
+  for (const q of ['USD', 'USDT']){
+    try {
+      j = await _liveFetchJson('https://api.binance.us/api/v3/klines?symbol=' + encodeURIComponent(sym + q) + '&interval=1d&limit=181');
+      if (Array.isArray(j) && j.length) break;
+    } catch (_) { j = null; }
   }
-  const rows = j.Data.Data
-    .filter(r => r && typeof r.close === 'number' && r.close > 0)
-    .map(r => ({
-      time: r.time,
-      close: Number(r.close),
-      volumefrom: Number(r.volumefrom) || 0,
-      volumeto: Number(r.volumeto) || 0,
-    }));
-  if (rows.length < 10) throw new Error('not enough data');
-  return rows;
+  const today = _liveTodayUtc();
+  const rows = (Array.isArray(j) ? j : []).map(r => ({
+    date: _liveDayOf(Number(r[0])), close: Number(r[4]), volume_usd: Number(r[7]),
+  })).filter(r => r.date < today && r.close > 0);
+  return { rows, source: 'binance_us', volumeBasis: 'exchange', coinId: null, name: '' };
+}
+const LIVE_CRYPTO_SOURCE_LABEL = {
+  coingecko: 'CoinGecko, aggregate volume',
+  coinbase: 'Coinbase, Coinbase-only volume',
+  kraken: 'Kraken, Kraken-only volume',
+  binance_us: 'Binance.US, Binance.US-only volume',
+};
+async function liveCryptoLookup(symbol){
+  const sym = String(symbol || '').toUpperCase();
+  if (!/^[A-Z0-9]{1,12}$/.test(sym)) throw new Error('not a crypto ticker');
+  const errors = [];
+  // A source only counts if its newest complete close is at most 2 days old:
+  // an exchange that delisted a pair can keep serving candles that end months
+  // ago (Coinbase DAI-USD ends 2026-05-04), and that must never be shown as live.
+  const oldestOk = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10);
+  for (const fn of [_liveCoinGecko, _liveCoinbase, _liveKraken, _liveBinanceUs]){
+    try {
+      const out = await fn(sym);
+      const lastDay = out && out.rows && out.rows.length ? out.rows[out.rows.length - 1].date : '';
+      if (out && out.rows && out.rows.length >= 10 && lastDay >= oldestOk) return out;
+      errors.push(fn.name + (lastDay && lastDay < oldestOk ? ': stale (last close ' + lastDay + ')' : ': not enough data'));
+    } catch (err){
+      errors.push(fn.name + ': ' + ((err && err.message) || err));
+    }
+  }
+  throw new Error('no free source had data (' + errors.join('; ') + ')');
 }
 
 function liveComputePOC(rows){
-  // Bin closes into 60 buckets by price range, weighted by volumeto.
+  // Bin closes into 60 buckets by price range, weighted by USD volume.
   const closes = rows.map(r => r.close);
-  const vols = rows.map(r => r.volumeto || 0);
+  const vols = rows.map(r => r.volume_usd || 0);
   const minP = Math.min.apply(null, closes);
   const maxP = Math.max.apply(null, closes);
   const range = maxP - minP || 1;
@@ -17393,7 +17567,7 @@ function liveFmtUsd(v){
 
 function liveLooksLikeStock(sym){
   // Crude: 1-5 uppercase A-Z, no digits. Used to pick the live stock branch
-  // when the symbol isn't in our cached stocks_signals AND CryptoCompare has
+  // when the symbol isn't in our cached stocks_signals AND no free crypto source has
   // nothing for it. Widened from 3-4 to 1-5 chars so tickers like F (Ford),
   // BA, GE, MSTR all qualify; 5-char tickers like GOOGL would too.
   return /^[A-Z]{1,5}$/.test(sym);
@@ -17492,7 +17666,7 @@ async function liveStockLookup(sym){
 
 function liveComputeStockSignal(rows){
   // Mirror of Python compute_stock_signal scoring (simplified to the
-  // SMA50 / SMA200 / RSI14 / 5d-momentum / golden-cross axis the CryptoCompare
+  // SMA50 / SMA200 / RSI14 / 5d-momentum / golden-cross axis the live crypto
   // path already uses — same component weights, same final mapping).
   const closes = rows.map(r => r.close);
   return liveComputeSignal(rows.map(r => ({ close: r.close })));
@@ -17524,7 +17698,7 @@ function renderLiveStockSection(sym, rows, source){
   const sig = liveComputeStockSignal(rows);
   const poc = liveComputePOC(rows.map(r => ({
     close: r.close,
-    volumeto: r.volume,  // POC weighting expects volumeto field
+    volume_usd: r.volume,  // POC weighting expects volume_usd
   })));
   const closes = rows.map(r => r.close);
   const n = closes.length;
@@ -17639,7 +17813,10 @@ async function liveServerSymbolLookup(sym){
 
 function renderServerSymbolSection(sym, payload){
   const kind = payload.kind || 'stock';
-  const sourceLbl = kind === 'crypto' ? 'server · CryptoCompare' : 'server · Yahoo Finance';
+  const sourceLbl = kind === 'crypto'
+    ? 'server · ' + (String(payload.source || '').indexOf('cache:') === 0 ? 'cached payload'
+        : (LIVE_CRYPTO_SOURCE_LABEL[payload.source] || 'free crypto sources'))
+    : 'server · Yahoo Finance';
   const score = Number(payload.score) || 0;
   const label = payload.label || 'HOLD';
   const last  = payload.price;
@@ -17691,7 +17868,8 @@ function renderServerSymbolSection(sym, payload){
   );
 }
 
-function renderLiveCryptoSection(sym, rows){
+function renderLiveCryptoSection(sym, live){
+  const rows = live.rows;
   const sig = liveComputeSignal(rows);
   const poc = liveComputePOC(rows);
   const closes = rows.map(r => r.close);
@@ -17709,7 +17887,7 @@ function renderLiveCryptoSection(sym, rows){
   return (
     '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
       '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
-      '<div class="sub" style="font-size:12px;color:var(--muted)">(live from CryptoCompare)</div>' +
+      '<div class="sub" style="font-size:12px;color:var(--muted)">(live from ' + escapeHtml(LIVE_CRYPTO_SOURCE_LABEL[live.source] || live.source || '') + (live.name ? ' &middot; ' + escapeHtml(live.name) : '') + '; daily closes through ' + escapeHtml((rows[rows.length - 1] || {}).date || '') + ')</div>' +
     '</div>' +
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:10px">' +
       '<div style="border:1px solid var(--border);border-radius:8px;padding:10px">' +
@@ -17902,7 +18080,7 @@ function resolveSymbolFromCache(sym){
     const up = sym;
     return t.toUpperCase().includes(up) || b.toUpperCase().includes(up);
   });
-  const sentiment = ((((market.social || {}).cc_news || {}).coins) || {})[symLower] || null;
+  const sentiment = ((((market.social || {}).headline_sentiment || {}).coins) || {})[symLower] || null;
   const hasAny = !!(stock || cryptoSignal || poc || news.length || sentiment);
   const displayName =
     (stock && stock.name) ||
@@ -17996,9 +18174,9 @@ function buildSymbolSectionsHtml(resolved){
     const netTxt = net == null ? '—' : ((net > 0 ? '+' : '') + net);
     sections.push(
       '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">News sentiment</div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Headline sentiment &middot; computed by Alpine Data</div>' +
         '<div style="display:flex;justify-content:space-between;align-items:baseline">' +
-          '<span class="sub" style="color:var(--muted);font-size:11px">' + (Number(sentiment.article_count) || total) + ' articles scored</span>' +
+          '<span class="sub" style="color:var(--muted);font-size:11px">' + (Number(sentiment.article_count) || total) + ' Google News headlines (7d), keyword-scored</span>' +
           '<span style="color:' + netColor + ';font-weight:700;font-size:14px">net ' + netTxt + '</span>' +
         '</div>' +
         '<div style="display:flex;height:10px;margin-top:6px;border-radius:3px;overflow:hidden;background:#1f2533">' +
@@ -18034,8 +18212,8 @@ async function resolveAndRenderSymbol(sym){
     } catch (err) { /* fall through */ }
   }
   try {
-    const rows = await liveCryptoLookup(sym);
-    return { html: renderLiveCryptoSection(sym, rows), found: true, sym: sym, displayName: '' };
+    const live = await liveCryptoLookup(sym);
+    return { html: renderLiveCryptoSection(sym, live), found: true, sym: sym, displayName: live.name || '' };
   } catch (err) { /* fall through */ }
   if (liveLooksLikeStock(sym)){
     try {
@@ -18366,8 +18544,8 @@ async function lookupSymbol(query){
     const up = sym;
     return t.toUpperCase().includes(up) || b.toUpperCase().includes(up);
   });
-  // 8) Sentiment (CryptoCompare news)
-  const sentiment = ((((market.social || {}).cc_news || {}).coins) || {})[symLower] || null;
+  // 8) Headline sentiment (Google News, Alpine Data keyword rule)
+  const sentiment = ((((market.social || {}).headline_sentiment || {}).coins) || {})[symLower] || null;
 
   // 9) Full-name substring fallback — try matching the user's input against
   //    the `name` field on signals_top20 / markets_top / stocks_signals. Only
@@ -18410,7 +18588,8 @@ async function lookupSymbol(query){
     //   1) Local Flask server `/api/symbol/<sym>` (only when we're on the
     //      same-origin live-server mode — has Yahoo + full 6-component scorer
     //      and no per-day rate limit).
-    //   2) CryptoCompare histoday (covers any crypto symbol, CORS-friendly).
+    //   2) Keyless crypto lookup: CoinGecko, then Coinbase / Kraken / Binance.US
+    //      (covers any listed crypto ticker, CORS-open, no key in the browser).
     //   3) Live stock lookup via Twelvedata (Alpha Vantage as fallback) —
     //      only attempted when the symbol shape looks like a US ticker AND
     //      crypto came up empty.
@@ -18438,12 +18617,12 @@ async function lookupSymbol(query){
       }
     }
 
-    // 2) CryptoCompare — always cheap and works for any crypto.
+    // 2) Keyless crypto lookup (CoinGecko, then exchange candles).
     let cryptoErr = null;
     try {
-      const rows = await liveCryptoLookup(sym);
+      const live = await liveCryptoLookup(sym);
       if (!stillCurrent()) return;
-      body.innerHTML = renderLiveCryptoSection(sym, rows);
+      body.innerHTML = renderLiveCryptoSection(sym, live);
       pushSymbolRecent(sym);
       return;
     } catch (err){
