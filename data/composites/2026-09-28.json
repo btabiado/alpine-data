@@ -50,17 +50,17 @@
     "poc_signal_breadth": null,
     "whale_sentiment_btc": {
       "as_of": "2026-09-27",
-      "backfilled_from": "series:https://btabiado.github.io/alpine-data/data-whale.json read 2026-10-04 truncated to the end of 2026-09-28",
+      "backfilled_from": "r2:raw/alpine-data/2026-09-28/data-whale.json",
       "label": "WHALE DISTRIBUTION",
-      "note": "backfilled (series)",
-      "score": -32,
+      "note": "backfilled (r2)",
+      "score": -33,
       "stale": false
     },
     "whale_sentiment_eth": {
       "as_of": "2026-09-27",
-      "backfilled_from": "series:https://btabiado.github.io/alpine-data/data-whale.json read 2026-10-04 truncated to the end of 2026-09-28",
+      "backfilled_from": "r2:raw/alpine-data/2026-09-28/data-whale.json",
       "label": "WHALE DISTRIBUTION",
-      "note": "backfilled (series)",
+      "note": "backfilled (r2)",
       "score": -43,
       "stale": false
     }
