@@ -16,6 +16,7 @@
 
 import { openDetail } from '../lthcs_tab/lthcs-detail.js';
 import { openAbout } from '../lthcs_tab/lthcs-about.js';
+import { EXILE_FILTER_KEY, exileInfo, exileBadgeHTML } from '../lthcs_tab/lthcs-exile.js';
 // Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
 import { paintComposite, freshnessHtml } from '../lthcs_tab/lthcs-freshness.js';
 // Build-time file index: lets the sector card read the newest sector_strength
@@ -67,7 +68,9 @@ const INDEX_KEY_NORMALIZE = {
   'S&P 100': 'sp-100',
   'S&P 500': 'sp-500',
 };
-const INDEX_FILTERS = ['djia', 'nasdaq-100', 'sp-100'];
+// `exiles` = the Index Exiles group (left every tracked index, still scored
+// daily). Not an index: exiles carry no key in row.indices.
+const INDEX_FILTERS = ['djia', 'nasdaq-100', 'sp-100', EXILE_FILTER_KEY];
 
 const STORAGE_KEY = 'lthcs.v2.filters';
 
@@ -346,6 +349,7 @@ function enrichScores(snapshot, universeByTicker) {
       name: uni.name || row.ticker,
       sector: uni.sector || row.sector || '',
       indices,
+      exile: exileInfo(uni),
       score: Number(row.lthcs_score),
       snapshotBand: row.band,
       uiBand,
@@ -802,7 +806,9 @@ function applyFilters() {
   return state.enriched.filter((row) => {
     if (state.filters.band !== 'all' && row.uiBand !== state.filters.band) return false;
     if (state.filters.drift !== 'all' && row.driftDirection !== state.filters.drift) return false;
-    if (state.filters.index !== 'all' && !row.indices.includes(state.filters.index)) return false;
+    if (state.filters.index === EXILE_FILTER_KEY) {
+      if (!row.exile) return false;
+    } else if (state.filters.index !== 'all' && !row.indices.includes(state.filters.index)) return false;
     if (q) {
       const t = (row.ticker || '').toLowerCase();
       const n = (row.name || '').toLowerCase();
@@ -828,9 +834,9 @@ function tickerCardHTML(row) {
   const period = trend.periodDays ? `${trend.periodDays}d` : '30d';
 
   return (
-    `<button type="button" class="ticker-card" data-ticker="${ticker}" data-band="${band}" aria-label="${ticker} band ${bandLabel}">` +
+    `<button type="button" class="ticker-card" data-ticker="${ticker}" data-band="${band}" data-exile="${row.exile ? '1' : '0'}" aria-label="${ticker} band ${bandLabel}">` +
       `<div class="ticker-head">` +
-        `<span class="ticker-sym">${ticker}</span>` +
+        `<span class="ticker-sym">${ticker}${exileBadgeHTML(row.exile, 'ticker-exile')}</span>` +
         `<span class="ticker-band">${bandLabel}</span>` +
       `</div>` +
       `<div class="ticker-score">${score}</div>` +

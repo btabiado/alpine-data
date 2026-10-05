@@ -148,6 +148,20 @@ Then `compute_macro_adjustment` and `compute_volatility_modifier` accept those a
 
 **Structural move:** redefining what a maturity stage *means* (e.g. adding a new stage, deprecating `recovery_stabilization`). Touch all impacted tickers in one PR, document in the changelog, bump minor version.
 
+#### Index Exiles (owner's rule) — leaving an index never removes a ticker
+
+A ticker that **was** in a tracked index (S&P 500, S&P 100, NASDAQ-100, DJIA) and has since been dropped from **all** of them stays `active: true` and keeps being scored and monitored daily. It is grouped as an **Index Exile**:
+
+- `index_membership` is `[]` — it lists current memberships only, so every index-level view or aggregate (index buttons and filters, leaderboard / heatmap index scopes, the stock money-flow scope) keeps excluding exiles. The universe-wide LTHCS Composite (`lthcs/index_aggregate.py`) counts every scored ticker, exiles included, because they are still in the universe; it is not an index aggregate.
+- `index_exile` holds `former_indexes`, `dropped_on` (the effective date it left its last index, **only** when a source establishes it, else `null`), `detected_on` (the sync run that saw it lose its last tag), `source`, optional per-index `drops` and a `note`. Schema: `lthcs/schemas/universe.py` (`IndexExile`).
+- `index_history` logs `exiled` / `rejoined` events.
+
+Deactivation (`active: false` + `inactive_reason`) is only for a delisting / no data (BK → BNY, EA taken private), never for an index exit.
+
+`scripts/lthcs_universe_sp500_sync.py` applies the rule in both modes (`--candidate-dir`, `--index-tags-dir`, or both in one run): a ticker that loses its last tag gets an `index_exile` marker (`dropped_on: null`, `detected_on` = `--run-date`, source = that run's constituent lists) and an `exiled` event; an exile that is tagged again loses the marker and gets a `rejoined` event carrying the cleared marker. Fill `dropped_on` afterwards from an index change table, never from the run date. `python -m lthcs.validate` fails on an active ticker that has no index tag and no `index_exile` marker.
+
+The site shows exiles under an **Index Exiles** filter on `/lthcs/`, `/lthcs/table/`, `/lthcs/v2/`, `/lthcs/heatmap/` and `/lthcs/leaderboards/`, with an "Exile" badge on the `/lthcs/` and `/lthcs/v2/` cards and `/lthcs/table/` rows whose tooltip reads "Left <index> on <date>; still scored daily" (the heatmap cell tooltip carries the same text). Shared helper: `lthcs_tab/lthcs-exile.js`. Evidence for the first seven (AZN, GFS, LCID, MDB, TEAM, TTD, ZS): `data/lthcs/universe_candidate/mapping_2026-10-05/_index_exiles.json`.
+
 ---
 
 ## Symptom-to-lever decision table

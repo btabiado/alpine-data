@@ -13,6 +13,7 @@
 
 // Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
 import { paintComposite } from '../lthcs-freshness.js';
+import { EXILE_FILTER_KEY, exileInfo, exileTooltip } from '../lthcs-exile.js';
 
 // ----- Constants -------------------------------------------------------------
 
@@ -124,6 +125,7 @@ function enrichScores(snapshot, universeByTicker) {
       sector: uni.sector || row.sector || 'Unknown',
       name: uni.name || row.ticker,
       indexKeys,
+      exile: exileInfo(uni),  // Index Exile (left every index), or null
     });
   }
   return out;
@@ -133,7 +135,9 @@ function enrichScores(snapshot, universeByTicker) {
 
 function applyFilters(rows, filters) {
   return rows.filter((r) => {
-    if (filters.index !== 'all' && !r.indexKeys.has(filters.index)) return false;
+    if (filters.index === EXILE_FILTER_KEY) {
+      if (!r.exile) return false;
+    } else if (filters.index !== 'all' && !r.indexKeys.has(filters.index)) return false;
     if (filters.band !== 'all' && r.band !== filters.band) return false;
     return true;
   });
@@ -179,12 +183,13 @@ function renderCell(row) {
   const band = BAND_KEYS.includes(row.band) ? row.band : '';
   const ticker = escapeHtml(row.ticker);
   const score = Number.isFinite(row.score) ? row.score.toFixed(1) : '—';
-  const title = `${escapeHtml(row.name)} · ${escapeHtml(row.sector)} · ${score} (${escapeHtml(row.band || 'unknown')})`;
+  const exileNote = row.exile ? ` · Index exile: ${escapeHtml(exileTooltip(row.exile))}` : '';
+  const title = `${escapeHtml(row.name)} · ${escapeHtml(row.sector)} · ${score} (${escapeHtml(row.band || 'unknown')})${exileNote}`;
   // Cross-link to card view; open in new tab. Fragment-based ticker hint for a
   // future enhancement in the main tab (it will land on the cards page today).
   const href = `../#ticker=${encodeURIComponent(row.ticker)}`;
   return (
-    `<a class="hm-cell" data-band="${escapeHtml(band)}" href="${href}" target="_blank" rel="noopener" title="${title}">` +
+    `<a class="hm-cell" data-band="${escapeHtml(band)}" data-exile="${row.exile ? '1' : '0'}" href="${href}" target="_blank" rel="noopener" title="${title}">` +
       `<span class="hm-cell-ticker">${ticker}</span>` +
       `<span class="hm-cell-score">${score}</span>` +
     `</a>`

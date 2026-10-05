@@ -2141,7 +2141,11 @@ input[type="search"] {
 .lthcs-index-buttons {
   display: grid;
   gap: 10px;
-  grid-template-columns: repeat(3, 1fr);
+  /* 3 index buttons + the Index Exiles group button. */
+  grid-template-columns: repeat(4, 1fr);
+}
+@media (max-width: 1000px) {
+  .lthcs-index-buttons { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 760px) {
   .lthcs-index-buttons { grid-template-columns: 1fr; }
@@ -3215,3 +3219,27 @@ input[type="search"] {
   }
 }
 
+
+/* Index Exiles: tickers that left every tracked index but are still scored
+   daily (lthcs-exile.js). Small neutral badge, tooltip carries the detail.
+   Shared by /lthcs/, /lthcs/table/, /lthcs/heatmap/ and /lthcs/leaderboards/. */
+.lthcs-exile-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  line-height: 1.5;
+  text-transform: uppercase;
+  vertical-align: middle;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: help;
+  font-family: inherit;
+}
+.lthcs-ix[data-index="exiles"] .lthcs-ix-eyebrow {
+  color: var(--text-tertiary);
+}

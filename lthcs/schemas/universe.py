@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 MaturityStage = Literal[
     "pre_revenue",
@@ -31,6 +31,70 @@ MaturityStage = Literal[
 Exchange = Literal["NYSE", "NASDAQ", "AMEX", "CBOE"]
 
 TechSubBucket = Literal["Hardware", "Semiconductors", "Software", "IT Services"]
+
+# The indexes the universe tracks in ``index_membership``.
+TrackedIndex = Literal["S&P 500", "S&P 100", "NASDAQ-100", "DJIA"]
+
+
+class IndexDrop(BaseModel):
+    """One sourced index exit: which index, the effective date, the evidence."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    index: TrackedIndex
+    # Effective date of the index change per ``source``; null when the
+    # source does not establish it. Never a guess.
+    dropped_on: Optional[date] = None
+    source: str = Field(min_length=1)
+
+
+class IndexExile(BaseModel):
+    """Marker for an "Index Exile".
+
+    Owner's rule: a ticker that was in a tracked index (S&P 500, S&P 100,
+    NASDAQ-100, DJIA) and has since left all of them stays ``active`` and is
+    scored daily like any other name. It is grouped as an Index Exile and
+    is NOT a member of any index, so index-level aggregates skip it (its
+    ``index_membership`` is empty). Deactivation is only for delisting /
+    no data (inactive_reason), never for leaving an index.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    former_indexes: List[TrackedIndex] = Field(min_length=1)
+    # Date it left its LAST tracked index (the day it became an exile), per
+    # ``source``. Null when no source establishes the date.
+    dropped_on: Optional[date] = None
+    # Universe sync run that found the ticker without any index tag.
+    detected_on: date
+    source: str = Field(min_length=1)
+    # Per-index exits with their own dates and evidence, when known.
+    drops: List[IndexDrop] = Field(default_factory=list)
+    note: Optional[str] = None
+
+    @model_validator(mode="after")
+    def _consistent(self) -> "IndexExile":
+        if self.dropped_on and self.dropped_on > self.detected_on:
+            raise ValueError("index_exile.dropped_on is after detected_on")
+        for d in self.drops:
+            if d.index not in self.former_indexes:
+                raise ValueError(f"index_exile.drops names {d.index!r}, not in former_indexes")
+        return self
+
+
+class IndexHistoryEvent(BaseModel):
+    """One entry of a ticker's exile / rejoin log (written by the sync)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    event: Literal["exiled", "rejoined"]
+    # Run date of the sync that recorded the event.
+    date: date
+    # exiled: the indexes it left; rejoined: the indexes it is in again.
+    indexes: List[TrackedIndex] = Field(default_factory=list)
+    source: str = Field(min_length=1)
+    # rejoined: the exile marker that was cleared, kept for the record.
+    exile: Optional[IndexExile] = None
 
 
 class UniverseEntry(BaseModel):
@@ -60,6 +124,10 @@ class UniverseEntry(BaseModel):
     sector_group: Optional[str] = None
     cik: Optional[str] = Field(default=None, pattern=r"^\d{10}$")
     source: Optional[str] = None
+    # Index Exile marker (see IndexExile). Present only while the ticker is
+    # in no tracked index; cleared (and logged in index_history) on rejoin.
+    index_exile: Optional[IndexExile] = None
+    index_history: List[IndexHistoryEvent] = Field(default_factory=list)
 
     @field_validator("ticker")
     @classmethod
@@ -67,6 +135,18 @@ class UniverseEntry(BaseModel):
         if v != v.upper():
             raise ValueError(f"ticker must be uppercase: {v!r}")
         return v
+
+    @model_validator(mode="after")
+    def _exile_has_no_index(self) -> "UniverseEntry":
+        if self.index_exile is not None and self.index_membership:
+            raise ValueError(
+                f"{self.ticker}: index_exile set but index_membership is "
+                f"{self.index_membership}; an exile is in no tracked index")
+        return self
+
+    @property
+    def is_index_exile(self) -> bool:
+        return self.index_exile is not None
 
 
 class Universe(BaseModel):

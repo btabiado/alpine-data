@@ -61,6 +61,18 @@ def validate_universe(path: Path | None = None) -> Tuple[bool, Universe | None]:
         f"universe.json valid ({len(universe.tickers)} tickers, "
         f"{active} active, version {universe.version})"
     )
+    # Index Exiles: an active ticker with no index tag must carry the
+    # index_exile marker (it left every tracked index and is still scored).
+    # A tagless active ticker without it would silently drop out of every
+    # index filter AND the exile filter.
+    untagged = sorted(t.ticker for t in universe.tickers
+                      if t.active and not t.index_membership and t.index_exile is None)
+    if untagged:
+        _print_fail(f"active tickers with no index tag and no index_exile marker: {untagged}")
+        return False, universe
+    exiles = sorted(t.ticker for t in universe.tickers if t.active and t.index_exile is not None)
+    _print_ok(f"index exiles (active, scored, in no index): {len(exiles)}"
+              + (f" ({', '.join(exiles)})" if exiles else ""))
     return True, universe
 
 

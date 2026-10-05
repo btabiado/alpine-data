@@ -14,7 +14,10 @@
    the pillar's score being ranked, band chip color-coded by composite score.
 
    Filters: chip group at the top toggles the universe scope between
-   { All, DJIA 30, S&P 100, NASDAQ-100, <watchlists>, Active watchlist }.
+   { All, DJIA 30, S&P 100, NASDAQ-100, Index Exiles, <watchlists>,
+   Active watchlist }. Index Exiles = tickers that left every tracked index
+   and are still scored daily (universe.json `index_exile`); they are in no
+   index scope.
    Persisted to localStorage so a refresh keeps the user's view.
 
    Reuses ../lthcs_tab/lthcs-sparkline.js for the sparkline + band-color
@@ -34,6 +37,7 @@ import {
 // Use the stable filename — survives daily date changes without code edits.
 // Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
 import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+import { EXILE_FILTER_KEY, exileInfo } from '../lthcs_tab/lthcs-exile.js';
 
 const SNAPSHOT_URL = '../data/lthcs/public/latest_snapshot.json';
 const UNIVERSE_URL = '../data/lthcs/universe.json';
@@ -191,6 +195,15 @@ function tickerSetForScope(scope) {
     const list = state.watchlists[name];
     if (!Array.isArray(list)) return new Set();
     return new Set(list);
+  }
+
+  if (scope === EXILE_FILTER_KEY) {
+    if (!state.universe) return null;
+    const exiles = new Set();
+    for (const row of state.universe.tickers || []) {
+      if (row && exileInfo(row)) exiles.add(row.ticker);
+    }
+    return exiles;
   }
 
   const indexLabel = SCOPE_TO_INDEX[scope];
@@ -595,6 +608,7 @@ async function load() {
   if (persisted
       && (persisted === 'all'
           || persisted in SCOPE_TO_INDEX
+          || persisted === EXILE_FILTER_KEY
           || persisted.startsWith('wl:'))) {
     state.scope = persisted;
   }

@@ -45,6 +45,9 @@ SCOPE_TO_INDEX: Dict[str, str] = {
     "nasdaq-100": "NASDAQ-100",
 }
 
+# Index Exiles group (see lthcs/schemas/universe.py IndexExile).
+EXILE_SCOPE = "exiles"
+
 TOP_N = 10
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -84,6 +87,11 @@ def load_universe_index_members(
     """
     if scope == "all":
         return None
+    if scope == EXILE_SCOPE:
+        # Index Exiles: active tickers that left every tracked index. They are
+        # in no index scope above (their index_membership is empty).
+        return {row["ticker"] for row in universe.get("tickers", []) or []
+                if row and row.get("active") is not False and row.get("index_exile")}
     label = SCOPE_TO_INDEX.get(scope)
     if not label:
         raise ValueError(f"Unknown scope: {scope!r}")
@@ -244,7 +252,7 @@ def _build_argparser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--scope",
-        choices=["all", *SCOPE_TO_INDEX.keys()],
+        choices=["all", *SCOPE_TO_INDEX.keys(), EXILE_SCOPE],
         default="all",
         help="Restrict to an index membership (default: all).",
     )
