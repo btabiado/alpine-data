@@ -876,3 +876,21 @@ footer a { color: var(--muted); }
 @media (prefers-reduced-motion: reduce) {
   .ticker-card, .mover-row, .band-pill, .chip { transition: none; }
 }
+
+/* Index Exiles badge (../lthcs_tab/lthcs-exile.js): left every tracked index,
+   still scored daily. */
+.lthcs-exile-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  line-height: 1.6;
+  text-transform: uppercase;
+  vertical-align: middle;
+  color: var(--muted);
+  cursor: help;
+}

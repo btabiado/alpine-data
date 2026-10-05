@@ -7,6 +7,7 @@
 
 // Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
 import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+import { EXILE_FILTER_KEY, exileInfo, exileBadgeHTML } from '../lthcs_tab/lthcs-exile.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -59,6 +60,9 @@ const INDEX_FILTER_MATCH = {
   'nasdaq-100': 'N100',
   'sp-100': 'SP100',
 };
+// The Index Exiles option (`exiles`) is not an index: it matches rows whose
+// universe entry carries `index_exile` (left every tracked index, still
+// scored daily). Exiles have no index key, so no index option matches them.
 
 // Column definitions drive both the <thead> render and the sort comparator.
 // `align: 'right'` flips text-alignment and applies the mono/tabular-nums
@@ -384,6 +388,7 @@ function enrichRows(snapshot, universeByTicker, insiderByTicker, holdingsByTicke
       sector: uni.sector || row.sector || '',
       indices,
       indicesLabel: indices.join(','),
+      exile: exileInfo(uni),
       score: Number(row.lthcs_score),
       snapshotBand: row.band,
       uiBand,
@@ -429,7 +434,9 @@ function applyFilters(rows) {
   const { index, band, drift } = state.filters;
   const indexMatch = INDEX_FILTER_MATCH[index];
   return rows.filter((row) => {
-    if (index !== 'all' && (!indexMatch || !row.indices.includes(indexMatch))) return false;
+    if (index === EXILE_FILTER_KEY) {
+      if (!row.exile) return false;
+    } else if (index !== 'all' && (!indexMatch || !row.indices.includes(indexMatch))) return false;
     if (band !== 'all' && row.uiBand !== band) return false;
     if (drift !== 'all' && row.driftDirection !== drift) return false;
     if (q) {
@@ -547,12 +554,12 @@ function rowHTML(row) {
   const maturityStage = escapeHtml(row.maturityStage || '');
 
   return (
-    `<tr data-ticker="${ticker}" tabindex="0" aria-label="Open ${ticker} detail">` +
+    `<tr data-ticker="${ticker}" data-exile="${row.exile ? '1' : '0'}" tabindex="0" aria-label="Open ${ticker} detail">` +
       `<td class="lthcs-col-star" data-align="left">` +
         `<button type="button" class="lthcs-table-star" data-star="${ticker}" ` +
                 `aria-pressed="${starPressed}" aria-label="Star ${ticker}">${starChar}</button>` +
       `</td>` +
-      `<td class="lthcs-col-ticker" data-align="left">${ticker}</td>` +
+      `<td class="lthcs-col-ticker" data-align="left">${ticker}${exileBadgeHTML(row.exile, 'lthcs-table-exile')}</td>` +
       `<td class="lthcs-col-name" data-align="left" title="${name}">${name}</td>` +
       `<td class="lthcs-col-score" data-align="right">${fmtScore(row.score)}</td>` +
       `<td data-align="left">` +

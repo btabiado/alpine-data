@@ -32,6 +32,9 @@ const getActiveName = getEffectiveName;
 const activeIsEmpty = effectiveIsEmpty;
 // --- end Phase 4 hookup ---
 
+// --- Index Exiles (left every tracked index, still scored daily) ---
+import { EXILE_FILTER_KEY, EXILE_LABEL, exileInfo, exileBadgeHTML } from './lthcs-exile.js';
+
 // --- Phase 5 #2 (what's new) hookup ---
 import { initWhatsNew, updateWhatsNew } from './lthcs-whatsnew.js';
 // --- end Phase 5 #2 hookup ---
@@ -132,6 +135,7 @@ const FILTER_VALUE_LABELS = {
     djia: 'DJIA 30',
     'nasdaq-100': 'NASDAQ-100',
     'sp-100': 'S&P 100',
+    exiles: 'Index Exiles',
   },
   band: {
     elite: 'Elite',
@@ -162,7 +166,17 @@ const INDEX_KEY_NORMALIZE = {
   'S&P 100': 'sp-100',
   'S&P 500': 'sp-500',
 };
-const INDEX_FILTERS = ['djia', 'nasdaq-100', 'sp-100'];
+// `exiles` is the Index Exiles group: tickers that left every tracked index
+// and are still scored daily. It is NOT an index — exiles carry no index key
+// in row.indices, so they never count toward the three index buttons.
+const INDEX_FILTERS = ['djia', 'nasdaq-100', 'sp-100', EXILE_FILTER_KEY];
+
+// True when `row` belongs to the drill-down group `key` (an index key, or
+// the exile group).
+function inGroup(row, key) {
+  if (key === EXILE_FILTER_KEY) return !!row.exile;
+  return row.indices.includes(key);
+}
 
 // ---------------------------------------------------------------------------
 // State
@@ -195,6 +209,7 @@ const INDEX_DISPLAY = {
   'sp-100': 'S&P 100',
   'djia': 'DOW 30',
   'nasdaq-100': 'NASDAQ-100',
+  [EXILE_FILTER_KEY]: EXILE_LABEL,
 };
 
 // Phase 4: handle returned by initWatchlists() so we can re-warm the universe
@@ -522,6 +537,7 @@ function enrichScores(snapshot, universeByTicker) {
       exchange: uni.exchange || '',
       sector: uni.sector || row.sector || '',
       indices,                         // normalized short keys, e.g. ['djia','nasdaq-100','sp-100','sp-500']
+      exile: exileInfo(uni),           // Index Exile marker (left every index), or null
       score: Number(row.lthcs_score),
       snapshotBand: row.band,
       uiBand,
@@ -554,7 +570,7 @@ function applyFilters() {
     // Variant C: `index` always narrows to a single index (sp-100 / djia
     // / nasdaq-100). The legacy `all` value is still tolerated so any
     // persisted state from before this change degrades gracefully.
-    if (index && index !== 'all' && !row.indices.includes(index)) return false;
+    if (index && index !== 'all' && !inGroup(row, index)) return false;
     if (band !== 'all' && row.uiBand !== band) return false;
     if (drift !== 'all' && row.driftDirection !== drift) return false;
     if (watchSet && !watchSet.has(row.ticker)) return false;
@@ -622,7 +638,7 @@ function sortRows(rows, mode) {
 // within the index subset, but the apex shows the subset as a whole).
 function rowsForIndex(indexKey) {
   if (!indexKey || indexKey === 'all') return state.enriched.slice();
-  return state.enriched.filter((row) => row.indices.includes(indexKey));
+  return state.enriched.filter((row) => inGroup(row, indexKey));
 }
 
 // Variant C: count breakdown for a single index subset. Returns
@@ -721,14 +737,15 @@ function cardHTML(row) {
     : 'Top: —';
 
   const indices = (row.indices || []).join(',');
+  const exileBadge = exileBadgeHTML(row.exile, 'lthcs-card-exile');
   // Band badge is a button — clicking it filters to that band rather
   // than opening the detail modal. The click handler on the grid checks
   // for `[data-band-filter]` first and stops propagation.
   const bandFilterAria = `Filter to ${bandLabel} band`;
   return (
-    `<div class="lthcs-card" data-ticker="${ticker}" data-band="${band}" data-exchange="${exchange}" data-indices="${indices}" data-drift-direction="${direction}">` +
+    `<div class="lthcs-card" data-ticker="${ticker}" data-band="${band}" data-exchange="${exchange}" data-indices="${indices}" data-exile="${row.exile ? '1' : '0'}" data-drift-direction="${direction}">` +
       `<div class="lthcs-card-header">` +
-        `<span class="lthcs-card-ticker">${ticker}</span>` +
+        `<span class="lthcs-card-ticker">${ticker}${exileBadge}</span>` +
         `<span class="lthcs-card-score">${score}</span>` +
       `</div>` +
       `<div class="lthcs-card-name">${name}</div>` +
@@ -847,11 +864,14 @@ function updateStats(filtered) {
   // drift/search), so the buttons read "100 / 30 / 97" regardless of
   // which one is currently selected. Sub-text shows the count vs.
   // unscored split where applicable.
+  // Index Exiles are counted only on their own button (row.indices never
+  // carries an index they left).
   const indexCounts = Object.fromEntries(INDEX_FILTERS.map((k) => [k, 0]));
   for (const row of state.enriched) {
     for (const idx of row.indices) {
       if (indexCounts[idx] != null) indexCounts[idx] += 1;
     }
+    if (row.exile) indexCounts[EXILE_FILTER_KEY] += 1;
   }
   for (const idx of INDEX_FILTERS) {
     const el = document.querySelector(`[data-index-count="${idx}"]`);
@@ -860,6 +880,7 @@ function updateStats(filtered) {
     if (sub) {
       const n = indexCounts[idx];
       if (idx === 'djia') sub.textContent = 'Dow Jones Industrial Avg';
+      else if (idx === EXILE_FILTER_KEY) sub.textContent = 'Left every index · still scored';
       else sub.textContent = `${n} scored`;
     }
   }
@@ -1456,7 +1477,7 @@ function wireBandBookmark() {
     const indexKey = state.activeFilters.index || 'sp-100';
     const inBand = state.enriched.filter((row) => {
       if (row.uiBand !== band) return false;
-      if (indexKey && indexKey !== 'all' && !row.indices.includes(indexKey)) return false;
+      if (indexKey && indexKey !== 'all' && !inGroup(row, indexKey)) return false;
       return true;
     });
     const tickers = inBand.map((r) => r.ticker);

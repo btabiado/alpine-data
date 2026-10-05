@@ -1,7 +1,7 @@
 {
   "version": "3.0.0",
   "last_updated": "2026-10-05",
-  "description": "LTHCS universe = current S&P 500 (all 503 share lines) + current DJIA 30 + the earlier NASDAQ-100 / S&P 100 / Wave A names (none dropped). 519 tickers, 515 active. Constituents: https://en.wikipedia.org/wiki/List_of_S%26P_500_companies (revision 1376729338, fetched 2026-10-05); DJIA: https://en.wikipedia.org/wiki/Historical_components_of_the_Dow_Jones_Industrial_Average (revision 1369743926; GOOGL replaced VZ on 2026-06-29). S&P 100 / NASDAQ-100 tags refreshed 2026-10-05: S&P 100 from https://en.wikipedia.org/wiki/S%26P_100 (revision 1378292206), NASDAQ-100 from https://api.nasdaq.com/api/quote/list-type/nasdaq100 (Nasdaq list as of 2026-10-01); inputs in data/lthcs/universe_candidate/mapping_2026-10-05/. New tickers start with no history. Provenance and inputs: data/lthcs/universe_candidate/sp500_2026-10-05/.",
+  "description": "LTHCS universe = current S&P 500 (all 503 share lines) + current DJIA 30 + the earlier NASDAQ-100 / S&P 100 / Wave A names (none dropped). 519 tickers, 515 active. Constituents: https://en.wikipedia.org/wiki/List_of_S%26P_500_companies (revision 1376729338, fetched 2026-10-05); DJIA: https://en.wikipedia.org/wiki/Historical_components_of_the_Dow_Jones_Industrial_Average (revision 1369743926; GOOGL replaced VZ on 2026-06-29). S&P 100 / NASDAQ-100 tags refreshed 2026-10-05: S&P 100 from https://en.wikipedia.org/wiki/S%26P_100 (revision 1378292206), NASDAQ-100 from https://api.nasdaq.com/api/quote/list-type/nasdaq100 (Nasdaq list as of 2026-10-01); inputs in data/lthcs/universe_candidate/mapping_2026-10-05/. New tickers start with no history. Provenance and inputs: data/lthcs/universe_candidate/sp500_2026-10-05/. Index Exiles (left every tracked index; still active and scored daily, counted in no index): AZN, GFS, LCID, MDB, TEAM, TTD, ZS (7).",
   "tickers": [
     {
       "ticker": "A",
@@ -818,7 +818,32 @@
       "sector": "Health Care",
       "industry": "Pharmaceuticals",
       "maturity_stage": "standard_compounder",
-      "active": true
+      "active": true,
+      "index_exile": {
+        "former_indexes": [
+          "NASDAQ-100"
+        ],
+        "dropped_on": "2026-01-20",
+        "detected_on": "2026-10-05",
+        "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264); evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_index_exiles.json",
+        "drops": [
+          {
+            "index": "NASDAQ-100",
+            "dropped_on": "2026-01-20",
+            "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264)"
+          }
+        ]
+      },
+      "index_history": [
+        {
+          "event": "exiled",
+          "date": "2026-10-05",
+          "indexes": [
+            "NASDAQ-100"
+          ],
+          "source": "2026-10-05 universe sync: S&P 500 / DJIA from data/lthcs/universe_candidate/sp500_2026-10-05/, S&P 100 / NASDAQ-100 from data/lthcs/universe_candidate/mapping_2026-10-05/ (scripts/lthcs_universe_sp500_sync.py)"
+        }
+      ]
     },
     {
       "ticker": "AZO",
@@ -3242,7 +3267,33 @@
       "industry": "Semiconductors",
       "tech_sub_bucket": "Semiconductors",
       "maturity_stage": "standard_compounder",
-      "active": true
+      "active": true,
+      "index_exile": {
+        "former_indexes": [
+          "NASDAQ-100"
+        ],
+        "dropped_on": "2025-12-22",
+        "detected_on": "2026-10-05",
+        "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264); evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_index_exiles.json",
+        "drops": [
+          {
+            "index": "NASDAQ-100",
+            "dropped_on": "2025-12-22",
+            "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264)"
+          }
+        ],
+        "note": "The universe kept a stale NASDAQ-100 tag from 2026-05-17 until 2026-10-05; GFS had left the index on 2025-12-22."
+      },
+      "index_history": [
+        {
+          "event": "exiled",
+          "date": "2026-10-05",
+          "indexes": [
+            "NASDAQ-100"
+          ],
+          "source": "2026-10-05 universe sync: S&P 500 / DJIA from data/lthcs/universe_candidate/sp500_2026-10-05/, S&P 100 / NASDAQ-100 from data/lthcs/universe_candidate/mapping_2026-10-05/ (scripts/lthcs_universe_sp500_sync.py)"
+        }
+      ]
     },
     {
       "ticker": "GILD",
@@ -4372,7 +4423,33 @@
       "sector": "Consumer Discretionary",
       "industry": "Automobiles",
       "maturity_stage": "pre_profit_growth",
-      "active": true
+      "active": true,
+      "index_exile": {
+        "former_indexes": [
+          "NASDAQ-100"
+        ],
+        "dropped_on": "2023-12-18",
+        "detected_on": "2026-10-05",
+        "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264); evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_index_exiles.json",
+        "drops": [
+          {
+            "index": "NASDAQ-100",
+            "dropped_on": "2023-12-18",
+            "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264)"
+          }
+        ],
+        "note": "The universe's NASDAQ-100 tag was already stale when it was added on 2026-05-17 (LCID left on 2023-12-18). The universe's former 'S&P 500' tag was inferred by scripts/lthcs_build_universe.py (NASDAQ-100 name not in NDX_NOT_IN_SPX => S&P 500), not sourced; the S&P 500 change history (https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500 (revision 1376064088)) has no row for this ticker, so S&P 500 is not a former index."
+      },
+      "index_history": [
+        {
+          "event": "exiled",
+          "date": "2026-10-05",
+          "indexes": [
+            "NASDAQ-100"
+          ],
+          "source": "2026-10-05 universe sync: S&P 500 / DJIA from data/lthcs/universe_candidate/sp500_2026-10-05/, S&P 100 / NASDAQ-100 from data/lthcs/universe_candidate/mapping_2026-10-05/ (scripts/lthcs_universe_sp500_sync.py)"
+        }
+      ]
     },
     {
       "ticker": "LDOS",
@@ -4762,7 +4839,33 @@
       "tech_sub_bucket": "Software",
       "maturity_stage": "growth_compounder",
       "active": true,
-      "maturity_note": "Database growth (+23%)"
+      "maturity_note": "Database growth (+23%)",
+      "index_exile": {
+        "former_indexes": [
+          "NASDAQ-100"
+        ],
+        "dropped_on": "2025-05-19",
+        "detected_on": "2026-10-05",
+        "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264); evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_index_exiles.json",
+        "drops": [
+          {
+            "index": "NASDAQ-100",
+            "dropped_on": "2025-05-19",
+            "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264)"
+          }
+        ],
+        "note": "The universe's NASDAQ-100 tag was already stale when it was added on 2026-05-17 (MDB left on 2025-05-19). The universe's former 'S&P 500' tag was inferred by scripts/lthcs_build_universe.py (NASDAQ-100 name not in NDX_NOT_IN_SPX => S&P 500), not sourced; the S&P 500 change history (https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500 (revision 1376064088)) has no row for this ticker, so S&P 500 is not a former index."
+      },
+      "index_history": [
+        {
+          "event": "exiled",
+          "date": "2026-10-05",
+          "indexes": [
+            "NASDAQ-100"
+          ],
+          "source": "2026-10-05 universe sync: S&P 500 / DJIA from data/lthcs/universe_candidate/sp500_2026-10-05/, S&P 100 / NASDAQ-100 from data/lthcs/universe_candidate/mapping_2026-10-05/ (scripts/lthcs_universe_sp500_sync.py)"
+        }
+      ]
     },
     {
       "ticker": "MDLZ",
@@ -6777,7 +6880,33 @@
       "industry": "Software",
       "tech_sub_bucket": "Software",
       "maturity_stage": "standard_compounder",
-      "active": true
+      "active": true,
+      "index_exile": {
+        "former_indexes": [
+          "NASDAQ-100"
+        ],
+        "dropped_on": "2026-04-20",
+        "detected_on": "2026-10-05",
+        "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264); evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_index_exiles.json",
+        "drops": [
+          {
+            "index": "NASDAQ-100",
+            "dropped_on": "2026-04-20",
+            "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264)"
+          }
+        ],
+        "note": "The universe's former 'S&P 500' tag was inferred by scripts/lthcs_build_universe.py (NASDAQ-100 name not in NDX_NOT_IN_SPX => S&P 500), not sourced; the S&P 500 change history (https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500 (revision 1376064088)) has no row for this ticker, so S&P 500 is not a former index."
+      },
+      "index_history": [
+        {
+          "event": "exiled",
+          "date": "2026-10-05",
+          "indexes": [
+            "NASDAQ-100"
+          ],
+          "source": "2026-10-05 universe sync: S&P 500 / DJIA from data/lthcs/universe_candidate/sp500_2026-10-05/, S&P 100 / NASDAQ-100 from data/lthcs/universe_candidate/mapping_2026-10-05/ (scripts/lthcs_universe_sp500_sync.py)"
+        }
+      ]
     },
     {
       "ticker": "TECH",
@@ -7080,7 +7209,40 @@
       "sector": "Communication Services",
       "industry": "Digital Advertising",
       "maturity_stage": "standard_compounder",
-      "active": true
+      "active": true,
+      "index_exile": {
+        "former_indexes": [
+          "S&P 500",
+          "NASDAQ-100"
+        ],
+        "dropped_on": "2026-09-21",
+        "detected_on": "2026-10-05",
+        "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264); https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500 (revision 1376064088); evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_index_exiles.json",
+        "drops": [
+          {
+            "index": "NASDAQ-100",
+            "dropped_on": "2025-12-22",
+            "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264)"
+          },
+          {
+            "index": "S&P 500",
+            "dropped_on": "2026-09-21",
+            "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500 (revision 1376064088)"
+          }
+        ],
+        "note": "The universe's S&P 500 tag was inferred in May 2026 (see LCID) but matches a real membership: TTD joined the S&P 500 on 2025-07-18 (replacing ANSS) and left on 2026-09-21. Its NASDAQ-100 tag was stale from 2026-05-17 (left 2025-12-22)."
+      },
+      "index_history": [
+        {
+          "event": "exiled",
+          "date": "2026-10-05",
+          "indexes": [
+            "S&P 500",
+            "NASDAQ-100"
+          ],
+          "source": "2026-10-05 universe sync: S&P 500 / DJIA from data/lthcs/universe_candidate/sp500_2026-10-05/, S&P 100 / NASDAQ-100 from data/lthcs/universe_candidate/mapping_2026-10-05/ (scripts/lthcs_universe_sp500_sync.py)"
+        }
+      ]
     },
     {
       "ticker": "TTWO",
@@ -7917,7 +8079,33 @@
       "tech_sub_bucket": "Software",
       "maturity_stage": "growth_compounder",
       "active": true,
-      "maturity_note": "Cybersecurity (+23%)"
+      "maturity_note": "Cybersecurity (+23%)",
+      "index_exile": {
+        "former_indexes": [
+          "NASDAQ-100"
+        ],
+        "dropped_on": "2026-06-22",
+        "detected_on": "2026-10-05",
+        "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264); evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_index_exiles.json",
+        "drops": [
+          {
+            "index": "NASDAQ-100",
+            "dropped_on": "2026-06-22",
+            "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264)"
+          }
+        ],
+        "note": "The universe's former 'S&P 500' tag was inferred by scripts/lthcs_build_universe.py (NASDAQ-100 name not in NDX_NOT_IN_SPX => S&P 500), not sourced; the S&P 500 change history (https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500 (revision 1376064088)) has no row for this ticker, so S&P 500 is not a former index."
+      },
+      "index_history": [
+        {
+          "event": "exiled",
+          "date": "2026-10-05",
+          "indexes": [
+            "NASDAQ-100"
+          ],
+          "source": "2026-10-05 universe sync: S&P 500 / DJIA from data/lthcs/universe_candidate/sp500_2026-10-05/, S&P 100 / NASDAQ-100 from data/lthcs/universe_candidate/mapping_2026-10-05/ (scripts/lthcs_universe_sp500_sync.py)"
+        }
+      ]
     },
     {
       "ticker": "ZTS",

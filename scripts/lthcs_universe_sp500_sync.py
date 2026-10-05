@@ -20,6 +20,10 @@ Rules
 * Universe = current S&P 500 ∪ current DJIA ∪ everything already in it.
   Nobody already present is dropped or deactivated here; NASDAQ-100-only
   names stay active.
+* Index Exiles (owner's rule; see "Index Exiles" below): a ticker that loses
+  its last tracked-index tag stays active and scored, and is marked
+  ``index_exile``. A ticker is only ever deactivated for delisting / no data
+  (``inactive_reason``, done by hand), never for leaving an index.
 * ``index_membership``: "S&P 500" and "DJIA" tags are recomputed from the
   inputs for every ACTIVE entry. "S&P 100" / "NASDAQ-100" tags are left as
   they are unless ``--index-tags-dir`` is given (see below). Inactive
@@ -51,8 +55,30 @@ For every ACTIVE entry the "S&P 100" and "NASDAQ-100" tags are recomputed
 from those lists (S&P 500 / DJIA tags are not touched in this mode).
 Constituents that are not in the universe are reported, never added: the
 universe stays S&P 500 + DJIA + everything already in it. An entry that
-loses its last tag stays active ("nobody dropped"). The report goes to
-``_index_tag_report.json`` in the same directory.
+loses its last tag stays active ("nobody dropped") and becomes an Index
+Exile. The report goes to ``_index_tag_report.json`` in the same directory.
+
+Index Exiles
+------------
+Both modes apply the rule (once per run, after all tags are recomputed):
+
+* active ticker had >=1 tracked-index tag, now has none -> ``index_exile``
+  is set: ``former_indexes`` = the tags it had before the run,
+  ``detected_on`` = the run date (``--run-date``, default today),
+  ``source`` = the constituent lists of the run (URL + revision), and
+  ``dropped_on`` = null: a current constituent list does not say when the
+  index change took effect, so the date is left for a sourced edit (index
+  change tables, e.g. data/lthcs/universe_candidate/mapping_2026-10-05/
+  _index_exiles.json). An "exiled" event goes to ``index_history``.
+  ``active`` is not touched.
+* exile that is tagged again -> ``index_exile`` is removed and a "rejoined"
+  event (with the cleared marker) goes to ``index_history``.
+* exile still without a tag -> its marker is left exactly as it is (keeps
+  any sourced dates).
+* a ticker that never had a tag is not an exile.
+
+``index_membership`` stays the list of CURRENT memberships only, so every
+index-level aggregate keeps excluding exiles.
 
 Usage::
 
@@ -263,6 +289,9 @@ TAG_LISTS = {
 _UNREFRESHED_TAGS = "S&P 100 / NASDAQ-100 tags were not refreshed in this sync."
 
 TODAY = "2026-10-05"
+EXILE_NOTE = ("Lost its last tracked-index tag in the %s universe sync. dropped_on is null: the sync "
+              "inputs are current constituent lists, which do not give the index change's effective "
+              "date. former_indexes are the universe's tags before that run.")
 FIVE_YEARS_AGO = _dt.date(2021, 10, 5)
 TWENTY_YEARS_AGO = _dt.date(2006, 10, 5)
 
@@ -355,7 +384,7 @@ def _ordered_indices(tags: List[str]) -> List[str]:
     return seen + sorted(t for t in tags if t not in INDEX_ORDER)
 
 
-def build(candidate_dir: Path) -> Dict[str, Any]:
+def build(candidate_dir: Path, run_date: Optional[str] = None, apply_exiles: bool = True) -> Dict[str, Any]:
     src = json.loads((candidate_dir / "_source.json").read_text())
     exch = json.loads((candidate_dir / "_sec_exchange.json").read_text())
     metrics = json.loads((candidate_dir / "_yahoo_metrics.json").read_text())["tickers"]
@@ -369,6 +398,7 @@ def build(candidate_dir: Path) -> Dict[str, Any]:
 
     report: Dict[str, Any] = {"added": [], "restored": [], "index_changes": [], "exchange_changes": [],
                               "industry_filled": []}
+    before = snapshot_tags(universe)
 
     # ---- existing entries ----
     for e in universe["tickers"]:
@@ -453,7 +483,100 @@ def build(candidate_dir: Path) -> Dict[str, Any]:
         new_entries.append(entry)
         report["added"].append(t)
 
+    if apply_exiles:
+        report.update(apply_exile_rules(universe["tickers"], before, run_date or _today(),
+                                        sp500_source(src)))
     return {"universe": universe, "new": new_entries, "report": report, "source": src}
+
+
+# ---------------------------------------------------------------------------
+# Index Exiles
+# ---------------------------------------------------------------------------
+
+
+def _today() -> str:
+    return _dt.date.today().isoformat()
+
+
+def snapshot_tags(universe: Dict[str, Any]) -> Dict[str, List[str]]:
+    """ticker -> index_membership of every active entry, before a run."""
+    return {e["ticker"]: list(e.get("index_membership") or [])
+            for e in universe["tickers"] if e.get("active", True)}
+
+
+def sp500_source(src: Dict[str, Any]) -> str:
+    return "S&P 500: %s (revision %s); DJIA: %s (revision %s)" % (
+        src["sp500"]["url"], src["sp500"]["revision_id"], src["djia"]["url"], src["djia"]["revision_id"])
+
+
+def tags_source(src: Dict[str, Any]) -> str:
+    sp, nd = src["sp100"], src["ndx100"]
+    return "S&P 100: %s (revision %s); NASDAQ-100: %s (as of %s)" % (
+        sp["url"], sp["revision_id"], nd["url"], nd["as_of"])
+
+
+def apply_exile_rule(entry: Dict[str, Any], old_tags: List[str], run_date: str,
+                     source: str) -> Optional[str]:
+    """Apply the Index Exile rule to one entry whose tags were just recomputed.
+
+    Returns "exiled", "rejoined" or None. Never changes ``active``.
+    """
+    if not entry.get("active", True):
+        return None
+    tags = entry.get("index_membership") or []
+    marker = entry.get("index_exile")
+    if tags:
+        if marker is None:
+            return None
+        entry.pop("index_exile")
+        entry.setdefault("index_history", []).append({
+            "event": "rejoined", "date": run_date, "indexes": list(tags), "source": source,
+            "exile": marker})
+        return "rejoined"
+    if marker is not None:
+        return None  # still an exile: keep the (possibly sourced) marker as is
+    former = [t for t in old_tags if t in INDEX_ORDER]
+    if not former:
+        return None  # never in a tracked index: not an exile
+    entry["index_exile"] = {
+        "former_indexes": _ordered_indices(former),
+        "dropped_on": None,
+        "detected_on": run_date,
+        "source": source,
+        "note": EXILE_NOTE % run_date,
+    }
+    entry.setdefault("index_history", []).append({
+        "event": "exiled", "date": run_date, "indexes": _ordered_indices(former), "source": source})
+    return "exiled"
+
+
+def apply_exile_rules(entries: List[Dict[str, Any]], before: Dict[str, List[str]], run_date: str,
+                      source: str) -> Dict[str, List[str]]:
+    out: Dict[str, List[str]] = {"exiled": [], "rejoined": []}
+    for e in entries:
+        if e["ticker"] not in before:
+            continue  # new this run, or inactive
+        what = apply_exile_rule(e, before[e["ticker"]], run_date, source)
+        if what:
+            out[what].append(e["ticker"])
+    return out
+
+
+_EXILE_SENTENCE = re.compile(r"Index Exiles \(left every tracked index[^)]*\): .*? \(\d+\)\.")
+
+
+def exile_sentence(universe: Dict[str, Any]) -> str:
+    exiles = sorted(e["ticker"] for e in universe["tickers"]
+                    if e.get("active", True) and e.get("index_exile"))
+    return ("Index Exiles (left every tracked index; still active and scored daily, counted in no "
+            "index): %s (%d)." % (", ".join(exiles) or "none", len(exiles)))
+
+
+def set_exile_sentence(description: str, universe: Dict[str, Any]) -> str:
+    sentence = exile_sentence(universe)
+    if _EXILE_SENTENCE.search(description):
+        return _EXILE_SENTENCE.sub(lambda _m: sentence, description)
+    return (description.rstrip() + " " + sentence).strip()
 
 
 def _tags_sentence(tags_src: Dict[str, Any], tags_dir: Path) -> str:
@@ -489,10 +612,12 @@ def _with_counts(description: str, universe: Dict[str, Any]) -> str:
                   "%d tickers, %d active." % (len(universe["tickers"]), active), description)
 
 
-def refresh_index_tags(universe: Dict[str, Any], tags_dir: Path) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+def refresh_index_tags(universe: Dict[str, Any], tags_dir: Path, run_date: Optional[str] = None,
+                       apply_exiles: bool = True) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """Recompute "S&P 100" / "NASDAQ-100" tags of every active entry.
 
     Returns (report, _source.json of ``tags_dir``). Mutates ``universe``.
+    With ``apply_exiles`` the Index Exile rule runs on the result.
     """
     src = json.loads((tags_dir / "_source.json").read_text())
     members: Dict[str, set] = {}
@@ -502,6 +627,7 @@ def refresh_index_tags(universe: Dict[str, Any], tags_dir: Path) -> Tuple[Dict[s
         with (tags_dir / fname).open(newline="", encoding="utf-8") as fh:
             members[tag] = {r["Symbol"].strip().upper() for r in csv.DictReader(fh) if r.get("Symbol")}
     by = {e["ticker"]: e for e in universe["tickers"]}
+    tags_before = snapshot_tags(universe)
     report: Dict[str, Any] = {"source": _rel(tags_dir), "changes": [], "by_index": {}}
     for e in universe["tickers"]:
         if not e.get("active", True):
@@ -526,6 +652,9 @@ def refresh_index_tags(universe: Dict[str, Any], tags_dir: Path) -> Tuple[Dict[s
             "inactive_in_universe": sorted(t for t in members[tag]
                                            if t in by and not by[t].get("active", True)),
         }
+    if apply_exiles:
+        report.update(apply_exile_rules(universe["tickers"], tags_before, run_date or _today(),
+                                        tags_source(src)))
     report["active_without_index_tag"] = sorted(
         e["ticker"] for e in universe["tickers"]
         if e.get("active", True) and not e.get("index_membership"))
@@ -552,6 +681,7 @@ def apply(result: Dict[str, Any], tags: Optional[Tuple[Dict[str, Any], Path]] = 
            src["fetched_at"], src["djia"]["url"], src["djia"]["revision_id"],
            _tags_sentence(*tags) if tags else _UNREFRESHED_TAGS)
     )
+    universe["description"] = set_exile_sentence(universe["description"], universe)
     (DATA / "universe.json").write_text(json.dumps(universe, indent=2) + "\n", encoding="utf-8")
 
     pg_path = DATA / "peer_groups.json"
@@ -595,6 +725,9 @@ def _write_tag_report(report: Dict[str, Any], tags_dir: Path) -> None:
                  ", ".join(r["not_in_universe"]) or "-"))
     if report["active_without_index_tag"]:
         print("active, now without any index tag:", ", ".join(report["active_without_index_tag"]))
+    for what in ("exiled", "rejoined"):
+        if report.get(what):
+            print("index exiles %s: %s" % (what, ", ".join(report[what])))
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -604,25 +737,40 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--index-tags-dir", type=Path,
                     help="directory with the S&P 100 / NASDAQ-100 lists (refreshes those tags)")
     ap.add_argument("--write", action="store_true", help="write universe.json + peer_groups.json")
+    ap.add_argument("--run-date", default=None,
+                    help="run date recorded on Index Exile events (YYYY-MM-DD, default today)")
     args = ap.parse_args(argv)
     if not args.candidate_dir and not args.index_tags_dir:
         ap.error("give --candidate-dir and/or --index-tags-dir")
     if not args.candidate_dir:
         universe = json.loads((DATA / "universe.json").read_text())
-        report, tags_src = refresh_index_tags(universe, args.index_tags_dir)
+        report, tags_src = refresh_index_tags(universe, args.index_tags_dir, args.run_date)
         _write_tag_report(report, args.index_tags_dir)
         if args.write:
-            universe["description"] = _with_counts(_set_tags_sentence(
-                universe.get("description", ""), _tags_sentence(tags_src, args.index_tags_dir)), universe)
+            universe["description"] = set_exile_sentence(_with_counts(_set_tags_sentence(
+                universe.get("description", ""), _tags_sentence(tags_src, args.index_tags_dir)), universe),
+                universe)
             (DATA / "universe.json").write_text(json.dumps(universe, indent=2) + "\n", encoding="utf-8")
             print("wrote universe.json")
         return 0
-    result = build(args.candidate_dir)
+    run_date = args.run_date or _today()
+    if not args.index_tags_dir:
+        result = build(args.candidate_dir, run_date)
+    else:
+        # Both lists in one run: the exile rule compares the tags from before
+        # the run with the tags after BOTH refreshes, so a ticker that swaps
+        # one index for another is never marked an exile in between.
+        before = snapshot_tags(json.loads((DATA / "universe.json").read_text()))
+        result = build(args.candidate_dir, run_date, apply_exiles=False)
     tags = None
     if args.index_tags_dir:
         # New entries are not in universe["tickers"] until apply(); tag them too.
         view = {"tickers": result["universe"]["tickers"] + result["new"]}
-        report, tags_src = refresh_index_tags(view, args.index_tags_dir)
+        report, tags_src = refresh_index_tags(view, args.index_tags_dir, run_date, apply_exiles=False)
+        moved = apply_exile_rules(view["tickers"], before, run_date,
+                                  sp500_source(result["source"]) + "; " + tags_source(tags_src))
+        report.update(moved)
+        result["report"].update(moved)
         _write_tag_report(report, args.index_tags_dir)
         tags = (tags_src, args.index_tags_dir)
     write_expand_input(result, args.candidate_dir)

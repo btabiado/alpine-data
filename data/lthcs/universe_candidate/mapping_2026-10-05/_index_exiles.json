@@ -1,0 +1,162 @@
+{
+ "purpose": "Evidence for the Index Exile markers (index_exile) on the seven active tickers that have no tracked-index tag after the 2026-10-05 tag refresh. Owner's rule: a ticker that was in the S&P 500, S&P 100, NASDAQ-100 or DJIA and has left all of them stays active and scored daily; it is grouped as an Index Exile and counts in no index. Dates are the index change effective dates from the change tables below; nothing is guessed.",
+ "fetched_at": "2026-10-05",
+ "sources": {
+  "ndx100_changes": {
+   "url": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100",
+   "revision_id": 1375648264,
+   "page_last_edited": "2026-09-19T03:33Z",
+   "fetched_at": "2026-10-05"
+  },
+  "sp500_changes": {
+   "url": "https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500",
+   "revision_id": 1376064088,
+   "page_last_edited": "2026-09-21T20:49Z",
+   "fetched_at": "2026-10-05"
+  }
+ },
+ "current_lists_checked": {
+  "sp500": "data/lthcs/universe_candidate/sp500_2026-10-05/_constituents_sp500.csv (revision 1376729338): none of the seven present",
+  "sp100": "data/lthcs/universe_candidate/mapping_2026-10-05/_constituents_sp100.csv (revision 1378292206): none present",
+  "ndx100": "data/lthcs/universe_candidate/mapping_2026-10-05/_constituents_ndx100.csv (Nasdaq list as of 2026-10-01): none present",
+  "djia": "data/lthcs/universe_candidate/sp500_2026-10-05/_source.json djia.components: none present"
+ },
+ "tickers": {
+  "AZN": {
+   "former_indexes": [
+    "NASDAQ-100"
+   ],
+   "changes": [
+    {
+     "index": "NASDAQ-100",
+     "joined_on": "2022-02-22",
+     "dropped_on": "2026-01-20",
+     "replaced_by": "WMT",
+     "reason": "Walmart transferred its listing from NYSE to Nasdaq and replaced AstraZeneca; AstraZeneca was preparing to move its listing to the NYSE.",
+     "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264)",
+     "primary_citation": "https://ir.nasdaq.com/news-releases/news-release-details/walmart-inc-join-nasdaq-100-indexr-beginning-january-20th-2026"
+    }
+   ],
+   "universe_tag_history": "universe.json tags: NASDAQ-100 since 2026-05-17 (commit 218e67bf); removed by the tag refresh (commit ca7b42fa, _index_tag_report.json). Never tagged S&P 500 (foreign-domiciled).",
+   "note": null
+  },
+  "GFS": {
+   "former_indexes": [
+    "NASDAQ-100"
+   ],
+   "changes": [
+    {
+     "index": "NASDAQ-100",
+     "joined_on": "2022-12-19",
+     "dropped_on": "2025-12-22",
+     "replaced_by": "INSM",
+     "reason": "Annual index reconstitution.",
+     "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264)",
+     "primary_citation": "https://www.nasdaq.com/press-release/annual-changes-nasdaq-100-indexr-2025-12-13"
+    }
+   ],
+   "universe_tag_history": "universe.json tags: NASDAQ-100 since 2026-05-17 (commit 218e67bf); removed by the tag refresh (commit ca7b42fa, _index_tag_report.json). Never tagged S&P 500 (foreign-domiciled).",
+   "note": "The universe kept a stale NASDAQ-100 tag from 2026-05-17 until 2026-10-05; GFS had left the index on 2025-12-22."
+  },
+  "LCID": {
+   "former_indexes": [
+    "NASDAQ-100"
+   ],
+   "changes": [
+    {
+     "index": "NASDAQ-100",
+     "joined_on": "2021-12-20",
+     "dropped_on": "2023-12-18",
+     "replaced_by": "ROP",
+     "reason": "Annual index reconstitution.",
+     "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264)",
+     "primary_citation": "https://finance.yahoo.com/news/annual-changes-nasdaq-100-index-010000080.html"
+    }
+   ],
+   "universe_tag_history": "universe.json tags: added 2026-05-17 (commit 218e67bf, scripts/lthcs_build_universe.py hand list); S&P 500 tag removed by the S&P 500 sync (commit 6dbf23cc, data/lthcs/universe_candidate/sp500_2026-10-05/_sync_report.json); NASDAQ-100 tag removed by the tag refresh (commit ca7b42fa, _index_tag_report.json).",
+   "note": "The universe's NASDAQ-100 tag was already stale when it was added on 2026-05-17 (LCID left on 2023-12-18). The universe's former 'S&P 500' tag was inferred by scripts/lthcs_build_universe.py (NASDAQ-100 name not in NDX_NOT_IN_SPX => S&P 500), not sourced; the S&P 500 change history (https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500 (revision 1376064088)) has no row for this ticker, so S&P 500 is not a former index."
+  },
+  "MDB": {
+   "former_indexes": [
+    "NASDAQ-100"
+   ],
+   "changes": [
+    {
+     "index": "NASDAQ-100",
+     "joined_on": "2023-12-18",
+     "dropped_on": "2025-05-19",
+     "replaced_by": "SHOP",
+     "reason": "MongoDB did not meet the minimum monthly weight requirements.",
+     "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264)",
+     "primary_citation": "https://www.nasdaq.com/articles/shopify-inc-added-nasdaq-100-index-and-related-indices-replacing-mongodb-inc"
+    }
+   ],
+   "universe_tag_history": "universe.json tags: added 2026-05-17 (commit 218e67bf, scripts/lthcs_build_universe.py hand list); S&P 500 tag removed by the S&P 500 sync (commit 6dbf23cc, data/lthcs/universe_candidate/sp500_2026-10-05/_sync_report.json); NASDAQ-100 tag removed by the tag refresh (commit ca7b42fa, _index_tag_report.json).",
+   "note": "The universe's NASDAQ-100 tag was already stale when it was added on 2026-05-17 (MDB left on 2025-05-19). The universe's former 'S&P 500' tag was inferred by scripts/lthcs_build_universe.py (NASDAQ-100 name not in NDX_NOT_IN_SPX => S&P 500), not sourced; the S&P 500 change history (https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500 (revision 1376064088)) has no row for this ticker, so S&P 500 is not a former index."
+  },
+  "TEAM": {
+   "former_indexes": [
+    "NASDAQ-100"
+   ],
+   "changes": [
+    {
+     "index": "NASDAQ-100",
+     "joined_on": "2020-12-21",
+     "dropped_on": "2026-04-20",
+     "replaced_by": "SNDK",
+     "reason": "Atlassian did not meet the minimum monthly weight requirements.",
+     "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264)",
+     "primary_citation": "https://ir.nasdaq.com/news-releases/news-release-details/sandisk-corporation-join-nasdaq-100-indexr-beginning-april-20"
+    }
+   ],
+   "universe_tag_history": "universe.json tags: added 2026-05-17 (commit 218e67bf, scripts/lthcs_build_universe.py hand list); S&P 500 tag removed by the S&P 500 sync (commit 6dbf23cc, data/lthcs/universe_candidate/sp500_2026-10-05/_sync_report.json); NASDAQ-100 tag removed by the tag refresh (commit ca7b42fa, _index_tag_report.json).",
+   "note": "The universe's former 'S&P 500' tag was inferred by scripts/lthcs_build_universe.py (NASDAQ-100 name not in NDX_NOT_IN_SPX => S&P 500), not sourced; the S&P 500 change history (https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500 (revision 1376064088)) has no row for this ticker, so S&P 500 is not a former index."
+  },
+  "TTD": {
+   "former_indexes": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "changes": [
+    {
+     "index": "NASDAQ-100",
+     "joined_on": "2023-07-17",
+     "dropped_on": "2025-12-22",
+     "replaced_by": "WDC",
+     "reason": "Annual index reconstitution.",
+     "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264)",
+     "primary_citation": "https://www.nasdaq.com/press-release/annual-changes-nasdaq-100-indexr-2025-12-13"
+    },
+    {
+     "index": "S&P 500",
+     "joined_on": "2025-07-18",
+     "dropped_on": "2026-09-21",
+     "replaced_by": "P",
+     "reason": "Market capitalization changes (Everpure replaced The Trade Desk).",
+     "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500 (revision 1376064088)",
+     "primary_citation": "https://www.spglobal.com/spdji/en/documents/indexnews/announcements/20260904-1484999/1484999_shuffle5461-sept2026.pdf"
+    }
+   ],
+   "universe_tag_history": "universe.json tags: added 2026-05-17 (commit 218e67bf, scripts/lthcs_build_universe.py hand list); S&P 500 tag removed by the S&P 500 sync (commit 6dbf23cc, data/lthcs/universe_candidate/sp500_2026-10-05/_sync_report.json); NASDAQ-100 tag removed by the tag refresh (commit ca7b42fa, _index_tag_report.json).",
+   "note": "The universe's S&P 500 tag was inferred in May 2026 (see LCID) but matches a real membership: TTD joined the S&P 500 on 2025-07-18 (replacing ANSS) and left on 2026-09-21. Its NASDAQ-100 tag was stale from 2026-05-17 (left 2025-12-22)."
+  },
+  "ZS": {
+   "former_indexes": [
+    "NASDAQ-100"
+   ],
+   "changes": [
+    {
+     "index": "NASDAQ-100",
+     "joined_on": "2021-12-20",
+     "dropped_on": "2026-06-22",
+     "replaced_by": "TER",
+     "reason": "Quarterly index reconstitution.",
+     "source": "https://en.wikipedia.org/wiki/Historical_components_of_the_Nasdaq-100 (revision 1375648264)",
+     "primary_citation": "https://ir.nasdaq.com/news-releases/news-release-details/nasdaq-100-indexr-june-2026-quarterly-changes"
+    }
+   ],
+   "universe_tag_history": "universe.json tags: added 2026-05-17 (commit 218e67bf, scripts/lthcs_build_universe.py hand list); S&P 500 tag removed by the S&P 500 sync (commit 6dbf23cc, data/lthcs/universe_candidate/sp500_2026-10-05/_sync_report.json); NASDAQ-100 tag removed by the tag refresh (commit ca7b42fa, _index_tag_report.json).",
+   "note": "The universe's former 'S&P 500' tag was inferred by scripts/lthcs_build_universe.py (NASDAQ-100 name not in NDX_NOT_IN_SPX => S&P 500), not sourced; the S&P 500 change history (https://en.wikipedia.org/wiki/Historical_components_of_the_S%26P_500 (revision 1376064088)) has no row for this ticker, so S&P 500 is not a former index."
+  }
+ }
+}
