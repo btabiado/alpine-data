@@ -1,6 +1,6 @@
 {
   "_doc": "Gaps in committed or archived history that no real source can fill. Read by scripts/history_continuity.py: a missing period (or null required field) listed here is reported as DISCLOSED instead of failing the daily data-health run. Published at /health/known_gaps.json so the dashboard can disclose it. Add an entry only after trying every real source (git history of the file, the upstream's historical endpoint, the R2 archive, Internet Archive copies of the site) and say which in backfill_attempted. Never add a gap that can still be filled; fill it. `fillable: true` marks a gap that a named tool can still fill (see remedy) and is listed so the dashboard can say so until it is.",
-  "checked": "2026-10-04",
+  "checked": "2026-10-05",
   "gaps": [
     {
       "feed": "data/composites/",
@@ -100,13 +100,14 @@
       "history": "daily index",
       "start": "2026-05-19",
       "end": "2026-08-26",
-      "reason": "Equity LTHCS days with no snapshot/index/narratives file: 2026-05-19, 05-28, 06-01, 06-03, 06-07, 06-09, 06-14, 06-21, 06-25, 07-01, 07-19, 08-06, 08-26 (late or failed lthcs-daily runs). The per-ticker history carries --catch-up synthetic entries for them, not real scores.",
+      "reason": "Equity LTHCS days with no snapshot/index/narratives file: 2026-05-19, 05-28, 06-01, 06-03, 06-07, 06-09, 06-14, 06-21, 06-25, 07-01, 07-19, 08-06, 08-26 (late or failed lthcs-daily runs). The per-ticker history carries --catch-up synthetic entries for them, not real scores. scripts/lthcs_backfill.py cannot rebuild them faithfully yet: it is point-in-time for prices (Yahoo, truncated to the day) and SEC filings (filed-date filter), but the Adoption pillar's Google Trends input ignores --as-of and reads the newest weekly file (a 2026-10-05 rerun of 2026-06-08 used trend week 2026-W40 for 97 tickers), and FRED series are cut by observation date on today's vintage, so a June day picks up CPI/U-6/housing-starts prints published weeks later. Rerunning the real day 2026-06-08 that way moved composites by 1.2 points on average (max 5.4) and changed 13 of 207 bands, so its output would put method jumps into the history, not market moves.",
       "backfill_attempted": [
         "git: no blob for these days",
-        "R2: LTHCS is not archived"
+        "R2: LTHCS is not archived",
+        "upstream: scripts/lthcs_backfill.py rerun of the real day 2026-06-08 on 2026-10-05 (FRED read through its keyless CSV, no FRED_API_KEY; SEC EDGAR answered 403 to the backfill host) did not reproduce the committed snapshot (composite MAE 1.19, 13/207 band changes), so no backfilled day was committed"
       ],
-      "fillable": true,
-      "remedy": "python scripts/lthcs_backfill.py --start <day> --end <day> per day (real point-in-time rows; needs SEC_USER_AGENT and network), then drop the day from this list"
+      "fillable": false,
+      "remedy": "Fillable once scripts/lthcs_backfill.py is point-in-time for every input: Google Trends read from the weekly file as committed in git at the end of the day, FRED read as the ALFRED vintage of the day (realtime_start/realtime_end, needs FRED_API_KEY), and run where SEC EDGAR accepts the SEC_USER_AGENT (the 2026-05-19..06-03 neighbours had live SEC fundamentals, the 06-07..08-26 neighbours had the financial pillar stubbed at 50). Then rerun a real neighbour day, check it reproduces, run the 13 days and drop them from this list."
     },
     {
       "feed": "data/equity_etf_flows.csv",
