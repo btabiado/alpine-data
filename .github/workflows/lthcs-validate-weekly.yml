@@ -2,7 +2,8 @@ name: lthcs-validate-weekly
 
 # Weekly read-only audit of the LTHCS backfill / snapshot history.
 # Runs scripts/lthcs_backfill_validate.py and surfaces failures via a
-# non-zero exit + an uploaded JSON artifact. Does NOT commit anything —
+# non-zero exit, ::error annotations + a job summary (one per failing check),
+# and an uploaded JSON artifact. Does NOT commit anything —
 # this is pure observability, not data mutation.
 #
 # Scheduled 1 hour after the weekly trends run so the two don't fight
@@ -50,12 +51,24 @@ jobs:
         # We capture the exit code so we can both upload the artifact
         # AND fail the workflow visibly when it's non-zero. Without
         # `continue-on-error: true` the upload step would be skipped.
+        #
+        # --github: one ::error annotation per failing check (trimmed) and a
+        # per-check table in the job summary, so a red run says WHAT failed
+        # on the run page; job logs are not readable from everywhere the
+        # run is triaged (the daily audit only sees annotations).
         id: validate
         continue-on-error: true
         run: |
           set +e
-          python scripts/lthcs_backfill_validate.py
-          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          python scripts/lthcs_backfill_validate.py --github 2> "$RUNNER_TEMP/validate.stderr"
+          code=$?
+          cat "$RUNNER_TEMP/validate.stderr" >&2
+          # A Python crash also exits 1, the "warnings only" code; say which.
+          if grep -q '^Traceback' "$RUNNER_TEMP/validate.stderr"; then
+            echo "crashed=true" >> "$GITHUB_OUTPUT"
+            echo "::error title=lthcs-validate crashed::$(tail -n 1 "$RUNNER_TEMP/validate.stderr" | cut -c1-400)"
+          fi
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
 
       - name: Upload validation JSON report
         # Always upload — even on success — so the artifact history in
@@ -75,6 +88,19 @@ jobs:
         # GitHub reflects whether the audit passed. `1` = warnings,
         # `2` = hard failures; either should turn the run red.
         if: steps.validate.outputs.exit_code != '0'
+        env:
+          EXIT_CODE: ${{ steps.validate.outputs.exit_code }}
+          CRASHED: ${{ steps.validate.outputs.crashed }}
         run: |
-          echo "Validation exit code: ${{ steps.validate.outputs.exit_code }}"
-          exit ${{ steps.validate.outputs.exit_code }}
+          case "$EXIT_CODE" in
+            2) why="hard failures" ;;
+            1) why="warnings only" ;;
+            *) why="unexpected exit code" ;;
+          esac
+          where="Each failing check has its own annotation and a row in the job summary; the full list is in the lthcs-backfill-validation artifact."
+          if [ "$CRASHED" = "true" ]; then
+            why="the validator crashed"
+            where="No checks were reported; the traceback is in the 'Run backfill validator' step log."
+          fi
+          echo "::error title=lthcs-validate-weekly::Validator exited $EXIT_CODE: $why. $where"
+          exit "$EXIT_CODE"

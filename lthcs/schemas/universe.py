@@ -124,6 +124,14 @@ class UniverseEntry(BaseModel):
     sector_group: Optional[str] = None
     cik: Optional[str] = Field(default=None, pattern=r"^\d{10}$")
     source: Optional[str] = None
+    # UTC date this entry was added to universe.json, written by the tool
+    # that added it (the commit that added it is the evidence). The daily
+    # snapshot for that same date may have been cut before the change landed
+    # (2026-10-05's was: snapshot 01:59Z, S&P 500 sync 02:08Z), so validators
+    # expect the ticker from the NEXT snapshot date on. Null means "in the
+    # universe before this field existed": validators then expect the ticker
+    # from the first snapshot that scored it.
+    added_on: Optional[date] = None
     # Index Exile marker (see IndexExile). Present only while the ticker is
     # in no tracked index; cleared (and logged in index_history) on rejoin.
     index_exile: Optional[IndexExile] = None
