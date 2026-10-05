@@ -1,19 +1,19 @@
 {
   "as_of": "2026-10-05",
-  "generated_at": "2026-10-05T04:30:49Z",
+  "generated_at": "2026-10-05T04:51:50Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-04",
       "label": null,
-      "note": "40 coins; 11 buy+, 3 sell+",
-      "score": 20,
+      "note": "40 coins; 10 buy+, 3 sell+",
+      "score": 18,
       "stale": false
     },
     "defi_sentiment": {
       "as_of": "2026-10-05",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": 7,
+      "score": 6,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -93,7 +93,13 @@
       "score": 20,
       "stale": false
     },
-    "poc_signal_breadth": null,
+    "poc_signal_breadth": {
+      "as_of": "2026-10-03",
+      "label": null,
+      "note": "49 coins; mean of latest per-coin signal",
+      "score": 8,
+      "stale": false
+    },
     "stocks_signal_breadth": {
       "as_of": "2026-10-02",
       "label": "DISTRIBUTION",
@@ -114,12 +120,6 @@
       "note": null,
       "score": -50,
       "stale": false
-    }
-  },
-  "unavailable": {
-    "indexes.poc_signal_breadth": {
-      "reason": "market.poc_top comes from CryptoCompare histoday (compute_poc_top_markets), which answers keyless requests with 401 since 2026-10; CRYPTOCOMPARE_API_KEY is not configured, so there is nothing to average.",
-      "requires_env": "CRYPTOCOMPARE_API_KEY"
     }
   }
 }
