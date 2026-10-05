@@ -1526,6 +1526,14 @@ header .meta{color:var(--muted);font-size:12px}
    .v2-card/.v2-card__head flex wrappers, so rules 1b/1c have no V1 analogue,
    and V1's two fixed-minimum grids have no V2 analogue. */
 .container > *{min-width:0}
+/* Rule 1, one level down. .grid2/.grid3 collapse to `1fr` on phones, and
+   1fr is minmax(auto,1fr): its floor is the item's min-content. The DeFi
+   tab's "Top 15 DeFi protocols" and "Top stablecoin yields" cards hold
+   7- and 4-column tables inside overflow:auto boxes, and a scroll box still
+   reports its table's min-content upward, so the track painted 398px and
+   the tab was 410px wide at 390 (daily UX audit, 2026-10). With min-width:0
+   the track is the container width and the table scrolls inside its box. */
+.grid2 > *,.grid3 > *{min-width:0}
 .travel-bullet__title,.travel-bullet__excerpt,.travel-bullet__top,
 .tag,.v2-fresh,.v2-chip,.feedrow,.chart-card .desc{overflow-wrap:anywhere}
 /* .feedrow — every article / post / insight row whose text comes from upstream:

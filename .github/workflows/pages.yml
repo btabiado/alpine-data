@@ -191,6 +191,12 @@ jobs:
         #
         # Idempotent — it only rewrites today's file when an index actually
         # moved, so the hourly schedule doesn't produce 24 no-op commits.
+        env:
+          # Read for presence only: while it is unset a null
+          # poc_signal_breadth is written with an `unavailable` reason
+          # (unavailable by design), so the continuity monitor discloses it
+          # rather than paging a new gap every day.
+          CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
         run: python scripts/snapshot_composites.py || echo "[composites] snapshot failed; continuing"
         continue-on-error: true
 

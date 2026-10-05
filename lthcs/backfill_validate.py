@@ -57,6 +57,18 @@ PILLAR_NAMES = (
 SEVERITY_OK = "ok"
 SEVERITY_WARN = "warn"
 SEVERITY_FAIL = "fail"
+# A problem health/known_gaps.json already explains. Reported, never failed:
+# the same contract scripts/history_continuity.py applies to the daily
+# data-health run, so one disclosure covers both monitors.
+SEVERITY_DISCLOSED = "disclosed"
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+KNOWN_GAPS_PATH = _REPO_ROOT / "health" / "known_gaps.json"
+# known_gaps.json entries that describe missing EQUITY snapshot days. The
+# crypto snapshot entries share the feed but not the history, and the
+# validator never reads crypto files.
+KNOWN_GAP_FEED = "data/lthcs/"
+KNOWN_GAP_HISTORIES = ("daily index",)
 
 
 # ---------------------------------------------------------------------------
@@ -96,6 +108,10 @@ class Report:
     @property
     def failures(self) -> List[Finding]:
         return [f for f in self.findings if f.severity == SEVERITY_FAIL]
+
+    @property
+    def disclosed(self) -> List[Finding]:
+        return [f for f in self.findings if f.severity == SEVERITY_DISCLOSED]
 
     def exit_code(self) -> int:
         if self.failures:
@@ -158,6 +174,55 @@ def _load_active_universe(data_root: Path) -> List[str]:
     return [t["ticker"] for t in tickers if t.get("active", True)]
 
 
+def load_known_gap_days(path: Path) -> dict:
+    """{YYYY-MM-DD: reason} for every equity-snapshot day known_gaps.json
+    discloses. A missing or unreadable file yields {} so a lost disclosure
+    fails loudly instead of silently muting a gap."""
+    try:
+        doc = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    out: dict = {}
+    for g in (doc.get("gaps") or []) if isinstance(doc, dict) else []:
+        if not isinstance(g, dict) or g.get("feed") != KNOWN_GAP_FEED:
+            continue
+        if g.get("history") not in KNOWN_GAP_HISTORIES or g.get("field"):
+            continue
+        try:
+            start = _parse_date(str(g.get("start")))
+            end = _parse_date(str(g.get("end")))
+        except ValueError:
+            continue
+        for d in _daterange(start, end):
+            out[d.isoformat()] = str(g.get("reason", "")).strip()
+    return out
+
+
+def _ticker_first_seen(snap_dir: Path) -> dict:
+    """{ticker: first snapshot date it was scored on}, across ALL snapshots.
+
+    The universe grows (167 tickers on 2026-02-17, +42 on 05-21, +8 on
+    06-10), so a ticker cannot be "absent" from, or "missing history" on, a
+    day before it joined. Judging every ticker against the whole range made
+    every pre-expansion date warn and every later addition fail continuity.
+    """
+    first: dict = {}
+    if not snap_dir.is_dir():
+        return first
+    for p in sorted(snap_dir.glob("*.json")):
+        if p.stem == "index":
+            continue
+        try:
+            rows = (_load_json(p) or {}).get("scores") or []
+        except (json.JSONDecodeError, OSError, AttributeError):
+            continue
+        for row in rows:
+            t = row.get("ticker") if isinstance(row, dict) else None
+            if t and t not in first:
+                first[t] = p.stem
+    return first
+
+
 def _load_score_bands(data_root: Path) -> dict:
     weights_path = data_root / "weights.json"
     if not weights_path.exists():
@@ -215,6 +280,8 @@ def _check_one_date(
     score_bands: dict,
     report: Report,
     history_sample: List[str],
+    first_seen: Optional[dict] = None,
+    known_gap_days: Optional[dict] = None,
 ) -> dict:
     """Run all per-date checks for a single date.
 
@@ -241,6 +308,14 @@ def _check_one_date(
     narr_path = data_root / "narratives" / f"{date_str}.json"
 
     # 1. Snapshot exists
+    if not snap_path.exists() and date_str in (known_gap_days or {}):
+        report.add(Finding(
+            check="snapshot_exists",
+            severity=SEVERITY_DISCLOSED,
+            message=f"missing snapshot for {date_str} (disclosed in health/known_gaps.json)",
+            detail={"date": date_str, "reason": known_gap_days[date_str]},
+        ))
+        return stats
     if not snap_path.exists():
         report.add(Finding(
             check="snapshot_exists",
@@ -311,8 +386,15 @@ def _check_one_date(
                 },
             ))
 
-    # Ticker coverage vs universe — warn if under-covered.
-    missing_from_universe = active_universe - seen_tickers
+    # Ticker coverage vs universe — warn if under-covered. A ticker only
+    # counts from the first day any snapshot scored it (it had not joined the
+    # universe before that); one never scored anywhere always counts.
+    first_seen = first_seen or {}
+    expected_today = {
+        t for t in active_universe
+        if t not in first_seen or first_seen[t] <= date_str
+    }
+    missing_from_universe = expected_today - seen_tickers
     if active_universe and len(missing_from_universe) > 1:
         # We tolerate 1 missing (e.g. a freshly delisted name) without warning.
         report.add(Finding(
@@ -343,6 +425,11 @@ def _check_one_date(
             variable_detail = _load_json(vd_path)
             stats["variable_detail_exists"] = True
             vrows = variable_detail.get("variables", []) if isinstance(variable_detail, dict) else []
+            # Rows for tickers the snapshot did not score (dropped at the
+            # quality gate) are diagnostics, not part of the scored set:
+            # 2026-05-21..06-08 carry 8 such tickers. Count scored rows only.
+            if seen_tickers and all(isinstance(r, dict) and "ticker" in r for r in vrows):
+                vrows = [r for r in vrows if r.get("ticker") in seen_tickers]
             stats["variable_detail_rows"] = len(vrows)
             expected = len(scores_rows) * len(PILLAR_NAMES)
             if expected and stats["variable_detail_rows"] != expected:
@@ -442,14 +529,19 @@ def _check_history_continuity(
     sample_tickers: List[str],
     expected_dates: List[str],
     report: Report,
+    first_seen: Optional[dict] = None,
 ) -> dict:
     out: dict = {}
     hist_root = data_root / "history" / "by_ticker"
-    expected_set = set(expected_dates)
+    first_seen = first_seen or {}
 
     for ticker in sample_tickers:
+        # Only the days since the ticker joined the universe are expected.
+        joined = first_seen.get(ticker)
+        ticker_dates = [d for d in expected_dates if joined is None or d >= joined]
+        expected_set = set(ticker_dates)
         path = hist_root / f"{ticker}.json"
-        info = {"ticker": ticker, "found": 0, "expected": len(expected_dates), "missing": []}
+        info = {"ticker": ticker, "found": 0, "expected": len(ticker_dates), "missing": []}
         out[ticker] = info
         if not path.exists():
             report.add(Finding(
@@ -494,7 +586,7 @@ def _check_history_continuity(
                 severity=SEVERITY_FAIL,
                 message=(
                     f"history for {ticker} missing {len(info['missing'])} of "
-                    f"{len(expected_dates)} dates (first: {info['missing'][:3]})"
+                    f"{len(ticker_dates)} dates (first: {info['missing'][:3]})"
                 ),
                 detail={
                     "ticker": ticker,
@@ -521,8 +613,14 @@ def _summarize_block(
     block_findings = [f for f in report.findings if f.check == check_name]
     fails = [f for f in block_findings if f.severity == SEVERITY_FAIL]
     warns = [f for f in block_findings if f.severity == SEVERITY_WARN]
+    disclosed = [f for f in block_findings if f.severity == SEVERITY_DISCLOSED]
+    if disclosed:
+        days = [f.detail.get("date") or f.message for f in disclosed]
+        lines.append(f"  [DISCLOSED] {len(disclosed)} known gap(s), not failed "
+                     f"(health/known_gaps.json): {', '.join(days[:8])}"
+                     + (" ..." if len(days) > 8 else ""))
     if not fails and not warns:
-        lines.append(f"  [OK] {ok_message}")
+        lines.append(f"  [OK] {'nothing undisclosed' if disclosed else ok_message}")
     else:
         if fails:
             lines.append(f"  [FAIL] {fail_label or check_name}: {len(fails)} failure(s)")
@@ -658,11 +756,16 @@ def run_validation(
     end: Optional[date] = None,
     sample_tickers: Optional[List[str]] = None,
     rng_seed: int = 0,
+    known_gaps_path: Optional[Path] = None,
 ):
     """Run the full validation suite.
 
     Returns ``(report, per_date_stats, history_stats, sample_tickers)``.
     Tests use this directly; the CLI wraps it.
+
+    ``known_gaps_path`` defaults to the repo's health/known_gaps.json, but
+    only when ``data_root`` IS the repo's data/lthcs: a disclosure describes
+    that tree, not a synthetic one.
     """
     data_root = Path(data_root)
     snap_dir = data_root / "snapshots"
@@ -684,6 +787,10 @@ def run_validation(
     universe = _load_active_universe(data_root)
     score_bands = _load_score_bands(data_root)
     active_set = set(universe)
+    first_seen = _ticker_first_seen(snap_dir)
+    if known_gaps_path is None and data_root.resolve() == (_REPO_ROOT / "data" / "lthcs").resolve():
+        known_gaps_path = KNOWN_GAPS_PATH
+    known_gap_days = load_known_gap_days(known_gaps_path) if known_gaps_path else {}
 
     dates = [d.isoformat() for d in _daterange(start, end)]
     report = Report(
@@ -702,10 +809,12 @@ def run_validation(
 
     per_date_stats: List[dict] = []
     for d in _daterange(start, end):
-        stats = _check_one_date(d, data_root, active_set, score_bands, report, sample_tickers)
+        stats = _check_one_date(d, data_root, active_set, score_bands, report, sample_tickers,
+                                first_seen=first_seen, known_gap_days=known_gap_days)
         per_date_stats.append(stats)
 
-    history_stats = _check_history_continuity(data_root, sample_tickers, dates, report)
+    history_stats = _check_history_continuity(data_root, sample_tickers, dates, report,
+                                              first_seen=first_seen)
 
     return report, per_date_stats, history_stats, sample_tickers
 
@@ -731,6 +840,7 @@ def write_json_report(
         "summary": {
             "warnings": len(report.warnings),
             "failures": len(report.failures),
+            "disclosed": len(report.disclosed),
             "exit_code": report.exit_code(),
         },
     }

@@ -620,13 +620,22 @@ def test_container_overflow_guard_is_present(v1_js):
     assert ".container > *{min-width:0}" in v1_js
 
 
+def test_grid_items_cannot_widen_their_collapsed_track(v1_js):
+    """.grid2/.grid3 collapse to `1fr` on phones, and 1fr's floor is the
+    item's min-content. The DeFi tab's protocol and yield tables (inside
+    overflow:auto boxes, which still report their table's min-content)
+    painted a 398px track and made the tab 410px wide at 390."""
+    assert ".grid2 > *,.grid3 > *{min-width:0}" in strip_comments(v1_js)
+
+
 def test_no_fixed_track_minimum_wider_than_a_phone(v1_js):
     """`minmax(420px,1fr)` hard-codes a track floor wider than a 360px
     viewport; auto-fit cannot rescue it, because the minimum is not relative.
 
     Two escapes are legitimate: wrap the minimum in ``min(Npx,100%)``, or give
     the selector an explicit single-column override in a mobile media query.
-    ``.grid2`` / ``.grid3`` take the second route and never overflowed;
+    ``.grid2`` / ``.grid3`` take the second route (their items still need
+    min-width:0, see test_grid_items_cannot_widen_their_collapsed_track);
     ``.metals-grid2`` / ``.supplies-grid`` had neither and measured 432px at
     both 360 and 390.
     """

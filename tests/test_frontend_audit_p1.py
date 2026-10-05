@@ -119,10 +119,82 @@ def test_main_writes_the_three_artifacts(builder, lthcs_root):
     assert aapl["ticker"] == "AAPL" and len(aapl["history"]) == 2
 
 
+def _hist(root: Path, ticker: str, rows):
+    _w(root / "history" / "by_ticker" / f"{ticker}.json",
+       {"ticker": ticker, "history": [{"date": d, "score": sc, "band": "x"} for d, sc in rows]})
+
+
+def test_trend_index_keeps_the_window_plus_one_anchor_row(builder, lthcs_root):
+    # newest-first on purpose (the committed files are not chronological)
+    _hist(lthcs_root, "AAPL", [("2026-10-04", 60), ("2026-09-20", 55),
+                               ("2026-09-04", 50), ("2026-09-01", 49), ("2026-08-01", 40)])
+    _hist(lthcs_root, "NVDA", [("2026-10-04", 70), ("2026-10-03", None)])
+    t = builder.build_trend_index(lthcs_root, builder.build_file_index(lthcs_root))
+    assert t["latest"] == "2026-10-04" and t["lookback_days"] == 30
+    # cutoff 2026-09-04: everything after it, plus the newest row on/before it
+    assert t["tickers"]["AAPL"] == [{"date": "2026-09-04", "score": 50},
+                                    {"date": "2026-09-20", "score": 55},
+                                    {"date": "2026-10-04", "score": 60}]
+    assert t["tickers"]["NVDA"] == [{"date": "2026-10-04", "score": 70}]   # null dropped
+    assert builder.main(["--root", str(lthcs_root)]) == 0
+    assert (lthcs_root / "history" / "trend_index.json").is_file()
+
+
+def test_trend_index_reproduces_the_browser_trend_for_every_committed_ticker(builder):
+    """The /lthcs/ cards must read the same 30d delta from the one-file index
+    as from each ticker's full history file. Runs the shipped computeTrend()
+    in V8 on both, for every ticker in the committed data."""
+    mr = pytest.importorskip("py_mini_racer", reason="V8 needed to run the shipped JS")
+    root = ROOT / "data" / "lthcs"
+    idx = builder.build_file_index(root)
+    t = builder.build_trend_index(root, idx)
+    if t is None:
+        pytest.skip("no committed LTHCS history")
+    src = (ROOT / "lthcs_tab" / "lthcs-tab.js").read_text(encoding="utf-8")
+
+    def fn(name):
+        start = src.index(f"function {name}(")
+        i, depth = src.index("{", start), 0
+        for j in range(i, len(src)):
+            depth += {"{": 1, "}": -1}.get(src[j], 0)
+            if depth == 0:
+                return src[start:j + 1]
+        raise AssertionError(f"unbalanced braces in {name}()")
+
+    consts = re.search(r"const TREND_FLAT_THRESHOLD = [^;]+;", src).group(0) + \
+        re.search(r"const TREND_FALLBACK_DAYS = [^;]+;", src).group(0)
+    assert "[30," in consts, "TREND_LOOKBACK_DAYS must equal max(TREND_FALLBACK_DAYS)"
+    ctx = mr.MiniRacer()
+    ctx.eval(consts + "".join(fn(n) for n in (
+        "parseISODateUTC", "pickAnchorForLookback", "pickAnchorWithFallback", "computeTrend")))
+    snap = json.loads((root / "snapshots" / f"{t['latest']}.json").read_text())
+    scores = {r["ticker"]: r["lthcs_score"] for r in snap["scores"]}
+    checked = 0
+    for ticker, rows in t["tickers"].items():
+        if ticker not in scores:
+            continue
+        full = json.loads((root / "history" / "by_ticker" / f"{ticker}.json").read_text())
+        a = ctx.call("computeTrend", full, t["latest"], scores[ticker])
+        b = ctx.call("computeTrend", {"history": rows}, t["latest"], scores[ticker])
+        assert a == b, ticker
+        checked += 1
+    assert checked >= len(scores) - 2
+
+
+def test_index_page_reads_the_trend_index_before_per_ticker_files():
+    src = (ROOT / "lthcs_tab" / "lthcs-tab.js").read_text(encoding="utf-8")
+    assert "../data/lthcs/history/trend_index.json" in src
+    body = src[src.index("async function fetchTrendMap("):src.index("async function fetchInsider(")]
+    assert body.index("fetchTrendIndex(calcDate)") < body.index("HISTORY_BASE")
+    guard = src[src.index("async function fetchTrendIndex("):src.index("async function fetchTrendMap(")]
+    assert "doc.latest !== calcDate" in guard
+
+
 def test_generated_artifacts_are_gitignored_and_built_in_pages_yml():
     gi = (ROOT / ".gitignore").read_text(encoding="utf-8")
     for p in ("data/lthcs/file_index.json", "data/lthcs/health_summary.json",
-              "data/lthcs/history/pillars_by_ticker/"):
+              "data/lthcs/history/pillars_by_ticker/",
+              "data/lthcs/history/trend_index.json"):
         assert p in gi
     yml = (ROOT / ".github" / "workflows" / "pages.yml").read_text(encoding="utf-8")
     step = yml.index("scripts/build_lthcs_site_index.py --root data/lthcs")

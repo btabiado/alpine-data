@@ -20,6 +20,18 @@ A missing period that cannot be backfilled from any real source is recorded in
 health/known_gaps.json (published at /health/known_gaps.json, so the dashboard
 can disclose it). Known gaps are reported, never failed; anything else fails.
 
+A field whose source is unavailable BY DESIGN (an API that needs a key this
+deployment does not have) is disclosed one of two ways, and both stop
+disclosing the moment the key exists, so "key set but still null" fails:
+
+  * the payload says so: the member carries
+    ``"unavailable": {"<dotted.field>": {"reason": "...", "requires_env": "X"}}``
+    (snapshot_composites.py writes this only while X is unset at write time);
+  * known_gaps.json holds an OPEN-ENDED entry: ``"end": null`` plus
+    ``"until_env": "X"``. It covers every period from `start` on while X is
+    unset in the monitor's environment, and nothing once X is set.
+    data-health.yml and daily-audit.yml map X for exactly this check.
+
 Only INTERNAL continuity is judged: between the first entry inside the window
 and the last entry. The trailing edge ("the history stopped growing") is the
 freshness check's job, and judging it twice would report one outage twice.
@@ -403,7 +415,11 @@ def verify_known_gaps(gaps: list[dict], specs: dict[str, tuple]) -> list[str]:
             continue
         if hist not in {s.name for s in specs[feed]}:
             problems.append(f"{where}: {feed} has no history named {hist!r}")
-        for k in ("start", "end"):
+        open_ended = g.get("end") is None
+        if open_ended and not (isinstance(g.get("until_env"), str) and g["until_env"].strip()):
+            problems.append(f"{where}: an open-ended gap (end: null) needs until_env, "
+                            f"the env var whose presence ends it")
+        for k in ("start",) if open_ended else ("start", "end"):
             if not isinstance(g.get(k), str) or not (_ISO_DAY.match(g[k]) or _ISO_MONTH.match(g[k])):
                 problems.append(f"{where}: {k} must be YYYY-MM-DD or YYYY-MM")
         if isinstance(g.get("start"), str) and isinstance(g.get("end"), str) and g["start"] > g["end"]:
@@ -427,12 +443,45 @@ def _disclosed(gaps: list[dict], feed: str, spec: History, period: str,
             continue
         if g.get("group") and g.get("group") != group:
             continue
-        start, end = str(g.get("start", "")), str(g.get("end", ""))
+        until_env = g.get("until_env")
+        if until_env and _env_set(until_env):
+            # The missing key is configured now; the reason no longer holds.
+            continue
+        start = str(g.get("start", ""))
+        end = g.get("end")
         # Compare on the period's own resolution, so a monthly gap can be
-        # written as 2020-11 and a daily one as a day range.
-        if start[:len(period)] <= period <= end[:len(period)]:
+        # written as 2020-11 and a daily one as a day range. A null end is
+        # open-ended (only valid with until_env; see verify_known_gaps).
+        if start[:len(period)] <= period and (
+                end is None or period <= str(end)[:len(period)]):
             return True
     return False
+
+
+def _env_set(name: str) -> bool:
+    return bool(os.environ.get(str(name), "").strip())
+
+
+def unavailable_reason(member, fld: str) -> str | None:
+    """The payload's own statement that `fld` is unavailable by design, or
+    None. Shape: member["unavailable"][fld] = {"reason": str, "requires_env":
+    optional env var}. A marker whose requires_env IS set in this
+    environment is ignored: the key exists, so a null is a real gap."""
+    if not isinstance(member, dict):
+        return None
+    marks = member.get("unavailable")
+    mark = marks.get(fld) if isinstance(marks, dict) else None
+    if isinstance(mark, str):
+        mark = {"reason": mark}
+    if not isinstance(mark, dict):
+        return None
+    reason = str(mark.get("reason") or "").strip()
+    if len(reason) < 10:     # a bare flag explains nothing; do not mute on it
+        return None
+    req = mark.get("requires_env")
+    if req and _env_set(req):
+        return None
+    return reason
 
 
 # --------------------------------------------------------------------------
@@ -492,6 +541,8 @@ def _judge(rows, spec: History, feed: str, today: date, gaps: list[dict],
                 continue
             if _disclosed(gaps, feed, spec, p, group, fld):
                 f.disclosed.append(f"{tag}{p} {fld}=null")
+            elif unavailable_reason(member, fld):
+                f.disclosed.append(f"{tag}{p} {fld}=null (unavailable by design)")
             else:
                 f.field_gaps.append((fld, tag + p))
 
@@ -581,7 +632,11 @@ def summarize(f: Finding, limit: int = 12) -> str:
             parts.append(f"{fld} null on {len(wheres)}: {', '.join(c[:limit])}"
                          + (" ..." if len(c) > limit else ""))
     if f.disclosed:
-        parts.append(f"{len(f.disclosed)} disclosed in {KNOWN_GAPS_REL}")
+        by_payload = sum(1 for d in f.disclosed if d.endswith("(unavailable by design)"))
+        if by_payload < len(f.disclosed):
+            parts.append(f"{len(f.disclosed) - by_payload} disclosed in {KNOWN_GAPS_REL}")
+        if by_payload:
+            parts.append(f"{by_payload} unavailable by design (payload says why)")
     if not parts or (f.note and len(parts) == 1):
         if f.note:
             return f.note

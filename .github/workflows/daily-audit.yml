@@ -83,6 +83,9 @@ jobs:
         timeout-minutes: 15
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Presence only: history_continuity.py stops excusing a null
+          # poc_signal_breadth (known_gaps.json until_env) once this is set.
+          CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
         run: python scripts/daily_audit_data.py --out "$RUNNER_TEMP/audit/data.json"
 
       - name: Install Playwright + Chromium

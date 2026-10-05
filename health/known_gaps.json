@@ -1,5 +1,5 @@
 {
-  "_doc": "Gaps in committed or archived history that no real source can fill. Read by scripts/history_continuity.py: a missing period (or null required field) listed here is reported as DISCLOSED instead of failing the daily data-health run. Published at /health/known_gaps.json so the dashboard can disclose it. Add an entry only after trying every real source (git history of the file, the upstream's historical endpoint, the R2 archive, Internet Archive copies of the site) and say which in backfill_attempted. Never add a gap that can still be filled; fill it. `fillable: true` marks a gap that a named tool can still fill (see remedy) and is listed so the dashboard can say so until it is.",
+  "_doc": "Gaps in committed or archived history that no real source can fill. Read by scripts/history_continuity.py: a missing period (or null required field) listed here is reported as DISCLOSED instead of failing the daily data-health run. Published at /health/known_gaps.json so the dashboard can disclose it. Add an entry only after trying every real source (git history of the file, the upstream's historical endpoint, the R2 archive, Internet Archive copies of the site) and say which in backfill_attempted. Never add a gap that can still be filled; fill it. `fillable: true` marks a gap that a named tool can still fill (see remedy) and is listed so the dashboard can say so until it is. An entry with \"end\": null is open-ended and must name `until_env`, the env var whose presence ends it (a source that needs a key this deployment does not have): it discloses every period from start on while that var is unset, and nothing once it is set.",
   "checked": "2026-10-05",
   "gaps": [
     {
@@ -27,6 +27,20 @@
         "git: data/market.json is never committed",
         "R2: archives data-*.json sidecars only; poc_top ships inline in index.html",
         "Internet Archive: no captures of btabiado.github.io/alpine-data"
+      ],
+      "fillable": false
+    },
+    {
+      "feed": "data/composites/",
+      "history": "daily snapshots",
+      "field": "indexes.poc_signal_breadth",
+      "start": "2026-10-05",
+      "end": null,
+      "until_env": "CRYPTOCOMPARE_API_KEY",
+      "reason": "Open-ended, unavailable by design: market.poc_top is built from CryptoCompare histoday, which answers keyless requests with 401 since 2026-10 (api_status: CryptoCompare/CoinDesk auth_required, key_state unset). Nothing to average until CRYPTOCOMPARE_API_KEY is configured. Stops applying the moment that env var is set in the monitor's environment, so a null with the key present fails again. Snapshots written after this change also carry the reason in their own `unavailable` field.",
+      "backfill_attempted": [
+        "upstream: min-api.cryptocompare.com histoday returns 401 without a key; no keyless historical source for the same per-coin series",
+        "git: data/market.json is never committed"
       ],
       "fillable": false
     },

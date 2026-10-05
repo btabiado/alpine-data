@@ -118,6 +118,11 @@ jobs:
         # report to $GITHUB_STEP_SUMMARY itself. Re-running it to build a
         # summary would evaluate the feeds a third time and could print a
         # verdict contradicting the one that decided whether to file the issue.
+        env:
+          # Presence only: a known_gaps.json entry with `until_env` (a source
+          # unavailable until its key is configured) stops disclosing the gap
+          # once the key exists, so a null with the key set fails again.
+          CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
         run: |
           set +e
           python scripts/data_health.py --mode "$MODE" $REMEDIATE

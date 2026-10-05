@@ -217,7 +217,10 @@ TARGETS: list[dict] = [
     # BLS answers an exhausted keyless quota with HTTP 200 and
     # "status": "REQUEST_NOT_PROCESSED", which this probe does not inspect.
     {"label": "BLS",                  "category": "City",          "url": "https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN120860000000003",                          "key_env": "BLS_API_KEY", "key_auth": {"param": "registrationkey"}},
-    {"label": "EPA AirNow",           "category": "City",          "url": "https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=40&longitude=-74&distance=25&API_KEY=", "key_env": "AIRNOW_API_KEY", "key_auth": {"param": "API_KEY"}},
+    # AirNow: the 2026 "By Zip Code or Lat/Long" service city/airnow.py uses.
+    # The old /aq/observation/latLong/current/ was retired 2026-09-30 and
+    # answers 410 Gone even with a valid key (keyless, both read 401).
+    {"label": "EPA AirNow",           "category": "City",          "url": "https://www.airnowapi.org/aq/observation/current/ziplatLong/?format=application/json&latitude=40.7128&longitude=-74.0060&API_KEY=", "key_env": "AIRNOW_API_KEY", "key_auth": {"param": "API_KEY"}},
     # ---- aviation: OpenSky live ADS-B. Anonymous access works (rate-limited);
     # OPENSKY_CLIENT_ID only raises limits. Tiny bbox keeps the probe cheap.
     {"label": "OpenSky Network",      "category": "Aviation",      "url": "https://opensky-network.org/api/states/all?lamin=45.8&lomin=5.9&lamax=46.0&lomax=6.1",            "key_env": "OPENSKY_CLIENT_ID"},
