@@ -64,12 +64,14 @@ def prune(root: Path, *, min_ttl_days: float = 7.0, now: Optional[float] = None)
             path.unlink()
             deleted += 1
         except OSError:
+            # Best-effort prune: an undeletable entry just stays cached.
             pass
     # Drop directories left empty.
     for d in sorted((p for p in root.rglob("*") if p.is_dir()), key=lambda p: len(p.parts), reverse=True):
         try:
             d.rmdir()
         except OSError:
+            # Not empty (kept entries) or already gone; either is fine.
             pass
     return kept, deleted
 
