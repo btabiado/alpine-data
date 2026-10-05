@@ -18,6 +18,13 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple
 
+from .bands import (
+    BAND_COLLOQUIAL,
+    BAND_ORDER_HIGH_TO_LOW,
+    band_ranges,
+    load_score_bands,
+)
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -51,37 +58,20 @@ BAND_DESCRIPTORS: Dict[str, Dict[str, str]] = {
     "review":           {"action": "requires Structural Review",      "review_tone": "review"},
 }
 
-# Bands ordered from highest to lowest. Mirrors the score_bands ranges in
-# data/lthcs/weights.json. Kept inline so this module is I/O free.
-_BAND_ORDER_HIGH_TO_LOW: List[str] = [
-    "elite",
-    "high_confidence",
-    "constructive",
-    "monitor",
-    "weakening",
-    "review",
-]
+# Bands ordered from highest to lowest, plus their live integer ranges.
+# Ranges are read from data/lthcs/weights.json -> score_bands through
+# lthcs.bands (cached on mtime) so a band recalibration flows through to
+# the "what would break" thresholds without editing this module.
+_BAND_ORDER_HIGH_TO_LOW: List[str] = list(BAND_ORDER_HIGH_TO_LOW)
 
-# (min, max) inclusive ranges for each band, matching weights.json.
-_BAND_RANGES: Dict[str, Tuple[int, int]] = {
-    "elite":           (90, 100),
-    "high_confidence": (80,  89),
-    "constructive":    (70,  79),
-    "monitor":         (60,  69),
-    "weakening":       (50,  59),
-    "review":          (0,   49),
-}
+
+def _band_ranges() -> Dict[str, Tuple[int, int]]:
+    return band_ranges(load_score_bands())
+
 
 # Colloquial label used in the "what would break" template when naming the
 # next-band-down. Keeps the prose readable without exposing snake_case.
-_BAND_COLLOQUIAL: Dict[str, str] = {
-    "elite":           "Elite",
-    "high_confidence": "High Confidence",
-    "constructive":    "Constructive",
-    "monitor":         "Monitor",
-    "weakening":       "Weakening",
-    "review":          "Structural Review",
-}
+_BAND_COLLOQUIAL: Dict[str, str] = dict(BAND_COLLOQUIAL)
 
 _FLAT_DRIFT_THRESHOLD = 0.1
 
@@ -320,11 +310,11 @@ def _what_would_break(
         ).format(name=weakest_name)
 
     next_band = _next_band_down(band)
-    next_band_min, _ = _BAND_RANGES.get(next_band, _BAND_RANGES["review"])
+    ranges = _band_ranges()
     # Threshold = just under the current band's floor, which is the same as
     # (next-band max + 1) - 0.1 == next_band.max + 0.9. We express it as
     # "current band min - 0.1" per the spec.
-    current_min, _ = _BAND_RANGES.get(band, _BAND_RANGES["monitor"])
+    current_min, _ = ranges.get(band) or ranges.get("monitor") or (60, 69)
     next_band_threshold = current_min - 0.1
 
     decline_threshold = max(weakest_score - 10.0, 0.0)

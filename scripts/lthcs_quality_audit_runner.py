@@ -157,6 +157,14 @@ def _compute_pillar_verdicts(snapshot: Dict[str, Any]) -> Dict[str, Dict[str, An
 # Distribution + bands verdict (from FF / GG outputs)
 # ---------------------------------------------------------------------------
 
+def _live_band_ranges() -> Dict[str, Tuple[int, int]]:
+    if str(REPO) not in sys.path:
+        sys.path.insert(0, str(REPO))
+    from lthcs.bands import band_ranges, load_score_bands
+
+    return band_ranges(load_score_bands(DATA / "weights.json"))
+
+
 def _distribution_summary(snapshot: Dict[str, Any]) -> Dict[str, Any]:
     """Composite-score distribution one-liner."""
     records = snapshot.get("scores") or []
@@ -173,13 +181,25 @@ def _distribution_summary(snapshot: Dict[str, Any]) -> Dict[str, Any]:
         }
     mean = sum(comps) / len(comps)
     sd = statistics.pstdev(comps) if len(comps) > 1 else 0.0
-    elite = sum(1 for v in comps if v >= 85)
-    high_conf = sum(1 for v in comps if 80 <= v < 85)
-    review = sum(1 for v in comps if v < 50)
+    # Cutoffs come from weights.json -> score_bands (not hard-coded), so a
+    # band recalibration is reflected here automatically. Half-open
+    # [min, max+1) to match lthcs.score.assign_band for fractional scores.
+    rng = _live_band_ranges()
+    elite_lo = rng["elite"][0]
+    high_lo = rng["high_confidence"][0]
+    review_hi = rng["review"][1]
+    elite = sum(1 for v in comps if v >= elite_lo)
+    high_conf = sum(1 for v in comps if high_lo <= v < elite_lo)
+    review = sum(1 for v in comps if v < review_hi + 1)
     # Critical: elite + high_conf both zero AND review band overflowing
     critical = (elite == 0 and high_conf == 0 and review / max(1, len(comps)) >= 0.40)
     return {
         "n": len(comps),
+        "band_cutoffs": {
+            "elite_min": elite_lo,
+            "high_confidence_min": high_lo,
+            "review_max": review_hi,
+        },
         "mean": round(mean, 2),
         "stdev": round(sd, 2),
         "elite_count": elite,
@@ -453,10 +473,16 @@ def render_summary_md(payload: Dict[str, Any]) -> str:
         lines.append(
             f"- n={dist['n']}, mean={dist['mean']}, stdev={dist['stdev']}{crit}"
         )
+        cut = dist.get("band_cutoffs") or {}
+        e_lo = cut.get("elite_min", "?")
+        h_lo = cut.get("high_confidence_min", "?")
+        r_hi = cut.get("review_max", "?")
+        h_hi = (e_lo - 1) if isinstance(e_lo, int) else "?"
+        r_lt = (r_hi + 1) if isinstance(r_hi, int) else "?"
         lines.append(
-            f"- elite (>=85): **{dist['elite_count']}**, "
-            f"high-confidence (80-84): **{dist['high_conf_count']}**, "
-            f"review (<50): **{dist['review_count']}** ({dist.get('review_pct', 0)}%)"
+            f"- elite (>={e_lo}): **{dist['elite_count']}**, "
+            f"high-confidence ({h_lo}-{h_hi}): **{dist['high_conf_count']}**, "
+            f"review (<{r_lt}): **{dist['review_count']}** ({dist.get('review_pct', 0)}%)"
         )
     lines.append("")
 

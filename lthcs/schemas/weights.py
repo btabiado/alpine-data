@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -33,6 +33,18 @@ class ScoreBand(BaseModel):
         return self
 
 
+class ScoreBandsCalibration(BaseModel):
+    """Provenance for data-driven score_bands (scripts/lthcs_calibrate_bands.py)."""
+
+    model_config = ConfigDict(extra="allow")
+
+    calibrated_at: date
+    calibrated_from: List[str]
+    ticker_count: int = Field(ge=0)
+    method: str
+    targets_pct: Dict[str, float]
+
+
 class ModifierRule(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -59,6 +71,11 @@ class Weights(BaseModel):
     profiles: Dict[str, List[float]]
     score_bands: Dict[str, ScoreBand]
     modifiers: ModifierConfig
+    # Walk-forward tuned weights (lthcs/adaptive_weights.py). Free-form;
+    # score.py validates the shape it consumes and falls back when malformed.
+    adaptive_overrides: Optional[Dict[str, Any]] = None
+    # Provenance written by scripts/lthcs_calibrate_bands.py --write.
+    score_bands_calibration: Optional[ScoreBandsCalibration] = None
 
     @field_validator("pillar_order")
     @classmethod

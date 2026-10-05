@@ -8,49 +8,53 @@
  * Pure DOM module — no innerHTML, no frameworks. Returns an SVGElement.
  */
 
+import { bandKeyForScore, bandCutoffs, scoreBands } from "./lthcs-bands.js";
+
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 /**
- * Default band-color map. Mirrors weights.json `band_colors`.
- * Score buckets are inclusive on the lower edge, exclusive on the upper
- * (except the elite bucket which is fully inclusive of 100).
+ * Default band-color map (keyed by UI band name; `high` = high_confidence).
+ * Score cutoffs are NOT defined here — they come from weights.json
+ * `score_bands` via lthcs-bands.js, so a recalibration moves them.
  */
 const DEFAULT_BAND_COLORS = {
-  elite: "#1F3A5F",        // 90 - 100
-  high: "#4A8F5F",         // 80 - 89
-  constructive: "#C9A227", // 70 - 79
-  monitor: "#D89148",      // 60 - 69
-  weakening: "#B85A3E",    // 50 - 59
-  review: "#7A2E1F",       //  0 - 49
+  elite: "#1F3A5F",
+  high: "#4A8F5F",
+  constructive: "#C9A227",
+  monitor: "#D89148",
+  weakening: "#B85A3E",
+  review: "#7A2E1F",
 };
 
-/**
- * Resolve the band color for a given score, matching weights.json bands.
- * Returns a CSS color string from the band_colors map or null if score is non-numeric.
- *
- * @param {number} score
- * @param {Object<string,string>|null} [bandColors] Optional override map keyed by band name.
- * @returns {string|null}
- */
+const UI_KEY = { high_confidence: "high" };
+
 /**
  * Text colour for a pill filled with bandColorForScore(score): near-black on
  * the light fills (high / constructive / monitor — white measured 2.4-3.9:1
  * there), white on the dark ones. null when the score is not a number.
  */
 export function bandInkForScore(score) {
-  if (typeof score !== "number" || !Number.isFinite(score)) return null;
-  return (score >= 60 && score < 90) ? "#111" : "#fff";
+  const key = bandKeyForScore(score);
+  if (!key) return null;
+  return (key === "high_confidence" || key === "constructive" || key === "monitor") ? "#111" : "#fff";
 }
 
+/**
+ * Resolve the band color for a given score, using the live weights.json
+ * band cutoffs (lthcs-bands.js). Returns a CSS color string or null if the
+ * score is non-numeric.
+ *
+ * @param {number} score
+ * @param {Object<string,string>|null} [bandColors] Optional override map keyed by UI band name.
+ * @returns {string|null}
+ */
 export function bandColorForScore(score, bandColors = null) {
-  if (typeof score !== "number" || !Number.isFinite(score)) return null;
-  const colors = bandColors || DEFAULT_BAND_COLORS;
-  if (score >= 90) return colors.elite || DEFAULT_BAND_COLORS.elite;
-  if (score >= 80) return colors.high || DEFAULT_BAND_COLORS.high;
-  if (score >= 70) return colors.constructive || DEFAULT_BAND_COLORS.constructive;
-  if (score >= 60) return colors.monitor || DEFAULT_BAND_COLORS.monitor;
-  if (score >= 50) return colors.weakening || DEFAULT_BAND_COLORS.weakening;
-  return colors.review || DEFAULT_BAND_COLORS.review;
+  const key = bandKeyForScore(score);
+  if (!key) return null;
+  const ui = UI_KEY[key] || key;
+  if (bandColors && bandColors[ui]) return bandColors[ui];
+  const cfg = scoreBands()[key];
+  return (cfg && cfg.color) || DEFAULT_BAND_COLORS[ui];
 }
 
 /**
@@ -61,7 +65,7 @@ export function bandColorForScore(score, bandColors = null) {
  * @param {Object} [options]
  * @param {number}  [options.width=120]       Pixel width (also used for viewBox).
  * @param {number}  [options.height=24]       Pixel height (also used for viewBox).
- * @param {boolean} [options.showBands=false] Faint horizontal guides at 50/70/80/90.
+ * @param {boolean} [options.showBands=false] Faint horizontal guides at the band cutoffs (weights.json).
  * @param {boolean} [options.showAxes=false]  Y-tick labels (0/25/50/75/100) and first/last date labels.
  * @param {boolean} [options.showLastDot=true] Filled circle on the most-recent point.
  * @param {string}  [options.strokeColor="currentColor"] Line color.
@@ -141,7 +145,7 @@ export function renderSparkline(history, options = {}) {
 
   // --- Band guides (detail mode) --------------------------------------------
   if (showBands) {
-    for (const threshold of [50, 70, 80, 90]) {
+    for (const threshold of bandCutoffs()) {
       const y = yFor(threshold);
       const line = document.createElementNS(SVG_NS, "line");
       line.setAttribute("x1", String(plotLeft));

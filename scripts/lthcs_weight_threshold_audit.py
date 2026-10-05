@@ -356,11 +356,23 @@ def cohort_verdict(
     return (verdict, worst or None, worst_gap)
 
 
-def band_verdict(count: int, band_name: str) -> str:
+# Review-band overflow threshold. Expressed as a share of the universe so it
+# scales with the ticker count (the old absolute ">30" was ~14% of the
+# original 219-name universe; on ~520 names it would fire on a healthy
+# distribution). The absolute fallback is kept for callers without a total.
+REVIEW_OVERFLOW_SHARE = 0.15
+REVIEW_OVERFLOW_ABS = 30
+
+
+def band_verdict(count: int, band_name: str, total: Optional[int] = None) -> str:
     """KEEP/SHIFT per-band verdict (heuristic)."""
     if band_name == "elite" and count == 0:
         return "SHIFT-DOWN (elite empty — threshold may be too high)"
-    if band_name == "review" and count > 30:
+    if total:
+        review_overflow = count / total > REVIEW_OVERFLOW_SHARE
+    else:
+        review_overflow = count > REVIEW_OVERFLOW_ABS
+    if band_name == "review" and review_overflow:
         return "SHIFT-UP (review overflowing — threshold may be too low)"
     if count == 0:
         return "EMPTY (consider widening adjacent bands)"
@@ -496,11 +508,20 @@ def fmt_band_md(
         spec = bands_cfg.get(b, {})
         lines.append(f"| {b} | {spec.get('min')}–{spec.get('max')} | {spec.get('label')} |")
     lines.append("")
-    lines.append(
-        "_Note: the task brief lists thresholds at 90/80/70/60/50/<50, but the "
-        "live `weights.json` config has Elite at 85+ (not 90+). All counts below "
-        "are computed against the **live config**._"
-    )
+    calib = weights_cfg.get("score_bands_calibration") or {}
+    if calib:
+        lines.append(
+            f"_Bands calibrated {calib.get('calibrated_at', '?')} from snapshot(s) "
+            f"{', '.join(calib.get('calibrated_from') or []) or '?'} "
+            f"({calib.get('ticker_count', '?')} tickers, method `{calib.get('method', '?')}`)._"
+        )
+    else:
+        lines.append(
+            "_Bands are the hand-set defaults (no `score_bands_calibration` "
+            "provenance in weights.json). Recalibrate from the live distribution "
+            "with `scripts/lthcs_calibrate_bands.py`. All counts below are "
+            "computed against the **live config**._"
+        )
     lines.append("")
 
     def _band_section(title: str, snapshots: Dict[str, List[Dict[str, Any]]], date: str):
@@ -513,7 +534,7 @@ def fmt_band_md(
         for b in band_order:
             c = counts.get(b, 0)
             pct = (100.0 * c / total) if total else 0.0
-            lines.append(f"| {b} | {c} | {pct:.1f}% | {band_verdict(c, b)} |")
+            lines.append(f"| {b} | {c} | {pct:.1f}% | {band_verdict(c, b, total)} |")
         lines.append(f"| **TOTAL** | **{total}** |  |  |")
         lines.append("")
 

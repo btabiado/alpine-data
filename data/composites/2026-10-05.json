@@ -1,19 +1,19 @@
 {
   "as_of": "2026-10-05",
-  "generated_at": "2026-10-05T01:02:39Z",
+  "generated_at": "2026-10-05T02:17:43Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-04",
       "label": null,
-      "note": "40 coins; 8 buy+, 3 sell+",
-      "score": 12,
+      "note": "40 coins; 7 buy+, 6 sell+",
+      "score": 2,
       "stale": false
     },
     "defi_sentiment": {
       "as_of": "2026-10-04",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": 11,
+      "score": 6,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -41,21 +41,21 @@
       "as_of": "2026-10-04",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": -17,
+      "score": -18,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-10-04",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": -17,
+      "score": -18,
       "stale": false
     },
     "futures_sentiment_eth": {
       "as_of": "2026-10-04",
       "label": "BALANCED",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": -8,
+      "score": -9,
       "stale": false
     },
     "futures_sentiment_link": {
@@ -73,7 +73,7 @@
       "stale": false
     },
     "lthcs_composite": {
-      "as_of": "2026-10-04",
+      "as_of": "2026-10-05",
       "label": "LTHCS NEUTRAL",
       "note": null,
       "score": -22,
@@ -102,14 +102,14 @@
       "stale": false
     },
     "whale_sentiment_btc": {
-      "as_of": "2026-10-03",
+      "as_of": "2026-10-04",
       "label": "WHALE DISTRIBUTION",
       "note": null,
-      "score": -38,
+      "score": -29,
       "stale": false
     },
     "whale_sentiment_eth": {
-      "as_of": "2026-10-03",
+      "as_of": "2026-10-04",
       "label": "STRONG WHALE DUMP",
       "note": null,
       "score": -50,
