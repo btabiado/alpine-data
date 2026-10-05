@@ -13,6 +13,7 @@
 
 // Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
 import { paintComposite, fLast } from '../lthcs_tab/lthcs-freshness.js';
+import { bandList } from '../lthcs_tab/lthcs-bands.js';
 
 const DATA_BASE = '../data/lthcs/history/by_ticker';
 const UNIVERSE_URL = '../data/lthcs/universe.json';
@@ -209,17 +210,9 @@ function renderLineChart(history) {
   const xScale = (x) => padL + (x - xMin) * (W - padL - padR) / (xMax - xMin || 1);
   const yScale = (y) => H - padB - (y - yMin) * (H - padT - padB) / (yMax - yMin);
 
-  // Band shade rectangles. Approximate band-to-score map from the public
-  // `score_bands` in data/lthcs/weights.json: 0-30 review, 30-45 weakening,
-  // 45-55 monitor, 55-70 constructive, 70-85 high_confidence, 85-100 elite.
-  const bands = [
-    { band: 'review',           lo: 0,  hi: 30 },
-    { band: 'weakening',        lo: 30, hi: 45 },
-    { band: 'monitor',          lo: 45, hi: 55 },
-    { band: 'constructive',     lo: 55, hi: 70 },
-    { band: 'high_confidence',  lo: 70, hi: 85 },
-    { band: 'elite',            lo: 85, hi: 100 },
-  ];
+  // Band shade rectangles from the live data/lthcs/weights.json
+  // `score_bands` (via lthcs-bands.js), so a recalibration moves the shading.
+  const bands = bandList().map((b) => ({ band: b.key, lo: b.min, hi: Math.min(100, b.max + 1) }));
   const colorVar = {
     elite: '--band-elite', high_confidence: '--band-high', constructive: '--band-constructive',
     monitor: '--band-monitor', weakening: '--band-weakening', review: '--band-review',

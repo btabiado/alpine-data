@@ -325,13 +325,14 @@ def assign_band(score: float, score_bands: Dict[str, Dict[str, Any]]) -> str:
     """Return the band key covering ``score``.
 
     Bands in weights.json are INTEGER-bounded (e.g. constructive=70..79,
-    high_confidence=80..89) but composite scores carry one decimal place,
-    so fractional scores like 79.4 sit in a gap between bands and would
-    otherwise be wrongly assigned. We treat each band as covering the
-    half-open interval ``[min, max+1)`` so a score of 79.4 lands in
-    constructive (since 70 ≤ 79.4 < 80), 89.99 lands in high_confidence,
-    100.0 lands in elite. Equivalent to flooring ``score`` to its integer
-    part before doing the inclusive lookup.
+    high_confidence=80..84 — the live numbers are whatever weights.json
+    says; see scripts/lthcs_calibrate_bands.py) but composite scores carry
+    one decimal place, so fractional scores like 79.4 sit in a gap between
+    bands and would otherwise be wrongly assigned. We treat each band as
+    covering the half-open interval ``[min, max+1)`` so a score of 79.4
+    lands in constructive (since 70 ≤ 79.4 < 80), 84.99 lands in
+    high_confidence, 100.0 lands in elite. Equivalent to flooring ``score``
+    to its integer part before doing the inclusive lookup.
 
     Out-of-range inputs are clamped to [0, 100] before lookup.
     """

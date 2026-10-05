@@ -6,14 +6,16 @@
  * button in the header.
  */
 
-const BAND_LIST = [
-  ["elite", "90–100", "Elite Confidence Hold"],
-  ["high_confidence", "80–89", "High Confidence Hold"],
-  ["constructive", "70–79", "Constructive Hold"],
-  ["monitor", "60–69", "Monitor Closely"],
-  ["weakening", "50–59", "Confidence Weakening"],
-  ["review", "0–49", "Structural Review Required"],
-];
+import { bandList, bandRangeText, bandsReady } from "./lthcs-bands.js";
+
+// Score-band rows come from the live weights.json score_bands (via
+// lthcs-bands.js) so the legend tracks any band recalibration.
+function bandRowsHtml() {
+  return bandList().map(
+    (b) =>
+      `<tr><td><span class="lthcs-about-dot" data-band="${b.key}"></span> ${escapeHtml(b.label)}</td><td><code>${escapeHtml(bandRangeText(b.key))}</code></td></tr>`
+  ).join("");
+}
 
 const PILLAR_LIST = [
   ["Adoption Momentum", "25%", "Revenue growth & QoQ vs peers + Google Trends search-interest (weekly batch)."],
@@ -90,10 +92,7 @@ function buildModal() {
   root.setAttribute("aria-modal", "true");
   root.setAttribute("aria-labelledby", "lthcs-about-title");
 
-  const bandRows = BAND_LIST.map(
-    ([key, range, label]) =>
-      `<tr><td><span class="lthcs-about-dot" data-band="${key}"></span> ${escapeHtml(label)}</td><td><code>${escapeHtml(range)}</code></td></tr>`
-  ).join("");
+  const bandRows = bandRowsHtml();
 
   const pillarRows = PILLAR_LIST.map(
     ([name, weight, desc]) =>
@@ -138,7 +137,7 @@ function buildModal() {
         <h3>Score bands</h3>
         <table class="lthcs-about-table">
           <thead><tr><th>Band</th><th>Range</th></tr></thead>
-          <tbody>${bandRows}</tbody>
+          <tbody data-about-bands>${bandRows}</tbody>
         </table>
 
         <h3>Five pillars (default weights for standard compounder)</h3>
@@ -248,6 +247,10 @@ export function openAbout() {
   document.addEventListener("keydown", trapTab);
   const closeBtn = root.querySelector(".lthcs-about-close");
   if (closeBtn) closeBtn.focus();
+  bandsReady.then(() => {
+    const tbody = root.querySelector("[data-about-bands]");
+    if (tbody) tbody.innerHTML = bandRowsHtml();
+  });
 }
 
 export function closeAbout() {

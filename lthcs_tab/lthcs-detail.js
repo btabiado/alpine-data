@@ -9,6 +9,7 @@
 'use strict';
 
 import { bandColorForScore } from './lthcs-sparkline.js';
+import { bandList, bandKeyForScore, bandCutoffs } from './lthcs-bands.js';
 import { loadFileIndex } from './lthcs-files.js';
 import {
   bindPillarExplainer,
@@ -82,17 +83,17 @@ const PILLAR_SHORT = {
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-// Band buckets, lowest first. Each: [minInclusive, maxExclusive, key, color]
-// Matches lthcs-sparkline DEFAULT_BAND_COLORS — kept here so we can tint with
-// low alpha without re-parsing hex.
-const BAND_BUCKETS = [
-  { min:  0, max: 50,  key: 'review',       color: '#7A2E1F' },
-  { min: 50, max: 60,  key: 'weakening',    color: '#B85A3E' },
-  { min: 60, max: 70,  key: 'monitor',      color: '#D89148' },
-  { min: 70, max: 80,  key: 'constructive', color: '#C9A227' },
-  { min: 80, max: 90,  key: 'high',         color: '#4A8F5F' },
-  { min: 90, max: 101, key: 'elite',        color: '#1F3A5F' },
-];
+// Band buckets, lowest first: {min (inclusive), max (exclusive), key, color}.
+// Built on demand from the live weights.json score_bands (lthcs-bands.js) so
+// a band recalibration re-tints the chart without a code change.
+function bandBuckets() {
+  return bandList().slice().reverse().map((b) => ({
+    min: b.min,
+    max: b.max + 1,
+    key: b.key,
+    color: b.color,
+  }));
+}
 
 const PILLAR_ORDER = [
   'adoption_momentum',
@@ -759,10 +760,7 @@ function attachChartHover(state) {
         const scoreEl = el('strong', { className: 'lthcs-chart-tip-score', text: score.toFixed(1) });
         tooltipEl.appendChild(scoreEl);
         // band readout
-        const band = row.band || (function () {
-          for (const b of BAND_BUCKETS) if (score >= b.min && score < b.max) return b.key;
-          return null;
-        })();
+        const band = row.band || bandKeyForScore(score);
         if (band) {
           const bandEl = el('span', { className: 'lthcs-chart-tip-band', text: humanCase(band) });
           bandEl.setAttribute('data-band', band);
@@ -1005,7 +1003,7 @@ function renderChart(panel, history) {
 
   // ---- Band-tinted backgrounds ----
   const bandsGroup = svgEl('g', { class: 'lthcs-chart-bands' });
-  for (const b of BAND_BUCKETS) {
+  for (const b of bandBuckets()) {
     const yTop = yFor(Math.min(100, b.max));
     const yBot = yFor(b.min);
     const h = Math.max(0, yBot - yTop);
@@ -1019,9 +1017,9 @@ function renderChart(panel, history) {
   }
   svg.appendChild(bandsGroup);
 
-  // ---- Gridlines at 50/60/70/80/90 ----
+  // ---- Gridlines at the band cutoffs (weights.json) ----
   const gridGroup = svgEl('g', { class: 'lthcs-chart-grid' });
-  for (const yVal of [50, 60, 70, 80, 90]) {
+  for (const yVal of bandCutoffs()) {
     const y = yFor(yVal);
     gridGroup.appendChild(svgEl('line', {
       x1: M.left, x2: M.left + plotW,
