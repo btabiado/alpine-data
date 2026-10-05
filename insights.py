@@ -216,9 +216,9 @@ FRESHNESS_MAX_AGE_DAYS = {
     # Reddit about.json — hourly, same stale-keep semantics. "Active users" is
     # an instantaneous gauge, so 2 -> tolerates 1 day is already generous.
     "social_reddit": 2,
-    # Santiment is deliberately gated to fire only on the UTC hour-0 run and
-    # stale-kept for the other 23 hours, so a HEALTHY feed is routinely up to
-    # ~1 day old BY DESIGN. 3 -> tolerates 2 days, leaving room for one
+    # Santiment is deliberately gated to one fetch per UTC day (the first run
+    # of the day) and stale-kept otherwise, so a HEALTHY feed is routinely up
+    # to ~1 day old BY DESIGN. 3 -> tolerates 2 days, leaving room for one
     # missed daily run without excusing a real outage.
     "social_santiment": 3,
 }

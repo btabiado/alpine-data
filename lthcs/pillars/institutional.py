@@ -46,6 +46,7 @@ rate-limit budget against Yahoo. The pipeline caller pre-fetches
 from __future__ import annotations
 
 import logging
+import math
 from typing import Any, Dict, List, Optional, Tuple
 
 from lthcs.normalize import (
@@ -365,7 +366,7 @@ def compute_momentum_subscore(
     except (TypeError, ValueError):
         return _NEUTRAL
     # NaN check.
-    if focal != focal:
+    if math.isnan(focal):
         return _NEUTRAL
 
     peer_values: List[float] = []
@@ -378,7 +379,7 @@ def compute_momentum_subscore(
             f = float(m)
         except (TypeError, ValueError):
             continue
-        if f != f:  # NaN
+        if math.isnan(f):  # NaN
             continue
         peer_values.append(f)
 
@@ -405,7 +406,7 @@ def compute_inst_holdings_subscore(
         v = float(change_qoq)
     except (TypeError, ValueError):
         return _NEUTRAL
-    if v != v:  # NaN
+    if math.isnan(v):  # NaN
         return _NEUTRAL
     return float(bounded_linear(v, _INST_CHANGE_LOW, _INST_CHANGE_HIGH))
 
@@ -462,7 +463,7 @@ def _apply_insider_adjustment(
         )
     except (TypeError, ValueError):
         conv = None
-    if conv is not None and conv != conv:  # NaN
+    if conv is not None and math.isnan(conv):  # NaN
         conv = None
 
     detail["regime"] = regime
@@ -557,7 +558,7 @@ def _apply_holdings_adjustment(
         )
     except (TypeError, ValueError):
         score = None
-    if score is not None and score != score:  # NaN
+    if score is not None and math.isnan(score):  # NaN
         score = None
 
     # Phase 2: prefer the AUM-weighted signal when present. Falls back
@@ -569,7 +570,7 @@ def _apply_holdings_adjustment(
         )
     except (TypeError, ValueError):
         weighted_score = None
-    if weighted_score is not None and weighted_score != weighted_score:  # NaN
+    if weighted_score is not None and math.isnan(weighted_score):  # NaN
         weighted_score = None
 
     raw_holders_share = holdings_data.get("weighted_holders_share")
@@ -581,7 +582,7 @@ def _apply_holdings_adjustment(
         weighted_holders_share = None
     if (
         weighted_holders_share is not None
-        and weighted_holders_share != weighted_holders_share
+        and math.isnan(weighted_holders_share)
     ):
         weighted_holders_share = None
 

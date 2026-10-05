@@ -64,7 +64,7 @@ on:
 
 jobs:
   backfill:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest becomes 26.04 on 2026-10-19 and setup-python needs a toolcache build for the image
     timeout-minutes: 350   # 5h50m — under GH's 6h job cap
     permissions:
       contents: read
@@ -76,7 +76,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.x"
 

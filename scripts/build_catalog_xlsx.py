@@ -139,9 +139,9 @@ def main() -> int:
     ws.append(["Note", meta.get("note", "")])
     ws.append([
         "Health note",
-        "Only dead/unreachable URLs are flagged per-row; ok/gated are aggregate "
-        "counts, so non-flagged rows show 'OK / not flagged'. Remaining "
-        "unreachable are usually datacenter-IP bot walls, not genuine downtime.",
+        ("Only dead/unreachable URLs are flagged per-row; ok/gated are aggregate "
+         "counts, so non-flagged rows show 'OK / not flagged'. Remaining "
+         "unreachable are usually datacenter-IP bot walls, not genuine downtime."),
     ])
     ws.append([])
     ws.append(["Category", "Count"])

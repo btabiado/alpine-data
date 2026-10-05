@@ -18,8 +18,10 @@ Two ways it's used:
      (``health/apis.html``) has a snapshot to fall back on when there's no
      live server to probe through.
 
-Pure stdlib (urllib + concurrent.futures) so it stays cheap in CI and adds no
-dependency to the server process.
+Stdlib (urllib + concurrent.futures) for every probe except the few that opt
+into ``requests`` with ``"client": "requests"`` (tsa.gov, whose edge 403s
+urllib but serves ``requests``; see TARGETS). ``requests`` is optional: when it
+isn't importable those targets fall back to urllib.
 
 THE KEY-REPORTING CONTRACT
 Each source that names a ``key_env`` reports a three-state ``key_state``:
@@ -46,9 +48,15 @@ import sys
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+
+try:  # optional: only targets with "client": "requests" use it (see TARGETS)
+    import requests
+except ImportError:  # pragma: no cover - exercised via monkeypatch in tests
+    requests = None
 
 REPO_ROOT = Path(__file__).resolve().parent
 OUT_PATH = REPO_ROOT / "data" / "health" / "api_status.json"
@@ -75,18 +83,32 @@ PROBE_ATTEMPTS = 2       # 1 retry: gov/city hosts give transient timeouts from 
 # is not mapped by the workflow step that runs this script.
 #
 # Fields: label, category (≈ dashboard tab/role), url, key_env (None = keyless).
+# Optional key_auth: how the FETCHER attaches the key when key_env is set —
+# {"param": NAME[, "extra": {...}]} adds/replaces a query parameter, {"header":
+# NAME, "format": "Apikey {key}"} adds a header. Without it a keyed source was
+# probed keyless even with its secret configured, so FRED / FRED ENPLANE (400)
+# and AirNow (401) read auth_required with key_state=set: the verdict described
+# the probe, not the source. Reddit and OpenSky need an OAuth exchange, so they
+# carry no key_auth and keep the keyless verdict.
 # Optional: headers (merged over the default UA), body_check ("arcgis": read
-# the body and judge the in-band error envelope ArcGIS sends with HTTP 200).
+# the body and judge the in-band error envelope ArcGIS sends with HTTP 200),
+# client ("requests": probe through the requests library instead of urllib,
+# for a host whose edge blocks urllib's request shape; urllib if requests is
+# not installed).
 TARGETS: list[dict] = [
     # ---- price / market cap ----
     {"label": "CoinGecko",            "category": "Price/MktCap",  "url": "https://api.coingecko.com/api/v3/ping",                                                          "key_env": None},
-    {"label": "CryptoCompare CCCAGG", "category": "Price/MktCap",  "url": "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD",                                "key_env": "CRYPTOCOMPARE_API_KEY"},
-    {"label": "CryptoCompare data-api","category": "Research",     "url": "https://data-api.cryptocompare.com/asset/v1/top/list?page=1&page_size=1",                       "key_env": "CRYPTOCOMPARE_API_KEY"},
+    {"label": "CryptoCompare CCCAGG", "category": "Price/MktCap",  "url": "https://min-api.cryptocompare.com/data/price?fsym=BTC&tsyms=USD",                                "key_env": "CRYPTOCOMPARE_API_KEY", "key_auth": {"header": "Authorization", "format": "Apikey {key}"}},
+    {"label": "CryptoCompare data-api","category": "Research",     "url": "https://data-api.cryptocompare.com/asset/v1/top/list?page=1&page_size=1",                       "key_env": "CRYPTOCOMPARE_API_KEY", "key_auth": {"header": "Authorization", "format": "Apikey {key}"}},
     {"label": "GeckoTerminal",        "category": "Price/MktCap",  "url": "https://api.geckoterminal.com/api/v2/networks",                                                  "key_env": None},
     # ---- exchange / derivatives ----
     {"label": "Coinbase Exchange",    "category": "Spot",          "url": "https://api.exchange.coinbase.com/products/BTC-USD/ticker",                                      "key_env": None},
     {"label": "Coinbase Intl (perps)","category": "Futures",       "url": "https://api.international.coinbase.com/api/v1/instruments",                                      "key_env": None},
-    {"label": "CoinDesk CADLI",       "category": "Futures",       "url": "https://data-api.coindesk.com/index/cc/v1/latest/tick?market=cadli&instruments=BTC-USD",         "key_env": None},
+    # CoinDesk Data (ex-CryptoCompare) answers every keyless request with 401
+    # "API key required" since 2026-10. fetch_market.coindesk_cadli() sends
+    # CRYPTOCOMPARE_API_KEY (one CoinDesk Data key covers both hosts), so a
+    # keyless 401 here is auth_required, not blocked. Same path as the fetcher.
+    {"label": "CoinDesk CADLI",       "category": "Futures",       "url": "https://data-api.coindesk.com/index/cc/v1/historical/days?market=cadli&instrument=BTC-USD&limit=1", "key_env": "CRYPTOCOMPARE_API_KEY", "key_auth": {"header": "Authorization", "format": "Apikey {key}"}},
     {"label": "OKX",                  "category": "Futures",       "url": "https://www.okx.com/api/v5/public/funding-rate?instId=BTC-USD-SWAP",                             "key_env": None},
     {"label": "Deribit",              "category": "Futures",       "url": "https://www.deribit.com/api/v2/public/get_index_price?index_name=btc_usd",                       "key_env": None},
     {"label": "Alternative.me F&G",   "category": "Sentiment",     "url": "https://api.alternative.me/fng/?limit=1",                                                        "key_env": None},
@@ -94,19 +116,21 @@ TARGETS: list[dict] = [
     {"label": "mempool.space",        "category": "Whale",         "url": "https://mempool.space/api/v1/fees/recommended",                                                  "key_env": None},
     {"label": "blockchain.info",      "category": "Whale",         "url": "https://api.blockchain.info/stats",                                                              "key_env": None},
     {"label": "Blockchair",           "category": "Whale",         "url": "https://api.blockchair.com/bitcoin/stats",                                                       "key_env": None},
-    {"label": "Etherscan v2",         "category": "Whale",         "url": "https://api.etherscan.io/v2/api?chainid=1&module=stats&action=ethprice",                         "key_env": "ETHERSCAN_API_KEY"},
-    {"label": "CoinMetrics",          "category": "Whale",         "url": "https://community-api.coinmetrics.io/v4/catalog/assets?assets=btc",                              "key_env": "COINMETRICS_API_KEY"},
-    {"label": "Glassnode",            "category": "Whale",         "url": "https://api.glassnode.com/v1/metrics/market/price_usd_close",                                     "key_env": "GLASSNODE_API_KEY"},
+    {"label": "Etherscan v2",         "category": "Whale",         "url": "https://api.etherscan.io/v2/api?chainid=1&module=stats&action=ethprice",                         "key_env": "ETHERSCAN_API_KEY", "key_auth": {"param": "apikey"}},
+    {"label": "CoinMetrics",          "category": "Whale",         "url": "https://community-api.coinmetrics.io/v4/catalog/assets?assets=btc",                              "key_env": "COINMETRICS_API_KEY", "key_auth": {"header": "Authorization", "format": "Api-Key {key}"}},
+    {"label": "Glassnode",            "category": "Whale",         "url": "https://api.glassnode.com/v1/metrics/market/price_usd_close",                                     "key_env": "GLASSNODE_API_KEY", "key_auth": {"param": "api_key"}},
     {"label": "bitinfocharts",        "category": "Whale",         "url": "https://bitinfocharts.com/bitcoin-distribution-history.html",                                     "key_env": None},
     # ---- defi ----
     {"label": "DeFiLlama TVL",        "category": "DeFi",          "url": "https://api.llama.fi/v2/chains",                                                                 "key_env": None},
     {"label": "DeFiLlama yields",     "category": "DeFi",          "url": "https://yields.llama.fi/pools",                                                                  "key_env": None},
     {"label": "DeFiLlama prices",     "category": "DeFi",          "url": "https://coins.llama.fi/prices/current/coingecko:bitcoin",                                        "key_env": None},
     {"label": "DeFiLlama stablecoins","category": "DeFi",          "url": "https://stablecoins.llama.fi/stablecoins?includePrices=false",                                   "key_env": None},
+    # 402 here is DeFiLlama's paid-plan wall (bridges are Pro-only since
+    # 2026-10), not an outage; the DeFi tab's bridges card says so.
     {"label": "DeFiLlama bridges",    "category": "DeFi",          "url": "https://bridges.llama.fi/bridges",                                                               "key_env": None},
     # ---- equities / macro ----
     {"label": "Yahoo Finance",        "category": "Stocks",        "url": "https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD?range=1d&interval=1d",                 "key_env": None},
-    {"label": "FRED",                 "category": "Macro",         "url": "https://api.stlouisfed.org/fred/releases",                                                       "key_env": "FRED_API_KEY"},
+    {"label": "FRED",                 "category": "Macro",         "url": "https://api.stlouisfed.org/fred/releases",                                                       "key_env": "FRED_API_KEY", "key_auth": {"param": "api_key", "extra": {"file_type": "json", "limit": "1"}}},
     # ---- ETF flows ----
     # Farside blocks automated requests (Cloudflare 403); the dashboard
     # actually sources BTC ETF flows from a keyless GitHub mirror CSV (see
@@ -138,7 +162,14 @@ TARGETS: list[dict] = [
     # effect was printing "auth required" on /health/apis.html forever for a key
     # that unlocked nothing. Claim removed; the probe still reports whether the
     # endpoint the dashboard actually calls is serving.
-    {"label": "Santiment",            "category": "Research",      "url": "https://api.santiment.net/graphql",                                                             "key_env": None},
+    #
+    # A bare GET of /graphql has no query document, so Santiment answers 400
+    # "No query document supplied": the probe reported "degraded" while the
+    # fetcher's POSTs were returning data. GraphQL also accepts GET with
+    # ?query=, so this sends the same getMetric/timeseriesData query the
+    # fetcher POSTs (bitcoin DAA, relative dates so it never ages out of the
+    # free window), URL-encoded.
+    {"label": "Santiment",            "category": "Research",      "url": "https://api.santiment.net/graphql?query=%7BgetMetric%28metric%3A%22daily_active_addresses%22%29%7BtimeseriesData%28slug%3A%22bitcoin%22%2Cfrom%3A%22utc_now-3d%22%2Cto%3A%22utc_now%22%2Cinterval%3A%221d%22%29%7Bdatetime%20value%7D%7D%7D", "key_env": None},
     {"label": "SEC EDGAR",            "category": "AI News",       "url": "https://efts.sec.gov/LATEST/search-index?q=ai",                                                 "key_env": None, "headers": {"User-Agent": "BDT-Dashboards/1.0 (open-source dashboard; contact@bdt-dashboards.local)", "Accept": "application/json"}},
     # ---- summit (the standalone Snowflake Summit dashboard is static/baked —
     # no live upstream API; we probe the deployed page itself for "is it up") ----
@@ -157,11 +188,11 @@ TARGETS: list[dict] = [
     # data.sfgov.org host (urllib follows its 301 to data.sf.gov).
     # SOCRATA_APP_TOKEN only raises rate limits, so it's an optional key
     # (200 keyless → "up").
-    {"label": "Socrata · Chicago",    "category": "City",          "url": "https://data.cityofchicago.org/resource/ydr8-5enu.json?$limit=1",                                "key_env": "SOCRATA_APP_TOKEN"},
-    {"label": "Socrata · Los Angeles","category": "City",          "url": "https://data.lacity.org/resource/pi9x-tg5x.json?$limit=1",                                       "key_env": "SOCRATA_APP_TOKEN"},
-    {"label": "Socrata · Seattle",    "category": "City",          "url": "https://data.seattle.gov/resource/76t5-zqzr.json?$limit=1",                                      "key_env": "SOCRATA_APP_TOKEN"},
-    {"label": "Socrata · San Francisco","category": "City",        "url": "https://data.sf.gov/resource/i98e-djp9.json?$limit=1",                                           "key_env": "SOCRATA_APP_TOKEN"},
-    {"label": "Socrata · New York",   "category": "City",          "url": "https://data.cityofnewyork.us/resource/ipu4-2q9a.json?$limit=1",                                 "key_env": "SOCRATA_APP_TOKEN"},
+    {"label": "Socrata · Chicago",    "category": "City",          "url": "https://data.cityofchicago.org/resource/ydr8-5enu.json?$limit=1",                                "key_env": "SOCRATA_APP_TOKEN", "key_auth": {"header": "X-App-Token", "format": "{key}"}},
+    {"label": "Socrata · Los Angeles","category": "City",          "url": "https://data.lacity.org/resource/pi9x-tg5x.json?$limit=1",                                       "key_env": "SOCRATA_APP_TOKEN", "key_auth": {"header": "X-App-Token", "format": "{key}"}},
+    {"label": "Socrata · Seattle",    "category": "City",          "url": "https://data.seattle.gov/resource/76t5-zqzr.json?$limit=1",                                      "key_env": "SOCRATA_APP_TOKEN", "key_auth": {"header": "X-App-Token", "format": "{key}"}},
+    {"label": "Socrata · San Francisco","category": "City",        "url": "https://data.sf.gov/resource/i98e-djp9.json?$limit=1",                                           "key_env": "SOCRATA_APP_TOKEN", "key_auth": {"header": "X-App-Token", "format": "{key}"}},
+    {"label": "Socrata · New York",   "category": "City",          "url": "https://data.cityofnewyork.us/resource/ipu4-2q9a.json?$limit=1",                                 "key_env": "SOCRATA_APP_TOKEN", "key_auth": {"header": "X-App-Token", "format": "{key}"}},
     # ArcGIS (Miami-Dade building permits): a returnCountOnly query on the
     # registry's miamidade_permit_data layer, the same /query path
     # city/arcgis.py uses. ArcGIS reports errors INSIDE an HTTP 200 body, so
@@ -180,25 +211,28 @@ TARGETS: list[dict] = [
     # fast. ACS *data* queries need CENSUS_API_KEY (keyless they 302 to an HTML
     # missing_key page). The /data.json discovery doc is huge and trips the
     # timeout whenever Census is sluggish.
-    {"label": "Census ACS",           "category": "City",          "url": "https://api.census.gov/data/2024/acs/acs5/variables/B19013_001E.json",                           "key_env": "CENSUS_API_KEY"},
+    {"label": "Census ACS",           "category": "City",          "url": "https://api.census.gov/data/2024/acs/acs5/variables/B19013_001E.json",                           "key_env": "CENSUS_API_KEY", "key_auth": {"param": "key"}},
     # BLS: one of the LAUS series city/bls.py requests (Miami-Dade unemployment
     # rate). Keyless works under a low daily cap; BLS_API_KEY lifts it. Caveat:
     # BLS answers an exhausted keyless quota with HTTP 200 and
     # "status": "REQUEST_NOT_PROCESSED", which this probe does not inspect.
-    {"label": "BLS",                  "category": "City",          "url": "https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN120860000000003",                          "key_env": "BLS_API_KEY"},
-    {"label": "EPA AirNow",           "category": "City",          "url": "https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=40&longitude=-74&distance=25&API_KEY=", "key_env": "AIRNOW_API_KEY"},
+    {"label": "BLS",                  "category": "City",          "url": "https://api.bls.gov/publicAPI/v2/timeseries/data/LAUCN120860000000003",                          "key_env": "BLS_API_KEY", "key_auth": {"param": "registrationkey"}},
+    {"label": "EPA AirNow",           "category": "City",          "url": "https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=40&longitude=-74&distance=25&API_KEY=", "key_env": "AIRNOW_API_KEY", "key_auth": {"param": "API_KEY"}},
     # ---- aviation: OpenSky live ADS-B. Anonymous access works (rate-limited);
     # OPENSKY_CLIENT_ID only raises limits. Tiny bbox keeps the probe cheap.
     {"label": "OpenSky Network",      "category": "Aviation",      "url": "https://opensky-network.org/api/states/all?lamin=45.8&lomin=5.9&lamax=46.0&lomax=6.1",            "key_env": "OPENSKY_CLIENT_ID"},
     # TSA daily throughput (powers the TSA Throughput sub-view via fetch_tsa.py).
     # tsa.gov 403s a non-browser UA, so send a real browser UA like the scraper.
-    {"label": "TSA passenger volumes","category": "Aviation",      "url": "https://www.tsa.gov/travel/passenger-volumes",                                                   "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
+    # Its Akamai edge also 403s urllib requests from GitHub Actions while serving
+    # `requests` (the client fetch_tsa.py switched to in PR #43), so probe with
+    # the same client. Otherwise this row reads "blocked" while the feed works.
+    {"label": "TSA passenger volumes","category": "Aviation",      "url": "https://www.tsa.gov/travel/passenger-volumes",                                                   "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}, "client": "requests"},
     # FRED ENPLANE — the air-travel enplanements series behind the Air Travel
     # sub-view. Use the FRED *API* host (api.stlouisfed.org, same reliable host
     # as the Macro FRED probe) rather than the web fredgraph.csv endpoint, which
     # Akamai tarpits for non-curl clients from CI. Keyed on FRED_API_KEY:
     # auth_required without a key, up in CI where the secret is set.
-    {"label": "FRED ENPLANE (air travel)","category": "Aviation",  "url": "https://api.stlouisfed.org/fred/series/observations?series_id=ENPLANE&file_type=json&limit=1",     "key_env": "FRED_API_KEY"},
+    {"label": "FRED ENPLANE (air travel)","category": "Aviation",  "url": "https://api.stlouisfed.org/fred/series/observations?series_id=ENPLANE&file_type=json&limit=1",     "key_env": "FRED_API_KEY", "key_auth": {"param": "api_key"}},
     # AOPA Air Safety Institute (McSpadden Report) — the GA accident/rate source
     # behind the Safety sub-view. Browser UA; annual data, probed for reachability.
     {"label": "AOPA ASI (GA safety)",  "category": "Aviation",      "url": "https://www.aopa.org/training-and-safety/air-safety-institute/accident-analysis/richard-g-mcspadden-report", "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
@@ -333,8 +367,75 @@ def _verdict(status: int | None, needs_key: bool) -> str:
     return "degraded"
 
 
-def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> dict:
+def _get_requests(url: str, headers: dict, timeout: float,
+                  body_check: str | None) -> tuple[int, tuple[int, str] | None, str]:
+    """One GET through the requests library -> ``(status, inband_error, note)``.
+
+    Mirrors the urllib path in ``_probe_one``: an HTTP error status is a server
+    reply and is returned (note = reason phrase), while connection-level
+    failures (DNS, TCP, TLS, timeout) raise so the caller retries them.
+    Redirects are followed, as urllib follows them. ``stream=True`` so a healthy
+    reply's body is not downloaded. requests' own default headers (Accept,
+    Accept-Encoding) go out alongside ours, as they do from fetch_tsa.py.
+    """
+    r = requests.get(url, headers=headers, timeout=timeout, stream=True)
+    try:
+        status = r.status_code
+        if status >= 400:
+            return status, None, (r.reason or "")[:80]
+        if body_check == "arcgis":
+            body = r.raw.read(_BODY_CHECK_BYTES, decode_content=True)
+            return status, _arcgis_inband_error(body), ""
+        return status, None, ""
+    finally:
+        r.close()
+
+
+def _with_key(target: dict, headers: dict) -> tuple[str, dict, str | None]:
+    """``(url, headers, key)`` with the target's key attached per ``key_auth``.
+
+    Only when ``key_env`` holds a non-blank value; otherwise the target is
+    probed exactly as written. The returned URL may carry the secret, so it is
+    used for the request only — never logged, stored or put in a note (the
+    snapshot records ``host`` and the redacted note, nothing else)."""
     url = target["url"]
+    auth = target.get("key_auth") or {}
+    key_env = target.get("key_env")
+    key = (os.environ.get(key_env) or "").strip() if key_env else ""
+    if not key or not auth:
+        return url, headers, None
+    if auth.get("param"):
+        parts = urllib.parse.urlsplit(url)
+        q = [(k, v) for k, v in urllib.parse.parse_qsl(parts.query, keep_blank_values=True)
+             if k != auth["param"]]
+        q += [(k, v) for k, v in (auth.get("extra") or {}).items()
+              if k not in {kk for kk, _ in q}]
+        q.append((auth["param"], key))
+        url = urllib.parse.urlunsplit(parts._replace(query=urllib.parse.urlencode(q)))
+    if auth.get("header"):
+        headers = dict(headers)
+        headers[auth["header"]] = (auth.get("format") or "{key}").format(key=key)
+    return url, headers, key
+
+
+def _scrub(note: str, key: str | None) -> str:
+    """Note text minus any credential: by value, then (for anything shaped
+    like a query string) by pattern via city.redact. The pattern pass is
+    limited to text containing '=' so prose such as ArcGIS's "Token Required"
+    survives intact."""
+    if key:
+        note = note.replace(key, "***REDACTED***").replace(
+            urllib.parse.quote(key, safe=""), "***REDACTED***")
+    if "=" not in note:
+        return note
+    try:
+        from city.redact import redact
+        return redact(note)
+    except Exception:  # never let redaction break a probe
+        return note
+
+
+def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> dict:
     key_env = target.get("key_env")
     needs_key = bool(key_env)
     # Default UA for all probes; a target may override/extend via "headers"
@@ -343,7 +444,12 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
     # without it EDGAR returns 403/500).
     headers = {"User-Agent": _UA}
     headers.update(target.get("headers") or {})
+    url, headers, key = _with_key(target, headers)
+    host = target["url"].split("/")[2]
     body_check = target.get("body_check")
+    # Opt-in per target; everything else stays on urllib. Without requests
+    # installed an opted-in target falls back to urllib too.
+    use_requests = target.get("client") == "requests" and requests is not None
     t0 = time.monotonic()
     status: int | None = None
     inband: tuple[int, str] | None = None
@@ -356,6 +462,9 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
     # is a genuine server reply, so take it as-is and stop.
     for attempt in range(attempts):
         try:
+            if use_requests:
+                status, inband, note = _get_requests(url, headers, timeout, body_check)
+                break
             req = urllib.request.Request(url, headers=headers, method="GET")
             with urllib.request.urlopen(req, timeout=timeout, context=_SSL_CTX) as r:
                 status = r.status
@@ -374,18 +483,19 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
             note = f"{type(e).__name__}: {e}"[:120]
             retried = attempt + 1
     latency_ms = int((time.monotonic() - t0) * 1000)
+    note = _scrub(note, key)
     # `status` stays the real HTTP status (the page's HTTP column); an in-band
     # error decides the verdict instead and is spelled out in the note.
     verdict_code = status
     if inband is not None:
         verdict_code, message = inband
-        note = f"ArcGIS error {verdict_code} in HTTP {status} body: {message}"[:120]
+        note = _scrub(f"ArcGIS error {verdict_code} in HTTP {status} body: {message}"[:120], key)
     verdict = _verdict(verdict_code, needs_key)
     kstate = key_state(key_env)
     return {
         "label": target["label"],
         "category": target["category"],
-        "host": url.split("/")[2],
+        "host": host,
         "status": status,
         "latency_ms": latency_ms,
         "verdict": verdict,
@@ -403,6 +513,9 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
         # the reader guess. A name, never a value.
         "key_env": key_env,
         "retries": retried,
+        # Whether the configured key was actually sent with the probe, so a
+        # 401 with key_sent=true means "the key is rejected", not "no key".
+        "key_sent": bool(key),
         "note": note,
     }
 

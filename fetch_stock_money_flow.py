@@ -382,7 +382,7 @@ def _write_sidecar(payload: Dict[str, Any]) -> Dict[str, Any]:
             json.dump(payload, fh, indent=2)
             fh.write("\n")
     except OSError:
-        pass
+        pass  # unwritable output path; the payload is still returned to the caller
     return payload
 
 

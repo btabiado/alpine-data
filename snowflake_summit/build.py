@@ -320,6 +320,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   :root{
+    color-scheme:dark;
     --bg:#0b1020; --panel:#121a30; --panel2:#172241; --border:#243352;
     --text:#e8eeff; --muted:#8da2c8; --accent:#29b5e8; --accent2:#11567f;
     --A:#34d399; --B:#fbbf24; --C:#64748b; --gem:#a78bfa; --fit:#f472b6;
@@ -382,8 +383,10 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
        (Scoped to #vModal; the desktop main table keeps its nowrap.) */
     #vModal th,#vModal td{white-space:normal}
     #vModal td.name{word-break:break-word}}
-  h3.sec{margin:22px 0 12px;font-size:15px}
-  h3.sec .hint{color:var(--muted);font-weight:400;font-size:12px;margin-left:6px}
+  /* Section titles are h2 (they follow the page h1; they were h3, a
+     skipped level for screen-reader heading navigation). */
+  h2.sec{margin:22px 0 12px;font-size:15px}
+  h2.sec .hint{color:var(--muted);font-weight:400;font-size:12px;margin-left:6px}
   .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
   .card2{background:linear-gradient(157deg,#17274a,#0f1830 70%);border:1px solid var(--border);border-radius:14px;padding:15px 16px 14px;position:relative;overflow:hidden;transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease}
   .card2::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);opacity:.6}
@@ -413,13 +416,13 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     .no-print,.dl,.homelink,.controls,#search,#mqBack,#mqSegSel{display:none !important}
     .wrap{width:1320px;max-width:none;padding:6px}
     .panel,.card2,.kpi,canvas,.nitem{break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    h3.sec{break-after:avoid;page-break-after:avoid}
+    h2.sec{break-after:avoid;page-break-after:avoid}
     .scroll{max-height:none !important;overflow:visible !important}
     table{font-size:10px}
   }
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
   .grid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;margin-bottom:16px}
-  .grid h4,.panel h4{margin:0 0 12px;font-size:13.5px;font-weight:700}
+  .grid h3,.panel h3{margin:0 0 12px;font-size:13.5px;font-weight:700}
   canvas{max-height:300px}
   table{width:100%;border-collapse:collapse;font-size:12.5px}
   th,td{text-align:left;padding:8px 9px;border-bottom:1px solid var(--border);white-space:nowrap}
@@ -587,7 +590,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     .wrap{padding:14px 12px}
     header{padding:16px 14px 12px}
     h1{font-size:17px}
-    h3.sec{font-size:13.5px;margin:18px 0 10px}
+    h2.sec{font-size:13.5px;margin:18px 0 10px}
     .kpi{padding:11px 12px}
     .kpi .v{font-size:21px}
     .kpi .l{font-size:9.5px}
@@ -822,22 +825,22 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <div class="wrap" id="dashwrap">
   <div class="kpis" id="kpis"></div>
 
-  <h3 class="sec">🤝 Bryan’s Recommendation <span class="hint">— top career / networking fit</span></h3>
+  <h2 class="sec">🤝 Bryan’s Recommendation <span class="hint">— top career / networking fit</span></h2>
   <div class="cards" id="bestfit"></div>
 
   <div class="grid" style="margin-top:22px">
-    <div class="panel"><h4>Top <span class="barNum">15</span> by Overall Score</h4><canvas id="topChart" role="img" aria-label="Bar chart: the 15 highest-scoring partners by overall score (0–10)."></canvas></div>
-    <div class="panel"><h4>Priority Tier mix</h4><canvas id="tierChart" role="img" aria-label="Doughnut chart: partner counts by priority tier (A, B, C)."></canvas></div>
+    <div class="panel"><h3>Top <span class="barNum">15</span> by Overall Score</h3><canvas id="topChart" role="img" aria-label="Bar chart: the 15 highest-scoring partners by overall score (0–10)."></canvas></div>
+    <div class="panel"><h3>Priority Tier mix</h3><canvas id="tierChart" role="img" aria-label="Doughnut chart: partner counts by priority tier (A, B, C)."></canvas></div>
   </div>
 
   <div class="topbar">
     <div class="searchwrap">
-      <input id="search" placeholder="Search all vendors — name, category, niche…" autocomplete="off"/>
+      <input id="search" aria-label="Search all vendors" placeholder="Search all vendors — name, category, niche…" autocomplete="off"/>
     </div>
     <span class="hit" id="searchhit"></span>
   </div>
 
-  <h3 class="sec" id="allpartners">All Partner Vendors <span class="hint">— <span class="sorthint">click a column to sort · </span>💎 = hidden gem</span></h3>
+  <h2 class="sec" id="allpartners">All Partner Vendors <span class="hint">— <span class="sorthint">click a column to sort · </span>💎 = hidden gem</span></h2>
   <div class="panel">
     <div class="vfilters-m no-print" id="vFiltersM"></div>
     <div class="scroll">
@@ -867,10 +870,10 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   </div>
 
   <div class="grid" style="margin-top:22px">
-    <div class="panel"><h4>Partners by Niche</h4><canvas id="nicheChart" role="img" aria-label="Bar chart: partner counts grouped by value niche."></canvas></div>
-    <div class="panel"><h4>Avg score profile — Tier A vs all</h4><canvas id="profChart" role="img" aria-label="Radar chart: average score profile across the five dimensions, Tier A versus all partners."></canvas></div>
+    <div class="panel"><h3>Partners by Niche</h3><canvas id="nicheChart" role="img" aria-label="Bar chart: partner counts grouped by value niche."></canvas></div>
+    <div class="panel"><h3>Avg score profile — Tier A vs all</h3><canvas id="profChart" role="img" aria-label="Radar chart: average score profile across the five dimensions, Tier A versus all partners."></canvas></div>
   </div>
-  <div class="panel" style="margin-bottom:16px"><h4>💰 Top <span class="barNum">15</span> by Valuation <span class="hint" style="font-weight:400;color:var(--muted)">— parsed from reported valuation / market cap; hover for detail</span></h4><canvas id="valChart" style="max-height:380px" role="img" aria-label="Bar chart: the 15 partners with the highest reported valuation or market cap."></canvas></div>
+  <div class="panel" style="margin-bottom:16px"><h3>💰 Top <span class="barNum">15</span> by Valuation <span class="hint" style="font-weight:400;color:var(--muted)">— parsed from reported valuation / market cap; hover for detail</span></h3><canvas id="valChart" style="max-height:380px" role="img" aria-label="Bar chart: the 15 partners with the highest reported valuation or market cap."></canvas></div>
 
   <div class="note" id="note"></div>
   <button id="toTop" type="button" class="totop no-print" aria-label="Back to top" title="Back to top">↑</button>
@@ -890,7 +893,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     </div>
   </header>
   <div class="wrap">
-    <h3 class="sec" id="news">📰 Summit News <span class="hint">— Snowflake Summit 2026 announcements from partner vendors, by category</span></h3>
+    <h2 class="sec" id="news">📰 Summit News <span class="hint">— Snowflake Summit 2026 announcements from partner vendors, by category</span></h2>
     <div id="newsBuckets" class="bucketbar"></div>
     <div class="panel">
       <div class="controls" style="margin-bottom:11px">
@@ -902,7 +905,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       </div>
       <div class="newsfeed" id="newsfeed"></div>
       <div class="sub" id="newsEmpty" style="display:none;padding:16px 4px">No partner Summit announcements gathered yet — the feed populates on the next research run.</div>
-      <div class="sub" style="margin-top:11px;line-height:1.5">Gathered by AI research agents searching public news / press per vendor; each link opens the primary source. Directional — verify before relying. Refreshes whenever the feed is rebuilt.</div>
+      <div class="sub" style="margin-top:11px;line-height:1.5">Summit announcements were gathered by AI research agents from public news / press; newer per-vendor headlines come from a Google News search refreshed on every deploy. Each link opens the source. Directional — verify before relying.</div>
     </div>
   </div>
 </div>
@@ -921,7 +924,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     </div>
   </header>
   <div class="wrap">
-    <h3 class="sec" id="mq">📊 Magic Quadrant <span class="hint">— all partners, or drill into a niche</span></h3>
+    <h2 class="sec" id="mq">📊 Magic Quadrant <span class="hint">— all partners, or drill into a niche</span></h2>
     <div class="panel">
       <div class="controls" style="margin-bottom:8px">
         <label class="sub" style="align-self:center">Drill into niche:</label>
@@ -959,8 +962,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     </div>
   </header>
   <div class="mapwrap">
-    <h3 class="sec" id="floormap">🗺 Your Guide to Basecamp <span class="hint">— our scouted partners on the Summit floor; click any booth for full detail</span></h3>
-    <div style="margin:4px 0 12px"><input id="mapSearch" class="mapsearch" type="search" placeholder="Highlight a vendor by name…" autocomplete="off"></div>
+    <h2 class="sec" id="floormap">🗺 Your Guide to Basecamp <span class="hint">— our scouted partners on the Summit floor; click any booth for full detail</span></h2>
+    <div style="margin:4px 0 12px"><input id="mapSearch" class="mapsearch" type="search" aria-label="Highlight a vendor on the floor map" placeholder="Highlight a vendor by name…" autocomplete="off"></div>
     <div class="maptoggle" role="group" aria-label="Floor map view">
       <button type="button" id="tabPlan" class="on" aria-pressed="true">🗺 Floor plan</button>
       <button type="button" id="tabCols" aria-pressed="false">▦ Zone columns</button>
@@ -997,19 +1000,36 @@ function homeLink(v){var w=(v&&v.website)?String(v.website).trim():'',real=/^htt
 const tierClass = t => ({A:'tA',B:'tB',C:'tC',D:'tD'})[t]||'tC';
 
 // View router: ?view=news opens the news-only view (in its own window).
-var _view=new URLSearchParams(location.search).get('view');
-if(_view==='news'){
-  document.body.classList.add('newsmode');
-  document.title='Summit News — Snowflake Summit 2026';
-}else if(_view==='mq'){
-  document.body.classList.add('mqmode');
-  document.title='Magic Quadrant — Snowflake Summit 2026';
-  var _mqsub=document.getElementById('mqsub');
-  if(_mqsub) _mqsub.textContent=`All ${DATA.vendors.length} partners, or drill into a niche · its own window`;
-}else if(_view==='map'){
-  document.body.classList.add('mapmode');
-  document.title='Basecamp Floor Map — Snowflake Summit 2026';
+// setSummitView() is also driven by postMessage from the Competitive
+// Landscape page, which embeds ONE copy of this page for all three of its
+// Summit tabs and switches views in place instead of reloading ~1 MB per tab.
+var _defaultTitle=document.title;
+function setSummitView(v){
+  document.body.classList.remove('newsmode','mqmode','mapmode');
+  document.title=_defaultTitle;
+  if(v==='news'){
+    document.body.classList.add('newsmode');
+    document.title='Summit News — Snowflake Summit 2026';
+  }else if(v==='mq'){
+    document.body.classList.add('mqmode');
+    document.title='Magic Quadrant — Snowflake Summit 2026';
+    var _mqsub=document.getElementById('mqsub');
+    if(_mqsub) _mqsub.textContent=`All ${DATA.vendors.length} partners, or drill into a niche · its own window`;
+  }else if(v==='map'){
+    document.body.classList.add('mapmode');
+    document.title='Basecamp Floor Map — Snowflake Summit 2026';
+  }
 }
+var _view=new URLSearchParams(location.search).get('view');
+setSummitView(_view);
+window.addEventListener('message',function(e){
+  if(e.origin!==location.origin) return;          // only the same-site embedder
+  var d=e.data; if(!d||d.type!=='summit-view') return;
+  setSummitView(d.view||'');
+  try{window.scrollTo(0,0);}catch(_){}
+  // Charts sized while their view was display:none need a layout pass.
+  try{window.dispatchEvent(new Event('resize'));}catch(_){}
+});
 
 // A-/A+ text zoom — scales the page via CSS zoom; persists across visits + views.
 // MOBILE (<=640px): the control is hidden and native pinch-zoom replaces it, so we
@@ -1087,14 +1107,19 @@ function scoreChips(v){
   const items=[['Bryan',v.bryan_score],['Snow',v.snowflake_score],['AI',v.ai_score],['Retail',v.retail_score],['IPO',v.ipo_score]];
   return items.map(([l,x],i)=>`<span class="schip${i===0?' lead':''}">${l} <b>${fmt(x)}</b></span>`).join('');
 }
-function card(v){
-  return `<div class="card2" data-v="${esc(v.name)}" tabindex="0" role="button" aria-label="View company detail for ${esc(v.name)}" style="cursor:pointer" title="Click for full company detail"><div class="rk">${v.rank}</div>
+// `pos` is the card's place in THIS list (Bryan-score order). The big badge
+// used to show the vendor's overall table rank, so the cards read
+// 1, 2, 3, 9, 4, 5 — correct order, confusing numbers. Overall rank moves to
+// the hover/aria text.
+function card(v, pos){
+  const n = (typeof pos === 'number') ? pos + 1 : v.rank;
+  return `<div class="card2" data-v="${esc(v.name)}" tabindex="0" role="button" aria-label="#${n} recommendation: view company detail for ${esc(v.name)} (overall rank #${v.rank})" style="cursor:pointer" title="Click for full company detail · overall rank #${v.rank}"><div class="rk">${n}</div>
     <div class="nm">${esc(v.name)}${homeLink(v)} <span class="tag ${tierClass(v.tier)}">${esc(v.tier)}</span> <span class="tag tNi">${esc(fmt(v.niche))}</span></div>
     <div class="ct">${esc(v.category)} · booth ${esc(fmt(v.booth))}</div>
     <div class="scores">${scoreChips(v)}</div>
     <div class="ovr"><b>${fmt(v.overall_score)}</b><span>/ 10 overall${v.company_type?(' · '+esc(v.company_type)):''}</span></div></div>`;
 }
-document.getElementById('bestfit').innerHTML = DATA.best_fit.map(card).join('');
+document.getElementById('bestfit').innerHTML = DATA.best_fit.map((v, i) => card(v, i)).join('');
 
 // The desktop DOM now orders Bryan → analytics → search → table, and mobile
 // follows that same order, so no mobile-only re-layout is needed here. (The

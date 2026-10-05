@@ -1,0 +1,119 @@
+{
+  "as_of": "2026-10-05",
+  "generated_at": "2026-10-05T00:23:24Z",
+  "indexes": {
+    "crypto_signal_sentiment": {
+      "as_of": "2026-10-04",
+      "label": null,
+      "note": "40 coins; 8 buy+, 5 sell+",
+      "score": 8,
+      "stale": false
+    },
+    "defi_sentiment": {
+      "as_of": "2026-10-04",
+      "label": "NEUTRAL",
+      "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
+      "score": 11,
+      "stale": false
+    },
+    "etf_flow_sentiment": {
+      "as_of": "2026-10-02",
+      "label": "STRONG INFLOWS",
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 700 daily rows; same series as etf_flow_sentiment_btc",
+      "score": 89,
+      "stale": false
+    },
+    "etf_flow_sentiment_btc": {
+      "as_of": "2026-10-02",
+      "label": "STRONG INFLOWS",
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 700 daily rows",
+      "score": 89,
+      "stale": false
+    },
+    "etf_flow_sentiment_eth": {
+      "as_of": "2026-10-02",
+      "label": "INFLOWS",
+      "note": "ETH ETF; 7d+30d net flow sum (60/40); 562 daily rows",
+      "score": 44,
+      "stale": false
+    },
+    "futures_sentiment": {
+      "as_of": "2026-10-04",
+      "label": "BALANCED",
+      "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
+      "score": -16,
+      "stale": false
+    },
+    "futures_sentiment_btc": {
+      "as_of": "2026-10-04",
+      "label": "BALANCED",
+      "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
+      "score": -16,
+      "stale": false
+    },
+    "futures_sentiment_eth": {
+      "as_of": "2026-10-04",
+      "label": "BALANCED",
+      "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
+      "score": -7,
+      "stale": false
+    },
+    "futures_sentiment_link": {
+      "as_of": "2026-10-04",
+      "label": "BALANCED",
+      "note": "LINK; 3 of 3 inputs: funding, long/short, 7d OI",
+      "score": 2,
+      "stale": false
+    },
+    "futures_sentiment_ltc": {
+      "as_of": "2026-10-04",
+      "label": "BALANCED",
+      "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
+      "score": 9,
+      "stale": false
+    },
+    "lthcs_composite": {
+      "as_of": "2026-10-04",
+      "label": "LTHCS NEUTRAL",
+      "note": null,
+      "score": -22,
+      "stale": false
+    },
+    "money_flow_index": {
+      "as_of": "2026-10-02",
+      "label": "Neutral",
+      "note": null,
+      "score": -7.27,
+      "stale": false
+    },
+    "overview_sentiment": {
+      "as_of": "2026-10-04",
+      "label": "NEUTRAL",
+      "note": "3 of 3 inputs: F&G, signal avg, perp funding",
+      "score": 19,
+      "stale": false
+    },
+    "poc_signal_breadth": null,
+    "stocks_signal_breadth": {
+      "as_of": "2026-10-02",
+      "label": "DISTRIBUTION",
+      "note": "50 stocks; 8 buy+, 22 sell+",
+      "score": -28,
+      "stale": false
+    },
+    "whale_sentiment_btc": {
+      "as_of": "2026-10-03",
+      "label": "WHALE DISTRIBUTION",
+      "note": null,
+      "score": -38,
+      "stale": false
+    },
+    "whale_sentiment_eth": {
+      "as_of": "2026-10-03",
+      "label": "STRONG WHALE DUMP",
+      "note": null,
+      "score": -50,
+      "stale": false
+    }
+  }
+}

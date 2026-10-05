@@ -18,6 +18,9 @@
 
 // Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
 import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+// Deploy-time listing of backtest files: lets the page skip files a run never
+// produced (e.g. profiles/*/rolling_sharpe.json) instead of 404-ing on them.
+import { hasBacktestFile } from '../lthcs_tab/lthcs-files.js';
 
 const DATA_ROOT = '../data/lthcs';
 const VALIDATION_DATE = '2026-05-18';
@@ -83,7 +86,15 @@ function svgEl(tag, attrs = {}) {
 }
 
 /* ----- Fetch helpers --------------------------------------------------- */
+const BACKTEST_PREFIX = `${DATA_ROOT}/backtest/`;
+// false only when the file index positively says the file is absent; with no
+// index (dev server) every file is attempted as before.
+async function backtestFileMissing(url) {
+  if (!url.startsWith(BACKTEST_PREFIX)) return false;
+  return (await hasBacktestFile(url.slice(BACKTEST_PREFIX.length))) === false;
+}
 async function tryFetch(url) {
+  if (await backtestFileMissing(url)) return null;
   try {
     const r = await fetch(url, { cache: 'no-cache' });
     if (!r.ok) return null;
@@ -355,6 +366,7 @@ function setupProfileToggle(base, currentProfile) {
   if (!toggle) return;
 
   syncProfileChips(toggle, caption, currentProfile);
+  hideProfilesWithoutArtifacts(toggle, base);
 
   toggle.addEventListener('click', async (ev) => {
     const target = ev.target.closest('.lbt-profile-chip');
@@ -367,6 +379,24 @@ function setupProfileToggle(base, currentProfile) {
     const bundle = await loadEngineBundle(next, base);
     renderEngineBundle(bundle);
   });
+}
+
+// Hide a strategy chip whose profile directory has no engine output at all
+// (per the deploy-time file index) — clicking it could only produce 404s and
+// an empty card. Unknown (no index) leaves every chip visible.
+async function hideProfilesWithoutArtifacts(toggle, base) {
+  const runDir = base.startsWith(BACKTEST_PREFIX) ? base.slice(BACKTEST_PREFIX.length) : null;
+  if (!runDir) return;
+  for (const chip of toggle.querySelectorAll('.lbt-profile-chip')) {
+    const prof = chip.dataset.profile;
+    if (!prof || prof === PROFILE_BASELINE || chip.classList.contains('is-active')) continue;
+    const dir = `${runDir}/profiles/${prof}`;
+    const [summ, curve] = await Promise.all([
+      hasBacktestFile(`${dir}/engine_summary.json`),
+      hasBacktestFile(`${dir}/equity_curve.json`),
+    ]);
+    if (summ === false && curve === false) { chip.hidden = true; chip.style.display = 'none'; }
+  }
 }
 
 function syncProfileChips(toggle, caption, profile) {

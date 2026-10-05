@@ -6,24 +6,25 @@
   <title>Status · BDT Dashboards</title>
   <style>
     :root {
+      color-scheme: dark; /* dark-only page: native controls follow */
       --bg: #0b0e14;
       --bg-elev: #141923;
       --bg-elev-2: #1c2230;
       --border: #2a3142;
       --text: #e6e8ee;
       --text-dim: #9aa3b2;
-      --text-faint: #6b7280;
+      --text-faint: #8b93a1; /* was #6b7280 (3.3-3.9:1 on panels) */
       /* freshness buckets */
       --fresh: #10b981;
       --stale: #f59e0b;
       --critical: #ef4444;
-      --missing: #6b7280;
+      --missing: #8b93a1;
       /* upstream-reachability buckets (share hues w/ freshness, kept distinct
          so each pane's render code reads its own vocabulary unchanged) */
       --up: #10b981;
       --warn: #f59e0b;
       --down: #ef4444;
-      --muted: #6b7280;
+      --muted: #8b93a1;
       --accent: #60a5fa;
       --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
       --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -53,6 +54,9 @@
        (e.g. "42/50 sources up · 95/100 fact containers fresh · 3 critical"). Colored
        by the worst bucket present across either feed. */
     .unified { font-size: 14px; font-weight: 600; margin: 10px 0 4px; }
+    /* CLS: reserve the headline line while both feeds load. */
+    .unified:empty { min-height: 21px; }
+    @media (max-width: 560px) { .unified:empty { min-height: 42px; } }
     .unified.up { color: var(--up); }
     .unified.warn { color: var(--warn); }
     .unified.down { color: var(--down); }
@@ -120,6 +124,7 @@
     .cat-table .svc { font-weight: 600; }
     .cat-table .svc a { color: var(--accent); text-decoration: none; }
     .cat-table .svc a:hover { text-decoration: underline; }
+    .cat-table .svc .cat-deadlink { text-decoration: line-through; text-decoration-color: var(--text-faint); cursor: help; }
     .cat-table .cat-co { color: var(--text-dim); white-space: nowrap; }
     .cat-badge { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; }
     .cat-badge.inuse { background: rgba(16,185,129,.15); color: var(--up); }
@@ -199,8 +204,10 @@
     .pill.auth_required { background: rgba(96,165,250,0.15); color: var(--accent); }
     .pill.rate_limited { background: rgba(245,158,11,0.15); color: var(--warn); }
     .pill.degraded { background: rgba(245,158,11,0.15); color: var(--warn); }
-    .pill.blocked { background: rgba(239,68,68,0.15); color: var(--down); }
-    .pill.down { background: rgba(239,68,68,0.15); color: var(--down); }
+    /* #f87171 not --down (#ef4444): the red text on its own 15% red tint
+       measured 4.0:1; this is 5.3:1. */
+    .pill.blocked { background: rgba(239,68,68,0.15); color: #f87171; }
+    .pill.down { background: rgba(239,68,68,0.15); color: #f87171; }
     .keytag { font-size: 10px; font-family: var(--mono); padding: 1px 5px; border-radius: 3px; margin-left: 6px; border: 1px solid var(--border); color: var(--text-faint); }
     .keytag.set { color: var(--up); border-color: rgba(16,185,129,0.4); }
     .keytag.missing { color: var(--warn); border-color: rgba(245,158,11,0.4); }
@@ -430,7 +437,9 @@
       if (!PANES[name]) name = 'sources';
       for (const [key, cfg] of Object.entries(PANES)) {
         const active = key === name;
-        document.getElementById(cfg.tab).setAttribute('aria-selected', active ? 'true' : 'false');
+        const tabEl = document.getElementById(cfg.tab);
+        tabEl.setAttribute('aria-selected', active ? 'true' : 'false');
+        tabEl.tabIndex = active ? 0 : -1;
         document.getElementById(cfg.pane).hidden = !active;
       }
       if (updateHash) {
@@ -443,8 +452,22 @@
 
     // Every subtab owns a pane (data-pane present), so the toggle handler
     // attaches to all of them — including the catalog tab.
-    document.querySelectorAll('.subtab[data-pane]').forEach(btn => {
+    const SUBTABS = Array.from(document.querySelectorAll('.subtab[data-pane]'));
+    SUBTABS.forEach((btn, i) => {
       btn.addEventListener('click', () => showPane(btn.dataset.pane, true));
+      // ARIA tabs pattern: Left/Right (and Home/End) move between tabs and
+      // activate them, as on /landscape/.
+      btn.addEventListener('keydown', e => {
+        let j = -1;
+        if (e.key === 'ArrowRight') j = (i + 1) % SUBTABS.length;
+        else if (e.key === 'ArrowLeft') j = (i - 1 + SUBTABS.length) % SUBTABS.length;
+        else if (e.key === 'Home') j = 0;
+        else if (e.key === 'End') j = SUBTABS.length - 1;
+        if (j < 0) return;
+        e.preventDefault();
+        SUBTABS[j].focus();
+        showPane(SUBTABS[j].dataset.pane, true);
+      });
     });
     window.addEventListener('hashchange', () => showPane(paneFromHash(), false));
     // Initial pane from the hash (header "Data Sources" button lands on #sources).
@@ -454,6 +477,10 @@
     // PANE A · Upstream Sources — fetch api_status.json (or live /api/status)
     // ===================================================================
     const LIVE_ENDPOINT = '/api/status';
+    // /api/status only exists on the local Flask server. On the static
+    // GitHub Pages mirror it is a guaranteed 404 (a console error on every
+    // load), so go straight to the committed snapshot there.
+    const HAS_LIVE_SERVER = ['127.0.0.1', 'localhost', '0.0.0.0'].includes(location.hostname);
     const SNAPSHOT = '../data/health/api_status.json';
 
     const VERDICT_LABEL = {
@@ -586,6 +613,7 @@
       try {
         let live = true, data = null;
         try {
+          if (!HAS_LIVE_SERVER) throw new Error('static mirror: no live endpoint');
           const r = await fetch(LIVE_ENDPOINT, { cache: 'no-store' });
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           data = await r.json();
@@ -653,8 +681,10 @@
         el.innerHTML = '<div class="empty">No files found.</div>';
         return;
       }
+      // .table-wrap: the 5 columns (long mono file names + timestamps) are
+      // ~760px wide; unwrapped they pushed the whole page sideways on a phone.
       el.innerHTML = `
-        <table>
+        <div class="table-wrap"><table>
           <thead>
             <tr>
               <th>Fact Container</th>
@@ -675,7 +705,7 @@
               </tr>
             `).join('')}
           </tbody>
-        </table>
+        </table></div>
       `;
     }
 
@@ -754,8 +784,33 @@
           if (!dead) return;
           const el = document.getElementById('catHealth');
           const when = (h.checked_at || '').slice(0, 10);
+          // Un-link services whose URL the monthly check found GONE (404/410).
+          // Only confirmed-dead codes: "unreachable" rows are often bot-blocks
+          // or timeouts and stay clickable. The name stays, struck through,
+          // with the reason in its tooltip.
+          const gone = new Map();
+          (Array.isArray(h.dead) ? h.dead : []).forEach(d => {
+            if (!d || !d.url || (d.code !== 404 && d.code !== 410)) return;
+            const href = safeHref(d.url);
+            if (href) gone.set(href, d.code);
+          });
+          let unlinked = 0;
+          if (gone.size) {
+            document.querySelectorAll('#catBody td.svc a[href]').forEach(a => {
+              const code = gone.get(a.href);
+              if (!code) return;
+              const span = document.createElement('span');
+              span.className = 'cat-deadlink';
+              span.textContent = a.textContent;
+              span.title = 'Link removed: the page returned HTTP ' + code +
+                ' at the monthly link check' + (when ? ' (' + when + ')' : '') + '.';
+              a.replaceWith(span);
+              unlinked++;
+            });
+          }
           el.textContent = '⚠ ' + dead + ' link' + (dead === 1 ? '' : 's') +
-            ' flagged for review' + (when ? ' · checked ' + when : '');
+            ' flagged for review' + (when ? ' · checked ' + when : '') +
+            (unlinked ? ' · ' + unlinked + ' dead link' + (unlinked === 1 ? '' : 's') + ' removed below' : '');
           el.classList.remove('cat-hidden');
         })
         .catch(() => {});

@@ -978,6 +978,14 @@ def fetch_live(status: dict | None = None) -> dict | None:
     status["rss"]["bulletins_parsed"] = len(bulletins)
     status["advisories"] = len(advisories)
     status["source"] = source if advisories else None
+    # Risk-indicator codes only exist on the HTML table. The RSS items carry
+    # the level, a FIPS country code and free-text prose, never the T/C/U/...
+    # indicators, and the per-country pages sit behind the same bot challenge
+    # as the table. So in the fallback every row's `risks` is [] because the
+    # data is MISSING, not because the country has no risks; this flag is how
+    # the dashboard tells those two apart.
+    risks_available = source == "html"
+    status["risks_available"] = risks_available if advisories else None
 
     if not advisories:
         # Hard fail — don't write a payload with an empty country list, even
@@ -994,6 +1002,9 @@ def fetch_live(status: dict | None = None) -> dict | None:
         # table broke and `risks` is empty for every row — visible in the data
         # itself, not just in a log line nobody reads.
         "source": source,
+        # False => `risks` is unknown for every row (show "unavailable", not
+        # "none"; a terrorism count of 0 would be a fabricated zero).
+        "risks_available": risks_available,
         "advisories": advisories,
         "bulletins": bulletins,
     }

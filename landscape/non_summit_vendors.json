@@ -785,7 +785,7 @@
     {
       "name": "Hitachi Vantara (Pentaho)",
       "one_liner": "Pentaho Data Integration (Kettle): open-core ETL and analytics suite.",
-      "website": "https://www.hitachivantara.com/en-us/products/pentaho-platform/pentaho-data-integration.html",
+      "website": "https://www.hitachivantara.com/",
       "category": "ETL / ELT / Data Ingestion & Integration",
       "subcategory": "Enterprise/open-core ETL",
       "hq": "Santa Clara, California, USA",
@@ -2325,7 +2325,7 @@
     {
       "name": "5X",
       "one_liner": "Managed modern-data-stack platform bundling ingestion, warehouse and transformation.",
-      "website": "https://www.5x.co",
+      "website": "",
       "category": "Data Transformation, Semantic & Metrics Layer",
       "subcategory": "Managed transformation/data platform",
       "funding_stage": "Seed",

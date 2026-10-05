@@ -620,6 +620,12 @@ def build_lthcs_payload() -> dict:
         if isinstance(scores, list) and scores:
             # Top movers by 30d drift (the snapshot field).
             def _drift(row): return row.get("drift_30d") or 0.0
+            def _subs(row):
+                # A pillar in dropped_pillars was not measured: publish null,
+                # never the placeholder older snapshots stored for it.
+                dropped = set(row.get("dropped_pillars") or [])
+                return {k: (None if k in dropped else v)
+                        for k, v in (row.get("subscores") or {}).items()}
             def _row(row):
                 return {
                     "ticker": row.get("ticker"),
@@ -627,7 +633,7 @@ def build_lthcs_payload() -> dict:
                     "band": row.get("band"),
                     "drift_30d": row.get("drift_30d"),
                     "sector": row.get("sector"),
-                    "subscores": row.get("subscores") or {},
+                    "subscores": _subs(row),
                 }
             sorted_by_drift = sorted(
                 [r for r in scores if r.get("ticker")],
@@ -638,6 +644,24 @@ def build_lthcs_payload() -> dict:
                 "gainers": [_row(r) for r in sorted_by_drift[:5]],
                 "decliners": [_row(r) for r in sorted_by_drift[-5:][::-1]],
             }
+            # 30d drift whose window straddles a methodology break mixes a
+            # model/coverage change into the move: say so next to the movers.
+            snap_date = snap.get("calc_date") or snap_file.stem
+            try:
+                from datetime import timedelta as _td30
+                from lthcs import methodology as _meth
+                anchor = (datetime.strptime(snap_date, "%Y-%m-%d")
+                          - _td30(days=30)).strftime("%Y-%m-%d")
+                spanned = _meth.breaks_between(anchor, snap_date)
+            except Exception:
+                spanned = []
+            if spanned:
+                out["movers"]["methodology_breaks"] = spanned
+                out["movers"]["note"] = (
+                    "30d drift spans a methodology change on "
+                    + ", ".join(b["date"] for b in spanned)
+                    + " (" + "; ".join(b["summary"] for b in spanned)
+                    + "): part of these moves is the model change, not the market.")
             out["universe_count"] = len(scores)
             out.setdefault("as_of", snap.get("calc_date"))
             out["available"] = True
@@ -655,6 +679,27 @@ def build_lthcs_payload() -> dict:
         print(f"[lthcs] insights error: {e}", file=sys.stderr)
         out["insights"] = []
     return out
+
+
+def _methodology_breaks_between(start_exclusive, end_inclusive) -> list:
+    """LTHCS methodology breaks inside (start, end]; [] if unavailable."""
+    try:
+        from lthcs import methodology as _meth
+        return _meth.breaks_between(start_exclusive, end_inclusive)
+    except Exception:
+        return []
+
+
+def _methodology_insight(spanned: list, what: str) -> dict:
+    dates = ", ".join(b["date"] for b in spanned)
+    return {
+        "category": "methodology",
+        "icon": "🛠️",
+        "headline": f"Methodology change {dates}: {what} — not a market signal",
+        "detail": "; ".join(b["detail"] for b in spanned),
+        "severity": "medium",
+        "methodology_breaks": [b["date"] for b in spanned],
+    }
 
 
 def compute_lthcs_insights(
@@ -773,7 +818,13 @@ def compute_lthcs_insights(
                         s_today = float(index_today.get("score") or 0)
                         s_yest = float(y.get("score") or 0)
                         delta = s_today - s_yest
-                        if abs(delta) >= 1:
+                        spanned = _methodology_breaks_between(
+                            yest.strftime("%Y-%m-%d"), as_of)
+                        if spanned and abs(delta) >= 1:
+                            candidates.append(_methodology_insight(
+                                spanned, f"Composite Index moved {s_yest:+.0f} → "
+                                         f"{s_today:+.0f} over {back}d"))
+                        elif abs(delta) >= 1:
                             sev = "high" if abs(delta) >= 10 else \
                                   "medium" if abs(delta) >= 5 else "low"
                             arrow = "▲" if delta > 0 else "▼"
@@ -794,7 +845,7 @@ def compute_lthcs_insights(
                             })
                     break
         except Exception:
-            pass
+            pass  # optional insight card; malformed index history must not break the build
 
     # ---- (6): Macro regime ----
     breadth_file = None
@@ -858,6 +909,7 @@ def compute_lthcs_insights(
                 })
 
     # ---- (8): Band moves vs. yesterday ----
+    band_window = None
     if history_dir.exists():
         band_changes = []
         try:
@@ -880,6 +932,7 @@ def compute_lthcs_insights(
                 latest, prev = by_date[0], by_date[1]
                 if latest.get("band") and prev.get("band") and \
                         latest.get("band") != prev.get("band"):
+                    band_window = (prev.get("date"), latest.get("date"))
                     band_changes.append({
                         "ticker": hd.get("ticker") or hp.stem,
                         "from_band": prev.get("band"),
@@ -890,7 +943,7 @@ def compute_lthcs_insights(
                         ),
                     })
         except Exception:
-            pass
+            pass  # optional insight card; malformed ticker history must not break the build
         if len(band_changes) >= 5:
             band_changes.sort(key=lambda c: -abs(c["score_delta"]))
             top3 = band_changes[:3]
@@ -899,13 +952,21 @@ def compute_lthcs_insights(
                 f"({c['score_delta']:+.1f})"
                 for c in top3
             )
-            candidates.append({
-                "category": "movers",
-                "icon": "📈",
-                "headline": f"{len(band_changes)} tickers shifted band overnight",
-                "detail": tail,
-                "severity": "medium",
-            })
+            # A band shift across a methodology break (2026-10-04: SEC
+            # financial data restored, 98 tickers changed band) is the model
+            # changing, not the market: relabel instead of a movers signal.
+            spanned = _methodology_breaks_between(*band_window) if band_window else []
+            if spanned:
+                candidates.append(_methodology_insight(
+                    spanned, f"{len(band_changes)} tickers shifted band"))
+            else:
+                candidates.append({
+                    "category": "movers",
+                    "icon": "📈",
+                    "headline": f"{len(band_changes)} tickers shifted band overnight",
+                    "detail": tail,
+                    "severity": "medium",
+                })
 
     # ---- Prioritize: high > medium > low, with category diversity ----
     candidates.sort(key=lambda i: SEV_RANK.get(i.get("severity"), 9))
@@ -1298,6 +1359,9 @@ HTML_TEMPLATE = r"""<!doctype html>
 </script>
 <style>
 :root{
+  /* Dark-only page: native controls (scrollbars, selects, date inputs,
+     default link colours) render in their dark variants. */
+  color-scheme:dark;
   --bg:#0b0d12; --panel:#141821; --panel2:#1b2030; --border:#252b3a;
   --text:#e6e8ee; --muted:#8a93a6; --btc:#f7931a; --eth:#627eea; --link:#2a5ada; --ltc:#bfbbbb;
   --green:#22c55e; --red:#ef4444; --amber:#f59e0b; --purple:#a78bfa; --cyan:#06b6d4;
@@ -1781,6 +1845,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 #chatFab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:#a78bfa;color:#000;border:0;cursor:pointer;font-size:24px;box-shadow:0 4px 14px rgba(167,139,250,.4);z-index:39;transition:transform .15s}
 #chatFab:hover{transform:scale(1.08)}
 #chatFab.hidden{display:none}
+/* The FAB floats over the right edge of the content. Two mitigations: the
+   page ends with enough room to scroll the last rows clear of it, and the FAB
+   steps up out of the way whenever a control (e.g. Overview's "Configure",
+   a feed row) is underneath it — see chatFabDodge() in the script. */
+body{padding-bottom:88px}
+@media (max-width:640px){#chatFab{width:46px;height:46px;font-size:21px;bottom:14px;right:14px}}
+#chatFab.dodge{transform:translateY(-68px)}
+#chatFab.dodge:hover{transform:translateY(-68px) scale(1.08)}
 /* Recent symbol-lookup chips. Rendered below the header symbol-search form
    by renderSymbolRecentChips(); hidden via .hidden when the localStorage
    list is empty. The chip's × (.symbol-recent-chip-x) removes a single
@@ -1978,8 +2050,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     white-space:nowrap;
     -webkit-overflow-scrolling:touch;
     scrollbar-width:none;
-    -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent);
-            mask-image:linear-gradient(to right,#000 calc(100% - 26px),transparent);
+  }
+  /* Right-edge "more this way" fade. This MUST NOT be a mask-image on .tabs:
+     a mask clips everything the element paints, including its position:fixed
+     dropdown panels below the strip, so every menu opened invisibly and taps
+     fell through to the page (19 of 21 tabs unreachable on phones). A sticky
+     overlay pinned to the strip's right edge draws the same fade without
+     touching the menus, and pointer-events:none keeps it out of hit-testing. */
+  .tabs::after{
+    content:"";position:sticky;right:0;flex:0 0 26px;margin-left:-26px;
+    align-self:stretch;pointer-events:none;
+    background:linear-gradient(to right,rgba(0,0,0,0),var(--panel));
   }
   .tabgroup,.tabnav-rule,.tabnav-jumps{flex:0 0 auto}
   .tabnav-rule{margin:0 6px;height:18px}
@@ -2408,6 +2489,48 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   .travel-count{flex:1 1 100%;margin-left:0;text-align:right}
   .travel-grid{grid-template-columns:1fr;gap:8px}
 }
+
+/* Keyboard focus ring for the header symbol search: its inline style sets
+   outline:none, which left no visible focus at all. */
+#symbolSearchInput:focus-visible{outline:2px solid var(--purple) !important;outline-offset:1px;border-color:var(--purple) !important}
+
+/* Phone tap targets (audit: < 24px). */
+/* UAP map: side panel stacks under the map so the 12-column tile grid gets
+   the full width (tiles were 8x8px in the squeezed left column). */
+@media (max-width:640px){ #mufonMapGrid{grid-template-columns:1fr !important} }
+/* AI News top-funded company links: 12px tall inline text. */
+#aiTopFundedTable td a{display:inline-block;padding:6px 0;margin:-6px 0}
+/* POC overlay checkbox (13x13). */
+#pocOverlayToggle{width:20px;height:20px}
+/* Multichain whale tx-hash links (11px tall inline text). */
+a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7px 0;margin:-7px 0}
+/* Travel "Enroll in STEP" and similar contact links (16px tall). */
+.travel-contact-link{display:inline-block;padding:6px 2px;margin:-6px -2px}
+
+/* Stock Flows rank rows. The six fixed/min tracks summed to ~485px, which
+   forced a horizontal page scroll on a 390px phone. Under 480px the MFI/CMF
+   columns drop out (the score + band label already summarise them; both stay
+   in the row's tooltip on wider screens) and the min widths relax to 0 so the
+   name/flow tracks shrink instead of overflowing. */
+.sfx-grid{display:grid;grid-template-columns:28px minmax(120px,1.6fr) minmax(90px,1.4fr) 64px 52px 56px;gap:10px}
+@media (max-width:480px){
+  .sfx-grid{grid-template-columns:20px minmax(0,1.5fr) minmax(0,1.2fr) 46px;gap:8px}
+  .sfx-grid .sfx-mfi,.sfx-grid .sfx-cmf{display:none}
+}
+
+/* CLS: these slots are filled by the boot render, which waits up to
+   ~1.2s for Chart.js. Empty, they collapsed to 0px and the whole tab
+   jumped ~330px when they filled (CLS 0.64 desktop / 0.76 phone).
+   Reserve roughly their filled height only while :empty, so a short
+   list never leaves a gap once real content is in. */
+/* The Overview strip always has a date (crypto prices), so keep its
+   44px row reserved while the boot render hasn't filled it — it used
+   to appear at ~0.9s and push the whole tab down 54px. */
+#tabFresh-overview:empty { display: block; visibility: hidden; }
+#overviewNews:empty { min-height: 165px; }
+#overviewInsights:empty { min-height: 165px; }
+#overviewAiStocksGrid:empty { min-height: 260px; }
+#overviewSentimentCard { min-height: 160px; }
 
 /* ===================== TOUCH BLOCK (site audit V2-C) =====================
    Deliberately LAST in the sheet so these win on source order. Gated on a
@@ -2954,7 +3077,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
          breaking news. Bid/ask + 24h range from Coinbase Exchange. -->
     <div id="coinbaseSpotWrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
       <div class="head">
-        <h2 style="margin:0;font-size:15px">Coinbase spot <span class="tag">live exchange</span></h2>
+        <h2 style="margin:0;font-size:15px">Coinbase spot <span class="tag">exchange quote</span> <span class="sub" id="coinbaseSpotAsOf" style="font-size:11px;font-weight:400;color:var(--muted)"></span></h2>
         <span class="desc">Bid/ask + 24h range from Coinbase Exchange (US-regulated). Cross-check vs CoinGecko aggregate.</span>
       </div>
       <div style="overflow:auto">
@@ -3043,12 +3166,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <span style="color:#ef4444">OUTFLOWS</span>
       </div>
     </div>
-    <div class="card" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px">
+    <div class="card" id="etfLoadCard" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px">
       <span class="lbl" style="margin:0">Load data</span>
       <button class="btn" id="loadBtcBtn" title="Paste BTC ETF flow CSV from Farside">Paste BTC</button>
       <button class="btn" id="loadEthBtn" title="Paste ETH ETF flow CSV from Farside">Paste ETH</button>
       <button class="btn" id="seedBtcBtn" title="Pull BTC from canadiancode/btc-etf-flows GitHub mirror (may be stale)">Seed BTC (mirror)</button>
-      <a class="btn" href="/bookmarklet" target="_blank" rel="noopener noreferrer" style="text-decoration:none" title="One-click bookmarklet for Farside pages">Get bookmarklet</a>
+      <a class="btn" id="bookmarkletLink" href="/bookmarklet" target="_blank" rel="noopener noreferrer" style="text-decoration:none" title="One-click bookmarklet for Farside pages">Get bookmarklet</a>
       <span id="loadStatus" class="sub" style="margin-left:8px;color:var(--muted)"></span>
     </div>
     <!-- Per-tab asset toggle: BTC or ETH (no spot LINK/LTC ETFs exist).
@@ -3558,7 +3681,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="chart-card" id="realEstateCard">
         <div class="head">
           <h2>US Real Estate Markets <span class="tag">Zillow &middot; Redfin &middot; FRED</span></h2>
-          <span class="desc">National housing heat index &middot; hot &amp; cooling markets &middot; refreshed daily &middot; full view at <a href="real-estate/" style="color:var(--accent)">/real-estate/</a></span>
+          <span class="desc">National housing heat index &middot; hot &amp; cooling markets &middot; vendors publish monthly (dates below) &middot; full view at <a href="real-estate/" style="color:var(--accent)">/real-estate/</a></span>
         </div>
         <div id="realEstateSummary">
           <div class="empty" style="padding:12px 14px">Loading real-estate snapshot&hellip;</div>
@@ -3625,7 +3748,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <!-- AI sentiment summary card (full width, below the top row) -->
         <div class="chart-card" id="aiNewsSummaryCard" style="margin-top:12px">
           <div class="head">
-            <h2>AI news sentiment <span class="tag">live</span></h2>
+            <h2>AI news sentiment <span class="tag">news feed</span></h2>
             <span class="desc">Aggregate sentiment across AI/ML/chips coverage &middot; auto-classified POSITIVE / NEUTRAL / NEGATIVE</span>
           </div>
           <div id="aiNewsSummary"></div>
@@ -4011,7 +4134,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </div>
     <div id="socialEmpty" class="empty hidden">
       No research data yet — all free sources (Reddit, CryptoCompare, Santiment) returned empty.
-      Refresh or wait for the next hourly cron.
+      Check back later — the site rebuilds every few hours.
     </div>
     <div id="socialContent">
       <div class="sub" id="socialAsOf" style="margin-bottom:6px"></div>
@@ -4020,7 +4143,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         and technical signals. Sources: Reddit (subscribers + top posts; cloud-IP-blocked, local-only),
         CryptoCompare social (legacy endpoint now auth-gated, may be empty),
         CryptoCompare news sentiment (keyless, POSITIVE/NEGATIVE/NEUTRAL labels),
-        Santiment (daily-active addresses + dev activity, refreshed once a day at 00:00 UTC),
+        Santiment (daily-active addresses + dev activity, fetched once per UTC day),
         and Point of Control (volume profile derived from existing price+volume series).
       </div>
 
@@ -4641,7 +4764,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">
             Data: NUFORC via community archive — sighting <strong>reports</strong>, not verified phenomena.
             Filed shapes and durations are eyewitness claims. Browse the live database at
-            <a href="https://nuforc.org/" target="_blank" rel="noopener noreferrer">nuforc.org</a>.
+            <a href="https://nuforc.org/" target="_blank" rel="noopener noreferrer" style="color:#60a5fa">nuforc.org</a>.
           </div>
         </div>
       </div>
@@ -4799,6 +4922,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   #aviation-tab .pill{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:20px;border:1px solid var(--edge)}
   #aviation-tab .pill.used{color:var(--green);border-color:rgba(61,220,132,.4)}
   #aviation-tab .pill.avail{color:var(--ink-dim)}
+  #aviation-tab .av-stale{margin:0 0 12px;padding:8px 12px;border:1px solid var(--red);border-radius:8px;background:rgba(255,93,108,.08);color:var(--red);font-family:var(--mono);font-size:12px;font-weight:600}
+  #aviation-tab .av-stale[hidden]{display:none}
   #aviation-tab .takeaway{display:flex;gap:11px;background:rgba(255,181,71,.06);border:1px solid rgba(255,181,71,.25);border-radius:9px;padding:12px 14px;margin-bottom:18px;font-size:13px;color:#f1dcb4}
   #aviation-tab .takeaway b{color:var(--amber)}
   #aviation-tab .tl{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
@@ -4997,9 +5122,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </div>
 
 <div class="av-view" id="view-tsa">
-  <div class="takeaway"><span aria-hidden="true">&#128737;</span><div><b>How many people the TSA screened, day by day.</b> A near-real-time pulse of US air-travel demand &mdash; over 900 million passengers screened in 2025, with single days topping 3 million. The daily series below refreshes from a cron-committed snapshot of the TSA checkpoint numbers.</div></div>
+  <div class="takeaway"><span aria-hidden="true">&#128737;</span><div><b>How many people the TSA screened, day by day.</b> A daily pulse of US air-travel demand &mdash; over 900 million passengers screened in 2025, with single days topping 3 million. The daily series below comes from a cron-committed snapshot of the TSA checkpoint numbers; its newest day is shown on the first card.</div></div>
+  <div class="av-stale" id="tsa-stale-badge" role="status" hidden></div>
   <div class="kpis" id="kpi-tsa" aria-live="polite" aria-atomic="false"></div>
-  <div class="panel"><h3>Daily passengers screened &mdash; recent weeks</h3><div class="ph-note">Passengers through all US TSA checkpoints, most recent ~30 days. Weekly travel rhythm (Sunday/Thursday peaks, Tuesday/Saturday troughs) is clearly visible.</div><div class="chart-wrap tall"><canvas id="c-tsa-series"></canvas></div></div>
+  <div class="panel"><h3>Daily passengers screened &mdash; recent weeks</h3><div class="ph-note" id="tsa-series-note">Passengers through all US TSA checkpoints, the most recent days on file.</div><div class="chart-wrap tall"><canvas id="c-tsa-series"></canvas></div></div>
   <div class="src" id="src-tsa"></div>
 </div>
 
@@ -5927,6 +6053,9 @@ function signalCardAsOfTitle(s){
 // Coinbase International perp rows carry the exchange's own quote timestamp
 // (as_of / as_of_ts). Oldest across the rows we actually average.
 function perpsFreshness(){
+  const pfund = (DATA.market || {}).perp_funding;
+  if (pfund) return (pfund.available && pfund.as_of)
+    ? { date: fDay(pfund.as_of), stale: 0, total: (pfund.rows || []).length } : null;
   const perps = ((DATA.market || {}).coinbase_intl_perps) || [];
   if (!Array.isArray(perps) || !perps.length) return null;
   const dates = perps.map(p => fDay(p && (p.as_of || p.as_of_ts))).filter(Boolean);
@@ -6101,14 +6230,32 @@ function defiFreshness(){
 // date to show, so we say so (rule 5) rather than printing social.fetched_at.
 function socialFreshness(){
   const s = socialData() || {};
-  const santStale = !!((s.santiment || {}).stale);
+  const sant = s.santiment || {};
+  const santStale = !!sant.stale;
+  // Santiment's same-day series (DAA, 24h actives, dev activity, devs) DO
+  // carry observation dates — the Santiment cards print them as "data
+  // through". The strip reports the OLDEST of those across coins (rule 3)
+  // instead of "as of —". Reddit / CryptoCompare stay undated and are
+  // disclosed in the hover.
+  const coins = sant.coins || {};
+  const lasts = [];
+  Object.keys(coins).forEach(k => {
+    const c = coins[k] || {};
+    const per = [c.daily_active_addresses, c.active_addresses_24h, c.dev_activity, c.dev_contributors]
+      .map(ser => fLast(ser)).filter(Boolean);
+    if (per.length) lasts.push(fMin(per));
+  });
   return {
-    date: null,
+    date: lasts.length ? fMin(lasts) : null,
     stale: 0,
     total: 0,
-    title: 'Reddit / CryptoCompare / Santiment ship point-in-time counts with no '
-         + 'observation date. social.fetched_at is fetch time, so it is not shown '
-         + 'as a freshness date.'
+    label: lasts.length ? 'Santiment data through' : 'as of',
+    title: (lasts.length
+             ? 'Oldest last observation across the Santiment on-chain/dev series ('
+               + lasts.length + ' coin' + (lasts.length === 1 ? '' : 's') + '). '
+             : '')
+         + 'Reddit / CryptoCompare ship point-in-time counts with no observation '
+         + 'date; social.fetched_at is fetch time, so it is not shown as a freshness date.'
          + (santStale ? ' Santiment is currently served from its daily-gated cache.' : ''),
   };
 }
@@ -6139,7 +6286,8 @@ function moneyFlowFreshness(){
   const src = mfx.sources || {};
   const parts = [];
   const named = [];
-  const mmfD = fLast((src.mmf || {}).weekly);
+  // A FRED fallback MMF block (ICI blocked) is display-only, not a composite input.
+  const mmfD = (src.mmf || {}).fallback ? null : fLast((src.mmf || {}).weekly);
   if (mmfD){ parts.push(mmfD); named.push('ICI money-market weekly'); }
   const mfD = fLast((src.mf_flows || {}).weekly);
   if (mfD){ parts.push(mfD); named.push('ICI equity mutual-fund weekly'); }
@@ -6153,13 +6301,10 @@ function moneyFlowFreshness(){
       ? 'Oldest of the ' + parts.length + ' dated inputs (' + named.join(', ') + ').'
       : 'None of the Money Flow inputs carry an observation date.')
     + (perIndex
-        ? ' The ' + perIndex + ' per-index MFI/CMF legs are computed from Yahoo '
-          + 'daily bars whose dates are not carried into the payload, so they '
-          + 'are excluded from this minimum.'
-        : '')
-    + ' money_flow.as_of is no longer a clock read — _composite_as_of derives '
-    + 'it from these same legs, or leaves it null — so it is redundant with '
-    + 'this minimum rather than excluded from it.';
+        ? ' The ' + perIndex + ' per-index MFI/CMF readings come from daily '
+          + 'price bars that are not dated in this snapshot, so they are not '
+          + 'part of this date.'
+        : '');
   return { date: parts.length ? fMin(parts) : null, stale: 0,
            total: parts.length, title: title };
 }
@@ -6200,6 +6345,19 @@ function lthcsFreshness(){
 // into _reCache; `generated_at` on it is PIPELINE RUN TIME, not an
 // observation date, so we read the monthly history labels instead — Zillow
 // ZHVI / Redfin are monthly series and the last label is the real bucket.
+// Per-vendor vintages from the snapshot's `sources.<v>.last_modified` (the
+// HTTP Last-Modified of each source CSV — a publish date, not our fetch time).
+// The tab mixes Zillow and Redfin KPIs, so the honest stamp is the OLDEST
+// vendor (fMin) — the same rule /real-estate/ applies to its header.
+function realEstateSourceDates(d){
+  const s = (d && d.sources) || {};
+  const comps = [['Zillow', 'zillow'], ['Redfin', 'redfin'], ['FRED', 'fred']].map(p => ({
+    label: p[0], date: fDay(s[p[1]] && s[p[1]].last_modified) || null,
+  }));
+  const dated = comps.filter(c => c.date).map(c => c.date);
+  return { oldest: dated.length ? fMin(dated) : null, comps: comps };
+}
+
 function realEstateFreshness(){
   // _reCache is a `let` declared further down; this only ever runs after the
   // whole script has evaluated (renderAll → renderTabFreshness), so the TDZ
@@ -6208,6 +6366,14 @@ function realEstateFreshness(){
   const d = _reCache || null;
   if (!d) return null;
   const metros = Array.isArray(d.metros) ? d.metros : [];
+  const src = realEstateSourceDates(d);
+  if (src.oldest){
+    return { date: src.oldest, stale: 0, total: 1, label: 'data as of',
+             title: 'Oldest vendor publish date ('
+                  + src.comps.map(c => c.label + ' ' + (c.date || 'undated')).join(' · ')
+                  + '). The snapshot is fetched daily, but the vendors publish '
+                  + 'monthly; generated_at is fetch time and is not used here.' };
+  }
   const lasts = [];
   metros.forEach(m => {
     const labels = ((m || {}).history_5y_monthly || {}).labels;
@@ -6251,12 +6417,51 @@ function cityFreshness(){
                 + 'vintages; this is the panel-level bucket.' };
 }
 
+// --- TSA checkpoint series (Aviation > TSA) --------------------------------
+// TSA publishes days as 'M/D/YYYY'. Strict parse to ISO; anything else is
+// refused rather than handed to a lenient Date.parse (same reasoning as the
+// prose refusal in aviationFreshness below).
+function tsaDayIso(s){
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(s == null ? '' : s).trim());
+  if (!m) return null;
+  const p2 = v => (v.length < 2 ? '0' : '') + v;
+  return fDay(m[3] + '-' + p2(m[1]) + '-' + p2(m[2]));
+}
+// TSA posts every weekday (Monday's post covers the weekend), so a newest day
+// more than this many days old means the feed/cron stopped — not a quiet week.
+const TSA_STALE_DAYS = 3;
+// Age in days when the newest TSA day is STALE (> TSA_STALE_DAYS), 0 when it
+// is current, null when undatable. Age comes from freshness(), the page's one
+// age implementation.
+function tsaStaleDays(latestIso){
+  const f = freshness(latestIso, {});
+  if (f.ageDays == null) return null;
+  return f.ageDays > TSA_STALE_DAYS ? f.ageDays : 0;
+}
+// The live data-tsa.json, fetched once and shared by the TSA view and the
+// Aviation tab's freshness strip (which used to read "as of —").
+let _tsaLive = null, _tsaLivePromise = null;
+function loadTsaLive(){
+  if (!_tsaLivePromise){
+    _tsaLivePromise = fetch('data-tsa.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(j => { _tsaLive = (j && j.latest && Array.isArray(j.series)) ? j : null; return _tsaLive; })
+      .catch(() => null);
+  }
+  return _tsaLivePromise;
+}
+
 // Aviation tab. `asOf` is a PROSE string ("FAA airman data Dec 31 2025 · FAA
 // aircraft registry late May 2026 · …"), not a parseable date, so there is no
-// honest single stamp — say so and surface the prose in the hover (rule 5).
+// honest single stamp from it — the prose goes in the hover (rule 5). The one
+// DAILY feed on the tab is TSA, so the strip names that date explicitly
+// ("TSA data through …") instead of reading "as of —".
 function aviationFreshness(){
   const a = DATA.aviation;
   if (!a) return null;
+  const tsaRaw = (_tsaLive && _tsaLive.latest && _tsaLive.latest.date)
+              || (a.tsa && a.tsa.seed && a.tsa.seed.date) || null;
+  const tsaDay = tsaDayIso(tsaRaw);
   // STRICT ISO ONLY. freshnessDayUTC() falls back to Date.parse() for
   // anything that is not 'YYYY-MM-DD...', and engines are wildly lenient
   // there: V8 happily pulls "Dec 31 2025" out of the middle of this prose
@@ -6265,6 +6470,14 @@ function aviationFreshness(){
   // which parser ran is not a fact. Anything that is not an unambiguous ISO
   // date is refused outright and explained in the hover instead.
   const iso = /^\d{4}-\d{2}-\d{2}/.test(String(a.asOf || '')) ? a.asOf : null;
+  if (!iso && tsaDay){
+    return { date: tsaDay, stale: 0, total: 1, label: 'TSA data through',
+             warnDays: TSA_STALE_DAYS,
+             title: 'Newest TSA checkpoint day on file'
+               + (_tsaLive ? '' : ' (built-in seed; the live data-tsa.json has not loaded)')
+               + ' — the only daily feed on this tab. The other views are annual/'
+               + 'quarterly: ' + (a.asOf ? String(a.asOf) : 'no vintage recorded') + '.' };
+  }
   return { date: fDay(iso), stale: 0, total: 1,
            title: (a.asOf
              ? 'Source vintages: ' + String(a.asOf) + '.'
@@ -6393,9 +6606,9 @@ const TAB_FRESHNESS_SOURCE = {
   money_flow:  'ICI weekly flows · equity ETF flow history',
   stockflow:   'per-stock daily bars',
   lthcs:       'LTHCS daily index snapshot',
-  real_estate: 'Zillow/Redfin monthly metro history',
+  real_estate: 'Zillow / Redfin / FRED source publish dates',
   city:        'city indicator reference month',
-  aviation:    'FAA registry / airman vintages',
+  aviation:    'TSA checkpoint series · FAA registry / airman vintages',
 };
 
 // --- insights: age of the DATA the insights were derived FROM --------------
@@ -6480,6 +6693,10 @@ function renderTabFreshness(){
     label: info.label || 'as of',
     stale: info.stale,
     total: info.total,
+    // Optional per-feed thresholds (e.g. TSA posts daily, so it goes amber
+    // after TSA_STALE_DAYS rather than the default 7).
+    warnDays: info.warnDays,
+    badDays: info.badDays,
     title: (info.title ? info.title + ' ' : '')
          + 'Source: ' + (TAB_FRESHNESS_SOURCE[tab] || 'tab data')
          + '. This is an observation date, not the page build time.',
@@ -6495,13 +6712,31 @@ function renderTabFreshness(){
 // alone in the header, which is how a page that rebuilds hourly managed to
 // look fresh while the series behind it were two months old. It now always
 // appears next to #dataFreshness, which reports the actual data age.
+// "12m ago" / "3h ago" / "2d ago" for a sub-day timestamp (build time,
+// exchange quote time). '' when unparseable. Stamps for DATA dates go through
+// freshness(); this is only for wall-clock events.
+function agoText(isoTs){
+  const raw = String(isoTs == null ? '' : isoTs).trim();
+  if (!raw) return '';
+  // generated_at is written without a zone ("2026-10-04T21:11:18") but is UTC.
+  const t = Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(raw) ? raw : raw + 'Z');
+  if (!isFinite(t)) return '';
+  const mins = Math.max(0, Math.round((Date.now() - t) / 60000));
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.round(mins / 60);
+  if (hrs < 48) return hrs + 'h ago';
+  return Math.round(hrs / 24) + 'd ago';
+}
+
 function setBuildStamp(){
   const el = document.getElementById('generatedAt');
   if (el){
-    el.textContent = 'built ' + (DATA.generated_at || '—');
-    el.title = 'When this page was rendered. The dashboard rebuilds hourly, so '
-             + 'this is always recent and says NOTHING about how old the data '
-             + 'is — that is the stamp to the right.';
+    const ago = agoText(DATA.generated_at);
+    el.textContent = 'built ' + (DATA.generated_at || '—') + (ago ? ' (' + ago + ')' : '');
+    el.title = 'When this page was rendered. The rebuild is scheduled hourly, but '
+             + 'GitHub Actions actually runs it every ~1–6 hours, so this can be '
+             + 'several hours old. It says NOTHING about how old the data is — '
+             + 'that is the stamp to the right.';
   }
   renderDataFreshness();
 }
@@ -6954,6 +7189,11 @@ function renderCoinbaseIntlPerps(){
   const shorts = perps.filter(p => p && typeof p.funding_rate === 'number' && p.funding_rate < 0)
                       .sort((a,b) => a.funding_rate - b.funding_rate)
                       .slice(0, 6);
+  const cieSt = (DATA.market || {}).coinbase_intl_perps_status || {};
+  const cieWhy = (cieSt.available === false && cieSt.reason)
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">'
+      + 'Coinbase International perps unavailable: ' + escapeHtml(String(cieSt.reason)) + '.</td></tr>'
+    : null;
   const emptyRow = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">No perpetuals data — wait for next refresh</td></tr>';
 
   function rowFor(p){
@@ -6975,8 +7215,8 @@ function renderCoinbaseIntlPerps(){
 
   const longsBody  = document.querySelector('#cieLongsTable tbody');
   const shortsBody = document.querySelector('#cieShortsTable tbody');
-  if (longsBody)  longsBody.innerHTML  = longs.length  ? longs.map(rowFor).join('')  : emptyRow;
-  if (shortsBody) shortsBody.innerHTML = shorts.length ? shorts.map(rowFor).join('') : emptyRow;
+  if (longsBody)  longsBody.innerHTML  = longs.length  ? longs.map(rowFor).join('')  : (cieWhy || emptyRow);
+  if (shortsBody) shortsBody.innerHTML = shorts.length ? shorts.map(rowFor).join('') : (cieWhy || emptyRow);
 }
 
 // CADLI BTC reference price chart — 90d daily close from the CoinDesk CADLI
@@ -6989,7 +7229,27 @@ function renderCadliChart(){
   const series = (bars || [])
     .filter(b => b && b.date && b.close != null)
     .map(b => ({date: b.date, value: b.close}));
-  if (!chartOrEmpty('cadliBtcChart', series.length > 0, 'No CADLI BTC reference data — wait for next refresh.')) {
+  // cadli_btc_status.reason is set when the fetch failed (since 2026-10 the
+  // CoinDesk Data API answers keyless requests with HTTP 401). Show it, so
+  // the empty state says why instead of promising a refresh that won't come.
+  const cst = (DATA.market || {}).cadli_btc_status || {};
+  const cadliMsg = (cst.available === false && cst.reason)
+    ? 'CADLI BTC reference unavailable: ' + cst.reason + '.'
+      + (cst.checked_at ? ' Checked ' + String(cst.checked_at).slice(0, 16).replace('T', ' ') + ' UTC.' : '')
+      + ' No series in this build \u2014 an absence, not a reading of zero.'
+    : 'No CADLI BTC reference data — wait for next refresh.';
+  const ok = chartOrEmpty('cadliBtcChart', series.length > 0, cadliMsg);
+  // Unavailable: collapse the ~380px chart box to the height of its message
+  // instead of leaving a large empty frame. Restored when data returns.
+  const cv = document.getElementById('cadliBtcChart');
+  const wrap = cv && cv.parentElement;
+  if (wrap){
+    wrap.style.height = ok ? '' : 'auto';
+    wrap.style.minHeight = ok ? '' : '0';
+    const em = wrap.querySelector('.chart-empty');
+    if (em) em.style.position = ok ? 'absolute' : 'static';
+  }
+  if (!ok) {
     destroy('cadliBtc');
     return;
   }
@@ -7072,7 +7332,8 @@ function signalColor(score){
   if (score >= 20) return '#22c55e';
   if (score > -20) return '#f59e0b';
   if (score > -50) return '#ef4444';
-  return '#b91c1c';
+  // Was #b91c1c: 2.75:1 on the dark panels. #f87171 is 6.4:1.
+  return '#f87171';
 }
 
 function renderSignalCard(asset, container){
@@ -7445,7 +7706,7 @@ function renderTop20Signals(){
     {key:'buy',         glyph:'✓',  label:'BUY',         color:'#22c55e'},
     {key:'hold',        glyph:'◯',  label:'HOLD',        color:'#f59e0b'},
     {key:'sell',        glyph:'↓',  label:'SELL',        color:'#ef4444'},
-    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#b91c1c'},
+    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#f87171'},
   ];
   // Outer #top20SignalCards is an auto-fit grid, so each section becomes a
   // column on laptop widths. Previously every empty bucket consumed a full
@@ -8338,9 +8599,21 @@ function renderMoneyFlowTab(){
     const src = mfx.sources || {};
     const blocks = [];
 
+    // A leg the fetcher could not read ships available:false + a reason;
+    // disclose it instead of silently dropping the block.
+    const unavailBlock = (title, b) => `
+        <div style="padding:8px 0;border-top:1px solid #1f2533">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em">${title}</div>
+          <div style="font-size:11px;color:#fb923c;margin-top:2px">Unavailable — ${escapeHtml(String(b.unavailable_reason))}</div>
+        </div>`;
+    const srcNote = b => b && b.note
+      ? `<div class="sub" style="font-size:10px;color:#fb923c;margin-top:2px">${escapeHtml(String(b.note))}</div>` : '';
+
     // Money-market funds (cash on the sidelines).
     const mmf = src.mmf || null;
-    if (mmf && Array.isArray(mmf.weekly) && mmf.weekly.length){
+    if (mmf && (!Array.isArray(mmf.weekly) || !mmf.weekly.length) && mmf.unavailable_reason){
+      blocks.push(unavailBlock('MONEY-MARKET FUNDS', mmf));
+    } else if (mmf && Array.isArray(mmf.weekly) && mmf.weekly.length){
       const latest = mmf.weekly[mmf.weekly.length - 1] || {};
       const unit = escapeHtml(mmf.unit || 'USD billions');
       // MMF balances are trillions-scale — roll >=$1,000B up to $T for readability.
@@ -8369,12 +8642,15 @@ function renderMoneyFlowTab(){
           </div>
           ${wowHtml}
           <div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">week of ${escapeHtml(latest.date || mmf.as_of || '—')}</div>
+          ${srcNote(mmf)}
         </div>`);
     }
 
     // Equity mutual-fund flows.
     const mf = src.mf_flows || null;
-    if (mf && Array.isArray(mf.weekly) && mf.weekly.length){
+    if (mf && (!Array.isArray(mf.weekly) || !mf.weekly.length) && mf.unavailable_reason){
+      blocks.push(unavailBlock('EQUITY MUTUAL-FUND FLOWS', mf));
+    } else if (mf && Array.isArray(mf.weekly) && mf.weekly.length){
       const latest = mf.weekly[mf.weekly.length - 1] || {};
       const unit = escapeHtml(mf.unit || 'USD billions');
       const fmtB = v => {
@@ -8500,7 +8776,7 @@ function stockflowRow(st, rank){
   const idxMap = {'DJIA':'Dow','NASDAQ-100':'NDX','S&P 500':'SPX'};
   const idxStr = escapeHtml((Array.isArray(st.indices) ? st.indices : []).map(i => idxMap[i]).filter(Boolean).join(' · '));
   return `
-    <div style="display:grid;grid-template-columns:28px minmax(120px,1.6fr) minmax(90px,1.4fr) 64px 52px 56px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #1f2533">
+    <div class="sfx-grid" style="align-items:center;padding:8px 0;border-top:1px solid #1f2533">
       <span style="font-size:11px;color:var(--muted);text-align:right">${rank}</span>
       <div style="min-width:0">
         <div style="font-size:13px;font-weight:700">${sym}${idxStr ? ` <span style="font-size:9px;font-weight:500;color:var(--muted)" title="Index membership">${idxStr}</span>` : ''}</div>
@@ -8511,8 +8787,8 @@ function stockflowRow(st, rank){
         <div style="font-size:9px;color:${accent};font-weight:600;letter-spacing:.03em;margin-top:3px">${label}</div>
       </div>
       <span style="font-size:14px;font-weight:700;color:${accent};text-align:right">${scoreStr}</span>
-      <span style="font-size:12px;text-align:right" title="Money Flow Index"><span style="font-size:9px;color:var(--muted)">MFI </span>${mfi}</span>
-      <span style="font-size:12px;text-align:right;color:${cmfCls}" title="Chaikin Money Flow"><span style="font-size:9px;color:var(--muted)">CMF </span>${cmf}</span>
+      <span class="sfx-mfi" style="font-size:12px;text-align:right" title="Money Flow Index"><span style="font-size:9px;color:var(--muted)">MFI </span>${mfi}</span>
+      <span class="sfx-cmf" style="font-size:12px;text-align:right;color:${cmfCls}" title="Chaikin Money Flow"><span style="font-size:9px;color:var(--muted)">CMF </span>${cmf}</span>
     </div>`;
 }
 
@@ -8617,8 +8893,8 @@ function renderStockFlowTab(){
            </div>`
         : '';
       body = `
-        <div style="display:grid;grid-template-columns:28px minmax(120px,1.6fr) minmax(90px,1.4fr) 64px 52px 56px;gap:10px;padding:0 0 4px;font-size:9px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase">
-          <span style="text-align:right">#</span><span>Stock</span><span>Flow</span><span style="text-align:right">Score</span><span style="text-align:right">MFI</span><span style="text-align:right">CMF</span>
+        <div class="sfx-grid" style="padding:0 0 4px;font-size:9px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase">
+          <span style="text-align:right">#</span><span>Stock</span><span>Flow</span><span style="text-align:right">Score</span><span class="sfx-mfi" style="text-align:right">MFI</span><span class="sfx-cmf" style="text-align:right">CMF</span>
         </div>
         ${rowsHtml}
         ${moreBtn}`;
@@ -8895,7 +9171,9 @@ function renderRealEstateTab(){
   if (_reCache) { _drawRealEstate(host, _reCache); return; }
   fetch('data/real_estate.json', {cache: 'no-store'})
     .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
-    .then(d => { _reCache = d; _drawRealEstate(host, d); })
+    // Repaint the tab strip once the snapshot is in: realEstateFreshness()
+    // reads _reCache, so the strip was blank on every first visit.
+    .then(d => { _reCache = d; _drawRealEstate(host, d); try { if (state.tab === 'real_estate') renderTabFreshness(); } catch (_) {} })
     .catch(e => { host.innerHTML = '<div class="empty">Real-estate snapshot not yet loaded ('+ String(e.message || e) +'). Daily refresh runs at 06:00 UTC.</div>'; });
 }
 function _drawRealEstate(host, d){
@@ -9094,6 +9372,9 @@ function _drawRealEstate(host, d){
                    : (MUFON_STATE_NAMES[code]||code) + ': no data';
     return ''
       + '<g class="reTile" data-restate="' + code + '" role="button" tabindex="0" style="cursor:pointer">'
+      // Invisible hit area spanning the gutter: the drawn tile is ~23px on a
+      // phone; this takes the tap target past 24px without changing the look.
+      +   '<rect x="'+(x-RE_GAP/2)+'" y="'+(y-RE_GAP/2)+'" width="'+(RE_CELL+RE_GAP)+'" height="'+(RE_CELL+RE_GAP)+'" fill="transparent"></rect>'
       +   '<rect x="'+x+'" y="'+y+'" width="'+RE_CELL+'" height="'+RE_CELL+'" rx="6" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+strokeW+'">'
       +     '<title>'+tip+'</title>'
       +   '</rect>'
@@ -9302,7 +9583,9 @@ function _drawRealEstate(host, d){
   const domValues = metros.map(m => m.kpis?.days_on_market?.value).filter(v => v != null);
   const avgDom = domValues.length ? Math.round(domValues.reduce((a,b)=>a+b,0) / domValues.length) : null;
 
-  const generated = d.generated_at ? new Date(d.generated_at).toISOString().slice(0,10) : '—';
+  // Observation date, not fetch time: generated_at is when the daily job
+  // pulled the CSVs, which read "today" even with Redfin months behind.
+  const reSrc = realEstateSourceDates(d);
 
   // ---- HTML build -----------------------------------------------------
   // Hero: heat index card
@@ -9399,7 +9682,11 @@ function _drawRealEstate(host, d){
     '</div>';
 
   const snapshotHtml =
-    '<div style="padding:8px 14px 0 14px;font-size:10px;color:var(--muted,#9aa3b2);font-family:ui-monospace,monospace">snapshot ' + generated + ' UTC &middot; sources: Zillow Research, Redfin Data Center, FRED</div>';
+    '<div style="padding:8px 14px 0 14px;font-size:10px;color:var(--muted,#9aa3b2);font-family:ui-monospace,monospace">'
+    + freshnessHtml(reSrc.oldest, { label: 'data as of',
+        title: 'Oldest vendor publish date; the page is only as current as its stalest source.' }).replace('<div ', '<span ').replace(/<\/div>$/, '</span>')
+    + ' &middot; ' + reSrc.comps.map(c => escapeHtml(c.label) + ' ' + escapeHtml(c.date || 'undated')).join(' &middot; ')
+    + ' &middot; sources: Zillow Research, Redfin Data Center, FRED</div>';
 
   // ---- Geographic state map (real polygons, lazy sidecar) -------------
   // Renders at the BOTTOM of the tab from data-us_states.json (51 pre-projected
@@ -9862,7 +10149,11 @@ function renderWhaleEth(){
         const n = Number(v);
         return Number.isFinite(n) ? n : null;
       };
-      const avgFee = toFiniteNum(bc.avg_tx_fee_eth_24h);
+      let avgFee = toFiniteNum(bc.avg_tx_fee_eth_24h);
+      // Older payloads carried Blockchair's raw WEI string under this *_eth_*
+      // name (fetch_market now converts). No 24h average fee is ever >= 1
+      // ETH, so a value that large is wei.
+      if (avgFee != null && avgFee >= 1) avgFee = avgFee / 1e18;
       const mp    = toFiniteNum(bc.market_price_usd);
       const burn  = toFiniteNum(bc.burned_eth_24h);
       const erc20 = toFiniteNum(bc.erc20_transactions_24h);
@@ -9922,20 +10213,53 @@ function renderWhaleAlerts(){
   }).join('');
 }
 
-// Recent ETH whale transactions: ≥ $1M last 24h from Blockchair. Hidden when
-// no data. Mirrors renderWhaleAlerts() (BTC mempool feed) in structure.
+// Recent ETH whale transactions: ≥ $1M in the TRAILING 24h from Blockchair.
+// Rows are re-checked against the window here as well as in the fetcher: an
+// earlier build replayed an unfiltered all-time scan (2015-2022 transfers)
+// under this "last 24h" label, so a row older than 24h is never shown. When
+// nothing qualifies the card says why instead of silently disappearing.
+const ETH_WHALE_WINDOW_MS = 24 * 3600 * 1000;
+function ethWhaleTxTime(t){
+  const s = (t && typeof t.time === 'string') ? t.time.trim() : '';
+  if (!s) return NaN;
+  // Blockchair times are UTC "YYYY-MM-DD HH:MM:SS" with no zone marker.
+  const hasZone = /([zZ]|[+-]\d\d:?\d\d)$/.test(s);
+  return Date.parse(s.replace(' ', 'T') + (hasZone ? '' : 'Z'));
+}
+function recentEthWhaleTxs(txs, nowMs){
+  const now = Number.isFinite(nowMs) ? nowMs : Date.now();
+  return (Array.isArray(txs) ? txs : []).filter(t => {
+    const ms = ethWhaleTxTime(t);
+    return Number.isFinite(ms) && ms >= now - ETH_WHALE_WINDOW_MS && ms <= now + 10 * 60 * 1000;
+  });
+}
 function renderEthWhaleAlerts(){
   const card = document.getElementById('ethWhaleAlertsCard');
   if (!card) return;
-  const txs = (((DATA.whale||{}).eth||{}).large_transactions) || [];
-  if (!txs.length){ card.classList.add('hidden'); return; }
+  const eth = ((DATA.whale||{}).eth) || null;
+  if (!eth){ card.classList.add('hidden'); return; }
+  const raw = Array.isArray(eth.large_transactions) ? eth.large_transactions : [];
+  const txs = recentEthWhaleTxs(raw);
+  const st = eth.large_transactions_status || {};
+  const asOf = st.as_of ? String(st.as_of).replace('T', ' ').slice(0, 16) + ' UTC' : '';
   card.classList.remove('hidden');
   const note = document.getElementById('ethWhaleAlertsNote');
   if (note){
-    note.textContent = `${txs.length} txs ≥ $1M · last 24h`;
+    const cached = st.source === 'stale-cache' ? ' · cached, Blockchair unreachable this build' : '';
+    note.textContent = txs.length
+      ? `${txs.length} txs ≥ $1M · last 24h${cached}`
+      : `≥ $1M · last 24h${asOf ? ' · as of ' + asOf : ''}`;
   }
   const tbody = document.getElementById('ethWhaleAlertsBody');
   if (!tbody) return;
+  if (!txs.length){
+    let why;
+    if (raw.length) why = `The latest Blockchair scan${asOf ? ' (' + asOf + ')' : ''} has no transactions from the last 24 hours.`;
+    else if (st.source === 'live') why = 'No ETH transactions of $1M or more in the last 24 hours.';
+    else why = 'Blockchair was unreachable, so there are no ETH whale transactions from the last 24 hours to show.';
+    tbody.innerHTML = `<tr><td colspan="4" style="color:var(--muted);padding:12px 8px">${escapeHtml(why)}</td></tr>`;
+    return;
+  }
   // Validate ETH tx hash as 0x + 64 hex chars to defang any javascript:/data:
   // scheme injection through the href + innerHTML.
   const isEthTxHash = s => typeof s === 'string' && /^0x[0-9a-fA-F]{64}$/.test(s);
@@ -9946,7 +10270,7 @@ function renderEthWhaleAlerts(){
     const eth = t.value_eth != null ? fmtNum(t.value_eth, 2) : '—';
     const usd = t.value_usd != null ? fmtUSD(t.value_usd, 'auto') : '—';
     const cls = (t.value_usd != null && t.value_usd >= 10_000_000) ? 'green' : '';
-    const time = t.time ? escapeHtml(String(t.time)) : '—';
+    const time = t.time ? escapeHtml(String(t.time)) + ' UTC' : '—';
     const linkCell = hash
       ? `<a href="${txUrl}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortHash} ↗</a>`
       : '—';
@@ -10710,18 +11034,37 @@ function renderDefi(){
     </tr>`).join('');
   }
 
-  // ---- Optional bridges card (hidden when empty) ----
+  // ---- Bridges card ----
+  // Hidden only when the payload says nothing about bridges (old payloads,
+  // sidecar not loaded yet). When the fetcher reports available:false (since
+  // 2026-10 DeFiLlama serves bridges only on its paid plan: HTTP 402) the
+  // card stays up and says so, rather than vanishing without a word.
   const bridgesCard = document.getElementById('defiBridgesCard');
   const bridgesBody = document.querySelector('#defiBridgesTable tbody');
+  const bridgesMeta = defi.bridges || {};
   if (bridgesCard && bridgesBody) {
+    // The 24h/7d column headers only make sense above real rows; over the
+    // "Unavailable" message they were empty scaffolding.
+    const bridgesHead = document.querySelector('#defiBridgesTable thead');
+    if (bridgesHead) bridgesHead.style.display = bridges.length ? '' : 'none';
     if (bridges.length) {
       bridgesCard.classList.remove('hidden');
+      // fetch_market emits daily_/weekly_volume_usd; the older names are kept
+      // as fallbacks for cached payloads.
       bridgesBody.innerHTML = bridges.slice(0, 15).map((b, i) => `<tr>
         <td style="color:var(--muted)">${i+1}</td>
         <td><strong>${escapeHtml(b.name||b.chain||'')}</strong></td>
-        <td>${fmtUSD(b.volume_24h_usd ?? b.volume_24h ?? b.volume_usd_24h, 'auto')}</td>
-        <td>${fmtUSD(b.volume_7d_usd  ?? b.volume_7d  ?? b.volume_usd_7d,  'auto')}</td>
+        <td>${fmtUSD(b.daily_volume_usd ?? b.volume_24h_usd ?? b.volume_24h ?? b.volume_usd_24h, 'auto')}</td>
+        <td>${fmtUSD(b.weekly_volume_usd ?? b.volume_7d_usd ?? b.volume_7d ?? b.volume_usd_7d, 'auto')}</td>
       </tr>`).join('');
+    } else if (bridgesMeta.available === false && bridgesMeta.reason) {
+      bridgesCard.classList.remove('hidden');
+      const checked = bridgesMeta.checked_at
+        ? ' Checked ' + escapeHtml(String(bridgesMeta.checked_at).slice(0, 16).replace('T', ' ')) + ' UTC.'
+        : '';
+      bridgesBody.innerHTML = `<tr><td colspan="4" style="color:var(--muted);font-size:12px;line-height:1.5;white-space:normal">
+        Unavailable: ${escapeHtml(bridgesMeta.reason)}.${checked} No bridge volumes in this build \u2014 an absence, not a reading of zero.
+      </td></tr>`;
     } else {
       bridgesCard.classList.add('hidden');
       bridgesBody.innerHTML = '';
@@ -11093,6 +11436,16 @@ function renderCoinbaseSpot(){
     return;
   }
   wrap.classList.remove('hidden');
+  // These are quotes captured when the page was built, not a live feed: say
+  // when (the OLDEST exchange ticker time across the rows) and how long ago.
+  const asOfEl = document.getElementById('coinbaseSpotAsOf');
+  if (asOfEl){
+    const times = rows.map(k => (cb[k] || {}).time).filter(t => typeof t === 'string' && isFinite(Date.parse(t))).sort();
+    const t0 = times[0] || null;
+    asOfEl.textContent = t0 ? '· quoted ' + t0.slice(0, 16).replace('T', ' ') + ' UTC (' + agoText(t0) + ')' : '';
+    asOfEl.title = 'Exchange ticker time of the snapshot taken at the last site rebuild. '
+                 + 'The page does not stream prices; it refreshes when the site rebuilds (every few hours).';
+  }
   tbody.innerHTML = rows.map(k => {
     const q = cb[k] || {};
     const sym = k.toUpperCase();
@@ -12117,7 +12470,7 @@ function renderStocksTab(){
     {key:'buy',         glyph:'✓',  label:'BUY',         color:'#22c55e'},
     {key:'hold',        glyph:'◯',  label:'HOLD',        color:'#f59e0b'},
     {key:'sell',        glyph:'↓',  label:'SELL',        color:'#ef4444'},
-    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#b91c1c'},
+    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#f87171'},
   ];
   const html = sections.map(sec => {
     const items = byBucket[sec.key];
@@ -12452,7 +12805,9 @@ function renderAiSecFormD(){
     tb.innerHTML = '<tr><td colspan="6" style="padding:14px;color:var(--muted)">No AI-adjacent Form D filings in the last 60 days. EDGAR may be unreachable, or no qualifying issuers filed in that window.</td></tr>';
     return;
   }
-  if (badge) badge.textContent = 'EDGAR · ' + rows.length + ' filings · last 60d';
+  const fdCov = ((DATA.market||{}).ai_funding||{}).form_d_coverage || {};
+  const fdOf = (Number(fdCov.ai_matches) > rows.length) ? (' of ' + fdCov.ai_matches) : '';
+  if (badge) badge.textContent = 'EDGAR · ' + rows.length + fdOf + ' filings · last 60d';
   // Sort by filed_date desc so the freshest deals lead.
   const sorted = rows.slice().sort((a,b) => {
     const da = a && a.filed_date ? Date.parse(a.filed_date) : 0;
@@ -13072,13 +13427,22 @@ function paintSentimentCard(prefix, net, label, color, posPct, neuPct, negPct, s
   const barPos = document.getElementById(prefix + 'BarPos');
   const barNeu = document.getElementById(prefix + 'BarNeu');
   const barNeg = document.getElementById(prefix + 'BarNeg');
+  // Grey the reading out when its OLDEST dated input is more than 7 days old:
+  // a vivid "BULLISH +40" over week-old inputs reads as a current call. The
+  // freshness stamp underneath still says exactly how old.
+  const fAge = (fresh && fresh.date) ? freshness(fresh.date, {}).ageDays : null;
+  const staleScore = fAge != null && fAge > 7;
+  const shown = staleScore ? 'var(--muted)' : color;
+  card.classList.toggle('sentiment-stale', staleScore);
   if (scoreEl){
     scoreEl.textContent = (net >= 0 ? '+' : '') + net;
-    scoreEl.style.color = color;
+    scoreEl.style.color = shown;
+    if (staleScore) scoreEl.title = 'Greyed out: the oldest input behind this score is ' + fAge + ' days old.';
+    else scoreEl.removeAttribute('title');
   }
   if (labelEl){
     labelEl.textContent = label;
-    labelEl.style.color = color;
+    labelEl.style.color = shown;
   }
   if (sublineEl){
     sublineEl.textContent = subline;
@@ -13299,6 +13663,10 @@ function refreshCompositeHistoryAffordances(){
       : 'This index has no usable daily history yet — open for the details.');
     card.classList.add('histcard');
     card.setAttribute('data-histcard', key);
+    // The whole card opens the history on click; make that reachable from
+    // the keyboard too (Enter/Space on the focused card — see the keydown
+    // handler next to the delegated click below).
+    if (!card.hasAttribute('tabindex')) card.setAttribute('tabindex', '0');
   });
 }
 
@@ -13609,6 +13977,13 @@ function closeCompositeHistory(){
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeCompositeHistory();
+    // Keyboard twin of the whole-card click: only when the card ITSELF has
+    // focus, so Enter on a link/button inside it keeps its own meaning.
+    if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.hasAttribute
+        && e.target.hasAttribute('data-histcard')){
+      e.preventDefault();
+      openCompositeHistory(e.target.getAttribute('data-histcard'));
+    }
   });
   // FOCUS TRAP (audit V2-E). The modal already declared role="dialog"
   // aria-modal="true", moved focus to its close button on open and restored
@@ -13705,12 +14080,17 @@ function renderOverviewSentiment(){
     components.push(clampScore(avg));
     inputLabels.push('signal avg');
   }
-  // 3) Avg Coinbase Intl perp funding rate. > 0.0001 (0.01%) per +0.0001
-  //    contributes +20; clamp to ±100. Positive funding = crowded longs.
-  const perps = Array.isArray(m.coinbase_intl_perps) ? m.coinbase_intl_perps : [];
-  const rates = perps
-    .map(p => p && Number(p.funding_rate))
-    .filter(v => isFinite(v));
+  // 3) Avg perp funding rate. > 0.0001 (0.01%) per +0.0001 contributes +20;
+  //    clamp to ±100. Positive funding = crowded longs. Sourced from
+  //    market.perp_funding (OKX BTC/ETH/LINK/LTC, fresh rows only): the
+  //    Coinbase Intl perps are paused/delisted and their frozen quotes must not
+  //    vote. Older payloads without perp_funding fall back to the perp rows.
+  const pfund = m.perp_funding || null;
+  const rates = pfund
+    ? ((pfund.available && isFinite(Number(pfund.avg_rate))) ? [Number(pfund.avg_rate)] : [])
+    : (Array.isArray(m.coinbase_intl_perps) ? m.coinbase_intl_perps : [])
+        .map(p => p && Number(p.funding_rate))
+        .filter(v => isFinite(v));
   if (rates.length){
     const avgRate = rates.reduce((a,b)=>a+b,0) / rates.length;
     components.push(clampScore((avgRate / 0.0001) * 20));
@@ -14576,6 +14956,12 @@ function renderSantimentCards(){
     const xout = c.exchange_outflow_latest;
     const xin  = c.exchange_inflow_latest;
     const netFlow = (xout != null && xin != null) ? (xout - xin) : null;
+    // Observation date of the same-day (lag 0) rows: the OLDEST last point
+    // among them, so a cached snapshot can't read as today's numbers. The
+    // ~35d rows carry their own pill.
+    const lastDate = ser => (Array.isArray(ser) && ser.length) ? String((ser[ser.length - 1] || {}).date || '').slice(0, 10) : '';
+    const dataThrough = [c.daily_active_addresses, c.active_addresses_24h, c.dev_activity, c.dev_contributors]
+      .map(lastDate).filter(Boolean).sort()[0] || '';
     const row = (label, val, extra, lag) =>
       `<tr><td style="color:var(--muted);font-size:11px">${label}${lag?' ':''}${stalePill(lag)}</td><td class="right" style="font-size:12px;font-variant-numeric:tabular-nums">${val == null ? '—' : (typeof val === 'string' ? val : fmtNumShort(val))} ${extra||''}</td></tr>`;
     return `<div class="card" style="border-left:4px solid ${accent}">
@@ -14592,7 +14978,7 @@ function renderSantimentCards(){
         ${row('MVRV',           mvrv == null ? null : mvrv.toFixed(2), mvrvTag(mvrv), 35)}
         ${row('Net exch flow',  netFlow, flowTag(netFlow), 35)}
       </tbody></table>
-      ${stale ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:6px">cached (daily-gated)</div>' : ''}
+      ${(dataThrough || stale) ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:6px">${dataThrough ? 'data through ' + escapeHtml(dataThrough) : ''}${dataThrough && stale ? ' \u00b7 ' : ''}${stale ? 'cached (fetched once per UTC day)' : ''}</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -14993,7 +15379,7 @@ function renderTopNewsSentiment(){
     const titleAttr = r.recent
       .map(rc => `${rc.sentiment[0]} · ${(rc.title || '').replace(/"/g, '”').slice(0, 100)}`)
       .join('\n');
-    return `<div class="top-news-sentiment-row" data-tns-symbol="${escapeHtml(r.symbol)}" style="cursor:pointer" title="${escapeHtml(titleAttr || (r.symbol + ': no headline matches'))}">
+    return `<div class="top-news-sentiment-row" data-tns-symbol="${escapeHtml(r.symbol)}" role="button" tabindex="0" aria-label="${escapeHtml(r.symbol)} news sentiment: ${r.total} mention${r.total === 1 ? '' : 's'}, net ${escapeHtml(String(netLbl))} — open headlines" style="cursor:pointer" title="${escapeHtml(titleAttr || (r.symbol + ': no headline matches'))}">
       <div>
         <div class="tns-sym">${escapeHtml(r.symbol)}</div>
         <div class="tns-name">${escapeHtml(r.name)}</div>
@@ -15012,9 +15398,13 @@ function renderTopNewsSentiment(){
   }).join('');
   // Click any row → open the detail modal for that coin. Delegated so
   // re-renders don't need to re-bind.
-  host.querySelectorAll('[data-tns-symbol]').forEach(el =>
-    el.addEventListener('click', () => openNewsSentimentDetail(el.getAttribute('data-tns-symbol')))
-  );
+  host.querySelectorAll('[data-tns-symbol]').forEach(el => {
+    el.addEventListener('click', () => openNewsSentimentDetail(el.getAttribute('data-tns-symbol')));
+    // role=button rows: Enter/Space activate, as for a native button.
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openNewsSentimentDetail(el.getAttribute('data-tns-symbol')); }
+    });
+  });
 }
 
 function renderResearchNews(){
@@ -15431,10 +15821,26 @@ function avBootAviation(DATA){
       new Chart($("#c-airports"),{type:"bar",data:{labels:m.airports.labels,datasets:[{data:m.airports.vals,backgroundColor:m.airports.labels.map((l,i)=>i===0?C.amber:"rgba(255,181,71,.55)"),borderRadius:4}]},
         options:base({plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+"M passengers (2024)"}}},scales:{x:{ticks:{color:C.ink,font:{family:AV_MONO,size:11}},grid:{display:false}},y:axes(0,0,null,v=>v+"M").y}})});}
 
+    // ONE fetch of the cron-committed OpenSky snapshot (data-opensky.json),
+    // shared by the summary tile and the Live sub-view. Resolves to the
+    // snapshot, or null when it is missing, unreadable or slow; callers then
+    // fall back to the baked-in D.live.seed and MUST label it as a dated,
+    // stale sample (it was captured once, months ago, and is not "now").
+    let _openskyP=null;
+    function openSky(){
+      if(!_openskyP){
+        const f=fetch("data-opensky.json",{cache:"no-store"}).then(r=>r.ok?r.json():null)
+          .then(s=>(s&&Number.isFinite(Number(s.airborne)))?s:null).catch(()=>null);
+        _openskyP=Promise.race([f,new Promise(r=>setTimeout(()=>r(null),8000))]);
+      }
+      return _openskyP;
+    }
+    function avSeedAsOf(){return String((D.live&&D.live.seed&&D.live.seed.tstr)||"").slice(0,10)||"unknown date";}
+
     function live(){if(drawn.live)return;drawn.live=1;
-      const apply=(s)=>{
+      const apply=(s,isSeed)=>{
         const k=[
-          {label:"Aircraft airborne now",val:s.airborne,delta:"OpenSky · "+s.tstr+(s.ts?" · "+Math.max(0,Math.round((Date.now()/1000-s.ts)/60))+" min ago":""),dir:"up"},
+          {label:"Aircraft airborne now",val:s.airborne,delta:isSeed?("stale seed sample · as of "+avSeedAsOf()):("OpenSky · "+s.tstr+(s.ts?" · "+Math.max(0,Math.round((Date.now()/1000-s.ts)/60))+" min ago":"")),dir:"up"},
           {label:"Total tracked",val:s.tracked,delta:"incl. on-ground",dir:"flat"},
           {label:"On the ground",val:s.ground,delta:"taxiing / parked w/ ADS-B",dir:"flat"},
           {label:"Top country (live)",val:(s.byCountry[0]||["—",0])[0],delta:fmt((s.byCountry[0]||["—",0])[1])+" aircraft",dir:"flat",raw:true}
@@ -15448,7 +15854,7 @@ function avBootAviation(DATA){
         chartTable("c-live-alt",["Altitude band","Airborne (live)"],s.byAlt.map(x=>[x[0],x[1]]));
       };
       // prefer the cron-committed snapshot; fall back to the baked-in seed
-      fetch("data-opensky.json",{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(apply).catch(()=>apply(D.live.seed));}
+      openSky().then(s=>s?apply(s,false):apply(D.live.seed,true));}
 
     // ---- Leaflet, loaded on FIRST USE of the map (was two render-blocking
     // link/script tags on unpkg.com in the document head). Nobody who
@@ -15648,12 +16054,32 @@ function avBootAviation(DATA){
         const latestV=(live&&live.latest)?live.latest.vol:t.seed.vol;
         const avg7=(live&&live.avg7)?live.avg7:t.seed.avg7;
         const ageNote=(live&&live.generated)?"":" · seed";
+        // Stale badge: TSA posts every weekday, so a newest day older than
+        // TSA_STALE_DAYS means the feed stopped. Said in the KPI, on the view
+        // and on the chart note; the view copy no longer promises real-time data.
+        const latestIso=tsaDayIso(latestD);
+        const staleDays=tsaStaleDays(latestIso);
+        const badge=$("#tsa-stale-badge");
+        if(badge){
+          if(staleDays){badge.hidden=false;badge.textContent="Stale · newest TSA day is "+latestD+" ("+staleDays+" days old)";}
+          else{badge.hidden=true;badge.textContent="";}
+        }
+        // The 7-day KPI names its actual window instead of "trailing week".
+        const wk=series.slice(-7);
+        const wkTxt=wk.length?(wk.length<7?wk.length+" days · ":"")+wk[0].d+" – "+wk[wk.length-1].d:"trailing week";
         const head=[
-          {label:"Latest day",val:fmt(latestV),delta:latestD+" · TSA"+ageNote,dir:"up",raw:true},
-          {label:"7-day average",val:fmt(avg7),delta:"trailing week",dir:"flat",raw:true}
+          {label:"Latest day",val:fmt(latestV),delta:latestD+" · TSA"+ageNote+(staleDays?" · stale ("+staleDays+"d old)":""),dir:staleDays?"down":"up",raw:true},
+          {label:"7-day average",val:fmt(avg7),delta:wkTxt,dir:"flat",raw:true}
         ].concat(t.kpis);
         kpi($("#kpi-tsa"),head);
-        const labels=series.map(p=>String(p.d).replace(/\/20\d\d$/,"")), vals=series.map(p=>p.v);
+        const note=$("#tsa-series-note");
+        if(note&&series.length){
+          note.textContent="Passengers through all US TSA checkpoints, "+series[0].d+" – "+series[series.length-1].d
+            +" ("+series.length+" days on file)."+(staleDays?" This feed has not updated since then.":" Weekly travel rhythm (Sunday/Thursday peaks, Tuesday/Saturday troughs) is clearly visible.");
+        }
+        // Year kept on the axis (M/D/YY): with a stale series, "6/17" alone
+        // read as this year's June.
+        const labels=series.map(p=>String(p.d).replace(/\/20(\d\d)$/,"/$1")), vals=series.map(p=>p.v);
         // Rebuild the Show-data/Copy-CSV companion to match the series actually
         // drawn. tsa() renders twice (synchronous seed, then live fetch) and
         // chartTable() bails if a .cdata sibling already exists — so drop the
@@ -15665,8 +16091,8 @@ function avBootAviation(DATA){
         window._tsaChart=new Chart($("#c-tsa-series"),{type:"line",data:{labels:labels,datasets:[{data:vals,borderColor:C.cyan,backgroundColor:"rgba(54,217,210,.10)",fill:true,tension:.2,pointRadius:2,borderWidth:2}]},
           options:base({plugins:{legend:{display:false},tooltip:{callbacks:{title:c=>series[c[0].dataIndex].d,label:c=>fmt(c.raw)+" screened"}}},scales:{x:{ticks:{color:C.dim,font:{family:AV_MONO,size:9},maxTicksLimit:12},grid:{display:false}},y:axes(0,0,null,v=>(v/1e6).toFixed(1)+"M").y}})});
       };
-      apply(null);
-      fetch("data-tsa.json",{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(apply).catch(()=>{});}
+      apply(_tsaLive);
+      loadTsaLive().then(j=>{ if(j) apply(j); });}
 
     function go(v){ // activate a view by name (shared by nav + summary tiles)
       document.querySelectorAll("#aviation-tab .av-nav button").forEach(x=>{const on=x.dataset.view===v;x.classList.toggle("active",on);x.setAttribute("aria-current",on?"true":"false");x.setAttribute("aria-selected",on?"true":"false");x.tabIndex=on?0:-1;});
@@ -15684,7 +16110,8 @@ function avBootAviation(DATA){
         {v:"airtravel",t:"Air travel",val:(D.airtravel?D.airtravel.kpis[0].val:"—"),s:"2024 enplanements"},
         {v:"safety",t:"GA safety",val:(D.safety?String(D.safety.kpis[2].val):"—"),s:"accidents / 100k hrs"},
         {v:"tsa",t:"TSA screened",val:(D.tsa?D.tsa.kpis[0].val:"—"),s:"passengers · 2025"},
-        {v:"live",t:"Airborne now",val:fmt(D.live.seed.airborne),s:"live OpenSky sample"},
+        // Filled from data-opensky.json below; never the baked-in seed as "live".
+        {v:"live",t:"Airborne now",val:"…",s:"loading OpenSky snapshot"},
         {v:"used",t:"Used market",val:fmt(u),s:"listings sampled"},
         {v:"calc",t:"Cost to own",val:"$/hr",s:"model your true cost"},
         {v:"map",t:"Live map",val:"Map",s:"aircraft positions now"}
@@ -15692,6 +16119,13 @@ function avBootAviation(DATA){
       document.getElementById("av-summary").innerHTML=tiles.map(x=>
         `<div class="scard" data-go="${x.v}" role="button" tabindex="0" aria-label="${escapeHtml(x.t+": "+x.val+", "+x.s)}"><div class="st">${x.t}</div><div class="sv">${x.val}</div><div class="ss">${x.s}</div></div>`).join("");
       document.querySelectorAll("#aviation-tab .scard").forEach(c=>{const g=()=>go(c.dataset.go);c.addEventListener("click",g);c.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();g();}});});
+      openSky().then(s=>{
+        const c=document.querySelector('#av-summary .scard[data-go="live"]'); if(!c) return;
+        const val=s?fmt(Number(s.airborne)):fmt(D.live.seed.airborne);
+        const sub=s?("OpenSky · "+(s.tstr||"time unknown")):("stale seed sample · as of "+avSeedAsOf());
+        c.querySelector(".sv").textContent=val; c.querySelector(".ss").textContent=sub;
+        c.setAttribute("aria-label","Airborne now: "+val+", "+sub);
+      });
     }
 
     const V={pilots,sport,fleet,models,macro,airtravel,safety,tsa,live,map,used,calc,sources};
@@ -15712,6 +16146,9 @@ function avBootAviation(DATA){
     });
     // Entry render: as-of stamp + summary tiles + default (Pilots) sub-view.
     document.getElementById("av-asof-stamp").textContent=D.asOf;
+    // TSA is the tab's one daily feed; load it up front so the freshness
+    // strip shows "TSA data through <date>" rather than "as of —".
+    loadTsaLive().then(()=>{ try{ if(state&&state.tab==='aviation') renderTabFreshness(); }catch(_){} });
     summary();
     let _av0="pilots"; try{const _sv=localStorage.getItem("av_view"); if(_sv&&V[_sv])_av0=_sv;}catch(_){}
     go(_av0);
@@ -15719,6 +16156,9 @@ function avBootAviation(DATA){
 
 }
 
+// true until the first (boot) selectTab(); see there. `var` (hoisted) so a
+// call that lands before this line runs reads undefined, i.e. "replace".
+var _tabHistReplace = true;
 function selectTab(t){
   state.tab = t;
   // Keep the URL hash in sync so every tab is deep-linkable & shareable
@@ -15730,9 +16170,16 @@ function selectTab(t){
     const _curHash = (location.hash || '').replace(/^#/, '');
     const _wantHash = (t === 'overview') ? '' : t;
     if (_curHash !== _wantHash) {
-      history.replaceState(null, '',
-        _wantHash ? '#' + _wantHash : location.pathname + location.search);
+      const _url = _wantHash ? '#' + _wantHash : location.pathname + location.search;
+      // A user-initiated tab change gets its own history entry, so Back
+      // returns to the previous tab instead of leaving the site after a few
+      // clicks. The first paint (and Back/Forward replays, whose hash already
+      // matches) replace instead. pushState fires no hashchange either, so
+      // the re-entrancy guarantee above still holds.
+      if (_tabHistReplace !== false) history.replaceState(null, '', _url);
+      else history.pushState({ tab: t }, '', _url);
     }
+    _tabHistReplace = false;   // only the very first (boot) paint replaces
   } catch (_) {}
   // Kick off lazy load of any sidecar this tab needs. Fire-and-forget —
   // renderAll() below runs immediately with an empty subtree (the
@@ -15930,6 +16377,38 @@ function openChat(){ chatDock?.classList.add('open'); chatFab?.classList.add('hi
 function closeChat(){ chatDock?.classList.remove('open'); chatFab?.classList.remove('hidden'); }
 
 chatFab?.addEventListener('click', openChat);
+// Keep the chat FAB off interactive content: if a link/button/input sits
+// under its resting position, lift it (CSS .dodge). Checked on scroll/resize,
+// throttled to one rAF; the test always uses the RESTING rect so the lifted
+// state can't oscillate.
+(function chatFabDodge(){
+  if (!chatFab || !document.elementsFromPoint) return;
+  let queued = false;
+  const CTRL = 'a[href],button,input,select,textarea,summary,[role="button"],[role="tab"],[tabindex="0"]';
+  function check(){
+    queued = false;
+    if (chatFab.classList.contains('hidden')) return;
+    const r = chatFab.getBoundingClientRect();
+    const lift = chatFab.classList.contains('dodge') ? 68 : 0;
+    const top = r.top + lift, bottom = r.bottom + lift;
+    const pts = [[r.left + r.width / 2, top + r.height / 2], [r.left + 4, top + 4], [r.right - 4, top + 4],
+                 [r.left + 4, bottom - 4], [r.right - 4, bottom - 4]];
+    let hit = false;
+    for (const [x, y] of pts){
+      for (const el of document.elementsFromPoint(x, y)){
+        if (el === chatFab || chatFab.contains(el) || el === document.body || el === document.documentElement) continue;
+        if (el.closest && el.closest(CTRL) && !el.closest('#chatDock')){ hit = true; break; }
+      }
+      if (hit) break;
+    }
+    chatFab.classList.toggle('dodge', hit);
+  }
+  const queue = () => { if (!queued){ queued = true; requestAnimationFrame(check); } };
+  window.addEventListener('scroll', queue, { passive: true });
+  window.addEventListener('resize', queue);
+  document.addEventListener('click', () => setTimeout(queue, 50));
+  setTimeout(queue, 1500);
+})();
 document.getElementById('chatClose')?.addEventListener('click', closeChat);
 
 function appendMsg(role, text){
@@ -16484,7 +16963,7 @@ if (!isServer){
   const _rb = document.getElementById('refreshBtn');
   if (_rb){
     _rb.textContent = '↻ Reload';
-    _rb.title = 'Reload page to get the latest hourly snapshot';
+    _rb.title = 'Reload to get the latest published snapshot (the site rebuilds every few hours)';
     // Remove the existing live-server click handler by cloning the node.
     const _clone = _rb.cloneNode(true);
     _rb.parentNode.replaceChild(_clone, _rb);
@@ -16508,6 +16987,13 @@ if (!isServer){
     const b = document.getElementById(id);
     if (b) b.style.display = 'none';
   });
+  // /bookmarklet is a Flask route; on GitHub Pages it 404s. Remove the anchor
+  // (not just hide it) so it can't be reached or crawled, and drop the whole
+  // "Load data" card — every control on it needs the local server.
+  const _bm = document.getElementById('bookmarkletLink');
+  if (_bm) _bm.remove();
+  const _lc = document.getElementById('etfLoadCard');
+  if (_lc) _lc.style.display = 'none';
 }
 
 // ---------- Share modal (owner side) ----------
@@ -16883,7 +17369,7 @@ function liveComputeSignal(rows){
 function liveSignalColor(label){
   if (label === 'STRONG BUY') return '#16a34a';
   if (label === 'BUY') return '#22c55e';
-  if (label === 'STRONG SELL') return '#b91c1c';
+  if (label === 'STRONG SELL') return '#f87171';  // text colour; #b91c1c was 2.75:1
   if (label === 'SELL') return '#ef4444';
   return '#f59e0b';
 }
@@ -18991,6 +19477,8 @@ function renderMufonMap(){
     const strokeW = isSel ? 2.5 : 1;
     return ''
       + '<g class="mufonTile" data-state="'+code+'" role="button" tabindex="0" style="cursor:pointer">'
+      // Invisible hit area spanning the gutter (bigger tap target, same look).
+      +   '<rect x="'+(x-GAP/2)+'" y="'+(y-GAP/2)+'" width="'+(CELL+GAP)+'" height="'+(CELL+GAP)+'" fill="transparent"></rect>'
       +   '<rect x="'+x+'" y="'+y+'" width="'+CELL+'" height="'+CELL+'" rx="6" '
       +     'fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+strokeW+'">'
       +     '<title>'+ (MUFON_STATE_NAMES[code]||code) +': '+c.toLocaleString()+' sightings</title>'
@@ -20994,6 +21482,18 @@ function travelFmtDate(iso){
   return months[m] + ' ' + d + ', ' + parts[0];
 }
 
+// Risk-indicator pills exist only when fetch_advisories parsed the State
+// Dept HTML table. In its RSS fallback (the table sits behind a bot
+// challenge) every row carries risks:[] because the data is MISSING, not
+// because a country has none. Treat that as "unavailable" so a Level 4
+// country never reads "No specific risk indicators" and the terrorism count
+// is never a fabricated 0. Older payloads without the flag are recognised by
+// their source tag.
+function travelRisksAvailable(t){
+  return !!t && t.risks_available !== false && t.source !== 'rss-fallback';
+}
+const TRAVEL_RISKS_UNAVAILABLE = 'Risk indicators unavailable (source blocked)';
+
 function renderTravelTab(){
   const travel = DATA.travel;
   const loading = document.getElementById('travelLoading');
@@ -21023,7 +21523,12 @@ function renderTravelTab(){
     if (Array.isArray(a.risks) && a.risks.indexOf('T') !== -1) counts.terror++;
   }
 
-  const sub = state.travelSub || 'overview';
+  const risksOk = travelRisksAvailable(travel);
+  let sub = state.travelSub || 'overview';
+  if (!risksOk && sub === 'terror') { sub = 'overview'; state.travelSub = 'overview'; }
+  document.querySelectorAll('.travel-subtab[data-travelsub="terror"]').forEach(b => {
+    b.classList.toggle('hidden', !risksOk);
+  });
 
   // Toggle sub-view visibility
   const overviewEl = document.getElementById('travelOverview');
@@ -21039,13 +21544,13 @@ function renderTravelTab(){
   });
 
   if (sub === 'overview') {
-    renderTravelOverviewV1(advisories, bulletins, counts, travel.generated_at);
+    renderTravelOverviewV1(advisories, bulletins, counts, travel.generated_at, risksOk);
   } else {
-    renderTravelListV1(advisories, sub, counts);
+    renderTravelListV1(advisories, sub, counts, risksOk);
   }
 }
 
-function renderTravelOverviewV1(advisories, bulletins, counts, generatedAt){
+function renderTravelOverviewV1(advisories, bulletins, counts, generatedAt, risksOk = true){
   // Stat cards row — clicking L1/L2/L3/L4 navigates to that level sub-view;
   // Terrorism card opens the Terrorism sub-view.
   const statHost = document.getElementById('travelStatCards');
@@ -21057,11 +21562,13 @@ function renderTravelOverviewV1(advisories, bulletins, counts, generatedAt){
         '<div class="travel-stat__sub">' + escapeHtml(TRAVEL_LEVEL_SHORT[l]) + '</div>' +
       '</button>'
     ).join('') +
-    '<button class="travel-stat travel-stat--terror" data-travelstat="terror" type="button">' +
-      '<div class="travel-stat__num">' + counts.terror + '</div>' +
-      '<div class="travel-stat__label">Terrorism</div>' +
-      '<div class="travel-stat__sub">Flagged destinations &rarr;</div>' +
-    '</button>';
+    (risksOk
+      ? '<button class="travel-stat travel-stat--terror" data-travelstat="terror" type="button">' +
+          '<div class="travel-stat__num">' + counts.terror + '</div>' +
+          '<div class="travel-stat__label">Terrorism</div>' +
+          '<div class="travel-stat__sub">Flagged destinations &rarr;</div>' +
+        '</button>'
+      : '');
     statHost.innerHTML = cards;
   }
 
@@ -21139,7 +21646,7 @@ function renderTravelOverviewV1(advisories, bulletins, counts, generatedAt){
   }
 }
 
-function renderTravelListV1(advisories, sub, counts){
+function renderTravelListV1(advisories, sub, counts, risksOk = true){
   // Determine level filter and whether the segmented L3/L4 control is shown
   let levelSet = null;
   let merged = false;
@@ -21160,7 +21667,9 @@ function renderTravelListV1(advisories, sub, counts){
   if (segment) segment.classList.toggle('hidden', !merged);
   const terrorToggle = document.getElementById('travelTerrorToggle');
   if (terrorToggle) {
-    terrorToggle.classList.toggle('hidden', isTerror); // hidden on the dedicated Terrorism view
+    // Hidden on the dedicated Terrorism view, and whenever risk indicators
+    // are unavailable (filtering on unknown data would show zero rows).
+    terrorToggle.classList.toggle('hidden', isTerror || !risksOk);
     terrorToggle.classList.toggle('active', !!state.travelTerrorOnly);
   }
   // Sync segment active state
@@ -21177,7 +21686,7 @@ function renderTravelListV1(advisories, sub, counts){
   const q = (state.travelQuery || '').toLowerCase();
   const rows = advisories.filter(d => {
     if (levelSet && levelSet.indexOf(d.level) === -1) return false;
-    if ((state.travelTerrorOnly || isTerror) && !(Array.isArray(d.risks) && d.risks.indexOf('T') !== -1)) return false;
+    if (risksOk && (state.travelTerrorOnly || isTerror) && !(Array.isArray(d.risks) && d.risks.indexOf('T') !== -1)) return false;
     if (q && !String(d.name || '').toLowerCase().includes(q)) return false;
     return true;
   });
@@ -21214,7 +21723,9 @@ function renderTravelListV1(advisories, sub, counts){
     const lv = d.level;
     const href = sanitizeUrl(d.url, '#');
     const risks = Array.isArray(d.risks) ? d.risks : [];
-    const chips = risks.length === 0
+    const chips = !risksOk
+      ? '<span class="travel-card__norisk">' + TRAVEL_RISKS_UNAVAILABLE + '</span>'
+      : risks.length === 0
       ? '<span class="travel-card__norisk">No specific risk indicators</span>'
       : risks.map(r => {
           const isT = (r === 'T');
@@ -21336,6 +21847,12 @@ function _tabFromHash(){
     renderAll();
   });
 })();
+// Back/Forward across the entries selectTab() pushes. The Overview entry has
+// no hash, so hashchange's _tabFromHash() alone can't route back to it.
+window.addEventListener('popstate', () => {
+  const h = location.hash ? _tabFromHash() : 'overview';
+  if (h && h !== state.tab) selectTab(h);
+});
 window.addEventListener('hashchange', () => {
   const h = _tabFromHash();
   if (h === 'summit') { window.location.replace('landscape/?pres=absent'); return; }

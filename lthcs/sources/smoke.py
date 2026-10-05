@@ -21,7 +21,7 @@ try:
 
     load_dotenv()
 except ImportError:
-    pass
+    pass  # python-dotenv is optional; env vars may already be set
 
 from lthcs.sources import alpha_vantage, eia, fred, sec_edgar, yahoo
 

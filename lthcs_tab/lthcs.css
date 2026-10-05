@@ -4,6 +4,8 @@
    ========================================================================= */
 
 :root {
+  /* Dark-only pages: native controls (scrollbars, selects, inputs) follow. */
+  color-scheme: dark;
   /* Band colors — must match data/lthcs/weights.json `score_bands` */
   --band-elite: #1F3A5F;
   --band-high: #4A8F5F;
@@ -57,7 +59,9 @@
 
   --text-primary: #E6E9EE;
   --text-secondary: #9CA3AF;
-  --text-tertiary: #6B7280;
+  /* Was #6B7280: 3.5-3.9:1 on the card/elevated backgrounds. #8B93A1 is
+     5.1-5.7:1 there and still reads as the tertiary tier. */
+  --text-tertiary: #8B93A1;
 
   --border-subtle: #2A323D;
   --border-strong: #3A4452;
@@ -173,6 +177,8 @@ input[type="search"] {
   align-items: center;
   gap: 18px;
   flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .lthcs-meta-line {
@@ -317,6 +323,11 @@ input[type="search"] {
   padding-left: 6px;
   margin-left: 2px;
   border-left: 1px solid var(--border-subtle);
+  /* Wrap on tablets: ten ghost buttons in one unbreakable row made the page
+     1,115px wide at 768px. Phones (<=640px) switch to a scrolling strip below. */
+  flex-wrap: wrap;
+  max-width: 100%;
+  min-width: 0;
 }
 
 @media (max-width: 720px) {
@@ -380,6 +391,19 @@ input[type="search"] {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  /* CLS: every LTHCS page fills <main> asynchronously; with a short
+     "Loading…" main the footer sat mid-screen and jumped away when content
+     arrived. Keep the footer below the fold from the first paint. */
+  min-height: 100vh;
+}
+/* CLS: the composite-index card is always produced by the daily pipeline;
+   reserve its height while it is still empty (it used to appear at ~0.5s and
+   push the rest of /lthcs/ down 430px). renderIndexInto(null) hides it. */
+#lthcs-composite-index:empty {
+  min-height: 414px;
+}
+@media (max-width: 720px) {
+  #lthcs-composite-index:empty { min-height: 600px; }
 }
 
 .lthcs-section {
@@ -485,6 +509,11 @@ input[type="search"] {
   color: var(--text-secondary);
   padding: 4px 0;
   user-select: none;
+}
+.lthcs-index-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
 }
 .lthcs-index-table {
   width: 100%;

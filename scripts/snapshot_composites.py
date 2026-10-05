@@ -381,6 +381,21 @@ def _futures_freshness(a: dict) -> str | None:
 # The nine composites the cards can chart
 # ---------------------------------------------------------------------------
 
+OVERVIEW_MAX_INPUT_LAG_DAYS = 2
+
+
+def _days_between(older, newer) -> int | None:
+    """Whole days from date-ish string ``older`` to ``newer`` (None if either
+    is missing or unparseable)."""
+    from datetime import date as _date
+    try:
+        a = _date.fromisoformat(str(older)[:10])
+        b = _date.fromisoformat(str(newer)[:10])
+    except (TypeError, ValueError):
+        return None
+    return (b - a).days
+
+
 def overview_sentiment(market: dict, top20) -> dict | None:
     """Crypto Market Sentiment — renderOverviewSentiment().
 
@@ -418,14 +433,23 @@ def overview_sentiment(market: dict, top20) -> dict | None:
         else:
             undated += 1
 
-    pf = _perps_freshness(market)
-    rates = [v for v in (_num(p.get("funding_rate"))
-                         for p in (market.get("coinbase_intl_perps") or [])
-                         if isinstance(p, dict)) if v is not None]
+    # Perp funding: market.perp_funding (OKX, fresh rows only) when the
+    # payload has it — the Coinbase Intl perps went PAUSED/DELISTED and their
+    # frozen quotes must not vote. Older payloads fall back to the perp rows.
+    pfund = market.get("perp_funding")
+    if isinstance(pfund, dict):
+        avg = _num(pfund.get("avg_rate")) if pfund.get("available") else None
+        rates = [avg] if avg is not None else []
+        pf = {"date": (pfund.get("as_of") or None) if rates else None}
+    else:
+        pf = _perps_freshness(market)
+        rates = [v for v in (_num(p.get("funding_rate"))
+                             for p in (market.get("coinbase_intl_perps") or [])
+                             if isinstance(p, dict)) if v is not None]
     if rates:
         components.append(_clamp((sum(rates) / len(rates) / 0.0001) * 20))
         if pf["date"]:
-            dated.append(pf["date"])
+            dated.append(str(pf["date"])[:10])
         else:
             undated += 1
 
@@ -440,12 +464,19 @@ def overview_sentiment(market: dict, top20) -> dict | None:
         note += f"; {undated} carrying no observation date"
     if sf["stale"]:
         note += f"; {sf['stale']} of {sf['total']} signal rows cached"
+    # An input dated well behind the fetch that built this payload is a frozen
+    # input (e.g. the paused Coinbase perps stuck at 2026-09-03): flag it.
+    oldest = _oldest(dated)
+    behind = _days_between(oldest, market.get("fetched_at"))
+    old_input = behind is not None and behind > OVERVIEW_MAX_INPUT_LAG_DAYS
+    if old_input:
+        note += f"; oldest input {oldest} is {behind}d behind the fetch"
     return _entry(
         net,
         _bucket(net, ["STRONG BULLISH", "BULLISH", "NEUTRAL", "BEARISH",
                       "STRONG BEARISH"]),
-        _oldest(dated),
-        stale=bool(sf["stale"]),
+        oldest,
+        stale=bool(sf["stale"]) or old_input,
         note=note,
     )
 
@@ -706,17 +737,53 @@ def stocks_signal_breadth(market: dict) -> dict | None:
     )
 
 
+def _whale_sentiments(whale: dict) -> tuple[dict, dict]:
+    """(BTC, ETH) whale-sentiment composites for a whale tree.
+
+    app.py and v2/app.py compute both at RENDER time (build_payload attaches
+    ``whale["sentiment"]`` and ``whale["eth"]["sentiment"]`` in memory) and
+    never write them back to data/whale.json, which is all this script reads.
+    So every snapshot from 2026-08-02 on archived ``whale_sentiment_btc`` and
+    ``whale_sentiment_eth`` as null while both cards showed a number. Compute
+    them here with the SAME pure functions the builders call, on the same
+    whale tree, so the archive holds the number the card displayed.
+
+    A payload that already carries a sentiment (a future fetch_market that
+    persists it) is used as-is. The ETH function's "available: False / score
+    0 / NO DATA" placeholder is not a reading and is returned as {} — a zero
+    would be archived as a genuine neutral observation.
+    """
+    btc = whale.get("sentiment") if isinstance(whale.get("sentiment"), dict) else None
+    eth_tree = whale.get("eth") if isinstance(whale.get("eth"), dict) else {}
+    eth = eth_tree.get("sentiment") if isinstance(eth_tree.get("sentiment"), dict) else None
+    if (btc is None or eth is None) and whale:
+        try:
+            import fetch_market as _fm
+            if btc is None:
+                btc = _fm.compute_whale_sentiment(whale)
+            if eth is None:
+                eth = _fm.compute_whale_sentiment_eth(whale)
+        except Exception as e:  # never fail the build over a composite
+            print(f"  [composites] whale sentiment recompute skipped: "
+                  f"{type(e).__name__}: {e}")
+    btc = btc if isinstance(btc, dict) else {}
+    eth = eth if isinstance(eth, dict) else {}
+    if eth.get("available") is False:
+        eth = {}
+    return btc, eth
+
+
 def collect() -> dict:
     market = _load(CACHE / "market.json") or {}
     whale = _load(CACHE / "whale.json") or {}
     idx: dict[str, dict | None] = {}
+    ws, wse = _whale_sentiments(whale)
 
     # --- Whale Sentiment Index (BTC) — computed Python-side in fetch_market ---
     # Fallback when the payload predates the provenance fix: the OLDEST last
     # date across the blockchain.info series the composite is built from.
     # Taking one series' last date (or worse, `fetched_at`) would overstate
     # the composite exactly the way this archive exists to catch.
-    ws = (whale or {}).get("sentiment") or {}
     btc = (whale or {}).get("btc") or {}
     idx["whale_sentiment_btc"] = _entry(
         ws.get("score"), ws.get("label"),
@@ -729,7 +796,6 @@ def collect() -> dict:
     )
 
     # --- ETH Whale Sentiment Index ---
-    wse = ((whale or {}).get("eth") or {}).get("sentiment") or {}
     eth_cm = (((whale or {}).get("eth") or {}).get("coin_metrics") or {})
     eth_eds = (((whale or {}).get("eth") or {}).get("etherscan_daily") or {})
     idx["whale_sentiment_eth"] = _entry(

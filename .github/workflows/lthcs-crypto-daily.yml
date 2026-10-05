@@ -6,12 +6,19 @@ name: lthcs-crypto-daily
 # Distinct concurrency group from pages.yml / lthcs-daily so the workflows
 # don't block each other.
 #
-# Schedule rationale: 22:00 UTC = ~17:00 ET. One hour before the equity
-# 23:00 UTC run (lthcs-daily.yml), so any downstream consumer that reads
-# both equity and crypto on the same day sees fresh crypto data first.
+# Schedule rationale: 12:00 UTC, as far from midnight as the day allows.
+# The snapshot is named by the runner's UTC date, and GitHub starts this cron
+# 2-8 hours late. At the old 22:00 slot that put every run on one side of
+# midnight or the other: two consecutive runs that landed 23:5x and 00:1x
+# wrote the same day's file twice (the second overwriting the first) and left
+# the day between them with NO snapshot. That is how 2026-09-14, 09-16, 09-21
+# and 09-23 were lost (health/known_gaps.json). Crypto trades around the
+# clock, so the hour carries no meaning beyond the date it lands on; at 12:00
+# a delay of up to 12 hours still lands on the right day. It still runs well
+# before the equity lthcs-daily build, which reads these snapshots.
 on:
   schedule:
-    - cron: "0 22 * * *"
+    - cron: "0 12 * * *"
   workflow_dispatch: {}
 
 # Push back to main requires contents:write. Pages deployment lives in
@@ -29,7 +36,7 @@ concurrency:
 
 jobs:
   run:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest becomes 26.04 on 2026-10-19 and setup-python needs a toolcache build for the image
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -38,7 +45,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.11"
           cache: pip

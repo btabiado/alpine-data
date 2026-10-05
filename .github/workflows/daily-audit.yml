@@ -1,0 +1,183 @@
+name: daily-audit
+
+# One DATA + UX audit per day, written down as one report per day.
+#
+#   scripts/daily_audit_data.py    feeds (reuses data_health.py), every
+#                                  workflow's last 24h, every cron's last 7
+#                                  days, API-status changes, and cheap spot
+#                                  checks of the live site against primary
+#                                  sources (no secrets needed)
+#   scripts/daily_audit_ux.mjs     Playwright: /, /v2/, /summit/, /health/,
+#                                  /real-estate/, /lthcs/ at 390px and 1440px;
+#                                  every V1/V2 tab opened the way a user would
+#   scripts/daily_audit_report.py  problems + new/ongoing/fixed vs. yesterday
+#
+# Output, committed back once a day (signed, via api-commit.sh, [skip ci]):
+#   audit/daily/YYYY-MM-DD.json + .md, audit/daily/latest.json + latest.md
+#   (90 days kept). pages.yml publishes latest.* at /audit/latest.md|json.
+# A separate scheduled agent reads latest.json/latest.md for the daily email.
+#
+# Alarm channel: the issue "Daily audit: action needed" (label daily-audit) is
+# opened/updated when there is a NEW P0 problem (a tab users cannot reach, an
+# uncaught JS exception, a feed newly stale, a workflow failing two days
+# running...), refreshed while P0s persist, and closed once none remain —
+# the same pattern as data-health.yml.
+#
+# Failure isolation: each audit step is continue-on-error and the report
+# builder treats a missing half as a problem, so a crashed audit is reported
+# (and alarms) instead of silently skipping the report.
+
+on:
+  schedule:
+    # 09:17 UTC: after the overnight crons (lthcs 22:00-23:30, trends 04:00,
+    # real-estate 06:00, city/cfpb 07:00, usaspending 07:30, money-flow 08:30).
+    # Off the top of the hour, where GitHub's scheduler is most congested.
+    # (On this repo scheduled runs start hours late — the report's schedules
+    # table measures each cron's median delay, this one included.)
+    - cron: "17 9 * * *"
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: "commit the report to audit/daily/ on main"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write   # commit audit/daily/* (api-commit.sh)
+  issues: write     # open / update / close the tracking issue
+  actions: read     # workflow run history and failed jobs
+  checks: read      # failed jobs' annotations (/check-runs/<job>/annotations)
+
+concurrency:
+  group: daily-audit-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ISSUE_TITLE: "Daily audit: action needed"
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest becomes 26.04 on 2026-10-19; this job also relies on the image Node and playwright install --with-deps (apt)
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        # The audit scripts and data_health.py are standard library; PyYAML
+        # (same pin as requirements.txt) reads the workflow crons.
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyYAML==6.0.2
+          # Scratch space for the raw audit JSON, outside the checkout.
+          mkdir -p "$RUNNER_TEMP/audit"
+
+      - name: Data audit
+        id: data
+        continue-on-error: true
+        timeout-minutes: 15
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/daily_audit_data.py --out "$RUNNER_TEMP/audit/data.json"
+
+      - name: Install Playwright + Chromium
+        # Installed under the runner temp dir, never into the repo checkout,
+        # so nothing it writes can be staged by the commit step below.
+        id: playwright
+        continue-on-error: true
+        timeout-minutes: 8
+        run: |
+          npm install --no-audit --no-fund --prefix "$RUNNER_TEMP/pw" playwright@1.56.1
+          "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
+
+      - name: UX audit
+        id: ux
+        continue-on-error: true
+        # The script holds itself to a 9-minute budget and records what it
+        # skipped; this is the hard backstop.
+        timeout-minutes: 12
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/pw/node_modules/playwright/index.mjs
+        run: node scripts/daily_audit_ux.mjs --out "$RUNNER_TEMP/audit/ux.json" --budget-s 540
+
+      - name: Build the report
+        id: report
+        run: |
+          python scripts/daily_audit_report.py \
+            --data "$RUNNER_TEMP/audit/data.json" \
+            --ux "$RUNNER_TEMP/audit/ux.json" \
+            --out-dir audit/daily \
+            --keep-days 90 \
+            --issue-body "$RUNNER_TEMP/audit/issue.md" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Keep the raw audit output
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: daily-audit-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/audit/
+            audit/daily/latest.*
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Commit the report
+        # Scheduled runs always commit; a manual run commits unless told not
+        # to. Only from main: api-commit.sh writes to BRANCH (default main).
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'schedule' || inputs.commit)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # -A stages the 90-day prune's deletions as well as today's files.
+          git add -A audit/daily
+          .github/scripts/api-commit.sh "audit: daily report $(date -u +%Y-%m-%d) [skip ci]"
+
+      - name: Open or update the tracking issue
+        if: steps.report.outputs.alert_action == 'open' || steps.report.outputs.alert_action == 'update'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ACTION: ${{ steps.report.outputs.alert_action }}
+        run: |
+          set -euo pipefail
+          # Idempotent label: `gh issue create --label` hard-fails on a label
+          # that does not exist, which would lose the very first alarm.
+          gh label create daily-audit --color D93F0B \
+            --description "Automated daily data/UX audit" --force >/dev/null 2>&1 || true
+          EXISTING=$(gh issue list --label daily-audit --state open \
+                       --json number,title \
+                       --jq ".[] | select(.title == \"$ISSUE_TITLE\") | .number" | head -1)
+          if [ -n "$EXISTING" ]; then
+            gh issue edit "$EXISTING" --body-file "$RUNNER_TEMP/audit/issue.md"
+            echo "updated issue #$EXISTING"
+          elif [ "$ACTION" = "open" ]; then
+            gh issue create --title "$ISSUE_TITLE" --body-file "$RUNNER_TEMP/audit/issue.md" --label daily-audit
+          else
+            # Only ongoing P0s and no open issue: someone closed it on purpose.
+            # Re-opening daily for the same known problem would be spam; a NEW
+            # P0 opens it again.
+            echo "P0s persist but none are new and no issue is open; not reopening."
+          fi
+
+      - name: Close the tracking issue when clean
+        if: steps.report.outputs.alert_action == 'close'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+          EXISTING=$(gh issue list --label daily-audit --state open \
+                       --json number,title \
+                       --jq ".[] | select(.title == \"$ISSUE_TITLE\") | .number" \
+                       2>/dev/null | head -1 || true)
+          if [ -n "$EXISTING" ]; then
+            gh issue close "$EXISTING" \
+              --comment "No P0 problems in the daily audit of $(date -u +'%Y-%m-%d %H:%M') UTC. Closed automatically by daily-audit.yml."
+            echo "closed issue #$EXISTING"
+          fi

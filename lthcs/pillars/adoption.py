@@ -23,6 +23,7 @@ aggressively and trend signals don't move meaningfully intra-day.
 
 from __future__ import annotations
 
+import math
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -174,7 +175,7 @@ def _is_valid_growth(value: Any) -> bool:
         f = float(value)
     except (TypeError, ValueError):
         return False
-    return f == f  # NaN check
+    return not math.isnan(f)  # NaN check
 
 
 def _soften_rank_extremes(score: float) -> float:
@@ -195,7 +196,7 @@ def _soften_rank_extremes(score: float) -> float:
         s = float(score)
     except (TypeError, ValueError):
         return score
-    if s != s:  # NaN
+    if math.isnan(s):  # NaN
         return s
     if s <= 0.0:
         return _SECTOR_RANK_FLOOR
@@ -318,7 +319,7 @@ def _safe_float(x: Any) -> Optional[float]:
     except (TypeError, ValueError):
         return None
     # Reject NaN/inf -- they poison any downstream arithmetic.
-    if f != f or f in (float("inf"), float("-inf")):
+    if math.isnan(f) or f in (float("inf"), float("-inf")):
         return None
     return f
 
@@ -623,7 +624,7 @@ def compute_adoption(
                 f = float(g_p)
             except (TypeError, ValueError):
                 continue
-            if f != f:  # NaN
+            if math.isnan(f):  # NaN
                 continue
             sector_peers.append(f)
         if sector_members >= _MIN_SECTOR_COHORT:
@@ -654,7 +655,7 @@ def compute_adoption(
                     f = float(g)
                 except (TypeError, ValueError):
                     continue
-                if f != f:  # NaN
+                if math.isnan(f):  # NaN
                     continue
                 peer_values.append(f)
             peer_cohort_size = len(peer_values) + (1 if ticker in cohort_set else 0)
@@ -670,7 +671,7 @@ def compute_adoption(
                 except (TypeError, ValueError):
                     continue
                 # NaN check.
-                if f != f:
+                if math.isnan(f):
                     continue
                 peer_values.append(f)
 
@@ -738,7 +739,7 @@ def compute_adoption(
                         f = float(v)
                     except (TypeError, ValueError):
                         continue
-                    if f != f:  # NaN
+                    if math.isnan(f):  # NaN
                         continue
                     peer_acc.append(f)
             if peer_acc:
