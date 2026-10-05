@@ -272,7 +272,7 @@ def _get_json(url: str, cache_key: str) -> Any:
         try:
             body = (resp.text or "")[:200]
         except Exception:
-            pass
+            pass  # response body is optional context for the error raised below
         raise SECEdgarError(
             "SEC EDGAR request to {url} failed with status {status}: {body}".format(
                 url=url, status=status, body=body

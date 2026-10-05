@@ -132,7 +132,7 @@ def _http_get(params: Dict[str, str]) -> Dict[str, Any]:
         try:
             body = resp.text[:200]
         except Exception:
-            pass
+            pass  # response body is optional context for the error raised below
         raise AlphaVantageError(
             f"Alpha Vantage returned HTTP {status} for function "
             f"{params.get('function')!r}: {body}"

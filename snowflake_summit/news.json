@@ -1,5 +1,6 @@
 {
- "generated": "2026-06-04",
+ "generated": "2026-10-04",
+ "gathered_at": "2026-10-04T21:01:50Z",
  "items": [
   {
    "vendor": "Semarchy",
@@ -731,15 +732,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Alation",
-   "headline": "Alation at Snowflake Summit 2026 (booth #1303) with attendee session guide",
-   "date": "2026-06-02",
-   "url": "https://www.alation.com/blog/snowflake-summit-2026-guide/",
-   "source": "Alation",
-   "summary": "Alation exhibits at Snowflake Summit 2026 booth #1303 and publishes a guide to dates, keynotes and sessions for the governed agentic-AI theme.",
-   "relevance": "low"
-  },
-  {
    "vendor": "Alteryx",
    "headline": "Alteryx at Snowflake Summit 2026 showing in-Snowflake analytics with built-in governance",
    "date": "2026-06-02",
@@ -1065,11 +1057,11 @@
   },
   {
    "vendor": "Atrium",
-   "headline": "Snowflake Summit: The After Hours Edit \u2014 Atrium Hosts Networking Happy Hour at Summit 2026",
+   "headline": "Snowflake Summit: The After Hours Edit — Atrium Hosts Networking Happy Hour at Summit 2026",
    "date": "2026-06-02",
    "url": "https://atrium.ai/events/snowflake-summit-2026-happy-hour/",
    "source": "Atrium (atrium.ai)",
-   "summary": "Atrium hosted an exclusive happy hour networking event on June 2, 2026 during Snowflake Summit 2026 at Next Chapter Cocktails & Tapas Lounge (142 Minna St, San Francisco). The event brought together data and AI professionals from 6\u20138 pm PT, with Retool as sponsor, reinforcing Atrium's active presence as a Snowflake consulting partner at the summit.",
+   "summary": "Atrium hosted an exclusive happy hour networking event on June 2, 2026 during Snowflake Summit 2026 at Next Chapter Cocktails & Tapas Lounge (142 Minna St, San Francisco). The event brought together data and AI professionals from 6–8 pm PT, with Retool as sponsor, reinforcing Atrium's active presence as a Snowflake consulting partner at the summit.",
    "relevance": "high"
   },
   {
@@ -1150,7 +1142,7 @@
    "date": "2024-06-06",
    "url": "https://blog.bem.ai/p/bem-raises-seed",
    "source": "bem Blog",
-   "summary": "Brilliant Enterprise Magic (bem) raised $3.7 million in seed funding led by Uncork Capital, with participation from Kevin Mahaffey, Roar Ventures, and Garry Tan. The company's AI platform converts unstructured data \u2014 invoices, emails, PDFs, spreadsheets \u2014 into structured, schema-valid JSON via a REST API, targeting supply chain, logistics, healthcare, insurance, and financial services sectors.",
+   "summary": "Brilliant Enterprise Magic (bem) raised $3.7 million in seed funding led by Uncork Capital, with participation from Kevin Mahaffey, Roar Ventures, and Garry Tan. The company's AI platform converts unstructured data — invoices, emails, PDFs, spreadsheets — into structured, schema-valid JSON via a REST API, targeting supply chain, logistics, healthcare, insurance, and financial services sectors.",
    "relevance": "high"
   },
   {
@@ -1159,16 +1151,16 @@
    "date": "2026-02-12",
    "url": "https://www.buentrip.vc/blog/investing-in-bem-the-infrastructure-making-ai-reliable",
    "source": "BuenTrip Ventures",
-   "summary": "BuenTrip Ventures announced an investment in bem.ai, citing the company's 99.999% precision claims for transforming unstructured data (PDFs, emails, audio, video) into structured, auditable formats as foundational AI infrastructure. The firm highlighted bem's focus on reliability for enterprise AI agent deployments \u2014 particularly in finance, logistics, and customer service \u2014 as a key differentiator. Co-founders Antonio Bustamante and Upal Saha are also named.",
+   "summary": "BuenTrip Ventures announced an investment in bem.ai, citing the company's 99.999% precision claims for transforming unstructured data (PDFs, emails, audio, video) into structured, auditable formats as foundational AI infrastructure. The firm highlighted bem's focus on reliability for enterprise AI agent deployments — particularly in finance, logistics, and customer service — as a key differentiator. Co-founders Antonio Bustamante and Upal Saha are also named.",
    "relevance": "medium"
   },
   {
    "vendor": "Brilliant Enterprise Magic",
-   "headline": "Brilliant Enterprise Magic \u2014 welcome Bem!",
+   "headline": "Brilliant Enterprise Magic — welcome Bem!",
    "date": "2024-06-10",
    "url": "https://medium.com/uncorkcapital/brilliant-enterprise-magic-welcome-bem-583802db017e",
    "source": "Uncork Capital / Medium",
-   "summary": "Uncork Capital Managing Partner Andy McLoughlin published a blog post welcoming Brilliant Enterprise Magic (bem) to their portfolio after leading the company's $3.7 million seed round. The post describes bem's mission to deliver 'structured data as-a-service' \u2014 eliminating manual data integration by transforming messy inputs into structured knowledge for engineering teams building in supply chain, logistics, healthcare, insurance, and financial services.",
+   "summary": "Uncork Capital Managing Partner Andy McLoughlin published a blog post welcoming Brilliant Enterprise Magic (bem) to their portfolio after leading the company's $3.7 million seed round. The post describes bem's mission to deliver 'structured data as-a-service' — eliminating manual data integration by transforming messy inputs into structured knowledge for engineering teams building in supply chain, logistics, healthcare, insurance, and financial services.",
    "relevance": "medium"
   },
   {
@@ -1213,7 +1205,7 @@
    "date": "2024-05-14",
    "url": "https://www.brooklyndata.co/news/2024/05/14/brooklyn-data-achieves-elite-partner-status-with-snowflake",
    "source": "Brooklyn Data",
-   "summary": "Brooklyn Data achieved Elite tier partnership status with Snowflake \u2014 the highest recognition level in Snowflake's partner ecosystem \u2014 following a six-year partnership history demonstrating strong execution across Financial Services, Healthcare, and Retail sectors. Snowflake's Director of Global Partner Development noted that Brooklyn Data's acquisition by Velir expanded capabilities by combining data expertise with digital and marketing competencies.",
+   "summary": "Brooklyn Data achieved Elite tier partnership status with Snowflake — the highest recognition level in Snowflake's partner ecosystem — following a six-year partnership history demonstrating strong execution across Financial Services, Healthcare, and Retail sectors. Snowflake's Director of Global Partner Development noted that Brooklyn Data's acquisition by Velir expanded capabilities by combining data expertise with digital and marketing competencies.",
    "relevance": "high"
   },
   {
@@ -1258,7 +1250,7 @@
    "date": "2026-05-01",
    "url": "https://coastalcloud.us/resources/the-locals-guide-to-snowflake-summit/",
    "source": "Coastal Cloud",
-   "summary": "Coastal Cloud, a data/AI/cloud and Snowflake consulting firm, published a comprehensive attendee guide to Snowflake Summit 2026 (June 1\u20134, Moscone Center, San Francisco). The guide covers event planning tips, Bay Area neighborhood recommendations, dining options near Moscone, local transportation, and safety information for visiting professionals.",
+   "summary": "Coastal Cloud, a data/AI/cloud and Snowflake consulting firm, published a comprehensive attendee guide to Snowflake Summit 2026 (June 1–4, Moscone Center, San Francisco). The guide covers event planning tips, Bay Area neighborhood recommendations, dining options near Moscone, local transportation, and safety information for visiting professionals.",
    "relevance": "high"
   },
   {
@@ -1321,7 +1313,7 @@
    "date": "2026-05-28",
    "url": "https://dagster.io/blog/snowflake-runs-your-data-dagster-runs-everything-else",
    "source": "Dagster Blog",
-   "summary": "Dagster published a pre-Summit post explaining how it complements Snowflake's native capabilities \u2014 covering SQL-first orchestration, Dynamic Tables integration, and cost attribution via Dagster+ Insights. The post coincided with Dagster's presence at Snowflake Summit 2026 (booth 1222) in San Francisco.",
+   "summary": "Dagster published a pre-Summit post explaining how it complements Snowflake's native capabilities — covering SQL-first orchestration, Dynamic Tables integration, and cost attribution via Dagster+ Insights. The post coincided with Dagster's presence at Snowflake Summit 2026 (booth 1222) in San Francisco.",
    "relevance": "high"
   },
   {
@@ -1344,11 +1336,11 @@
   },
   {
    "vendor": "Datacove",
-   "headline": "Datacove Wins Business of the Year (Up to \u00a31m Turnover) at 2025 Gatwick Diamond Business Awards",
+   "headline": "Datacove Wins Business of the Year (Up to £1m Turnover) at 2025 Gatwick Diamond Business Awards",
    "date": "2025-03-20",
    "url": "https://www.gatwickdiamondbusinessawards.com/year/2025-awards/2024-business-oty-up-to-1m",
    "source": "Gatwick Diamond Business Awards",
-   "summary": "Datacove was named Business of the Year (Up to \u00a31m Turnover) at the 2025 Gatwick Diamond Business Awards. The award celebrates high-performing and innovative small businesses that do the right thing for their clients, people, and the Gatwick Diamond community.",
+   "summary": "Datacove was named Business of the Year (Up to £1m Turnover) at the 2025 Gatwick Diamond Business Awards. The award celebrates high-performing and innovative small businesses that do the right thing for their clients, people, and the Gatwick Diamond community.",
    "relevance": "medium"
   },
   {
@@ -1465,7 +1457,7 @@
    "date": "2025-11-12",
    "url": "https://www.biia.com/espresso-ai-launches-agentic-lakehouse-for-databricks/",
    "source": "BIIA.com",
-   "summary": "Espresso AI unveiled a solution that transforms Databricks into an agentic lakehouse via three specialized agents \u2014 Autoscaling, Scheduling, and Query \u2014 designed to reduce Databricks infrastructure costs by roughly 50%. The company, founded by three ex-Googlers, completed a six-month beta with enterprises including Booz Allen Hamilton and Comcast before the launch.",
+   "summary": "Espresso AI unveiled a solution that transforms Databricks into an agentic lakehouse via three specialized agents — Autoscaling, Scheduling, and Query — designed to reduce Databricks infrastructure costs by roughly 50%. The company, founded by three ex-Googlers, completed a six-month beta with enterprises including Booz Allen Hamilton and Comcast before the launch.",
    "relevance": "medium"
   },
   {
@@ -1474,7 +1466,7 @@
    "date": "2024-05-07",
    "url": "https://www.maginative.com/article/espresso-ai-raises-11m-to-cut-cloud-costs-with-generative-ai/",
    "source": "Maginative",
-   "summary": "Espresso AI emerged from stealth with over $11 million in seed and pre-seed funding \u2014 seed led by Daniel Gross and Nat Friedman, pre-seed led by Matt Turck at FirstMark \u2014 to build an AI-powered platform that automatically optimizes SQL queries and reduces cloud data warehouse costs by up to 80%. The company's initial product targets Snowflake workloads with setup taking under 10 minutes.",
+   "summary": "Espresso AI emerged from stealth with over $11 million in seed and pre-seed funding — seed led by Daniel Gross and Nat Friedman, pre-seed led by Matt Turck at FirstMark — to build an AI-powered platform that automatically optimizes SQL queries and reduces cloud data warehouse costs by up to 80%. The company's initial product targets Snowflake workloads with setup taking under 10 minutes.",
    "relevance": "medium"
   },
   {
@@ -1510,7 +1502,7 @@
    "date": "2025-12-01",
    "url": "https://www.snowflake.com/en/blog/startup-spotlight-euno/",
    "source": "Snowflake Blog",
-   "summary": "Snowflake featured Euno CEO Sarah Levy in its Startup Spotlight series, highlighting how the company's metadata intelligence platform provides governance automation and automated context for AI agents \u2014 including those powering Snowflake Intelligence. Euno uses column-level lineage and certified dataset signals to give AI systems the context needed for reliable, explainable, enterprise-scale analytics.",
+   "summary": "Snowflake featured Euno CEO Sarah Levy in its Startup Spotlight series, highlighting how the company's metadata intelligence platform provides governance automation and automated context for AI agents — including those powering Snowflake Intelligence. Euno uses column-level lineage and certified dataset signals to give AI systems the context needed for reliable, explainable, enterprise-scale analytics.",
    "relevance": "high"
   },
   {
@@ -1618,7 +1610,7 @@
    "date": "2026-05-07",
    "url": "https://www.prnewswire.com/news-releases/genpact-and-google-cloud-expand-alliance-to-bring-agentic-solutions-to-the-office-of-the-cfo-302765266.html",
    "source": "PR Newswire",
-   "summary": "Genpact and Google Cloud announced an expanded alliance to develop and scale agentic AI-led solutions for enterprise finance operations, with the first product \u2014 Genpact Finance One: Revenue Lens Agents \u2014 now available on Google Cloud's Agent Marketplace. The collaboration targets Fortune 500 companies seeking to modernize CFO functions including revenue forecasting, accounts payable, and financial planning.",
+   "summary": "Genpact and Google Cloud announced an expanded alliance to develop and scale agentic AI-led solutions for enterprise finance operations, with the first product — Genpact Finance One: Revenue Lens Agents — now available on Google Cloud's Agent Marketplace. The collaboration targets Fortune 500 companies seeking to modernize CFO functions including revenue forecasting, accounts payable, and financial planning.",
    "relevance": "high"
   },
   {
@@ -1636,7 +1628,7 @@
    "date": "2026-04-28",
    "url": "https://www.prnewswire.com/news-releases/genpact-named-a-leader-in-isg-provider-lens-2026-servicenow-ecosystem-partners-302755844.html",
    "source": "PR Newswire",
-   "summary": "Information Services Group named Genpact a Leader in two quadrants of the ISG Provider Lens 2026 ServiceNow Ecosystem Partners report \u2014 ServiceNow Consulting and Implementation Services, and Innovation on ServiceNow \u2014 citing its blend of agentic AI, process intelligence, and governed human-in-the-loop delivery. The recognition highlights Genpact's ability to scale AI from pilots to production within ServiceNow-enabled workflows across IT, finance, and supply chain.",
+   "summary": "Information Services Group named Genpact a Leader in two quadrants of the ISG Provider Lens 2026 ServiceNow Ecosystem Partners report — ServiceNow Consulting and Implementation Services, and Innovation on ServiceNow — citing its blend of agentic AI, process intelligence, and governed human-in-the-loop delivery. The recognition highlights Genpact's ability to scale AI from pilots to production within ServiceNow-enabled workflows across IT, finance, and supply chain.",
    "relevance": "medium"
   },
   {
@@ -1654,7 +1646,7 @@
    "date": "2025-06-03",
    "url": "https://www.prnewswire.com/news-releases/growthloop-compound-marketing-engine-now-powered-by-snowflake-cortex-ai-302469835.html",
    "source": "PR Newswire",
-   "summary": "GrowthLoop announced at Snowflake Summit 2025 a deeper integration enabling its Compound Marketing Engine to leverage Snowflake Cortex AI, allowing marketing teams to activate AI Growth Agents \u2014 generating audiences, suggesting journeys, and orchestrating omnichannel campaigns \u2014 without moving data outside the Snowflake platform.",
+   "summary": "GrowthLoop announced at Snowflake Summit 2025 a deeper integration enabling its Compound Marketing Engine to leverage Snowflake Cortex AI, allowing marketing teams to activate AI Growth Agents — generating audiences, suggesting journeys, and orchestrating omnichannel campaigns — without moving data outside the Snowflake platform.",
    "relevance": "high"
   },
   {
@@ -1740,20 +1732,11 @@
   },
   {
    "vendor": "Keebo",
-   "headline": "Keebo Launches Workload Intelligence \u2013 Public Edition on Snowflake Marketplace",
+   "headline": "Keebo Launches Workload Intelligence – Public Edition on Snowflake Marketplace",
    "date": "2025-06-03",
    "url": "https://www.prweb.com/releases/keebo-launches-workload-intelligence---public-edition-on-snowflake-marketplace-302462730.html",
    "source": "PR Newswire / PRWeb",
    "summary": "Keebo announced the Workload Intelligence Public Edition, a Snowflake Native App that autonomously adjusts warehouse settings and routes queries to reduce over-provisioning and cut costs. The launch was timed to Snowflake Summit 2025 and includes a customer case study from Costco Travel citing a 50% cost reduction.",
-   "relevance": "high"
-  },
-  {
-   "vendor": "Kloudgen",
-   "headline": "Kloudgen Advances Enterprise AI with Semantiqa: Automated Semantic and Agent Layers Now on Snowflake Marketplace",
-   "date": "2026-06-04",
-   "url": "https://www.pr.com/press-release/970209",
-   "source": "PR.com",
-   "summary": "Kloudgen announced the expanded availability of Semantiqa on Snowflake Marketplace at Snowflake Summit 26, positioning the tool as a way to automate semantic layer creation and activate enterprise data for AI within a single day. CEO Yash Gupta stated the solution drastically reduces the time from raw data to actionable, interactive discovery by operating natively within Snowflake customer accounts.",
    "relevance": "high"
   },
   {
@@ -1762,7 +1745,7 @@
    "date": "2026-06-01",
    "url": "https://kpmg.com/us/en/events/kpmg-at-snowflake-summit.html",
    "source": "KPMG",
-   "summary": "KPMG is a returning sponsor at Snowflake Summit 2026, held June 1\u20134 at the Moscone Center in San Francisco. The firm highlights how it guides clients through data-driven, cloud-based business transformations using the Snowflake platform to deliver speed, scale, and lower costs.",
+   "summary": "KPMG is a returning sponsor at Snowflake Summit 2026, held June 1–4 at the Moscone Center in San Francisco. The firm highlights how it guides clients through data-driven, cloud-based business transformations using the Snowflake platform to deliver speed, scale, and lower costs.",
    "relevance": "high"
   },
   {
@@ -1839,16 +1822,16 @@
   },
   {
    "vendor": "LTM",
-   "headline": "LTM at Snowflake Summit 2026 \u2014 Booth 1102, San Francisco",
+   "headline": "LTM at Snowflake Summit 2026 — Booth 1102, San Francisco",
    "date": "2026-06-01",
    "url": "https://www.ltm.com/news-events/events/2026/outcreate-with-intelligence-at-scale",
    "source": "LTM (LTIMindtree) Official Site",
-   "summary": "LTIMindtree exhibited at Snowflake Summit 2026 (June 1\u20134, San Francisco) at Booth 1102, showcasing AI-ready Snowflake ecosystem solutions under the theme 'Outcreate with Intelligence at Scale.' Two speaker sessions covered AI strategy and AI engineering with Snowflake Cortex, featuring LTM leaders including the Head of their Snowflake Practice.",
+   "summary": "LTIMindtree exhibited at Snowflake Summit 2026 (June 1–4, San Francisco) at Booth 1102, showcasing AI-ready Snowflake ecosystem solutions under the theme 'Outcreate with Intelligence at Scale.' Two speaker sessions covered AI strategy and AI engineering with Snowflake Cortex, featuring LTM leaders including the Head of their Snowflake Practice.",
    "relevance": "high"
   },
   {
    "vendor": "LTM",
-   "headline": "LTM Makes Offer to Acquire Randstad's Technology and Consulting Services Business for ~\u20ac469M",
+   "headline": "LTM Makes Offer to Acquire Randstad's Technology and Consulting Services Business for ~€469M",
    "date": "2026-05-22",
    "url": "https://www.ltm.com/news-events/press-releases/2026/ltm-acquire-randstad-tech-consulting-services-business",
    "source": "LTM (LTIMindtree) Official Site",
@@ -1879,16 +1862,16 @@
    "date": "2026-05-15",
    "url": "https://www.prnewswire.com/news-releases/mastech-digital-reports-first-quarter-2026-results-302772975.html",
    "source": "PR Newswire",
-   "summary": "Mastech Digital reported Q1 2026 revenues of $41.1 million with new bookings doubling year-over-year to $7.0 million TCV, as the company restructured into two segments \u2014 Talent and Data & AI \u2014 to reflect its AI-first strategy. CEO Nirav Patel noted the EDGE cost-transformation initiative is executing ahead of expectations, with $54.9 million in liquidity and no bank debt.",
+   "summary": "Mastech Digital reported Q1 2026 revenues of $41.1 million with new bookings doubling year-over-year to $7.0 million TCV, as the company restructured into two segments — Talent and Data & AI — to reflect its AI-first strategy. CEO Nirav Patel noted the EDGE cost-transformation initiative is executing ahead of expectations, with $54.9 million in liquidity and no bank debt.",
    "relevance": "medium"
   },
   {
    "vendor": "Maxa",
-   "headline": "Maxa at Snowflake Summit June 1\u20134, 2026",
+   "headline": "Maxa at Snowflake Summit June 1–4, 2026",
    "date": "2026-05-26",
    "url": "https://www.maxa.ai/blog/maxa-at-snowflake-summit-june-1-4-2026",
    "source": "Maxa (company blog)",
-   "summary": "Maxa confirmed its presence at Snowflake Summit 2026 in San Francisco, showcasing deterministic dbt pipelines, ERP/finance/ops data harmonization, and AI readiness at Booth 2711. The company invited attendees to book limited demo slots during the June 1\u20134 event.",
+   "summary": "Maxa confirmed its presence at Snowflake Summit 2026 in San Francisco, showcasing deterministic dbt pipelines, ERP/finance/ops data harmonization, and AI readiness at Booth 2711. The company invited attendees to book limited demo slots during the June 1–4 event.",
    "relevance": "high"
   },
   {
@@ -2055,7 +2038,7 @@
   },
   {
    "vendor": "Openlayer",
-   "headline": "Openlayer Recognized in the 2026 Gartner\u00ae Market Guide for AI Evaluation and Observability Platforms",
+   "headline": "Openlayer Recognized in the 2026 Gartner® Market Guide for AI Evaluation and Observability Platforms",
    "date": "2026-02-19",
    "url": "https://www.prnewswire.com/news-releases/openlayer-recognized-in-the-2026-gartner-market-guide-for-ai-evaluation-and-observability-platforms-302692100.html",
    "source": "PR Newswire",
@@ -2064,11 +2047,11 @@
   },
   {
    "vendor": "Openlayer",
-   "headline": "Openlayer Partners with Telef\u00f3nica Tech to Deliver AI Governance and Observability Across Europe and Latin America",
+   "headline": "Openlayer Partners with Telefónica Tech to Deliver AI Governance and Observability Across Europe and Latin America",
    "date": "2026-03-26",
    "url": "https://www.prnewswire.com/news-releases/openlayer-partners-with-telefonica-tech-to-deliver-ai-governance-and-observability-across-europe-and-latin-america-302726408.html",
    "source": "PR Newswire",
-   "summary": "Openlayer announced a commercial partnership with Telef\u00f3nica Tech, the digital unit of Telef\u00f3nica Group, to integrate Openlayer's AI governance platform into Telef\u00f3nica Tech's enterprise services across Europe and Latin America. The solution covers pre-deployment testing for hallucinations and bias, production monitoring, and compliance mapping aligned with the EU AI Act and ISO 42001.",
+   "summary": "Openlayer announced a commercial partnership with Telefónica Tech, the digital unit of Telefónica Group, to integrate Openlayer's AI governance platform into Telefónica Tech's enterprise services across Europe and Latin America. The solution covers pre-deployment testing for hallucinations and bias, production monitoring, and compliance mapping aligned with the EU AI Act and ISO 42001.",
    "relevance": "medium"
   },
   {
@@ -2145,7 +2128,7 @@
   },
   {
    "vendor": "Promethium",
-   "headline": "Promethium at Snowflake Summit 2025 \u2014 Booth 1305 & Self-Service Data Session",
+   "headline": "Promethium at Snowflake Summit 2025 — Booth 1305 & Self-Service Data Session",
    "date": "2025-06-02",
    "url": "https://promethium.ai/events/snowflake-summit/",
    "source": "Promethium.ai",
@@ -2172,7 +2155,7 @@
   },
   {
    "vendor": "Prophecy",
-   "headline": "Prophecy at Snowflake Summit 2026 \u2014 Booth #1006, Moscone Center",
+   "headline": "Prophecy at Snowflake Summit 2026 — Booth #1006, Moscone Center",
    "date": "2026-06-01",
    "url": "https://www.prophecy.ai/events",
    "source": "Prophecy.ai",
@@ -2284,7 +2267,7 @@
    "date": "2026-06-01",
    "url": "https://www.recordpoint.com/events/snowflake-summit-2026",
    "source": "RecordPoint",
-   "summary": "RecordPoint exhibited at Snowflake Summit 2026 (June 1\u20134, Moscone Center, San Francisco), with CEO Anthony Woodward and other executives on-site to discuss data governance and AI within the Snowflake ecosystem. The company highlighted secure data sharing, AI-powered analytics, and intelligent automation as core focus areas at the event.",
+   "summary": "RecordPoint exhibited at Snowflake Summit 2026 (June 1–4, Moscone Center, San Francisco), with CEO Anthony Woodward and other executives on-site to discuss data governance and AI within the Snowflake ecosystem. The company highlighted secure data sharing, AI-powered analytics, and intelligent automation as core focus areas at the event.",
    "relevance": "high"
   },
   {
@@ -2304,15 +2287,6 @@
    "source": "SecurityBrief Asia",
    "summary": "RecordPoint acquired Australian AI startup Redactive, which specializes in sensitive data discovery and classification, to strengthen its AI governance and data security capabilities for regulated industries. Redactive, backed by Blackbird and Felicis, had secured clients such as superfund HESTA and PEXA before the acquisition.",
    "relevance": "medium"
-  },
-  {
-   "vendor": "Redpanda",
-   "headline": "Redpanda at Snowflake Summit 2026",
-   "date": "2026-05-31",
-   "url": "https://www.redpanda.com/events/snowflake-summit-2",
-   "source": "Redpanda",
-   "summary": "Redpanda participated as a booth exhibitor at Snowflake Summit 2026 (May 31, San Francisco), showcasing its real-time streaming data platform. The page highlights enterprise customers including Akamai, Cisco, NYSE, and Vodafone.",
-   "relevance": "high"
   },
   {
    "vendor": "Redpanda",
@@ -2464,7 +2438,7 @@
    "date": "2026-06-01",
    "url": "https://www.safe.com/company-updates/events/2026-upcoming-events/",
    "source": "Safe Software",
-   "summary": "Safe Software is a Snow Row sponsor at Snowflake Summit 2026 (June 1\u20134), exhibiting at Booth #1407 to showcase FME's data integration capabilities within the Snowflake ecosystem.",
+   "summary": "Safe Software is a Snow Row sponsor at Snowflake Summit 2026 (June 1–4), exhibiting at Booth #1407 to showcase FME's data integration capabilities within the Snowflake ecosystem.",
    "relevance": "high"
   },
   {
@@ -2545,7 +2519,7 @@
    "date": "2026-05-05",
    "url": "https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-opens-its-full-system-of-action-to-every-AI-Agent-in-the-enterprise/default.aspx",
    "source": "ServiceNow Newsroom",
-   "summary": "ServiceNow announced Action Fabric, a platform that allows any AI agent \u2014 built on Claude, Copilot, or custom tools \u2014 to execute governed enterprise workflows through an open Model Context Protocol (MCP) Server. Anthropic was named the first design partner, connecting Claude directly to ServiceNow's system of action.",
+   "summary": "ServiceNow announced Action Fabric, a platform that allows any AI agent — built on Claude, Copilot, or custom tools — to execute governed enterprise workflows through an open Model Context Protocol (MCP) Server. Anthropic was named the first design partner, connecting Claude directly to ServiceNow's system of action.",
    "relevance": "high"
   },
   {
@@ -2685,11 +2659,11 @@
   },
   {
    "vendor": "Steep",
-   "headline": "The next chapter for Steep: \u20ac4M seed funding to make data useful for everyone",
+   "headline": "The next chapter for Steep: €4M seed funding to make data useful for everyone",
    "date": "2024-07-03",
    "url": "https://steep.app/blog/steep-next-chapter",
    "source": "Steep Blog",
-   "summary": "Steep raised \u20ac4 million in seed funding led by Connect Ventures, with participation from Inventure, Alliance VC, Antler, and Greens. The capital will support product development, team expansion, and international growth.",
+   "summary": "Steep raised €4 million in seed funding led by Connect Ventures, with participation from Inventure, Alliance VC, Antler, and Greens. The capital will support product development, team expansion, and international growth.",
    "relevance": "medium"
   },
   {
@@ -2779,7 +2753,7 @@
    "date": "2026-02-10",
    "url": "https://nebius.com/newsroom/nebius-announces-agreement-to-acquire-tavily-to-add-agentic-search-to-its-ai-cloud-platform",
    "source": "Nebius Newsroom",
-   "summary": "Nebius announced an agreement to acquire Tavily, a real-time agentic search provider, with the transaction value undisclosed in the press release. Tavily will continue operating under its own brand and leadership while integrating its search infrastructure \u2014 spanning search, extract, crawl, and map capabilities \u2014 into Nebius's AI cloud platform, serving a developer community of over one million users including IBM, Cohere, and Groq.",
+   "summary": "Nebius announced an agreement to acquire Tavily, a real-time agentic search provider, with the transaction value undisclosed in the press release. Tavily will continue operating under its own brand and leadership while integrating its search infrastructure — spanning search, extract, crawl, and map capabilities — into Nebius's AI cloud platform, serving a developer community of over one million users including IBM, Cohere, and Groq.",
    "relevance": "high"
   },
   {
@@ -2797,7 +2771,7 @@
    "date": "2026-02-10",
    "url": "https://siliconangle.com/2026/02/10/ai-infrastructure-giant-nebius-buys-agentic-search-startup-tavily/",
    "source": "SiliconANGLE",
-   "summary": "SiliconANGLE covered Nebius's acquisition of Tavily, reporting the deal at $275 million upfront with potential earn-out payments up to $400 million per Calcalist \u2014 a rapid exit for a startup founded in 2024 that grew to over one million developers and three million monthly SDK downloads. The acquisition positions Nebius to combine high-performance GPU inference with real-time web grounding, addressing a core gap in agentic AI stacks.",
+   "summary": "SiliconANGLE covered Nebius's acquisition of Tavily, reporting the deal at $275 million upfront with potential earn-out payments up to $400 million per Calcalist — a rapid exit for a startup founded in 2024 that grew to over one million developers and three million monthly SDK downloads. The acquisition positions Nebius to combine high-performance GPU inference with real-time web grounding, addressing a core gap in agentic AI stacks.",
    "relevance": "medium"
   },
   {
@@ -2833,7 +2807,7 @@
    "date": "2025-06-12",
    "url": "https://www.adexchanger.com/online-advertising/the-trade-desk-introduces-a-native-app-on-snowflake-for-retail-conversion-data/",
    "source": "AdExchanger",
-   "summary": "The Trade Desk launched its Connector App on Snowflake, enabling retailers to share live conversion data at the SKU level directly from their Snowflake account \u2014 without data ever leaving the warehouse \u2014 for campaign optimization on TTD's platform. The launch was accompanied by new partnerships with Instacart and Ocado to expand SKU-level retail data access for self-serve advertisers.",
+   "summary": "The Trade Desk launched its Connector App on Snowflake, enabling retailers to share live conversion data at the SKU level directly from their Snowflake account — without data ever leaving the warehouse — for campaign optimization on TTD's platform. The launch was accompanied by new partnerships with Instacart and Ocado to expand SKU-level retail data access for self-serve advertisers.",
    "relevance": "high"
   },
   {
@@ -2842,7 +2816,7 @@
    "date": "2025-09-29",
    "url": "https://investors.thetradedesk.com/news-and-events/news/news-details/2025/The-Trade-Desk-Announces-Major-Overhaul-of-Digital-Advertising-Data-Marketplace/default.aspx",
    "source": "The Trade Desk Investor Relations",
-   "summary": "The Trade Desk introduced Audience Unlimited, an AI-powered platform that automatically scores and recommends third-party data segments by relevance, paired with a simplified pricing model to reduce advertisers' reliance on costly \u00e0 la carte data fees. The company also unveiled Koa Adaptive Trading Modes, offering buyers a choice between full AI-driven optimization (Performance Mode) and manual oversight (Control Mode).",
+   "summary": "The Trade Desk introduced Audience Unlimited, an AI-powered platform that automatically scores and recommends third-party data segments by relevance, paired with a simplified pricing model to reduce advertisers' reliance on costly à la carte data fees. The company also unveiled Koa Adaptive Trading Modes, offering buyers a choice between full AI-driven optimization (Performance Mode) and manual oversight (Control Mode).",
    "relevance": "medium"
   },
   {
@@ -2910,11 +2884,11 @@
   },
   {
    "vendor": "Treasure AI",
-   "headline": "Treasure Data\u00ae Becomes Treasure AI\u2122, Delivering 10x Value to Marketers in 10 Minutes with Its Agentic Experience Platform",
+   "headline": "Treasure Data® Becomes Treasure AI™, Delivering 10x Value to Marketers in 10 Minutes with Its Agentic Experience Platform",
    "date": "2026-04-20",
    "url": "https://finance.yahoo.com/sectors/technology/articles/treasure-data-becomes-treasure-ai-120000734.html",
    "source": "Yahoo Finance / Business Wire",
-   "summary": "Treasure Data rebranded to Treasure AI and launched its Agentic Experience Platform, including Treasure AI Studio \u2014 a conversational workspace enabling marketing teams to build segments, journeys, and campaigns via natural language. Early adopters Michaels and Nestl\u00e9 Mexico report measurable growth and cost reductions of up to 50%.",
+   "summary": "Treasure Data rebranded to Treasure AI and launched its Agentic Experience Platform, including Treasure AI Studio — a conversational workspace enabling marketing teams to build segments, journeys, and campaigns via natural language. Early adopters Michaels and Nestlé Mexico report measurable growth and cost reductions of up to 50%.",
    "relevance": "high"
   },
   {
@@ -2964,7 +2938,7 @@
   },
   {
    "vendor": "Validio AB",
-   "headline": "What the 2026 Gartner\u00ae Market Guide for Data Observability tells us about where the market is heading \u2014 and where it still needs to go",
+   "headline": "What the 2026 Gartner® Market Guide for Data Observability tells us about where the market is heading — and where it still needs to go",
    "date": "2026-03-24",
    "url": "https://validio.io/blog/what-the-2026-gartner-market-guide-for-data-observability-tells-us",
    "source": "Validio Blog",
@@ -2977,26 +2951,17 @@
    "date": "2026-05-27",
    "url": "https://www.vaultspeed.com/webinar-vaultspeed-agentic-framework",
    "source": "VaultSpeed",
-   "summary": "VaultSpeed introduced its new agentic framework in a live webinar led by CEO Patrick Van Deven and VP Solutions Engineering Jonas De Keuster, targeting specialist data work surrounding raw vault implementation \u2014 source profiling, entity mapping, and semantic layer design. The AI agents propose changes grounded in enterprise integration knowledge while keeping production code fully deterministic, with humans reviewing and approving each step.",
+   "summary": "VaultSpeed introduced its new agentic framework in a live webinar led by CEO Patrick Van Deven and VP Solutions Engineering Jonas De Keuster, targeting specialist data work surrounding raw vault implementation — source profiling, entity mapping, and semantic layer design. The AI agents propose changes grounded in enterprise integration knowledge while keeping production code fully deterministic, with humans reviewing and approving each step.",
    "relevance": "high"
   },
   {
    "vendor": "VaultSpeed",
-   "headline": "Automate Your Data Vault on Snowflake, Natively \u2014 VaultSpeed Now on Snowflake Marketplace",
+   "headline": "Automate Your Data Vault on Snowflake, Natively — VaultSpeed Now on Snowflake Marketplace",
    "date": "2026-03-05",
    "url": "https://vaultspeed.com/blog/data-vault-automation-on-snowflake-marketplace",
    "source": "VaultSpeed",
    "summary": "VaultSpeed announced availability as a native app on the Snowflake Marketplace, built on the Snowflake Native App Framework, requiring no separate infrastructure or VPN. The platform generates Snowflake-native SQL, Tasks, and Dynamic Tables from metadata and handles CDC patterns, schema drift detection, and lineage tracking automatically.",
    "relevance": "high"
-  },
-  {
-   "vendor": "VaultSpeed",
-   "headline": "VaultSpeed Secures $15.9 Million in Series A Funding to Accelerate Growth",
-   "date": "2023-11-16",
-   "url": "https://www.fortino.vc/news/vaultspeed-secures-159-million-series-funding-accelerate-growth-its-automated-data",
-   "source": "Fortino Ventures",
-   "summary": "VaultSpeed raised $15.9 million (EUR 15.1 million) in a Series A round led by Octopus Ventures, with participation from Fortino Capital, PMV, and BNP Paribas Fortis Private Equity. The Belgian data vault automation company aimed to triple revenue by 2025 and expand its platform partnerships with Snowflake, Microsoft, and Databricks.",
-   "relevance": "medium"
   },
   {
    "vendor": "WisdomAI",
@@ -3104,6 +3069,1590 @@
    "url": "https://www.prnewswire.com/news-releases/zilliz-cloud-delivers-major-cost-savings-higher-performance-and-strengthened-security-for-enterprise-ai-302590558.html",
    "source": "PR Newswire",
    "summary": "Zilliz introduced a rebuilt tiered storage system cutting storage costs by 87% (from $0.30 to $0.04 per GB/month) and a new Business Critical Plan with HIPAA readiness and multi-region replication for regulated industries. Simplified unified pricing across AWS, Azure, and Google Cloud took effect January 1, 2026.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Domo",
+   "headline": "Progress Software stock raises guidance after Domo deal closed,",
+   "date": "2026-10-04",
+   "url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxNQ2d3NllTVEsxTm8zYTdzZ3lpTzlwaEZqMEcxZUVqblBUbTVNOWNOaXlTa1BBOVpHUWVNeC10MlNtWlBxaFlVZUlZVjNsZzhSRks3UDNiZExkU3hBQWNFY01WQ3c3UjlHWG10Qk9oQzRDODBqWk1OLVUzZUJ3Q0ZLaWo4aVprN3lDZUljSXJ5S1FmMDJpSTlQX0FTNUt1WElLeUN3bHdBR0o0a3VDTFZMcFhCelpCVDBXNzMwUjdnZkEtWjg?oc=5",
+   "source": "AD HOC NEWS",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Infosys",
+   "headline": "10 IT Companies Hiring in India in 2026: TCS, Infosys, Wipro, HCLTech Step Up Search for AI and Cloud Talent",
+   "date": "2026-10-04",
+   "url": "https://news.google.com/rss/articles/CBMi5AFBVV95cUxON3BfbTZOaThyaWFuUThrcERmMXA0QjRWUWphSlM0X2VKRE44aXlyajY2MnNzc2lQQmpTSWdkN29Da0lXQ2phdTdocHdEeEhnVmFwQnVCNHhyRDQ4LTFKOHo5LW9vcGdhUzhNV3haVkE0eGtjRkdJOWxubmsxVmhRQjA0ajhRMDQyVW54ZnRxMGdqeVRlRE1HS012c1Fwcks2X1F1U0pFNUZoWGdyc2VYRXNrZVU4TldDR2dEOGI5LTkxTlRWOHlMQUVpTXNWRmY1Z3AzbXF0dDMxWDhBazJZU2ExZDTSAeQBQVVfeXFMTjdwX202Tmk4cmlhblE4a3BEZjFwNEI0VlFqYUpTNF9lSkROOGl5cmo2NjJzc3NpUEJqU0lnZDdvQ2tJV0NqYXU3aHB3RHhIZ1ZhcEJ1QjR4ckQ0OC0xSjh6OS1vb3BnYVM4TVd4WlZBNHhrY0ZHSTlsbm5rMVZoUUIwNGo4UTA0MlVueGZ0cTBnanlUZURNR0tNdnNRcHJLNl9RdVNKRTVGaFhncnNlWEVza2VVOE5XQ0dnRDhiOS05MU5UVjh5TEFFaU1zVkZmNWdwM21xdHQzMVg4QWsyWVNhMWQ0?oc=5",
+   "source": "infotechlead.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "AWS",
+   "headline": "Cloudflare Basin Goes GA: $2.50/TB Undercuts AWS by 50% [2026]",
+   "date": "2026-10-03",
+   "url": "https://news.google.com/rss/articles/CBMie0FVX3lxTFBOTmZQTENUMWFlRzN3QlYzcExVYm5hZE5VX1RMOWZzVUdCY0dLbkNDcnNwWTBJd1VNLWwtYWVEQnc5WTZUdWJXSWpJeGthSDhTMlNabzJ5LVRCMUZxS0dPS0I0UEZmM2RCZVh4ZlBtd29tLXFYRnlNSHIyNA?oc=5",
+   "source": "shattered.io",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Boomi",
+   "headline": "Boomi Names Hickman CFO as Focus Shifts to Profitable Scale",
+   "date": "2026-10-03",
+   "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxNUUdGN3NuVDM4cnB4dFZNa09SSU1yTXM4SHVXdEttNGxobmd4UFJ5Ulotc3NEZE1PWmJqMDctRkgyNjI0VmR6bS14OEREaUlLVXl2RkFTUUN0R0FKdXoyYjBaZk1YUFNwa1lub2MtUlVjbmZwenZQbVVvOUNweXp5TlhYMjhWVDRCZXVaNi0temNPWGstMHg1TFVmSVRhbkhDanBZ?oc=5",
+   "source": "MyChesCo",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "LlamaIndex",
+   "headline": "LlamaIndex – Weekly Recap",
+   "date": "2026-10-03",
+   "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE1UdXVQTU9nSXdzb1loeTh6bm5kTThhVVp1NjBLYVNub2YtTlp0WXNydU9iaGw0RVl4TVBIWV9Fb0J1emdVS05MLTB2Y0tMR1FYb2Q0Yk1aaDZmeTRwLXlBU3l5eURaVHFxcWV6Z3lwODRrZ0FKWXl5YU9vT2Mxb0U?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "OpenAI",
+   "headline": "OpenAI to limit latest model launch at Trump administration's request: report",
+   "date": "2026-10-03",
+   "url": "https://news.google.com/rss/articles/CBMijgJBVV95cUxOOTdGRFFhcGdlcmd2a05GcGVCclZvV29qUTBxa2ZRbHBWTWg4emNkeWpwZUhfV0VlTTNBVUJYajdaRU5Gb1F3NVFvNjN1MzN1ODZtV25NYzd2aFYtYzhKMENTMDIxc29CWG9Gam1VenVzN3BLckV0bWlpRURPT1YtVEZUYWxnLURJczExLXUtS1FrNGVBdmxUZG9RMkI3ZHFZR28tSjF3OTdRd0J3U29ubF9obUhhcm9rejdhQmRjSkpaR1BBRTVRbWNGM1VMeGRvVFk4OWxhX3ZqdFAwcVBxNm01SmRsNWtlcVowZFJMVnREZ3Y5NUFPOS10UFdHSVRGbzBVWUptSGxWMEJ2ekE?oc=5",
+   "source": "KFOX",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Alteryx",
+   "headline": "Sparity's Tableau to Power BI and Alteryx to Fabric Migration Accelerators Featured at FabCon Europe 2026",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxNNXZtS2h0azZIeVdFaUNVSmJWQ3pmNzhnWlVzZXVscFVOVlQ0aHB2b3pvVFdmellWLU1nYmF4OW5ZOVZKUzlyQjMyWmxDWnQtVHdnUEZQNldYaUV4VThvRHExUkxDSlMwUmVnTjJhdjVsZVJhSlJTakxqQnJsTUZvRXRxYkpuMUJPU1BGaVN2NzJhcUs4ZW5lNS1obm94aVNqUTMwYlZKX0tjOEhuSGV0aF9ZdXpmZjh1dHMyOHE4TnJLWFFJLWNLTVQ4am9rYUs2RHRjMktfSEZkU21iU3hHeVdIQXpMSTg?oc=5",
+   "source": "EIN Presswire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Boomi",
+   "headline": "Boomi named Gartner leader in API management for AI",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxQYlMzTUJ2VnZnYWhCa1VsekRxY3AtVVdQcE9pcFRkUi1Jak9BcEtGOTkxS1RkNDhMVmxBc1JrSlRSMTJuYlVPNTJwR1A1ZzNTdE1rUlc2UVNoM0RjdVF3Mkxpai1LWUtaSmR6Zk9HdTBYSUctREZSVy00Z0pSdm1HbFlURWZBQjZvTlFHT2ZYNA?oc=5",
+   "source": "SecurityBrief Australia",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Braze",
+   "headline": "Braze's Self-Service Push Makes Marketers Owners of Their Own Guardrails",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxQMzV4bUpSTjVERlFwNGNTTUNCb1prZG4wQXpLMlRhQlVmUXppRkdwSVBWRndDV3lMVUFUbEx2VDBFUDY4WkhkNVhnMjBkRFJRdVllMVM1NHlqcXNKeFNpcnZCM2VzeG54dm5RTllEY3E5UDRRbWE5YkJmT3RnbzVodU9iOGwxY3FVQTVBVnNFdmxYMjh2RWJzdzF3bF9aOVhKeWVsYlFRU2dxQ2FoejRkNDlnd3FQb1ZNWkE?oc=5",
+   "source": "CMSWire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Braze",
+   "headline": "Analysts Offer Insights on Technology Companies: Vicor (VICR) and Braze (BRZE)",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMi8gFBVV95cUxNMjdsR2gzRUV0RDQ5ekpKN2Q0Yzg0eWFESmZ5X2kzWGFoV1AzanFlR0lzRjd5U0lkT0xERDJzcVp5TVNVNEVZUmlPN2NvS2FVUl9STW9jNVJBNDVzNzFNN3l2U01sVGZSYS0wZVJTMnFqaWo1NWthM1htX3JDVVhFX2JnLVZOOVFmS1RfQnJlZFVmR1RYai0tSVFvMEZ5NUxWMFpxak00SUhMRGFvaDZueGJmV0x5TlVOQnhockdwanIxaFpZMWx6NW56aVk2RzBJM3AtVjF6eDJoaGxxc3ZwdHFmRlp4N21XZllpLTRkcGxuUQ?oc=5",
+   "source": "The Globe and Mail",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Braze",
+   "headline": "Braze (BRZE) Trades Nearly Flat at $25.64 as Market Awaits Direction - Value Area High",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxNNktjZW5ZdFRSUVRtamlKOWFBb2s3MXZ3eHVUM2F6OFBoYnJBd1hGZ1M4NzhXckJvbnRabFc2RGdZcG9ORzZLeE8zV0dyOUZTMGNlSkpnRUNlWmF4VTEtYkk2R0dVSEotUldEalJGWnU2T2xleGl3NzAxemlsdUZ3Y2trZ0JOV3FOUHItVVJRLTE2WG1IdVhTU0hoSHEyWndENnh5TXRSeWtPQUk?oc=5",
+   "source": "siam.in",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "CData",
+   "headline": "CData Offers Gateway Tech For Better Agentic AI-IT System Links",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxQbVRraENxWnJVX3d5dzQwVkhSUkJrcmVXSHpFQWVySW1saXNkdDJmQUJuT0J6eFU4OXRHa190UGxJbnRURzRIbl8wVjV6aEJsWG83bzhmRDdIcDN5eEZacHVJZE1BbWVUUEJ6bkNVMmstdzlnOXYwREt3YUE3Y3lLUXZoSUozMEhnWDc4bml5SXlkWWVhWlhOb2c4M0U?oc=5",
+   "source": "crn.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Dataiku",
+   "headline": "Dataiku launches cross-platform AI agent management tool",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxOMHBOTl9sMXhPNVpTbU9SelpEVGwwSE85bzR1TjNwZm5pbzhrQW9MUlZtbFNJZTBTdGdyVkIybVRMSU1wb2pFSV8yTWpfanlZcXVKWHlfTEVyRzBJWGNxT2o1MXI4eVJfVkFpNzhaWWxmMV8yY09VUk5qWjVUTGN4Y2dWNnRiOHRRb3Y0UTRR?oc=5",
+   "source": "IT Brief Australia",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Dremio",
+   "headline": "Dremio Launches New MCP Server, Furthering Its Leadership in Accelerating Agentic Applications",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMi2wFBVV95cUxNRjloRndCdGJqRGw0Ull1UTV2S19GQXBoQkZfYlFMTHpCdlpXVTNhSzVSdE4wUS15VGVsYmR1MF95RXNabEg5dWdWNURYMTRKMnE4RVBhbVpkZkpHQkhJZmgwb3ktWGtacnlwdEV6cWI4MjRLZUFrRnNkVlpmUHl3REpEM2dFZTNpY2djcnFmN0w0c1lQWUl6Y2NqdWNLUjNUZFJsTWJKVXA2WXVwSmdUR1lwQ0czYkNsTm5CUEcxcjlIVjNHS3N1UGhXRGszcG1MdV9hZnQ1MXpIcTA?oc=5",
+   "source": "HPCwire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Informatica",
+   "headline": "Informatica Unveils Blueprint for Enterprise Generative AI Applications for Snowflake Cortex AI",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxQVlZrNVNvX2JlR2FiQ0tSWE9ZTEs3N2cxZC1PQW1MWmU3ZTZ6LUdUa2ZSY0d3cXZHSlpTQXlvU1k2Z211Z1B1M1JxRTdwUkZrcDQ0STFTLUZWXzQxb3FRS2VVZGZ1NkhqTEhSR0JJbUEtRWhoWk8xNnIxUlZNVHNSakxZWHc3dUtsSENoRHlnaVdmTWhYRWJMQVhiNXYtYXZvaXFTWGFSTzNaQmJmTC1PXzdZN01DSDl1bWhWNDNjeWVrRzFCTEtGemhiZndHNC0yZ05DUmlHcVQ?oc=5",
+   "source": "HPCwire",
+   "summary": "",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Kumo",
+   "headline": "Nvidia unveils Kumo Tabular open-source foundation model for tabular data prediction",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxOT2ZFSTFmaDZvSjY5U3NXZVhUcWl1X3dFd2VtRWZieUYybTJNMnNVcjAxZm5pa1BYdlRsdnEzb05QeHZYRlBDbUd6dlZpMkY5UTc3clphMnhsWkh1XzNMLVhJLXh0YlA5NHFEYklWQmcxM2FicW80ZG0tODI2eTh1bVlRNzhiZlZiSmRmYjljcnFLUUppdUY4Nmg3aFZ4STExdElmaWZ5dUpOWmhEN2xreFNHaU0xZw?oc=5",
+   "source": "디지털투데이",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "OneTrust",
+   "headline": "OneTrust Unveils Platform Innovations to Govern AI at Enterprise Scale",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxPaVFBa1hSQ1RMVzhBN3pIXzBNNDRJSE44a1ZrRHlRTXdlUFdENTJVeGdDS1lldlV3OWNYZ2dEekU4blhENXlXWE5PaHVoVkxNUHBUZ2FkLTQ5OFlBTmJaUVhUdjZZR2lxVHBtZXozNkswTWZEQ1Rubms4STBwdldZNmhZNk5hN1NNV1pKMG9SN1JnNkdOeGZfN1RoYw?oc=5",
+   "source": "VMblog",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "OpenAI",
+   "headline": "OpenAI Fires 3 Safety Researchers For Allegedly Sharing Info to External Safety Groups, Says Report",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMi3wFBVV95cUxNQ0xka3draXR1cXZHMDdkVF9HN0c1dUJrcm04S0kwRlZXcWl6cDcwY2hIYk42QW4zSG85RXlpcDJmbUt2ZmdTM3M1UUwwUWNvWXF6dlJJU1kzenkyVVhOUGNOeXFHRHRDUlF6TkJ6ZDhVaktmZE5NUXpGa0Rna19JdERDRE9UUDJNS1gxbzI4NDBKQkxVVklLY202XzAzT2h0bF9CVm5nRG1ZT2hidmZPMERydHhOVTNRRTNkQnNoWDM4MU9vVlpQbHdNUjAwZ0NHNHp2Q0RiVm51UkxCTG1r?oc=5",
+   "source": "Tech Times",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "7Rivers",
+   "headline": "7Rivers Showcases Enterprise AI Partnership Approach With HGA",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQQUYzX0RjWWwxOXRqNE04M3Z5SnJHVEwtRDFfd2pMWXc3ZlFGdmpWeUo0QmxiMnpwS1M0b0xRNmZXR1NfSXdaQUpMM1I4Z0VsX2NuSWVOa3lWb1d3cVBOYkE0RnhaaDNtc0V0ZHhqTWJJSUxxZzBMeXpzLUVUOVdTR1lIWlVWYUhJRjN3cXFBNEktZnVqRXV2RTFxVWRhWFJJN3gtSkFfRkhZdG1FRUE?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Braze",
+   "headline": "How Braze is moving AI decisioning and governance closer to the Marketer",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxPdjBCV0h2Qm5SRG1TR1AzbWpWMG9fUVlTem5SVERfdEkyT0ZvSExTY0RuOEcyNkx6bHNubXQ3Q2ctNFR2czU5S0pxZXJfSG1QUjY5SXNRTGl2NGg3NDJ6VWx1T2Q2TUFoRWdEX1l6MUVaZWZVR3RoamdVU0pWY2plS0R1dl8wTkd2OFNKM1Rn?oc=5",
+   "source": "diginomica",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Leo Brunnick, Chief Product Officer at Cloudera – Interview Series",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxNeFQ4UFNOOEFVaU0yM3JqRlVfcjhsaC1sXzUtNWZhcXdGNE1PODFOUzdzUDVrSWZZQlE0SXRhRkVsVXlmUWxHbGt4UkY1blJBOERrcFZtWkdNcWNFbjlwLWZpbmdHYmY4RXZvbGo3MThmRTQxUWFNcmk2OHR4S1JwaGlkSVQ4VnlsT0dpVFdn?oc=5",
+   "source": "Unite.AI",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Interview: Cloudera says AI agents reshape zero trust",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMikAFBVV95cUxQdWo3OTNXdHZEeU05WU5lUGFhZkF2TW9nUFhkUFBRRGN2Y1FvYXdudG1GYnNVMUctRU1SbGRtV0dVcml1WUh0VnVwOVZCbXRPTlpLMjNYOUFxMEE1cHZ0VXJsekRlVVBkRWwyRVFacmhCTmVDdExSaUx6dDREVkYxYTlqQ2xsX2VZdHNzbGFRT1E?oc=5",
+   "source": "SecurityBrief Australia",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "dbt Labs",
+   "headline": "Omni Highlights Deeper Integration With dbt Labs to Enhance Data Trust",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxPZFppUWlzTVB2V3hnRDE0RFNJYWFNR0xBMHVqbVVqVjdreTdJZzlQSXV5ejVxczVjTVp3Z1JkZEhSZkRQV2JpTzVnOXZTVG1YUy1qeW5nZm90ak5zYTVYZnk5amFwX3hkUEZmMG94YlJMdDQwTkhKZV9VQWhJSGJnX19fT01rYjdhdmNaSmJYeS1YLW5sbkFEaXVUcWM1Vmh3dk8wTW1QazJ1SE9XTEd6ZnNxTlBjX1RaT3c?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Domo",
+   "headline": "Progress Software Expects Domo Deal to Weigh on Fiscal 2027 Margin; Quarterly Earnings Rise Annually",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxOdkhvbU1Fd0dsaDBfQWRDb1FBRXhoWG56aDFYSWlINWtkWEdneW1TYmNINS1wVU5rWHhHT3NzR0drR3VGU1U1czVrODBQSVl2MU9nRUR4c1RmSmFxTkVnMjB5NlhwaVhzX1dwNWxtNXZVdWNfazZNWERwVl9vWS1IZnFNcFp2ZGNJR093WnlwVk9WS21LSXhxbzhlNm0?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Hightouch",
+   "headline": "Hightouch Expands Reframe Marketing Event Series With Global AI-Focused Roadshow",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxPalV2VGxaZ1ZYUG5penF1ZC1sSjFTdFowOUV6bFdWVGU4SjgwU1RIeUh3ZlAtYUFraWM1aEFVVnlfZGtURk1zQVdGRXV3a1Rpd0NjUFlJMkpZOGxnSXRpVVVtTTVFSG1MUmlPWVN5LVZWOTJrSHFGUVZyRndEN1NOMG1wMjRGWFNsV1dKTXlaWG5VZTBBUFM1RlJKOFJ5cVlzTDE2cHlJYkllWkVwTnlBR1RtZlI5eFl5NnNtU0d0YThJQk1NNWU4?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "IBM",
+   "headline": "IBM Jumps 5% as Bob Coding Agent Gains Self-Hosted Deployment; Salesforce Rises 3%, Palantir Inches Higher",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMi3wFBVV95cUxNb2VJeS1GTXZITDdoM2VJbzVWQnNrb1VkNlVFOFUtVmo1X0VUXzh6Q1JZVlV5T1FXSkNCZzA4U2daWWZqSXQtcmt6anN3MEtuWXNEeGdieVowUnMxdFVEZUhETmtiMUpuTXFnWW5aVVgzczZUZTFxaG43NWJCWkVwX2dNelVIYjNwaE1aZlJoSXltMEhzR3Q2TGN4N1JyWUNUcExDMUFqT0FpcktWUk5ZbTZBdVBEWGNpMDZoUzZLTTlieWJ5Mmd1MHNtRVRsdzhsQ05YQVh6RXJLMGRNRlZj?oc=5",
+   "source": "247wallst.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Informatica",
+   "headline": "Informatica Unveils Headless Data Management, Agentic MDM at Informatica World 2026",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxPNVNfemxVa2txVlZqT0dUSGVIWkR1cVJJZUJzSFRYVXJxS29vcDNCMWE0QVZqdnllRXZNaDNZWEh0Uk5xSzdUS1V1MDRGZGl3UUk5UWx1d2FxYm9Fc1I4Sm5LMW5tdnJtdTFkMTNXclRycmM2T1VoVzVWcHlSWFhrYnl3emFIXzZiNURESElLUm1wNHR5OV9jMlJCWG50MC1qczZ4a3BIb25jcThJbXN3V2pxSUFka2ZvbHY3Z0cyNDBFWWFUVlF0dGRwUG4?oc=5",
+   "source": "HPCwire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "LlamaIndex",
+   "headline": "LlamaIndex doubles down on the context layer for always-on agents",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMioAFBVV95cUxNbTlmb29PSFVGdTZzS2FpTkxFOTd0RmhhMDVDcG5DZV9IS3JEYVpwRUxmTmdGY212Z19kZjlrMmVnbGhYamtKeWhWR2xHWXctc01lanIzNnBka0k1d0NvOER2WXYwTVB2bWwxemVQWkFIenFyamJSbmYtM0RKcng5RTFLbWFDYUFZLVBmZy1KbXR6UmR5LXJtZ19relRaUHdN?oc=5",
+   "source": "app.dealroom.co",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "LlamaIndex",
+   "headline": "LlamaIndex Launches Extract V2.5 With Accuracy and Grounding Gains",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxQc0dCXzJ6TVczVnNybFhLLXo0MGVmcjY0REJKVlU1dnFRaDQteTFpR3J3Qk5zZEtQV0ltWHZaOVB0ZWFFUFlOZDNKdk9sRGRsWU1iVVlubmdWa1NwTWdJSjRrTVJydC1xSENPTE9pUEZMcThSRTZFZlM3RmpSZVBJQ3Z5aDlOZk8zZEVmSDFQYnc2dw?oc=5",
+   "source": "Unite.AI",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Neo4j",
+   "headline": "I Built a Personal AI Agent on a Raspberry Pi — Jeremy Adams, Neo4j｜AI Engineer",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE1ib0dpN0Q4SjgyVElxay1ZS29WZmlBaDhKdVppcERZelhicHpQb2xJMkRjTHdXY0FtZWI0V01QbDJ1bEN5M3hjZ3RRSE1DVHgtcmRJWUtWbHpkVUhIX0w4?oc=5",
+   "source": "finance.biggo.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Acceldata",
+   "headline": "Acceldata launches xFactory for governed private AI",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxNOTBpa2lJQU1xWjJRdWNpTV8yallIV2E3Mm10RmN3M3UxMWM2RWNfSl9aTGl0NU0zX195SXUxdURubWZIcm5HZU9uamJmZDkwZ2JtSG1NWUdRYzBZd2dRUnEzRHFsQ0kyYTRjT1l0UXNGQm9pOHItNDV0QWI1QnhuQTJVWjA3UQ?oc=5",
+   "source": "IT Brief UK",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Atlan",
+   "headline": "Atlan Positions Context Conference at Center of Enterprise AI Data Strategy",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxObVRlbkE3dGRXdHFXcWJUTDNLVjBCUVZqYVdPcDdoNHJ1RXpNOWpkMVIxdVVyamROdnJPZU9GVndoZ1QzMjlRNXBwNF92OVVPSXlNR3AyUGFJU0Fma1BBOHY4WnNIRnZtVE9EZURxX0RHdUdpVElTMFMzZTAxOUN5akZyU2ZISVBuenEwQldGTVVzb2RwYzVLc056RlZXcTdCODA4c3dyMG9sUC1CSF92OXFXalQ5cEJMRlZHcmhxUzk?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Boomi",
+   "headline": "Boomi Recognized as a Leader in the 2026 Gartner® Magic Quadrant™ for API Management",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxNZHFGZVRrbV80UHhCZENxWFVjSG5hTDVGdHFtS21qT0pjNWVTWnpIVGd3VGtRanVRem5MSm9YSjNfZGx6LS15QVlkMVBtX1k4eURaaHFTeUllS0w5dzJxM2dHTElWVjNud0s3XzJULUNmaHJ4NFZ3MkN3NGhobEJMd3lxQ2pCRi1zRjZoQnNZMEpFSjhVMlpMSzRaNDZTVnRJczluMlc1Umt0elVNSl80eXhGQVV5MnNOU2tQbzZFM0Q0MDh3Zjhra0VTcFdQc1I5SzVyTi1n?oc=5",
+   "source": "Business Wire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cyera",
+   "headline": "Private Equity Daily: Cyera Raises $400 Million From Goldman in Extension Round",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxNWVRSc3l1cjVTbWtkVENOWkdGbWRiRU5BeGE2NU9vM2w5Q2pQN3h4TmxTNDFpLWtoNEE1S1ZuNm1xYUw3cnlxdHc0YVFkaGZ6MkI4VFJweTNZc1U2Rk5zdFJwblVabElaTU5ZdVFWR2pIdGFKV1dTM2lOSU1TWHpOUEk3d0N3QUM4LVhlM1pSZmdUX20tUzNOZjdzTm1nanY1NWF3eFhQU1VYLTMwYWtBMW9ReldNdlpIeExhVF9LVElTQXM?oc=5",
+   "source": "WSJ",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Dataiku",
+   "headline": "UAE leads global markets in large-scale agentic AI deployment, Dataiku finds",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxQNHZDbDQ0U2pwcWZvaGNnN2NvcVZ1MFFCRVVHTDFZbjJFOU1rei1iZUF4MWtjZk9Gc3ZRcDNuLW5WVGN6czRwNkVDaFVfSHRMT3JoV04zUUZseTVENUUzaDhjWlM3Y1RvUDVGQlJzVGROWUxNUjZ5blNUcnRYYzNfT0xVcUs1a0pEM3c?oc=5",
+   "source": "Arabian Business",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Infosys",
+   "headline": "Infosys and ABN Amro Extend Strategic Collaboration to Simplify IT Landscape and Accelerate AI-Driven Transformation",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxOWDBEU3BIU0duVGZJWUFsOFRFc01IbEE1OWpZeWNmc3h4SExxclBzRnpMcFFaeUhRVTA0aUJ1LVdaeVg2TFhwSlVsOVVPRzZiNVUxWnAzWWpIQVVyLXUxd0RZMlBSSHFaTWQ2QURaUHlCd2xCaUgzQXFOVEJPSHZ5Z2JmWS1OMjcxZnlkdGFjdXFYZVRzWGs2VTc5T2ZDRE9sV0QzQnQxRHJRT2ZJNjRXbkpRTEM?oc=5",
+   "source": "Financial IT",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Infosys",
+   "headline": "Infosys and ABN AMRO Extend Partnership to Scale Agentic AI and Modernize Banking IT",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxNYlhqanBBT0VfSGpZTlFuenp5QmM2WGJFc2tOekV5SHdNZnRsdU4zdDY0eXFBalpoQ2ItaVdiSGp4cXlkNUc3SFhsZ2NUOHFlQ29yWmExclhtR182VzA1Ynd2cV92bHJaZEtKTWdfWHVVT0xrSm94dG44V2NEaXJfdkg3UURhX1pNWEN3ZDFaS0FoNjFXR0ttdVdYbEJ5ZWJYNE92QTZYcHJfb1Z3cVloM29PMA?oc=5",
+   "source": "FF News",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Integrated Quantum Technologies",
+   "headline": "Integrated Quantum Technologies Announces Veil(TM) Channel Partnership with Synergis",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMirwFBVV95cUxQSVpRVkFLTVp2dVE1clk0SFRXdHVPODcyTHRrR2kxZk96ejJiTklDV3c4Q1huaEJLWFZHR1lXNVhzSGNMV09EM1gzUzVYemkwaTlJQVdnTzF1Njl5N281NFQwcF91YnRhOHh0bnA5U0JHTDAtQ2VNZkpOWktZdHJFSndabHUwMFkwV1hVb0NsU3laVFZ1YzdSNVFfUkhpSmtSTzBiekJJd3BNek10MW9v?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Integrated Quantum Technologies",
+   "headline": "Integrated Quantum Technologies Inc. (VEIL) Signs Synergis as VEIL Channel Partner",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxPaEtuZHBmbER4TUVsbGtZV0xBelh0dkthbHBMNHFBUzY3c0dpZC1PZVFoV19DbjdtTUZ0RTRHY21idHF4eWYyT2FFZ0VKSEZSbUMxUUpXWXV4aEE0SkJnaEstdGw3TlBya2E1RFFjNFFhelF6bmZRb1hvcmdhWXFMd3VnSVF0SHQ0WWxJdWJnT2tONUd0bmRYaXI2ZTdGMWxZLWw4TERHNVU1ZGRlM3ZlWGdNVk5vOVBnRzFNMFgyUkV4UTZsN0dwbGRZRHgwcUVkS2JfZkZNUDM?oc=5",
+   "source": "TradingView",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Integrated Quantum Technologies",
+   "headline": "Integrated Quantum Technologies Signs Channel Partnership with Synergis to Expand VEIL™ Enterprise Distribution",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMi5AFBVV95cUxNRmFLZkM0NDBQcmxQT3lGZzhSSEpPOWZaMHhINWhGWEdUSWtNLTZGdG1lQy1rM2x2T1dCQ1VGUWRlRGQ2SWVxaTBVQ2tuOWt1WkIxenZTMnlLalZoUjh5UVd6V1VLSEs0OUhhZm9scEpnNWFwLXQyYjBfQlREbXlrQmptSXphZkFxd0tJY3NXQi1JdnNZbFlWTDczN1ZNV2VKX3RaTk1LMmp0MURXbUJBY3d0cEl3c0NGd2hwM2h0SXhQaDFWb1l6Q3AycmVhWEdxVi0zSjIwcW1RTFR3UGtrZUlTMWI?oc=5",
+   "source": "kalkine.ca",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Integrated Quantum Technologies",
+   "headline": "Integrated Quantum Technologies Inc. (VEIL.CN) Stock Price, News, Quote & History",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1UQUhkNkR4LVFlQkc4NjdVNWViWGV2SlBYZVo4QThFR0JmUE9GNlc2bUNvSEpHVmdleTc5ZVNmTmhqQXdlcTI1UjNmcUEtMTBmbVM4RnhR?oc=5",
+   "source": "Yahoo! Finance Canada",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "LTM",
+   "headline": "LTM Named Global Leader In ISG Provider Lens 2026",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxOMHNhclk0VmZMdEFKRHhsdFRkTEJqVHJHMG52YWpJem16RXBaYTk5aXVOWVA2QklNNHdsNFBxazQ0RTNpUFFiUjRHYmc3SGY3bHVLNGNlaGJGa2MzdmtaNWF3WGp5VU5SZDdiUW1lZ2NsbXdlSHNtUzQ0ZWlFOFNoSWVhSFhseGZSN3JfelduekFxTGYwZjNTVThMSXVRY3hRdlpSRVJOMFlGWVFrQWUtRQ?oc=5",
+   "source": "fintechbiznews.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Microsoft",
+   "headline": "Apache Ossie: Microsoft Ecosystem Support & Power BI Converter",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMikAFBVV95cUxQRGItZ285Qm5xdlZsY0FjLUdNYUVyWUpQdGU4d1RzTGhsNGZ1ZFpxMFFGYnBHaUJPbzBQVFBUMkdIczFsclZScW5EMGdaZFpnMW1zeXN2Y2JGbzJEOEdFUUx4Mzg0WTNVcnljWWlwLXltcFVwNm5laUVqQXRfaUdGTnFyM3BXdGV5S2lpWFNTWVY?oc=5",
+   "source": "Snowflake",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Microsoft",
+   "headline": "Stocks Mixed Amid Rising Yields, Oil Prices; HPE, Snowflake, Microsoft In Focus",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE9EQ3d3cm1BZGY3bFpYLVdILVhwbXFLZ043clVyVDlsM1VwZXMzVEJiUDZ0blZLNEtXQ0VjbXdyMS1qeGgxelh6LUc3RndkelBIUGthUWtDTHdadVN1aG5qV2lGdTZmaEl0NTBXTlI1Rmo5NWp3U0VXRTBVbzA?oc=5",
+   "source": "Investor's Business Daily",
+   "summary": "",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Microsoft",
+   "headline": "Microsoft joins AI data standards group Apache Ossie",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMinwFBVV95cUxNdkk2NjI1cEJoS2puVE40a3JMVDN0MV9idFBwaEVsV01GTEZUUng4N2Q1OXFvNHIyLWF3blp5dklOcVRJRTdTWmNIWUpMYUEtSDVUU01JSEZrSnlLY256ZmNoWDZ3VnBLYzlFSTFCQmoxRU9tLVNEOFBiVFhfb1N0QUh6YngwNVphSmpvX0tTVUVZajhOQUxpVFF1WkFyNGM?oc=5",
+   "source": "디지털투데이",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "NICE",
+   "headline": "NICE upped to Outperform on improving financials as AI disruption fears ease: Oppenheimer",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMi5gFBVV95cUxNZzZNRGVYTmxfd1N2YmU5ZDZBTnYtb1NuMXQ0VHlnelU4QzE3X1BRYWFhNWh2ajllenBsbUgzTGpFclpOZURIZ0lxd3VpMUtiemVIbjhmZkptS2dPMVJPdGdsWGRwcXB5RWR2endNVk55aTVwZm11M2ZadVFJX1VYUjZ2VmJKbkR5dlNGb3E3bmdaZGZleXh3T3djZm1JRnJETlBjdy1qNkUyZFFSMHFzWW51TGp6dGpBOGdYSmtBN3pTZlhwSGVjVU9ON1BtRUlMTFQwYW5GMUwtYWg4eWlqNXJWYmNQdw?oc=5",
+   "source": "TradingView",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "NICE",
+   "headline": "NICE Ltd. stays a Buy as AI growth and low valu...",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxPVzJyRFBGRDlrbjN6b1AzZFFIS3FQcmQyUnVFTnQyenpZUUYxQXZNZ1J6Wi00NTBISFd6SG9oc1ZMbnlhN0YxYzBmdVAtTVF1RmZ4Nkc2Mk5fbWc5RjdzdUt0Uk5LTndvV0FWWFBtQmNUdkZyYlBvdjZ3dU9BNExneFVwb2tDUQ?oc=5",
+   "source": "Pluang",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "OneTrust",
+   "headline": "OneTrust CORIE Adds Runtime AI Agent Governance Controls",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxONWN4aENuUG9lTTVxb3AzSU93M0stWFEtTmlGYnVlb253WFg1Q1I2c3RKeFVEWERyb2Q4T2pQTUNpbUQwc2FOOUQtbXF0dGVHM0dqaEpock04U0JVbkZVLUY4NFBNVnBkV3hSSHJYSlV0NjFNdXFoU29Ka3Qycm1rU290aFR2YVJacFpEQV9PcUUwZmRqSjMtMHBZdw?oc=5",
+   "source": "Channel Insider",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "OneTrust",
+   "headline": "Announcing the Winners of the 2026 TrustMaker Awards by OneTrust",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxNYzRvaHN2WHdhRlNiNjlTdFR2NGlvYVBMT25TRnUxUWxfdldQaWVrVlhPYjNMekdwbGFQNlEwQ1Y1TGtZVjNncEJIVnBQR1FrZ1FJcnNTdEFFSFVaMGtVRkVQUi1IUHNBeUYtZV9uLUN5cTk0bk56U0poVWxXMU5WZTJhMm5SeHJYTGtGNkVTY2RyVmgyOGJaeWlVWkhUSjktVHBBcHV5Sk1BQlpCOUluVGxfQ01iQUU3eDFtaDNIdmJpbUliTWRKRC04bHJzQWFiNHZDUNIB2gFBVV95cUxQS3RlV1hEeWREVjNzeUVsbVYwOU5RYTN3U2xoc0s1ZmN1Z0l6TmctajBvUGRLNldQR0VHLVZHN1lpQU80M2RZVTREUEZhek1HYjhIQ042VlNMSGxEUHdPV0tlWlFmRWhMcUxILXZ2Vkw5UUVhd2JaRVFRVGdoaUI1cjROWkVaUmJGdEsyQkc5UlpBak5aM3lBU0VKSXhvQm56TEgtb0c5S3ItcjduOFAzYXp3b3VFa2FxYmw5bksxemxpWDVKdkxVSlN0cWR0M2U0elUzSDNsTk1kUQ?oc=5",
+   "source": "The Manila Times",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Atlan",
+   "headline": "Atlan Expands Data Context and Governance Capabilities Within Microsoft Fabric Ecosystem",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxQWUdaMkV2NGVIT01PRUl0dTRJTWdUVUtwbEZuNU5PRnd5c05JUzNfNkhUX0JvQm0yU3F2Ujh5RmtpMVdGak9lSkZzeGdVNXpKTE1lU2R1OHY4MUJ5eU5DWmczd2ptVWdRYWlGNjNGS1R0T25fd0l2dkxCTFVVZ0RPNUNBR1cyeE1IQ2xYTzNJTnFFbHRHNHZqeGNrUGN1QmxONkVqR012OTZWU21LUkdSTmZmbm9nbGxWNlpsdURPWUQ1Q2tmVDFBc0o0a1o5R09qOUE?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "AVEVA",
+   "headline": "Tarun Singh, Country Head - India, and Ann Moore, Power & Utilities Industry Principal at AVEVA",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMilAFBVV95cUxNUGR1YzAzLV9KQjY3U09lS2QxTnhJWHpncm5wQlhWcFVGUExXXzlDT2IyTHNOM29Jd0Q5MldDbEd1dnQyUk9mZ29EZm85QUZyZG1fdVZ3N1dZVW5vNHVnU3Jad01ueTlRQmxic2pTaXRoNDBDazZ4NnM3dDNOcExjakJxTW1yNEV1UWZlRjQtd1lzNWNS?oc=5",
+   "source": "Energetica India Magazine",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "AWS",
+   "headline": "Accenture Edge and AWS Launch Six Midmarket Cloud and AI Offers",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxOaHdGNnRvMmZVLUZxSUZ5MnFkNkEzUXlkaHBtNFI4Z2hIcDJJUVlFWHhMY3N0bG1BaW95MTFsZHJpTTJpcGRaS21pYVhtZzNtdlYyZ1VNZEZJNUYxTDF4ZmVrSU5QUjQ0YkN5SFNzWTZyaEg4akxyQlBlNzZkd2xHN1FoTE8xdHI0VGV0SA?oc=5",
+   "source": "Channel Insider",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "CData",
+   "headline": "CData Launches Connect AI Gateway, One Control Point Between AI and the Systems That Run the Business",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxPdWFOYVRNRkxSa2tZUHNZR3BaZjRaYWU0YjJmYVVRMGNMbGh2eWtvS1FVSk9CYnFSVGdSMnhCME85M25WMG5haG4ySEF3UEdCbll0a0doWVRmNUlGSE5mendqcE9JRV9oa2NKRXBfRm1xbE95eGUxSWEwTXZOV0g2RXhBd2RFN0lNVzVuME1WY1M1dHRhSldrNEFtMjhRUQ?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cyera",
+   "headline": "Cyera Stock: The Next Security Wiz Kid?",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFBlN2xiaTgtQS1zVTNhUjdYNzQ0cTROWk9NZjRNWlhRNzdCLUFqREVJYzNEMG9pRmdRQzMwLVY5a2FKempLRDUyRUcxa1dQRWFm?oc=5",
+   "source": "Access IPOs",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Dataiku",
+   "headline": "Dataiku to Launch Unified AI Agent Management Platform",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE4yNlBwUEc2a1RxVi0wZm5xMlBBR0pYMVI3RkhwclZLd0NiT0J0QkhKenpmNm42ME90bHppYVo3UGJ3R180UXB4TmNYSUJ6R2FoS3BkRXdnOVotMUZ5MkF5MFdWRWZ3S1E?oc=5",
+   "source": "thelec.net",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "EPAM",
+   "headline": "Domino Data Lab And EPAM Partner To Accelerate AI Adoption In Life Sciences",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxNdTYyZUlZVk5lMzJoNEJQNUFoNTdycEl6ZW5DeXpvV3ZJb3pKTXJSMklEUXpYVUNST1pQVGpYUktXVDBORlMwTGtldXEwbDRJelMySDNIU3EycUllQzBPRmNockhOckFpb2F3RnFoeW5jZmY5aUtvd3lMcUVEMmRJcEIzcDVKTzFyTXdkYWI5c05ZNUU4d2tBRFJDRdIBoAFBVV95cUxPenhWVmFxbnE0VGZKMExvTGRhajlhNUFiakUxRmFVUW5BSjhRVzBwMndVVkE4dHZlUWJPa3pKTG9fakVVSWVBMl9sU3h6TnBZbTRRTUdIbktvc1ZXR1Z3R1R6MkdGU3VtbmllRFJHRkpvZXhLc2hPQ2hDaDVWeXZ2UnZNa2ZyV1phcVByQzY4ZFVKVU92TjMwNXdWam1JR2U5?oc=5",
+   "source": "Pulse 2.0",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Matillion",
+   "headline": "Matillion narrows losses as tech unicorn’s evolution gathers momentum",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxPdlZfdHE4el9HZ0JNcmhnR3hYWUg0Uk1iSFV0V0Z2b0tjeFBCTjM0QTUwcVJkUDMyMC1WazN3UDJ6OTN1UXNiZWJMSGNqTXhlajlhdWc0cXAzRFlRUnp2QTBNR3ZrUDN2TjRXQ1ZMYWJITjZ0Vk41SUlwcFBONHplcVExcFFqVUNLSVZxNWlzRVJ6TjhDMWJZNUdjZUJtaVRCdnFyWkMwU0xTVDc2VlZfY2VHcw?oc=5",
+   "source": "Insider Media Ltd",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Microsoft",
+   "headline": "Trust3 AI Brings Secure Autonomous AI Agents To Microsoft OneLake",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxQNkF1VV9NZWMzRFlnUUNKR2NXZW1lNm1FS2RkdXdodW9QNEFSYnA4c2JQNHhYMVcwQlFLOFBLRkcxN2pkeUxMSHl2bnMtZnRSdGVTOVRYMTZ1V3B0RkZYNDVGZm1kSExJMkxkZ0owclZJdkxZbk5mdkVMX2llZXdoN0lETml5YmZBMERqLU5ubE43WEFzYjhHSDZfeUQyMnJLSzhZNS1tZ3ZiWTZodjh2dzdyallPVWx3SnkweWZFYw?oc=5",
+   "source": "Business Wire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "OneTrust",
+   "headline": "OneTrust CORIE™ Governs AI Agents at Machine Speed",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMi_AFBVV95cUxPSkhkeVFPOVRMTEo1cVlNcUFhTmh0VzdwN1pYNEpTUlNOdlFPazJESmgxU2tYNGpjR3lLbkNNcURVYVdpakxMUmpXWEdyTFd1bVJneHpPUDFQdmFCOV80UVY4a1BzNEJtZlNLd2NnbFZpcEk0RDBJRlZLeHphNEVLaTlIVjlya0Q4RFRMaUtVOVFCZHFrc3ByX29hbzdOMG1VWGM4RXB3NzAtWjF0NWRpdnZvZEk3d0I2aWpid1VvdU1xWDRDVmZQVGUySU1OWkE5Y2tfRWlLVEM3RXMySjFTa0MyYWMtZjRkakJycl9DWnRnVHMyV2tzMDdmbXo?oc=5",
+   "source": "True North Radio Network",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "OpenAI",
+   "headline": "[Liveblog] OpenAI Announces Always-On AI Agents Named Dots",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE9LenRDZV9MUkxuVWJxeTZqVkdCZDI1S2RtY3pGLWctOVhYNGpyZUVzRWg1Y1BzOWgwb3JNZEFyS3hoV29QSzM4RlRKQ0twMFE?oc=5",
+   "source": "OfficeChai",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "OpenAI",
+   "headline": "OpenAI Faces Technical Glitches During Dev Day 2026 With Dot Not Responding & Voice Mode Not Working",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxNdEs0MmJ4UGR6VGlHUEZpY3RYMTcyVmdIRUdTcGJMRzVUSUs0ckdUZlBNaXpzTWFxWnVxS0NXd1FWWWk0aHBaODR2WlFrZFZ2c2o0b3N6Sjh0WHZ4ckY5ZkpPZExKOGxsLTNHZ0RMenNvNjRZQnZfNDN3ZngxeGJSLUQ5QU1paGphVExwRVRsRnQyckJnZTNjM0VvYTVVTFRPa0hZRDhNblB6Q2xFVDlEd0ozbm1QWE5FYWdlSTFsZ01GbVE?oc=5",
+   "source": "OfficeChai",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "7Rivers",
+   "headline": "7Rivers Names Ben Kerford CEO as Paul Stillmank Moves to Chairman",
+   "date": "2026-09-28",
+   "url": "https://news.google.com/rss/articles/CBMipwFBVV95cUxNUE05X1lacnpOMWhURVVjNVUwcWRLcEZ0RjF3eVdCSk9PbHgxS0FCZl9fVUo2eEZkRlZvczdEQXlBN2xhOTU5LVp0bkw5OFM3TDJFWmNlbEREUFgxYmpVZmxSQW1nSGgtRXBoamJDM1k3SmFDa3VzM0lCa3l2THRieGZxbDZQdWs5SkVCcTJ6cE10d3BwWlREcklkQ21ybkRzdHRvZklqWQ?oc=5",
+   "source": "citybiz",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "7Rivers",
+   "headline": "7Rivers Announces Ben Kerford as Chief Executive Officer to Lead the Next Era of AI-First Transformation",
+   "date": "2026-09-28",
+   "url": "https://news.google.com/rss/articles/CBMi3wFBVV95cUxQenZaR2YxUzl5MGh4LVNSN3kxSjZUWTM5UTVxM2pGem9Wd0ZrNnNnRzE1b2ViS2V1ckRqckFZTFZGdVVmQkROQ1dncF9YemFHYU1nZnJsMGpHMFRqTUdMWjc3WE5UX3lwNFdENl9mQjd2ZnJNWFo4M09VX1paNlNTWFFLRXpldmJ0UW5GSlV6OWxadVlPLURGeVhESDJCa0xwVjVlQmRyb2EwSWt2SWVkYkRNTk04UnBpQmdoOFg2SnZoZ0tlLXlJSnp3RENGZ2toSXA5dEg5X0JiVUZjejRr?oc=5",
+   "source": "einnews.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "7Rivers",
+   "headline": "7Rivers Appoints New CEO to Strengthen Data and AI Strategy",
+   "date": "2026-09-28",
+   "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxPYjdIMkZCYUhkVmtsellLM2t4d015eWNqSE9OTENmek9aNmlDd2RqMmt4TEEzWWtLRnpzd3dJcnJaVmxpTGRWSHNaeHhqYldGbkZBajdIVnB2eE5TZlltTU95bnpvcVBrZ01QSzB0T0pGUThySzRCTXVNOGxMSXpNRjJ0U1QwOW53Zk92c0hDcmZ1TlJESWExbUZpWm84SzZYT2d6cF9jdk5XbGM?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Atlan",
+   "headline": "Atlan Highlights Integration of Data Context Platform With AWS-Based AI Agents",
+   "date": "2026-09-28",
+   "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxOaDdEZmV6bmUxZV9wRlQ1R2gwRG1zY3docUUzVHhxdUptM0RjcTNPUG5GUTRRd0NacmdFSnRWd1FaTmlWYzFaS2sxVk1sRTEwMVNsQkItWFlvdzI2alE2ZkhPLXBPZElKLW42ck5Fb1ZxMk9zc0txeWZQX01lM0VEeFZyUXdrdzRuZkJaRWFzME5PM0trMlZqM0ZrbHZCY2F6RW5adGpULTlQLU0xUFNmZm9DYi1CX3NsYXE1Q2cyOEFoUGRU?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Atlan",
+   "headline": "Atlan Platform Showcased in Alliander Grid Data Deployment",
+   "date": "2026-09-28",
+   "url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxNd2NtdExEblVFTFhoQzlFXzJhWmswOXIyS1VXVW1LODRyU1A4N0xWT09FVXg1bnhDSE5uaE5JWUt5c0kycFVTRVo0YWVGY0FWbzVZSGRvUVBLY2xMM1ZINW9wdHNSOE1yOHBQckpUZTJUSk5aMlI4OGdPMDBJNE5iZElpYnNWRXd5U0pEaUNvME5vUTl4Rkh4SlFVdXI1T0dQWk9hT0JrS3gtQQ?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Boomi",
+   "headline": "Boomi Named a Leader and Secures Highest Score in the Strategy Category in Adaptive Process Orchestration Software Evaluation",
+   "date": "2026-09-28",
+   "url": "https://news.google.com/rss/articles/CBMijwJBVV95cUxOUEFQTlhjZnFXN284aXVjeTZrbUJSZ253b2JqWXhkTGxyRmxXQS1vNjl1UGxiUWp3dmpEQ1g2SFF0dXVlTDVRdXdjcnlnbVhmelFOR1BvblJMM3FjMW1pTElWeW5YLUpJdjRkZHBTZGYxYjhtemQ4RzVlUjR4eXhmWDg3MW5MalBkV0pkSnRyS1FsMFdPcXNOYzEwdnlySGpvSnpDcUdyc1I4N0pUS3g1NWhIbXlCWUZfTmtWT0lmMnlLcUNuNF9udG9ZSVNKYUlyejNtWnMwMDAyX2pfSTZYc1RHNXlhNzBjVlRxb0JNSDdJcHdneDRxRTJ1a3diZ3FnRGh4d2xGeFU1a2hVdkZB?oc=5",
+   "source": "Business Wire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Cloudera's Wim Stoop on Predictive AI and Data Foundations",
+   "date": "2026-09-28",
+   "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTFBMSjFKMkFUcmZWcFZmcXhkbVBIQTFjb0xqbUNTSmtqVThaWHhLbGtlZkRlSFNKcXYxTnBtTDhWdlJqMHJIb1hoZU5nWnVuczdjWUFWeE1ibzdJd2FYcXJpa3h4Rl9Db2k2cmZRSHlaV2xvZTZrY0c0?oc=5",
+   "source": "AI Magazine",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Cloudera And Muroon Announce Strategic Mou",
+   "date": "2026-09-28",
+   "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTFA4cFl6VmN1MkxCdXo3eVZzQjN5ZGdSYi11T3RVb0N4ZVlOOGRsUkFWM1VtMnpUdGY4UkNIajV1clZtbUY0ZEFxSnVlWEtERXdfdXdpaVA3UGRzRzR4Rkk3dm9oa0dpYVoyT0ZGVXFsWlRZRFZwbGRuSXFmbVU?oc=5",
+   "source": "menafn.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "DataHub",
+   "headline": "Metadata-Driven Automation Highlighted in DataHub Hackathon Project",
+   "date": "2026-09-28",
+   "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxQbW5kbmlHS1pPMXYzX3I2UVozWktsMjZTVllRZC1hdVdNODBsbkRNMGlTQ2hFdl9YZzdSaVZiZmxYOWZUXzh6LW05X0NVcW9EbHA5U0NNcDRYWTdoUWxZMlRoc0RoclM0S2pIRFVuTWttbmpZMkZsbUJ1M09yNDNiVU41TmI1c3pwOEI4aWNkRktoRmNvd2pFZ3pnbmNjR1JJdHYtV0FqSV9CdVJRSENDMU5NdG80Zw?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Dataiku",
+   "headline": "Dataiku Says It Can Track AI Agents Across Platforms: What Can It See?",
+   "date": "2026-09-28",
+   "url": "https://news.google.com/rss/articles/CBMifkFVX3lxTE8wNVpQOWhKTHFLS0dEdTExb0huYTYwRzA3Z1V4YzBKWVJxcFJfaXhXYjhVVFFRcVJIeUFqa1RrRlBGUmJJZTdHQmw1VTBEYlBIb2RpNXZZRFJJbDhGLUxQN2tvR0N1MGVleVdqWWQ0VWhkbUw0bXk2QlFMOWVuZw?oc=5",
+   "source": "eWeek",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Informatica",
+   "headline": "Powering your Enterprise AI with Informatica Plugin for Claude",
+   "date": "2026-09-28",
+   "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxPd21NaENrNW5wRmZ5ejFKOGZiUUotV3VnQnh6eDZZeXZ0OGNhWC01cTNlS21tR2J6ZWRobnNsTkc3bWUwR1dfamdwMmRCTXNnSm9rdVozMnJJWnFOUGtpMkNLaFhUbkdDUFN0Z0VEZHo5Vm10bmxRTXl0ejlTVDdaeXpjWHhOUWV4ZjZpY3RsM0tvOUxZdmtkbGU0eWstdFVaTXdj?oc=5",
+   "source": "Informatica",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "MathCo",
+   "headline": "MathCo builds model for enterprise problem-solving",
+   "date": "2026-09-27",
+   "url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxOWWVMbWh0SDBPb3NNeHR6LXhfaWMzM2tXSnVZbmV1Y3cybGNPQ21TVlVsYmF0YU9rZGdlUl8wd242VHBSNjBEMURVdzkxQWxWZ1dlVUNXeE1iWkdBMHVmSlYtd0tGS3RKenQ0UFlQUVZkd1JHV0ZHdUtxVkhDTDdmYlhYaE4xVVhvbFpPMGNKYVNPM1pRLU1yQnk5SzE?oc=5",
+   "source": "deccanherald.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "MathCo",
+   "headline": "Moving beyond AI pilots: How MathCo is helping large enterprises scale self-sufficiency",
+   "date": "2026-09-27",
+   "url": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxQaXpOSURkOUlUM2JWYTVRXzVpMGV6RmNOX3BvQlFnVVNsX2lPNmVnbTNJV2FJZ0RPVGRCR1hJV003d2RCYlhxT0FoNF9idk1WRTVsT2FxZ0h4WDUtRjVOMjBBVWx2cDJKWWt5VlNKMWVwclhOR1JWdm1uc0RJa3RlVERvVGZXX195TldsVFQxZHItNEVBdjVVWUo4ZmhEWFM1cEd6X1NXblpQQVhIeFdlRzBLaGlraDlqSzRnRTJEZmI2SGN6RDZtU3BkOGx2TnVRM1ZpV1AxbHjSAesBQVVfeXFMUGZWdVBIbGNOMGV6N0RJTmtGcEtEbWlJbzl5eFFWMDFsMFBHbkpmRkNlRnlKcS1GQm52VGJsa2JxX1NHb0NJOTdaOVdaTmpUeUNmeExVaVY0enZqdUF4Q3l0aE8tbHpEejU1Um5JRzhsbmlkN1ZlbHJrbGNsQzM0cGNuZkdUSHJPdnJFSVhYb3lNWGdPdmVvZUlCanc5RGV0UXgzTTgxYWV1NWtKeW40Q1RIbDcwYm9rd3JqazR1Qnh3VnpzeHZYSFhYWUU0cE80TC1CSVFIUTBHMWpXN3B3WWExOTVyRGV0SVU2RQ?oc=5",
+   "source": "deccanherald.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cyera",
+   "headline": "Cyera's new $2B valuation, Chamelio's $26M for in-house legal AI, Adlib buys Paperbox",
+   "date": "2026-09-26",
+   "url": "https://news.google.com/rss/articles/CBMilwFBVV95cUxNbnktNkE4NFUxWU4ydkJ4NUhlRF9Hc2VCOUxVMGMybTNJQmxTV1ZkcWVvdW9Kclk2dTQ2eUI5Qm9kdXpWQlZsVDZ1cFNkU2JhS200VzhjMVNuQVJfUjhGbGxoMUdYVXB3WXdIQ2pGdUVSZFlhM2p6ajZDeEMweERucnZDeDdsWDBFbkR2VFZYTFM4RWFhRlNn?oc=5",
+   "source": "Axios",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "MessageGears",
+   "headline": "MessageGears raises $62M growth round led by Long Ridge Equity Partners",
+   "date": "2026-09-26",
+   "url": "https://news.google.com/rss/articles/CBMipwFBVV95cUxNd2dIeWF0Vk9lWG9qOEVybTZqalFrR2dYbnRma2FIT0RLWnpvMm8wczJDaFdOSkw5d1VPc3NGR3k3RHpXUG9EeUdlYzZHeUZoWHZWeUFDb1lMWlFCcDBiamRROG0yQ3JrMXl6ZW1wNE9xbm9STjE3c2NDdmtBcVhCSnRFMlFTdXh1ZlJYYjFrWng4b2R4NlVJQTNkb0dhWGtMN0FPX1JNcw?oc=5",
+   "source": "app.dealroom.co",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cyera",
+   "headline": "Cyera raises $400M from Goldman Sachs — plus 7 more NYC VC deals to know",
+   "date": "2026-09-25",
+   "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxNRXVMbWNFQTZrVE9HU1dnSnNwY1JzOUdtSVFHWF9GS29mMG83Z3BiWkh0aE5tQmZ1SXhLakxuVUtUNFFhMFo2QmIxNUgxUTRGbXZyM21CeExtbjdBZm9RX2Q4RnNMbW5QY3lrU0tWeTFIbWhUbkVVTFNmdi02SFRHbjBYNU4yZEJPYUJURG9zRW5qTVFtRGhSZw?oc=5",
+   "source": "The Business Journals",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "phData",
+   "headline": "Gryphon Investors completes majority growth recapitalization of phData",
+   "date": "2026-09-25",
+   "url": "https://news.google.com/rss/articles/CBMipwFBVV95cUxNU3p0ODNNLVQzQjRrb3NfMkYzZ1J0cmgtMmJHLXZjdF81R1lLTk9BRUpnbktTOEtKUlBLVWlwN1Q1enQ1cl9yMGk2U1pPZ1dLdmk2UTBuU042c3lvemJpT2pLRXBRdlVzZDNzalJINWJmd3VSQUVPQktBYXZXSXFXaU1oU3lic0tKTWRESnVfRTlNNmw0U3lhdnZUTEdSSURBTWp6RnJmSQ?oc=5",
+   "source": "app.dealroom.co",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Alteryx",
+   "headline": "Alteryx Highlights the Role of Business Logic in Scaling Trusted Enterprise AI",
+   "date": "2026-09-24",
+   "url": "https://news.google.com/rss/articles/CBMizwFBVV95cUxQSWFzeTJWYm1KS0ktNGt5NlZEVGJzWF9rcG1BSHhCWFNxaWV1VEh5QUVaUzFiSTh5Z0hwNjl2ZUpPamNyQ2FIZXAzeEN5RGw1dk9KTWxmTVAzczhCSGttSUp2NVY1cHBSMHZZTkx3dWdQZFV2ekpRSS1jakpoSnZ2WHlsS1BxZ0oyZkd1TTFPbmxKUTF1UE9JdzlPTHNiMDRWY1M4ZS1rbzRDbGw4VjZzbHI1bHAwclY1eHVjUGQzRDl2NVBQTXJOdDRONUdiUkk?oc=5",
+   "source": "firstindia.co.in",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "LlamaIndex",
+   "headline": "Lemma Joins LlamaIndex, TinyFish, Linq, and Obvious to",
+   "date": "2026-09-24",
+   "url": "https://news.google.com/rss/articles/CBMijwJBVV95cUxORDRjWU9qZE16aHJIYXV0aDgya2ZjRnV6QjVWel9Sck9lYU5tc1VRS0NfODNVZ2ZIVFNNU2lOYzdqNVhPU2hXSHoxazVUU3k1ZndXNTFzeHUyRzhlZGxVUWNpbU80T0ljcXc3aDRYZ2tjbzQzTWt3UnlyUm9WWmFTV1F4R3AzS1FzRHdVemd1UDBPTk5feWNRUi1ja25iZEhRcS0tT3pmZDRyWFdhdlJwSVU2TzBZajItOUl5cG1MTHZqeTJ4UU5PSEVCOXNCUnZkbFJCaTJzczBQRUpjZm9HeTVhd2tWVE5hRVJfZzFTbWUySFZvSUl0R0VucjVWbVZuWHVvTnVoVk14dkJ3YUhv?oc=5",
+   "source": "GlobeNewswire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Neo4j",
+   "headline": "Neo4j makes the case for knowledge graphs as shared context for AI agents",
+   "date": "2026-09-24",
+   "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxQd3VDWl9ia3JJZEFDMmRfOTNjQlZ1UExocGRyM2ZBbHRmLVlZMzFTTDRiWGc1OEphYk40OTFaSnJFb0djeW5PZzZXMmlUXzN6M1psX1dWNTl1b2IxTjZreFFpX3oySU02aEpQdk45SjlMN1Z1U3AxTHJMX1BNQ2xNZVF4UHJCS2VjeEpyaFRfNlZqU3Q5Snl4Nk5jN2t3eEwxS29JSnNWdW51ZFA4UmVEbmt3?oc=5",
+   "source": "SiliconANGLE",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "NICE",
+   "headline": "NICE's Longer-Term AI Opportunity Remains Incrementally Constructive, RBC Says",
+   "date": "2026-09-24",
+   "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxNczBrRERnaFlab200ckJYbU1WTnpob2NDV1puMnFJaW1LYjE2UjRUYVlIUldROVNnUmxhSjdRSDBGM3Njd2FmblFPUG5ENUNnaUx6UTJoXzNXY3pHVlpYd08tN25aYV9JYVVwdEFpcHA1UlRERXlqenJkb1V4eUh1aENjTFV6Z3RXaGo0a1NkX1VpZw?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Collibra",
+   "headline": "Collibra Launches New Capabilities to Reduce the Hallucination Tax on Enterprise AI",
+   "date": "2026-09-23",
+   "url": "https://news.google.com/rss/articles/CBMi1gFBVV95cUxOOXRnaGVoNjNfNXNWWXphZW9CY1Q5RDFPOXRqRURnQVNGeVp1cEZxVkFMNTR5LXJ0NVRVUElGZzU0NjZYTy03OUxtUnBRS3dzcGVObElMR0J4Vjdkek9uWmlkWEloVkc2YllhUks0ODFDOVUxS2xqbFZGM04ybUxIVWxDaFIxVndiTEJOekpESVllUmNiTy1DZUh4S084X3N5cTZfYXAyb1JldUVONGtyaHp1cGs0YWxWcnVOV1d0Y2Z3eWtWamlzdk02OUhWWDJBdnRuRXh3?oc=5",
+   "source": "PR Newswire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "FactSet",
+   "headline": "How FactSet’s Mixed Earnings Setup Could Reframe Operating Momentum for FactSet Research Systems (FDS) Investors",
+   "date": "2026-09-23",
+   "url": "https://news.google.com/rss/articles/CBMioAFBVV95cUxPelFkTjRBSWxOVE04cGcyaWY0amY0ZGxqc1BFdHkteExMQ0JIWW9NeTBJTVZZbThWVnVOT2w0RFNHZThCSDNTZGxiRkRqTlBlZzkyV1NpQldaLWxCMUVBQnRwRU1PQ1ZNaHF5SHJVNDVLeHRZb2ZXa0tueEJOTG9WRnk5dXdiTGloVE9INllZX3Uzc0VRdFZRcl9DZUVYMHVr?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Hex",
+   "headline": "AI-Powered Product Review Intelligence with Cortex AI Functions and Hex",
+   "date": "2026-09-23",
+   "url": "https://news.google.com/rss/articles/CBMilgFBVV95cUxOSTBaTTNSRFczc3BRMzVtZHlBV2JaYmYxVU5rNW96NXM0MTN5MnQ0RWQ1WGxiZUxQX05iUDFVMWNTVVZpSzc2bnRmQW5JMTNiWEViem53Ym80U1JPUFN5YW5vQzc5UTg1eVlMR3l0LTZucHdhYy02UURvYUVHV2hYcmpuVzZNWUEtSWxyN0ZEVWdERTQzOXc?oc=5",
+   "source": "Snowflake",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "MathCo",
+   "headline": "MathCo’s revenue crosses Rs 620 Cr in FY26, profit tumbles 94%",
+   "date": "2026-09-23",
+   "url": "https://news.google.com/rss/articles/CBMioAFBVV95cUxNVDVUdTJHdG5kZHRzQlg3Slk3MnpVQy1kR2RaZzRScThjb0NJZHB6d2RkX1hRQUJvXzRfSXlrVHZTTE1IdEM5OTJCOEJHU0FxUU40SlFITFBRZWNDUHpSaDNqMk4tWjB2R1NsVWNpaGdDazlYT3BRRDc5TzR5MHR1SmI2ZlhTWGctYlVfQ2dvb3ZEbU5kQW9fcWI4Q0ZMTm4t0gGgAUFVX3lxTE1UNVR1Mkd0bmRkdHNCWDdKWTcyelVDLWRHZFpnNFJxOGNvQ0lkcHp3ZGRfWFFBQm9fNF9JeWtUdlNMTUh0Qzk5MkI4QkdTQXFRTjRKUUhMUFFlY0NQelJoM2oyTi1aMHZHU2xVY2loZ0NrOVhPcFFENzlPNHkwdHVKYjZmWFNYZy1iVV9DZ29vdkRtTmRBb19xYjhDRkxObi0?oc=5",
+   "source": "entrackr.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "MathCo",
+   "headline": "MathCo’s FY26 Revenue Rises 23.7% to Rs 621 Crore, Profit Falls 94%",
+   "date": "2026-09-23",
+   "url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxQMlhnRXEzbWx1Rk94bUxWUkZoVnptU201dkFYZ1ByYzk3bGFOeEJ6VWplVmktczlwdmZ4RzVBUnVTQVBkY3dRUFJxUDJ4ei16LUFrZTdjZHZVUFBhejdfdnZkR04yN2VKNVVCT0NabEZsTmpxME5XRzMzWU5pQjA1RHA2QV9zT055VEpRVnZFWm0zMk5mNGVvSHU5NTk?oc=5",
+   "source": "CXO Digitalpulse",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Neo4j",
+   "headline": "Massive Parallel Imports in Neo4j Without Deadlock and Lock Contention",
+   "date": "2026-09-23",
+   "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxPSG5DMS1PS0tUZEhMeXhydThTNTd5RzJCTVJxRWFoTldHSF9uazczQnVMcnd5RllEZHQyZHVEUjNKVDNlSDZlWTc4YXRHeXlTOWdhR2xpdVQtT1U3SGYxWFVvRTlDak0wM05qMldhUUFmc2dKVDgwYUltZEJZSU12ci1rOFcteDRvX09ncV91REY1cjlGLU9pUzBZZU9fdk14bnhaTkJVMndpOEE4cGdKcjdfTQ?oc=5",
+   "source": "Neo4j",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Perficient",
+   "headline": "Perficient stock trades near its yearly range",
+   "date": "2026-09-23",
+   "url": "https://news.google.com/rss/articles/CBMipwFBVV95cUxPUVNnZjZVTUUyQ3MxME1JRDJuYUR6dG1VUVV0VTlIbEVkc2cxbENFREoyanZpelNnZW5JU05hSV9KOGtyMlFtUlVfeTNtX2pRTDhndDJuOG42V3d6VTFzdUhiSjdlaDFsNVNhY1o3d1IyWU1RdzVhUmR3NnlXY2NFMG9RM1lidFZMd1JmMW9HdnFrVF9iZ3JrSE0xRktwMVdUR3I5anBJOA?oc=5",
+   "source": "AD HOC NEWS",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Dremio",
+   "headline": "SAP Trims Operating Profit Outlook as Dremio and Prior Labs Deals Weigh on Margins",
+   "date": "2026-09-21",
+   "url": "https://news.google.com/rss/articles/CBMi3wFBVV95cUxQUmpFemw1QjVoYUItWTRxTlhIcE4ydUZiMG10c05mWkt4NkJrbGs2cEtJNmVCRnZ5Y3d0dC1kRVVVV0Z6X0FnNEwzZlFZc1ZkZ3hHMk9aTi1ya2ROSkZKTnlNX1lTbk1qWXZZU2RRTDhxMTkzWjl1SGptVGtFam1WUFR3bEVIOUZzeWk5aV90cHZOXzdRQnBHUWlJakRhT2hOVExTX0cwMHJ6OExfVHZKV2F5QUFDLWphdGUxQndibXdsZV9FSVdQLVNyVnBtSmtkZzJTMjBsWjZ5d3pUU3FR?oc=5",
+   "source": "AD HOC NEWS",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Mastech Digital",
+   "headline": "The services industry is experiencing a fundamental reset, and the practices that defined it for decades are being questioned almost every single day. Nirav Patel, President and CEO of Mastech, has a clear view of what comes next, and it starts with a simple b",
+   "date": "2026-09-21",
+   "url": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxPeDJXQlRaZmFhR3hKbDQtYW1BQXFWX1lBdUFEbXE3R09DZy1WT2d1elFYT3JjREpHYWYzTGREd3pjeGpGUGd6aWRudGYxOXQ0OXhtTTRxM0x5dkxDUW5sakhPV2F2dF9EUVJfcTNXaEV2dHRzZnZ4SkpqTE02dWRWWUtyZ3FldXdkbm1hWVhtdVVBMXc3MXBVY0QtbTNYQXh5d2FwOGQ1R2pyajJOU3ZWUEk3M0ZGU0d0MWZ4alVZem16bHFkVjZuOA?oc=5",
+   "source": "LinkedIn",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Neo4j",
+   "headline": "Navigating a Neo4j Knowledge Graph with Jev",
+   "date": "2026-09-20",
+   "url": "https://news.google.com/rss/articles/CBMifkFVX3lxTFB0VUUyZzlQejZwdDZoaW9RcURJRklVWEdPNE1SQUdxVVM0Zng4R3ptRnhqWnZ5d0Z2S2xuMnVmN1pXZEVjVmJXVlVOdFc5azdWRFNCSDdsTkVkQ2VFRTZxTmdEVS1zTDVHeUFPUEx2R2xyRm4waUpsTlM2VUtndw?oc=5",
+   "source": "Neo4j",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "FreedomPay",
+   "headline": "TPG invests in FreedomPay commerce payments platform",
+   "date": "2026-09-19",
+   "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxOd1VKQ0gycHNUY2ZkZnVEZ0tzQTVnVnduTGNoRU1ZdkV5WkhTSVJLZGRLbzlPd2pKMm9BZFRkZ2hTU2FaNkY1T0NJTk9abVJrV0NQSE1YQVJmQm9oeG9obUZKa0x6blNSQk9zc3V6emlpRERkMHI5ME9qaUtsLUxNaVA3VHo1dFdFTHRCZXVmQQ?oc=5",
+   "source": "app.dealroom.co",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Informatica",
+   "headline": "Salesforce acquires Informatica for $9.6B (closed November 2025)",
+   "date": "2026-09-19",
+   "url": "https://news.google.com/rss/articles/CBMikAFBVV95cUxQYlJGNXg3aWxXejg2MEtvZk5kdnQtVlNqVVZVSzJrLVpHc3pYR2t4WUxRNnFQZjBfWVVDa2tFZGptclNSZ01vSkZ3VkdLa0p0eFp3S1JqWGZpMjdSTm1FWXByQ2tHWjZTMXFiejZFM1paVHI3TWFUNnVzam9vSlRlX1ZoTXB1WUZuTkc1QjlsRl8?oc=5",
+   "source": "app.dealroom.co",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "insightsoftware",
+   "headline": "Hg leads ~$1bn investment in insightsoftware",
+   "date": "2026-09-19",
+   "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxNVzB2S0RtY2djMGJDRWpSZDF0MWx1cTJQQVJrYkZRblp2VDBLcXZaX3V3VjdzbWVMRzRoakhhUnFqQ0ZBSlh0QlRZMDc4MHFXOGxpaEp5MFpzRFh1aUNNem1KSGFsbTkySjNENWxNeHRfcmFSUmZUSWhjX0l3ZHlTZEx3?oc=5",
+   "source": "app.dealroom.co",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Perficient",
+   "headline": "Perficient acquires SMEDIX for $43.6M (SEC)",
+   "date": "2026-09-19",
+   "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNMXhMelJ5ODJqanQ4QmlacXduczB2eDFLT2NPUzZOOVI4ZVR2R1hYUEdVQ3kzMkh2VDZXbFRZVVBpV0xCc0I0YXRmblVHZXNFUHNNcUJGYjA1d2kyVlZpaTRqVmVmekUyYmZjRmV1M0NkOVlROTllc01hUGdOTS1Ndw?oc=5",
+   "source": "app.dealroom.co",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Perficient",
+   "headline": "Perficient stock holds steady as investors look to recent earnings",
+   "date": "2026-09-19",
+   "url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxQSEJqLWQ0alEtd0ZmUzNZZGcwYUZMenB1aG9xVVladEhVR3FwV3d2MDZSSk80T0U5N0xuaW5tV1BERG5MUUhjUDdIZVNkdTFTcVJBaFEwRko3UW5mN1J2WEZUa3g5MWFERDg3MUNSR2ZTTDY1ZlJxUTEyZ1U2b203blQxWDRrc0dseEJDSllGaTY4bFM2Tm90cktMZV9rLTB0cnVlRGFaenJLMWIzcVFTSW4yY2NReXc2MHVkcU5qMWdOZnc?oc=5",
+   "source": "AD HOC NEWS",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Merkle",
+   "headline": "Merkle Launches Customer Value Hub for Travel and Hospitality Powered by Adobe CX Enterprise",
+   "date": "2026-09-18",
+   "url": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNMXVGOHNiV1hhZmU3dmgxd2g5RWRmYlBIZnlzOEZPeGtraXl3bjVpdUpxTl9SZEJmcjZudXRxMkdZNFBNTEZZeFUwV2pNY0pMdTBzZjIydUJOcGItM0VSbmJSTWFaLTh6cGgtal84NjJrTzhSbzhmWVBmbjVldi14QU5ldWw3aDU2WEpfS1hvMzB0UHlGR1U4RXcxMTlKbFdsOTJkVzNya3BpM1pWbDRVVkFRV2xSN2lleFRB?oc=5",
+   "source": "LBB - Little Black Book",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Acceldata",
+   "headline": "Acceldata Launches xFactory for Building Governed AI Applications From Business Intent, on Federated Data",
+   "date": "2026-09-17",
+   "url": "https://news.google.com/rss/articles/CBMi8wFBVV95cUxNbEpzVXFtdl94bXY2Zi1iNTR3bk10X0stMW04akxxMExqbjhMWC1sLThKengzVTdvcDIzZTJIOXJqMmkxbE9tUHZYU1FHNFdVTHhoTnVuR0ctNzdLMkFoY0U5MkU5ckNMcFZ4SXpTampWSzlXMFBiMnpqVVp1elNKdXF0SUxkNzNKNEViaUJhVUlZQ3FueGpHdzlreGV4Q3VZa1duTDUxUDd6S0l4MzY2Y1ZLWldnaG5uZDdFdEJ4TTk5OFM3TEUzaGVUdjZYby11UmJQYzNFa09MZUpUa2gtVTUyaFJxQ21LRDh1R0ZXdHVIMWc?oc=5",
+   "source": "Business Wire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Acceldata",
+   "headline": "Acceldata stokes up xFactory power for AI application creation",
+   "date": "2026-09-17",
+   "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxOQ1BTTzBtMWlueDFaeGxab01nWHlGSlo4V3R5eWNzMmQ5YUwybmlWNnlyMF9GdzRUTEFVaHVRcDQxRURndVRtbVFvcWRaT0hhMGs0SHZ4SXVWd1I1ZjNqZzBQVHlEMEZZVnNrbnNoUHF5emFHQjFYWnVKR1dMTmZWRlA3VFlyeUY2VHZZS2xpQVdDZjVocTBFM0pkM0VMU0RsUTZ0VWVPNzNSM0dULW5BbFAzOA?oc=5",
+   "source": "Techzine Global",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Alation",
+   "headline": "Alation CEO Warns That Smarter AI Agents Can Still Get Your Business Wrong",
+   "date": "2026-09-17",
+   "url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxOb1hKVmpoUTZOeHBhQ04wQzFqakhzQVBEVjJGRDJ5ekxTU3VPbGl4NnFxMGxYanBFVVFxbDlUa2JrRjhoVnJhc29tb0c3R3BJNncxV3VEdU13eWM1WUcxa1R4UDVVbEhrQnE2cktiaEtKaGMxLXVyUFcwd09rQkhHcFlrdmRLX3J1U1JOS1Jzc2RaMjlRaTM3bkhJNEJUc2Z2cHplUU9tZ3B3eXJtREdvWG9XbUNxeXlTT2pDR3lYMkpVZlE?oc=5",
+   "source": "Forbes",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Alation",
+   "headline": "New features position Alation's AIOS as AI management layer",
+   "date": "2026-09-17",
+   "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxNR1lTZS0tbzZBM0Z1enFOUzQxOG0xemFfa043N18tSEZKTFN5bjZ3S3JkWXpuQm90eGd2a2dVUzQ3LWRLb2ZJa0lnajlpSXEwUTc5OHRTbWZ4SzdPNWFMSFd0VUJSX1Q3N0Q3M3RrNXNoSWstaHRqMjhVTklCMjJaVnMzRkxOeFVSR3YyYWdJYlQzYUNWV2hFdU5tMHhJRlFsRE5maXNKQUVRY1FUWGZ2Vy1Sd3hRel9hRFE?oc=5",
+   "source": "TechTarget",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Alation",
+   "headline": "Alation Expands AIOS With Six Products For AI Governance, Enterprise Context And Agent Management",
+   "date": "2026-09-17",
+   "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxNb3RmejJEUlgxQjR1LU1KYVBHekNjbkNIbFlQbGlHV3FVX2NwcEVGdkZXWHgwWWJiUzlXblZBek5MX0FRb1hLWnBZbGplMzFYYnpma3JKaG9BZDg2dXhtR2hSM2hLOU9BZUIxZzRqbDF0azI0Nm1XVGwyRnFtOTZfbjZaODBING5jQnRieDJsak9pdU4xRXR0NHZIcGZnaVczUTN0ZXBUd2NtLWZZb0hzUUZwRGJ6RzjSAbwBQVVfeXFMT1lxeFV6WktHclRYREhVX1BVeUlNUjRFdGxVR0M2WDV0RXlzQkZUSkFJUUY4WU9oNERNUHdFOVdLWWFyd1JiS0pob3NMT0d4OG1DTkUwSTV3QUotN2xTVlowVlZKTFBxenRjaGlyNXkzdll4cFVrNXlmNkgyY2I0emY1dlVQX3FKVkFDZHJIMXF3azZzX1d0Q0x2Rjl6YUNKUlQ3MnlySWw2emxZM0VjTnNkQ3ZaTEVrSG1xS2I?oc=5",
+   "source": "Pulse 2.0",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Alation",
+   "headline": "Alation Launches AIOS™ Expansion with Six Products that Accelerate AI Transformation",
+   "date": "2026-09-17",
+   "url": "https://news.google.com/rss/articles/CBMioAFBVV95cUxPMlg0aWg3RDQyT3ppSjRJUHJCeUJsakU3eklXV0YyMWdHMThkNnhDWVNDc0EtbGh4U2QxaTdCR1pfbl9jXzRRV1BSN3dQY21MNzNhRDhMcUxXcVpabHhNZWtxbERvNzk5UUYyUS1SZ3ZVNkwxZXRNd2pPY3FFaHJoXzdpSElra1RfSnQ2d0ZQeTVMdWV0aE1MZTVkc1ZpWVZm?oc=5",
+   "source": "finance.yahoo.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "AVEVA",
+   "headline": "AVEVA: Software Is the 'Brain' Behind Thailand's Energy Security Push",
+   "date": "2026-09-17",
+   "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTFBIVW16STlQS1Q1ZGMwRmUzbGxBVTQtUGZNUDBCSGZ4bHNsWnNsUnZYYV9ib3pEUTVseG5xcF9XaFNwWWNZcGtseUFJOXlZUHdEWmtCcGJldHpjbkRIOEh2WW5IUQ?oc=5",
+   "source": "Nation Thailand",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "dbt Labs",
+   "headline": "Fivetran + dbt Labs Debut New Capabilities to Make Enterprise Data Agent-Ready",
+   "date": "2026-09-17",
+   "url": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxQUHR5eFJDc1lvVmNlb0Nnb3FuQlZVWnhNV3plcExzMmJicHg5cl9xN0ZpS1VUREFXazM2a3FHRVdqdXR4T0RUQ3hBcXBXZ0FWbWRXNWZLX1hON3Y5elIxckZkeDR0cTFqWmJkN2tlTkZoTENJOE5HSVNsUzR4OUpQNUNaWHZTQmktenVTTFBoWFB2cGlxUlZtVEZGTVlodEhoUFpXa0lsb1MyNV9CUzY3ekVOb3BhRjlJZlBEMU5od0poQktGckhNaHBEWTBtVkFSVkRR?oc=5",
+   "source": "Database Trends and Applications",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Alteryx",
+   "headline": "Alteryx’s $4 Billion Sale to Clearlake, Insight Beats Challenge",
+   "date": "2026-09-16",
+   "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxNeHpGR3A1Vm52d3ZPYTJmT01TWVZPelItTmhEd2R5ZEsxaTRkc3ZhWE1yQlI2RVY3My1KYWhpWU40WTRyV2o5cUlXWXplSDZYTGlydmZQTi1WS3RQbDZNZGJRWUNMb3pOQVJsV2UzNWlLb3JNcU9jYU1uYVhQdjF4VGJyYldtbjlSUzNmTlZGQ2g2Ql90eDRIRk5nSE5xSjUwWEFF?oc=5",
+   "source": "Bloomberg Law News",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Collibra",
+   "headline": "New Survey from Collibra by The Harris Poll Finds 72% of Tech Decision-Makers Feel AI Initiatives Today Are Falling Short",
+   "date": "2026-09-16",
+   "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxQa3hLWUxub21rNUpjUFB1VnFKN3NIN3p4UWozU1lxelRRUnE5MU53UUFtT2tpYUxsVl91T0szYzVSeXBac2swaEM1NFUybl8yaGZiWXFIOXZxSjc3VFNLRVpyY29OWFJheTVTU3lvVE5tSjB1eVc2d213eWVrZkFqZnRDX1B5YUNhSW1EM0VrRHp6N0pHYVdreVhPMDVrZw?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "dbt Labs",
+   "headline": "Fivetran + dbt Labs Announces New Capabilities to Make Enterprise Data Agent-Ready at dbt Summit 2026",
+   "date": "2026-09-16",
+   "url": "https://news.google.com/rss/articles/CBMi7AFBVV95cUxQMTNzZGwtZXpQLXU1YU1tX0FJWmpsTGpHamh6V0RNM21DQjFlWl9nd2xXb1JCdkdXNGVLUmNheDJjOWM4dklOQzY3dXJDd2RrUHN0YUtXaW9aa29FeDdRZk1wV0taQVlFRjFLWF81WWVvZDZtX1VoNG13N0pJT1Bva2pMTzBsWWdpSjYyeWR1bHdpOUpRRVRneEhGUnpTMlI4NjBlUlhJRzMyd2ZYblJuQl9zNUZvRUxWZkg0MFoxa3l2eXVJUmFQMU1yeUtURk5IMUc5U0IwU1lZd1BsN1QtS001QW02bVI4VlpNSw?oc=5",
+   "source": "Business Wire",
+   "summary": "",
+   "relevance": "high"
+  },
+  {
+   "vendor": "insightsoftware",
+   "headline": "insightsoftware Launches Three Specialized Technology Brands",
+   "date": "2026-09-16",
+   "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxPNHBwQmNHcW1lRUdJWWRmcHB5OEJxeTJDeGFLa2J2LXhBUC0tUERsQkFvU0xPVDB0SFk5cmFtbklKMmk1VlJNUDRJNXc0eFRKUWdqM2JMcG1JTk5ISXhrdGpWaUl0SmVNek04VWJ6MWtuOHZuRjNWeGZ0QjVkeEFqQU5pd1dJcXZORnlsVzVrUzJNMXhEOHNWWXFUY3pHNF80cW4zZ3EtV25DNXFiM1NEVG5RRWQxSEtmT0FkdXVLdklmU05FRnRHV21Yd04?oc=5",
+   "source": "GlobeNewswire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Merkle",
+   "headline": "Dentsu Aegis Network boosts Merkle with acquisition of HelloWorld",
+   "date": "2026-09-16",
+   "url": "https://news.google.com/rss/articles/CBMiywFBVV95cUxOcTdVY2NDa3hYa0FmUC1FekNKTFdoREJ1YUpPVVFOT2FBVFFyXzYwSjEzUnVxdmcyN09vclpPYVlHSVJ4RVp5N2wxZ2JsdmRxTUtsODVrQV9SbWRvSFNfZ2FYY25jUFFCSE03SUNQM1FxWkpSLXNRMGFVTnZOdUFRSC1IQnBHNTV5VVJUYUVKYUViNDhNUV9EQU9oZE5sU1I3RGFBR3Q4RklkbFZyQ0tCYzU4NUhma3NXRFJrazYwOUtpYl9oV2xGVWRiMA?oc=5",
+   "source": "Campaign UK",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Alteryx",
+   "headline": "Alteryx and Golden Analytics Partner to Help Organizations Reimagine Analytics for the AI Era",
+   "date": "2026-09-15",
+   "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxQNTFUZlU4ZW1rUGZYWC1CZTQwZ1YzZml2bUFYMnJKb0o0UkZmMXpDd1NMSGZpNElla25VNkZvbmx3UDFWWHBKeG5RaFMxSEUyanlabFJIdTUweGg5Z2otN0NFQ0Q3WFhwT1NrOEJ1OHBCRE1naEt1SGhFNHV6SDdCLUIzSk85MGdWaC1CbEJQMGRoRWM5MTIyWVZ6N1dvdFlxRlln?oc=5",
+   "source": "finance.yahoo.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "AWS",
+   "headline": "From Data Silos to Enterprise AI with SAP, AWS and Snowflake",
+   "date": "2026-09-15",
+   "url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxPVVdUU2hEbHFmUlB1V25zRnc5UHlEYmZvU0JQMF9lZzREb3B5Yl9VTlJuaVBpVmh4NVpCQU9CckM3ZDgzQUZScVdpc21DNkdpa3lqX1lETGxhOXQzdE02VkhlM3g2SXdSeUE3a0ZjT1JZY0FjOVFXekE0eHE5ekhLb2wyb2laeDM2cW4yS3JObEp5Q2gxdkJhX0V1TFhLMk1ud2dDVzBySG9BTFV1V243eFJBaEg?oc=5",
+   "source": "Snowflake",
+   "summary": "",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Hightouch",
+   "headline": "Suno hires ex-Hightouch CFO Cherry Miao as its first finance chief: ‘Music is one of the things that makes humans human’",
+   "date": "2026-09-15",
+   "url": "https://news.google.com/rss/articles/CBMi7gFBVV95cUxORVlvOUhsX2NIb1lTd0lVMzRXRzR5b1JnX0lwMmVuNVBzRWI0VXpnYkVxY1FRcU9EWF9lNGJOOGJNZlRTb3dIQURCem1nallTNWN0bTRRV3lOUTB4SC00R1BjbkpiejkzTHNMYjg4T0pncWh1NnVmNzZlX0ZLN3RiY0hJcUhibjVpV1Q4c3k3YWJwelRsbEZOdFpidldBRlJnVDZ4RVpaejRQX1FxNUI2M1NMelhzeWt0OUlJem9VQ3dna1NiaGNrYlUzRFBpR010cW5CdGs4RHV4d0VVbDVJbjAyZXdMOWZCSXlMOGV3?oc=5",
+   "source": "Music Business Worldwide",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "DataHub",
+   "headline": "DataHub Launches Fully Enterprise-ready Release, DataHub 1.0",
+   "date": "2026-09-14",
+   "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxPMUF2OExTZEc2Z1Z1cS1FR3QtRTctNnJJSnMzbEJTRGt1TE5NTkdieEZhYWNfWlVyY3RBQVl3WERmWDVPbXJyQTU0aDBwa3VHSWN2ZXdYd011dzUxR0p2V0RaM3B5QW9YMlQwcDRsRzd2OHZCQlVVTTJwSkpxb1ZNOEFBMGkxNDU1elJnOVJHYkhEWXR3bmZBSDhVRWdDejdEY2w4MDV0RGwwVlFWdUE?oc=5",
+   "source": "HPCwire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Google Cloud",
+   "headline": "AWS vs Google Cloud: 28% vs 15% Share, 105% Perf Gap [2026]",
+   "date": "2026-09-14",
+   "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTFBLNUFPUkpUU2l4ZTFMNlEzV1FvVXZLdjNWX3VheXA2RlpuQlRGcUw2VjJ5a3Q3S1M4d3VSbk1ieEFEUFFYRm1rXzBUWVQ5Sl9LRHprQUVCbnYwWXNOWlF3?oc=5",
+   "source": "tech-insider.org",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Perficient",
+   "headline": "Perficient Launches Agentic Front Office Solution, Proven to Reduce Sales Cycle Time by 20%",
+   "date": "2026-09-14",
+   "url": "https://news.google.com/rss/articles/CBMi3wFBVV95cUxPNFhqSFBRZXNvREtzMzNGMFhLeHBlQXItUVJFUDZVVzRBVFFrWDdyZy13RFZGYjJHX2h2TkROb0hGS2tnNXNVSmdLUkZ3cG9waHQ5VlZoWmVxNUdtRVUtVUxyS0N6VHVJeHhGX0hTWjVVMnJDMm1QWGVQaEMxaWEyQnJiZDdUMnEtdXNscTJHbFJWczdyLXJLSzdybmhqOV83WnlSaWd2UkVvLVY5UmlOUGwwV2NlMk9RN0lSdEpadlFFbk5INm03QnJobVFJekNUbVBId3lYREhfVGw2T0tF?oc=5",
+   "source": "Business Wire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Acxiom",
+   "headline": "Acxiom partners with HAWK for omnichannel ad data",
+   "date": "2026-09-13",
+   "url": "https://news.google.com/rss/articles/CBMifkFVX3lxTE1wNWx0T2hIT0w3LTdJQ005WXNxVnhPSG5CNDM4NnNkLTRIQk5rZnNVTzV5OG05anVpZUpRbUJaV0szeGVvWGR3dU1OZU0tYUt0cWNKTDdxWE10Zlo3SlFhVU1jN015a3pYM2RTTkFRS3RIS1hPcm51TmlmSm8zZw?oc=5",
+   "source": "MediaBrief",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "FreedomPay",
+   "headline": "FreedomPay Launches Commerce Intelligence Offering on Snowflake Marketplace",
+   "date": "2026-09-09",
+   "url": "https://news.google.com/rss/articles/CBMi4wFBVV95cUxNS3o0SGZRT3F1N2VUTVlPbE9UMFJ2YlJuY21FWlB1S0p5VldYQ2RjWGRjY0FXd01tVFEtNGNZWGFUVFRhb3JKd210bnVlRDA4UTNhTUhFSndkMTM0RDctNFFDaFBfS04zcUtIdnZUMTN5WU9xdXNaTDR0VWEteUt5VWFVODNoeTF6UkNlXzJybDhmVmtHTldDQ25NUjNHOVdMWWNOaU1zRGNRREI0ZEJ6blQwakJmS3NHbUJvUkVyY1daS1A0MkZhZ3ZYYmVVYVF5a0JxUllLbElybTE5OGMwUUxud9IB6AFBVV95cUxQc0xBdHdDcjJqVTZ5dWF1UXp5NlhRZU9JUjNLbm9BNzBhLWEtRElhNWVkOXBNb1A0aEFZYTBvRzBrZ1BNTFhTajM2QnZydkJ5MlRmeEFfSUtfaXJ4NUpjWC1DS2lNNGdlYjBtbnl4RDhlLU5CNUQxWTNyQ2dON1NHUzdzcDhPRkRnU0JTMW5GUUY4Vl9TZVRNeXNTWU1WNDN3Y1dOYjZUaE5aSjhNbnY3NzZlcnZNWkdsZU92WkV2N1ZWdW1mWWVzdG9iQ1VHQ0ZaOGlaaE1vNXZDRGNJZXpoaXBDeXpCMWJF?oc=5",
+   "source": "The Manila Times",
+   "summary": "",
+   "relevance": "high"
+  },
+  {
+   "vendor": "LandingAI",
+   "headline": "LandingAI Releases Agentic Document Extraction Gen2 with DPT-3 Pro and DPT-3 Verity",
+   "date": "2026-09-09",
+   "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxQU0xDOUN6SnU3clZla0poWU11cE5Mc2VYMnhuMm5lYWZIWDNYSlMzS09ZQkVHeXcxampCRDNDLWYwQkh0UmRYcEczR0N1MG00OUUtTkRmY0RYSjJyaW9oWW5kM1dLLVVqMXFlaWliVWNBR0ZQWlkydVFRS0VRNVV0a1VNa0NfR0lrOHJaaHZvSVEzcE1GNUdUbmZfVDZqUk8ya0hKM3d4TjlkYmMtS1E2VVAxT21iNHhYa2JoNE1Bbzhzdw?oc=5",
+   "source": "MarkTechPost",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Dagster Labs",
+   "headline": "Airflow vs Dagster vs Prefect: 2026 Pricing Compared",
+   "date": "2026-09-08",
+   "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE5rWEZfOUtxN3ZoZjhZTDUyX3lkd0JMQTVtRVhEV1M5Skl0QjlpOVJlMi10b0prbUF2SU9SdkpteFp2NVpsN0Jmc3BienZNa1A5RnBEZFJKd0JvREYzQXh0a2s2ZzVRVjFXeXBOWQ?oc=5",
+   "source": "tech-insider.org",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "IBM",
+   "headline": "IBM Stock Keeps Winning in Quantum. The Stock Is Still Stuck Near Its Lows",
+   "date": "2026-09-07",
+   "url": "https://news.google.com/rss/articles/CBMioAFBVV95cUxPRG96aEpfVTVvR2hTbjkyQlVRU3JsTzlwSVQ1X2JBMmZEZWlSdnVNam0xa19uWXN2UG1JbFE2TWhlV0tCcVdwaGU1cWVLWDlpMUIxQ3dGbzJ4Y3pLdmQ0MHplOXZoa2kyMW50cnotUkFQV0pzRTVKQnZhVE4zcHpuZWtvRG8wcVFPQjRtZDk2cXEwc3A1UEtkOExUWjBGLThM?oc=5",
+   "source": "TIKR.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "FactSet",
+   "headline": "Is FactSet’s Expanded Credit Facilities Reshaping the Investment Case For FactSet Research Systems (FDS)?",
+   "date": "2026-09-05",
+   "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxPVGJPV2hIV1llNnpyNWFZSE5wQmZ5aGd1Q2Z6dVNQcjhaNnlNOTEtNWR3dFpZelR2bkFrZjNtS09xS0tUeE9DWkhJNENVMUlBZmttd0pReFdpRlV1elVwWF8tOV9sREplTGN3YWJFbW01M05xemJsR1MtSWZQYnZEWXU5VGdSOUp5R0ZiRVN3c0lJaUlEd0lqNTF1WUFXUnhzRGhRSmZRYkhQUmtUTmc?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "IBM",
+   "headline": "Arvind Krishna (IBM CEO) - Adobe to WhatsApp: 18 Indian-origin CEOs leading some of the world's biggest companies",
+   "date": "2026-09-05",
+   "url": "https://news.google.com/rss/articles/CBMi-gFBVV95cUxNNi1LR29WXzI3T2ZDOTBDMnRTMmdRZzR4bDFMN3ZvbkVBTlJYdE5QdGE4aTgyNkVkNThKOXA2cEpyLVFNeEVRSHlsUE1XVEc0bm5iZkhhN0Z2X1hKRGlSU0dFZXcyT1pla0lHLTR1MDBYS2pfY0NQbFBSMnlrTTAzWE9QektERGMxUnQzV1g2cXZPWWRYeEJIVFpJS1dfeVgxSU9hc2w0T2EwT1g1T1JzTlppQ2lzSE81ZUttNEEzVFhXazBtVFRMYTVoWEVUajZoQlVCZnNGU2haUEJIcHNyRS1lTG4wWmFBblZvUUg4NVhxaXRRUDdTZXZ3?oc=5",
+   "source": "The Economic Times",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Salesforce",
+   "headline": "PLTR, CRM, NOW, SNOW Comparison: Palantir Leads Growth, Salesforce's AI ARR Is Clearer",
+   "date": "2026-10-04",
+   "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxOd0lPUjJuVmRMT3RJTW9vc3U1R3ZvNTM0OXZpZWIwSXdKdjlTemIxb0cxSjlVcVpPUWt5RW9pVmo1bl9WT0VzX1ljTG5YRVJXS0hSNUpXM0hZb1dSNlVOalNOTTRaWDh3bnZrcmF3YUV4Q3VSMmhqLUgzbnRFcGVKRWRRYlAyZWpzVzRRelNYSjRadXM2N01SUmN2bzNMQTh1dVN6NFZkdHlUb3Jqa09aYg?oc=5",
+   "source": "TradingKey",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "ServiceNow",
+   "headline": "LSEG Names ServiceNow’s Amit Zavery to Board as AI Push Expands",
+   "date": "2026-10-04",
+   "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxQTFBpRGdUZ0Rpcjc5a2xad2NyczNxYTZWZHNobnJ5c2xCOHdwbjhMaDFrbmstb19zejBSQjJUNlZxaXVIYUVNbVhJV0dYWEU2T1dsTDNMdENsUHQ4TzFSYWhmY2lBX213Wks1LV9FUlM1YVlJSzlDVE9hM3BSZ1FLbndlS0tuTzRFeEw0UzRyQjgzeEVNWHZQWHFYZ2ZBeUJaUVFoQU5rN1lmU0d2X19sOXJXbG9GMG1hMlRTN1VtTlhBcDFS?oc=5",
+   "source": "finchannel",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Quest",
+   "headline": "Quest Software Emphasizes AI Talent Development in Cork",
+   "date": "2026-10-03",
+   "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxQMTNEQlRpQ2dMeFJnNGwzZVhfQ2p3T3dLeVgybnFrbFlTSjJCcldSSU1lR2MxNndyMDBJdnVYTDUxcTVZbDVOUGpzLWJhUUJHa3diaVJVY2R3VzkzT3l3THlWcEE5SG52Wk81ODUwR1VZYndxT3BXdTBtU1Bnek1pME1PS2pUUV9aV1JmSmlNZWtyUkEwMXRvakNISTBjTU5VeEFjdmh3?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Replit",
+   "headline": "Tech M&A deals: Xopero Software, Vigil Guard, Alight, Abett, Replit, Atta",
+   "date": "2026-10-03",
+   "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxOZEhmMWZvNTktdzdhRzhyTDdQYXRoSmhOajcwOVZTS1RGbktETjBVMEpFcGFGUWtuUlA2NjkzMWRBRU9ONTA4MmxkTFdncW55elNrU052ZXJoYkRINV9XVFdCRUZfV0thNDNVbXF2M2hMaU9qSVZaekhqWllrN2J3b0FVZUxYbk1GN3ZjcmJzNnlhU0FvbEdZMTlJZGx1RTNZS2FQcnpCWS1pNjjSAbMBQVVfeXFMTnVWTmxHeFZpQTUwUUxKdENETFRqTWF5d2RGTkVoekFTLU9GVzRZRVh5Nk5LcGQ3QlIxWkRiczRqYnYwUGJtODl1emJBWlo3U1pUaWZUOUVmN3RYa182bV9ndjRabFFOOG1rRm9uejNFcl81U2RKUVVzVzBxYUJxNXdXWUhnSjk2RVZySjFyaEFhd254ei1nUVczRVZpZDdtU3ZnOEpRdjZHNFRIWHR3UFlIWHc?oc=5",
+   "source": "infotechlead.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Replit",
+   "headline": "MNT-Halan nears IPO, Replit acquires Egyptian-Tunisian founded Atta",
+   "date": "2026-10-03",
+   "url": "https://news.google.com/rss/articles/CBMilwFBVV95cUxORXZvc2hDQVJSSnV1TzdfTkE3VFhodWh2N3otQ2ZTTlotSUR6V1dxSHR1eTZLTUZYN0NpQnlLUTlIRmZ0Um5IYlV4VGFHMGxVMDJ5MTZvcEFxSHhkR0hldzl0aDRPa3BFNml3QTB1Z2h1R002bjRnR01nd0hyaDJmdFZNU09BQ2t1Qm1LQVhUVFdWX05rcms0?oc=5",
+   "source": "FWDStart",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Sparq",
+   "headline": "Sparq Builds Broad Enterprise Claude Capability With More Than 130 Certified Professionals",
+   "date": "2026-10-03",
+   "url": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxOUms0Tk1iV3VHenVHRE1NQk9felgySW5zWUtISWpxdklXQ0laSXY0R05hNzdENTQzVmE1dkRydENJRlVXTVVPZlJZaTd5YUp1bEpBUmZTYnkwSlhXQzNGMWEzS3pvUXdlaDN5NVdpZHJBd2lTTFZnd2szQkNHd09nTFQ4UUUwXzlnanE2eFBrcXplbUtOeUJhamVXbGFKSm5ERmxzSEh0dW85cnlmd0MxQ3lRWmkyeGRuNy1LcjIzVGlhSzJiVDcxeXBnSnVMSXpBQ1BsSzEyR2pZbVJS?oc=5",
+   "source": "kitsapsun.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Prefect Technologies",
+   "headline": "Prefect – Python Workflow Orchestrator for Data, ML & Agent Jobs",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMilAFBVV95cUxOUkJ6VnU5QW1UUFI0TkZQNFAyMFJUSGFHTmd5R2V2bUJSWjJzMXAwQTA1Rm1JRmhxd0hoV3FITWJwVTkyeEota0ttYUZOM19wV2N1MkZmNFppbUdKM2N3T1VQMkNQWnI0NzNOdVpLYmpWMlFMQVdtWmgzUnN0b3hFUDVqUGhybmx3cFhtX05VREh3a3NB?oc=5",
+   "source": "quasa.io",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Reltio",
+   "headline": "SAP to Acquire Reltio to Make SAP and Non-SAP Data AI-Ready",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxNZ3F2S2dqUDBvZy1faG1HMGNfaGdXV3pMVFB6cDlyaDZQdXZwN2dBendxX0JMV1RmUlo4clFrcnZhR2JmYXBLSjl1d255SHB6TFI1OW9NUEdMNmdoZWw1VVBMemxQZ0FCSnhNQkxBMENBYVgtQm1XbGFpYjBkcEtlYzZjckc3LUFMS1VJbHlxY25lUVJmS1R0a0kzaURWUXVhNDlnakVCWGRsZ3VpZHc?oc=5",
+   "source": "HPCwire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Replit",
+   "headline": "Replit acquires AI analytics startup Atta",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTE55LVBhOEZiUUVydkY1bkhGR1ozN1diQjN2UlpHWUdmekp3dTFvWjlBN1ZJTW9kOVlRYzlIdXNTb3ZTRE1FNlZRVnlaVXlLV1c5UGJFSWYtYWJxSjdpR083cWZJS2pDV3ZyUm9fVFBfdGMwRlZsSVE?oc=5",
+   "source": "FWDStart",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Replit",
+   "headline": "Replit acquires Egypt’s AI analytics startup Atta",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE54Y2gyZ2Zfcy15RGp2Nl9icGFVc2MwblE3U2xYa3lSS0tTcTNIdUlpeXd2YWVNSlhmWHUwUDBzRDdhZVR4TWpxOEdKdnpjeVBqakhFV2ZtdGxlcmg1Wlo4eWVYYVdkLWMxTmZqUkRn?oc=5",
+   "source": "Condia",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Workato",
+   "headline": "Workato launches AI Lab in Singapore to accelerate applied AI innovation and talent development",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMirAFBVV95cUxQUDlMblROYkJfY21PZVpNYVFTaTN6Wm9uY3NmeFhtMGlHSEcyRDAxR0ZrTFA2SE96WmR4Y251QTBUZ2NxUVhUMFBXQVpRdWZMdkFVX1puUEIzcXFSckJpb2lvS0F1Q05ZWHFCNFFnZ0d0WERSV2FZU29xVWtfVWE3cU5fWVprb1E1N2FOY0dXTkhXLTNwTzVGbjdFOFBwbW5BZW11WTlPbHFUdlRs?oc=5",
+   "source": "edb.gov.sg",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Workato",
+   "headline": "From Cost Centres to Innovation Hubs: Workato India’s Sandeep Menon on the Future of GCCs",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxNZTlkWjVxYkpXaUYyazVBYTBVc202enZzektPbVA1UlVxenF5MXNrMmRKdWkzRHZqUlpqNkh1LTRTbnJwcFRLaUtxSUMtQjVkVHR6TnNmWjlULV95bG13QmhhWGNMcEJteFRfYnZSZzgzaFJXcUxyM0luVjZmc2ZzN21hLWMySzlCSXhCVDJkblRRR1RxSWlqeDRoNlVZQWNxa1pnSFdrTXZGeVFHWkRfU0MyUlVodHY1Nm9LUDRpSEkxX2V0UFVCNTkxOVlrd1VhUE5UYVJpMNIB1wFBVV95cUxNZTlkWjVxYkpXaUYyazVBYTBVc202enZzektPbVA1UlVxenF5MXNrMmRKdWkzRHZqUlpqNkh1LTRTbnJwcFRLaUtxSUMtQjVkVHR6TnNmWjlULV95bG13QmhhWGNMcEJteFRfYnZSZzgzaFJXcUxyM0luVjZmc2ZzN21hLWMySzlCSXhCVDJkblRRR1RxSWlqeDRoNlVZQWNxa1pnSFdrTXZGeVFHWkRfU0MyUlVodHY1Nm9LUDRpSEkxX2V0UFVCNTkxOVlrd1VhUE5UYVJpMA?oc=5",
+   "source": "analyticsinsight.net",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Salesforce",
+   "headline": "UiPath and Snowflake Jump 5% on UiPath’s BDO and Snowflake Updates; Salesforce Moves Up 3%",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxNR0JraEs3ekJBR2pPZFZEN19SMGxyZHhJNHhjWTdnaDE0azJoTnJIeDVwS3MxdGlGcmlvVEJoTFF6UmJVbEpCUkhOVXYwWU9xZ3VEbWNTVUVVaW5MWHV0TDJ3V252TDdZVWVuR0NrTXJaRG9EMS1TYjgyTkN5VTZ1MlJkOTM2Q0ZRbjk3NmV5SkxPT0lfZ2ZIbzBDNA?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Semarchy",
+   "headline": "Semarchy Publishes Intelligent Data Products and Semantic Context to Microsoft Fabric",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMirAFBVV95cUxQb3NyRGFtdE4ya3JPUjl6ZDMyeFBxWjJNbHgxOU9HZDVMQUFBX01PVEQ4Y1FIZTMyWUJLbVkxbF9CRE5ZbEpZbmExUnhLMGFIZm1xcFhzV3ByTXAyNER4OVFkY2JLRkNDREJfa1dPOVp0bC1obEZjNUdlZHhrZHl6Z2xVRnhRQjE2SGdlWFIzWlB2bEpmb01qbnNSTGNIREdQXzhpUndWZWlsVUtK?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Semarchy",
+   "headline": "Semarchy Brings Intelligent Data Products And Semantic Intelligence To Microsoft (NASDAQ: MSFT) Fabric Platform",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMi7gFBVV95cUxNbVB2RFpQY1ZSTWE5SHVFMXB2ZlpUZzYxZ0pJUUowYmEybDdlemI4TFFkbWdrS0k3X1B5Y0twMy1RX053RUNSMFZ6eWMxeDV1ZE4wUlRXM0FyQkRIR05BaWowRDNabTUzUWhvcTVHRG1nQ2RmVnZvd3l5WGtGOVM0T29kSXlJMEpmT2xZNWRLTjB2ZTBBUWJWMkpIdVVOUGVwb1R1VDFoc1d0V21FZlYwT3FPVXlsNXQ4c1VKSzNsbzF4LW9ZWm9UYVhLbHFUN1dVajdrNDRMZk94cEM3ZVNyeWRnWExmMnVIcGtwNDZR?oc=5",
+   "source": "foreignpolicyjournal.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "ServiceNow",
+   "headline": "Xapien Partners With ServiceNow to Bring AI-Native Due Diligence Into Enterprise Workflows",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxQakRFTmFGSkpnUW1UclJCNTJOa0hqem1CMHpzZXo1RlU4SW5NUm9yY3FUekdLakhfUHk4aFBkakhmSjF1QkhCQkZubWJ2ZjhyU09JNlIxRnN2d1AzOWppVzVsV1ZYLTFhZWhWdzRxNFJaWENka0x5NVJYSjUzbkhKdFhCT2V5dUJobVZ5eVk1VldNdFNOWktTenhNT2lwaFRKZ1U5M3VBcFVmLW9fdDE4QlpudlJ3cmxXV05r?oc=5",
+   "source": "ReadITQuik",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Tredence",
+   "headline": "Jitendra Putcha, COO of Tredence – Interview Series",
+   "date": "2026-09-30",
+   "url": "https://news.google.com/rss/articles/CBMiekFVX3lxTFBaV1kySTc2ZFRNMTRwVGF3bFhRT1BucFZBNTBPMGN4enc0VFhVSFlDNnU3UWNxanlGdlBndDgtRDNSLWJvT0ZuWnUyODdJWUh6NHhDQXdkUnRXQ1FCRERad0NUNEw1M2tIUEpISERVV3RoYTJ1b2RYTTFR?oc=5",
+   "source": "Unite.AI",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Qlik",
+   "headline": "Qlik Survey: American Voters Trust AI Chatbots for Election Information More Than They Use Them",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxPN3JHODZUQU9LLWlrUUVuQmowMmQ1UWY5RHhwb2ptbER3Y3hUTFNmZkFDcTlLSUpQSkRZZ0NXQ0IyMDhwckUzUi12WXpfaG10MVd1MW85bmdlcnlYT2xxZlFmZVRPVDZ3SFQwQ2RmajViLWI5Z3FlMmd1dlctVzJuR0tnTGNsM0FaQ1pTUHJnRXJtMlVWY0tUZGtDVHJ6QQ?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Salesforce",
+   "headline": "NextLabs Releases Salesforce and Snowflake Enforcers for Data Masking, Segregation, and Policy-Based Access Control",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMi8gFBVV95cUxQMVhTVmNubkpzUW1BaU5pSnExRWxlWEpCV3FGV0ltdE4weXY0WXJWWnBUbDJmMUZLckJSYTJEbWROTmh6aGJOdzliOUk5d1RlZGp2dkZlbDhmU1RKdzc5QWJfd1pDNWEwRjFEQkhFa1M0N09feEJEdVVZZzMtRzhXamFCRjl0Q2QtVEdhQ3lYNGlNN1ZMd0ZyMnZvUU1uQkRuQnB6VDBWYjVEUnhBWEpCZFRodXUybjVRa2w1T0U0WVRlZWFZa3hqTkszQ2JYa3dvSDJ3Ql9NcjJpX0pSTEFRTEZ4cHV4dVNzcHNFYTdXSUxlQQ?oc=5",
+   "source": "EIN Presswire",
+   "summary": "",
+   "relevance": "high"
+  },
+  {
+   "vendor": "ServiceNow",
+   "headline": "Oracle Jumps 5% as Fusion Claw Launch Adds 25 Agentic Applications; Salesforce Holds Flat, ServiceNow Slips",
+   "date": "2026-09-29",
+   "url": "https://news.google.com/rss/articles/CBMi4gFBVV95cUxNaWZGZGlMR1hGM0UxQUxXYm1IODVuOVFqSTNkR2Y4ekxDQkpMMlg1MmpYSHpTcWRvXzdESERZUDZFeTNXdmR0NzJDbGl3dnhGSVlJMTllVjVjOU03R05wQlNjaGxPdmJNSXRyUy1KZXlGZlpIZmJLN1ZBbHJlSzVEX1MtRnkyS1JDZE9hNjQ3TTR2YTVYMlhZY3hVdXFlUDVUZzBJODYyVW9VajRncmQzbjBiVWRZZ25zT2ZFUjFnZUNEclp6cWoxYzdsRWpPdmJodUowUWVhRjVnZm02c1ZkYkx3?oc=5",
+   "source": "24/7 Wall St.",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "ServiceNow",
+   "headline": "Why Salesforce, ServiceNow and Snowflake All Dropped 4% Within Minutes of a Meta Announcement Monday",
+   "date": "2026-09-28",
+   "url": "https://news.google.com/rss/articles/CBMi2gFBVV95cUxNRi1fOVROazVMdWVZblk4dmxHdU1OaXhnQlRzOEJlUGNIWWdia2x2Nk42dFpKa1FKMFd6anYyRk96S2JXTTBGVG1mOGVWTkVLWTd2TkdnUl9MQjlFV3FRWXU5YXljVkM2eE5NYjhKQUtxeTVYanZMTERfci1fVkxIa3dqUVFERWliRnRGaGVXNndPeVNDY3hsdEgyd1ZYQ0FraURxdUpnNnczbWUyeUczSkVXLWxSRGlzZkM5eE5RUHc5T1B2cFlkcWpLS3RCMEQ2MkcxX1VkVmFiQQ?oc=5",
+   "source": "24/7 Wall St.",
+   "summary": "",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Qlik",
+   "headline": "Federal Leader’s Guide to CAIO & CDO: Qlik’s Andrew Churchill on growing your confidence in agentic tools",
+   "date": "2026-09-27",
+   "url": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxObkxRNDd5akp6a2Z3RDFrV2dlNWkwN3lFWWpTbUJBZFRRMDhBUHprOFJqRlFrbjl0ZGx4Y0NYR3cxSmtPS0dRdmduMkthUnloTDJ1YzF2TzEwdjBvTjJCWFg1N0VkNmZNNFN3V0hsWk1teEEyQUZzSE52aVZiTVJFU19JSE0yOXV0US1ldnBLMFc2Mm9qYjFWcExISUFfeUdRZUl1RE51Q05COGNxR0tXRm1qMHRuaTdvQ3Fv?oc=5",
+   "source": "Federal News Network",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Qlik",
+   "headline": "Qlik and ICT Academy Expand Data and AI Learning in India",
+   "date": "2026-09-26",
+   "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxQZmlkUkJ4Vld6ODNzRnhOOE9rSktab2U3SXoyM2lYY2VCVmdxcmhheFhrMGJGMTBNNU41b1kxdE5oV1dCX0VFZHRibDg2WXlNaW9kSnNGVnNYVDVVQzlCbDRHSnRWNVFaTWFXVEFGM21WOW50VEFqRU1XV19FV2tSYWk3Y1hfTFJsejhQSm1qV2ZqWXo0ZGhLWDdSaw?oc=5",
+   "source": "SMEStreet",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Row Zero",
+   "headline": "Databricks buys Row Zero to aid spreadsheet governance for users, AI",
+   "date": "2026-09-25",
+   "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxQTF92UkJweGZobWFqX00tT2dmUk9WaGRpNkRVajFNTlVQTXZRdGI1TGtmeWdFWmcyT2N2NWFHUnJmNEpuS3F3QXJTRVRyQ3ZrSFd6TjQ1dTNZLVJHaURuVmxvQ0VzLWJpaDZiRENaZHYzNUpSeWRiRDhKZUlLQ3JyTmdxRmpQVVlIRzg1YWNWRk5mQjVrdXA3Z0tZbFYzNjNrdG5obGNGcFo4M3J4SGZnb210cDJQNDFiVklYZmF1aldpcGhLZlE?oc=5",
+   "source": "techtarget.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Row Zero",
+   "headline": "Databricks acquisition itch still unsatisfied - buys Row Zero",
+   "date": "2026-09-25",
+   "url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxQR3ItWnJkTG0ya2QwQXF6cDJVZ2ZjbkJwdm9ZRVR0cEpwN25LMmNKV2Q4Y0VHcTVWamJCRWExbXVLSm9qalhTa1JtWXpBSWZIT0JNTVNITVhUTFhvbTZaZmRSVFp6Y3QxYWlCalRVR05JMm9YeHRkb1N2QWdQa1ZKNDZIQnowME1wZjgxSTY5czVaaFJTc1ROUFN6WlhhZWhSUm91QkttbFVSbENIdnZteDN5SjltSHB6VVFPR0Z4eVl0SVk?oc=5",
+   "source": "Blocks & Files",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Qlik",
+   "headline": "Qlik, ICT academy expand partnership to train 1 million learners",
+   "date": "2026-09-24",
+   "url": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxQdjliaTNabGN1NGtmMFFOWFlrTm5Uakt5SHREM20zRDBWMDlETng3VXE4LVJlWVYzcjM1eTVaVGtUX181LWY4elNfS3BGVGJJVTNMd3Q0a2tjbVA2VTdtUGlFOGp1NnZTa25vNXBzUG1EeGJaTEE0c19FRm9NQ0ZmYmJGRkFZd0hmWDBoTDhPSkNYQm1xeE9uSEd2TDBsdV8tOThuT2NfU0NmRGE2VXhoZ1hFVDlYcVExcGZIMzQzQm1fUGxTU09YR3MxMV9nbFVa0gHXAUFVX3lxTFBnYkd5OEp1eG9YNGZudkhfaFJubGQtTTlVX0ttaDhlNnJsckljbDFOM1Y1c25uRTZ6dzBmSDFJb0kySjc4LWRpVHlfekdXMnFUQnNaSHowUURNX3N4a09CUmMyOTh5OUJ0eFdvM1c5Y0Zwa09EOHhGaDFhMmtYck5CdXgwazg2djFmaXU5anFhcU1wUC1GWFBEMHpTS1M4czBFV0c0aGdDbU5RcjFQOW9jaDlZYjN2R3RrTmJBN0hUMnpVQjR3NFJkeVNKUUdlS3hLSXFPT0dJ?oc=5",
+   "source": "BusinessLine",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Row Zero",
+   "headline": "Row Zero Joins Databricks to Give Genie a Governed Spreadsheet",
+   "date": "2026-09-24",
+   "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxNQmsyaEV2WVpXME9xcGNHMFRFSzVjcXlJZUVrYi13dHdkTVRFRVV3TWlITHpDRVdOVGw1aGRKaUF6U3Vob3FzNEZxcnpmVEZDMmdoaURGeHdVYk1nN0MyZzlvanpYSDZBRGVDRFUzU1ZXOEZrYThrUzhaY2J5MjhWSnpCSlFKY0pmY0Zvbg?oc=5",
+   "source": "Unite.AI",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Treasure AI",
+   "headline": "Treasure AI aims to get its name out through women's sports",
+   "date": "2026-09-24",
+   "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxPZ0xhUlZiX2RTMXRLNlBQM1c2RURPaTNPVFR5U0pYU0dvalFMZXVDSE82b0EtUkxGYTNCOUFheGpZQUw0MmgxU1A5VEVURzltZS1jT2tWYmZZeDUwUnRFT3ZWeWJqdWlrb243c2lBSDZfVF9jb2pzd2FzNXpJOXBfQ09qQ0Fhdw?oc=5",
+   "source": "Axios",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Treasure AI",
+   "headline": "Kazuki Ohta, co-founder and CEO, Treasure AI",
+   "date": "2026-09-24",
+   "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxPQzc3dHQ1bzZQZ1lKWWttNE1ZS2VESkNHWUhEeko2RFZiS1RRblZRVnRmeUJXaHI2azBZQ2Y1dUg0bmxjenVmUXZCRS1LVU1SQW9xYk5kMURzd2lkeEJwMnBUTXVIS1ZkMDRKb2t3bWtRVDQ5OTBVdG9oby1rM3NsOU5EOFg?oc=5",
+   "source": "ADWEEK",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Workato",
+   "headline": "Workato Named a Customers’ Choice in 2026 Gartner® Peer Insights™ \"Voice of the Customer\" for Integration Platform as a Service",
+   "date": "2026-09-24",
+   "url": "https://news.google.com/rss/articles/CBMioAFBVV95cUxOMWE5Ul9zWnB2bFNDdWplNEtkb1NLNTBqY3FJMGc4b0puT0pHMkoyc0NCUGxkYnZQOWdlNnNudXpmUGlGaGpGdnJwdTNkOVZENGYxVVJleTMxN2NqNnlTWkJNTWhaQ19Wd3B4YWV3MGR6Zk9PclN6ZGZYVjlfdFhSNzJobkpyTkJIeVhqeTlEWFBVOENTRzRpTTZwNHpmWTBE?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Workato",
+   "headline": "Workato Customers Surpass 1.1 Billion Enterprise AI Actions Processed and Share Results at World of Workato 2026",
+   "date": "2026-09-24",
+   "url": "https://news.google.com/rss/articles/CBMi_gFBVV95cUxOQkw0R1EwRzMwU3d2dXRZd00tTm9XRlRtOUNDUzVkVEZDTFJ5eHpvTmhZOUtpdGwwbUMtY0lVNF9wZFhBdlY0SnlIaThCVXluTmpTZ3BBN0RPcjN3RWYwVVE4MHMzbVJXTFZXdXRUTUJRVUl4ZnlJWnZHMkx4eUtOY2wzeVVPRTF3TldkdUpya0pGUS1RSnhwSDFBamJvMFAtOUNSYk8xX3Rja2p2eGhPTUNYSVFwV3BSMHdNaENBdVFKTjhPdWhxQm5lT3lGTlBsZnhrMmU0YlNwcjVHRF9EclA1RmxHRmNxZF9YSmdXdFlEaG9iSkJ3M3VjSzg1Zw?oc=5",
+   "source": "Business Wire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "PointFive",
+   "headline": "PointFive Joins the Tokenomics Foundation as a Premier Member and Takes a Seat on the Governing Board",
+   "date": "2026-09-23",
+   "url": "https://news.google.com/rss/articles/CBMi-wFBVV95cUxQZjVUT3Ffd2syYVVUMFFDX3VYdU9jbTlRMnEwTEpPWUNrbHd0ZFhNbUFUMmFDaDB3cG1rQUhkd3VERUdwdk52eEszX1FxSXp5NEtiQ2ZNWDRtbXYtekNoa0xLa29zMVZ3SmZOOHptTTNZTldYdV95TnQzNXhJbmlfR0tHVWNQWmpmRERlMS00XzZMV2dPNmxMV0lOam4tMFRPQUpWQWhaM1hWYkpNRTE1UVVhVUxocDRhWWYxay1veFNIUXA0WnpUeUk5ODBrbjUwaWlpbFloWC0tVlp1dFNYQWE2SGVyem9OMWdWZmpEVVo1QjNPemJNNzBGYw?oc=5",
+   "source": "Eastern Progress",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Precisely",
+   "headline": "Precisely Expands AI-Powered Customer Communications Capabilities in EngageOne™ RapidCX",
+   "date": "2026-09-23",
+   "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOM0U5eVZkSGJFdE12UGxibm1WeFdPY3puNjQ1djNRMzBZVElseXlNX3d2UGJQQUUwVnl2T0Ntd3MzSWtCS0RsTGtGbDM3cU54YlBUMEE4RElaTWRyaDVsejRUejNfTXJCQXZ1U0FTUktaSU56SjNMYWxocTJMQWZHTnM1TkJFYV9OaGZHWkhBT2t6MTJZVTdBRFk0WVQwajdReFQ0?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "WisdomAI",
+   "headline": "WisdomAI Launches Live Apps to Bring Right-Sized AI to the Enterprise",
+   "date": "2026-09-23",
+   "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxPVjZja3phOUdXdXl2M1MyUUtCeEtEdEltMGlVamJHb2x5MGFtXzB3Y2YyVndQV2FsRmZFdm5jYk9jSTVoeGdUZG5mUDFtNGZoYzVtdDFic2NpQ1dBWUMwTWVtWkN3S3lOR0hYWUV0RXhJeVNkTzlpMXY2YmlNd3NmbTRsakZuc3FlMHBKbTA1R1F3QUl4a2Ntc21Ib3o5QQ?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Semarchy",
+   "headline": "Semarchy Enhances Intelligent Data Products, Bringing Trusted Enterprise Context to AI",
+   "date": "2026-09-22",
+   "url": "https://news.google.com/rss/articles/CBMi2gFBVV95cUxOSVMzdm90TVB5UERnbDMzUFNOaE5Del9yMExhVDYzc0VMWmlDU0dGQTdqUXQ4d2gzaVU5djFiSE5Zcmd5cXBqWk9qcUFZWUxVZ1FZdmE2bjZZYUJVQkRvXy1kVDFsMjFkbnZpeG85SFVMbkw2VS1fbTZjRlZEVHc2ZlJzWVBsQlVWMTh4RlNzQXVVLW9VdHRMLXIxNXVWdkZod21TU2tWZ1pfU2x4OFp1cUlsNEFMQWFKbzhtdXhsTWdHcHBTblBwbHZTZTBzblRzTlhsdEZQenZOQQ?oc=5",
+   "source": "businesswire.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "The Trade Desk",
+   "headline": "The Trade Desk Trades Above Wall Street’s Average Target. Here’s What the Cost Cuts Change",
+   "date": "2026-09-22",
+   "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxQN3hfcG9PZU1SZG9zMHVaTURqc2xsMWp6SU9zaHd2Ri16WmtoVFFJRjFUcE84WFlwVEk1OEFlclluNUF4eC1kWHZoUkFUdzRJRFBDSlExUGt4WGlhQWhMTjlVVFNQaTg0Z2xrNGRhUHNIenh0bkhCNGktbXU5WTExQlh1R19qVkxlalFNb3dQcDd2X21ZcWVwZVRjTXVtVVNkajlYWmdqSFNDWjZCTUpoMHd2RQ?oc=5",
+   "source": "TIKR.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "WisdomAI",
+   "headline": "WisdomAI and Teradata Partner to Deliver Agentic Intelligence for Mission-Critical Enterprise Data",
+   "date": "2026-09-22",
+   "url": "https://news.google.com/rss/articles/CBMijAJBVV95cUxQZjBsMHpqT1oxdFhkYzNhcHF4NTFkMmxhM3NxdXFYd0hoRWlaSm5NRWQ4RFJta1lhRi0tSFFGSmtmOExSdkZOV3VDR0prdENDV0JWYmRjVTVab0FhekIzWWx3QmVuTUZOdDFMVFFJLXZ1NHBFb1RlUTZEMTdrQzR4QXAtMnZnamZJdHZXMnJPNU50YmVXajdHRHlNWnB5X1pQTGoxb1BKemZ2bzd1Rk9WOEMybG1yS2ctR2k4V3VHcFJQUHhVMUp5d25idFlwWjZweW5ER3FHMVNqLXBfZHlFLTFKT0tOT3JNdDViMFc5SmoyeS15QUhpS0ItV3FSdjgzc1hyZXI3ckc1Unlx?oc=5",
+   "source": "Eastern Progress",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "WisdomAI",
+   "headline": "Teradata, WisdomAI Partner on Agentic Analytics Platform",
+   "date": "2026-09-22",
+   "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxQdFpnZWNFUVhCTjBMd195N1RvLVphRTQ4N2Jld2dMdkp5SldiWE1DQ1loR1NJdEpMZXNFLUp3MVZBVlZscmJ2TkdsYW1Mc0Myam1KTk1FV3k0MUZFTUlMd2xEMUpGX0pqWDNFekdTS3o3Tkh0cXJCSTRaSDN5MFg4TU1Hc24zdmhnYU51ZUhUTmpkYmlGaWFkUW5PNEpVYmhSeFprSGVEcU9PZk0?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "WisdomAI",
+   "headline": "WisdomAI's analytics platform integrates with T...",
+   "date": "2026-09-22",
+   "url": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxPazZTZUF1TGU5WXpZdXA0a0p5UVFsdlR5MFdwZ1k0WGRDMWxrOHQycnUzMGdLaW0tYnUwMWtUdFFkcHF2MHlRVGhoUS1FeTJsTnZ1YjVmNEZzWnAyS1VLRWJmNHE1c1JnUHI3MzJ4dkx0ejd1Y2Vhd1I3eGRhTXo5bDczUDBpZjhZd3lReHZFcUlYZW1rSWx1UWNFMG8xV2JRVlRrSkNvTnQ?oc=5",
+   "source": "Pluang",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Quest",
+   "headline": "Quest Software Highlights Expansion of Security Platform for Non‑Human Identity Risks",
+   "date": "2026-09-18",
+   "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxOTEVZeTFabWtwdmw2TU4tVTBnNFJzRnByYjBzNW9qVW01a19mOHdPSkx3YTIwb1lkTDBIa3VWcDM1ZXRBVmo3VVIwckNuVWdUaGZQeGJaMXFhWmhweDlJM3p4dXY0MFJWUnI0NVM2N0pVcC1tYWJEbk9ySWVDdzBjTUo1bjZQYktWNE42ZWxWU2lDNFpodkZsMmFoZDJ2emhXbjVmZEJmMDYzZ041NUV2XzBTWkZMLTFQNDRVQkZfb3hwbWJsc0NLNGtfWW4?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "RecordPoint",
+   "headline": "Informotion teams up with RecordPoint to address stalled AI initiatives",
+   "date": "2026-09-18",
+   "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxOOXJTY3ZPWWNHSzVwUEFXSEdMNU1pVGdsUk1HZThsQVRQX1dWRXBzeWhTR2xBdnVwck9sdFBUb2tSbElGOXdiMmZmMjFfQk5Fa3oyam01M3lMLTFTdVhTdEp4Wncxa1lWSUpXZVRwX1R1MzdJVVpyamg3Nk55dVpuRlhVRlJBSFd3Qko0aWtyZmo1dGxGY04zeFlxUVg3NzBGVGJqa2ZLYUFPbFRwbmNNa3MxNDFaRVpQS2c?oc=5",
+   "source": "ARNnet",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Starburst",
+   "headline": "Starburst supports GPUs for faster distributed data analysis",
+   "date": "2026-09-18",
+   "url": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxOV0FFUWRUT0VQVGhYWlJIRl9JVWNPa1dEeGp6SUdTS0VnS3JmYmdrVUljU0FtaTNDbHJoeS1laXFNQkFfTE0zWm55RDlTbEFSb25mVUhCaXlGRThJcC1Bcnl1M01ReDBLc1Fqa1dHM19CRERyRzA0YUg1a1dNTDc2R29yeEhYSUNRMWh3Mk15SjdwUTNhY3c4Z19uM2pLNEY1a21GYWJTdmRyWFhTZ2x5TmxwTnk1VnFoU3NpWC00TXo?oc=5",
+   "source": "Blocks & Files",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "SAP",
+   "headline": "Wipro launches STO360 with Aramco and SAP for industrial maintenance",
+   "date": "2026-09-17",
+   "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxNQ1l2eWpRS19kRThacVF6dERMbHdQMFBRY1NQcG9jTnhPdlc3cWV5SHczZTJnWURqcW9MYnlrVEY5dkJsM2NpbnhQRW03WE5ZaExZMVZzVHIwRzNnNlhzQ2x0ZW9xT1dlSWMxR3k3VTRZQ2M3YU14Wi04eGJfR1BJbklWeGhyUVFfYWNoV1psc3AzZXFpUURpSmV1c1pKd9IBowFBVV95cUxOTWkxM0hTMTBqeHhsWlh1cmc2NUxaUmx1Q003bDdZcEFQT1ZYYXhUeHAxRFRNcjJMcW1FRnpRMFcwbkxmMzBRYWZNal83eE5YbFBLMXl0a1dqNnJEZEFNWGYxX3U1ek8tNmRXM2czTmk1MW1FeDdqYUVNZWJvSzZQYlNDaVZqSnlyZ0F2MC1LMm9PZnZPdW10N3lsNjhVY1ZiNUdJ?oc=5",
+   "source": "Tech Observer Magazine",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Quest",
+   "headline": "Quest Expands Security Platform With Five Identity-Security Capabilities",
+   "date": "2026-09-16",
+   "url": "https://news.google.com/rss/articles/CBMimgFBVV95cUxOZzdpNDJPaU51RWhjZklnM29SY2RXMVlHRHkzTlZXOEpzNVN4Qk5jTVQ4UFp6dFNzVzZUY3JhNVBhZVVYdWFYN1NuX09RMDZZc1ZyeWJhR1E5bVpDYV94N1hnQzBLZG1CWFQ1OVBQWXFTTUpReWc5Y1UxYnQtV1hXTFBVdWthdXhYYlEteWZkaUZOSE5XckRRd1h3?oc=5",
+   "source": "Unite.AI",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Sparq",
+   "headline": "In the UAE, Sparq platform helps school students find internships — The National",
+   "date": "2026-09-15",
+   "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxNejdIeVFKUTNiYjh1TTZEaEwzV1JOLXFWRkxWeHI3X2UtR2NsejRyeDliblBnYmYtZzVKUTB2UnA4R190NExBMUtMb0dmTlR2T3ZOZDN6VzZMWkRtM0ZMMFFOb05Eb1prZHdUTDEtUGZ4YXFRRkF0QVpLUGx3c0NqTWJmUDJONmx2a3pVNm1GanlIcnQ3ZHRNVnE3TGxLMXNqQWJj?oc=5",
+   "source": "UA.NEWS",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Semarchy",
+   "headline": "Semarchy Expands Self-Hosted Options With Red Hat® OpenShift® and SUSE® Rancher® RKE2 Support",
+   "date": "2026-09-14",
+   "url": "https://news.google.com/rss/articles/CBMi3wFBVV95cUxOTUVJd3lJOUw5QTQxY2tpMlJlWWxObUt1TWhVUHp4T3FsX2YwbWNrLWxvdEV0WmxjSW16U0lETzBYZjdDNHkxa1RxRE9KS1NpamJfMVducE81dzRVekVsTVV6eHZLN21qQkNOUmlGS09UQVRUVEtiOTNlVG8ydVJXREo1eUJNSTRCSFc5MkVLN3dFVGFrVlZ5WGxJeHhYbkgzaWZObTRsSm95Y2tSbENWNzFCbDhiOE0zMVlJNDhVTFpuTlBXSGlCZVZyTjZHX2kzb2gyMk1lTWxrY1ZCS1hF?oc=5",
+   "source": "businesswire.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "SAP",
+   "headline": "SAP CEO says he will launch only AI agents that solve complex problems",
+   "date": "2026-09-11",
+   "url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxQRUJNMWgyV011ZnBJUVJlM0pwWC11eTlTNDJjUnBSeVNpem94ZWxjZFhoT3lFVkgzWlZsQXkxZ1JtYnRMRzBVdnNtdTZrZjVpeFVVdmlDdlhZVGt6OUpPdGF5SkpWaWlOQ3N3TzMwRS1qTFNBNHFXR0ZHekFvNHRRbk5LMmtCTHhVU2xIVTJKQlpnMGVwcHozOTRya1ZKZHR0dVhIdG9RYWNhdw?oc=5",
+   "source": "디지털투데이",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Tealium",
+   "headline": "Tealium Launches AI Partner Ecosystem to Power Real-Time Context and Activation for Enterprise AI Systems",
+   "date": "2026-09-09",
+   "url": "https://news.google.com/rss/articles/CBMi6wFBVV95cUxPcXRNNklmOGNzekktbm1PYXVMM3hOYlN0bGpqSkVqWWhjc3NOY21tak5ZY0kxUS13dEU4SjRtVHhNTnA3cFlOWElVMERlYkx4aWxlWnViZ3B0V1kySUxLVFJiaFVlNExVRUk3dnRlNjB5MjRNSWpKc21qVElHQkp5NXpQN3FRLTlzZUg2YnlJU2czUXRvYjI3OU92Zk40UVRJR3dseVpNb3VvaWtBeHowd0dMUEVCeHpaOFh2dU0zQU40V2NwMUpsR2hlZEFvaDBDU0M1X1pNX3l4ZkYyTDRBd0JlV0V4azdTMUgw?oc=5",
+   "source": "HPCwire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Tredence",
+   "headline": "Tredence Recognized as Leader in the 2026 ISG Provider Lens® for Supply Chain Analytics and AI Services",
+   "date": "2026-09-05",
+   "url": "https://news.google.com/rss/articles/CBMikAJBVV95cUxQR1E0dnUtTEJfV3pYbTlod3U4TzNBU0FVdUxJaE1tdFBycEU5TjN3dFpzZlBHdEJQalEtOE5MQkRrc1RjOWktUDRxaFhGV0NTb3pxb0ROZWJFSGxib2FwWU9WM3lhcnNTdXVkZDdLSUdJSDk1WDJwZlk4SzkxRUZLNXlZWXp3TmUxNDJWNlo2RVZEeVFSbXR2ck4tRGg0WVd2dmdQZ2hjbVVqcFd4aHN3VWtaYWNIaTZ5c2FqRUo2UXlJN0RPU2RSYS1zWnZzV0FBMmpqdE9fdG9hbWpTNU85WVdMTk5fWm4xb0EyV3JDTzhjcjZvV1Z0bU5NQURJRzlDdDFKU1NnR0c0WnZsdGdjVNIBlgJBVV95cUxPTlRodVdxUE9OTnl1RnpsdmlNMnllb3hvYVdUaFhXcXk1WUN2RFZLSjJYd29oeUwwY3otaWRYbmplZUtUN2oyTXhRRUYxYi1jZXAySVVzejBVdzNnak1mdEF3U1ZTRjgwZm01NDNBQ19JTDR5WktIeXQ3QzNIbzQ5QjJDTld2VWFBNUNVNnRHM0RtYno0ZUpiZ3Nmd2xrSGpZRGZ6d2lPUG01dnFEYUs4VUxoeGhTc3c5emFRd3JxeDVNNlNjNXktdU1UR3JVd1VYUnhtQUJ1cnJyQVZpblNCVXMwUll1Qk9nN1ZhX2V0NWl0UjdYNHF6S1J3dkxIVmVCNW9fVTNtcVI3T0RvaTdYRXJTcXZiZw?oc=5",
+   "source": "Business Standard",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Domo",
+   "headline": "Progress Software lifts outlook after Domo AI acquisition",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxNdDZUdGp0THBDazVHWkNBM01UOTBVcXB6aXM5TU9ERlN6RVBid2IzQVNkSzBGaGxJblV6UmRTa2VMWmR2aldnRWhDMHduYTAyckI2QVhvLWVGVUtqZ2ljM3VQZmk0TnZBd3JVa1BHdTRzZWF4eEVXal9XNFVpNWp4aUtMZm9Id2VqZ2NWM3B1OE82QUI5MHN0ZHJWdnRESmVZanRPMmhUaTBBcmNUeWI5cWZsVUppd29wRUJNYVBHT3JOU1p0RGVEbk5OdWFuUTU4RDlETmpKamhuNFI2?oc=5",
+   "source": "The Globe and Mail",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Domo",
+   "headline": "Progress Software Expects Domo Deal to Weigh on Fiscal 2027 Margin; Quarterly Earnings Rise Annually",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxNM2Rvbm13aXkzSkZGdVJYaWYxejMzX3NWTmFFRGFiLThzbFVTOWd4ZXdxMk5VcVI3dUxMdUxCaWtaQVVZY05HUFE3WVNESi1mbU1jekJ1WWVfbmZHOW5wNUpYRmsycGhsZ2ZNcGpnZW9RR3F4ZlhJUDFwUGVSLWZES3hkc2FUQXcxcFdlem5ESVNidDduVUgyb3ExZ0ZRWE9meklyTkFfTE9rWjhfRUI3b2dTSzZyWTcyX2tkRi1qaXFORmphVGItYVR3c2FjM2FMSDY2eHhtMzNIWFNaNWRCZ1NRLVNYZVE?oc=5",
+   "source": "marketscreener.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Domo",
+   "headline": "Progress Software closes $400M Domo deal, guides FY26 sales up",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNV3c4MVdjamRwVTJzRURTem1fVS1ZM2U1MjVxNFZrZ1JTODI2UTJORkhQRG9EQUxQdjJNcDVWUk1OOFdidHdvb2RSWlhxdUhpX3FVdGh0c1paWjdtcnVZanhXU0t2Q0dESHBTRl94OXpVZmc2QnVUOElfN2dFZEQ2ZV9jUmVjN08xMkQ0SFpYVEVOX0FMc1ZTVlM3OVpyaE1ab0VBQ1JjVnhOQlhBQVNuaXdhMk55ZG5Ca01V?oc=5",
+   "source": "scanx.trade",
+   "summary": "",
    "relevance": "medium"
   }
  ]

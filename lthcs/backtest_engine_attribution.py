@@ -41,7 +41,6 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import pandas as pd
 
-from lthcs import backtest_engine
 from lthcs.backtest_engine import EngineParams, run_backtest
 from lthcs.score import PILLAR_ORDER, assign_band
 
@@ -94,15 +93,32 @@ def _recompute_score(
     """
     if not isinstance(subscores, dict):
         return None
+    # An explicit null sub-score is a pillar dropped from scoring (not
+    # measured); like production (lthcs/score.py) it is excluded and the
+    # remaining weights renormalised. An ABSENT key is a malformed row -> None.
     total = 0.0
+    present_w = 0.0
+    all_w = 0.0
     for i, pillar in enumerate(PILLARS):
-        v = subscores.get(pillar)
-        if v is None:
-            return None
         try:
-            total += float(v) * float(weights[i])
+            w = float(weights[i])
         except (TypeError, ValueError, IndexError):
             return None
+        all_w += w
+        if pillar not in subscores:
+            return None
+        v = subscores[pillar]
+        if v is None:
+            continue
+        try:
+            total += float(v) * w
+        except (TypeError, ValueError):
+            return None
+        present_w += w
+    if present_w <= 0:
+        return None
+    if present_w < all_w:
+        total = total * all_w / present_w
     total += float(modifier_sum or 0.0)
     # Clamp to [0, 100], matching lthcs/score.py:compute_lthcs_score.
     if not math.isfinite(total):

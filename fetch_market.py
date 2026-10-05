@@ -80,6 +80,33 @@ def _get(url: str, params: dict | None = None, timeout: int = 25) -> dict | list
         return None
 
 
+def _get_status(url: str, params: dict | None = None, headers: dict | None = None,
+                timeout: int = 25) -> tuple[int | None, Any]:
+    """Like `_get`, but keeps the HTTP status: ``(status, parsed_json_or_None)``.
+
+    `_get` collapses every failure to None, which is fine for a section that
+    only needs "data or nothing". A section that has to TELL the reader why it
+    is empty (a paywall, a missing key) needs the status, so it uses this.
+    ``status`` is None when no HTTP response arrived at all. Only the bare URL
+    and the exception's type are logged: a requests exception message can
+    carry the full query string, and a header-borne key must stay unlogged.
+    """
+    try:
+        r = requests.get(url, params=params, headers=headers or _headers_for(url),
+                         timeout=timeout)
+    except Exception as e:
+        print(f"  [skip] {url} -> {type(e).__name__}", file=sys.stderr)
+        return None, None
+    if r.status_code != 200:
+        print(f"  [skip] {url} -> {r.status_code}", file=sys.stderr)
+        return r.status_code, None
+    try:
+        return 200, r.json()
+    except ValueError:
+        print(f"  [skip] {url} -> 200 with a non-JSON body", file=sys.stderr)
+        return 200, None
+
+
 def _ts(ms: int) -> str:
     return datetime.fromtimestamp(ms / 1000, tz=timezone.utc).strftime("%Y-%m-%d")
 
@@ -95,10 +122,27 @@ def _coingecko_market_impl(asset_id: str, days: int = 365) -> dict:
     if not j:
         return {"price": [], "volume": [], "market_cap": []}
     return {
-        "price": [{"date": _ts(p[0]), "value": p[1]} for p in j.get("prices", [])],
-        "volume": [{"date": _ts(p[0]), "value": p[1]} for p in j.get("total_volumes", [])],
-        "market_cap": [{"date": _ts(p[0]), "value": p[1]} for p in j.get("market_caps", [])],
+        "price": _one_per_day(j.get("prices", [])),
+        "volume": _one_per_day(j.get("total_volumes", [])),
+        "market_cap": _one_per_day(j.get("market_caps", [])),
     }
+
+
+def _one_per_day(points) -> list[dict]:
+    """[[ms, value], ...] -> one {date, value} per UTC day, the LAST sample
+    of each day winning.
+
+    market_chart's daily series ends with an extra "now" sample, so today's
+    date appeared twice (00:00 and the fetch instant) in price / volume /
+    market_cap and in the ETH/BTC ratio derived from them, which charted two
+    points for one day. The latest sample is the more current reading, and
+    keeping it leaves every series' final value exactly what it was.
+    """
+    by_day: dict[str, float] = {}
+    for p in points or []:
+        if isinstance(p, (list, tuple)) and len(p) >= 2 and p[0] is not None:
+            by_day[_ts(p[0])] = p[1]
+    return [{"date": d, "value": v} for d, v in sorted(by_day.items())]
 
 
 def coingecko_market(asset_id: str, days: int = 365) -> dict:
@@ -125,9 +169,29 @@ def coingecko_market(asset_id: str, days: int = 365) -> dict:
     return out if isinstance(out, dict) else {"price": [], "volume": [], "market_cap": []}
 
 
-def coinbase_intl_perpetuals() -> list[dict]:
+# A perp row only describes the market if the instrument is actually trading
+# and its quote is recent. On 2026-10-04 every Coinbase International PERP was
+# PAUSED (131) or DELISTED (133) with quotes frozen at 2026-09-03 / 2026-10-01,
+# yet those frozen predicted-funding values kept feeding the Overview
+# "Crypto Market Sentiment" composite as if live.
+CB_INTL_MAX_QUOTE_AGE_H = 24
+_CB_INTL_LAST_STATUS: dict = {}
+
+
+def _parse_iso_utc(ts: Any) -> datetime | None:
+    if not isinstance(ts, str) or not ts:
+        return None
+    try:
+        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
+def coinbase_intl_perpetuals(now: datetime | None = None) -> list[dict]:
     """Coinbase International Exchange — funding rate + mark price + open
-    interest for every PERP (~246 of them). Public endpoint, no auth.
+    interest for every PERP that is TRADING with a quote < 24h old. Public
+    endpoint, no auth.
 
     Works from US IPs (Binance's /fapi endpoint returns 451 from US, this
     one returns 200). Use case: cross-exchange perpetual positioning view
@@ -136,13 +200,27 @@ def coinbase_intl_perpetuals() -> list[dict]:
     settle at the next funding interval — i.e. forward-looking funding,
     most useful for spotting crowded positioning right now.
 
+    Instruments whose ``trading_state`` is not TRADING (PAUSED/DELISTED) or
+    whose quote is older than ``CB_INTL_MAX_QUOTE_AGE_H`` are dropped; the
+    counts and the reason land in ``_CB_INTL_LAST_STATUS`` (published as
+    ``market.coinbase_intl_perps_status``) so an empty table says why.
+
     Returns rows sorted by funding_rate descending (most crowded long first).
     Empty list on any failure.
     """
+    now = now or datetime.now(timezone.utc)
+    checked_at = now.isoformat(timespec="seconds")
+    _CB_INTL_LAST_STATUS.clear()
     j = _get("https://api.international.coinbase.com/api/v1/instruments")
     if not j or not isinstance(j, list):
+        _CB_INTL_LAST_STATUS.update({"available": False, "checked_at": checked_at,
+                                     "reason": "instruments endpoint unreachable"})
         return []
     out: list[dict] = []
+    total = 0
+    states: dict[str, int] = {}
+    stale_quotes = 0
+    newest_quote: str | None = None
     for it in j:
         if it.get("type") != "PERP":
             continue
@@ -150,6 +228,7 @@ def coinbase_intl_perpetuals() -> list[dict]:
         sym = sym_full.replace("-PERP", "")
         if not sym:
             continue
+        total += 1
         quote = it.get("quote") or {}
         # Coinbase stamps each quote object with its own ISO-8601 UTC
         # `timestamp` (same object that carries predicted_funding), which
@@ -160,6 +239,16 @@ def coinbase_intl_perpetuals() -> list[dict]:
         # upstream timestamp renders as "unavailable" instead of "now".
         q_ts = quote.get("timestamp") or it.get("timestamp")
         q_ts = q_ts if isinstance(q_ts, str) and q_ts else None
+        if q_ts and (newest_quote is None or q_ts > newest_quote):
+            newest_quote = q_ts
+        state = it.get("trading_state")
+        if state is not None and state != "TRADING":
+            states[str(state)] = states.get(str(state), 0) + 1
+            continue
+        q_dt = _parse_iso_utc(q_ts)
+        if q_dt is None or (now - q_dt) > timedelta(hours=CB_INTL_MAX_QUOTE_AGE_H):
+            stale_quotes += 1
+            continue
         try:
             out.append({
                 "symbol":         sym,
@@ -178,6 +267,55 @@ def coinbase_intl_perpetuals() -> list[dict]:
         except (ValueError, TypeError):
             continue
     out.sort(key=lambda r: r["funding_rate"], reverse=True)
+    status = {"available": bool(out), "checked_at": checked_at,
+              "perps_total": total, "trading_fresh": len(out),
+              "excluded_by_state": states, "excluded_stale_quote": stale_quotes,
+              "max_quote_age_hours": CB_INTL_MAX_QUOTE_AGE_H,
+              "newest_quote": newest_quote}
+    if not out:
+        bits = [f"{n} {st}" for st, n in sorted(states.items())]
+        if stale_quotes:
+            bits.append(f"{stale_quotes} with quotes older than {CB_INTL_MAX_QUOTE_AGE_H}h")
+        status["reason"] = (f"no Coinbase International perp is trading with a fresh quote "
+                            f"({', '.join(bits) or 'no PERP instruments'}"
+                            + (f"; newest quote {newest_quote}" if newest_quote else "") + ")")
+    _CB_INTL_LAST_STATUS.update(status)
+    return out
+
+
+def perp_funding_summary(funding_by_symbol: dict, now: datetime | None = None,
+                         max_age_days: int = 2) -> dict:
+    """Perp-funding input for the Overview sentiment composite, from OKX.
+
+    ``funding_by_symbol`` maps a symbol to ``okx_funding`` output (daily mean
+    of OKX's per-settlement rates, oldest->newest). Each symbol contributes its
+    newest row if that row is within ``max_age_days``; ``as_of`` is the OLDEST
+    contributing date (a composite is only as fresh as its oldest input).
+    Replaces the Coinbase International perps, which stopped trading."""
+    now = now or datetime.now(timezone.utc)
+    cutoff = (now - timedelta(days=max_age_days)).strftime("%Y-%m-%d")
+    rows, excluded = [], []
+    for sym, series in (funding_by_symbol or {}).items():
+        last = next((r for r in reversed(series or [])
+                     if isinstance(r, dict) and r.get("rate") is not None
+                     and isinstance(r.get("date"), str)), None)
+        if last is None:
+            excluded.append({"symbol": sym, "reason": "no funding rows"})
+            continue
+        if last["date"][:10] < cutoff:
+            excluded.append({"symbol": sym, "reason": f"newest row {last['date'][:10]} is stale"})
+            continue
+        rows.append({"symbol": sym, "rate": float(last["rate"]), "as_of": last["date"][:10]})
+    out = {
+        "source": "OKX USDT-margined perpetual swaps (daily mean of settlement funding rates)",
+        "available": bool(rows),
+        "rows": rows,
+        "excluded": excluded,
+        "avg_rate": (sum(r["rate"] for r in rows) / len(rows)) if rows else None,
+        "as_of": min(r["as_of"] for r in rows) if rows else None,
+    }
+    if not rows:
+        out["reason"] = "no OKX funding row within %d days" % max_age_days
     return out
 
 
@@ -511,8 +649,50 @@ def coingecko_trending() -> list[dict]:
     return out
 
 
+def _pct_change(now_v, then_v):
+    """Percent change now vs then, or None when either side is unusable."""
+    try:
+        now_f, then_f = float(now_v), float(then_v)
+    except (TypeError, ValueError):
+        return None
+    if then_f == 0:
+        return None
+    return (now_f / then_f - 1.0) * 100.0
+
+
+def _chain_changes_from_history(points: Any) -> dict:
+    """1d/7d/30d % change from a ``/v2/historicalChainTvl/{chain}`` body.
+
+    Compares the newest daily point with the point exactly 1/7/30 UTC days
+    earlier (matched by day, not by list offset, so a gap in the series yields
+    None instead of a change over the wrong span)."""
+    by_day: dict[int, float] = {}
+    for p in points or []:
+        try:
+            by_day[int(p.get("date")) // 86400] = float(p.get("tvl"))
+        except (TypeError, ValueError, AttributeError):
+            continue
+    if not by_day:
+        return {}
+    last = max(by_day)
+    cur = by_day[last]
+    return {
+        "change_1d_pct": _pct_change(cur, by_day.get(last - 1)),
+        "change_7d_pct": _pct_change(cur, by_day.get(last - 7)),
+        "change_1m_pct": _pct_change(cur, by_day.get(last - 30)),
+        "change_as_of": datetime.fromtimestamp(last * 86400, tz=timezone.utc).strftime("%Y-%m-%d"),
+    }
+
+
 def defillama_chains(top: int = 20) -> list[dict]:
-    """TVL across all blockchain ecosystems (Ethereum, Solana, etc.)."""
+    """TVL across all blockchain ecosystems (Ethereum, Solana, etc.).
+
+    DeFiLlama's free ``/v2/chains`` stopped returning ``change_1d/7d/1m``
+    (verified 2026-10-04: only name/tvl/tokenSymbol/gecko_id/cmcId/chainId),
+    which left every chain's change null and starved the TVL-momentum
+    composite. When the snapshot lacks them, the changes are derived per
+    top-N chain from ``/v2/historicalChainTvl/{chain}``; a chain whose
+    history cannot be fetched keeps null (never a guessed 0)."""
     j = _get("https://api.llama.fi/v2/chains")
     if not j or not isinstance(j, list):
         return []
@@ -528,7 +708,22 @@ def defillama_chains(top: int = 20) -> list[dict]:
             "cmc_id": c.get("cmcId"),
         })
     chains.sort(key=lambda x: x.get("tvl_usd") or 0, reverse=True)
-    return chains[:top]
+    chains = chains[:top]
+    for c in chains:
+        if all(c.get(k) is not None for k in ("change_1d_pct", "change_7d_pct", "change_1m_pct")):
+            continue
+        if not c.get("name"):
+            continue
+        hist = _get(f"https://api.llama.fi/v2/historicalChainTvl/{c['name']}")
+        derived = _chain_changes_from_history(hist if isinstance(hist, list) else [])
+        if not derived:
+            continue
+        for k in ("change_1d_pct", "change_7d_pct", "change_1m_pct"):
+            if c.get(k) is None:
+                c[k] = derived.get(k)
+        c["change_source"] = "historicalChainTvl"
+        c["change_as_of"] = derived.get("change_as_of")
+    return chains
 
 
 def defillama_historical_tvl(chain: str = "Ethereum") -> list[dict]:
@@ -546,8 +741,30 @@ def defillama_historical_tvl(chain: str = "Ethereum") -> list[dict]:
     return out[-365:]  # keep last year
 
 
+def _protocols2_enrichment(j: Any) -> tuple[dict, dict]:
+    """(by_name, parent_by_id) from DeFiLlama ``/lite/protocols2``.
+
+    That endpoint still carries ``tvlPrevMonth`` per protocol and a
+    ``parentProtocols`` list with each parent token's ``mcap``."""
+    if not isinstance(j, dict):
+        return {}, {}
+    by_name = {p.get("name"): p for p in (j.get("protocols") or [])
+               if isinstance(p, dict) and p.get("name")}
+    parents = {p.get("id"): p for p in (j.get("parentProtocols") or [])
+               if isinstance(p, dict) and p.get("id")}
+    return by_name, parents
+
+
 def defillama_protocols(top: int = 25) -> list[dict]:
-    """Top DeFi protocols by TVL with 1d/7d/1m changes."""
+    """Top DeFi protocols by TVL with 1d/7d/1m changes.
+
+    ``/protocols`` no longer returns ``change_1m`` (null on 25/25 rows) and
+    reports ``mcap`` only for protocols that own a CoinGecko id, so child
+    protocols (Aave V3, Morpho Blue, ...) read null. Both are filled from
+    ``/lite/protocols2``: ``change_1m`` from its ``tvl``/``tvlPrevMonth`` and
+    ``mcap`` from the parent protocol's token (tagged ``mcap_source``). Rows
+    that still have no value (CEX entries carry no 30d baseline; tokenless
+    entries have no market cap) say why in ``unavailable``."""
     j = _get("https://api.llama.fi/protocols")
     if not j or not isinstance(j, list):
         return []
@@ -564,9 +781,36 @@ def defillama_protocols(top: int = 25) -> list[dict]:
             "change_1m_pct": p.get("change_1m"),
             "mcap_usd": p.get("mcap"),
             "url": p.get("url"),
+            "_parent": p.get("parentProtocol"),
         })
     out.sort(key=lambda x: x.get("tvl_usd") or 0, reverse=True)
-    return out[:top]
+    out = out[:top]
+    by_name: dict = {}
+    parents: dict = {}
+    if any(r.get("change_1m_pct") is None or r.get("mcap_usd") is None for r in out):
+        by_name, parents = _protocols2_enrichment(_get("https://api.llama.fi/lite/protocols2"))
+    for r in out:
+        parent_id = r.pop("_parent", None)
+        lite = by_name.get(r.get("name")) or {}
+        missing: dict = {}
+        if r.get("change_1m_pct") is None:
+            r["change_1m_pct"] = _pct_change(lite.get("tvl"), lite.get("tvlPrevMonth"))
+            if r["change_1m_pct"] is None:
+                missing["change_1m_pct"] = (
+                    "no 30d TVL baseline published for CEX entries"
+                    if (r.get("category") == "CEX") else "no 30d TVL baseline from DeFiLlama")
+        if r.get("mcap_usd") is None:
+            parent = parents.get(parent_id) if parent_id else None
+            if parent and parent.get("mcap") is not None:
+                r["mcap_usd"] = parent.get("mcap")
+                r["mcap_source"] = f"parent token ({parent.get('symbol') or parent.get('name')})"
+            elif not r.get("symbol") or r.get("symbol") == "-":
+                missing["mcap_usd"] = "no token"
+            else:
+                missing["mcap_usd"] = "market cap not reported by DeFiLlama"
+        if missing:
+            r["unavailable"] = missing
+    return out
 
 
 def defillama_yields_stablecoin_top(top: int = 20) -> list[dict]:
@@ -597,23 +841,19 @@ def defillama_yields_stablecoin_top(top: int = 20) -> list[dict]:
     return out[:top]
 
 
-def defillama_bridges() -> dict:
-    """Cross-chain bridge daily volume snapshot.
+DEFILLAMA_BRIDGES_URL = "https://bridges.llama.fi/bridges"
 
-    The legacy `api.llama.fi/bridges` route now 404s. DeFiLlama moved the
-    bridges API onto its own subdomain at `bridges.llama.fi/bridges`. If
-    that also fails (rare auth/quota cases), gracefully return an empty
-    list — never raise.
-    """
-    out: dict[str, Any] = {"top_bridges": []}
-    j = _get("https://bridges.llama.fi/bridges")
-    if not j or not isinstance(j, dict):
-        return out
-    bridges = (j.get("bridges") or [])
+
+def _bridges_rows(j: Any) -> list[dict]:
+    """Top-10 bridges by 24h volume from a DeFiLlama ``/bridges`` body."""
+    if not isinstance(j, dict):
+        return []
+    bridges = j.get("bridges") or []
     if not isinstance(bridges, list):
-        return out
-    bridges = sorted(bridges, key=lambda b: (b.get("lastDailyVolume") or 0), reverse=True)
-    out["top_bridges"] = [
+        return []
+    bridges = [b for b in bridges if isinstance(b, dict)]
+    bridges.sort(key=lambda b: (b.get("lastDailyVolume") or 0), reverse=True)
+    return [
         {
             "name": b.get("displayName") or b.get("name"),
             "daily_volume_usd": b.get("lastDailyVolume"),
@@ -623,7 +863,55 @@ def defillama_bridges() -> dict:
         }
         for b in bridges[:10]
     ]
-    return out
+
+
+def _bridges_unavailable_reason(status: int | None) -> str:
+    if status == 402:
+        return ("DeFiLlama moved its bridges API to the paid Pro plan "
+                "(HTTP 402 Payment Required)")
+    if status is None:
+        return "DeFiLlama bridges API did not respond"
+    if status == 200:
+        return "DeFiLlama bridges API returned no bridges"
+    return f"DeFiLlama bridges API returned HTTP {status}"
+
+
+def defillama_bridges(now: datetime | None = None) -> dict:
+    """Cross-chain bridge volume snapshot, or an explicit "unavailable" record.
+
+    The legacy ``api.llama.fi/bridges`` route 404s; the API moved to
+    ``bridges.llama.fi``. Since 2026-10 that host answers every bridges route
+    with HTTP 402 "Upgrade to the paid API plan", and DeFiLlama's API docs now
+    list all bridges endpoints as Pro-only (``pro-api.llama.fi/{key}/bridges/…``,
+    paid subscription). There is no keyless equivalent to fall back to:
+    ``/overview/bridge-aggregators`` is aggregator routing volume and protocol
+    TVL is not volume, so substituting either would put a different metric
+    under this card's title.
+
+    So instead of an empty list the UI silently hides, a failed fetch returns
+    ``available: False`` with the reason, the HTTP status and when it was
+    checked, and the card says so. ``top_bridges`` stays a list in every case
+    (payload schema unchanged); there is no stale-keep, so an empty list here
+    contributes no date to ``defi_provenance``. Never raises.
+    """
+    checked_at = (now or datetime.now(timezone.utc)).isoformat(timespec="seconds")
+    status: int | None = None
+    rows: list[dict] = []
+    try:
+        status, j = _get_status(DEFILLAMA_BRIDGES_URL)
+        if status == 200:
+            rows = _bridges_rows(j)
+    except Exception as e:  # parse surprises must not take down fetch_trading
+        print(f"  [defillama_bridges] {type(e).__name__}", file=sys.stderr)
+    if rows:
+        return {"top_bridges": rows, "available": True, "checked_at": checked_at}
+    return {
+        "top_bridges": [],
+        "available": False,
+        "http_status": status,
+        "reason": _bridges_unavailable_reason(status),
+        "checked_at": checked_at,
+    }
 
 
 def _series_last_date(rows: list | None) -> str | None:
@@ -1234,13 +1522,20 @@ def _ai_keyword_hit(name: str) -> bool:
     return False
 
 
+def _sec_headers() -> dict:
+    """SEC fair-access headers. Prefer the operator-supplied SEC_USER_AGENT
+    secret (a real contact, as SEC asks) and fall back to the generic UA."""
+    ua = (os.environ.get("SEC_USER_AGENT") or "").strip() or SEC_UA
+    return {"User-Agent": ua, "Accept": "application/json"}
+
+
 def _sec_get(url: str, params: dict | None = None, timeout: int = 20):
     """SEC-flavored requests.get that always uses the polite UA. Returns
     the parsed JSON (or text for non-JSON endpoints) or None on failure.
     Honors EDGAR's preferred 10 req/sec ceiling implicitly by being called
     serially in the fetcher with a small sleep between calls."""
     try:
-        r = requests.get(url, params=params, headers=SEC_HEADERS, timeout=timeout)
+        r = requests.get(url, params=params, headers=_sec_headers(), timeout=timeout)
         if r.status_code != 200:
             print(f"  [sec] {url} -> {r.status_code}", file=sys.stderr)
             return None
@@ -1312,15 +1607,46 @@ def _parse_form_d_xml(xml_text: str) -> dict:
 
     out["total_offering_amount"] = _ffloat("totalOfferingAmount")
     out["total_amount_sold"]     = _ffloat("totalAmountSold")
-    out["date_of_first_sale"]    = _ftext("dateOfFirstSale")
+    # Live EDGAR schema nests the date: <dateOfFirstSale><value>YYYY-MM-DD
+    # </value></dateOfFirstSale>, or <yetToOccur>true</yetToOccur> when no
+    # sale has happened. Older/flat docs carry the date as direct text.
+    first_sale = _ftext("dateOfFirstSale/value") or _ftext("dateOfFirstSale")
+    if not first_sale and _ftext("dateOfFirstSale/yetToOccur").lower() == "true":
+        first_sale = "yet to occur"
+    out["date_of_first_sale"] = first_sale
     try:
-        ex_nodes = root.findall(".//exemption")
+        # Live schema: <federalExemptionsExclusions><item>06b</item>...;
+        # some docs use <exemption> leaves instead.
+        ex_nodes = (root.findall(".//federalExemptionsExclusions/item")
+                    or root.findall(".//exemption"))
         out["exemptions"] = [
             (n.text or "").strip() for n in ex_nodes if n.text and n.text.strip()
         ]
     except Exception:
         out["exemptions"] = []
     return out
+
+
+# Server-side EDGAR full-text query. The unfiltered Form D firehose is
+# >=10,000 filings per 60 days and EDGAR caps paging at 10,000, so scanning
+# "the first 100 hits" (the old approach) only ever saw ONE filing day. Asking
+# EDGAR for the AI terms instead returns ~200 hits for 60 days, which we page
+# through completely; the issuer-name matcher below then keeps only names
+# that are themselves AI-adjacent (a full-text hit can come from a related
+# person's name or an address).
+_SEC_FTS_QUERY = " OR ".join(
+    f'"{kw}"' if (" " in kw or "." in kw) else kw
+    for kw in ("ai", "artificial intelligence", "machine learning", "neural",
+               "deep learning", "gpt", "llm", "agentic", "robotics",
+               "autonomous", "openai", "anthropic", "inference")
+)
+_SEC_FTS_PAGE = 100          # EDGAR FTS page size (fixed upstream)
+_SEC_FTS_MAX_PAGES = 20      # hard stop: 2,000 hits; a real 60d window is ~2-3 pages
+_SEC_MIN_GAP_S = 0.15        # ~6 req/s, under SEC's 10 req/s fair-access ceiling
+
+# Coverage of the most recent sweep, published next to the rows so the UI can
+# say "N of M" instead of implying the list is the whole window.
+_SEC_FORM_D_LAST_COVERAGE: dict = {}
 
 
 def _fetch_sec_form_d_filings_impl(
@@ -1332,29 +1658,54 @@ def _fetch_sec_form_d_filings_impl(
     optionally enrich each with offering-amount fields from primary_doc.xml.
 
     Steps:
-      1. One full-text search request: `forms=D&dateRange=custom&startdt=...`
-         returns up to 100 hits in chronological order (newest first).
-      2. Filter hits by AI keywords in the issuer display_name.
+      1. Full-text search ``forms=D`` over ``[today-days, today]`` with the AI
+         terms as a server-side OR query, paging with ``from=`` until every
+         hit is read (sleeping between pages for SEC's 10 req/s limit).
+      2. Keep hits whose issuer display_name passes ``_ai_keyword_hit``,
+         de-duplicated by accession, newest first. Exemptions come straight
+         from the hit's ``items`` (e.g. 06B, 3C.7).
       3. Take the top `max_results`. If `enrich_details` is True, fetch
-         each filing's primary_doc.xml (with a 0.15s gap between requests
-         to stay below SEC's 10 req/sec ceiling).
+         each filing's primary_doc.xml for offering amounts and date of
+         first sale.
 
     Returns a list of dicts ready for the AI tab renderer.
     """
     end = datetime.now(timezone.utc).date()
     start = end - timedelta(days=days)
-    params = {
-        "q": "",
+    base = {
+        "q": _SEC_FTS_QUERY,
         "forms": "D",
         "dateRange": "custom",
         "startdt": start.isoformat(),
         "enddt": end.isoformat(),
     }
-    j = _sec_get("https://efts.sec.gov/LATEST/search-index", params=params)
-    if not isinstance(j, dict):
-        return []
-    hits = (((j.get("hits") or {}).get("hits")) or [])
+    hits: list = []
+    total = None
+    pages = 0
+    for page in range(_SEC_FTS_MAX_PAGES):
+        params = dict(base)
+        if page:
+            params["from"] = page * _SEC_FTS_PAGE
+            time.sleep(_SEC_MIN_GAP_S)
+        j = _sec_get("https://efts.sec.gov/LATEST/search-index", params=params)
+        if not isinstance(j, dict):
+            if page == 0:
+                return []
+            break  # keep what earlier pages returned
+        pages += 1
+        h = (j.get("hits") or {})
+        if total is None:
+            t = h.get("total")
+            total = t.get("value") if isinstance(t, dict) else t
+        batch = h.get("hits") or []
+        hits.extend(batch)
+        if len(batch) < _SEC_FTS_PAGE:
+            break
+        if isinstance(total, int) and len(hits) >= total:
+            break
+
     rows: list[dict] = []
+    seen: set = set()
     for h in hits:
         src = h.get("_source") or {}
         names = src.get("display_names") or []
@@ -1372,10 +1723,14 @@ def _fetch_sec_form_d_filings_impl(
         # "0001234567-25-000123:primary_doc.xml" — the part before the colon
         # is the accession number.
         raw_id = h.get("_id") or ""
-        adsh = raw_id.split(":", 1)[0] if raw_id else ""
+        adsh = src.get("adsh") or (raw_id.split(":", 1)[0] if raw_id else "")
+        if adsh and adsh in seen:
+            continue
+        seen.add(adsh)
         ciks = src.get("ciks") or []
         cik = ciks[0] if ciks else ""
         file_date = src.get("file_date") or ""
+        items = [str(x) for x in (src.get("items") or []) if x]
         rows.append({
             "issuer": clean_name,
             "cik": cik,
@@ -1387,10 +1742,25 @@ def _fetch_sec_form_d_filings_impl(
             "total_offering_amount": None,
             "total_amount_sold": None,
             "date_of_first_sale": "",
-            "exemptions": [],
+            # The search hit already carries the claimed exemptions; the XML
+            # pass overwrites them only if it finds its own list.
+            "exemptions": items,
         })
-        if len(rows) >= max_results:
-            break
+
+    rows.sort(key=lambda r: r.get("filed_date") or "", reverse=True)
+    matched = len(rows)
+    rows = rows[:max_results]
+    _SEC_FORM_D_LAST_COVERAGE.clear()
+    _SEC_FORM_D_LAST_COVERAGE.update({
+        "window_days": days,
+        "window": [start.isoformat(), end.isoformat()],
+        "fts_hits_total": total,
+        "fts_hits_scanned": len(hits),
+        "pages": pages,
+        "complete": isinstance(total, int) and len(hits) >= total,
+        "ai_matches": matched,
+        "shown": len(rows),
+    })
 
     if enrich_details and rows:
         for row in rows:
@@ -1398,13 +1768,16 @@ def _fetch_sec_form_d_filings_impl(
                 continue
             url = _sec_primary_doc_url(row["cik"], row["accession"])
             xml_text = _sec_get(url)
-            # Be polite — sleep 0.15s between filing fetches (~6 req/sec
+            # Be polite — sleep between filing fetches (~6 req/sec
             # ceiling, well under SEC's 10 req/sec limit).
-            time.sleep(0.15)
+            time.sleep(_SEC_MIN_GAP_S)
             if not isinstance(xml_text, str):
                 continue
             parsed = _parse_form_d_xml(xml_text)
-            row.update(parsed)
+            # Only overwrite with values the XML actually carried, so the
+            # exemptions taken from the search hit survive an XML without them.
+            row.update({k: v for k, v in parsed.items()
+                        if v not in (None, "", [])})
 
     return rows
 
@@ -1445,30 +1818,41 @@ def fetch_ai_funding() -> dict:
     hn_news = fetch_ai_funding_news_hn(30, 40)
     print(f"    -> {len(hn_news)} HN funding stories")
     print("  AI funding: SEC EDGAR Form D (AI issuers, last 60d)...")
-    form_d = fetch_sec_form_d_filings(60, 20, True)
-    print(f"    -> {len(form_d)} Form D filings (AI-adjacent)")
+    _SEC_FORM_D_LAST_COVERAGE.clear()
+    form_d = fetch_sec_form_d_filings(60, 50, True)
+    form_d_cov = dict(_SEC_FORM_D_LAST_COVERAGE) or {"window_days": 60, "stale_fallback": True}
+    print(f"    -> {len(form_d)} Form D filings (AI-adjacent; "
+          f"{form_d_cov.get('ai_matches', '?')} matched in window)")
     return {
         "yc_companies": yc.get("yc_companies", []),
         "yc_total_ai_count": yc.get("yc_total_ai_count", 0),
         "recent_funding_news": hn_news,
         "form_d_filings": form_d,
+        "form_d_coverage": form_d_cov,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 
 
-def coindesk_cadli_ohlc(days: int = 90) -> list[dict]:
-    """CoinDesk cadli BTC-USD daily OHLC — manipulation-resistant aggregate index."""
-    j = _get(
-        "https://data-api.coindesk.com/index/cc/v1/historical/days",
-        {"market": "cadli", "instrument": "BTC-USD", "limit": str(days)},
-    )
-    if not j or not isinstance(j, dict):
+COINDESK_CADLI_URL = "https://data-api.coindesk.com/index/cc/v1/historical/days"
+# CryptoCompare is CoinDesk Data now: one key, issued at developers.coindesk.com,
+# authenticates both min-api.cryptocompare.com and data-api.coindesk.com. The
+# repo already plumbs it under this name (pages.yml fetch + V2 build + probe).
+CADLI_KEY_ENV = "CRYPTOCOMPARE_API_KEY"
+
+
+def _cadli_rows(j: Any) -> list[dict]:
+    """Daily OHLC rows from a CoinDesk index ``historical/days`` body."""
+    if not isinstance(j, dict):
         return []
-    rows = (j.get("Data") or [])
+    rows = j.get("Data") or []
+    if not isinstance(rows, list):
+        return []
     out = []
     for r in rows:
+        if not isinstance(r, dict):
+            continue
         ts = r.get("TIMESTAMP")
-        if not ts:
+        if not ts or r.get("CLOSE") is None:
             continue
         out.append({
             "date": datetime.fromtimestamp(int(ts), tz=timezone.utc).strftime("%Y-%m-%d"),
@@ -1480,6 +1864,67 @@ def coindesk_cadli_ohlc(days: int = 90) -> list[dict]:
         })
     out.sort(key=lambda x: x["date"])
     return out
+
+
+def _cadli_unavailable_reason(status: int | None, key_configured: bool) -> str:
+    if status in (401, 403):
+        if key_configured:
+            return f"CoinDesk Data API rejected the configured API key (HTTP {status})"
+        return (f"CoinDesk Data API now requires an API key (HTTP {status}); "
+                "none is configured for this build")
+    if status == 429:
+        return "CoinDesk Data API rate-limited this build (HTTP 429)"
+    if status is None:
+        return "CoinDesk Data API did not respond"
+    if status == 200:
+        return "CoinDesk Data API returned no CADLI rows"
+    return f"CoinDesk Data API returned HTTP {status}"
+
+
+def coindesk_cadli(days: int = 90, now: datetime | None = None) -> dict:
+    """CoinDesk CADLI BTC-USD daily OHLC plus a status record saying why not.
+
+    Returns ``{"rows": [...], "status": {...}}``. ``rows`` is the series that
+    ships as ``market.cadli_btc`` (shape unchanged); ``status`` ships alongside
+    as ``market.cadli_btc_status``.
+
+    Since 2026-10 the whole CoinDesk Data API (data-api.coindesk.com, and the
+    min-api / data-api cryptocompare.com hosts) answers keyless requests with
+    HTTP 401 "API key required". A free registered key restores it, sent as
+    ``Authorization: Apikey <key>`` (the documented header; never the
+    ``api_key`` query param, which would put the secret into any logged URL).
+    Without one the series is empty, and ``status`` carries the reason so the
+    card states it instead of "wait for next refresh". CADLI is CoinDesk's
+    proprietary index, so no other provider's BTC price is substituted under
+    its name. Never raises.
+    """
+    checked_at = (now or datetime.now(timezone.utc)).isoformat(timespec="seconds")
+    key = os.environ.get(CADLI_KEY_ENV, "").strip()
+    headers = dict(H)
+    if key:
+        headers["Authorization"] = f"Apikey {key}"
+    status: int | None = None
+    rows: list[dict] = []
+    try:
+        status, j = _get_status(
+            COINDESK_CADLI_URL,
+            {"market": "cadli", "instrument": "BTC-USD", "limit": str(days)},
+            headers=headers,
+        )
+        if status == 200:
+            rows = _cadli_rows(j)
+    except Exception as e:  # parse surprises must not take down fetch_trading
+        print(f"  [coindesk_cadli] {type(e).__name__}", file=sys.stderr)
+    st: dict[str, Any] = {
+        "available": bool(rows),
+        "key_env": CADLI_KEY_ENV,
+        "key_configured": bool(key),
+        "checked_at": checked_at,
+    }
+    if not rows:
+        st["http_status"] = status
+        st["reason"] = _cadli_unavailable_reason(status, bool(key))
+    return {"rows": rows, "status": st}
 
 
 def mempool_difficulty_adjustment() -> dict:
@@ -1719,7 +2164,14 @@ def _stale_path(funcname: str) -> Path:
     # A few cache keys embed upstream API symbols/ids (e.g. CoinGecko 'symbol'/'id'),
     # so strip path separators + traversal before joining (CodeQL py/path-injection).
     safe = "".join(c if (c.isalnum() or c in "_.-") else "_" for c in Path(str(funcname)).name)
-    return _STALE_DIR / f"{safe}.json"
+    # Normalise and confirm the result is still directly inside the stale dir.
+    # Unreachable with the character filter above; kept as an explicit
+    # containment check so the guarantee doesn't rest on the filter alone.
+    base = os.path.normpath(_STALE_DIR)
+    full = os.path.normpath(os.path.join(base, f"{safe}.json"))
+    if not full.startswith(base + os.sep):
+        raise ValueError(f"unsafe stale-cache key: {funcname!r}")
+    return Path(full)
 
 
 def _stale_save(funcname: str, value) -> None:
@@ -2506,31 +2958,83 @@ def fetch_cc_per_coin_news(markets_top: list[dict], top_n: int = 25) -> dict:
     }
 
 
-def santiment_metrics() -> dict:
+def _santiment_prev() -> dict | None:
+    """The previous run's ``social.santiment`` node from data/market.json."""
+    try:
+        prev = json.loads((CACHE / "market.json").read_text())
+        node = (prev.get("social") or {}).get("santiment")
+        return node if isinstance(node, dict) else None
+    except Exception as e:
+        print(f"  [stale-keep] santiment cache unreadable: {type(e).__name__}", file=sys.stderr)
+        return None
+
+
+def santiment_gate(prev: dict | None, now: datetime) -> str | None:
+    """``None`` = attempt a Santiment fetch now; else the stale_reason to keep the cache.
+
+    At most ONE attempt per UTC day, made by the first run of that day.
+
+    This used to be ``now.hour == 0``: fetch only on the 00:xx UTC run. But
+    GitHub runs the "hourly" pages cron only ~4-6 times a day at drifting
+    times, so on most days no run landed in hour 0 and the panel sat on a
+    2-3 day old snapshot (live on 2026-10-04: fetched 2026-10-02T00:39Z).
+    Keying on "already attempted today" keeps the same budget (one sweep of
+    ~28 calls a day, inside the keyless 1,000 calls/month cap) without
+    depending on which hours GitHub happens to schedule. A failed attempt
+    also counts, so a Santiment outage cannot burn the quota run after run.
+    """
+    if not isinstance(prev, dict):
+        return None
+    last = prev.get("attempted_at")
+    if last is None and prev.get("coins"):
+        last = prev.get("fetched_at")  # nodes written before attempted_at existed
+    if isinstance(last, str) and last[:10] == now.strftime("%Y-%m-%d"):
+        return "daily_gate_attempted_today"
+    return None
+
+
+def santiment_metrics(now: datetime | None = None) -> dict:
     """Santiment GraphQL — free-tier metrics for 4 coins. No API key.
+
+    Fetches at most once per UTC day (see ``santiment_gate``); other runs
+    serve the previous snapshot marked ``stale``. ``fetched_at`` is when the
+    served coins were fetched, ``attempted_at`` when a fetch was last tried.
+    A failed attempt keeps the previous coins (stale, ``stale_reason:
+    fetch_failed``) rather than blanking the panel; every series carries its
+    own dates, which the cards and insights.py read as the data date.
+    """
+    now = now or datetime.now(timezone.utc)
+    now_iso = now.isoformat(timespec="seconds")
+    prev = _santiment_prev()
+    gate = santiment_gate(prev, now)
+    if gate:
+        if prev and prev.get("coins"):
+            return {**prev, "stale": True, "stale_reason": gate}
+        return {"available": False, "reason": gate, "coins": {},
+                "attempted_at": (prev or {}).get("attempted_at"),
+                "fetched_at": now_iso}
+    coins = _santiment_fetch_coins(now)
+    if coins:
+        return {"available": True, "coins": coins,
+                "fetched_at": now_iso, "attempted_at": now_iso}
+    if prev and prev.get("coins"):
+        return {**prev, "stale": True, "stale_reason": "fetch_failed",
+                "attempted_at": now_iso}
+    return {"available": False, "reason": "fetch_failed", "coins": {},
+            "fetched_at": now_iso, "attempted_at": now_iso}
+
+
+def _santiment_fetch_coins(now: datetime) -> dict:
+    """One sweep of the Santiment free tier: ``{sym: {metric series...}}``.
 
     The free tier has a sliding window restriction (now-12mo to now-30d)
     for MOST metrics, but a handful work with recent data (lag=0): DAA,
     dev_activity, active_addresses_24h, dev_contributors. The rest
     (network_growth, mvrv_usd, exchange flows) need a ~35d lag query.
 
-    Budget: 4 slugs × 7 metrics = 28 calls. Gated to fire only on the
-    hourly run at UTC hour 0 (once/day). Other hours return prior good
-    snapshot from cache (marked stale).
+    Budget: 4 slugs x 6 metrics + 2 slugs x 2 BTC/ETH-only = 28 calls.
+    Empty dict when nothing came back.
     """
-    # Daily-only gate (stale-keep otherwise)
-    now_hour = datetime.now(timezone.utc).hour
-    if now_hour != 0:
-        try:
-            prev = json.loads((CACHE / "market.json").read_text())
-            prev_san = ((prev.get("social") or {}).get("santiment")) or None
-            if prev_san and prev_san.get("coins"):
-                return {**prev_san, "stale": True, "stale_reason": f"daily_gate_hour_{now_hour}"}
-        except Exception as e:
-            print(f"  [stale-keep] santiment daily-gate suppressed: {type(e).__name__}", file=sys.stderr)
-        return {"available": False, "reason": f"daily_gate_hour_{now_hour}",
-                "coins": {},
-                "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
     SLUGS = {"btc": "bitcoin", "eth": "ethereum", "link": "chainlink", "ltc": "litecoin"}
     BTC_ETH_ONLY = {"btc", "eth"}
     # (metric_name, output_key, day_lag, slugs_supported)
@@ -2545,7 +3049,6 @@ def santiment_metrics() -> dict:
         ("exchange_inflow",                "exchange_inflow",         35, BTC_ETH_ONLY),
     ]
     out: dict[str, dict] = {sym: {"slug": slug} for sym, slug in SLUGS.items()}
-    now = datetime.now(timezone.utc)
     for metric, key, lag, slugs_ok in SANTIMENT_METRICS:
         # Build per-metric date window (recent vs lagged)
         to_dt = now - timedelta(days=lag) if lag else now
@@ -2584,13 +3087,8 @@ def santiment_metrics() -> dict:
                 print(f"  [santiment] {slug}/{metric} error: {e}", file=sys.stderr)
             time.sleep(0.3)
     # Filter out slugs with no metrics populated
-    out = {sym: data for sym, data in out.items()
-           if any(k for k in data if k not in ("slug",))}
-    return {
-        "available": bool(out),
-        "coins": out,
-        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    }
+    return {sym: data for sym, data in out.items()
+            if any(k for k in data if k not in ("slug",))}
 
 
 def point_of_control(price_series: list[dict], volume_series: list[dict],
@@ -3531,7 +4029,7 @@ def fetch_social() -> dict:
                         on missing key)
       cc_news         — per-coin news sentiment via the keyless data-api
                         (POSITIVE/NEGATIVE/NEUTRAL counts + top headlines)
-      santiment       — DAA + dev-activity (daily-gated at hour=0 UTC)
+      santiment       — DAA + dev-activity (one fetch per UTC day; see santiment_gate)
 
     LunarCrush was removed — their v4 API is gated behind the Builder plan
     (~$240/mo); no free endpoints exist. See commit log for the decision.
@@ -3730,7 +4228,12 @@ def blockchair_eth_stats() -> dict:
     erc721 = (layer_2.get("erc_721") if isinstance(layer_2, dict) else None) or {}
 
     txs_24h = d.get("transactions_24h")
-    avg_tx_val_eth = d.get("average_transaction_value_24h")
+    # Blockchair's average_transaction_{fee,value}_24h are WEI strings, like
+    # every other ETH amount on this endpoint. They used to be passed through
+    # raw under *_eth_* names, so the Whale tab printed a fee of
+    # "88120340117212.000000 ETH" (and V2's .toFixed() on the string threw).
+    avg_tx_fee_eth = _wei_to_eth(d.get("average_transaction_fee_24h"))
+    avg_tx_val_eth = _wei_to_eth(d.get("average_transaction_value_24h"))
     mkt_px = d.get("market_price_usd")
 
     # Honest on-chain 24h transfer volume in USD: txs * avg-value-per-tx * price.
@@ -3742,7 +4245,7 @@ def blockchair_eth_stats() -> dict:
     # setup friction and this single live value already replaces the misleading
     # CoinGecko trading-volume KPI.
     try:
-        if txs_24h in (None, "") or avg_tx_val_eth in (None, "") or mkt_px in (None, ""):
+        if txs_24h in (None, "") or avg_tx_val_eth is None or mkt_px in (None, ""):
             transfer_volume_24h_usd = None
         else:
             transfer_volume_24h_usd = float(txs_24h) * float(avg_tx_val_eth) * float(mkt_px)
@@ -3752,7 +4255,7 @@ def blockchair_eth_stats() -> dict:
     return {
         "blocks_24h": d.get("blocks_24h"),
         "transactions_24h": txs_24h,
-        "avg_tx_fee_eth_24h": d.get("average_transaction_fee_24h"),
+        "avg_tx_fee_eth_24h": avg_tx_fee_eth,
         "avg_tx_value_eth_24h": avg_tx_val_eth,
         "transfer_volume_24h_usd": transfer_volume_24h_usd,
         "supply_eth": _wei_to_eth(d.get("circulation_approximate")),
@@ -3798,37 +4301,86 @@ _BLOCKCHAIR_NAMES = {
 }
 
 
+# Window the "Recent ETH whale transactions" feed is labelled with. The
+# fetcher, the stale-cache replay and the browser all enforce it, so a row
+# outside it can never be shown under a "last 24h" label.
+ETH_LARGE_TX_WINDOW_HOURS = 24
+# Cache key for the stale replay. The previous key
+# ("blockchair_eth_large_transactions") holds rows from an unfiltered
+# all-time `s=value(desc)` scan (2015-2022 transfers) and is deleted on sight.
+_ETH_LARGE_TX_CACHE_KEY = "blockchair_eth_large_transactions_24h"
+_ETH_LARGE_TX_LEGACY_CACHE_KEY = "blockchair_eth_large_transactions"
+
+
+def _blockchair_time_utc(value) -> datetime | None:
+    """Parse a Blockchair row time ("YYYY-MM-DD HH:MM:SS", UTC) or an ISO
+    string. Returns an aware UTC datetime, or None when unparseable."""
+    if not isinstance(value, str) or not value.strip():
+        return None
+    txt = value.strip().replace("T", " ").replace("Z", "")
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+        try:
+            return datetime.strptime(txt[:19], fmt).replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+    return None
+
+
+def _eth_large_tx_within_window(rows, now: datetime | None = None,
+                                hours: int = ETH_LARGE_TX_WINDOW_HOURS) -> list[dict]:
+    """Keep only rows whose `time` falls inside the trailing `hours` window
+    ending at `now` (UTC). Rows with a missing/unparseable time are dropped:
+    an undated row cannot honestly be called recent."""
+    now = now or datetime.now(timezone.utc)
+    cutoff = now - timedelta(hours=hours)
+    # Small allowance for clock skew between Blockchair and the runner.
+    ceiling = now + timedelta(minutes=10)
+    out: list[dict] = []
+    for r in rows or []:
+        if not isinstance(r, dict):
+            continue
+        t = _blockchair_time_utc(r.get("time"))
+        if t is None or t < cutoff or t > ceiling:
+            continue
+        out.append(r)
+    return out
+
+
 def _blockchair_eth_large_transactions_impl(
-    min_value_usd: float = 1_000_000.0, limit: int = 10
-) -> list[dict]:
+    min_value_usd: float = 1_000_000.0, limit: int = 10,
+    now: datetime | None = None,
+) -> list[dict] | None:
     """Live fetch of large ETH transactions over the last 24h via Blockchair.
 
-    Blockchair's tx search uses a `q=` query language; we ask for txs in the
-    last 24h with value_usd above the threshold. If the query rejects the
-    `value_usd(...)` filter we fall back to a plain top-N-by-value scan.
+    Blockchair's `q=` filter takes an absolute datetime range; the relative
+    form `time(24h)..` is rejected with HTTP 400 "Wrong filtering expression".
+    So the query is `time(<now-24h UTC>..),value_usd(<min>..)`, sorted by USD
+    value. There is deliberately NO unfiltered fallback: the old
+    `s=value(desc)` retry returned the all-time largest transfers (2015-2022)
+    and published them under a "last 24h" label.
 
-    Each row carries hash, native ETH value, USD value, ISO time, and fee
-    in ETH. Returns at most `limit` rows sorted by USD value descending.
+    Returns at most `limit` rows (hash, value_eth, value_usd, time, fee_eth)
+    sorted by USD value descending, re-filtered to the window and threshold
+    client-side. Returns ``[]`` when the query succeeded but nothing
+    qualified, and ``None`` when the request failed.
     """
+    now = now or datetime.now(timezone.utc)
     min_usd = int(max(0, float(min_value_usd or 0)))
+    since = (now - timedelta(hours=ETH_LARGE_TX_WINDOW_HOURS)).strftime("%Y-%m-%d %H:%M:%S")
     base = "https://api.blockchair.com/ethereum/transactions"
 
     j = _get(base, {
-        "q": f"time(24h)..,value_usd({min_usd}..)",
+        "q": f"time({since}..),value_usd({min_usd}..)",
         "s": "value_usd(desc)",
         "limit": str(max(limit, 10)),
     })
-
-    # Fall back to plain top-N-by-value if the query language was rejected
-    # (Blockchair returns 4xx for malformed `q=`; _get logs and returns None).
-    if not j or not isinstance(j, dict) or not j.get("data"):
-        j = _get(base, {"limit": str(max(limit, 10)), "s": "value(desc)"})
-
     if not j or not isinstance(j, dict):
-        return []
-    rows = j.get("data") or []
+        return None
+    rows = j.get("data")
+    if rows is None:
+        return None
     if not isinstance(rows, list):
-        return []
+        return None
 
     out: list[dict] = []
     for r in rows:
@@ -3849,6 +4401,8 @@ def _blockchair_eth_large_transactions_impl(
             fee_eth = float(r.get("fee") or 0) / 1e18
         except (TypeError, ValueError):
             fee_eth = 0.0
+        if value_usd < min_usd:
+            continue
         out.append({
             "hash":      h,
             "value_eth": value_eth,
@@ -3857,32 +4411,64 @@ def _blockchair_eth_large_transactions_impl(
             "fee_eth":   fee_eth,
         })
 
+    out = _eth_large_tx_within_window(out, now)
     out.sort(key=lambda r: r.get("value_usd") or 0, reverse=True)
     return out[:limit]
 
 
-def blockchair_eth_large_transactions(
-    min_value_usd: float = 1_000_000.0, limit: int = 10
-) -> list[dict]:
-    """Stale-fallback wrapper around `_blockchair_eth_large_transactions_impl`.
+def blockchair_eth_large_transactions_with_status(
+    min_value_usd: float = 1_000_000.0, limit: int = 10,
+    now: datetime | None = None,
+) -> dict:
+    """Fetch the last-24h large-tx feed and say where the rows came from.
 
-    On empty result or fetch failure, serves the last good payload from
-    `data/.stale/blockchair_eth_large_transactions.json`. Returns an empty
-    list if no cache exists either — never raises.
+    Returns ``{"rows": [...], "status": {...}}`` where status.source is
+    "live" (query succeeded, possibly with zero qualifying rows),
+    "stale-cache" (query failed; replaying the last good fetch, trimmed to
+    rows still inside the 24h window) or "unavailable" (query failed and no
+    cached row is still recent). Never raises.
     """
-    cache_key = "blockchair_eth_large_transactions"
+    now = now or datetime.now(timezone.utc)
+    # The legacy cache file was filled by the unfiltered all-time scan; never
+    # replay it.
     try:
-        out = _blockchair_eth_large_transactions_impl(min_value_usd, limit)
+        _stale_path(_ETH_LARGE_TX_LEGACY_CACHE_KEY).unlink(missing_ok=True)
+    except OSError:
+        # Best-effort cleanup only: the legacy key is never read again, so a
+        # file we couldn't delete is harmless and must not stop the fetch.
+        pass
+    status = {
+        "window_hours": ETH_LARGE_TX_WINDOW_HOURS,
+        "min_value_usd": float(min_value_usd or 0),
+        "as_of": now.isoformat(timespec="seconds"),
+    }
+    try:
+        out = _blockchair_eth_large_transactions_impl(min_value_usd, limit, now=now)
     except Exception as e:
         print(f"  [blockchair_eth_large_transactions] fatal: {e}", file=sys.stderr)
         out = None
-    if isinstance(out, list) and len(out) > 0:
-        _stale_save(cache_key, out)
-        return out
-    cached = _stale_load(cache_key)
-    if cached is not None:
-        return cached if isinstance(cached, list) else []
-    return out if isinstance(out, list) else []
+    if isinstance(out, list):
+        if out:
+            _stale_save(_ETH_LARGE_TX_CACHE_KEY, out)
+        return {"rows": out, "status": {**status, "source": "live"}}
+    cached = _stale_load(_ETH_LARGE_TX_CACHE_KEY)
+    recent = _eth_large_tx_within_window(cached if isinstance(cached, list) else [], now)
+    if recent:
+        return {"rows": recent[:limit], "status": {**status, "source": "stale-cache"}}
+    return {"rows": [], "status": {**status, "source": "unavailable"}}
+
+
+def blockchair_eth_large_transactions(
+    min_value_usd: float = 1_000_000.0, limit: int = 10,
+    now: datetime | None = None,
+) -> list[dict]:
+    """Rows-only wrapper around `blockchair_eth_large_transactions_with_status`.
+
+    Every row returned is inside the trailing 24h window, whether it came from
+    the live query or the stale cache; an empty list means nothing recent is
+    known. Never raises.
+    """
+    return blockchair_eth_large_transactions_with_status(min_value_usd, limit, now=now)["rows"]
 
 
 def blockchair_chain_stats(chain_slug: str) -> dict:
@@ -5162,7 +5748,7 @@ async def _fetch_trading_async() -> dict:
         _timed("fetch_ai_news",           _bg_call(fetch_ai_news)),
         _timed("fetch_ai_funding",        _bg_call(fetch_ai_funding)),
         _timed("load_ai_curated",         _bg_call(load_ai_curated)),
-        _timed("coindesk_cadli_ohlc",     _bg_call(coindesk_cadli_ohlc, 90)),
+        _timed("coindesk_cadli",          _bg_call(coindesk_cadli, 90)),
         _timed("yahoo_indices",           _bg_call(yahoo_indices)),
         _timed("fetch_stocks_signals",    _bg_call(fetch_stocks_signals, 50)),
         _timed("fear_greed",              _bg_call(fear_greed)),
@@ -5285,6 +5871,13 @@ async def _fetch_trading_async() -> dict:
         "global": glob,
         "coinbase": cb_spot,
         "coinbase_intl_perps": cb_intl,
+        "coinbase_intl_perps_status": dict(_CB_INTL_LAST_STATUS),
+        # Overview sentiment's perp-funding input (OKX; Coinbase Intl perps
+        # are paused/delisted). See perp_funding_summary.
+        "perp_funding": perp_funding_summary({
+            "BTC": okx_fund_btc, "ETH": okx_fund_eth,
+            "LINK": okx_fund_link, "LTC": okx_fund_ltc,
+        }),
         "defillama": llama,
         "geckoterminal": gt_pools,
         "social": social,
@@ -5309,7 +5902,10 @@ async def _fetch_trading_async() -> dict:
         "ai_news": ai_news,
         "ai_funding": ai_funding,
         "ai_curated": ai_curated,
-        "cadli_btc": cadli,
+        "cadli_btc": cadli["rows"],
+        # Why cadli_btc is empty, when it is (the CoinDesk Data API now needs
+        # a key). The Futures card prints `reason` instead of a bare empty state.
+        "cadli_btc_status": cadli["status"],
         "yahoo_indices": yahoo_idx,
         "stocks_signals": stocks_signals,
         "money_flow": money_flow_block,
@@ -5586,7 +6182,7 @@ async def _fetch_whale_async(btc_price_usd: float | None = None) -> dict:
         _timed("glassnode_btc_whale_metrics",      _bg_call(glassnode_btc_whale_metrics)),
         _timed("mempool_whale_transactions",       _whale_tx()),
         _timed("blockchair_eth_stats",             _bg_call(blockchair_eth_stats)),
-        _timed("blockchair_eth_large_transactions", _bg_call(blockchair_eth_large_transactions, 1_000_000)),
+        _timed("blockchair_eth_large_transactions", _bg_call(blockchair_eth_large_transactions_with_status, 1_000_000)),
         _timed("coin_metrics_eth_whale_metrics",   _bg_call(coin_metrics_eth_whale_metrics)),
         _timed("etherscan_eth_daily",              _bg_call(etherscan_eth_daily)),
         _timed("fetch_multichain_whale_stats",     _bg_call(fetch_multichain_whale_stats)),
@@ -5600,7 +6196,8 @@ async def _fetch_whale_async(btc_price_usd: float | None = None) -> dict:
         "eth": {
             "blockchair": eth_bc,
             "coin_metrics": eth_cm,
-            "large_transactions": eth_large_txs,
+            "large_transactions": (eth_large_txs or {}).get("rows") or [],
+            "large_transactions_status": (eth_large_txs or {}).get("status") or {},
             "etherscan_daily": eth_etherscan,
         },
         "multichain": multichain,

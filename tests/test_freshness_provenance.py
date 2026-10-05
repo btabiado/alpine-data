@@ -398,28 +398,37 @@ def _perp(**over):
     return inst
 
 
+# Rows are now only kept when the quote is < 24h old (frozen quotes from
+# paused instruments used to feed the sentiment composite), so the clock is
+# pinned just after the quote under test.
+_QUOTE_NOW = datetime(2026, 8, 1, 12, 0, 0, tzinfo=timezone.utc)
+
+
 def test_coinbase_intl_perps_row_carries_quote_timestamp():
     with patch.object(fetch_market, "_get", return_value=[_perp()]):
-        out = fetch_market.coinbase_intl_perpetuals()
+        out = fetch_market.coinbase_intl_perpetuals(now=_QUOTE_NOW)
     assert len(out) == 1
     assert out[0]["as_of"] == "2026-08-01"
     assert out[0]["as_of_ts"] == "2026-08-01T05:31:56Z"
 
 
-def test_coinbase_intl_perps_row_none_when_upstream_undated():
+def test_coinbase_intl_perps_row_dropped_when_upstream_undated():
+    """An undated quote cannot be shown to be fresh, so it is excluded (and
+    counted) rather than published as a live funding reading."""
     inst = _perp()
     del inst["quote"]["timestamp"]
     with patch.object(fetch_market, "_get", return_value=[inst]):
-        out = fetch_market.coinbase_intl_perpetuals()
-    assert out[0]["as_of"] is None
-    assert out[0]["as_of_ts"] is None
+        out = fetch_market.coinbase_intl_perpetuals(now=_QUOTE_NOW)
+    assert out == []
+    assert fetch_market._CB_INTL_LAST_STATUS["excluded_stale_quote"] == 1
 
 
 def test_coinbase_intl_perps_falls_back_to_instrument_timestamp():
     inst = _perp(timestamp="2026-07-15T00:00:00Z")
     del inst["quote"]["timestamp"]
     with patch.object(fetch_market, "_get", return_value=[inst]):
-        out = fetch_market.coinbase_intl_perpetuals()
+        out = fetch_market.coinbase_intl_perpetuals(
+            now=datetime(2026, 7, 15, 6, 0, 0, tzinfo=timezone.utc))
     assert out[0]["as_of"] == "2026-07-15"
 
 

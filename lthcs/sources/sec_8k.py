@@ -50,7 +50,6 @@ from lthcs.sources.sec_edgar import (
     SECEdgarError,
     _bucket as _SEC_BUCKET,
     _headers,
-    _user_agent,
     get_cik,
 )
 

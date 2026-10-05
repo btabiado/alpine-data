@@ -1,0 +1,89 @@
+name: history-backfill
+
+# Fills committed histories from the R2 archive of what the site actually
+# served (raw/alpine-data/<day>/<file>, written daily by pages.yml's
+# upload_to_r2.py). R2 is the only record of deploy-time sidecars that were
+# never committed, and this session cannot read it, so the backfill runs here
+# where the R2_* secrets are.
+#
+# For each day in [start, end] it:
+#   * puts the EXACT whale sentiments the served data-whale.json carried into
+#     data/composites/<day>.json, superseding the `series:` recomputes that
+#     scripts/backfill_history.py composites wrote offline (a value that is
+#     already in a snapshot is otherwise never touched);
+#   * rebuilds data/stock_money_flow_history.csv and the travel-advisory
+#     history CSVs from the archived sidecars, marked provenance=r2@<day>.
+#
+# Every filled value names its source (`backfilled_from` / `provenance`).
+# Nothing is interpolated: a day R2 does not have stays a gap, and the
+# continuity monitor (scripts/data_health.py) keeps reporting it.
+#
+# Usage: Actions -> history-backfill -> Run workflow. The archive starts
+# 2026-05-28 (travel) / 2026-06-08 (stock money flow) / 2026-06-23 (whale);
+# 2026-08-19..21 is absent everywhere (no deploy ran).
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "First day (YYYY-MM-DD)"
+        required: true
+        default: "2026-05-28"
+        type: string
+      end:
+        description: "Last day (YYYY-MM-DD). Default: yesterday UTC; today's composite is still being written hourly."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: history-backfill
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest becomes 26.04 on 2026-10-19 and setup-python needs a toolcache build for the image
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt boto3
+
+      - name: Backfill from the R2 archive
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          START: ${{ inputs.start }}
+          END: ${{ inputs.end }}
+        run: |
+          set -euo pipefail
+          if [ -z "${END}" ]; then END="$(date -u -d yesterday +%Y-%m-%d)"; fi
+          python scripts/backfill_history.py r2 --start "$START" --end "$END"
+
+      - name: Commit backfilled history
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Inputs reach the shell as env vars, never spliced into the script.
+          START: ${{ inputs.start }}
+          END: ${{ inputs.end }}
+        run: |
+          git add data/composites data/stock_money_flow_history.csv \
+                  data/travel_advisory_levels.csv data/travel_advisory_changes.csv 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "[history-backfill] nothing new from R2"
+          else
+            .github/scripts/api-commit.sh \
+              "history: backfill ${START}..${END:-yesterday} from R2 archive [skip ci]"
+          fi

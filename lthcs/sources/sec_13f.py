@@ -84,6 +84,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import re
 import xml.etree.ElementTree as ET
@@ -210,9 +211,6 @@ _INDEX_TTL_SECONDS = 365 * 24 * 60 * 60
 # Per-filing universe-extracted holdings: filings are immutable, so cache
 # essentially forever. 365 days is a comfortable upper bound.
 _FILING_TTL_SECONDS = 365 * 24 * 60 * 60
-# Per-ticker aggregate snapshot: refreshed shortly after each 45-day 13F
-# deadline. 14 days is safe inside that envelope.
-_AGGREGATE_TTL_SECONDS = 14 * 24 * 60 * 60
 
 # Common XML namespaces seen in 13F filings. The schema lives under
 # http://www.sec.gov/edgar/document/thirteenf/informationtable but newer
@@ -446,7 +444,7 @@ def _load_managers_full() -> Tuple[Dict[str, str], float, Dict[str, float], floa
             aum = float(raw_aum) if raw_aum is not None else 0.0
         except (TypeError, ValueError):
             aum = 0.0
-        if aum != aum:  # NaN
+        if math.isnan(aum):  # NaN
             aum = 0.0
         if aum < 0.0:
             aum = 0.0

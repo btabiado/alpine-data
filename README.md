@@ -212,7 +212,7 @@ All optional. Core dashboard runs with none of these set; the dashboard surfaces
 | `CHAT_MODEL` | `chat.py` | Defaults to `claude-haiku-4-5-20251001` |
 | `FRED_API_KEY` | `fetch_market.py` | Macro overlay (DXY, S&P 500, Gold, 10Y, M2) hidden |
 | `GLASSNODE_API_KEY` | `fetch_market.py` | True whale-cohort metrics off; free on-chain proxies still shown |
-| `CRYPTOCOMPARE_API_KEY` | `fetch_market.py` | Social/news depth limited to anonymous tier; also used for the top-25 historical daily OHLCV that feeds the Point of Control tab (free tier works, key raises the rate limit) |
+| `CRYPTOCOMPARE_API_KEY` | `fetch_market.py` | A CoinDesk Data API key (CryptoCompare now runs on CoinDesk Data; free keys at developers.coindesk.com, one key covers both hosts). Since 2026-10 data-api.coindesk.com and the cryptocompare.com hosts answer keyless requests with HTTP 401, so unset means no CADLI BTC reference chart on the Futures tab (the card states why), no top-25 daily OHLCV for the Point of Control tab, and no CryptoCompare social/news sentiment |
 | `COINMETRICS_API_KEY` | `fetch_market.py` | ETH whale series omitted from Whale tab |
 | `ETHERSCAN_API_KEY` | `fetch_market.py` | 90-day ETH blocks-per-day chart on the Whale tab hidden; gas oracle still works (separate keyless endpoint) |
 | `REDDIT_CLIENT_ID` + `REDDIT_CLIENT_SECRET` | `fetch_market.py` | Reddit subscriber counts unavailable; public dashboard falls back to RSS post titles only |

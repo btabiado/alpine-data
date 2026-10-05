@@ -276,6 +276,10 @@ def _format_subscores(subs: Dict[str, float]) -> str:
     parts = []
     for p in order:
         name = _templated.HUMAN_PILLAR_NAMES.get(p, p)
+        if p in subs and subs.get(p) is None:
+            # Dropped pillar (not measured): say so instead of inventing 50.
+            parts.append(f"{name}=n/a (dropped, no data)")
+            continue
         val = float(subs.get(p, 50.0))
         parts.append(f"{name}={val:.1f}")
     return ", ".join(parts)
@@ -284,7 +288,9 @@ def _format_subscores(subs: Dict[str, float]) -> str:
 def _binding_and_supporting(subs: Dict[str, float]) -> Dict[str, Any]:
     """Pick lowest + highest pillar (the binding constraint + the anchor)."""
     order = _templated.PILLAR_ORDER
-    ordered = [(p, float(subs.get(p, 50.0))) for p in order]
+    ordered = [(p, float(subs.get(p, 50.0))) for p in order
+               if not (p in subs and subs.get(p) is None)] or \
+              [(p, 50.0) for p in order]
     by_high = sorted(ordered, key=lambda kv: kv[1], reverse=True)
     by_low = sorted(ordered, key=lambda kv: kv[1])
     return {
@@ -469,7 +475,8 @@ def build_user_message(
             "available": True,
             "lthcs_score": prior_snapshot_row.get("lthcs_score"),
             "band": prior_snapshot_row.get("band"),
-            "subscores": {k: round(float(v), 1) for k, v in prior_subs.items()},
+            "subscores": {k: (None if v is None else round(float(v), 1))
+                          for k, v in prior_subs.items()},
         }
     else:
         prior_block = {"available": False}
@@ -482,7 +489,8 @@ def build_user_message(
         "drift_7d": snapshot_row.get("drift_7d"),
         "drift_30d": snapshot_row.get("drift_30d"),
         "confidence_level": snapshot_row.get("confidence_level"),
-        "subscores": {k: round(float(v), 1) for k, v in subs.items()},
+        "subscores": {k: (None if v is None else round(float(v), 1))
+                      for k, v in subs.items()},
         "binding_and_supporting": bs,
         "pillar_components": _summarize_variable_detail(variable_detail_rows),
         "data_quality_by_pillar": _data_quality_by_pillar(variable_detail_rows),
@@ -748,7 +756,7 @@ def _parse_json_envelope(raw_text: str) -> Optional[Dict[str, Any]]:
         if isinstance(parsed, dict):
             return parsed
     except (ValueError, TypeError):
-        pass
+        pass  # not plain JSON; fall through to the next parse strategy
     fence_stripped = re.sub(r"^```(?:json)?\s*", "", text)
     fence_stripped = re.sub(r"\s*```\s*$", "", fence_stripped)
     try:
@@ -756,7 +764,7 @@ def _parse_json_envelope(raw_text: str) -> Optional[Dict[str, Any]]:
         if isinstance(parsed, dict):
             return parsed
     except (ValueError, TypeError):
-        pass
+        pass  # not plain JSON; fall through to the next parse strategy
     match = _JSON_OBJ_RE.search(text)
     if match:
         try:
@@ -815,16 +823,52 @@ def _parse_four_section_json(raw_text: str) -> Optional[Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 
+def fallback_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Run-level provenance of a narratives list, for the payload's top level.
+
+    ``fallback`` is True only when EVERY row is the templated fallback (e.g.
+    no ANTHROPIC_API_KEY: 215/215 on 2026-10-04) — the case where the file's
+    ``model_version`` names a model that wrote none of it. The UI badge reads
+    ``fallback`` / ``narrative_source`` rather than inferring from the model.
+    """
+    rows = [r for r in (rows or []) if isinstance(r, dict)]
+    n = len(rows)
+    fb = [r for r in rows if r.get("fallback")]
+    reasons: Dict[str, int] = {}
+    for r in fb:
+        key = str(r.get("fallback_reason") or "unknown").split(":", 1)[0]
+        reasons[key] = reasons.get(key, 0) + 1
+    if n and len(fb) == n:
+        source = "template_fallback"
+    elif fb:
+        source = "mixed"
+    else:
+        source = "llm"
+    return {
+        "fallback": bool(n) and len(fb) == n,
+        "fallback_count": len(fb),
+        "llm_count": n - len(fb),
+        "fallback_reasons": reasons,
+        "narrative_source": source if n else None,
+    }
+
+
 def _fallback_narrative(
     ticker: str,
     snapshot_row: Dict[str, Any],
     reason: str,
     *,
     model: Optional[str] = None,
+    prior_snapshot_row: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Build the templated narrative and stamp it with fallback metadata."""
+    """Build the templated narrative and stamp it with fallback metadata.
+
+    ``prior_snapshot_row`` is forwarded so the template's why_changed can
+    name the pillar that moved instead of claiming no prior snapshot exists.
+    """
     try:
-        templated = _templated.generate_narratives(snapshot_row)
+        templated = _templated.generate_narratives(
+            snapshot_row, prior_score_dict=prior_snapshot_row)
     except Exception:  # pragma: no cover - templated is well-tested
         templated = {
             "todays_take": "",
@@ -882,19 +926,21 @@ def generate_llm_narrative(
     if client is None:
         api_key = _api_key()
         if not api_key:
-            return _fallback_narrative(ticker, snapshot_row, "missing_api_key", model=None)
+            return _fallback_narrative(
+                ticker, snapshot_row, "missing_api_key", model=None,
+                prior_snapshot_row=prior_snapshot_row)
         anthropic = _import_anthropic()
         if anthropic is None:
             return _fallback_narrative(
-                ticker, snapshot_row, "anthropic_sdk_unavailable", model=None
-            )
+                ticker, snapshot_row, "anthropic_sdk_unavailable", model=None,
+                prior_snapshot_row=prior_snapshot_row)
         try:
             client = anthropic.Anthropic(api_key=api_key)
         except Exception as exc:
             logger.warning("Anthropic client construction failed: %s", exc)
             return _fallback_narrative(
-                ticker, snapshot_row, "client_init_failed", model=None
-            )
+                ticker, snapshot_row, "client_init_failed", model=None,
+                prior_snapshot_row=prior_snapshot_row)
 
     try:
         system_blocks = build_system_blocks(macro_breadth if use_cache else None)
@@ -916,8 +962,8 @@ def generate_llm_narrative(
         # payload (e.g. an insider name was tampered with). Skip the
         # LLM call entirely and use the templated fallback.
         return _fallback_narrative(
-            ticker, snapshot_row, "injection_in_payload", model=model
-        )
+                ticker, snapshot_row, "injection_in_payload", model=model,
+                prior_snapshot_row=prior_snapshot_row)
 
     try:
         response = _call_anthropic_with_retry(
@@ -929,16 +975,20 @@ def generate_llm_narrative(
     except Exception as exc:
         logger.warning("Anthropic call failed for %s: %s", ticker, exc)
         return _fallback_narrative(
-            ticker, snapshot_row, "api_error: %s" % exc, model=model
-        )
+                ticker, snapshot_row, "api_error: %s" % exc, model=model,
+                prior_snapshot_row=prior_snapshot_row)
 
     raw_text = _extract_text(response)
     if not raw_text:
-        return _fallback_narrative(ticker, snapshot_row, "empty_response", model=model)
+        return _fallback_narrative(
+                ticker, snapshot_row, "empty_response", model=model,
+                prior_snapshot_row=prior_snapshot_row)
 
     parsed = _parse_four_section_json(raw_text)
     if parsed is None:
-        return _fallback_narrative(ticker, snapshot_row, "json_parse_error", model=model)
+        return _fallback_narrative(
+                ticker, snapshot_row, "json_parse_error", model=model,
+                prior_snapshot_row=prior_snapshot_row)
 
     # Output validation BEFORE returning. Rejects hype phrases, ALL-CAPS
     # runs, oversized sections, and invalid confidence labels. Logged
@@ -954,8 +1004,8 @@ def generate_llm_narrative(
             stage="output",
         )
         return _fallback_narrative(
-            ticker, snapshot_row, f"output_rejected: {reason}", model=model
-        )
+                ticker, snapshot_row, f"output_rejected: {reason}", model=model,
+                prior_snapshot_row=prior_snapshot_row)
 
     usage = _extract_usage(response)
     return {
@@ -1045,7 +1095,8 @@ def generate_universe_narratives(
                     {"ticker": ticker},
                 )
                 results[ticker] = _fallback_narrative(
-                    ticker, row, "task_crash: %s" % exc, model=model
+                    ticker, row, "task_crash: %s" % exc, model=model,
+                    prior_snapshot_row=prior_snapshot_by_ticker.get(ticker),
                 )
     return results
 
@@ -1162,6 +1213,9 @@ def write_shadow_daily(
         "generated_at": _now_iso(),
         "model_version": meta.get("model") or "",
         "meta": meta,
+        # Top-level provenance (see fallback_summary): readers must not infer
+        # "LLM-written" from model_version.
+        **fallback_summary(list(rows or [])),
         "narratives": list(rows or []),
     }
     _atomic_write_json(path, payload)
@@ -1276,6 +1330,8 @@ def score_universe(
         "ticker_count": len(results),
         "fallback_count": fallback_count,
         "shadow_run_id": run_id,
+        **{k: v for k, v in fallback_summary(list(results.values())).items()
+           if k != "fallback_count"},
     }
 
     if cost_cap_hit:

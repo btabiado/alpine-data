@@ -145,6 +145,32 @@ def test_share_route_valid_token_returns_dashboard(client, isolated_shares):
     assert "__DATA_JSON__" not in body
 
 
+def test_live_share_token_only_returns_live_tokens(isolated_shares):
+    entry = shares.create(days=1)
+    assert server._live_share_token(entry["token"]) == entry["token"]
+    assert server._live_share_token("not-a-real-token") is None
+    assert server._live_share_token("") is None
+    assert server._live_share_token(None) is None
+
+
+def test_live_share_token_is_html_escaped(isolated_shares):
+    """A hand-edited store key carrying markup must not be reflected raw."""
+    future = (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(timespec="seconds")
+    isolated_shares.write_text(json.dumps({
+        "<b>x</b>": {"created_at": future, "expires_at": future, "label": ""},
+    }))
+    assert server._live_share_token("<b>x</b>") == "&lt;b&gt;x&lt;/b&gt;"
+
+
+def test_root_share_query_embeds_only_live_token(client, isolated_shares):
+    entry = shares.create(days=1)
+    body = client.get(f"/?share={entry['token']}").get_data(as_text=True)
+    assert f'const SHARE_TOKEN = "{entry["token"]}";' in body
+    body = client.get("/?share=bogus-token").get_data(as_text=True)
+    assert "const SHARE_TOKEN = null;" in body
+    assert "bogus-token" not in body
+
+
 # ---------- server.py: /api/share endpoints (auth disabled in test) ----------
 
 def test_api_share_post_mints_token(client):

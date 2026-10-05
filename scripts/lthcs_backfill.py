@@ -43,7 +43,6 @@ Output: a one-line summary per date and an aggregate report at the end::
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import subprocess
 import sys

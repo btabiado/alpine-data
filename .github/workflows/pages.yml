@@ -37,7 +37,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest becomes 26.04 on 2026-10-19 and setup-python needs a toolcache build for the image
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -123,6 +123,9 @@ jobs:
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           COINMETRICS_API_KEY: ${{ secrets.COINMETRICS_API_KEY }}
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+          # SEC fair-access contact UA for the AI-tab Form D sweep (falls back
+          # to a generic UA when unset).
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
         run: python app.py --fetch-market --no-open
 
       - name: Fallback generate if dashboard.html missing
@@ -211,13 +214,51 @@ jobs:
           fi
         continue-on-error: true
 
+      - name: Snapshot deploy-time feed history (daily rows)
+        # data-stock-money-flow.json and data-travel.json are rebuilt by this
+        # job and never committed, and neither upstream serves history, so
+        # each build used to throw yesterday's reading away. This appends ONE
+        # compact row-set per observation date (scripts/snapshot_history.py):
+        #   data/stock_money_flow_history.csv   completed trading-day bars only
+        #   data/travel_advisory_levels.csv     one summary row per day
+        #   data/travel_advisory_changes.csv    a row only when a level changes
+        # Append-only by date, so the hourly schedule re-runs it as a no-op and
+        # the commit below fires at most once per new date. ~0.2 MB/year total.
+        # Must run here: the sidecars exist only inside this job.
+        run: python scripts/snapshot_history.py || echo "[history] snapshot failed; continuing"
+        continue-on-error: true
+
+      - name: Commit deploy-time feed history
+        # Same signed API commit as data/composites, with [skip ci]. Nothing is
+        # staged unless the snapshot above appended a new date, so this is a
+        # no-op on every run but the first one after a new observation lands.
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          FILES="data/stock_money_flow_history.csv data/travel_advisory_levels.csv data/travel_advisory_changes.csv"
+          for f in $FILES; do
+            if [ -f "$f" ]; then git add -- "$f"; fi
+          done
+          if git diff --cached --quiet -- $FILES; then
+            echo "[history] no new observation date; nothing to commit"
+          else
+            .github/scripts/api-commit.sh \
+              "history: deploy-time feed rows $(date -u +%Y-%m-%d) [skip ci]" \
+              || echo "[history] commit failed; continuing"
+          fi
+        continue-on-error: true
+
       - name: Probe upstream API reachability (live snapshot)
         # Hits each upstream data-source endpoint and writes
         # data/health/api_status.json — the snapshot the static /health/apis.html
         # page falls back to when there's no live server to probe through.
         # Keyed sources report auth_required (live, gated) when the secret is
-        # absent, so this stays useful without every key configured. Pure
-        # stdlib, ~50 cheap requests. Must NOT break the deploy.
+        # absent, so this stays useful without every key configured. ~50 cheap
+        # requests, stdlib urllib except the TSA probe, which uses `requests`
+        # (tsa.gov's edge 403s urllib from Actions). `requests` comes from
+        # requirements.txt via "Install dependencies" above; without it that
+        # probe falls back to urllib. Must NOT break the deploy.
         #
         # *** THIS ENV BLOCK MUST LIST EVERY key_env api_status.TARGETS NAMES. ***
         # It listed five of fourteen. The other nine — Socrata, Census, BLS,
@@ -381,9 +422,9 @@ jobs:
         continue-on-error: true
 
       - name: Enrich + rebuild Summit dashboard
-        timeout-minutes: 6   # bound the GDELT/Wikidata enrich + rebuild (continue-on-error already set)
-        # Pull live vendor news (GDELT) + company facts (Wikidata) — both
-        # keyless — then rebuild snowflake_summit/dashboard.html so /summit/
+        timeout-minutes: 6   # bound the news/Wikidata enrich + rebuild (continue-on-error already set)
+        # Pull live vendor news (Google News RSS) + company facts (Wikidata) —
+        # both keyless — then rebuild snowflake_summit/dashboard.html so /summit/
         # ships fresh data each deploy. Cached via .enrich_cache.json (restored
         # above) so most runs are cheap; a fetch failure keeps the prior data
         # (stale-keep) and the committed dashboard.html is the final fallback.
@@ -392,6 +433,82 @@ jobs:
         run: |
           python snowflake_summit/enrich_vendors.py || echo "[summit] enrich failed; using existing data"
           python snowflake_summit/build.py || echo "[summit] rebuild failed; using committed dashboard.html"
+        continue-on-error: true
+
+      - name: Commit Summit news feed
+        # The enricher above refreshes snowflake_summit/news.json on every
+        # deploy, but nothing committed it, so the repo copy (and the
+        # data-health monitor that reads it) sat at 2026-06-04 for four months
+        # while /summit/ itself moved on. Committed back the same way
+        # data/composites is: staged, then handed to the signed api-commit.sh,
+        # with [skip ci] so it does not retrigger this workflow.
+        #
+        # Churn guard: hourly runs add a few headlines each, and committing
+        # every one would mean ~24 commits a day. Commit only when the feed's
+        # data date (`generated`, the newest item's day) moved, or when the
+        # committed copy was gathered more than MAX_FEED_AGE_H ago. The check
+        # is also a validity guard: a file that is not JSON with a non-empty
+        # items list is never staged over a good one.
+        if: github.event_name != 'pull_request' && hashFiles('snowflake_summit/news.json') != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAX_FEED_AGE_H: "24"
+          COMMIT_FLAG: ${{ runner.temp }}/summit-news-commit.flag
+        run: |
+          set -euo pipefail
+          rm -f "$COMMIT_FLAG"
+          python3 - <<'PY'
+          import json, os, subprocess
+          from datetime import datetime, timezone
+
+          PATH = "snowflake_summit/news.json"
+
+          def decide():
+              try:
+                  fresh = json.loads(open(PATH, encoding="utf-8").read())
+              except (OSError, ValueError) as e:
+                  return False, f"news.json unreadable ({e}); not staging it"
+              if not isinstance(fresh, dict) or not fresh.get("items"):
+                  return False, "news.json has no items; not staging it"
+              old = subprocess.run(["git", "show", f"HEAD:{PATH}"],
+                                   capture_output=True, text=True)
+              if old.returncode != 0:
+                  return True, "first commit of the feed"
+              try:
+                  prev = json.loads(old.stdout)
+              except ValueError:
+                  return True, "committed feed is unparseable; replacing it"
+              if prev == fresh:
+                  return False, "feed unchanged"
+              if prev.get("generated") != fresh.get("generated"):
+                  return True, (f"feed date moved {prev.get('generated')} -> "
+                                f"{fresh.get('generated')}")
+              try:
+                  then = datetime.fromisoformat(
+                      str(prev["gathered_at"]).replace("Z", "+00:00"))
+                  age_h = (datetime.now(timezone.utc) - then).total_seconds() / 3600
+              except (KeyError, ValueError, TypeError):
+                  age_h = float("inf")
+              if age_h >= float(os.environ.get("MAX_FEED_AGE_H", "24")):
+                  return True, f"committed feed gathered {age_h:.1f}h ago"
+              return False, "new headlines only, committed copy is recent"
+
+          go, why = decide()
+          print(f"[summit-news] {'committing' if go else 'skipping'}: {why}")
+          if go:
+              open(os.environ["COMMIT_FLAG"], "w").write("yes")
+          PY
+          if [ ! -f "$COMMIT_FLAG" ]; then
+            exit 0
+          fi
+          git add snowflake_summit/news.json
+          if git diff --cached --quiet -- snowflake_summit/news.json; then
+            echo "[summit-news] staged diff is empty; nothing to commit."
+            exit 0
+          fi
+          .github/scripts/api-commit.sh \
+            "summit: news feed $(date -u +%Y-%m-%d) [skip ci]" \
+            || echo "[summit-news] commit failed; continuing"
         continue-on-error: true
 
       - name: Rebuild Competitive Landscape dashboard
@@ -649,6 +766,21 @@ jobs:
           # a stale feed reads as a visible soft-failure in the run UI rather
           # than as an unbroken row of green ticks.
           exit $rc
+        continue-on-error: true
+
+      - name: Build LTHCS site indexes (file listing, health summary, pillar history)
+        # GitHub Pages cannot list directories, so the LTHCS pages used to
+        # discover files by requesting them: pipeline.html walked back day by
+        # day with HEAD probes (~285 x 404, ~35 s spinner), /lthcs/health/
+        # pulled 30 days of insider/13F/snapshot JSON (~50 MB) to count keys,
+        # and the detail modal fetched every snapshot (~48 MB) for 5 lines.
+        # This writes data/lthcs/file_index.json, health_summary.json and
+        # history/pillars_by_ticker/<T>.json from the committed data so the
+        # staging below ships them. Pure transform, no network; not committed
+        # (.gitignore). Non-fatal: every page falls back to its old behaviour
+        # when these files are missing.
+        if: hashFiles('scripts/build_lthcs_site_index.py') != ''
+        run: python scripts/build_lthcs_site_index.py --root data/lthcs || echo "[lthcs-index] build failed; pages fall back to probing"
         continue-on-error: true
 
       - name: Stage site directory
@@ -999,6 +1131,24 @@ jobs:
               cp -R landscape/icons _site/landscape/
             fi
           fi
+          # Publish the newest daily audit report at /audit/latest.md and
+          # /audit/latest.json. daily-audit.yml commits it to audit/daily/ once
+          # a day; this just mirrors the committed copy, so a missing report
+          # (before the first audit run) makes this a no-op.
+          # Explicit names, not a glob: this step runs with `shopt -s nullglob`
+          # (set above), so an unmatched `latest.*` expands to nothing, `ls`
+          # with no arguments succeeds, and `cp` then fails with no source.
+          for f in audit/daily/latest.md audit/daily/latest.json; do
+            if [ -f "$f" ]; then
+              mkdir -p _site/audit
+              cp "$f" _site/audit/
+            fi
+          done
+          # Site-wide 404 page (GitHub Pages serves _site/404.html for any
+          # missing path). Dark, mobile-friendly, absolute links home.
+          if [ -f site_static/404.html ]; then
+            cp site_static/404.html _site/404.html
+          fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BDT Dashboards — static snapshot
@@ -1065,4 +1215,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5.0.0
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

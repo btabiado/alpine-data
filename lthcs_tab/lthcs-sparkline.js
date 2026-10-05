@@ -32,6 +32,16 @@ const DEFAULT_BAND_COLORS = {
  * @param {Object<string,string>|null} [bandColors] Optional override map keyed by band name.
  * @returns {string|null}
  */
+/**
+ * Text colour for a pill filled with bandColorForScore(score): near-black on
+ * the light fills (high / constructive / monitor — white measured 2.4-3.9:1
+ * there), white on the dark ones. null when the score is not a number.
+ */
+export function bandInkForScore(score) {
+  if (typeof score !== "number" || !Number.isFinite(score)) return null;
+  return (score >= 60 && score < 90) ? "#111" : "#fff";
+}
+
 export function bandColorForScore(score, bandColors = null) {
   if (typeof score !== "number" || !Number.isFinite(score)) return null;
   const colors = bandColors || DEFAULT_BAND_COLORS;

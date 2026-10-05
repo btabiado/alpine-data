@@ -137,7 +137,7 @@ def percentile(values: Sequence[float], pct: float) -> Optional[float]:
             f = float(v)
         except (TypeError, ValueError):
             continue
-        if f != f:  # NaN
+        if math.isnan(f):  # NaN
             continue
         cleaned.append(f)
     if not cleaned:
@@ -154,7 +154,7 @@ def percentile(values: Sequence[float], pct: float) -> Optional[float]:
 
 def summary_stats(values: Sequence[float]) -> Dict[str, Any]:
     """Mean / stdev / count / percentiles for a numeric sample."""
-    cleaned = [float(v) for v in values if v is not None and not (isinstance(v, float) and v != v)]
+    cleaned = [float(v) for v in values if v is not None and not (isinstance(v, float) and math.isnan(v))]
     n = len(cleaned)
     if n == 0:
         return {
@@ -199,7 +199,7 @@ def histogram(
             x = float(v)
         except (TypeError, ValueError):
             continue
-        if x != x:
+        if math.isnan(x):
             continue
         x_clamped = max(0.0, min(100.0, x))
         for i, (lo, hi) in enumerate(bins):
@@ -250,7 +250,7 @@ def band_counts(
             x = float(v)
         except (TypeError, ValueError):
             continue
-        if x != x:
+        if math.isnan(x):
             continue
         x_floor = int(math.floor(max(0.0, min(100.0, x))))
         for i, (_, lo, hi) in enumerate(bands):
@@ -458,18 +458,20 @@ def pillar_correlation_matrix(
     scoreset: Sequence[Dict[str, Any]],
 ) -> Dict[Tuple[str, str], Optional[float]]:
     """Compute the 5x5 pillar correlation matrix from a snapshot."""
-    cols: Dict[str, List[float]] = {p: [] for p in PILLAR_ORDER}
-    for r in scoreset:
-        subs = r.get("subscores") or {}
-        # Only include rows with all pillars present and numeric.
-        if any(not isinstance(subs.get(p), (int, float)) for p in PILLAR_ORDER):
-            continue
-        for p in PILLAR_ORDER:
-            cols[p].append(float(subs[p]))
+    # Pairwise-complete: a pillar dropped from scoring (null) for every row
+    # used to empty the WHOLE matrix, because rows were kept only when all
+    # five pillars were numeric. Each pair now uses the rows where both are.
+    rows = [r.get("subscores") or {} for r in scoreset]
     out: Dict[Tuple[str, str], Optional[float]] = {}
     for a in PILLAR_ORDER:
         for b in PILLAR_ORDER:
-            out[(a, b)] = pearson_corr(cols[a], cols[b])
+            xa, xb = [], []
+            for subs in rows:
+                va, vb = subs.get(a), subs.get(b)
+                if isinstance(va, (int, float)) and isinstance(vb, (int, float)):
+                    xa.append(float(va))
+                    xb.append(float(vb))
+            out[(a, b)] = pearson_corr(xa, xb)
     return out
 
 

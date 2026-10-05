@@ -1003,7 +1003,16 @@ HTML_TEMPLATE = r"""<!doctype html>
 })();
 </script>
 <style>
+/* Phone tap targets (audit: < 24px): grow the hit box with padding and pull
+   the layout back with a negative margin, so nothing visibly moves. */
+#aiTopFundedTable td a{display:inline-block;padding:6px 0;margin:-6px 0}
+a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7px 0;margin:-7px 0}
+#pocOverlayToggle{width:20px;height:20px}
+.travel-contact-link{display:inline-block;padding:6px 2px;margin:-6px -2px}
 :root{
+  /* Dark-only page: native controls (scrollbars, selects, date inputs,
+     default link colours) render in their dark variants. */
+  color-scheme:dark;
   --bg:#0b0d12; --panel:#141821; --panel2:#1b2030; --border:#252b3a;
   --text:#e6e8ee; --muted:#8a93a6; --btc:#f7931a; --eth:#627eea; --link:#2a5ada; --ltc:#bfbbbb;
   --green:#22c55e; --red:#ef4444; --amber:#f59e0b; --purple:#a78bfa; --cyan:#06b6d4;
@@ -2446,6 +2455,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
   <div id="tab-overview">
+    <!-- CLS: reserve the filled height while the boot render (which waits
+             for Chart.js) hasn't run yet; :empty-only so no gap afterwards. -->
+        <style>#overviewNews:empty{min-height:225px}#overviewInsights:empty{min-height:290px}#overviewSentimentCard{min-height:150px}
+          /* The strip + spotlight above the news grid also fill at boot (~0.9s)
+             and pushed it down ~180px; hold their rows while empty. */
+          #tabFresh-overview:empty{display:block;visibility:hidden}
+          #overviewSpotlight:empty{min-height:125px}
+          @media (max-width:600px){#overviewSpotlight:empty{min-height:107px}}</style>
     <div id="aiTake-overview" class="aiTake-slot"></div>
     <!-- Freshness strip: OLDEST real observation date feeding this tab.
          Written by renderTabFreshness(); hidden while empty. -->
@@ -2460,6 +2477,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="v2-card" style="cursor:pointer" data-jump="trading" title="See full news feed in Trading tab">
         <div class="v2-card__head"><div><h2 class="v2-card__title">Latest crypto news</h2><div class="v2-card__subtitle">Top 4 · click for full feed</div></div></div>
         <div class="v2-card__body" id="overviewNews"></div>
+
       </div>
       <div class="v2-card v2-card--ai">
         <div class="v2-card__head"><div><h2 class="v2-card__title">Top insights</h2><div class="v2-card__subtitle">Most-relevant 4 right now</div></div></div>
@@ -2590,7 +2608,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div id="coinbaseSpotWrap" class="v2-card hidden" style="margin-top:6px">
       <div class="v2-card__head">
         <div>
-          <h2 class="v2-card__title">Coinbase spot <span class="tag">live exchange</span></h2>
+          <h2 class="v2-card__title">Coinbase spot <span class="tag">exchange quote</span> <span class="sub" id="coinbaseSpotAsOf" style="font-size:11px;font-weight:400;color:var(--muted)"></span></h2>
           <div class="v2-card__subtitle">Bid/ask + 24h range from Coinbase Exchange (US-regulated). Cross-check vs CoinGecko aggregate.</div>
         </div>
       </div>
@@ -2655,7 +2673,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <span style="color:var(--v2-bad)">OUTFLOWS</span>
       </div>
     </div>
-    <div class="card" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px">
+    <div class="card" id="etfLoadCard" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px">
       <span class="lbl" style="margin:0">Load data</span>
       <button class="btn" id="loadBtcBtn" title="Paste BTC ETF flow CSV from Farside">Paste BTC</button>
       <button class="btn" id="loadEthBtn" title="Paste ETH ETF flow CSV from Farside">Paste ETH</button>
@@ -3139,7 +3157,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="v2-card" id="aiNewsSummaryCard">
           <div class="v2-card__head">
             <div>
-              <h2 class="v2-card__title">AI news sentiment <span class="tag">live</span></h2>
+              <h2 class="v2-card__title">AI news sentiment <span class="tag">news feed</span></h2>
               <div class="v2-card__subtitle">Aggregate sentiment across AI/ML/chips coverage &middot; auto-classified POSITIVE / NEUTRAL / NEGATIVE</div>
             </div>
           </div>
@@ -3579,7 +3597,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </div>
     <div id="socialEmpty" class="empty hidden">
       No research data yet — all free sources (Reddit, CryptoCompare, Santiment) returned empty.
-      Refresh or wait for the next hourly cron.
+      Check back later — the site rebuilds every few hours.
     </div>
     <div id="socialContent">
       <div class="sub" id="socialAsOf" style="margin-bottom:6px"></div>
@@ -3588,7 +3606,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         and technical signals. Sources: Reddit (subscribers + top posts; cloud-IP-blocked, local-only),
         CryptoCompare social (legacy endpoint now auth-gated, may be empty),
         CryptoCompare news sentiment (keyless, POSITIVE/NEGATIVE/NEUTRAL labels),
-        Santiment (daily-active addresses + dev activity, refreshed once a day at 00:00 UTC),
+        Santiment (daily-active addresses + dev activity, fetched once per UTC day),
         and Point of Control (volume profile derived from existing price+volume series).
       </div>
 
@@ -4283,7 +4301,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">
             Data: NUFORC via community archive — sighting <strong>reports</strong>, not verified phenomena.
             Filed shapes and durations are eyewitness claims. Browse the live database at
-            <a href="https://nuforc.org/" target="_blank" rel="noopener noreferrer">nuforc.org</a>.
+            <a href="https://nuforc.org/" target="_blank" rel="noopener noreferrer" style="color:#60a5fa">nuforc.org</a>.
           </div>
         </div>
       </div>
@@ -5260,6 +5278,11 @@ function renderCoinbaseIntlPerps(){
   const shorts = perps.filter(p => p && typeof p.funding_rate === 'number' && p.funding_rate < 0)
                       .sort((a,b) => a.funding_rate - b.funding_rate)
                       .slice(0, 6);
+  const cieSt = (DATA.market || {}).coinbase_intl_perps_status || {};
+  const cieWhy = (cieSt.available === false && cieSt.reason)
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">'
+      + 'Coinbase International perps unavailable: ' + escapeHtml(String(cieSt.reason)) + '.</td></tr>'
+    : null;
   const emptyRow = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">'
     + 'No perpetuals in this build\u2019s payload \u2014 an absence, not a reading of zero.</td></tr>';
 
@@ -5282,8 +5305,8 @@ function renderCoinbaseIntlPerps(){
 
   const longsBody  = document.querySelector('#cieLongsTable tbody');
   const shortsBody = document.querySelector('#cieShortsTable tbody');
-  if (longsBody)  longsBody.innerHTML  = longs.length  ? longs.map(rowFor).join('')  : emptyRow;
-  if (shortsBody) shortsBody.innerHTML = shorts.length ? shorts.map(rowFor).join('') : emptyRow;
+  if (longsBody)  longsBody.innerHTML  = longs.length  ? longs.map(rowFor).join('')  : (cieWhy || emptyRow);
+  if (shortsBody) shortsBody.innerHTML = shorts.length ? shorts.map(rowFor).join('') : (cieWhy || emptyRow);
 }
 
 // CADLI BTC reference price chart — 90d daily close from the CoinDesk CADLI
@@ -5296,7 +5319,27 @@ function renderCadliChart(){
   const series = (bars || [])
     .filter(b => b && b.date && b.close != null)
     .map(b => ({date: b.date, value: b.close}));
-  if (!chartOrEmpty('cadliBtcChart', series.length > 0, 'No CADLI BTC reference series in this build\u2019s payload \u2014 an absence, not a reading of zero.')) {
+  // cadli_btc_status.reason is set when the fetch failed (since 2026-10 the
+  // CoinDesk Data API answers keyless requests with HTTP 401). Show it, so
+  // the empty state says why instead of promising a refresh that won't come.
+  const cst = (DATA.market || {}).cadli_btc_status || {};
+  const cadliMsg = (cst.available === false && cst.reason)
+    ? 'CADLI BTC reference unavailable: ' + cst.reason + '.'
+      + (cst.checked_at ? ' Checked ' + String(cst.checked_at).slice(0, 16).replace('T', ' ') + ' UTC.' : '')
+      + ' No series in this build \u2014 an absence, not a reading of zero.'
+    : 'No CADLI BTC reference series in this build\u2019s payload \u2014 an absence, not a reading of zero.';
+  const ok = chartOrEmpty('cadliBtcChart', series.length > 0, cadliMsg);
+  // Unavailable: collapse the ~380px chart box to the height of its message
+  // instead of leaving a large empty frame. Restored when data returns.
+  const cv = document.getElementById('cadliBtcChart');
+  const wrap = cv && cv.parentElement;
+  if (wrap){
+    wrap.style.height = ok ? '' : 'auto';
+    wrap.style.minHeight = ok ? '' : '0';
+    const em = wrap.querySelector('.chart-empty');
+    if (em) em.style.position = ok ? 'absolute' : 'static';
+  }
+  if (!ok) {
     destroy('cadliBtc');
     return;
   }
@@ -5418,7 +5461,8 @@ function signalColor(score){
   if (score >= 20) return 'var(--v2-good)';
   if (score > -20) return 'var(--v2-warn)';
   if (score > -50) return 'var(--v2-bad)';
-  return '#b91c1c';
+  // Was #b91c1c: 2.75:1 on the dark panels. #f87171 is 6.4:1.
+  return '#f87171';
 }
 
 function renderSignalCard(asset, container){
@@ -5841,7 +5885,7 @@ function renderTop20Signals(){
     {key:'buy',         glyph:'✓',  label:'BUY',         color:'#22c55e'},
     {key:'hold',        glyph:'◯',  label:'HOLD',        color:'#f59e0b'},
     {key:'sell',        glyph:'↓',  label:'SELL',        color:'#ef4444'},
-    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#b91c1c'},
+    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#f87171'},
   ];
   // Outer #top20SignalCards is an auto-fit grid, so each section becomes a
   // column on laptop widths. Previously every empty bucket consumed a full
@@ -6859,12 +6903,26 @@ function renderWhaleEth(){
   const statsBox = document.getElementById('ethStatsBox');
   if (statsBox){
     if (bc.blocks_24h || bc.transactions_24h){
-      const avgFee = bc.avg_tx_fee_eth_24h;
-      const mp    = bc.market_price_usd;
-      const burn  = bc.burned_eth_24h;
-      const erc20 = bc.erc20_transactions_24h;
-      const erc721= bc.erc721_transactions_24h;
-      const inflation = bc.inflation_eth_24h;
+      // Coerce: Blockchair sometimes returns numeric fields as strings
+      // ("0.00123"), and a string has no .toFixed — that TypeError used to
+      // abort the whole ETH panel. Number(null/undefined/"") -> NaN, which
+      // Number.isFinite rejects, so missing fields stay hidden.
+      const toFiniteNum = (v) => {
+        if (v == null || v === '') return null;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      };
+      let avgFee = toFiniteNum(bc.avg_tx_fee_eth_24h);
+      // Older payloads carried Blockchair's raw WEI string under this *_eth_*
+      // name (fetch_market now converts), which rendered as
+      // "88120340117212.000000 ETH". No 24h average fee is ever >= 1 ETH, so
+      // a value that large is wei.
+      if (avgFee != null && avgFee >= 1) avgFee = avgFee / 1e18;
+      const mp    = toFiniteNum(bc.market_price_usd);
+      const burn  = toFiniteNum(bc.burned_eth_24h);
+      const erc20 = toFiniteNum(bc.erc20_transactions_24h);
+      const erc721= toFiniteNum(bc.erc721_transactions_24h);
+      const inflation = toFiniteNum(bc.inflation_eth_24h);
       // Deflationary if burn > inflation in the 24h window. Post-Merge this
       // flips between deflationary and mildly inflationary block-to-block.
       const netSupplyDelta = (burn != null && inflation != null) ? (inflation - burn) : null;
@@ -6873,7 +6931,7 @@ function renderWhaleEth(){
       statsBox.innerHTML = `
         <div>Blocks (24h): <strong style="color:var(--text)">${fmtNum(bc.blocks_24h||0, 0)}</strong></div>
         <div>Txs (24h): <strong style="color:var(--text)">${fmtNum(bc.transactions_24h||0, 0)}</strong></div>
-        ${avgFee != null ? `<div>Avg tx fee: <strong style="color:var(--text)">${avgFee.toFixed(6)} ETH</strong>${mp ? ` (~$${(avgFee*mp).toFixed(2)})` : ''}</div>` : ''}
+        ${avgFee != null ? `<div>Avg tx fee: <strong style="color:var(--text)">${avgFee.toFixed(6)} ETH</strong>${mp != null ? ` (~$${(avgFee*mp).toFixed(2)})` : ''}</div>` : ''}
         ${burn != null ? `<div><span class="v2-tip-anchor" data-v2-tip="ETH base fee permanently destroyed by every transaction since the London upgrade. Net deflationary when burn > issuance.">EIP-1559 burn</span> (24h): <strong class="${netCls}">${burn.toFixed(2)} ETH</strong>${mp ? ` (~${fmtUSD(burn*mp,'auto')})` : ''} <span style="color:var(--muted)">· ${netLbl}</span></div>` : ''}
         ${erc20  != null ? `<div>ERC-20 tx (24h): <strong style="color:var(--text)">${fmtNum(erc20, 0)}</strong></div>` : ''}
         ${erc721 != null ? `<div>ERC-721 tx (24h): <strong style="color:var(--text)">${fmtNum(erc721, 0)}</strong></div>` : ''}`;
@@ -6919,20 +6977,53 @@ function renderWhaleAlerts(){
   }).join('');
 }
 
-// Recent ETH whale transactions: ≥ $1M last 24h from Blockchair. Hidden when
-// no data. Mirrors renderWhaleAlerts() (BTC mempool feed) in structure.
+// Recent ETH whale transactions: ≥ $1M in the TRAILING 24h from Blockchair.
+// Rows are re-checked against the window here as well as in the fetcher: an
+// earlier build replayed an unfiltered all-time scan (2015-2022 transfers)
+// under this "last 24h" label, so a row older than 24h is never shown. When
+// nothing qualifies the card says why instead of silently disappearing.
+const ETH_WHALE_WINDOW_MS = 24 * 3600 * 1000;
+function ethWhaleTxTime(t){
+  const s = (t && typeof t.time === 'string') ? t.time.trim() : '';
+  if (!s) return NaN;
+  // Blockchair times are UTC "YYYY-MM-DD HH:MM:SS" with no zone marker.
+  const hasZone = /([zZ]|[+-]\d\d:?\d\d)$/.test(s);
+  return Date.parse(s.replace(' ', 'T') + (hasZone ? '' : 'Z'));
+}
+function recentEthWhaleTxs(txs, nowMs){
+  const now = Number.isFinite(nowMs) ? nowMs : Date.now();
+  return (Array.isArray(txs) ? txs : []).filter(t => {
+    const ms = ethWhaleTxTime(t);
+    return Number.isFinite(ms) && ms >= now - ETH_WHALE_WINDOW_MS && ms <= now + 10 * 60 * 1000;
+  });
+}
 function renderEthWhaleAlerts(){
   const card = document.getElementById('ethWhaleAlertsCard');
   if (!card) return;
-  const txs = (((DATA.whale||{}).eth||{}).large_transactions) || [];
-  if (!txs.length){ card.classList.add('hidden'); return; }
+  const eth = ((DATA.whale||{}).eth) || null;
+  if (!eth){ card.classList.add('hidden'); return; }
+  const raw = Array.isArray(eth.large_transactions) ? eth.large_transactions : [];
+  const txs = recentEthWhaleTxs(raw);
+  const st = eth.large_transactions_status || {};
+  const asOf = st.as_of ? String(st.as_of).replace('T', ' ').slice(0, 16) + ' UTC' : '';
   card.classList.remove('hidden');
   const note = document.getElementById('ethWhaleAlertsNote');
   if (note){
-    note.textContent = `${txs.length} txs ≥ $1M · last 24h`;
+    const cached = st.source === 'stale-cache' ? ' · cached, Blockchair unreachable this build' : '';
+    note.textContent = txs.length
+      ? `${txs.length} txs ≥ $1M · last 24h${cached}`
+      : `≥ $1M · last 24h${asOf ? ' · as of ' + asOf : ''}`;
   }
   const tbody = document.getElementById('ethWhaleAlertsBody');
   if (!tbody) return;
+  if (!txs.length){
+    let why;
+    if (raw.length) why = `The latest Blockchair scan${asOf ? ' (' + asOf + ')' : ''} has no transactions from the last 24 hours.`;
+    else if (st.source === 'live') why = 'No ETH transactions of $1M or more in the last 24 hours.';
+    else why = 'Blockchair was unreachable, so there are no ETH whale transactions from the last 24 hours to show.';
+    tbody.innerHTML = `<tr><td colspan="4" style="color:var(--muted);padding:12px 8px">${escapeHtml(why)}</td></tr>`;
+    return;
+  }
   // Validate ETH tx hash as 0x + 64 hex chars to defang any javascript:/data:
   // scheme injection through the href + innerHTML.
   const isEthTxHash = s => typeof s === 'string' && /^0x[0-9a-fA-F]{64}$/.test(s);
@@ -6943,7 +7034,7 @@ function renderEthWhaleAlerts(){
     const eth = t.value_eth != null ? fmtNum(t.value_eth, 2) : '—';
     const usd = t.value_usd != null ? fmtUSD(t.value_usd, 'auto') : '—';
     const cls = (t.value_usd != null && t.value_usd >= 10_000_000) ? 'green' : '';
-    const time = t.time ? escapeHtml(String(t.time)) : '—';
+    const time = t.time ? escapeHtml(String(t.time)) + ' UTC' : '—';
     const linkCell = hash
       ? `<a href="${txUrl}" target="_blank" rel="noopener" style="color:var(--v2-ai);text-decoration:none">${shortHash} ↗</a>`
       : '—';
@@ -7972,6 +8063,9 @@ function signalsTop20Freshness(){
 // Coinbase International perp rows now carry the exchange's own quote
 // timestamp (as_of / as_of_ts). Oldest across the rows we actually average.
 function perpsFreshness(){
+  const pfund = (DATA.market || {}).perp_funding;
+  if (pfund) return (pfund.available && pfund.as_of)
+    ? { date: fDay(pfund.as_of), stale: 0, total: (pfund.rows || []).length } : null;
   const perps = ((DATA.market || {}).coinbase_intl_perps) || [];
   if (!Array.isArray(perps) || !perps.length) return null;
   const dates = perps.map(p => fDay(p && (p.as_of || p.as_of_ts))).filter(Boolean);
@@ -8153,14 +8247,32 @@ function defiFreshness(){
 // date to show, so we say so (rule 5) rather than printing social.fetched_at.
 function socialFreshness(){
   const s = socialData() || {};
-  const santStale = !!((s.santiment || {}).stale);
+  const sant = s.santiment || {};
+  const santStale = !!sant.stale;
+  // Santiment's same-day series (DAA, 24h actives, dev activity, devs) DO
+  // carry observation dates — the Santiment cards print them as "data
+  // through". The strip reports the OLDEST of those across coins (rule 3)
+  // instead of "as of —". Reddit / CryptoCompare stay undated and are
+  // disclosed in the hover.
+  const coins = sant.coins || {};
+  const lasts = [];
+  Object.keys(coins).forEach(k => {
+    const c = coins[k] || {};
+    const per = [c.daily_active_addresses, c.active_addresses_24h, c.dev_activity, c.dev_contributors]
+      .map(ser => fLast(ser)).filter(Boolean);
+    if (per.length) lasts.push(fMin(per));
+  });
   return {
-    date: null,
+    date: lasts.length ? fMin(lasts) : null,
     stale: 0,
     total: 0,
-    title: 'Reddit / CryptoCompare / Santiment ship point-in-time counts with no '
-         + 'observation date. social.fetched_at is fetch time, so it is not shown '
-         + 'as a freshness date.'
+    label: lasts.length ? 'Santiment data through' : 'as of',
+    title: (lasts.length
+             ? 'Oldest last observation across the Santiment on-chain/dev series ('
+               + lasts.length + ' coin' + (lasts.length === 1 ? '' : 's') + '). '
+             : '')
+         + 'Reddit / CryptoCompare ship point-in-time counts with no observation '
+         + 'date; social.fetched_at is fetch time, so it is not shown as a freshness date.'
          + (santStale ? ' Santiment is currently served from its daily-gated cache.' : ''),
   };
 }
@@ -8366,13 +8478,31 @@ function renderTabFreshness(){
 // alone in the header, which is how a page that rebuilds hourly managed to
 // look fresh while the series behind it were two months old. It now always
 // appears next to #dataFreshness, which reports the actual data age.
+// "12m ago" / "3h ago" / "2d ago" for a sub-day timestamp (build time,
+// exchange quote time). '' when unparseable. Stamps for DATA dates go through
+// freshness(); this is only for wall-clock events.
+function agoText(isoTs){
+  const raw = String(isoTs == null ? '' : isoTs).trim();
+  if (!raw) return '';
+  // generated_at is written without a zone ("2026-10-04T21:11:18") but is UTC.
+  const t = Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(raw) ? raw : raw + 'Z');
+  if (!isFinite(t)) return '';
+  const mins = Math.max(0, Math.round((Date.now() - t) / 60000));
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.round(mins / 60);
+  if (hrs < 48) return hrs + 'h ago';
+  return Math.round(hrs / 24) + 'd ago';
+}
+
 function setBuildStamp(){
   const el = document.getElementById('generatedAt');
   if (el){
-    el.textContent = 'built ' + (DATA.generated_at || '—');
-    el.title = 'When this page was rendered. The dashboard rebuilds hourly, so '
-             + 'this is always recent and says NOTHING about how old the data '
-             + 'is — that is the stamp to the right.';
+    const ago = agoText(DATA.generated_at);
+    el.textContent = 'built ' + (DATA.generated_at || '—') + (ago ? ' (' + ago + ')' : '');
+    el.title = 'When this page was rendered. The rebuild is scheduled hourly, but '
+             + 'GitHub Actions actually runs it every ~1–6 hours, so this can be '
+             + 'several hours old. It says NOTHING about how old the data is — '
+             + 'that is the stamp to the right.';
   }
   renderDataFreshness();
 }
@@ -8919,18 +9049,37 @@ function renderDefi(){
     </tr>`).join('');
   }
 
-  // ---- Optional bridges card (hidden when empty) ----
+  // ---- Bridges card ----
+  // Hidden only when the payload says nothing about bridges (old payloads,
+  // sidecar not loaded yet). When the fetcher reports available:false (since
+  // 2026-10 DeFiLlama serves bridges only on its paid plan: HTTP 402) the
+  // card stays up and says so, rather than vanishing without a word.
   const bridgesCard = document.getElementById('defiBridgesCard');
   const bridgesBody = document.querySelector('#defiBridgesTable tbody');
+  const bridgesMeta = defi.bridges || {};
   if (bridgesCard && bridgesBody) {
+    // The 24h/7d column headers only make sense above real rows; over the
+    // "Unavailable" message they were empty scaffolding.
+    const bridgesHead = document.querySelector('#defiBridgesTable thead');
+    if (bridgesHead) bridgesHead.style.display = bridges.length ? '' : 'none';
     if (bridges.length) {
       bridgesCard.classList.remove('hidden');
+      // fetch_market emits daily_/weekly_volume_usd; the older names are kept
+      // as fallbacks for cached payloads.
       bridgesBody.innerHTML = bridges.slice(0, 15).map((b, i) => `<tr>
         <td style="color:var(--muted)">${i+1}</td>
         <td><strong>${escapeHtml(b.name||b.chain||'')}</strong></td>
-        <td>${fmtUSD(b.volume_24h_usd ?? b.volume_24h ?? b.volume_usd_24h, 'auto')}</td>
-        <td>${fmtUSD(b.volume_7d_usd  ?? b.volume_7d  ?? b.volume_usd_7d,  'auto')}</td>
+        <td>${fmtUSD(b.daily_volume_usd ?? b.volume_24h_usd ?? b.volume_24h ?? b.volume_usd_24h, 'auto')}</td>
+        <td>${fmtUSD(b.weekly_volume_usd ?? b.volume_7d_usd ?? b.volume_7d ?? b.volume_usd_7d, 'auto')}</td>
       </tr>`).join('');
+    } else if (bridgesMeta.available === false && bridgesMeta.reason) {
+      bridgesCard.classList.remove('hidden');
+      const checked = bridgesMeta.checked_at
+        ? ' Checked ' + escapeHtml(String(bridgesMeta.checked_at).slice(0, 16).replace('T', ' ')) + ' UTC.'
+        : '';
+      bridgesBody.innerHTML = `<tr><td colspan="4" style="color:var(--muted);font-size:12px;line-height:1.5;white-space:normal">
+        Unavailable: ${escapeHtml(bridgesMeta.reason)}.${checked} No bridge volumes in this build \u2014 an absence, not a reading of zero.
+      </td></tr>`;
     } else {
       bridgesCard.classList.add('hidden');
       bridgesBody.innerHTML = '';
@@ -9374,6 +9523,16 @@ function renderCoinbaseSpot(){
     return;
   }
   wrap.classList.remove('hidden');
+  // These are quotes captured when the page was built, not a live feed: say
+  // when (the OLDEST exchange ticker time across the rows) and how long ago.
+  const asOfEl = document.getElementById('coinbaseSpotAsOf');
+  if (asOfEl){
+    const times = rows.map(k => (cb[k] || {}).time).filter(t => typeof t === 'string' && isFinite(Date.parse(t))).sort();
+    const t0 = times[0] || null;
+    asOfEl.textContent = t0 ? '· quoted ' + t0.slice(0, 16).replace('T', ' ') + ' UTC (' + agoText(t0) + ')' : '';
+    asOfEl.title = 'Exchange ticker time of the snapshot taken at the last site rebuild. '
+                 + 'The page does not stream prices; it refreshes when the site rebuilds (every few hours).';
+  }
   tbody.innerHTML = rows.map(k => {
     const q = cb[k] || {};
     const sym = k.toUpperCase();
@@ -10306,7 +10465,7 @@ function renderStocksTab(){
     {key:'buy',         glyph:'✓',  label:'BUY',         color:'#22c55e'},
     {key:'hold',        glyph:'◯',  label:'HOLD',        color:'#f59e0b'},
     {key:'sell',        glyph:'↓',  label:'SELL',        color:'#ef4444'},
-    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#b91c1c'},
+    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#f87171'},
   ];
   const html = sections.map(sec => {
     const items = byBucket[sec.key];
@@ -10415,6 +10574,18 @@ function renderAiNewsSpotlight(){
 // hasn't loaded yet — renderAll's travelLoadingActive branch shows a
 // placeholder in that case. Reads state.travelSub / travelSubLevel /
 // travelQuery / travelTerrorOnly / travelSort.
+// Risk-indicator pills exist only when fetch_advisories parsed the State
+// Dept HTML table. In its RSS fallback (the table sits behind a bot
+// challenge) every row carries risks:[] because the data is MISSING, not
+// because a country has none. Treat that as "unavailable" so a Level 4
+// country never reads "No specific risk indicators" and the terrorism count
+// is never a fabricated 0. Older payloads without the flag are recognised by
+// their source tag.
+function travelRisksAvailable(t){
+  return !!t && t.risks_available !== false && t.source !== 'rss-fallback';
+}
+const TRAVEL_RISKS_UNAVAILABLE = 'Risk indicators unavailable (source blocked)';
+
 function renderTravel(){
   const travel = DATA.travel;
   if (!travel || !Array.isArray(travel.advisories)) return; // sidecar pending
@@ -10428,7 +10599,12 @@ function renderTravel(){
     if (Array.isArray(a.risks) && a.risks.indexOf('T') !== -1) counts.terror++;
   }
 
-  const sub = state.travelSub || 'overview';
+  const risksOk = travelRisksAvailable(travel);
+  let sub = state.travelSub || 'overview';
+  if (!risksOk && sub === 'terror') { sub = 'overview'; state.travelSub = 'overview'; }
+  document.querySelectorAll('.travel-subtab[data-travelsub="terror"]').forEach(b => {
+    b.classList.toggle('hidden', !risksOk);
+  });
 
   // Toggle sub-view visibility
   const overviewEl = document.getElementById('travelOverview');
@@ -10444,9 +10620,9 @@ function renderTravel(){
   });
 
   if (sub === 'overview') {
-    renderTravelOverview(advisories, bulletins, counts, travel.generated_at);
+    renderTravelOverview(advisories, bulletins, counts, travel.generated_at, risksOk);
   } else {
-    renderTravelList(advisories, sub, counts);
+    renderTravelList(advisories, sub, counts, risksOk);
   }
 }
 
@@ -10468,7 +10644,7 @@ function travelFmtDate(iso){
   return months[m] + ' ' + d + ', ' + parts[0];
 }
 
-function renderTravelOverview(advisories, bulletins, counts, generatedAt){
+function renderTravelOverview(advisories, bulletins, counts, generatedAt, risksOk = true){
   // Stat cards row — clicking L1/L2/L3/L4 navigates to that level sub-view;
   // Terrorism card opens the Terrorism sub-view.
   const statHost = document.getElementById('travelStatCards');
@@ -10480,11 +10656,13 @@ function renderTravelOverview(advisories, bulletins, counts, generatedAt){
         '<div class="travel-stat__sub">' + escapeHtml(TRAVEL_LEVEL_SHORT[l]) + '</div>' +
       '</button>'
     ).join('') +
-    '<button class="travel-stat travel-stat--terror" data-travelstat="terror" type="button">' +
-      '<div class="travel-stat__num">' + counts.terror + '</div>' +
-      '<div class="travel-stat__label">Terrorism</div>' +
-      '<div class="travel-stat__sub">Flagged destinations &rarr;</div>' +
-    '</button>';
+    (risksOk
+      ? '<button class="travel-stat travel-stat--terror" data-travelstat="terror" type="button">' +
+          '<div class="travel-stat__num">' + counts.terror + '</div>' +
+          '<div class="travel-stat__label">Terrorism</div>' +
+          '<div class="travel-stat__sub">Flagged destinations &rarr;</div>' +
+        '</button>'
+      : '');
     statHost.innerHTML = cards;
   }
 
@@ -10558,7 +10736,7 @@ function renderTravelOverview(advisories, bulletins, counts, generatedAt){
   }
 }
 
-function renderTravelList(advisories, sub, counts){
+function renderTravelList(advisories, sub, counts, risksOk = true){
   // Determine level filter and whether the segmented L3/L4 control is shown
   let levelSet = null;
   let merged = false;
@@ -10579,7 +10757,9 @@ function renderTravelList(advisories, sub, counts){
   if (segment) segment.classList.toggle('hidden', !merged);
   const terrorToggle = document.getElementById('travelTerrorToggle');
   if (terrorToggle) {
-    terrorToggle.classList.toggle('hidden', isTerror); // hidden on the dedicated Terrorism view
+    // Hidden on the dedicated Terrorism view, and whenever risk indicators
+    // are unavailable (filtering on unknown data would show zero rows).
+    terrorToggle.classList.toggle('hidden', isTerror || !risksOk);
     terrorToggle.classList.toggle('active', !!state.travelTerrorOnly);
   }
   // Sync segment active state
@@ -10596,7 +10776,7 @@ function renderTravelList(advisories, sub, counts){
   const q = (state.travelQuery || '').toLowerCase();
   const rows = advisories.filter(d => {
     if (levelSet && levelSet.indexOf(d.level) === -1) return false;
-    if ((state.travelTerrorOnly || isTerror) && !(Array.isArray(d.risks) && d.risks.indexOf('T') !== -1)) return false;
+    if (risksOk && (state.travelTerrorOnly || isTerror) && !(Array.isArray(d.risks) && d.risks.indexOf('T') !== -1)) return false;
     if (q && !String(d.name || '').toLowerCase().includes(q)) return false;
     return true;
   });
@@ -10633,7 +10813,9 @@ function renderTravelList(advisories, sub, counts){
     const lv = d.level;
     const href = sanitizeUrl(d.url, '#');
     const risks = Array.isArray(d.risks) ? d.risks : [];
-    const chips = risks.length === 0
+    const chips = !risksOk
+      ? '<span class="travel-card__norisk">' + TRAVEL_RISKS_UNAVAILABLE + '</span>'
+      : risks.length === 0
       ? '<span class="travel-card__norisk">No specific risk indicators</span>'
       : risks.map(r => {
           const isT = (r === 'T');
@@ -13122,7 +13304,9 @@ function renderAiSecFormD(){
     tb.innerHTML = '<tr><td colspan="6" style="padding:14px;color:var(--muted)">No AI-adjacent Form D filings in the last 60 days. EDGAR may be unreachable, or no qualifying issuers filed in that window.</td></tr>';
     return;
   }
-  if (badge) badge.textContent = 'EDGAR · ' + rows.length + ' filings · last 60d';
+  const fdCov = ((DATA.market||{}).ai_funding||{}).form_d_coverage || {};
+  const fdOf = (Number(fdCov.ai_matches) > rows.length) ? (' of ' + fdCov.ai_matches) : '';
+  if (badge) badge.textContent = 'EDGAR · ' + rows.length + fdOf + ' filings · last 60d';
   // Sort by filed_date desc so the freshest deals lead.
   const sorted = rows.slice().sort((a,b) => {
     const da = a && a.filed_date ? Date.parse(a.filed_date) : 0;
@@ -13967,13 +14151,22 @@ function paintSentimentCard(prefix, net, label, color, posPct, neuPct, negPct, s
   const barPos = document.getElementById(prefix + 'BarPos');
   const barNeu = document.getElementById(prefix + 'BarNeu');
   const barNeg = document.getElementById(prefix + 'BarNeg');
+  // Grey the reading out when its OLDEST dated input is more than 7 days old:
+  // a vivid "BULLISH +40" over week-old inputs reads as a current call. The
+  // freshness stamp underneath still says exactly how old.
+  const fAge = (fresh && fresh.date) ? freshness(fresh.date, {}).ageDays : null;
+  const staleScore = fAge != null && fAge > 7;
+  const shown = staleScore ? 'var(--muted)' : color;
+  card.classList.toggle('sentiment-stale', staleScore);
   if (scoreEl){
     scoreEl.textContent = (net >= 0 ? '+' : '') + net;
-    scoreEl.style.color = color;
+    scoreEl.style.color = shown;
+    if (staleScore) scoreEl.title = 'Greyed out: the oldest input behind this score is ' + fAge + ' days old.';
+    else scoreEl.removeAttribute('title');
   }
   if (labelEl){
     labelEl.textContent = label;
-    labelEl.style.color = color;
+    labelEl.style.color = shown;
   }
   if (sublineEl){
     sublineEl.textContent = subline;
@@ -14201,6 +14394,10 @@ function refreshCompositeHistoryAffordances(){
       : 'This index has no usable daily history yet — open for the details.');
     card.classList.add('v2-histcard');
     card.setAttribute('data-histcard', key);
+    // The whole card opens the history on click; make that reachable from
+    // the keyboard too (Enter/Space on the focused card — see the keydown
+    // handler next to the delegated click below).
+    if (!card.hasAttribute('tabindex')) card.setAttribute('tabindex', '0');
   });
 }
 
@@ -14510,6 +14707,13 @@ function closeCompositeHistory(){
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeCompositeHistory();
+    // Keyboard twin of the whole-card click: only when the card ITSELF has
+    // focus, so Enter on a link/button inside it keeps its own meaning.
+    if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.hasAttribute
+        && e.target.hasAttribute('data-histcard')){
+      e.preventDefault();
+      openCompositeHistory(e.target.getAttribute('data-histcard'));
+    }
   });
   // FOCUS TRAP (audit V2-E). The modal already declared role="dialog"
   // aria-modal="true", moved focus to its close button on open and restored
@@ -14603,12 +14807,17 @@ function renderOverviewSentiment(){
     components.push(clampScore(avg));
     inputLabels.push('signal avg');
   }
-  // 3) Avg Coinbase Intl perp funding rate. > 0.0001 (0.01%) per +0.0001
-  //    contributes +20; clamp to ±100. Positive funding = crowded longs.
-  const perps = Array.isArray(m.coinbase_intl_perps) ? m.coinbase_intl_perps : [];
-  const rates = perps
-    .map(p => p && Number(p.funding_rate))
-    .filter(v => isFinite(v));
+  // 3) Avg perp funding rate. > 0.0001 (0.01%) per +0.0001 contributes +20;
+  //    clamp to ±100. Positive funding = crowded longs. Sourced from
+  //    market.perp_funding (OKX BTC/ETH/LINK/LTC, fresh rows only): the
+  //    Coinbase Intl perps are paused/delisted and their frozen quotes must not
+  //    vote. Older payloads without perp_funding fall back to the perp rows.
+  const pfund = m.perp_funding || null;
+  const rates = pfund
+    ? ((pfund.available && isFinite(Number(pfund.avg_rate))) ? [Number(pfund.avg_rate)] : [])
+    : (Array.isArray(m.coinbase_intl_perps) ? m.coinbase_intl_perps : [])
+        .map(p => p && Number(p.funding_rate))
+        .filter(v => isFinite(v));
   if (rates.length){
     const avgRate = rates.reduce((a,b)=>a+b,0) / rates.length;
     components.push(clampScore((avgRate / 0.0001) * 20));
@@ -15540,6 +15749,12 @@ function renderSantimentCards(){
     const xout = c.exchange_outflow_latest;
     const xin  = c.exchange_inflow_latest;
     const netFlow = (xout != null && xin != null) ? (xout - xin) : null;
+    // Observation date of the same-day (lag 0) rows: the OLDEST last point
+    // among them, so a cached snapshot can't read as today's numbers. The
+    // ~35d rows carry their own pill.
+    const lastDate = ser => (Array.isArray(ser) && ser.length) ? String((ser[ser.length - 1] || {}).date || '').slice(0, 10) : '';
+    const dataThrough = [c.daily_active_addresses, c.active_addresses_24h, c.dev_activity, c.dev_contributors]
+      .map(lastDate).filter(Boolean).sort()[0] || '';
     const row = (label, val, extra, lag) =>
       `<tr><td style="color:var(--muted);font-size:11px">${label}${lag?' ':''}${stalePill(lag)}</td><td class="right" style="font-size:12px;font-variant-numeric:tabular-nums">${val == null ? '—' : (typeof val === 'string' ? val : fmtNumShort(val))} ${extra||''}</td></tr>`;
     return `<div class="card" style="border-left:4px solid ${accent}">
@@ -15556,7 +15771,7 @@ function renderSantimentCards(){
         ${row('MVRV',           mvrv == null ? null : mvrv.toFixed(2), mvrvTag(mvrv), 35)}
         ${row('Net exch flow',  netFlow, flowTag(netFlow), 35)}
       </tbody></table>
-      ${stale ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:6px">cached (daily-gated)</div>' : ''}
+      ${(dataThrough || stale) ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:6px">${dataThrough ? 'data through ' + escapeHtml(dataThrough) : ''}${dataThrough && stale ? ' \u00b7 ' : ''}${stale ? 'cached (fetched once per UTC day)' : ''}</div>` : ''}
     </div>`;
   }).join('');
 }
@@ -15966,7 +16181,7 @@ function renderTopNewsSentiment(){
     const titleAttr = r.recent
       .map(rc => `${rc.sentiment[0]} · ${(rc.title || '').replace(/"/g, '”').slice(0, 100)}`)
       .join('\n');
-    return `<div class="top-news-sentiment-row" data-tns-symbol="${escapeHtml(r.symbol)}" style="cursor:pointer" title="${escapeHtml(titleAttr || (r.symbol + ': no headline matches'))}">
+    return `<div class="top-news-sentiment-row" data-tns-symbol="${escapeHtml(r.symbol)}" role="button" tabindex="0" aria-label="${escapeHtml(r.symbol)} news sentiment: ${r.total} mention${r.total === 1 ? '' : 's'}, net ${escapeHtml(String(netLbl))} — open headlines" style="cursor:pointer" title="${escapeHtml(titleAttr || (r.symbol + ': no headline matches'))}">
       <div>
         <div class="tns-sym">${escapeHtml(r.symbol)}</div>
         <div class="tns-name">${escapeHtml(r.name)}</div>
@@ -15985,9 +16200,13 @@ function renderTopNewsSentiment(){
   }).join('');
   // Click any row → open the detail modal for that coin. Delegated so
   // re-renders don't need to re-bind.
-  host.querySelectorAll('[data-tns-symbol]').forEach(el =>
-    el.addEventListener('click', () => openNewsSentimentDetail(el.getAttribute('data-tns-symbol')))
-  );
+  host.querySelectorAll('[data-tns-symbol]').forEach(el => {
+    el.addEventListener('click', () => openNewsSentimentDetail(el.getAttribute('data-tns-symbol')));
+    // role=button rows: Enter/Space activate, as for a native button.
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openNewsSentimentDetail(el.getAttribute('data-tns-symbol')); }
+    });
+  });
 }
 
 function renderResearchNews(){
@@ -16782,6 +17001,9 @@ function renderAll(){
   refreshCompositeHistoryAffordances();
 }
 
+// true until the first (boot) selectTab(); see there. `var` (hoisted) so a
+// call that lands before this line runs reads undefined, i.e. "replace".
+var _tabHistReplace = true;
 function selectTab(t){
   state.tab = t;
   // Keep the URL hash in sync so every tab is deep-linkable & shareable
@@ -16793,9 +17015,16 @@ function selectTab(t){
     const _curHash = (location.hash || '').replace(/^#/, '');
     const _wantHash = (t === 'overview') ? '' : t;
     if (_curHash !== _wantHash) {
-      history.replaceState(null, '',
-        _wantHash ? '#' + _wantHash : location.pathname + location.search);
+      const _url = _wantHash ? '#' + _wantHash : location.pathname + location.search;
+      // A user-initiated tab change gets its own history entry, so Back
+      // returns to the previous tab instead of leaving the site after a few
+      // clicks. The first paint (and Back/Forward replays, whose hash already
+      // matches) replace instead. pushState fires no hashchange either, so
+      // the re-entrancy guarantee above still holds.
+      if (_tabHistReplace !== false) history.replaceState(null, '', _url);
+      else history.pushState({ tab: t }, '', _url);
     }
+    _tabHistReplace = false;   // only the very first (boot) paint replaces
   } catch (_) {}
   // Kick off lazy load of any sidecar this tab needs. Fire-and-forget —
   // renderAll() below runs immediately with an empty subtree (the
@@ -17326,7 +17555,21 @@ document.querySelectorAll('.tab').forEach(b => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       selectTab(b.dataset.tab);
+      return;
     }
+    // ARIA tabs pattern (as on /landscape/): Left/Right/Home/End move along
+    // the strip and activate the tab. Hidden tabs are skipped.
+    if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].indexOf(e.key) === -1) return;
+    const strip = Array.prototype.filter.call(
+      document.querySelectorAll('.tab[data-tab]'), t => t.offsetParent !== null);
+    const i = strip.indexOf(b);
+    if (i < 0 || !strip.length) return;
+    const j = e.key === 'Home' ? 0
+            : e.key === 'End' ? strip.length - 1
+            : (i + (e.key === 'ArrowRight' ? 1 : strip.length - 1)) % strip.length;
+    e.preventDefault();
+    strip[j].focus();
+    selectTab(strip[j].dataset.tab);
   });
   // Keyboard focus moving along the strip must drag the strip with it, or a
   // Tab-key user focuses a tab that is scrolled off-screen. Instant, not
@@ -17592,7 +17835,7 @@ if (!isServer){
   const _rb = document.getElementById('refreshBtn');
   if (_rb){
     _rb.textContent = '↻ Reload';
-    _rb.title = 'Reload page to get the latest hourly snapshot';
+    _rb.title = 'Reload to get the latest published snapshot (the site rebuilds every few hours)';
     // Remove the existing live-server click handler by cloning the node.
     const _clone = _rb.cloneNode(true);
     _rb.parentNode.replaceChild(_clone, _rb);
@@ -17615,6 +17858,13 @@ if (!isServer){
     const b = document.getElementById(id);
     if (b) b.style.display = 'none';
   });
+  // /bookmarklet is a Flask route; on GitHub Pages it 404s. Remove the anchor
+  // (not just hide it) so it can't be reached or crawled, and drop the whole
+  // "Load data" card — every control on it needs the local server.
+  const _bm = document.getElementById('bookmarkletLink');
+  if (_bm) _bm.remove();
+  const _lc = document.getElementById('etfLoadCard');
+  if (_lc) _lc.style.display = 'none';
 }
 
 // ---------- Share modal (owner side) ----------
@@ -17933,7 +18183,7 @@ function liveComputeSignal(rows){
 function liveSignalColor(label){
   if (label === 'STRONG BUY') return '#16a34a';
   if (label === 'BUY') return 'var(--v2-good)';
-  if (label === 'STRONG SELL') return '#b91c1c';
+  if (label === 'STRONG SELL') return '#f87171';  // text colour; #b91c1c was 2.75:1
   if (label === 'SELL') return 'var(--v2-bad)';
   return 'var(--v2-warn)';
 }
@@ -19353,6 +19603,12 @@ function _tabFromHash(){
 whenChartsReady(function(){
   selectTab(_tabFromHash() || 'overview');
   renderAll();
+});
+// Back/Forward across the entries selectTab() pushes. The Overview entry has
+// no hash, so hashchange's _tabFromHash() alone can't route back to it.
+window.addEventListener('popstate', () => {
+  const h = location.hash ? _tabFromHash() : 'overview';
+  if (h && h !== state.tab) selectTab(h);
 });
 window.addEventListener('hashchange', () => {
   const h = _tabFromHash();

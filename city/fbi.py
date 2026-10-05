@@ -168,7 +168,7 @@ def _get_json(session, url: str, *, params: dict, timeout: int):
         try:
             body = (resp.text or "")[:200]
         except Exception:
-            pass
+            pass  # response body is optional context for the error raised below
         raise FBIError(redact(f"CDE returned HTTP {status} at {safe_url(url)}: {body}".rstrip(": ")))
 
     try:

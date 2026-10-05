@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 import os
 import time
 from pathlib import Path
@@ -478,7 +479,7 @@ def _safe_float(x: Any) -> Optional[float]:
         f = float(x)
     except (TypeError, ValueError):
         return None
-    if f != f or f in (float("inf"), float("-inf")):
+    if math.isnan(f) or f in (float("inf"), float("-inf")):
         return None
     return f
 

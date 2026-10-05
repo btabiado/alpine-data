@@ -497,7 +497,7 @@ def get_history(
             reverse=True,
         )
     except (KeyError, ValueError):
-        pass
+        pass  # unparseable dates: keep the stored order
     trimmed = history[:days]
     return {
         "ticker": sym,

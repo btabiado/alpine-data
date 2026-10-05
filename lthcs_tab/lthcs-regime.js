@@ -10,6 +10,9 @@
 
 'use strict';
 
+import { fetchLatestSectorStrength } from './lthcs-files.js';
+import { freshnessHtml } from './lthcs-freshness.js';
+
 const MACRO_BASE = '../data/lthcs/macro';
 
 // ---------------------------------------------------------------------------
@@ -182,7 +185,7 @@ function renderSectorTile(sym, info, kind) {
   );
 }
 
-function renderSectorRow(sectorData) {
+function renderSectorRow(sectorData, fileDate, calcDate) {
   if (!sectorData || !sectorData.sectors) return '';
   const entries = Object.entries(sectorData.sectors)
     .map(([sym, info]) => ({ sym, info, rel: Number(info && info.relative_1m) }))
@@ -203,6 +206,11 @@ function renderSectorRow(sectorData) {
         `<span class="lthcs-regime-sector-label">Laggards 1m</span>` +
         `${botHTML}` +
       `</div>` +
+      // The sector stage is optional and often older than the snapshot, so
+      // its own file date is always shown next to it.
+      (fileDate && fileDate !== calcDate
+        ? freshnessHtml(fileDate, { label: 'sectors as of', title: 'Newest sector_strength file on disk; this optional stage does not run every day.' })
+        : '') +
     `</div>`
   );
 }
@@ -219,10 +227,12 @@ export async function renderRegimeStrip(calcDate) {
     return;
   }
 
-  const [breadth, sectors] = await Promise.all([
+  const [breadth, sectorHit] = await Promise.all([
     fetchJSONSafe(`${MACRO_BASE}/breadth_${calcDate}.json`),
-    fetchJSONSafe(`${MACRO_BASE}/sector_strength_${calcDate}.json`),
+    // Newest sector_strength that exists (not today's, which usually 404s).
+    fetchLatestSectorStrength(MACRO_BASE, calcDate, fetchJSONSafe),
   ]);
+  const sectors = sectorHit ? sectorHit.data : null;
 
   // If both missing, hide cleanly.
   if (!breadth && !sectors) {
@@ -241,7 +251,7 @@ export async function renderRegimeStrip(calcDate) {
       )
     : '';
 
-  const sectorHTML = sectors ? renderSectorRow(sectors) : '';
+  const sectorHTML = sectors ? renderSectorRow(sectors, sectorHit.date, calcDate) : '';
 
   host.innerHTML = (
     `<div class="lthcs-regime-strip-inner">` +
