@@ -754,6 +754,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             print("wrote universe.json")
         return 0
     run_date = args.run_date or _today()
+    before = None
     if not args.index_tags_dir:
         result = build(args.candidate_dir, run_date)
     else:
