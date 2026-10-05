@@ -15,7 +15,17 @@ from city import airnow
 from city.airnow import AirNowError, CITY_LATLON, fetch_aqi
 
 
-AIRNOW_URL = "https://www.airnowapi.org/aq/observation/latLong/current/"
+import json
+from pathlib import Path
+
+# The 2026 "By Zip Code or Lat/Long" service. The old latLong/current/ path was
+# retired 2026-09-30 and answers 410 Gone with a valid key.
+AIRNOW_URL = "https://www.airnowapi.org/aq/observation/current/ziplatLong/"
+FIXTURES = Path(__file__).parent / "fixtures" / "airnow"
+
+
+def _fixture(name):
+    return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
 
 
 # ---------------------------------------------------------------------------
@@ -120,7 +130,9 @@ def test_fetch_aqi_request_shape(monkeypatch):
     url, params = session.calls[0]
     assert url == AIRNOW_URL
     assert params["format"] == "application/json"
-    assert params["distance"] == 50
+    # The 2026 service ignores `distance` (it applies the reporting area's
+    # own lookup boundary), so it is no longer sent.
+    assert "distance" not in params
     assert params["API_KEY"] == "secret-key"
     # Coordinates come from CITY_LATLON, not hardcoded.
     lat, lon = CITY_LATLON["chicago"]
@@ -292,3 +304,46 @@ def test_fetch_aqi_uses_module_session_when_none(monkeypatch):
     result = fetch_aqi("seattle")
     assert result == 88
     assert recorded["url"] == AIRNOW_URL
+
+
+# ---------------------------------------------------------------------------
+# 9. 2026 web-service response shape (fixtures recorded from the live service)
+# ---------------------------------------------------------------------------
+def test_fetch_aqi_parses_2026_ziplatlong_fixture(monkeypatch):
+    """lowerCamelCase rows with the AQI in nowcastAQI: max(11, 34, 15) == 34."""
+    monkeypatch.setenv("AIRNOW_API_KEY", "k")
+    session = FakeSession([_fixture("ziplatlong_current.json")])
+    assert fetch_aqi("la", session=session) == 34
+
+
+def test_fetch_aqi_no_data_envelope_returns_none(monkeypatch):
+    """'No observations in range' is a 200 WebServiceError envelope -> None."""
+    monkeypatch.setenv("AIRNOW_API_KEY", "k")
+    session = FakeSession([_fixture("ziplatlong_no_data.json")])
+    assert fetch_aqi("seattle", session=session) is None
+
+
+def test_fetch_aqi_other_error_envelope_raises(monkeypatch):
+    """Any other WebServiceError message is a real failure, not 'no data'."""
+    monkeypatch.setenv("AIRNOW_API_KEY", "k")
+    session = FakeSession([{"WebServiceError": [{"Message": "Invalid API key"}]}])
+    with pytest.raises(AirNowError):
+        fetch_aqi("nyc", session=session)
+
+
+def test_fetch_aqi_nowcast_sentinel_ignored(monkeypatch):
+    """-1 in nowcastAQI is 'no current value', same as the legacy AQI field."""
+    monkeypatch.setenv("AIRNOW_API_KEY", "k")
+    payload = [
+        {"parameterName": "OZONE", "nowcastAQI": -1},
+        {"parameterName": "PM2.5", "nowcastAQI": 61},
+    ]
+    assert fetch_aqi("sf", session=FakeSession([payload])) == 61
+
+
+def test_fetch_aqi_410_gone_raises(monkeypatch):
+    """A retired endpoint (410) must surface as an error, never as 'no data'."""
+    monkeypatch.setenv("AIRNOW_API_KEY", "k")
+    session = FakeSession([FakeResponse(None, status_code=410, text="Gone")])
+    with pytest.raises(AirNowError):
+        fetch_aqi("chicago", session=session)
