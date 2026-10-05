@@ -447,6 +447,9 @@ def _compute_signals_top20_or_skip(market: dict) -> list[dict]:
     if not isinstance(market.get("markets_top"), list) or not market["markets_top"]:
         pytest.skip("market.markets_top is empty — signals_top20 cannot be built")
     sys.path.insert(0, str(ROOT))
+    # pytest.skip() raises, but static analysis cannot tell, so every name
+    # used after a skipping `except` is bound up front.
+    sig_mod = out = None
     try:
         import signals as sig_mod  # noqa: WPS433 (test-time import is fine)
     except Exception as e:  # pragma: no cover — defensive

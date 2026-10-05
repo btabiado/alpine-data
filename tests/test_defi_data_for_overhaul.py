@@ -30,6 +30,7 @@ def _load_defi_or_skip() -> dict:
     """Load and return ``market.defi`` or skip if the file isn't there yet."""
     if not MARKET_JSON.exists():
         pytest.skip(f"{MARKET_JSON} not present — run fetch_market.py first")
+    market = None  # pytest.fail() raises; bound for static analysis
     try:
         market = json.loads(MARKET_JSON.read_text(encoding="utf-8"))
     except json.JSONDecodeError as e:

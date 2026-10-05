@@ -107,6 +107,26 @@ def gh_api_optional(path: str) -> Any | None:
 # ----------------------------- checks -----------------------------
 
 
+# Severities that fail the job. Security rules carry security_severity_level
+# (critical/high/medium/low); quality rules only carry severity
+# (error/warning/note), so a quality "error" fails it too.
+CODEQL_BLOCKING = ("critical", "high", "error")
+
+
+def _codeql_severity(alert: dict) -> str:
+    rule = alert.get("rule") or {}
+    return rule.get("security_severity_level") or rule.get("severity") or "unknown"
+
+
+def _codeql_where(alert: dict, sev: str) -> str:
+    rule = alert.get("rule") or {}
+    loc = ((alert.get("most_recent_instance") or {}).get("location") or {})
+    path = loc.get("path") or "?"
+    line = loc.get("start_line")
+    num = alert.get("number", "?")
+    return f"#{num} {sev} {rule.get('id', '?')} @ {path}{':' + str(line) if line else ''}"
+
+
 def check_codeql(repo: str) -> CheckResult:
     try:
         alerts = gh_api(f"/repos/{repo}/code-scanning/alerts?state=open&per_page=100")
@@ -120,16 +140,25 @@ def check_codeql(repo: str) -> CheckResult:
         )
 
     by_sev: dict[str, int] = {}
+    blocking: list[str] = []
     for a in alerts or []:
-        sev = (a.get("rule") or {}).get("security_severity_level") or (a.get("rule") or {}).get("severity") or "unknown"
+        sev = _codeql_severity(a)
         by_sev[sev] = by_sev.get(sev, 0) + 1
+        if sev in CODEQL_BLOCKING:
+            blocking.append(_codeql_where(a, sev))
 
-    open_error = by_sev.get("error", 0) + by_sev.get("critical", 0) + by_sev.get("high", 0)
+    open_error = len(blocking)
     total = sum(by_sev.values())
     summary = ", ".join(f"{k}={v}" for k, v in sorted(by_sev.items())) or "0"
     rows = [[("metric", "open_total"), ("value", str(total))]]
     for k, v in sorted(by_sev.items()):
         rows.append([("metric", f"severity:{k}"), ("value", str(v))])
+    # Name every alert that fails the job. Without this the run only said
+    # "CodeQL: FAIL open=4 (error=4)", which is how four quality alerts in
+    # tests/ (py/uninitialized-local-variable after pytest.skip) kept this
+    # job red for four months with nobody able to tell why from the log.
+    for where in blocking[:20]:
+        rows.append([("metric", "blocking"), ("value", where)])
 
     return CheckResult(
         "CodeQL",

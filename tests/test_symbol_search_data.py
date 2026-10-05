@@ -162,6 +162,7 @@ def test_signals_top20_searchable_by_symbol_in_dashboard_html():
     test_dashboard_integration.py) and confirm at least one entry has an
     uppercase symbol."""
     html = _read_dashboard_or_skip()
+    signals_top20 = None  # pytest.skip() raises; bound for static analysis
     try:
         signals_top20 = _extract_json_array_at(html, "signals_top20")
     except AssertionError as e:
