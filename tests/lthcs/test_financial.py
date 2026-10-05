@@ -1684,7 +1684,12 @@ def test_bank_tickers_expanded_to_twelve() -> None:
     # BNY = BK's current ticker (2026-07 change); both stay listed so the
     # inactive BK history and the active BNY row route the same way.
     assert "BNY" in financial.BANK_TICKERS
-    assert len(financial.BANK_TICKERS) == 13
+    # + the 11 S&P 500 sync banks verified against SEC XBRL on 2026-10-05
+    # (tests/lthcs/test_lthcs_mapping_followup.py checks them against the
+    # committed evidence).
+    for sym in ("CFG", "FITB", "HBAN", "KEY", "MTB", "NTRS", "PNC", "RF", "RJF", "STT", "SYF"):
+        assert sym in financial.BANK_TICKERS
+    assert len(financial.BANK_TICKERS) == 24
 
 
 def test_bank_cohort_percentile_includes_expansion_members() -> None:

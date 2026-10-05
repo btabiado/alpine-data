@@ -1,0 +1,57 @@
+{
+ "fetched_at": "2026-10-05",
+ "purpose": "Inputs and evidence for the 2026-10-05 LTHCS mapping follow-up to the S&P 500 sync (data/lthcs/universe_candidate/sp500_2026-10-05/): 13F CUSIPs, S&P 100 / NASDAQ-100 tags, uncertain maturity stages, the strict-bank allowlist and the removal of carried-forward synthetic history rows.",
+ "sp100": {
+  "url": "https://en.wikipedia.org/wiki/S%26P_100",
+  "revision_id": 1378292206,
+  "page_last_edited": "2026-10-03T21:10:13Z",
+  "rows": 101,
+  "file": "_constituents_sp100.csv",
+  "note": "Table id=constituents ('Components'). 101 rows = 100 companies; Alphabet is listed as GOOGL and GOOG."
+ },
+ "ndx100": {
+  "url": "https://api.nasdaq.com/api/quote/list-type/nasdaq100",
+  "as_of": "2026-10-01",
+  "as_of_note": "The API response's own date field reads 'Oct 1, 2026'.",
+  "rows": 101,
+  "file": "_constituents_ndx100.csv",
+  "publisher": "Nasdaq, Inc. (index owner)",
+  "cross_check": {
+   "url": "https://en.wikipedia.org/wiki/Nasdaq-100",
+   "revision_id": 1376446286,
+   "page_last_edited": "2026-09-24T05:04:55Z",
+   "result": "The 'List of NASDAQ-100 companies' navbox on that revision names the same 100 companies (Alphabet = GOOGL + GOOG; 'Honeywell Technologies' = HON, 'Honeywell Aerospace' = HONA)."
+  }
+ },
+ "sec": {
+  "user_agent": "etf-flow-dashboard/1.0 (open-source dashboard; contact@etf-flow-dashboard.local) -- the generic SEC_UA fetch_market.py falls back to when SEC_USER_AGENT is unset; no personal contact",
+  "sec_13f_list_current": {
+   "url": "https://www.sec.gov/files/investment/13flist2026q2-txt.txt",
+   "quarter": "2026Q2",
+   "last_modified": "2026-07-06T12:30:12Z",
+   "index_page": "https://www.sec.gov/rules-regulations/staff-guidance/official-list-section-13f-securities",
+   "note": "latest list posted when fetched; no 2026Q3 list yet"
+  },
+  "sec_13f_list_previous": {
+   "url": "https://www.sec.gov/files/investment/13flist2026q1.txt",
+   "quarter": "2026Q1"
+  },
+  "company_tickers": "https://www.sec.gov/files/company_tickers.json",
+  "companyfacts": "https://data.sec.gov/api/xbrl/companyfacts/CIK##########.json",
+  "submissions": "https://data.sec.gov/submissions/CIK##########.json",
+  "filings_cited": {
+   "HONA 8-K (spin-off completed, CUSIP 43849R105)": "https://www.sec.gov/Archives/edgar/data/2089271/000162828026045874/hona-20260625.htm",
+   "FDXF 8-K (spin-off completed 2026-06-01)": "https://www.sec.gov/Archives/edgar/data/2082247/000110465926068521/tm2615735d2_8k.htm",
+   "VMRK 8-K (AvalonBay merger closed, Equity Residential renamed Vivmark Residential, ticker VMRK)": "https://www.sec.gov/Archives/edgar/data/906107/000114036126033377/ef20080318_8k.htm"
+  }
+ },
+ "files": {
+  "_sec_13flist_rows.json": "official 13(f) list rows backing every active ticker's CUSIPs (python -m scripts.build_13f_cusip_map --audit ... --evidence-out)",
+  "_constituents_sp100.csv": "S&P 100 snapshot (see sp100)",
+  "_constituents_ndx100.csv": "NASDAQ-100 snapshot (see ndx100)",
+  "_index_tag_report.json": "tag changes written by scripts/lthcs_universe_sp500_sync.py --index-tags-dir",
+  "_maturity_review.json": "SEC XBRL facts and the decision for the nine maturity stages marked uncertain by the S&P 500 sync",
+  "_bank_xbrl_check.json": "bank-concept test for every active Financials ticker and the strict-bank allowlist",
+  "_synthetic_rows_removed.json": "carried-forward synthetic history rows removed by scripts/lthcs_prune_carried_forward_history.py"
+ }
+}

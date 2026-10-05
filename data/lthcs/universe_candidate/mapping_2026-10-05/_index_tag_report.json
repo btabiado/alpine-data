@@ -1,0 +1,593 @@
+{
+ "source": "data/lthcs/universe_candidate/mapping_2026-10-05/",
+ "changes": [
+  {
+   "ticker": "AMAT",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "ANET",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100"
+   ]
+  },
+  {
+   "ticker": "APP",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "AXON",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "AZN",
+   "from": [
+    "NASDAQ-100"
+   ],
+   "to": []
+  },
+  {
+   "ticker": "BIIB",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "BNY",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100"
+   ]
+  },
+  {
+   "ticker": "CDW",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "CHTR",
+   "from": [
+    "S&P 500",
+    "S&P 100",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "CL",
+   "from": [
+    "S&P 500",
+    "S&P 100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "CPRT",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "CSGP",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "CSX",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "CTSH",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "DELL",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100"
+   ]
+  },
+  {
+   "ticker": "F",
+   "from": [
+    "S&P 500",
+    "S&P 100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "FDX",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100"
+   ]
+  },
+  {
+   "ticker": "GEV",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100"
+   ]
+  },
+  {
+   "ticker": "GFS",
+   "from": [
+    "NASDAQ-100"
+   ],
+   "to": []
+  },
+  {
+   "ticker": "HON",
+   "from": [
+    "S&P 500",
+    "S&P 100",
+    "NASDAQ-100",
+    "DJIA"
+   ],
+   "to": [
+    "S&P 500",
+    "NASDAQ-100",
+    "DJIA"
+   ]
+  },
+  {
+   "ticker": "HONA",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "ILMN",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "KHC",
+   "from": [
+    "S&P 500",
+    "S&P 100",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "LCID",
+   "from": [
+    "NASDAQ-100"
+   ],
+   "to": []
+  },
+  {
+   "ticker": "LITE",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "LRCX",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "LULU",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "MDB",
+   "from": [
+    "NASDAQ-100"
+   ],
+   "to": []
+  },
+  {
+   "ticker": "MET",
+   "from": [
+    "S&P 500",
+    "S&P 100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "MPWR",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "MU",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "NKE",
+   "from": [
+    "S&P 500",
+    "S&P 100",
+    "DJIA"
+   ],
+   "to": [
+    "S&P 500",
+    "DJIA"
+   ]
+  },
+  {
+   "ticker": "ON",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "PANW",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "PLTR",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "PYPL",
+   "from": [
+    "S&P 500",
+    "S&P 100",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "SMCI",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "SNDK",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "SPG",
+   "from": [
+    "S&P 500",
+    "S&P 100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "STX",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "TEAM",
+   "from": [
+    "NASDAQ-100"
+   ],
+   "to": []
+  },
+  {
+   "ticker": "TER",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "TGT",
+   "from": [
+    "S&P 500",
+    "S&P 100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "TTD",
+   "from": [
+    "NASDAQ-100"
+   ],
+   "to": []
+  },
+  {
+   "ticker": "UBER",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100"
+   ]
+  },
+  {
+   "ticker": "VRSK",
+   "from": [
+    "S&P 500",
+    "NASDAQ-100"
+   ],
+   "to": [
+    "S&P 500"
+   ]
+  },
+  {
+   "ticker": "WDC",
+   "from": [
+    "S&P 500"
+   ],
+   "to": [
+    "S&P 500",
+    "NASDAQ-100"
+   ]
+  },
+  {
+   "ticker": "WMT",
+   "from": [
+    "S&P 500",
+    "S&P 100",
+    "DJIA"
+   ],
+   "to": [
+    "S&P 500",
+    "S&P 100",
+    "NASDAQ-100",
+    "DJIA"
+   ]
+  },
+  {
+   "ticker": "ZS",
+   "from": [
+    "NASDAQ-100"
+   ],
+   "to": []
+  }
+ ],
+ "by_index": {
+  "S&P 100": {
+   "constituents": 101,
+   "tagged_active": 101,
+   "added": [
+    "AMAT",
+    "ANET",
+    "BNY",
+    "DELL",
+    "FDX",
+    "GEV",
+    "LRCX",
+    "MU",
+    "PANW",
+    "PLTR",
+    "SNDK",
+    "UBER"
+   ],
+   "removed": [
+    "CHTR",
+    "CL",
+    "F",
+    "HON",
+    "KHC",
+    "MET",
+    "NKE",
+    "PYPL",
+    "SPG",
+    "TGT"
+   ],
+   "not_in_universe": [],
+   "inactive_in_universe": []
+  },
+  "NASDAQ-100": {
+   "constituents": 101,
+   "tagged_active": 91,
+   "added": [
+    "APP",
+    "AXON",
+    "CPRT",
+    "CSX",
+    "HONA",
+    "LITE",
+    "MPWR",
+    "PLTR",
+    "SNDK",
+    "STX",
+    "TER",
+    "WDC",
+    "WMT"
+   ],
+   "removed": [
+    "AZN",
+    "BIIB",
+    "CDW",
+    "CHTR",
+    "CSGP",
+    "CTSH",
+    "GFS",
+    "ILMN",
+    "KHC",
+    "LCID",
+    "LULU",
+    "MDB",
+    "ON",
+    "SMCI",
+    "TEAM",
+    "TTD",
+    "VRSK",
+    "ZS"
+   ],
+   "not_in_universe": [
+    "ALAB",
+    "ALNY",
+    "CRWV",
+    "FER",
+    "MSTR",
+    "NBIS",
+    "RKLB",
+    "SHOP",
+    "SPCX",
+    "TRI"
+   ],
+   "inactive_in_universe": []
+  }
+ },
+ "active_without_index_tag": [
+  "AZN",
+  "GFS",
+  "LCID",
+  "MDB",
+  "TEAM",
+  "TTD",
+  "ZS"
+ ]
+}

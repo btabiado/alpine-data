@@ -1,7 +1,7 @@
 {
   "version": "3.0.0",
   "last_updated": "2026-10-05",
-  "description": "LTHCS universe = current S&P 500 (all 503 share lines) + current DJIA 30 + the earlier NASDAQ-100 / S&P 100 / Wave A names (none dropped). 519 tickers, 515 active. Constituents: https://en.wikipedia.org/wiki/List_of_S%26P_500_companies (revision 1376729338, fetched 2026-10-05); DJIA: https://en.wikipedia.org/wiki/Historical_components_of_the_Dow_Jones_Industrial_Average (revision 1369743926; GOOGL replaced VZ on 2026-06-29). S&P 100 / NASDAQ-100 tags were not refreshed in this sync. New tickers start with no history. Provenance and inputs: data/lthcs/universe_candidate/sp500_2026-10-05/.",
+  "description": "LTHCS universe = current S&P 500 (all 503 share lines) + current DJIA 30 + the earlier NASDAQ-100 / S&P 100 / Wave A names (none dropped). 519 tickers, 515 active. Constituents: https://en.wikipedia.org/wiki/List_of_S%26P_500_companies (revision 1376729338, fetched 2026-10-05); DJIA: https://en.wikipedia.org/wiki/Historical_components_of_the_Dow_Jones_Industrial_Average (revision 1369743926; GOOGL replaced VZ on 2026-06-29). S&P 100 / NASDAQ-100 tags refreshed 2026-10-05: S&P 100 from https://en.wikipedia.org/wiki/S%26P_100 (revision 1378292206), NASDAQ-100 from https://api.nasdaq.com/api/quote/list-type/nasdaq100 (Nasdaq list as of 2026-10-01); inputs in data/lthcs/universe_candidate/mapping_2026-10-05/. New tickers start with no history. Provenance and inputs: data/lthcs/universe_candidate/sp500_2026-10-05/.",
   "tickers": [
     {
       "ticker": "A",
@@ -376,6 +376,7 @@
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
+        "S&P 100",
         "NASDAQ-100"
       ],
       "sector": "Technology",
@@ -497,7 +498,8 @@
       "active": true,
       "cik": "0001596532",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "S&P 100"
       ],
       "maturity_stage": "growth_compounder",
       "name": "Arista Networks, Inc.",
@@ -615,7 +617,7 @@
       "industry": "Asset Management & Custody Banks",
       "maturity_stage": "financial",
       "active": true,
-      "maturity_note": "financial: Financials-sector convention of the seed/Wave A (Yahoo 2026-10-05: mcap $67B, rev growth +64%, trailing EPS 2.79, first trade 2011-03-30); uncertain: growth/fintech profile rather than a classic bank/insurer",
+      "maturity_note": "financial (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was financial): Asset manager with a retirement-services insurer (Athene): squarely the seed definition of financial (banks / insurance / asset managers). Revenue swings are insurance / investment-result driven (FY2023 +198% on the Athene merger, FY2024 -20%, FY2025 +22.7%), not a growth-company profile; GAAP profitable (FY2025 net income $3.49B). Kept financial. Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Diversified Financials",
       "cik": "0001858681",
       "source": "sp500_sync_2026-10-05"
@@ -625,7 +627,8 @@
       "name": "AppLovin Corporation",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "NASDAQ-100"
       ],
       "sector": "Communication Services",
       "industry": "Advertising",
@@ -780,7 +783,8 @@
       "name": "Axon Enterprise, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "NASDAQ-100"
       ],
       "sector": "Industrials",
       "industry": "Aerospace & Defense",
@@ -810,9 +814,7 @@
       "ticker": "AZN",
       "name": "AstraZeneca PLC",
       "exchange": "NYSE",
-      "index_membership": [
-        "NASDAQ-100"
-      ],
+      "index_membership": [],
       "sector": "Health Care",
       "industry": "Pharmaceuticals",
       "maturity_stage": "standard_compounder",
@@ -995,8 +997,7 @@
       "name": "Biogen Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
+        "S&P 500"
       ],
       "sector": "Health Care",
       "industry": "Biotechnology",
@@ -1015,7 +1016,7 @@
       "industry": "Banks",
       "maturity_stage": "standard_compounder",
       "active": false,
-      "inactive_reason": "BNY Mellon now trades as BNY: Yahoo has had no quote for BK since 2026-07-10 (\"Quote not found for symbol: BK\") and SEC company_tickers maps CIK 1390777 to BNY. Unscored since 2026-07-10; re-add as BNY to resume scoring."
+      "inactive_reason": "BNY Mellon now trades as BNY: Yahoo has had no quote for BK since 2026-07-10 (\"Quote not found for symbol: BK\") and SEC company_tickers maps CIK 1390777 to BNY. Unscored since 2026-07-10; re-add as BNY to resume scoring. History ends at the last real score (2026-07-09): the 87 flat synthetic rows catch-up wrote for 2026-07-10..2026-10-04 were removed on 2026-10-05 (record: data/lthcs/universe_candidate/mapping_2026-10-05/_synthetic_rows_removed.json)."
     },
     {
       "ticker": "BKNG",
@@ -1075,7 +1076,8 @@
       "name": "The Bank of New York Mellon Corporation",
       "exchange": "NYSE",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "S&P 100"
       ],
       "sector": "Financials",
       "industry": "Asset Management & Custody Banks",
@@ -1364,8 +1366,7 @@
       "name": "CDW Corporation",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
+        "S&P 500"
       ],
       "sector": "Technology",
       "industry": "IT Distribution",
@@ -1455,9 +1456,7 @@
       "name": "Charter Communications, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500",
-        "S&P 100",
-        "NASDAQ-100"
+        "S&P 500"
       ],
       "sector": "Communication Services",
       "industry": "Cable",
@@ -1517,8 +1516,7 @@
       "name": "Colgate-Palmolive Company",
       "exchange": "NYSE",
       "index_membership": [
-        "S&P 500",
-        "S&P 100"
+        "S&P 500"
       ],
       "sector": "Consumer Staples",
       "industry": "Household Products",
@@ -1690,7 +1688,7 @@
       "industry": "Financial Exchanges & Data",
       "maturity_stage": "financial",
       "active": true,
-      "maturity_note": "financial: Financials-sector convention of the seed/Wave A (Yahoo 2026-10-05: mcap $48B, rev growth -17%, trailing EPS -3.84, first trade 2021-04-14); uncertain: growth/fintech profile rather than a classic bank/insurer",
+      "maturity_note": "financial (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was financial): Exchange: the seed and Wave A class every exchange (CME, ICE, NDAQ, CBOE) and processor as financial (51 of 52 Financials). Not a growth profile on SEC data: FY2025 revenue +9.4%, TTM to 2026-06-30 -10.4%, TTM GAAP net loss -$0.99B; listed 2021-04-14, so the IPO<5y clause no longer applies. Kept financial. Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Diversified Financials",
       "cik": "0001679788",
       "source": "sp500_sync_2026-10-05"
@@ -1766,7 +1764,7 @@
       "industry": "Transaction & Payment Processing Services",
       "maturity_stage": "financial",
       "active": true,
-      "maturity_note": "financial: Financials-sector convention of the seed/Wave A (Yahoo 2026-10-05: mcap $26B, rev growth +22%, trailing EPS 16.45, first trade 2010-12-15); uncertain: growth/fintech profile rather than a classic bank/insurer",
+      "maturity_note": "financial (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was financial): Payment processor: seed precedent (FI, FIS, GPN, JKHY) is financial. Fails the >20% growth test on the fiscal-year measure the pipeline uses (FY2025 revenue +13.9%, 3y CAGR 9.7%; only the acquisition-boosted TTM window reaches +20.4%); GAAP profitable, public since 2010. Kept financial. Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Diversified Financials",
       "cik": "0001175454",
       "source": "sp500_sync_2026-10-05"
@@ -1776,7 +1774,8 @@
       "name": "Copart, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "NASDAQ-100"
       ],
       "sector": "Industrials",
       "industry": "Diversified Support Services",
@@ -1888,8 +1887,7 @@
       "name": "CoStar Group, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
+        "S&P 500"
       ],
       "sector": "Industrials",
       "industry": "Data Analytics",
@@ -1900,7 +1898,8 @@
       "active": true,
       "cik": "0000277948",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "NASDAQ-100"
       ],
       "maturity_stage": "mature_compounder",
       "name": "CSX Corporation",
@@ -1929,8 +1928,7 @@
       "name": "Cognizant Technology Solutions",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
+        "S&P 500"
       ],
       "sector": "Technology",
       "industry": "IT Services",
@@ -2108,7 +2106,8 @@
       "name": "Dell Technologies Inc.",
       "exchange": "NYSE",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "S&P 100"
       ],
       "sector": "Technology",
       "industry": "Technology Hardware, Storage & Peripherals",
@@ -2394,7 +2393,7 @@
       "industry": "Video Games",
       "maturity_stage": "standard_compounder",
       "active": false,
-      "inactive_reason": "Electronic Arts taken private (PIF / Silver Lake / Affinity Partners); delisted, no Yahoo quote and no SEC ticker since 2026-08-15, unscored since."
+      "inactive_reason": "Electronic Arts taken private (PIF / Silver Lake / Affinity Partners); delisted, no Yahoo quote and no SEC ticker since 2026-08-15, unscored since. History ends at the last real score (2026-08-14): the 51 flat synthetic rows catch-up wrote for 2026-08-15..2026-10-04 were removed on 2026-10-05 (record: data/lthcs/universe_candidate/mapping_2026-10-05/_synthetic_rows_removed.json)."
     },
     {
       "ticker": "EBAY",
@@ -2423,7 +2422,7 @@
       "industry": "Wireless Telecommunication Services",
       "maturity_stage": "recovery_stabilization",
       "active": true,
-      "maturity_note": "recovery_stabilization: negative GAAP EPS without >20% growth read as operational stress (judgement call, uncertain; Yahoo 2026-10-05: mcap $27B, rev growth -4%, trailing EPS -24.77, first trade 2008-01-02)",
+      "maturity_note": "recovery_stabilization (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was recovery_stabilization): Revenue down three straight years (FY2025 -5.2%, 3y CAGR -7.0%, TTM -5.2%); GAAP net loss FY2025 -$14.50B (incl. a $5.78B indefinite-lived intangible impairment) and TTM -$4.77B even after a +$8.46B Q2 2026 quarter; listed since 2008. The literal pre_profit_growth clause (negative GAAP earnings) is rejected: revenue is shrinking and the company is not pre-profit. Operational stress is in the numbers. Kept recovery_stabilization. Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Telecommunication Services",
       "cik": "0001415404",
       "source": "sp500_sync_2026-10-05"
@@ -2806,8 +2805,7 @@
       "name": "Ford Motor Company",
       "exchange": "NYSE",
       "index_membership": [
-        "S&P 500",
-        "S&P 100"
+        "S&P 500"
       ],
       "sector": "Consumer Discretionary",
       "industry": "Automobiles",
@@ -2875,7 +2873,8 @@
       "active": true,
       "cik": "0001048911",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "S&P 100"
       ],
       "maturity_stage": "mature_compounder",
       "name": "FedEx Corporation",
@@ -2895,9 +2894,9 @@
       ],
       "sector": "Industrials",
       "industry": "Cargo Ground Transportation",
-      "maturity_stage": "growth_compounder",
+      "maturity_stage": "standard_compounder",
       "active": true,
-      "maturity_note": "growth_compounder via the heuristic's IPO<5y clause (Yahoo 2026-10-05: mcap $17B, rev growth +5%, trailing EPS 4.38, first trade 2026-05-27); uncertain: a spin-off of an established business, growth <=20%",
+      "maturity_note": "standard_compounder (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was growth_compounder): Spin-off, not an IPO, so the heuristic's 'IPO <5y ago' growth clause does not apply; no growth either: revenue FY2026 (May) -1.1%, FY2025 -5.6%. GAAP profitable (FY2026 net income $0.66B), market cap $16.9B (inside the $5B-$200B standard band). Not mature (<$200B), not pre-profit or in recovery. Changed to standard_compounder. (The seed applied the IPO clause literally to the SOLV / VLTO spin-offs; those entries are unchanged here.) Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Transportation",
       "cik": "0002082247",
       "source": "sp500_sync_2026-10-05"
@@ -3222,7 +3221,8 @@
       "active": true,
       "cik": "0001996810",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "S&P 100"
       ],
       "maturity_stage": "growth_compounder",
       "name": "GE Vernova Inc.",
@@ -3237,9 +3237,7 @@
       "ticker": "GFS",
       "name": "GlobalFoundries Inc.",
       "exchange": "NASDAQ",
-      "index_membership": [
-        "NASDAQ-100"
-      ],
+      "index_membership": [],
       "sector": "Technology",
       "industry": "Semiconductors",
       "tech_sub_bucket": "Semiconductors",
@@ -3578,7 +3576,6 @@
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
-        "S&P 100",
         "NASDAQ-100",
         "DJIA"
       ],
@@ -3592,13 +3589,14 @@
       "name": "Honeywell Aerospace Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "NASDAQ-100"
       ],
       "sector": "Industrials",
       "industry": "Aerospace & Defense",
-      "maturity_stage": "growth_compounder",
+      "maturity_stage": "standard_compounder",
       "active": true,
-      "maturity_note": "growth_compounder via the heuristic's IPO<5y clause (Yahoo 2026-10-05: mcap $49B, rev growth +5%, trailing EPS 3.28, first trade 2026-06-15); uncertain: a spin-off of an established business, growth <=20%",
+      "maturity_note": "standard_compounder (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was growth_compounder): Spin-off, not an IPO, so the 'IPO <5y ago' growth clause does not apply; revenue +5.4% YoY in its first 10-Q (quarter to 2026-06-27: $4.52B vs $4.29B); GAAP net income positive ($0.25B that quarter); market cap $49.0B (inside the $5B-$200B band). Changed to standard_compounder. (SOLV / VLTO, earlier spin-offs the seed put in growth_compounder, are unchanged here.) Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Capital Goods",
       "cik": "0002089271",
       "source": "sp500_sync_2026-10-05"
@@ -3612,9 +3610,9 @@
       ],
       "sector": "Financials",
       "industry": "Investment Banking & Brokerage",
-      "maturity_stage": "financial",
+      "maturity_stage": "growth_compounder",
       "active": true,
-      "maturity_note": "financial: Financials-sector convention of the seed/Wave A (Yahoo 2026-10-05: mcap $101B, rev growth +32%, trailing EPS 2.27, first trade 2021-07-29); uncertain: growth/fintech profile rather than a classic bank/insurer",
+      "maturity_note": "growth_compounder (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was financial): Retail broker, not a bank / insurer / asset manager (the seed's definition of financial), and growth is its defining trait on every SEC measure: revenue FY2025 +51.6%, FY2024 +58.2%, 3y CAGR 48.8%, TTM +38.3%; GAAP profitable since FY2024 (FY2025 net income $1.88B, TTM $2.07B). Meets the heuristic's growth_compounder clause (>20% YoY); the seed's one Financials exception (MSCI -> growth_compounder) is the precedent. Changed to growth_compounder. Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Diversified Financials",
       "cik": "0001783879",
       "source": "sp500_sync_2026-10-05"
@@ -3775,7 +3773,7 @@
       "industry": "Investment Banking & Brokerage",
       "maturity_stage": "financial",
       "active": true,
-      "maturity_note": "financial: Financials-sector convention of the seed/Wave A (Yahoo 2026-10-05: mcap $150B, rev growth +26%, trailing EPS 2.52, first trade 2007-05-04); uncertain: growth/fintech profile rather than a classic bank/insurer",
+      "maturity_note": "financial (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was financial): Broker, so the growth test decides; it falls just short on the fiscal-year measure: total net revenues FY2025 +19.7% (TTM +21.3%, 3y CAGR 26.5%). GAAP profitable (FY2025 net income to common $0.98B), public since 2007. Kept financial (default for Financials); borderline, re-check on the FY2026 10-K. Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Diversified Financials",
       "cik": "0001381197",
       "source": "sp500_sync_2026-10-05"
@@ -3861,8 +3859,7 @@
       "name": "Illumina, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
+        "S&P 500"
       ],
       "sector": "Health Care",
       "industry": "Life Sciences Tools",
@@ -4220,9 +4217,7 @@
       "name": "The Kraft Heinz Company",
       "exchange": "NYSE",
       "index_membership": [
-        "S&P 500",
-        "S&P 100",
-        "NASDAQ-100"
+        "S&P 500"
       ],
       "sector": "Consumer Staples",
       "industry": "Packaged Foods",
@@ -4373,9 +4368,7 @@
       "ticker": "LCID",
       "name": "Lucid Group, Inc.",
       "exchange": "NASDAQ",
-      "index_membership": [
-        "NASDAQ-100"
-      ],
+      "index_membership": [],
       "sector": "Consumer Discretionary",
       "industry": "Automobiles",
       "maturity_stage": "pre_profit_growth",
@@ -4480,7 +4473,8 @@
       "name": "Lumentum Holdings Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "NASDAQ-100"
       ],
       "sector": "Technology",
       "industry": "Communications Equipment",
@@ -4554,6 +4548,7 @@
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
+        "S&P 100",
         "NASDAQ-100"
       ],
       "sector": "Technology",
@@ -4568,8 +4563,7 @@
       "name": "Lululemon Athletica Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
+        "S&P 500"
       ],
       "sector": "Consumer Discretionary",
       "industry": "Apparel",
@@ -4762,9 +4756,7 @@
       "ticker": "MDB",
       "name": "MongoDB, Inc.",
       "exchange": "NASDAQ",
-      "index_membership": [
-        "NASDAQ-100"
-      ],
+      "index_membership": [],
       "sector": "Technology",
       "industry": "Software",
       "tech_sub_bucket": "Software",
@@ -4817,8 +4809,7 @@
       "name": "MetLife, Inc.",
       "exchange": "NYSE",
       "index_membership": [
-        "S&P 500",
-        "S&P 100"
+        "S&P 500"
       ],
       "sector": "Financials",
       "industry": "Insurance",
@@ -4964,7 +4955,8 @@
       "active": true,
       "cik": "0001280452",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "NASDAQ-100"
       ],
       "maturity_stage": "growth_compounder",
       "name": "Monolithic Power Systems, Inc.",
@@ -5002,7 +4994,7 @@
       "industry": "Biotechnology",
       "maturity_stage": "recovery_stabilization",
       "active": true,
-      "maturity_note": "recovery_stabilization: negative GAAP EPS without >20% growth read as operational stress (judgement call, uncertain; Yahoo 2026-10-05: mcap $76B, rev growth +2%, trailing EPS -7.98, first trade 2018-12-07)",
+      "maturity_note": "recovery_stabilization (re-checked 2026-10-05 against the seed heuristic with SEC XBRL 10-K/10-Q data; was recovery_stabilization): Revenue collapsed from $19.26B (FY2022) to $1.94B (FY2025; -40% FY2025, TTM -27.6%); GAAP losses FY2023-FY2025 and TTM (-$3.15B); IPO 2018. Not pre_profit_growth (GAAP profits of $12.2B / $8.4B in FY2021-22; revenue shrinking) and not yet recovery_rerating (no trough: revenue still falling). Kept recovery_stabilization; note the TTM loss has not narrowed yet (-$3.15B vs -$2.90B). Evidence: data/lthcs/universe_candidate/mapping_2026-10-05/_maturity_review.json",
       "sector_group": "Pharmaceuticals, Biotechnology & Life Sciences",
       "cik": "0001682852",
       "source": "sp500_sync_2026-10-05"
@@ -5140,6 +5132,7 @@
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
+        "S&P 100",
         "NASDAQ-100"
       ],
       "sector": "Technology",
@@ -5261,7 +5254,6 @@
       "exchange": "NYSE",
       "index_membership": [
         "S&P 500",
-        "S&P 100",
         "DJIA"
       ],
       "sector": "Consumer Discretionary",
@@ -5524,8 +5516,7 @@
       "name": "ON Semiconductor Corporation",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
+        "S&P 500"
       ],
       "sector": "Technology",
       "industry": "Semiconductors",
@@ -5616,6 +5607,7 @@
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
+        "S&P 100",
         "NASDAQ-100"
       ],
       "sector": "Technology",
@@ -5837,7 +5829,9 @@
       "name": "Palantir Technologies Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
       ],
       "sector": "Technology",
       "industry": "Application Software",
@@ -6058,7 +6052,6 @@
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
-        "S&P 100",
         "NASDAQ-100"
       ],
       "sector": "Financials",
@@ -6420,8 +6413,7 @@
       "name": "Super Micro Computer, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
+        "S&P 500"
       ],
       "sector": "Technology",
       "industry": "Computer Hardware",
@@ -6451,7 +6443,9 @@
       "name": "Sandisk Corporation",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
       ],
       "sector": "Technology",
       "industry": "Technology Hardware, Storage & Peripherals",
@@ -6511,8 +6505,7 @@
       "name": "Simon Property Group, Inc.",
       "exchange": "NYSE",
       "index_membership": [
-        "S&P 500",
-        "S&P 100"
+        "S&P 500"
       ],
       "sector": "Real Estate",
       "industry": "Retail REITs",
@@ -6603,7 +6596,8 @@
       "active": true,
       "cik": "0001137789",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "NASDAQ-100"
       ],
       "maturity_stage": "standard_compounder",
       "name": "Seagate Technology Holdings plc",
@@ -6778,9 +6772,7 @@
       "ticker": "TEAM",
       "name": "Atlassian Corporation",
       "exchange": "NASDAQ",
-      "index_membership": [
-        "NASDAQ-100"
-      ],
+      "index_membership": [],
       "sector": "Technology",
       "industry": "Software",
       "tech_sub_bucket": "Software",
@@ -6825,7 +6817,8 @@
       "name": "Teradyne, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "NASDAQ-100"
       ],
       "sector": "Technology",
       "industry": "Semiconductor Materials & Equipment",
@@ -6858,8 +6851,7 @@
       "name": "Target Corporation",
       "exchange": "NYSE",
       "index_membership": [
-        "S&P 500",
-        "S&P 100"
+        "S&P 500"
       ],
       "sector": "Consumer Discretionary",
       "industry": "Discount Retail",
@@ -7084,9 +7076,7 @@
       "ticker": "TTD",
       "name": "The Trade Desk, Inc.",
       "exchange": "NASDAQ",
-      "index_membership": [
-        "NASDAQ-100"
-      ],
+      "index_membership": [],
       "sector": "Communication Services",
       "industry": "Digital Advertising",
       "maturity_stage": "standard_compounder",
@@ -7174,7 +7164,8 @@
       "active": true,
       "cik": "0001543151",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "S&P 100"
       ],
       "maturity_stage": "growth_compounder",
       "name": "Uber Technologies, Inc.",
@@ -7407,7 +7398,7 @@
       "industry": "Multi-Family Residential REITs",
       "maturity_stage": "standard_compounder",
       "active": true,
-      "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20); seed listed this company as AVB before its ticker change",
+      "maturity_note": "Seed heuristic (sp500_candidate_seed.json, 2026-05-20); seed listed this company as EQR: Vivmark Residential is the renamed Equity Residential (same SEC CIK 906107; 8-K 2026-08-17: AvalonBay merged in, name and ticker changed). Seed stage for EQR (and AVB) is standard_compounder.",
       "sector_group": "Real Estate",
       "cik": "0000906107",
       "source": "sp500_sync_2026-10-05"
@@ -7417,8 +7408,7 @@
       "name": "Verisk Analytics, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
+        "S&P 500"
       ],
       "sector": "Industrials",
       "industry": "Data Analytics",
@@ -7610,7 +7600,8 @@
       "active": true,
       "cik": "0000106040",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "NASDAQ-100"
       ],
       "maturity_stage": "recovery_stabilization",
       "name": "Western Digital Corporation",
@@ -7704,6 +7695,7 @@
       "index_membership": [
         "S&P 500",
         "S&P 100",
+        "NASDAQ-100",
         "DJIA"
       ],
       "sector": "Consumer Staples",
@@ -7919,9 +7911,7 @@
       "ticker": "ZS",
       "name": "Zscaler, Inc.",
       "exchange": "NASDAQ",
-      "index_membership": [
-        "NASDAQ-100"
-      ],
+      "index_membership": [],
       "sector": "Technology",
       "industry": "Cybersecurity",
       "tech_sub_bucket": "Software",

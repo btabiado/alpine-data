@@ -601,11 +601,22 @@ def _build_name_lookup(tickers: Iterable[str]) -> Dict[str, str]:
     ``name_aliases`` array). Multiple aliases per ticker are supported
     so e.g. "MARVELL TECHNOLOGY" and "MARVELL TECHNOLOGY GROUP" both
     resolve to MRVL.
+
+    Tickers that HAVE a CUSIP are left out. The fallback is consulted for
+    every row whose CUSIP is not in the universe, i.e. every holding of
+    every other issuer, and a starts-with match on a short alias claims
+    those rows: "blackrock" took BlackRock's own closed-end funds and ETF
+    trusts for BLK, "invesco" Invesco's ETFs for IVZ, "fox" Fox Factory
+    for FOX/FOXA, "apple" Apple Hospitality REIT for AAPL (49 such
+    collisions against the 2026Q2 SEC 13(f) list). A ticker with a
+    verified CUSIP is matched by that CUSIP only.
     """
     out: Dict[str, str] = {}
     for t in tickers:
         norm_t = (t or "").strip().upper()
         if not norm_t:
+            continue
+        if TICKER_TO_CUSIP.get(norm_t):
             continue
         aliases = _NAME_ALIASES.get(norm_t, ())
         for alias in aliases:
@@ -1047,11 +1058,20 @@ def _extracted_cache_key(cik: str, accession: str, universe_fingerprint: str) ->
 
 
 def _universe_fingerprint(tickers: Iterable[str]) -> str:
-    """Stable short fingerprint of the universe so cache entries don't
-    cross-contaminate across pipeline runs with different ticker sets."""
+    """Stable short fingerprint of the universe AND its matching keys so
+    cache entries don't cross-contaminate across pipeline runs with
+    different ticker sets or a corrected CUSIP map. The per-filing extract
+    is cached for a year; keyed on tickers alone, a CUSIP fix in
+    13f_cusip_map.json would not reach a filing extracted before it."""
     norm = sorted({(t or "").strip().upper() for t in tickers if t})
+    parts = []
+    for t in norm:
+        cusips = sorted(filter(None, (_normalize_cusip(c) for c in TICKER_TO_CUSIP.get(t, ()))))
+        aliases = () if cusips else sorted(
+            filter(None, (_normalize_name(a) for a in _NAME_ALIASES.get(t, ()))))
+        parts.append("%s:%s:%s" % (t, ",".join(cusips), ",".join(aliases)))
     import hashlib
-    return hashlib.sha256("|".join(norm).encode("utf-8")).hexdigest()[:12]
+    return hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()[:12]
 
 
 def _fetch_one_filing_extracted(

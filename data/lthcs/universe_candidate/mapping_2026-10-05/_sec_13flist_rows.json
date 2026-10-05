@@ -1,0 +1,5204 @@
+{
+ "current_list": "13flist2026q2.txt",
+ "previous_list": "13flist2026q1.txt",
+ "tickers": {
+  "A": [
+   {
+    "cusip": "00846U101",
+    "options": true,
+    "issuer": "AGILENT TECHNOLOGIES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AAPL": [
+   {
+    "cusip": "037833100",
+    "options": true,
+    "issuer": "APPLE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ABBV": [
+   {
+    "cusip": "00287Y109",
+    "options": true,
+    "issuer": "ABBVIE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ABNB": [
+   {
+    "cusip": "009066101",
+    "options": true,
+    "issuer": "AIRBNB INC",
+    "description": "COM CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ABT": [
+   {
+    "cusip": "002824100",
+    "options": true,
+    "issuer": "ABBOTT LABORATORIES",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ACGL": [
+   {
+    "cusip": "G0450A105",
+    "options": true,
+    "issuer": "ARCH CAP GROUP LTD",
+    "description": "ORD",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ACN": [
+   {
+    "cusip": "G1151C101",
+    "options": true,
+    "issuer": "ACCENTURE PLC IRELAND",
+    "description": "SHS CLASS A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ADBE": [
+   {
+    "cusip": "00724F101",
+    "options": true,
+    "issuer": "ADOBE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ADI": [
+   {
+    "cusip": "032654105",
+    "options": true,
+    "issuer": "ANALOG DEVICES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ADM": [
+   {
+    "cusip": "039483102",
+    "options": true,
+    "issuer": "ARCHER DANIELS MIDLAND CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ADP": [
+   {
+    "cusip": "053015103",
+    "options": true,
+    "issuer": "AUTOMATIC DATA PROCESSING IN",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ADSK": [
+   {
+    "cusip": "052769106",
+    "options": true,
+    "issuer": "AUTODESK INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AEE": [
+   {
+    "cusip": "023608102",
+    "options": true,
+    "issuer": "AMEREN CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AEP": [
+   {
+    "cusip": "025537101",
+    "options": true,
+    "issuer": "AMERICAN ELEC PWR CO INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AES": [
+   {
+    "cusip": "00130H105",
+    "options": true,
+    "issuer": "AES CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AFL": [
+   {
+    "cusip": "001055102",
+    "options": true,
+    "issuer": "AFLAC INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AIG": [
+   {
+    "cusip": "026874784",
+    "options": true,
+    "issuer": "AMERICAN INTL GROUP INC",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AIZ": [
+   {
+    "cusip": "04621X108",
+    "options": true,
+    "issuer": "ASSURANT INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AJG": [
+   {
+    "cusip": "363576109",
+    "options": true,
+    "issuer": "GALLAGHER ARTHUR J & CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AKAM": [
+   {
+    "cusip": "00971T101",
+    "options": true,
+    "issuer": "AKAMAI TECHNOLOGIES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ALB": [
+   {
+    "cusip": "012653101",
+    "options": true,
+    "issuer": "ALBEMARLE CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ALGN": [
+   {
+    "cusip": "016255101",
+    "options": true,
+    "issuer": "ALIGN TECHNOLOGY INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ALL": [
+   {
+    "cusip": "020002101",
+    "options": true,
+    "issuer": "ALLSTATE CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ALLE": [
+   {
+    "cusip": "G0176J109",
+    "options": true,
+    "issuer": "ALLEGION PLC",
+    "description": "ORD SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AMAT": [
+   {
+    "cusip": "038222105",
+    "options": true,
+    "issuer": "APPLIED MATLS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AMCR": [
+   {
+    "cusip": "G0250X149",
+    "options": true,
+    "issuer": "AMCOR PLC",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AMD": [
+   {
+    "cusip": "007903107",
+    "options": true,
+    "issuer": "ADVANCED MICRO DEVICES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AME": [
+   {
+    "cusip": "031100100",
+    "options": true,
+    "issuer": "AMETEK INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AMGN": [
+   {
+    "cusip": "031162100",
+    "options": true,
+    "issuer": "AMGEN INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AMP": [
+   {
+    "cusip": "03076C106",
+    "options": true,
+    "issuer": "AMERIPRISE FINL INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AMT": [
+   {
+    "cusip": "03027X100",
+    "options": true,
+    "issuer": "AMERICAN TOWER CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AMZN": [
+   {
+    "cusip": "023135106",
+    "options": true,
+    "issuer": "AMAZON COM INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ANET": [
+   {
+    "cusip": "040413205",
+    "options": true,
+    "issuer": "ARISTA NETWORKS INC",
+    "description": "COM SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AON": [
+   {
+    "cusip": "G0403H108",
+    "options": true,
+    "issuer": "AON PLC",
+    "description": "SHS CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AOS": [
+   {
+    "cusip": "831865209",
+    "options": true,
+    "issuer": "SMITH A O CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "APA": [
+   {
+    "cusip": "03743Q108",
+    "options": true,
+    "issuer": "APA CORPORATION",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "APD": [
+   {
+    "cusip": "009158106",
+    "options": true,
+    "issuer": "AIR PRODUCTS AND CHEMICALS I",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "APH": [
+   {
+    "cusip": "032095101",
+    "options": true,
+    "issuer": "AMPHENOL CORP",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "APO": [
+   {
+    "cusip": "03769M106",
+    "options": true,
+    "issuer": "APOLLO GLOBAL MGMT INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "APP": [
+   {
+    "cusip": "03831W108",
+    "options": true,
+    "issuer": "APPLOVIN CORP",
+    "description": "COM CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "APTV": [
+   {
+    "cusip": "G3265R107",
+    "options": true,
+    "issuer": "APTIV PLC",
+    "description": "COM SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ARE": [
+   {
+    "cusip": "015271109",
+    "options": true,
+    "issuer": "ALEXANDRIA REAL ESTATE EQ IN",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ARES": [
+   {
+    "cusip": "03990B101",
+    "options": true,
+    "issuer": "ARES MANAGEMENT CORPORATION",
+    "description": "CL A COM STK",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ARM": [
+   {
+    "cusip": "042068205",
+    "options": true,
+    "issuer": "ARM HOLDINGS PLC",
+    "description": "SPONSORED ADS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ASML": [
+   {
+    "cusip": "N07059210",
+    "options": true,
+    "issuer": "ASML HLDG NV",
+    "description": "N Y REGISTRY SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ATO": [
+   {
+    "cusip": "049560105",
+    "options": true,
+    "issuer": "ATMOS ENERGY CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AVGO": [
+   {
+    "cusip": "11135F101",
+    "options": true,
+    "issuer": "BROADCOM INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AVY": [
+   {
+    "cusip": "053611109",
+    "options": true,
+    "issuer": "AVERY DENNISON CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AWK": [
+   {
+    "cusip": "030420103",
+    "options": true,
+    "issuer": "AMERICAN WTR WKS CO INC NEW",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AXON": [
+   {
+    "cusip": "05464C101",
+    "options": true,
+    "issuer": "AXON ENTERPRISE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AXP": [
+   {
+    "cusip": "025816109",
+    "options": true,
+    "issuer": "AMERICAN EXPRESS CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AZN": [
+   {
+    "cusip": "G0593M107",
+    "options": true,
+    "issuer": "ASTRAZENECA PLC",
+    "description": "ORD",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "AZO": [
+   {
+    "cusip": "053332102",
+    "options": true,
+    "issuer": "AUTOZONE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BA": [
+   {
+    "cusip": "097023105",
+    "options": true,
+    "issuer": "BOEING CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BAC": [
+   {
+    "cusip": "060505104",
+    "options": true,
+    "issuer": "BANK OF AMER CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BALL": [
+   {
+    "cusip": "058498106",
+    "options": true,
+    "issuer": "BALL CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BAX": [
+   {
+    "cusip": "071813109",
+    "options": true,
+    "issuer": "BAXTER INTL INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BBY": [
+   {
+    "cusip": "086516101",
+    "options": true,
+    "issuer": "BEST BUY INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BDX": [
+   {
+    "cusip": "075887109",
+    "options": true,
+    "issuer": "BECTON DICKINSON & CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BE": [
+   {
+    "cusip": "093712107",
+    "options": true,
+    "issuer": "BLOOM ENERGY CORP",
+    "description": "COM CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BEN": [
+   {
+    "cusip": "354613101",
+    "options": true,
+    "issuer": "FRANKLIN RESOURCES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BF.B": [
+   {
+    "cusip": "115637209",
+    "options": true,
+    "issuer": "BROWN FORMAN CORP",
+    "description": "CL B",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BG": [
+   {
+    "cusip": "H11356104",
+    "options": true,
+    "issuer": "BUNGE GLOBAL SA",
+    "description": "COM SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BIIB": [
+   {
+    "cusip": "09062X103",
+    "options": true,
+    "issuer": "BIOGEN INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BKNG": [
+   {
+    "cusip": "09857L108",
+    "options": true,
+    "issuer": "BOOKING HOLDINGS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BKR": [
+   {
+    "cusip": "05722G100",
+    "options": true,
+    "issuer": "BAKER HUGHES COMPANY",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BLK": [
+   {
+    "cusip": "09290D101",
+    "options": true,
+    "issuer": "BLACKROCK INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BMY": [
+   {
+    "cusip": "110122108",
+    "options": true,
+    "issuer": "BRISTOL-MYERS SQUIBB CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BNY": [
+   {
+    "cusip": "064058100",
+    "options": true,
+    "issuer": "BANK OF NY MELLON CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BR": [
+   {
+    "cusip": "11133T103",
+    "options": true,
+    "issuer": "BROADRIDGE FINL SOLUTIONS IN",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BRK.B": [
+   {
+    "cusip": "084670702",
+    "options": true,
+    "issuer": "BERKSHIRE HATHAWAY INC DEL",
+    "description": "CL B NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BRO": [
+   {
+    "cusip": "115236101",
+    "options": true,
+    "issuer": "BROWN & BROWN INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BSX": [
+   {
+    "cusip": "101137107",
+    "options": true,
+    "issuer": "BOSTON SCIENTIFIC CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BX": [
+   {
+    "cusip": "09260D107",
+    "options": true,
+    "issuer": "BLACKSTONE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "BXP": [
+   {
+    "cusip": "101121101",
+    "options": true,
+    "issuer": "BXP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "C": [
+   {
+    "cusip": "172967424",
+    "options": true,
+    "issuer": "CITIGROUP INC",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CAH": [
+   {
+    "cusip": "14149Y108",
+    "options": true,
+    "issuer": "CARDINAL HEALTH INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CARR": [
+   {
+    "cusip": "14448C104",
+    "options": true,
+    "issuer": "CARRIER GLOBAL CORPORATION",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CASY": [
+   {
+    "cusip": "147528103",
+    "options": true,
+    "issuer": "CASEYS GEN STORES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CAT": [
+   {
+    "cusip": "149123101",
+    "options": true,
+    "issuer": "CATERPILLAR INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CB": [
+   {
+    "cusip": "H1467J104",
+    "options": true,
+    "issuer": "CHUBB LIMITED",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CBOE": [
+   {
+    "cusip": "12503M108",
+    "options": true,
+    "issuer": "CBOE GLOBAL MKTS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CBRE": [
+   {
+    "cusip": "12504L109",
+    "options": true,
+    "issuer": "CBRE GROUP INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CCEP": [
+   {
+    "cusip": "G25839104",
+    "options": true,
+    "issuer": "COCA-COLA EUROPACIFIC PARTNE",
+    "description": "SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CCI": [
+   {
+    "cusip": "22822V101",
+    "options": true,
+    "issuer": "CROWN CASTLE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CCL": [
+   {
+    "cusip": "G2004J103",
+    "options": true,
+    "issuer": "CARNIVAL CORP LTD",
+    "description": "COMMON SHARES",
+    "status": "*A*",
+    "list": "current"
+   },
+   {
+    "cusip": "143658300",
+    "options": true,
+    "issuer": "CARNIVAL CORP",
+    "description": "COMMON STOCK",
+    "status": "*D*",
+    "list": "current"
+   },
+   {
+    "cusip": "143658300",
+    "options": true,
+    "issuer": "CARNIVAL CORP",
+    "description": "COMMON STOCK",
+    "status": "",
+    "list": "previous"
+   }
+  ],
+  "CDNS": [
+   {
+    "cusip": "127387108",
+    "options": true,
+    "issuer": "CADENCE DESIGN SYSTEM INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CDW": [
+   {
+    "cusip": "12514G108",
+    "options": true,
+    "issuer": "CDW CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CEG": [
+   {
+    "cusip": "21037T109",
+    "options": true,
+    "issuer": "CONSTELLATION ENERGY CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CF": [
+   {
+    "cusip": "125269100",
+    "options": true,
+    "issuer": "CF INDUSTRIES HOLD",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CFG": [
+   {
+    "cusip": "174610105",
+    "options": true,
+    "issuer": "CITIZENS FINL GROUP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CHD": [
+   {
+    "cusip": "171340102",
+    "options": true,
+    "issuer": "CHURCH & DWIGHT CO INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CHRW": [
+   {
+    "cusip": "12541W209",
+    "options": true,
+    "issuer": "C H ROBINSON WORLDWIDE IN",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CHTR": [
+   {
+    "cusip": "16119P108",
+    "options": true,
+    "issuer": "CHARTER COMMUNICATIONS INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CI": [
+   {
+    "cusip": "125523100",
+    "options": true,
+    "issuer": "THE CIGNA GROUP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CIEN": [
+   {
+    "cusip": "171779309",
+    "options": true,
+    "issuer": "CIENA CORP",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CINF": [
+   {
+    "cusip": "172062101",
+    "options": true,
+    "issuer": "CINCINNATI FINL CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CL": [
+   {
+    "cusip": "194162103",
+    "options": true,
+    "issuer": "COLGATE PALMOLIVE CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CLX": [
+   {
+    "cusip": "189054109",
+    "options": true,
+    "issuer": "CLOROX CO DEL",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CMCSA": [
+   {
+    "cusip": "20030N101",
+    "options": true,
+    "issuer": "COMCAST CORP NEW",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CME": [
+   {
+    "cusip": "12572Q105",
+    "options": true,
+    "issuer": "CME GROUP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CMG": [
+   {
+    "cusip": "169656105",
+    "options": true,
+    "issuer": "CHIPOTLE MEXICAN GRILL INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CMI": [
+   {
+    "cusip": "231021106",
+    "options": true,
+    "issuer": "CUMMINS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CMS": [
+   {
+    "cusip": "125896100",
+    "options": true,
+    "issuer": "CMS ENERGY CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CNC": [
+   {
+    "cusip": "15135B101",
+    "options": true,
+    "issuer": "CENTENE CORP DEL",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CNP": [
+   {
+    "cusip": "15189T107",
+    "options": true,
+    "issuer": "CENTERPOINT ENERGY INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "COF": [
+   {
+    "cusip": "14040H105",
+    "options": true,
+    "issuer": "CAPITAL ONE FINL CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "COHR": [
+   {
+    "cusip": "19247G107",
+    "options": true,
+    "issuer": "COHERENT CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "COIN": [
+   {
+    "cusip": "19260Q107",
+    "options": true,
+    "issuer": "COINBASE GLOBAL INC",
+    "description": "COM CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "COO": [
+   {
+    "cusip": "216648501",
+    "options": true,
+    "issuer": "COOPER COS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "COP": [
+   {
+    "cusip": "20825C104",
+    "options": true,
+    "issuer": "CONOCOPHILLIPS",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "COR": [
+   {
+    "cusip": "03073E105",
+    "options": true,
+    "issuer": "CENCORA INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "COST": [
+   {
+    "cusip": "22160K105",
+    "options": true,
+    "issuer": "COSTCO WHOLESALE CORPORATION",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CPAY": [
+   {
+    "cusip": "219948106",
+    "options": true,
+    "issuer": "CORPAY INC",
+    "description": "COM SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CPRT": [
+   {
+    "cusip": "217204106",
+    "options": true,
+    "issuer": "COPART INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CPT": [
+   {
+    "cusip": "133131102",
+    "options": true,
+    "issuer": "CAMDEN PPTY TR",
+    "description": "SH BEN INT",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CRH": [
+   {
+    "cusip": "G25508105",
+    "options": true,
+    "issuer": "CRH PLC",
+    "description": "ORD",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CRL": [
+   {
+    "cusip": "159864107",
+    "options": true,
+    "issuer": "CHARLES RIV LABS INTL INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CRM": [
+   {
+    "cusip": "79466L302",
+    "options": true,
+    "issuer": "SALESFORCE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CRWD": [
+   {
+    "cusip": "22788C105",
+    "options": true,
+    "issuer": "CROWDSTRIKE HLDGS INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CSCO": [
+   {
+    "cusip": "17275R102",
+    "options": true,
+    "issuer": "CISCO SYS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CSGP": [
+   {
+    "cusip": "22160N109",
+    "options": true,
+    "issuer": "COSTAR GROUP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CSX": [
+   {
+    "cusip": "126408103",
+    "options": true,
+    "issuer": "CSX CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CTAS": [
+   {
+    "cusip": "172908105",
+    "options": true,
+    "issuer": "CINTAS CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CTSH": [
+   {
+    "cusip": "192446102",
+    "options": true,
+    "issuer": "COGNIZANT TECHNOLOGY SOLUTIO",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CTVA": [
+   {
+    "cusip": "22052L104",
+    "options": true,
+    "issuer": "CORTEVA INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CVNA": [
+   {
+    "cusip": "146869102",
+    "options": true,
+    "issuer": "CARVANA CO",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CVS": [
+   {
+    "cusip": "126650100",
+    "options": true,
+    "issuer": "CVS HEALTH CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "CVX": [
+   {
+    "cusip": "166764100",
+    "options": true,
+    "issuer": "CHEVRON CORPORATION",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "D": [
+   {
+    "cusip": "25746U109",
+    "options": true,
+    "issuer": "DOMINION ENERGY INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DAL": [
+   {
+    "cusip": "247361702",
+    "options": true,
+    "issuer": "DELTA AIR LINES INC",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DASH": [
+   {
+    "cusip": "25809K105",
+    "options": true,
+    "issuer": "DOORDASH INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DD": [
+   {
+    "cusip": "26614N201",
+    "options": true,
+    "issuer": "DUPONT DE NEMOURS INC",
+    "description": "COMMON STOCK",
+    "status": "*A*",
+    "list": "current"
+   },
+   {
+    "cusip": "26614N102",
+    "options": true,
+    "issuer": "DUPONT DE NEMOURS INC",
+    "description": "COM",
+    "status": "*D*",
+    "list": "current"
+   },
+   {
+    "cusip": "26614N102",
+    "options": true,
+    "issuer": "DUPONT DE NEMOURS INC",
+    "description": "COM",
+    "status": "",
+    "list": "previous"
+   }
+  ],
+  "DDOG": [
+   {
+    "cusip": "23804L103",
+    "options": true,
+    "issuer": "DATADOG INC",
+    "description": "CL A COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DE": [
+   {
+    "cusip": "244199105",
+    "options": true,
+    "issuer": "DEERE & CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DECK": [
+   {
+    "cusip": "243537107",
+    "options": true,
+    "issuer": "DECKERS OUTDOOR CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DELL": [
+   {
+    "cusip": "24703L202",
+    "options": true,
+    "issuer": "DELL TECHNOLOGIES INC",
+    "description": "CL C",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DG": [
+   {
+    "cusip": "256677105",
+    "options": true,
+    "issuer": "DOLLAR GEN CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DGX": [
+   {
+    "cusip": "74834L100",
+    "options": true,
+    "issuer": "QUEST DIAGNOSTICS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DHI": [
+   {
+    "cusip": "23331A109",
+    "options": true,
+    "issuer": "D R HORTON INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DHR": [
+   {
+    "cusip": "235851102",
+    "options": true,
+    "issuer": "DANAHER CORP DEL",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DIS": [
+   {
+    "cusip": "254687106",
+    "options": true,
+    "issuer": "DISNEY WALT CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DLR": [
+   {
+    "cusip": "253868103",
+    "options": true,
+    "issuer": "DIGITAL RLTY TR INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DLTR": [
+   {
+    "cusip": "256746108",
+    "options": true,
+    "issuer": "DOLLAR TREE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DOC": [
+   {
+    "cusip": "42250P103",
+    "options": true,
+    "issuer": "HEALTHPEAK PROPERTIES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DOV": [
+   {
+    "cusip": "260003108",
+    "options": true,
+    "issuer": "DOVER CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DOW": [
+   {
+    "cusip": "260557103",
+    "options": true,
+    "issuer": "DOW HLDGS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DPZ": [
+   {
+    "cusip": "25754A201",
+    "options": true,
+    "issuer": "DOMINOS PIZZA INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DRI": [
+   {
+    "cusip": "237194105",
+    "options": true,
+    "issuer": "DARDEN RESTAURANTS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DTE": [
+   {
+    "cusip": "233331107",
+    "options": true,
+    "issuer": "DTE ENERGY CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DUK": [
+   {
+    "cusip": "26441C204",
+    "options": true,
+    "issuer": "DUKE ENERGY CORP NEW",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DVA": [
+   {
+    "cusip": "23918K108",
+    "options": true,
+    "issuer": "DAVITA INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DVN": [
+   {
+    "cusip": "25179M103",
+    "options": true,
+    "issuer": "DEVON ENERGY CORP NEW",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "DXCM": [
+   {
+    "cusip": "252131107",
+    "options": true,
+    "issuer": "DEXCOM INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EBAY": [
+   {
+    "cusip": "278642103",
+    "options": true,
+    "issuer": "EBAY INC.",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ECHO": [
+   {
+    "cusip": "278768106",
+    "options": true,
+    "issuer": "ECHOSTAR CORP",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ECL": [
+   {
+    "cusip": "278865100",
+    "options": true,
+    "issuer": "ECOLAB INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ED": [
+   {
+    "cusip": "209115104",
+    "options": true,
+    "issuer": "CONSOLIDATED EDISON INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EFX": [
+   {
+    "cusip": "294429105",
+    "options": true,
+    "issuer": "EQUIFAX INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EG": [
+   {
+    "cusip": "G3223R108",
+    "options": true,
+    "issuer": "EVEREST GROUP LTD",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EIX": [
+   {
+    "cusip": "281020107",
+    "options": true,
+    "issuer": "EDISON INTL",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EL": [
+   {
+    "cusip": "518439104",
+    "options": true,
+    "issuer": "LAUDER ESTEE COS INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ELV": [
+   {
+    "cusip": "036752103",
+    "options": true,
+    "issuer": "ELEVANCE HEALTH INC FORMERLY",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EME": [
+   {
+    "cusip": "29084Q100",
+    "options": true,
+    "issuer": "EMCOR GROUP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EMR": [
+   {
+    "cusip": "291011104",
+    "options": true,
+    "issuer": "EMERSON ELEC CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EOG": [
+   {
+    "cusip": "26875P101",
+    "options": true,
+    "issuer": "EOG RES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EQIX": [
+   {
+    "cusip": "29444U700",
+    "options": true,
+    "issuer": "EQUINIX INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EQT": [
+   {
+    "cusip": "26884L109",
+    "options": true,
+    "issuer": "EQT CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ERIE": [
+   {
+    "cusip": "29530P102",
+    "options": true,
+    "issuer": "ERIE INDTY CO",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ES": [
+   {
+    "cusip": "30040W108",
+    "options": true,
+    "issuer": "EVERSOURCE ENERGY",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ESS": [
+   {
+    "cusip": "297178105",
+    "options": true,
+    "issuer": "ESSEX PPTY TR INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ETN": [
+   {
+    "cusip": "G29183103",
+    "options": true,
+    "issuer": "EATON CORP PLC",
+    "description": "SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ETR": [
+   {
+    "cusip": "29364G103",
+    "options": true,
+    "issuer": "ENTERGY CORP NEW",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EVRG": [
+   {
+    "cusip": "30034W106",
+    "options": true,
+    "issuer": "EVERGY INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EW": [
+   {
+    "cusip": "28176E108",
+    "options": true,
+    "issuer": "EDWARDS LIFESCIENCES CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EXC": [
+   {
+    "cusip": "30161N101",
+    "options": true,
+    "issuer": "EXELON CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EXE": [
+   {
+    "cusip": "165167735",
+    "options": true,
+    "issuer": "EXPAND ENERGY CORPORATION",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EXPD": [
+   {
+    "cusip": "302130109",
+    "options": true,
+    "issuer": "EXPEDITORS INTL WASH INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EXPE": [
+   {
+    "cusip": "30212P303",
+    "options": true,
+    "issuer": "EXPEDIA GROUP INC",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "EXR": [
+   {
+    "cusip": "30225T102",
+    "options": true,
+    "issuer": "EXTRA SPACE STORAGE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "F": [
+   {
+    "cusip": "345370860",
+    "options": true,
+    "issuer": "FORD MTR CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FANG": [
+   {
+    "cusip": "25278X109",
+    "options": true,
+    "issuer": "DIAMONDBACK ENERGY INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FAST": [
+   {
+    "cusip": "311900104",
+    "options": true,
+    "issuer": "FASTENAL CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FCX": [
+   {
+    "cusip": "35671D857",
+    "options": true,
+    "issuer": "FREEPORT MCMORAN INC",
+    "description": "CL B",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FDS": [
+   {
+    "cusip": "303075105",
+    "options": true,
+    "issuer": "FACTSET RESH SYS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FDX": [
+   {
+    "cusip": "31428X106",
+    "options": true,
+    "issuer": "FEDEX CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FDXF": [
+   {
+    "cusip": "314352105",
+    "options": true,
+    "issuer": "FEDEX FGHT HLDG CO INC",
+    "description": "COMMON STOCK",
+    "status": "*A*",
+    "list": "current"
+   }
+  ],
+  "FE": [
+   {
+    "cusip": "337932107",
+    "options": true,
+    "issuer": "FIRSTENERGY CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FERG": [
+   {
+    "cusip": "31488V107",
+    "options": true,
+    "issuer": "FERGUSON ENTERPRISES INC",
+    "description": "COMMON STOCK NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FFIV": [
+   {
+    "cusip": "315616102",
+    "options": true,
+    "issuer": "F5 INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FICO": [
+   {
+    "cusip": "303250104",
+    "options": true,
+    "issuer": "FAIR ISAAC CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FIS": [
+   {
+    "cusip": "31620M106",
+    "options": true,
+    "issuer": "FIDELITY NATL INFORMATION SV",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FISV": [
+   {
+    "cusip": "337738108",
+    "options": true,
+    "issuer": "FISERV INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FITB": [
+   {
+    "cusip": "316773100",
+    "options": true,
+    "issuer": "FIFTH THIRD BANCORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FIX": [
+   {
+    "cusip": "199908104",
+    "options": true,
+    "issuer": "COMFORT SYS USA INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FLEX": [
+   {
+    "cusip": "Y2573F102",
+    "options": true,
+    "issuer": "FLEX LTD",
+    "description": "ORD",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FOX": [
+   {
+    "cusip": "35137L204",
+    "options": true,
+    "issuer": "FOX CORP",
+    "description": "CL B COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FOXA": [
+   {
+    "cusip": "35137L105",
+    "options": true,
+    "issuer": "FOX CORP",
+    "description": "CL A COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FRT": [
+   {
+    "cusip": "313745101",
+    "options": true,
+    "issuer": "FEDERAL RLTY INVT TR NEW",
+    "description": "SH BEN INT NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FSLR": [
+   {
+    "cusip": "336433107",
+    "options": true,
+    "issuer": "FIRST SOLAR INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FTNT": [
+   {
+    "cusip": "34959E109",
+    "options": true,
+    "issuer": "FORTINET INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "FTV": [
+   {
+    "cusip": "34959J108",
+    "options": true,
+    "issuer": "FORTIVE CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GD": [
+   {
+    "cusip": "369550108",
+    "options": true,
+    "issuer": "GENERAL DYNAMICS CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GDDY": [
+   {
+    "cusip": "380237107",
+    "options": true,
+    "issuer": "GODADDY INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GE": [
+   {
+    "cusip": "369604301",
+    "options": true,
+    "issuer": "GE AEROSPACE",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GEHC": [
+   {
+    "cusip": "36266G107",
+    "options": true,
+    "issuer": "GE HEALTHCARE TECHNOLOGIES I",
+    "description": "COMMON STOCK",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GEN": [
+   {
+    "cusip": "668771108",
+    "options": true,
+    "issuer": "GEN DIGITAL INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GEV": [
+   {
+    "cusip": "36828A101",
+    "options": true,
+    "issuer": "GE VERNOVA INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GFS": [
+   {
+    "cusip": "G39387108",
+    "options": true,
+    "issuer": "GLOBALFOUNDRIES INC",
+    "description": "ORDINARY SHARES",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GILD": [
+   {
+    "cusip": "375558103",
+    "options": true,
+    "issuer": "GILEAD SCIENCES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GIS": [
+   {
+    "cusip": "370334104",
+    "options": true,
+    "issuer": "GENERAL MILLS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GL": [
+   {
+    "cusip": "37959E102",
+    "options": true,
+    "issuer": "GLOBE LIFE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GLW": [
+   {
+    "cusip": "219350105",
+    "options": true,
+    "issuer": "CORNING INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GM": [
+   {
+    "cusip": "37045V100",
+    "options": true,
+    "issuer": "GENERAL MTRS CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GNRC": [
+   {
+    "cusip": "368736104",
+    "options": true,
+    "issuer": "GENERAC HLDGS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GOOG": [
+   {
+    "cusip": "02079K107",
+    "options": true,
+    "issuer": "ALPHABET INC",
+    "description": "CAP STK CL C",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GOOGL": [
+   {
+    "cusip": "02079K305",
+    "options": true,
+    "issuer": "ALPHABET INC",
+    "description": "CAP STK CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GPC": [
+   {
+    "cusip": "372460105",
+    "options": true,
+    "issuer": "GENUINE PARTS CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GPN": [
+   {
+    "cusip": "37940X102",
+    "options": true,
+    "issuer": "GLOBAL PMTS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GRMN": [
+   {
+    "cusip": "H2906T109",
+    "options": true,
+    "issuer": "GARMIN LTD",
+    "description": "SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GS": [
+   {
+    "cusip": "38141G104",
+    "options": true,
+    "issuer": "GOLDMAN SACHS GROUP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "GWW": [
+   {
+    "cusip": "384802104",
+    "options": true,
+    "issuer": "WW GRAINGER INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HAL": [
+   {
+    "cusip": "406216101",
+    "options": true,
+    "issuer": "HALLIBURTON CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HAS": [
+   {
+    "cusip": "418056107",
+    "options": true,
+    "issuer": "HASBRO INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HBAN": [
+   {
+    "cusip": "446150104",
+    "options": true,
+    "issuer": "HUNTINGTON BANCSHARES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HCA": [
+   {
+    "cusip": "40412C101",
+    "options": true,
+    "issuer": "HCA HEALTHCARE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HD": [
+   {
+    "cusip": "437076102",
+    "options": true,
+    "issuer": "HOME DEPOT INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HIG": [
+   {
+    "cusip": "416515104",
+    "options": true,
+    "issuer": "HARTFORD INSURANCE GROUP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HII": [
+   {
+    "cusip": "446413106",
+    "options": true,
+    "issuer": "HUNTINGTON INGALLS INDS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HLT": [
+   {
+    "cusip": "43300A203",
+    "options": true,
+    "issuer": "HILTON WORLDWIDE HLDGS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HON": [
+   {
+    "cusip": "438516205",
+    "options": true,
+    "issuer": "HONEYWELL INTL INC",
+    "description": "COM",
+    "status": "*A*",
+    "list": "current"
+   },
+   {
+    "cusip": "438516106",
+    "options": true,
+    "issuer": "HONEYWELL INTL INC",
+    "description": "COM",
+    "status": "*D*",
+    "list": "current"
+   },
+   {
+    "cusip": "438516106",
+    "options": true,
+    "issuer": "HONEYWELL INTL INC",
+    "description": "COM",
+    "status": "",
+    "list": "previous"
+   }
+  ],
+  "HONA": [
+   {
+    "cusip": "43849R105",
+    "options": false,
+    "issuer": "HONEYWELL AEROSPACE INC",
+    "description": "COM",
+    "status": "*A*",
+    "list": "current"
+   }
+  ],
+  "HOOD": [
+   {
+    "cusip": "770700102",
+    "options": true,
+    "issuer": "ROBINHOOD MKTS INC",
+    "description": "COM CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HPE": [
+   {
+    "cusip": "42824C109",
+    "options": true,
+    "issuer": "HEWLETT PACKARD ENTERPRISE C",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HPQ": [
+   {
+    "cusip": "40434L105",
+    "options": true,
+    "issuer": "HP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HRL": [
+   {
+    "cusip": "440452100",
+    "options": true,
+    "issuer": "HORMEL FOODS CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HSIC": [
+   {
+    "cusip": "806407102",
+    "options": true,
+    "issuer": "SCHEIN HENRY INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HST": [
+   {
+    "cusip": "44107P104",
+    "options": true,
+    "issuer": "HOST HOTELS & RESORTS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HSY": [
+   {
+    "cusip": "427866108",
+    "options": true,
+    "issuer": "HERSHEY CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HUBB": [
+   {
+    "cusip": "443510607",
+    "options": true,
+    "issuer": "HUBBELL INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HUM": [
+   {
+    "cusip": "444859102",
+    "options": true,
+    "issuer": "HUMANA INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "HWM": [
+   {
+    "cusip": "443201108",
+    "options": true,
+    "issuer": "HOWMET AEROSPACE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "IBKR": [
+   {
+    "cusip": "45841N107",
+    "options": true,
+    "issuer": "INTERACTIVE BROKERS GROUP IN",
+    "description": "COM CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "IBM": [
+   {
+    "cusip": "459200101",
+    "options": true,
+    "issuer": "INTERNATIONAL BUSINESS MACHS",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ICE": [
+   {
+    "cusip": "45866F104",
+    "options": true,
+    "issuer": "INTERCONTINENTAL EXCHANGE IN",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "IDXX": [
+   {
+    "cusip": "45168D104",
+    "options": true,
+    "issuer": "IDEXX LABS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "IEX": [
+   {
+    "cusip": "45167R104",
+    "options": true,
+    "issuer": "IDEX CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "IFF": [
+   {
+    "cusip": "459506101",
+    "options": true,
+    "issuer": "INTERNATIONAL FLAVORS&FRAGRA",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ILMN": [
+   {
+    "cusip": "452327109",
+    "options": true,
+    "issuer": "ILLUMINA INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "INCY": [
+   {
+    "cusip": "45337C102",
+    "options": true,
+    "issuer": "INCYTE CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "INTC": [
+   {
+    "cusip": "458140100",
+    "options": true,
+    "issuer": "INTEL CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "INTU": [
+   {
+    "cusip": "461202103",
+    "options": true,
+    "issuer": "INTUIT",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "INVH": [
+   {
+    "cusip": "46187W107",
+    "options": true,
+    "issuer": "INVITATION HOMES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "IP": [
+   {
+    "cusip": "460146103",
+    "options": true,
+    "issuer": "INTERNATIONAL PAPER CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "IQV": [
+   {
+    "cusip": "46266C105",
+    "options": true,
+    "issuer": "IQVIA HLDGS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "IR": [
+   {
+    "cusip": "45687V106",
+    "options": true,
+    "issuer": "INGERSOLL RAND INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "IRM": [
+   {
+    "cusip": "46284V101",
+    "options": true,
+    "issuer": "IRON MTN INC DEL",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ISRG": [
+   {
+    "cusip": "46120E602",
+    "options": true,
+    "issuer": "INTUITIVE SURGICAL INC",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "IT": [
+   {
+    "cusip": "366651107",
+    "options": true,
+    "issuer": "GARTNER INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ITW": [
+   {
+    "cusip": "452308109",
+    "options": true,
+    "issuer": "ILLINOIS TOOL WKS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "IVZ": [
+   {
+    "cusip": "G491BT108",
+    "options": true,
+    "issuer": "INVESCO LTD",
+    "description": "SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "J": [
+   {
+    "cusip": "46982L108",
+    "options": true,
+    "issuer": "JACOBS SOLUTIONS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "JBHT": [
+   {
+    "cusip": "445658107",
+    "options": true,
+    "issuer": "HUNT J B TRANS SVCS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "JBL": [
+   {
+    "cusip": "466313103",
+    "options": true,
+    "issuer": "JABIL INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "JCI": [
+   {
+    "cusip": "G51502105",
+    "options": true,
+    "issuer": "JOHNSON CONTROLS INTERNATION",
+    "description": "SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "JKHY": [
+   {
+    "cusip": "426281101",
+    "options": true,
+    "issuer": "HENRY JACK & ASSOC INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "JNJ": [
+   {
+    "cusip": "478160104",
+    "options": true,
+    "issuer": "JOHNSON & JOHNSON",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "JPM": [
+   {
+    "cusip": "46625H100",
+    "options": true,
+    "issuer": "JPMORGAN CHASE & CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "KDP": [
+   {
+    "cusip": "49271V100",
+    "options": true,
+    "issuer": "KEURIG DR PEPPER INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "KEY": [
+   {
+    "cusip": "493267108",
+    "options": true,
+    "issuer": "KEYCORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "KEYS": [
+   {
+    "cusip": "49338L103",
+    "options": true,
+    "issuer": "KEYSIGHT TECHNOLOGIES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "KHC": [
+   {
+    "cusip": "500754106",
+    "options": true,
+    "issuer": "KRAFT HEINZ CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "KIM": [
+   {
+    "cusip": "49446R109",
+    "options": true,
+    "issuer": "KIMCO REALTY CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "KKR": [
+   {
+    "cusip": "48251W104",
+    "options": true,
+    "issuer": "KKR & CO INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "KLAC": [
+   {
+    "cusip": "482480100",
+    "options": true,
+    "issuer": "KLA CORP",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "KMB": [
+   {
+    "cusip": "494368103",
+    "options": true,
+    "issuer": "KIMBERLY-CLARK CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "KMI": [
+   {
+    "cusip": "49456B101",
+    "options": true,
+    "issuer": "KINDER MORGAN INC DEL",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "KO": [
+   {
+    "cusip": "191216100",
+    "options": true,
+    "issuer": "COCA COLA CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "KR": [
+   {
+    "cusip": "501044101",
+    "options": true,
+    "issuer": "KROGER CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "KVUE": [
+   {
+    "cusip": "49177J102",
+    "options": true,
+    "issuer": "KENVUE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "L": [
+   {
+    "cusip": "540424108",
+    "options": true,
+    "issuer": "LOEWS CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LCID": [
+   {
+    "cusip": "549498202",
+    "options": true,
+    "issuer": "LUCID GROUP INC",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LDOS": [
+   {
+    "cusip": "525327102",
+    "options": true,
+    "issuer": "LEIDOS HOLDINGS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LEN": [
+   {
+    "cusip": "526057104",
+    "options": true,
+    "issuer": "LENNAR CORP",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LH": [
+   {
+    "cusip": "504922105",
+    "options": true,
+    "issuer": "LABCORP HOLDINGS INC",
+    "description": "COM SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LHX": [
+   {
+    "cusip": "502431109",
+    "options": true,
+    "issuer": "L3HARRIS TECHNOLOGIES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LII": [
+   {
+    "cusip": "526107107",
+    "options": true,
+    "issuer": "LENNOX INTL INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LIN": [
+   {
+    "cusip": "G54950103",
+    "options": true,
+    "issuer": "LINDE PLC",
+    "description": "SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LITE": [
+   {
+    "cusip": "55024U109",
+    "options": true,
+    "issuer": "LUMENTUM HLDGS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LLY": [
+   {
+    "cusip": "532457108",
+    "options": true,
+    "issuer": "ELI LILLY & CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LMT": [
+   {
+    "cusip": "539830109",
+    "options": true,
+    "issuer": "LOCKHEED MARTIN CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LNT": [
+   {
+    "cusip": "018802108",
+    "options": true,
+    "issuer": "ALLIANT ENERGY CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LOW": [
+   {
+    "cusip": "548661107",
+    "options": true,
+    "issuer": "LOWES COS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LRCX": [
+   {
+    "cusip": "512807306",
+    "options": true,
+    "issuer": "LAM RESEARCH CORP",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LULU": [
+   {
+    "cusip": "550021109",
+    "options": true,
+    "issuer": "LULULEMON ATHLETICA INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LUV": [
+   {
+    "cusip": "844741108",
+    "options": true,
+    "issuer": "SOUTHWEST AIRLS CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LVS": [
+   {
+    "cusip": "517834107",
+    "options": true,
+    "issuer": "LAS VEGAS SANDS CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LYB": [
+   {
+    "cusip": "N53745100",
+    "options": true,
+    "issuer": "LYONDELLBASELL INDUSTRIES NV",
+    "description": "SHS - A -",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "LYV": [
+   {
+    "cusip": "538034109",
+    "options": true,
+    "issuer": "LIVE NATION ENTERTAINMENT IN",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MA": [
+   {
+    "cusip": "57636Q104",
+    "options": true,
+    "issuer": "MASTERCARD INCORPORATED",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MAA": [
+   {
+    "cusip": "59522J103",
+    "options": true,
+    "issuer": "MID-AMER APT CMNTYS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MAR": [
+   {
+    "cusip": "571903202",
+    "options": true,
+    "issuer": "MARRIOTT INTL INC NEW",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MAS": [
+   {
+    "cusip": "574599106",
+    "options": true,
+    "issuer": "MASCO CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MCD": [
+   {
+    "cusip": "580135101",
+    "options": true,
+    "issuer": "MCDONALDS CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MCHP": [
+   {
+    "cusip": "595017104",
+    "options": true,
+    "issuer": "MICROCHIP TECHNOLOGY INC.",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MCK": [
+   {
+    "cusip": "58155Q103",
+    "options": true,
+    "issuer": "MCKESSON CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MCO": [
+   {
+    "cusip": "615369105",
+    "options": true,
+    "issuer": "MOODYS CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MDB": [
+   {
+    "cusip": "60937P106",
+    "options": true,
+    "issuer": "MONGODB INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MDLZ": [
+   {
+    "cusip": "609207105",
+    "options": true,
+    "issuer": "MONDELEZ INTL INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MDT": [
+   {
+    "cusip": "G5960L103",
+    "options": true,
+    "issuer": "MEDTRONIC PLC",
+    "description": "SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MELI": [
+   {
+    "cusip": "58733R102",
+    "options": true,
+    "issuer": "MERCADOLIBRE  INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MET": [
+   {
+    "cusip": "59156R108",
+    "options": true,
+    "issuer": "METLIFE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "META": [
+   {
+    "cusip": "30303M102",
+    "options": true,
+    "issuer": "META PLATFORMS INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MGM": [
+   {
+    "cusip": "552953101",
+    "options": true,
+    "issuer": "MGM RESORTS INTERNATIONAL",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MKC": [
+   {
+    "cusip": "579780206",
+    "options": true,
+    "issuer": "MCCORMICK & CO INC",
+    "description": "COM NON VTG",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MLM": [
+   {
+    "cusip": "573284106",
+    "options": true,
+    "issuer": "MARTIN MARIETTA MATLS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MMM": [
+   {
+    "cusip": "88579Y101",
+    "options": true,
+    "issuer": "3M CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MNST": [
+   {
+    "cusip": "61174X109",
+    "options": true,
+    "issuer": "MONSTER BEVERAGE CORP NEW",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MO": [
+   {
+    "cusip": "02209S103",
+    "options": true,
+    "issuer": "ALTRIA GROUP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MOS": [
+   {
+    "cusip": "61945C103",
+    "options": true,
+    "issuer": "MOSAIC CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MPC": [
+   {
+    "cusip": "56585A102",
+    "options": true,
+    "issuer": "MARATHON PETE CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MPWR": [
+   {
+    "cusip": "609839105",
+    "options": true,
+    "issuer": "MONOLITHIC PWR SYS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MRK": [
+   {
+    "cusip": "58933Y105",
+    "options": true,
+    "issuer": "MERCK & CO INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MRNA": [
+   {
+    "cusip": "60770K107",
+    "options": true,
+    "issuer": "MODERNA INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MRSH": [
+   {
+    "cusip": "571748102",
+    "options": true,
+    "issuer": "MARSH & MCLENNAN COS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MRVL": [
+   {
+    "cusip": "573874104",
+    "options": true,
+    "issuer": "MARVELL TECHNOLOGY INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MS": [
+   {
+    "cusip": "617446448",
+    "options": true,
+    "issuer": "MORGAN STANLEY",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MSCI": [
+   {
+    "cusip": "55354G100",
+    "options": true,
+    "issuer": "MSCI INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MSFT": [
+   {
+    "cusip": "594918104",
+    "options": true,
+    "issuer": "MICROSOFT CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MSI": [
+   {
+    "cusip": "620076307",
+    "options": true,
+    "issuer": "MOTOROLA SOLUTIONS INC",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MTB": [
+   {
+    "cusip": "55261F104",
+    "options": true,
+    "issuer": "M & T BK CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MTD": [
+   {
+    "cusip": "592688105",
+    "options": true,
+    "issuer": "METTLER TOLEDO INTERNATIONAL",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "MU": [
+   {
+    "cusip": "595112103",
+    "options": true,
+    "issuer": "MICRON TECHNOLOGY INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NCLH": [
+   {
+    "cusip": "G66721104",
+    "options": true,
+    "issuer": "NORWEGIAN CRUISE LINE HLDGS",
+    "description": "SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NDAQ": [
+   {
+    "cusip": "631103108",
+    "options": true,
+    "issuer": "NASDAQ INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NDSN": [
+   {
+    "cusip": "655663102",
+    "options": true,
+    "issuer": "NORDSON CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NEE": [
+   {
+    "cusip": "65339F101",
+    "options": true,
+    "issuer": "NEXTERA ENERGY INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NEM": [
+   {
+    "cusip": "651639106",
+    "options": true,
+    "issuer": "NEWMONT CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NFLX": [
+   {
+    "cusip": "64110L106",
+    "options": true,
+    "issuer": "NETFLIX INC.",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NI": [
+   {
+    "cusip": "65473P105",
+    "options": true,
+    "issuer": "NISOURCE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NKE": [
+   {
+    "cusip": "654106103",
+    "options": true,
+    "issuer": "NIKE INC",
+    "description": "CL B",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NOC": [
+   {
+    "cusip": "666807102",
+    "options": true,
+    "issuer": "NORTHROP GRUMMAN CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NOW": [
+   {
+    "cusip": "81762P102",
+    "options": true,
+    "issuer": "SERVICENOW INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NRG": [
+   {
+    "cusip": "629377508",
+    "options": true,
+    "issuer": "NRG ENERGY INC",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NSC": [
+   {
+    "cusip": "655844108",
+    "options": true,
+    "issuer": "NORFOLK SOUTHN CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NTAP": [
+   {
+    "cusip": "64110D104",
+    "options": true,
+    "issuer": "NETAPP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NTRS": [
+   {
+    "cusip": "665859104",
+    "options": true,
+    "issuer": "NORTHERN TR CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NUE": [
+   {
+    "cusip": "670346105",
+    "options": true,
+    "issuer": "NUCOR CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NVDA": [
+   {
+    "cusip": "67066G104",
+    "options": true,
+    "issuer": "NVIDIA CORPORATION",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NVR": [
+   {
+    "cusip": "62944T105",
+    "options": false,
+    "issuer": "NVR INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NWS": [
+   {
+    "cusip": "65249B208",
+    "options": true,
+    "issuer": "NEWS CORP NEW",
+    "description": "CL B",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NWSA": [
+   {
+    "cusip": "65249B109",
+    "options": true,
+    "issuer": "NEWS CORP NEW",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "NXPI": [
+   {
+    "cusip": "N6596X109",
+    "options": true,
+    "issuer": "NXP SEMICONDUCTORS N V",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "O": [
+   {
+    "cusip": "756109104",
+    "options": true,
+    "issuer": "REALTY INCOME CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ODFL": [
+   {
+    "cusip": "679580100",
+    "options": true,
+    "issuer": "OLD DOMINION FREIGHT LINE IN",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "OKE": [
+   {
+    "cusip": "682680103",
+    "options": true,
+    "issuer": "ONEOK INC NEW",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "OMC": [
+   {
+    "cusip": "681919106",
+    "options": true,
+    "issuer": "OMNICOM GROUP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ON": [
+   {
+    "cusip": "682189105",
+    "options": true,
+    "issuer": "ON SEMICONDUCTOR CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ORCL": [
+   {
+    "cusip": "68389X105",
+    "options": true,
+    "issuer": "ORACLE CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ORLY": [
+   {
+    "cusip": "67103H107",
+    "options": true,
+    "issuer": "OREILLY AUTOMOTIVE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "OTIS": [
+   {
+    "cusip": "68902V107",
+    "options": true,
+    "issuer": "OTIS WORLDWIDE CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "OXY": [
+   {
+    "cusip": "674599105",
+    "options": true,
+    "issuer": "OCCIDENTAL PETE CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "P": [
+   {
+    "cusip": "74624M102",
+    "options": true,
+    "issuer": "EVERPURE INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PANW": [
+   {
+    "cusip": "697435105",
+    "options": true,
+    "issuer": "PALO ALTO NETWORKS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PAYX": [
+   {
+    "cusip": "704326107",
+    "options": true,
+    "issuer": "PAYCHEX INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PCAR": [
+   {
+    "cusip": "693718108",
+    "options": true,
+    "issuer": "PACCAR INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PCG": [
+   {
+    "cusip": "69331C108",
+    "options": true,
+    "issuer": "PG&E CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PDD": [
+   {
+    "cusip": "722304102",
+    "options": true,
+    "issuer": "PDD HOLDINGS INC",
+    "description": "SPONSORED ADS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PEG": [
+   {
+    "cusip": "744573106",
+    "options": true,
+    "issuer": "PUBLIC SVC ENTERPRISE GROUP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PEP": [
+   {
+    "cusip": "713448108",
+    "options": true,
+    "issuer": "PEPSICO INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PFE": [
+   {
+    "cusip": "717081103",
+    "options": true,
+    "issuer": "PFIZER INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PFG": [
+   {
+    "cusip": "74251V102",
+    "options": true,
+    "issuer": "PRINCIPAL FINANCIAL GROUP IN",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PG": [
+   {
+    "cusip": "742718109",
+    "options": true,
+    "issuer": "PROCTER & GAMBLE CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PGR": [
+   {
+    "cusip": "743315103",
+    "options": true,
+    "issuer": "PROGRESSIVE CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PH": [
+   {
+    "cusip": "701094104",
+    "options": true,
+    "issuer": "PARKER-HANNIFIN CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PHM": [
+   {
+    "cusip": "745867101",
+    "options": true,
+    "issuer": "PULTE GROUP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PKG": [
+   {
+    "cusip": "695156109",
+    "options": true,
+    "issuer": "PACKAGING CORP AMER",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PLD": [
+   {
+    "cusip": "74340W103",
+    "options": true,
+    "issuer": "PROLOGIS INC.",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PLTR": [
+   {
+    "cusip": "69608A108",
+    "options": true,
+    "issuer": "PALANTIR TECHNOLOGIES INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PM": [
+   {
+    "cusip": "718172109",
+    "options": true,
+    "issuer": "PHILIP MORRIS INTL INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PNC": [
+   {
+    "cusip": "693475105",
+    "options": true,
+    "issuer": "PNC FINL SVCS GROUP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PNR": [
+   {
+    "cusip": "G7S00T104",
+    "options": true,
+    "issuer": "PENTAIR PLC",
+    "description": "SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PNW": [
+   {
+    "cusip": "723484101",
+    "options": true,
+    "issuer": "PINNACLE WEST CAP CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PODD": [
+   {
+    "cusip": "45784P101",
+    "options": true,
+    "issuer": "INSULET CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PPG": [
+   {
+    "cusip": "693506107",
+    "options": true,
+    "issuer": "PPG INDS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PPL": [
+   {
+    "cusip": "69351T106",
+    "options": true,
+    "issuer": "PPL CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PRU": [
+   {
+    "cusip": "744320102",
+    "options": true,
+    "issuer": "PRUDENTIAL FINL INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PSA": [
+   {
+    "cusip": "74460D109",
+    "options": true,
+    "issuer": "PUBLIC STORAGE",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PSKY": [
+   {
+    "cusip": "69932A204",
+    "options": true,
+    "issuer": "PARAMOUNT SKYDANCE CORP",
+    "description": "COM CL B",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PSX": [
+   {
+    "cusip": "718546104",
+    "options": true,
+    "issuer": "PHILLIPS 66",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PTC": [
+   {
+    "cusip": "69370C100",
+    "options": true,
+    "issuer": "PTC INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PWR": [
+   {
+    "cusip": "74762E102",
+    "options": true,
+    "issuer": "QUANTA SVCS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "PYPL": [
+   {
+    "cusip": "70450Y103",
+    "options": true,
+    "issuer": "PAYPAL HLDGS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "Q": [
+   {
+    "cusip": "74743L100",
+    "options": true,
+    "issuer": "QNITY ELECTRONICS INC",
+    "description": "COMMON STOCK",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "QCOM": [
+   {
+    "cusip": "747525103",
+    "options": true,
+    "issuer": "QUALCOMM INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "RCL": [
+   {
+    "cusip": "V7780T103",
+    "options": true,
+    "issuer": "ROYAL CARIBBEAN GROUP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "RDDT": [
+   {
+    "cusip": "75734B100",
+    "options": true,
+    "issuer": "REDDIT INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "REG": [
+   {
+    "cusip": "758849103",
+    "options": true,
+    "issuer": "REGENCY CTRS CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "REGN": [
+   {
+    "cusip": "75886F107",
+    "options": true,
+    "issuer": "REGENERON PHARMACEUTICALS",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "RF": [
+   {
+    "cusip": "7591EP100",
+    "options": true,
+    "issuer": "REGIONS FINANCIAL CORP NEW",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "RJF": [
+   {
+    "cusip": "754730109",
+    "options": true,
+    "issuer": "RAYMOND JAMES FINL INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "RL": [
+   {
+    "cusip": "751212101",
+    "options": true,
+    "issuer": "RALPH LAUREN CORP",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "RMD": [
+   {
+    "cusip": "761152107",
+    "options": true,
+    "issuer": "RESMED INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ROK": [
+   {
+    "cusip": "773903109",
+    "options": true,
+    "issuer": "ROCKWELL AUTOMATION INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ROL": [
+   {
+    "cusip": "775711104",
+    "options": true,
+    "issuer": "ROLLINS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ROP": [
+   {
+    "cusip": "776696106",
+    "options": true,
+    "issuer": "ROPER TECHNOLOGIES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ROST": [
+   {
+    "cusip": "778296103",
+    "options": true,
+    "issuer": "ROSS STORES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "RSG": [
+   {
+    "cusip": "760759100",
+    "options": true,
+    "issuer": "REPUBLIC SVCS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "RTX": [
+   {
+    "cusip": "75513E101",
+    "options": true,
+    "issuer": "RTX CORPORATION",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "RVTY": [
+   {
+    "cusip": "714046109",
+    "options": true,
+    "issuer": "REVVITY INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SBAC": [
+   {
+    "cusip": "78410G104",
+    "options": true,
+    "issuer": "SBA COMMUNICATIONS CORP",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SBUX": [
+   {
+    "cusip": "855244109",
+    "options": true,
+    "issuer": "STARBUCKS CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SCHW": [
+   {
+    "cusip": "808513105",
+    "options": true,
+    "issuer": "SCHWAB CHARLES CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SHW": [
+   {
+    "cusip": "824348106",
+    "options": true,
+    "issuer": "SHERWIN WILLIAMS CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SJM": [
+   {
+    "cusip": "832696405",
+    "options": true,
+    "issuer": "SMUCKER J M CO",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SLB": [
+   {
+    "cusip": "806857108",
+    "options": true,
+    "issuer": "SLB LIMITED",
+    "description": "COM STK",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SMCI": [
+   {
+    "cusip": "86800U302",
+    "options": true,
+    "issuer": "SUPER MICRO COMPUTER INC",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SNA": [
+   {
+    "cusip": "833034101",
+    "options": true,
+    "issuer": "SNAP ON INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SNDK": [
+   {
+    "cusip": "80004C200",
+    "options": true,
+    "issuer": "SANDISK CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SNPS": [
+   {
+    "cusip": "871607107",
+    "options": true,
+    "issuer": "SYNOPSYS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SO": [
+   {
+    "cusip": "842587107",
+    "options": true,
+    "issuer": "SOUTHERN CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SOLV": [
+   {
+    "cusip": "83444M101",
+    "options": true,
+    "issuer": "SOLVENTUM CORP",
+    "description": "COM SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SPG": [
+   {
+    "cusip": "828806109",
+    "options": true,
+    "issuer": "SIMON PPTY GROUP INC NEW",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SPGI": [
+   {
+    "cusip": "78409V104",
+    "options": true,
+    "issuer": "S&P GLOBAL INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SRE": [
+   {
+    "cusip": "816851109",
+    "options": true,
+    "issuer": "SEMPRA",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "STE": [
+   {
+    "cusip": "G8473T100",
+    "options": true,
+    "issuer": "STERIS PLC",
+    "description": "SHS USD",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "STLD": [
+   {
+    "cusip": "858119100",
+    "options": true,
+    "issuer": "STEEL DYNAMICS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "STT": [
+   {
+    "cusip": "857477103",
+    "options": true,
+    "issuer": "STATE STR CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "STX": [
+   {
+    "cusip": "G7997R103",
+    "options": true,
+    "issuer": "SEAGATE TECHNOLOGY HLDNGS PL",
+    "description": "ORD SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "STZ": [
+   {
+    "cusip": "21036P108",
+    "options": true,
+    "issuer": "CONSTELLATION BRANDS INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SW": [
+   {
+    "cusip": "G8267P108",
+    "options": true,
+    "issuer": "SMURFIT WESTROCK PLC",
+    "description": "SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SWK": [
+   {
+    "cusip": "854502101",
+    "options": true,
+    "issuer": "STANLEY BLACK & DECKER INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SWKS": [
+   {
+    "cusip": "83088M102",
+    "options": true,
+    "issuer": "SKYWORKS SOLUTIONS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SYF": [
+   {
+    "cusip": "87165B103",
+    "options": true,
+    "issuer": "SYNCHRONY FINANCIAL",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SYK": [
+   {
+    "cusip": "863667101",
+    "options": true,
+    "issuer": "STRYKER CORPORATION",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "SYY": [
+   {
+    "cusip": "871829107",
+    "options": true,
+    "issuer": "SYSCO CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "T": [
+   {
+    "cusip": "00206R102",
+    "options": true,
+    "issuer": "AT&T INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TDG": [
+   {
+    "cusip": "893641100",
+    "options": true,
+    "issuer": "TRANSDIGM GROUP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TDY": [
+   {
+    "cusip": "879360105",
+    "options": true,
+    "issuer": "TELEDYNE TECHNOLOGIES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TEAM": [
+   {
+    "cusip": "049468101",
+    "options": true,
+    "issuer": "ATLASSIAN CORPORATION",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TECH": [
+   {
+    "cusip": "09073M104",
+    "options": true,
+    "issuer": "BIO-TECHNE CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TEL": [
+   {
+    "cusip": "G87052109",
+    "options": true,
+    "issuer": "TE CONNECTIVITY PLC",
+    "description": "ORD SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TER": [
+   {
+    "cusip": "880770102",
+    "options": true,
+    "issuer": "TERADYNE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TFC": [
+   {
+    "cusip": "89832Q109",
+    "options": true,
+    "issuer": "TRUIST FINL CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TGT": [
+   {
+    "cusip": "87612E106",
+    "options": true,
+    "issuer": "TARGET CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TJX": [
+   {
+    "cusip": "872540109",
+    "options": true,
+    "issuer": "TJX COS INC NEW",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TKO": [
+   {
+    "cusip": "87256C101",
+    "options": true,
+    "issuer": "TKO GROUP HOLDINGS INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TMO": [
+   {
+    "cusip": "883556102",
+    "options": true,
+    "issuer": "THERMO FISHER SCIENTIFIC INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TMUS": [
+   {
+    "cusip": "872590104",
+    "options": true,
+    "issuer": "T-MOBILE US INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TPL": [
+   {
+    "cusip": "88262P102",
+    "options": true,
+    "issuer": "TEXAS PACIFIC LAND CORPORATI",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TPR": [
+   {
+    "cusip": "876030107",
+    "options": true,
+    "issuer": "TAPESTRY INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TRGP": [
+   {
+    "cusip": "87612G101",
+    "options": true,
+    "issuer": "TARGA RES CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TRMB": [
+   {
+    "cusip": "896239100",
+    "options": true,
+    "issuer": "TRIMBLE INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TROW": [
+   {
+    "cusip": "74144T108",
+    "options": true,
+    "issuer": "PRICE T ROWE GROUP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TRV": [
+   {
+    "cusip": "89417E109",
+    "options": true,
+    "issuer": "TRAVELERS COMPANIES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TSCO": [
+   {
+    "cusip": "892356106",
+    "options": true,
+    "issuer": "TRACTOR SUPPLY CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TSLA": [
+   {
+    "cusip": "88160R101",
+    "options": true,
+    "issuer": "TESLA INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TSN": [
+   {
+    "cusip": "902494103",
+    "options": true,
+    "issuer": "TYSON FOODS INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TT": [
+   {
+    "cusip": "G8994E103",
+    "options": true,
+    "issuer": "TRANE TECHNOLOGIES PLC",
+    "description": "SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TTD": [
+   {
+    "cusip": "88339J105",
+    "options": true,
+    "issuer": "THE TRADE DESK INC",
+    "description": "COM CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TTWO": [
+   {
+    "cusip": "874054109",
+    "options": true,
+    "issuer": "TAKE-TWO INTERACTIVE SOFTWAR",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TXN": [
+   {
+    "cusip": "882508104",
+    "options": true,
+    "issuer": "TEXAS INSTRS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TXT": [
+   {
+    "cusip": "883203101",
+    "options": true,
+    "issuer": "TEXTRON INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "TYL": [
+   {
+    "cusip": "902252105",
+    "options": true,
+    "issuer": "TYLER TECHNOLOGIES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "UAL": [
+   {
+    "cusip": "910047109",
+    "options": true,
+    "issuer": "UNITED AIRLS HLDGS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "UBER": [
+   {
+    "cusip": "90353T100",
+    "options": true,
+    "issuer": "UBER TECHNOLOGIES INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "UDR": [
+   {
+    "cusip": "902653104",
+    "options": true,
+    "issuer": "UDR INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "UHS": [
+   {
+    "cusip": "913903100",
+    "options": true,
+    "issuer": "UNIVERSAL HLTH SVCS INC",
+    "description": "CL B",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ULTA": [
+   {
+    "cusip": "90384S303",
+    "options": true,
+    "issuer": "ULTA BEAUTY INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "UNH": [
+   {
+    "cusip": "91324P102",
+    "options": true,
+    "issuer": "UNITEDHEALTH GROUP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "UNP": [
+   {
+    "cusip": "907818108",
+    "options": true,
+    "issuer": "UNION PAC CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "UPS": [
+   {
+    "cusip": "911312106",
+    "options": true,
+    "issuer": "UNITED PARCEL SVCS INC",
+    "description": "CL B",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "URI": [
+   {
+    "cusip": "911363109",
+    "options": true,
+    "issuer": "UNITED RENTALS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "USB": [
+   {
+    "cusip": "902973304",
+    "options": true,
+    "issuer": "US BANCORP",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "V": [
+   {
+    "cusip": "92826C839",
+    "options": true,
+    "issuer": "VISA INC",
+    "description": "COM CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "VEEV": [
+   {
+    "cusip": "922475108",
+    "options": true,
+    "issuer": "VEEVA SYS INC",
+    "description": "CL A COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "VICI": [
+   {
+    "cusip": "925652109",
+    "options": true,
+    "issuer": "VICI PPTYS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "VLO": [
+   {
+    "cusip": "91913Y100",
+    "options": true,
+    "issuer": "VALERO ENERGY CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "VLTO": [
+   {
+    "cusip": "92338C103",
+    "options": true,
+    "issuer": "VERALTO CORP",
+    "description": "COM SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "VMC": [
+   {
+    "cusip": "929160109",
+    "options": true,
+    "issuer": "VULCAN MATLS CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "VMRK": [
+   {
+    "cusip": "29476L107",
+    "options": true,
+    "issuer": "EQUITY RESIDENTIAL",
+    "description": "SH BEN INT",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "VRSK": [
+   {
+    "cusip": "92345Y106",
+    "options": true,
+    "issuer": "VERISK ANALYTICS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "VRSN": [
+   {
+    "cusip": "92343E102",
+    "options": true,
+    "issuer": "VERISIGN INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "VRT": [
+   {
+    "cusip": "92537N108",
+    "options": true,
+    "issuer": "VERTIV HOLDINGS CO",
+    "description": "COM CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "VRTX": [
+   {
+    "cusip": "92532F100",
+    "options": true,
+    "issuer": "VERTEX PHARMACEUTICALS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "VST": [
+   {
+    "cusip": "92840M102",
+    "options": true,
+    "issuer": "VISTRA CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "VTR": [
+   {
+    "cusip": "92276F100",
+    "options": true,
+    "issuer": "VENTAS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "VTRS": [
+   {
+    "cusip": "92556V106",
+    "options": true,
+    "issuer": "VIATRIS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "VZ": [
+   {
+    "cusip": "92343V104",
+    "options": true,
+    "issuer": "VERIZON COMMUNICATIONS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WAB": [
+   {
+    "cusip": "929740108",
+    "options": true,
+    "issuer": "WABTEC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WAT": [
+   {
+    "cusip": "941848103",
+    "options": true,
+    "issuer": "WATERS CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WBD": [
+   {
+    "cusip": "934423104",
+    "options": true,
+    "issuer": "WARNER BROS DISCOVERY INC",
+    "description": "COM SER A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WDAY": [
+   {
+    "cusip": "98138H101",
+    "options": true,
+    "issuer": "WORKDAY INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WDC": [
+   {
+    "cusip": "958102105",
+    "options": true,
+    "issuer": "WESTERN DIGITAL CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WEC": [
+   {
+    "cusip": "92939U106",
+    "options": true,
+    "issuer": "WEC ENERGY GROUP INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WELL": [
+   {
+    "cusip": "95040Q104",
+    "options": true,
+    "issuer": "WELLTOWER INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WFC": [
+   {
+    "cusip": "949746101",
+    "options": true,
+    "issuer": "WELLS FARGO & CO",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WM": [
+   {
+    "cusip": "94106L109",
+    "options": true,
+    "issuer": "WASTE MGMT INC DEL",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WMB": [
+   {
+    "cusip": "969457100",
+    "options": true,
+    "issuer": "WILLIAMS COS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WMT": [
+   {
+    "cusip": "931142103",
+    "options": true,
+    "issuer": "WALMART INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WRB": [
+   {
+    "cusip": "084423102",
+    "options": true,
+    "issuer": "BERKLEY W R CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WSM": [
+   {
+    "cusip": "969904101",
+    "options": true,
+    "issuer": "WILLIAMS SONOMA INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WST": [
+   {
+    "cusip": "955306105",
+    "options": true,
+    "issuer": "WEST PHARMACEUTICAL SVSC INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WTW": [
+   {
+    "cusip": "G96629103",
+    "options": true,
+    "issuer": "WILLIS TOWERS WATSON PLC LTD",
+    "description": "SHS",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WY": [
+   {
+    "cusip": "962166104",
+    "options": true,
+    "issuer": "WEYERHAEUSER CO",
+    "description": "COM NEW",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "WYNN": [
+   {
+    "cusip": "983134107",
+    "options": true,
+    "issuer": "WYNN RESORTS LTD",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "XEL": [
+   {
+    "cusip": "98389B100",
+    "options": true,
+    "issuer": "XCEL ENERGY INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "XOM": [
+   {
+    "cusip": "30231G102",
+    "options": true,
+    "issuer": "EXXON MOBIL CORP",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "XYL": [
+   {
+    "cusip": "98419M100",
+    "options": true,
+    "issuer": "XYLEM INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "XYZ": [
+   {
+    "cusip": "852234103",
+    "options": true,
+    "issuer": "BLOCK INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "YUM": [
+   {
+    "cusip": "988498101",
+    "options": true,
+    "issuer": "YUM BRANDS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ZBH": [
+   {
+    "cusip": "98956P102",
+    "options": true,
+    "issuer": "ZIMMER BIOMET HOLDINGS INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ZBRA": [
+   {
+    "cusip": "989207105",
+    "options": true,
+    "issuer": "ZEBRA TECHNOLOGIES CORPORATI",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ZS": [
+   {
+    "cusip": "98980G102",
+    "options": true,
+    "issuer": "ZSCALER INC",
+    "description": "COM",
+    "status": "",
+    "list": "current"
+   }
+  ],
+  "ZTS": [
+   {
+    "cusip": "98978V103",
+    "options": true,
+    "issuer": "ZOETIS INC",
+    "description": "CL A",
+    "status": "",
+    "list": "current"
+   }
+  ]
+ }
+}

@@ -1,7 +1,7 @@
 {
   "version": 1,
   "as_of": "2026-10-05",
-  "description": "Externalized ticker -> CUSIP map for the LTHCS Institutional Confidence pillar (Tier 3 #13 Phase 1). CUSIPs sourced from public 10-K cover pages and the OpenFIGI free tier. Multiple CUSIPs per ticker handle share classes / re-organizations. Each entry's name_aliases drive the fallback issuer-name match path in sec_13f._extract_holdings_for_universe when CUSIP matching fails. 2026-10-05 S&P 500 sync: CUSIPs for added tickers (and the 50 Wave A placeholders) matched by issuer name + share class against the SEC Official List of Section 13(f) Securities, 2026 Q2 (https://www.sec.gov/files/investment/13flist2026q2-txt.txt); only unambiguous matches were written, the rest keep empty cusips and fall back to name_aliases.",
+  "description": "Externalized ticker -> CUSIP map for the LTHCS Institutional Confidence pillar (Tier 3 #13 Phase 1). Multiple CUSIPs per ticker handle share classes / re-organizations. Since 2026-10-05 every active universe ticker carries a CUSIP verified against the SEC Official List of Section 13(f) Securities (see provenance); name_aliases are only consulted for a ticker that has no CUSIP (sec_13f._build_name_lookup).",
   "tickers": {
     "AAPL": {
       "cusips": [
@@ -133,7 +133,7 @@
     },
     "ARM": {
       "cusips": [
-        "042068106"
+        "042068205"
       ],
       "name_aliases": [
         "arm holdings"
@@ -165,7 +165,7 @@
     },
     "AZN": {
       "cusips": [
-        "046353108"
+        "G0593M107"
       ],
       "name_aliases": [
         "astrazeneca"
@@ -221,7 +221,7 @@
     },
     "BLK": {
       "cusips": [
-        "09247X101"
+        "09290D101"
       ],
       "name_aliases": [
         "blackrock"
@@ -311,7 +311,7 @@
     },
     "CEG": {
       "cusips": [
-        "210371100"
+        "21037T109"
       ],
       "name_aliases": [
         "constellation energy"
@@ -400,7 +400,7 @@
     },
     "CTAS": {
       "cusips": [
-        "192410106"
+        "172908105"
       ],
       "name_aliases": [
         "cintas"
@@ -432,7 +432,7 @@
     },
     "DASH": {
       "cusips": [
-        "25058X105"
+        "25809K105"
       ],
       "name_aliases": [
         "doordash"
@@ -570,7 +570,7 @@
     },
     "GFS": {
       "cusips": [
-        "G39319104"
+        "G39387108"
       ],
       "name_aliases": [
         "globalfoundries"
@@ -602,8 +602,7 @@
     },
     "GOOGL": {
       "cusips": [
-        "02079K305",
-        "02079K107"
+        "02079K305"
       ],
       "name_aliases": [
         "alphabet"
@@ -627,6 +626,7 @@
     },
     "HON": {
       "cusips": [
+        "438516205",
         "438516106"
       ],
       "name_aliases": [
@@ -733,7 +733,7 @@
     },
     "LCID": {
       "cusips": [
-        "534816107"
+        "549498202"
       ],
       "name_aliases": [
         "lucid group"
@@ -741,7 +741,7 @@
     },
     "LIN": {
       "cusips": [
-        "G5494J103"
+        "G54950103"
       ],
       "name_aliases": [
         "linde"
@@ -774,7 +774,7 @@
     },
     "LRCX": {
       "cusips": [
-        "512807108"
+        "512807306"
       ],
       "name_aliases": [
         "lam research"
@@ -1040,7 +1040,7 @@
     },
     "PDD": {
       "cusips": [
-        "722304101"
+        "722304102"
       ],
       "name_aliases": [
         "pdd holdings",
@@ -1157,7 +1157,7 @@
     },
     "SMCI": {
       "cusips": [
-        "86800U104"
+        "86800U302"
       ],
       "name_aliases": [
         "super micro computer"
@@ -1198,7 +1198,7 @@
     },
     "TEAM": {
       "cusips": [
-        "G06242104"
+        "049468101"
       ],
       "name_aliases": [
         "atlassian"
@@ -1345,7 +1345,7 @@
     },
     "WBD": {
       "cusips": [
-        "934423105"
+        "934423104"
       ],
       "name_aliases": [
         "warner bros discovery",
@@ -1577,7 +1577,9 @@
       ]
     },
     "ITW": {
-      "cusips": [],
+      "cusips": [
+        "452308109"
+      ],
       "name_aliases": [
         "illinois tool works"
       ]
@@ -1655,7 +1657,9 @@
       ]
     },
     "NSC": {
-      "cusips": [],
+      "cusips": [
+        "655844108"
+      ],
       "name_aliases": [
         "norfolk southern"
       ]
@@ -1861,7 +1865,9 @@
       ]
     },
     "AJG": {
-      "cusips": [],
+      "cusips": [
+        "363576109"
+      ],
       "name_aliases": [
         "arthur j. gallagher"
       ]
@@ -1987,7 +1993,9 @@
       ]
     },
     "ARE": {
-      "cusips": [],
+      "cusips": [
+        "015271109"
+      ],
       "name_aliases": [
         "alexandria real estate equities"
       ]
@@ -2017,7 +2025,9 @@
       ]
     },
     "AWK": {
-      "cusips": [],
+      "cusips": [
+        "030420103"
+      ],
       "name_aliases": [
         "american water works"
       ]
@@ -2183,7 +2193,10 @@
       ]
     },
     "CCL": {
-      "cusips": [],
+      "cusips": [
+        "G2004J103",
+        "143658300"
+      ],
       "name_aliases": [
         "carnival"
       ]
@@ -2341,7 +2354,9 @@
       ]
     },
     "CRL": {
-      "cusips": [],
+      "cusips": [
+        "159864107"
+      ],
       "name_aliases": [
         "charles river laboratories"
       ]
@@ -2379,7 +2394,10 @@
       ]
     },
     "DD": {
-      "cusips": [],
+      "cusips": [
+        "26614N201",
+        "26614N102"
+      ],
       "name_aliases": [
         "dupont de nemours"
       ]
@@ -2553,7 +2571,9 @@
       ]
     },
     "EL": {
-      "cusips": [],
+      "cusips": [
+        "518439104"
+      ],
       "name_aliases": [
         "the est\u00e9e lauder companies"
       ]
@@ -2575,7 +2595,9 @@
       ]
     },
     "ERIE": {
-      "cusips": [],
+      "cusips": [
+        "29530P102"
+      ],
       "name_aliases": [
         "erie indemnity"
       ]
@@ -2629,7 +2651,9 @@
       ]
     },
     "EXPD": {
-      "cusips": [],
+      "cusips": [
+        "302130109"
+      ],
       "name_aliases": [
         "expeditors international of washington"
       ]
@@ -2651,13 +2675,17 @@
       ]
     },
     "FDS": {
-      "cusips": [],
+      "cusips": [
+        "303075105"
+      ],
       "name_aliases": [
         "factset research systems"
       ]
     },
     "FDXF": {
-      "cusips": [],
+      "cusips": [
+        "314352105"
+      ],
       "name_aliases": [
         "fedex freight holding"
       ]
@@ -2695,7 +2723,9 @@
       ]
     },
     "FIS": {
-      "cusips": [],
+      "cusips": [
+        "31620M106"
+      ],
       "name_aliases": [
         "fidelity national information services"
       ]
@@ -2821,7 +2851,9 @@
       ]
     },
     "GPN": {
-      "cusips": [],
+      "cusips": [
+        "37940X102"
+      ],
       "name_aliases": [
         "global payments"
       ]
@@ -2883,7 +2915,9 @@
       ]
     },
     "HONA": {
-      "cusips": [],
+      "cusips": [
+        "43849R105"
+      ],
       "name_aliases": [
         "honeywell aerospace"
       ]
@@ -2921,7 +2955,9 @@
       ]
     },
     "HSIC": {
-      "cusips": [],
+      "cusips": [
+        "806407102"
+      ],
       "name_aliases": [
         "henry schein"
       ]
@@ -3023,7 +3059,9 @@
       ]
     },
     "IRM": {
-      "cusips": [],
+      "cusips": [
+        "46284V101"
+      ],
       "name_aliases": [
         "iron mountain"
       ]
@@ -3069,7 +3107,9 @@
       ]
     },
     "JKHY": {
-      "cusips": [],
+      "cusips": [
+        "426281101"
+      ],
       "name_aliases": [
         "jack henry & associates"
       ]
@@ -3187,7 +3227,9 @@
       ]
     },
     "LUV": {
-      "cusips": [],
+      "cusips": [
+        "844741108"
+      ],
       "name_aliases": [
         "southwest airlines"
       ]
@@ -3217,7 +3259,9 @@
       ]
     },
     "MAA": {
-      "cusips": [],
+      "cusips": [
+        "59522J103"
+      ],
       "name_aliases": [
         "mid-america apartment communities"
       ]
@@ -3295,7 +3339,9 @@
       ]
     },
     "MTB": {
-      "cusips": [],
+      "cusips": [
+        "55261F104"
+      ],
       "name_aliases": [
         "m&t bank"
       ]
@@ -3373,7 +3419,9 @@
       ]
     },
     "NVR": {
-      "cusips": [],
+      "cusips": [
+        "62944T105"
+      ],
       "name_aliases": [
         "nvr"
       ]
@@ -3467,13 +3515,17 @@
       ]
     },
     "PHM": {
-      "cusips": [],
+      "cusips": [
+        "745867101"
+      ],
       "name_aliases": [
         "pultegroup"
       ]
     },
     "PKG": {
-      "cusips": [],
+      "cusips": [
+        "695156109"
+      ],
       "name_aliases": [
         "packaging of america"
       ]
@@ -3663,7 +3715,9 @@
       ]
     },
     "SJM": {
-      "cusips": [],
+      "cusips": [
+        "832696405"
+      ],
       "name_aliases": [
         "the j. m. smucker"
       ]
@@ -3725,7 +3779,9 @@
       ]
     },
     "STT": {
-      "cusips": [],
+      "cusips": [
+        "857477103"
+      ],
       "name_aliases": [
         "state street"
       ]
@@ -3907,7 +3963,9 @@
       ]
     },
     "UAL": {
-      "cusips": [],
+      "cusips": [
+        "910047109"
+      ],
       "name_aliases": [
         "united airlines"
       ]
@@ -3977,7 +4035,9 @@
       ]
     },
     "VMRK": {
-      "cusips": [],
+      "cusips": [
+        "29476L107"
+      ],
       "name_aliases": [
         "vivmark residential"
       ]
@@ -4023,7 +4083,9 @@
       ]
     },
     "WAB": {
-      "cusips": [],
+      "cusips": [
+        "929740108"
+      ],
       "name_aliases": [
         "westinghouse air brake technologies"
       ]
@@ -4061,7 +4123,9 @@
       ]
     },
     "WST": {
-      "cusips": [],
+      "cusips": [
+        "955306105"
+      ],
       "name_aliases": [
         "west pharmaceutical services"
       ]
@@ -4138,5 +4202,285 @@
         "zoetis"
       ]
     }
+  },
+  "provenance": {
+    "verified_on": "2026-10-05",
+    "sec_13f_list": {
+      "quarter": "2026Q2",
+      "url": "https://www.sec.gov/files/investment/13flist2026q2-txt.txt",
+      "last_modified": "2026-07-06T12:30:12Z",
+      "index_page": "https://www.sec.gov/rules-regulations/staff-guidance/official-list-section-13f-securities",
+      "note": "Latest list on the SEC index page when fetched on 2026-10-05 (no 2026Q3 list posted yet)."
+    },
+    "previous_sec_13f_list": {
+      "quarter": "2026Q1",
+      "url": "https://www.sec.gov/files/investment/13flist2026q1.txt"
+    },
+    "sec_company_tickers": {
+      "url": "https://www.sec.gov/files/company_tickers.json",
+      "fetched": "2026-10-05",
+      "use": "ticker -> CIK -> SEC company name, cross-checked against the list issuer name; EDGAR submissions/8-Ks for renames and spin-offs"
+    },
+    "user_agent": "the generic SEC User-Agent fetch_market.py falls back to (SEC_UA); no personal contact",
+    "rule": "An active ticker maps to the CUSIP of its listed common / ordinary / ADS line that is live (not *D*) on the latest list, matched by issuer name and share class and cross-checked against the SEC CIK name. A predecessor CUSIP is kept only when it was live on the previous quarter's list, so the two quarters the QoQ signal compares both match. Every CUSIP passes the check-digit test and no CUSIP is claimed by two active tickers.",
+    "evidence": "data/lthcs/universe_candidate/mapping_2026-10-05/_sec_13flist_rows.json",
+    "verify": "python -m scripts.build_13f_cusip_map --audit 13flist2026q2.txt --previous-list 13flist2026q1.txt",
+    "coverage": {
+      "before": "469/515 active tickers had a CUSIP live on the 2026Q2 list (31 had none, 15 pointed at CUSIPs that are not live)",
+      "after": "515/515"
+    },
+    "filled_2026-10-05": {
+      "AJG": [
+        "363576109"
+      ],
+      "ARE": [
+        "015271109"
+      ],
+      "AWK": [
+        "030420103"
+      ],
+      "CCL": [
+        "G2004J103",
+        "143658300"
+      ],
+      "CRL": [
+        "159864107"
+      ],
+      "DD": [
+        "26614N201",
+        "26614N102"
+      ],
+      "EL": [
+        "518439104"
+      ],
+      "ERIE": [
+        "29530P102"
+      ],
+      "EXPD": [
+        "302130109"
+      ],
+      "FDS": [
+        "303075105"
+      ],
+      "FDXF": [
+        "314352105"
+      ],
+      "FIS": [
+        "31620M106"
+      ],
+      "GPN": [
+        "37940X102"
+      ],
+      "HONA": [
+        "43849R105"
+      ],
+      "HSIC": [
+        "806407102"
+      ],
+      "IRM": [
+        "46284V101"
+      ],
+      "ITW": [
+        "452308109"
+      ],
+      "JKHY": [
+        "426281101"
+      ],
+      "LUV": [
+        "844741108"
+      ],
+      "MAA": [
+        "59522J103"
+      ],
+      "MTB": [
+        "55261F104"
+      ],
+      "NSC": [
+        "655844108"
+      ],
+      "NVR": [
+        "62944T105"
+      ],
+      "PHM": [
+        "745867101"
+      ],
+      "PKG": [
+        "695156109"
+      ],
+      "SJM": [
+        "832696405"
+      ],
+      "STT": [
+        "857477103"
+      ],
+      "UAL": [
+        "910047109"
+      ],
+      "VMRK": [
+        "29476L107"
+      ],
+      "WAB": [
+        "929740108"
+      ],
+      "WST": [
+        "955306105"
+      ]
+    },
+    "corrected_2026-10-05": {
+      "ARM": {
+        "from": [
+          "042068106"
+        ],
+        "to": [
+          "042068205"
+        ],
+        "why": "ADS CUSIP on the list is 042068205; 042068106 is on neither the 2026Q1 nor 2026Q2 list"
+      },
+      "AZN": {
+        "from": [
+          "046353108"
+        ],
+        "to": [
+          "G0593M107"
+        ],
+        "why": "AstraZeneca ordinary shares listed directly (list: ORD G0593M107, *A* on 2026Q1); the ADR 046353108 was deleted on the 2026Q1 list"
+      },
+      "BLK": {
+        "from": [
+          "09247X101"
+        ],
+        "to": [
+          "09290D101"
+        ],
+        "why": "BlackRock holding-company reorganisation: list carries BLACKROCK INC COM 09290D101 (SEC CIK 2012383); 09247X101 is not on the list"
+      },
+      "CEG": {
+        "from": [
+          "210371100"
+        ],
+        "to": [
+          "21037T109"
+        ],
+        "why": "210371100 is on neither the 2026Q1 nor the 2026Q2 list; the list carries CONSTELLATION ENERGY CORP COM 21037T109 (SEC CIK 1868275)"
+      },
+      "CTAS": {
+        "from": [
+          "192410106"
+        ],
+        "to": [
+          "172908105"
+        ],
+        "why": "192410106 fails the CUSIP check digit and is not on the list; Cintas COM is 172908105"
+      },
+      "DASH": {
+        "from": [
+          "25058X105"
+        ],
+        "to": [
+          "25809K105"
+        ],
+        "why": "25058X105 is not on the list; DoorDash CL A is 25809K105"
+      },
+      "GFS": {
+        "from": [
+          "G39319104"
+        ],
+        "to": [
+          "G39387108"
+        ],
+        "why": "G39319104 fails the check digit and is not on the list; GlobalFoundries ordinary shares are G39387108"
+      },
+      "HON": {
+        "from": [
+          "438516106"
+        ],
+        "to": [
+          "438516205",
+          "438516106"
+        ],
+        "why": "Honeywell COM changed CUSIP on the 2026Q2 list (438516106 *D*, 438516205 *A*, alongside the 2026-06-29 Aerospace spin-off); 438516106 is kept because it was live on the 2026Q1 list, so both quarters the QoQ signal compares still match"
+      },
+      "LCID": {
+        "from": [
+          "534816107"
+        ],
+        "to": [
+          "549498202"
+        ],
+        "why": "534816107 fails the check digit and is not on the list; Lucid Group COM NEW (post reverse split) is 549498202"
+      },
+      "LIN": {
+        "from": [
+          "G5494J103"
+        ],
+        "to": [
+          "G54950103"
+        ],
+        "why": "G5494J103 is not on the list; Linde plc SHS is G54950103"
+      },
+      "LRCX": {
+        "from": [
+          "512807108"
+        ],
+        "to": [
+          "512807306"
+        ],
+        "why": "512807108 is not on the list; Lam Research COM NEW (post 10:1 split) is 512807306"
+      },
+      "PDD": {
+        "from": [
+          "722304101"
+        ],
+        "to": [
+          "722304102"
+        ],
+        "why": "check digit fix: 722304101 -> 722304102 (same 8-character issue, which is what sec_13f matches on)"
+      },
+      "SMCI": {
+        "from": [
+          "86800U104"
+        ],
+        "to": [
+          "86800U302"
+        ],
+        "why": "86800U104 is not on the list; Super Micro COM NEW (post 10:1 split) is 86800U302"
+      },
+      "TEAM": {
+        "from": [
+          "G06242104"
+        ],
+        "to": [
+          "049468101"
+        ],
+        "why": "G06242104 (pre-redomicile Atlassian plc) is not on the list; Atlassian Corporation CL A is 049468101"
+      },
+      "WBD": {
+        "from": [
+          "934423105"
+        ],
+        "to": [
+          "934423104"
+        ],
+        "why": "check digit fix: 934423105 -> 934423104 (same 8-character issue)"
+      },
+      "GOOGL": {
+        "from": [
+          "02079K305",
+          "02079K107"
+        ],
+        "to": [
+          "02079K305"
+        ],
+        "why": "dropped 02079K107 (Class C, which belongs to GOOG): with both share classes in the universe the duplicate claim made sec_13f attribute every Class C row to GOOGL (last write wins) and none to GOOG"
+      }
+    },
+    "notes": {
+      "VMRK": "Vivmark Residential is the renamed Equity Residential (same SEC CIK 906107; 8-K filed 2026-08-17: AvalonBay merged into the operating partnership, company renamed, ticker VMRK from 2026-08-18, existing share certificates unaffected). The 2026Q2 list predates the rename and carries EQUITY RESIDENTIAL SH BEN INT 29476L107; no later list is published yet, so if a new CUSIP was assigned at the rename the 2026Q3 list will show it. AvalonBay's CUSIP (053484101) is NOT mapped: a different, acquired issuer.",
+      "HONA": "CUSIP 43849R105 is on the 2026Q2 list (*A*) and stated in Honeywell Aerospace's 8-K of 2026-06-29 (regular-way trading on Nasdaq from 2026-06-29).",
+      "FDXF": "FEDEX FGHT HLDG CO INC COMMON STOCK 314352105 (*A* on 2026Q2); spin-off effective 2026-06-01 per the 8-K filed that day.",
+      "CCL": "Carnival Corporation renamed Carnival Corp Ltd. (SEC CIK 815097, former name until 2026-04-29); the 2026Q2 list adds CARNIVAL CORP LTD COMMON SHARES G2004J103 and deletes CARNIVAL CORP COMMON STOCK 143658300, which is kept as the 2026Q1 predecessor. The Carnival plc ADS (14365C103, also deleted) is a different listing and is not mapped to CCL.",
+      "DD": "2026Q2 list deletes DUPONT DE NEMOURS COM 26614N102 and adds COMMON STOCK 26614N201; both kept (26614N102 was live on 2026Q1)."
+    },
+    "unresolved": {}
   }
 }

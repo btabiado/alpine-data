@@ -22,7 +22,8 @@ Rules
   names stay active.
 * ``index_membership``: "S&P 500" and "DJIA" tags are recomputed from the
   inputs for every ACTIVE entry. "S&P 100" / "NASDAQ-100" tags are left as
-  they are (not refreshed by this script). Inactive entries are untouched.
+  they are unless ``--index-tags-dir`` is given (see below). Inactive
+  entries are untouched.
 * ``exchange`` is refreshed from the SEC exchange file; ``industry`` is
   filled from the GICS sub-industry where an entry has none.
 * Maturity stage for new tickers:
@@ -36,10 +37,30 @@ Rules
        written to ``maturity_note``.
 * New tickers carry no scores and no history. Nothing is backfilled.
 
+S&P 100 / NASDAQ-100 tags (``--index-tags-dir``)
+------------------------------------------------
+A second dated directory holds the two other index lists::
+
+    data/lthcs/universe_candidate/<dir>/
+        _source.json             "sp100" / "ndx100" blocks: URL, revision id
+                                 or as-of date, fetch date
+        _constituents_sp100.csv  Symbol, Name, Sector
+        _constituents_ndx100.csv Symbol, Name
+
+For every ACTIVE entry the "S&P 100" and "NASDAQ-100" tags are recomputed
+from those lists (S&P 500 / DJIA tags are not touched in this mode).
+Constituents that are not in the universe are reported, never added: the
+universe stays S&P 500 + DJIA + everything already in it. An entry that
+loses its last tag stays active ("nobody dropped"). The report goes to
+``_index_tag_report.json`` in the same directory.
+
 Usage::
 
     python scripts/lthcs_universe_sp500_sync.py \\
         --candidate-dir data/lthcs/universe_candidate/sp500_2026-10-05 --write
+
+    python scripts/lthcs_universe_sp500_sync.py \\
+        --index-tags-dir data/lthcs/universe_candidate/mapping_2026-10-05 --write
 """
 
 from __future__ import annotations
@@ -48,6 +69,7 @@ import argparse
 import csv
 import datetime as _dt
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -61,7 +83,10 @@ DATA = REPO_ROOT / "data" / "lthcs"
 RESTORES = {"BNY": "BK"}
 
 # Current symbol -> symbol the May 2026 seed listed the same company under.
-SEED_ALIASES = {"FISV": "FI", "MRSH": "MMC", "VMRK": "AVB", "PSKY": "PARA"}
+# VMRK is the renamed Equity Residential (SEC CIK 906107, 8-K 2026-08-17:
+# AvalonBay merged into it), so its seed row is EQR, not AVB; both carry
+# the same seed stage (standard_compounder).
+SEED_ALIASES = {"FISV": "FI", "MRSH": "MMC", "VMRK": "EQR", "PSKY": "PARA"}
 
 INDEX_ORDER = ["S&P 500", "S&P 100", "NASDAQ-100", "DJIA"]
 
@@ -229,6 +254,13 @@ INTERNET_PLATFORMS = {"EBAY", "EXPE", "APP"}
 
 # Custody banks follow BK's precedent (banks cohort).
 CUSTODY_BANKS = {"BNY", "STT", "NTRS"}
+
+# --index-tags-dir inputs: index tag -> (_source.json key, constituents file).
+TAG_LISTS = {
+    "S&P 100": ("sp100", "_constituents_sp100.csv"),
+    "NASDAQ-100": ("ndx100", "_constituents_ndx100.csv"),
+}
+_UNREFRESHED_TAGS = "S&P 100 / NASDAQ-100 tags were not refreshed in this sync."
 
 TODAY = "2026-10-05"
 FIVE_YEARS_AGO = _dt.date(2021, 10, 5)
@@ -424,7 +456,83 @@ def build(candidate_dir: Path) -> Dict[str, Any]:
     return {"universe": universe, "new": new_entries, "report": report, "source": src}
 
 
-def apply(result: Dict[str, Any]) -> None:
+def _tags_sentence(tags_src: Dict[str, Any], tags_dir: Path) -> str:
+    sp, nd = tags_src["sp100"], tags_src["ndx100"]
+    return (
+        "S&P 100 / NASDAQ-100 tags refreshed %s: S&P 100 from %s (revision %s), NASDAQ-100 from %s "
+        "(Nasdaq list as of %s); inputs in %s."
+        % (tags_src["fetched_at"], sp["url"], sp["revision_id"], nd["url"], nd["as_of"],
+           _rel(tags_dir))
+    )
+
+
+def _rel(path: Path) -> str:
+    try:
+        return Path(path).resolve().relative_to(REPO_ROOT).as_posix() + "/"
+    except ValueError:
+        return str(path)
+
+
+def _set_tags_sentence(description: str, sentence: str) -> str:
+    """Swap the S&P 100 / NASDAQ-100 sentence of the universe description."""
+    if _UNREFRESHED_TAGS in description:
+        return description.replace(_UNREFRESHED_TAGS, sentence)
+    pattern = re.compile(r"S&P 100 / NASDAQ-100 tags refreshed .*?; inputs in \S+/\.")
+    if pattern.search(description):
+        return pattern.sub(lambda _m: sentence, description)
+    return (description.rstrip() + " " + sentence).strip()
+
+
+def _with_counts(description: str, universe: Dict[str, Any]) -> str:
+    active = sum(1 for e in universe["tickers"] if e.get("active", True))
+    return re.sub(r"\d+ tickers, \d+ active\.",
+                  "%d tickers, %d active." % (len(universe["tickers"]), active), description)
+
+
+def refresh_index_tags(universe: Dict[str, Any], tags_dir: Path) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """Recompute "S&P 100" / "NASDAQ-100" tags of every active entry.
+
+    Returns (report, _source.json of ``tags_dir``). Mutates ``universe``.
+    """
+    src = json.loads((tags_dir / "_source.json").read_text())
+    members: Dict[str, set] = {}
+    for tag, (key, fname) in TAG_LISTS.items():
+        if key not in src:
+            raise SystemExit("%s/_source.json has no %r block" % (tags_dir, key))
+        with (tags_dir / fname).open(newline="", encoding="utf-8") as fh:
+            members[tag] = {r["Symbol"].strip().upper() for r in csv.DictReader(fh) if r.get("Symbol")}
+    by = {e["ticker"]: e for e in universe["tickers"]}
+    report: Dict[str, Any] = {"source": _rel(tags_dir), "changes": [], "by_index": {}}
+    for e in universe["tickers"]:
+        if not e.get("active", True):
+            continue
+        old = list(e.get("index_membership") or [])
+        tags = [x for x in old if x not in TAG_LISTS]
+        tags += [tag for tag in TAG_LISTS if e["ticker"] in members[tag]]
+        tags = _ordered_indices(tags)
+        if tags != old:
+            report["changes"].append({"ticker": e["ticker"], "from": old, "to": tags})
+            e["index_membership"] = tags
+    for tag in TAG_LISTS:
+        before = {c["ticker"] for c in report["changes"] if tag in c["from"] and tag not in c["to"]}
+        after = {c["ticker"] for c in report["changes"] if tag in c["to"] and tag not in c["from"]}
+        report["by_index"][tag] = {
+            "constituents": len(members[tag]),
+            "tagged_active": sum(1 for e in universe["tickers"]
+                                 if e.get("active", True) and tag in e.get("index_membership", [])),
+            "added": sorted(after),
+            "removed": sorted(before),
+            "not_in_universe": sorted(t for t in members[tag] if t not in by),
+            "inactive_in_universe": sorted(t for t in members[tag]
+                                           if t in by and not by[t].get("active", True)),
+        }
+    report["active_without_index_tag"] = sorted(
+        e["ticker"] for e in universe["tickers"]
+        if e.get("active", True) and not e.get("index_membership"))
+    return report, src
+
+
+def apply(result: Dict[str, Any], tags: Optional[Tuple[Dict[str, Any], Path]] = None) -> None:
     universe = result["universe"]
     src = result["source"]
     new = result["new"]
@@ -438,10 +546,11 @@ def apply(result: Dict[str, Any]) -> None:
         "LTHCS universe = current S&P 500 (all 503 share lines) + current DJIA 30 + the earlier "
         "NASDAQ-100 / S&P 100 / Wave A names (none dropped). %d tickers, %d active. "
         "Constituents: %s (revision %s, fetched %s); DJIA: %s (revision %s; GOOGL replaced VZ on "
-        "2026-06-29). S&P 100 / NASDAQ-100 tags were not refreshed in this sync. New tickers start "
+        "2026-06-29). %s New tickers start "
         "with no history. Provenance and inputs: data/lthcs/universe_candidate/sp500_2026-10-05/."
         % (len(universe["tickers"]), active, src["sp500"]["url"], src["sp500"]["revision_id"],
-           src["fetched_at"], src["djia"]["url"], src["djia"]["revision_id"])
+           src["fetched_at"], src["djia"]["url"], src["djia"]["revision_id"],
+           _tags_sentence(*tags) if tags else _UNREFRESHED_TAGS)
     )
     (DATA / "universe.json").write_text(json.dumps(universe, indent=2) + "\n", encoding="utf-8")
 
@@ -472,12 +581,50 @@ def write_expand_input(result: Dict[str, Any], candidate_dir: Path) -> None:
             })
 
 
+def _write_tag_report(report: Dict[str, Any], tags_dir: Path) -> None:
+    path = tags_dir / "_index_tag_report.json"
+    if report["changes"] or not path.exists():
+        path.write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+    else:
+        # A re-run against an already-synced universe changes nothing; keep
+        # the report of the run that did change the tags.
+        print("no tag changes; kept %s" % _rel(path).rstrip("/"))
+    for tag, r in report["by_index"].items():
+        print("%s: %d constituents, %d active tagged | +%d -%d | not in universe: %s"
+              % (tag, r["constituents"], r["tagged_active"], len(r["added"]), len(r["removed"]),
+                 ", ".join(r["not_in_universe"]) or "-"))
+    if report["active_without_index_tag"]:
+        print("active, now without any index tag:", ", ".join(report["active_without_index_tag"]))
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--candidate-dir", type=Path, required=True)
+    ap.add_argument("--candidate-dir", type=Path,
+                    help="S&P 500 + DJIA candidate directory (adds tickers, refreshes those tags)")
+    ap.add_argument("--index-tags-dir", type=Path,
+                    help="directory with the S&P 100 / NASDAQ-100 lists (refreshes those tags)")
     ap.add_argument("--write", action="store_true", help="write universe.json + peer_groups.json")
     args = ap.parse_args(argv)
+    if not args.candidate_dir and not args.index_tags_dir:
+        ap.error("give --candidate-dir and/or --index-tags-dir")
+    if not args.candidate_dir:
+        universe = json.loads((DATA / "universe.json").read_text())
+        report, tags_src = refresh_index_tags(universe, args.index_tags_dir)
+        _write_tag_report(report, args.index_tags_dir)
+        if args.write:
+            universe["description"] = _with_counts(_set_tags_sentence(
+                universe.get("description", ""), _tags_sentence(tags_src, args.index_tags_dir)), universe)
+            (DATA / "universe.json").write_text(json.dumps(universe, indent=2) + "\n", encoding="utf-8")
+            print("wrote universe.json")
+        return 0
     result = build(args.candidate_dir)
+    tags = None
+    if args.index_tags_dir:
+        # New entries are not in universe["tickers"] until apply(); tag them too.
+        view = {"tickers": result["universe"]["tickers"] + result["new"]}
+        report, tags_src = refresh_index_tags(view, args.index_tags_dir)
+        _write_tag_report(report, args.index_tags_dir)
+        tags = (tags_src, args.index_tags_dir)
     write_expand_input(result, args.candidate_dir)
     rep = result["report"]
     (args.candidate_dir / "_sync_report.json").write_text(
@@ -490,7 +637,7 @@ def main(argv: Optional[List[str]] = None) -> int:
              len(rep["exchange_changes"]), len(rep["industry_filled"])))
     print("new-ticker stages:", dict(sorted(stages.items())))
     if args.write:
-        apply(result)
+        apply(result, tags)
         print("wrote universe.json and peer_groups.json")
     return 0
 

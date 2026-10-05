@@ -424,12 +424,53 @@ def test_pillar_surfaces_manager_universe_size_and_aum_pct() -> None:
 
 # --- End-to-end: name-alias fallback uses JSON-loaded aliases --------------
 
-def test_build_name_lookup_uses_json_aliases() -> None:
-    """The Phase 1 alias for a non-default ticker should now resolve."""
+def test_build_name_lookup_uses_json_aliases(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A JSON alias resolves for a ticker that has no CUSIP ..."""
     # MRVL is not in the Phase-0 fallback name map but IS in the JSON.
-    lookup = sec_13f._build_name_lookup(["MRVL", "MELI"])
+    assert sec_13f._NAME_ALIASES.get("MRVL")
+    cusips = dict(sec_13f.TICKER_TO_CUSIP)
+    cusips.pop("MRVL", None)
+    monkeypatch.setattr(sec_13f, "TICKER_TO_CUSIP", cusips)
+    lookup = sec_13f._build_name_lookup(["MRVL"])
     assert any(t == "MRVL" for t in lookup.values())
-    assert any(t == "MELI" for t in lookup.values())
+
+
+def test_build_name_lookup_skips_tickers_with_a_cusip() -> None:
+    """... and is never consulted for a ticker matched by CUSIP: the
+    starts-with fallback runs on every other issuer's rows too."""
+    assert sec_13f.TICKER_TO_CUSIP.get("MRVL") and sec_13f.TICKER_TO_CUSIP.get("MELI")
+    assert sec_13f._build_name_lookup(["MRVL", "MELI"]) == {}
+
+
+def test_other_issuers_rows_are_not_claimed_by_alias() -> None:
+    """BlackRock's own funds / Fox Factory / Apple Hospitality used to be
+    attributed to BLK / FOX / AAPL through the alias fallback."""
+    rows = [
+        ("BLACKROCK INC", "09290D101", 100),          # BLK itself, by CUSIP
+        ("BLACKROCK CORE BD TR", "09249E101", 5000),  # a BlackRock fund
+        ("FOX FACTORY HLDG CORP", "35138V102", 700),
+        ("APPLE HOSPITALITY REIT INC", "03784Y200", 900),
+    ]
+    body = "<informationTable>" + "".join(
+        "<infoTable><nameOfIssuer>%s</nameOfIssuer><cusip>%s</cusip><value>%d</value>"
+        "<shrsOrPrnAmt><sshPrnamt>%d</sshPrnamt><sshPrnamtType>SH</sshPrnamtType>"
+        "</shrsOrPrnAmt></infoTable>" % (n, c, s * 10, s)
+        for n, c, s in rows) + "</informationTable>"
+    universe = ["BLK", "FOX", "FOXA", "AAPL"]
+    out = sec_13f._extract_holdings_for_universe(
+        body, sec_13f._build_cusip_lookup(universe),
+        sec_13f._build_name_lookup(universe), unit_multiplier=1.0)
+    assert out == {"BLK": {"shares": 100.0, "value": 1000.0}}
+
+
+def test_universe_fingerprint_changes_with_the_cusip_map(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The year-long per-filing extract cache must not survive a CUSIP fix."""
+    before = sec_13f._universe_fingerprint(["AAPL", "LRCX"])
+    assert before == sec_13f._universe_fingerprint(["LRCX", "AAPL", "aapl"])
+    cusips = dict(sec_13f.TICKER_TO_CUSIP)
+    cusips["LRCX"] = ("512807108",)  # the pre-split CUSIP the map used to carry
+    monkeypatch.setattr(sec_13f, "TICKER_TO_CUSIP", cusips)
+    assert sec_13f._universe_fingerprint(["AAPL", "LRCX"]) != before
 
 
 def test_build_cusip_lookup_covers_full_universe_from_json() -> None:
@@ -450,7 +491,9 @@ def test_build_cusip_lookup_covers_full_universe_from_json() -> None:
     # Known legitimate share-class siblings: tickers that intentionally
     # share a CUSIP because they're the same legal class of stock.
     siblings = {
-        "GOOG": {"GOOGL"},   # Class C CUSIP appears on both
+        # (GOOGL used to list the Class C CUSIP too; since 2026-10-05 each
+        # share class maps to its own CUSIP, kept here as a harmless allowance.)
+        "GOOG": {"GOOGL"},
         "GOOGL": {"GOOG"},
         # Ticker change, same security: BNY Mellon traded as BK until
         # 2026-07; the inactive BK entry keeps its (identical) CUSIP.
