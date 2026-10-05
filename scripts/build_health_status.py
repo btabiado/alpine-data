@@ -11,9 +11,10 @@ from __future__ import annotations
 
 import json
 import re
+import importlib
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -47,8 +48,14 @@ THRESHOLDS: dict[str, Threshold] = {
     # quarterly; past 90 days it should alarm, and it will.
     "ai_curated.json": Threshold(720, 2160),
     "ai_curated_wiki.json": Threshold(8, 24),
-    "btc_flows.csv": Threshold(30, 48),
-    "eth_flows.csv": Threshold(30, 48),
+    # Trading-day feeds (TRADING_DAY_FEEDS below): these three are measured on
+    # a WEEKDAY clock from the end of the last row's day, so Friday's row is
+    # 0h old all weekend and ~9h old at Monday's 09:15Z refresh. On the plain
+    # wall clock they read "critical 2.8d" every Sunday on data that was
+    # complete. 56 weekday hours = the next trading day's row is a full
+    # trading day late (amber from 30h).
+    "btc_flows.csv": Threshold(30, 56),
+    "eth_flows.csv": Threshold(30, 56),
     "insights_history.json": Threshold(26, 48),
     "shares.json": Threshold(168, 720),  # rarely changes
     # --- feeds that were red on /health/ for reasons that are NOT rot ---
@@ -58,7 +65,11 @@ THRESHOLDS: dict[str, Threshold] = {
     #
     # equity ETF flows only move on TRADING days, so Friday's row is already
     # ~3 days old by Monday morning and ~4 across a Monday holiday.
-    "equity_etf_flows.csv": Threshold(96, 168),
+    "equity_etf_flows.csv": Threshold(30, 56),   # weekday clock, see above
+    # Same trading-day cadence, but a JSON sidecar judged on its `trade_date`
+    # (NESTED_DATE_PATHS) on the wall clock: Friday's session is ~3d old by
+    # Monday and ~4d across a Monday holiday.
+    "data-equity-etf-flows.json": Threshold(96, 168),
     # Daily history rows scripts/snapshot_history.py appends for deploy-time
     # sidecars. The stock file gains a row-set per completed TRADING day (so
     # it shares the equity cadence); the travel summary gains one per day.
@@ -109,8 +120,22 @@ THRESHOLDS: dict[str, Threshold] = {
     # It is supposed to be months old.
     "metro_coords.json": Threshold(8760, 17520),  # ~1y / ~2y
     # root-level v2 artifacts
-    "data-defi.json": Threshold(8, 24),
-    "data-whale.json": Threshold(2, 6),
+    # Both are judged on a DATE-ONLY daily stamp (data-defi `as_of`, the min
+    # of DeFiLlama's daily TVL points; data-whale `sentiment.as_of`, the last
+    # complete day of its daily on-chain series), which is day-granular: today
+    # = 0h, yesterday = 24h. The old 8h/2h hourly limits applied to a daily
+    # series dated yesterday reported "critical 43.5h" on current data.
+    "data-defi.json": Threshold(30, 54),
+    "data-whale.json": Threshold(30, 54),
+    # Daily crons (07:00Z / 07:30Z) stamped with the fetch time: 24h exactly
+    # is "one run ago", not stale.
+    "data-cfpb.json": Threshold(26, 48),
+    "data-usaspending.json": Threshold(26, 48),
+    # Money Flow ICI legs. MMF is weekly (ICI ~1 week lag); while ici.org 403s
+    # it falls back to FRED WRMFNS, published monthly with weekly obs ~5 weeks
+    # back — amber, honestly, rather than red. MF flows has no fallback.
+    "data-mmf.json": Threshold(14 * 24, 45 * 24),
+    "data-mf-flows.json": Threshold(10 * 24, 21 * 24),
     # high-frequency upstream caches
     "coinbase_spot.json": Threshold(1, 4),
     "mempool_space.json": Threshold(2, 6),
@@ -148,7 +173,33 @@ TAB_INPUTS: dict[str, list[str]] = {
     "LTHCS": ["lthcs/universe.json"],
     "Insights": ["insights_history.json"],
     "Summit": ["snowflake_summit/vendors.json", "snowflake_summit/news.json"],
+    # Tabs that had no entry at all (audit 2026-10-04). Root-level feeds are
+    # collected from data_health.MANIFEST (see collect_manifest_feeds), so the
+    # thresholds and suppressions are the watchdog's, not a second copy.
+    "City": ["data-city.json"],
+    "Travel": ["data-travel.json", "data-travel-fetch-status.json"],
+    "Aviation / TSA": ["data-tsa.json", "data-aviation.json", "data-opensky.json"],
+    "UAP": ["data-mufon.json"],
+    "CPI": ["data-cpi.json"],
+    "Metals": ["data-metals.json"],
+    "Supplies": ["data-supplies.json"],
+    "Money Flow": ["data-mmf.json", "data-mf-flows.json",
+                   "data-equity-etf-flows.json", "equity_etf_flows.csv"],
+    "Stock Flow": ["data-stock-money-flow.json"],
+    "Real Estate": ["real_estate.json"],
 }
+
+# Feeds whose observations only exist on US trading days; their CSV last-row
+# age is measured on a weekday clock (trading_day_age_h).
+TRADING_DAY_FEEDS = frozenset({"btc_flows.csv", "eth_flows.csv",
+                               "equity_etf_flows.csv"})
+
+# Immutable month caches: once their month is over, the file never changes, so
+# its mtime/age says nothing about feed health. 144 of these (NUFORC subndx
+# backfill) made up 144 of the 150 "critical" rows on /health/. They are
+# aggregated into ONE row (collect_stale); the live feed they back
+# (data-mufon.json) is judged on its own content date.
+IMMUTABLE_MONTH_CACHE = re.compile(r"^(?P<prefix>nuforc_subndx)_(?P<ym>\d{6})\.json$")
 
 
 def classify(age_h: float, t: Threshold) -> str:
@@ -252,6 +303,56 @@ def _parse_date_value(v: object) -> "datetime | None":
     return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
 
 
+_DATE_ONLY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _value_age_h(raw: object, dt: datetime, now_ts: float) -> float:
+    """Age in hours of a parsed stamp.
+
+    A DATE-ONLY value ("2026-10-04") names a day, not an instant, so it is
+    day-granular: today = 0h, yesterday = 24h (the rule _newest_row_age_h
+    already applies to market rows). Reading it as midnight made DeFi's
+    same-day `as_of` "stale 19.5h" every evening and pushed a daily series
+    dated yesterday to ~45h.
+    """
+    if isinstance(raw, str) and _DATE_ONLY.match(raw.strip()):
+        today = datetime.fromtimestamp(now_ts, timezone.utc).date()
+        return max(0.0, (today - dt.date()).days * 24.0)
+    return max(0.0, (now_ts - dt.timestamp()) / 3600.0)
+
+
+def trading_day_age_h(last: date, now_ts: float) -> float:
+    """WEEKDAY hours elapsed since the end of trading day ``last``.
+
+    Weekend hours do not count, so data through Friday is 0h old until Monday
+    00:00Z. US market holidays are not modelled; thresholds leave a day of
+    slack for them.
+    """
+    now = datetime.fromtimestamp(now_ts, timezone.utc)
+    cur = datetime(last.year, last.month, last.day, tzinfo=timezone.utc) + timedelta(days=1)
+    hours = 0.0
+    while cur < now:
+        nxt = min(datetime(cur.year, cur.month, cur.day, tzinfo=timezone.utc)
+                  + timedelta(days=1), now)
+        if cur.weekday() < 5:
+            hours += (nxt - cur).total_seconds() / 3600.0
+        cur = nxt
+    return hours
+
+
+def threshold_for(name: str, limit_h: "float | None" = None) -> Threshold:
+    """Threshold for a feed, honouring a data_health MANIFEST ``limit_h``.
+
+    data_health fails a feed past ``limit_h or THRESHOLDS[name].stale_h``; the
+    same number is /health/'s critical boundary so the two cannot disagree.
+    """
+    base = THRESHOLDS.get(name, DEFAULT)
+    if not limit_h:
+        return base
+    fresh = base.fresh_h if name in THRESHOLDS else limit_h / 2
+    return Threshold(min(fresh, limit_h), limit_h)
+
+
 @dataclass
 class AgeProbe:
     """Result of reading a file's own freshness signal.
@@ -265,6 +366,9 @@ class AgeProbe:
     key: str | None = None                                  # what produced age_h
     drift_keys: list[str] = field(default_factory=list)     # unrecognised date-ish keys
     note: str = ""                                          # why age_h is None
+    # Set when the payload declares itself unavailable (top-level
+    # `available: false`), e.g. an upstream that 403s with no fallback.
+    unavailable_reason: str | None = None
 
 
 def _scan_for_date_keys(obj: object, prefix: str = "", depth: int = 0,
@@ -381,8 +485,10 @@ def _content_age_probe(path: Path, now_ts: float) -> AgeProbe:
                 dt = datetime.strptime(ds, "%Y-%m-%d").replace(tzinfo=timezone.utc)
             except ValueError:
                 return AgeProbe(note=f"last row's first column is not a date: {ds!r}")
-            return AgeProbe(age_h=max(0.0, (now_ts - dt.timestamp()) / 3600.0),
-                            key="last CSV row")
+            if path.name in TRADING_DAY_FEEDS:
+                return AgeProbe(age_h=trading_day_age_h(dt.date(), now_ts),
+                                key="last CSV row (weekday clock)")
+            return AgeProbe(age_h=_value_age_h(ds, dt, now_ts), key="last CSV row")
         if path.suffix != ".json":
             return AgeProbe(note=f"no reader for {path.suffix or 'extensionless'} files")
 
@@ -398,9 +504,15 @@ def _content_age_probe(path: Path, now_ts: float) -> AgeProbe:
         # CoinGecko response. A key-priority ranking cannot fix that — the
         # envelope key is genuinely present and genuinely recent; it is just
         # describing something other than the data.
+        unavailable = None
+        if data.get("available") is False:
+            unavailable = str(data.get("unavailable_reason") or data.get("reason")
+                              or "payload declares available: false")
+
         row_age = _row_content_age_h(path.name, data, now_ts)
         if row_age is not None:
-            return AgeProbe(age_h=row_age, key="newest row `as_of`")
+            return AgeProbe(age_h=row_age, key="newest row `as_of`",
+                            unavailable_reason=unavailable)
 
         # One pass to build the normalised lookup, so camelCase and snake_case
         # spellings of the same key resolve identically.
@@ -419,8 +531,8 @@ def _content_age_probe(path: Path, now_ts: float) -> AgeProbe:
                 if isinstance(raw, str) and raw.strip():
                     seen_but_unparseable.append(f"{orig}={raw.strip()[:60]!r}")
                 continue
-            return AgeProbe(age_h=max(0.0, (now_ts - dt.timestamp()) / 3600.0),
-                            key=orig)
+            return AgeProbe(age_h=_value_age_h(data[orig], dt, now_ts), key=orig,
+                            unavailable_reason=unavailable)
 
         # Nothing recognised resolved. Before giving up, say what the file DOES
         # look like it contains, so allowlist drift surfaces itself.
@@ -435,7 +547,9 @@ def _content_age_probe(path: Path, now_ts: float) -> AgeProbe:
                       "NESTED_DATE_PATHS (nested).")
         else:
             note = "no date-shaped value anywhere in the first 3 levels"
-        return AgeProbe(drift_keys=drift, note=note)
+        if unavailable:
+            note = f"payload marks itself unavailable: {unavailable}"
+        return AgeProbe(drift_keys=drift, note=note, unavailable_reason=unavailable)
     except Exception as exc:  # unreadable / malformed file
         return AgeProbe(note=f"{type(exc).__name__}: {exc}"[:200])
 
@@ -486,6 +600,9 @@ NESTED_DATE_PATHS: dict[str, tuple[str, ...]] = {
     # Its only stamp, one level down under a metadata block. Found by the drift
     # scan above, not by reading the directory.
     "snowflake_summit/vendors.json": ("_meta.generated",),
+    # `as_of` is fetch_equity_etf_flows' _today() — the run date, a clock.
+    # `trade_date` is the session the shares-outstanding snapshot describes.
+    "data-equity-etf-flows.json": ("trade_date",),
 }
 
 
@@ -550,7 +667,7 @@ def nested_age_h(path: Path, now_ts: float, specs) -> "tuple[float | None, str]"
             dt = _parse_date_value(value)
             if dt is None:
                 continue
-            age = max(0.0, (now_ts - dt.timestamp()) / 3600.0)
+            age = _value_age_h(value, dt, now_ts)
             if oldest is None or age > oldest:
                 oldest, where = age, spec
     return oldest, where
@@ -609,6 +726,8 @@ def _provenance_fields(probe: AgeProbe) -> dict:
     `date_drift` names the keys the file actually uses so the fix is obvious.
     """
     out: dict = {"date_key": probe.key}
+    if probe.unavailable_reason:
+        out["unavailable_reason"] = probe.unavailable_reason
     if probe.age_h is None:
         out["date_unresolved"] = probe.note
         if probe.drift_keys:
@@ -616,8 +735,19 @@ def _provenance_fields(probe: AgeProbe) -> dict:
     return out
 
 
-def scan(path: Path, rel_to: Path, threshold_key_fn=None) -> list[dict]:
-    """Return one entry per regular file under `path`. mtime → age_h → status."""
+def _status(age_h: float, t: Threshold, probe: AgeProbe) -> str:
+    """classify(), except a payload that declares itself unavailable is
+    critical whatever its stamp says: a fresh file announcing that its
+    upstream is gone is not a fresh feed."""
+    return "critical" if probe.unavailable_reason else classify(age_h, t)
+
+
+def scan(path: Path, rel_to: Path, threshold_key_fn=None,
+         skip=None) -> list[dict]:
+    """Return one entry per regular file under `path`. mtime → age_h → status.
+
+    ``skip(entry) -> bool`` lets a caller take files out of the per-file list
+    (collect_stale aggregates immutable month caches instead)."""
     rows: list[dict] = []
     if not path.exists():
         return rows
@@ -628,6 +758,8 @@ def scan(path: Path, rel_to: Path, threshold_key_fn=None) -> list[dict]:
         if not entry.is_file():
             continue
         if entry.suffix in (".bak", ".tmp"):
+            continue
+        if skip is not None and skip(entry):
             continue
         try:
             mtime = entry.stat().st_mtime
@@ -644,44 +776,129 @@ def scan(path: Path, rel_to: Path, threshold_key_fn=None) -> list[dict]:
             "mtime_iso": datetime.fromtimestamp(mtime, timezone.utc).isoformat(),
             "age_h": round(age_h, 2),
             "age_human": humanize_age(age_h),
-            "status": classify(age_h, t),
+            "status": _status(age_h, t, probe),
             "fresh_h": t.fresh_h,
             "stale_h": t.stale_h,
             **_provenance_fields(probe),
         })
+    return rows
+
+
+def _manifest():
+    """data_health's MANIFEST + SUPPRESSIONS + kinds, imported lazily.
+
+    data_health imports this module at load time, so the import is deferred to
+    call time to avoid a cycle. Returns None if it cannot be imported (the
+    status page then simply lacks the manifest-driven rows rather than
+    failing the build)."""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        # importlib rather than an `import` statement: data_health imports
+        # this module at load time, and a static import here would form a
+        # module-level cycle. Resolving it at call time keeps the dependency
+        # one-way for anything that imports build_health_status.
+        return importlib.import_module("data_health")
+    except Exception as exc:  # pragma: no cover - defensive
+        print(f"  [health] data_health manifest unavailable: {exc}", file=sys.stderr)
+        return None
+
+
+def collect_manifest_feeds(root: Path = REPO_ROOT) -> list[dict]:
+    """One row per ROOT-LEVEL feed in data_health.MANIFEST (data-*.json).
+
+    These were the tabs /health/ never covered (City, Travel, Aviation/TSA,
+    UAP, CPI, Metals, Supplies, Money Flow, Stock Flow). The feed list, the
+    per-feed limit and the suppressions all come from data_health, so the two
+    monitors judge the same files against the same numbers; ages come from the
+    shared resolve_age (in-payload data dates, not mtime). A DEPLOYED feed is
+    read from its built_path, the copy this build publishes. Files absent on
+    disk produce no row; build_tab_view reports them as missing.
+    """
+    dh = _manifest()
+    if dh is None:
+        return []
+    rows: list[dict] = []
+    now = datetime.now(timezone.utc).timestamp()
+    today = datetime.fromtimestamp(now, timezone.utc).date()
+    for rel, feed in sorted(dh.MANIFEST.items()):
+        if "/" in rel or feed.kind not in (dh.COMMITTED, dh.BUILT):
+            continue  # data/ and snowflake_summit/ have their own collectors
+        p = root / (feed.built_path or rel)
+        if not p.is_file():
+            continue
+        mtime = p.stat().st_mtime
+        age_h, probe = _age_and_provenance(p, mtime, now, rel)
+        t = threshold_for(Path(rel).name, feed.limit_h)
+        row = {
+            "name": rel,
+            "path": rel,
+            "size_bytes": p.stat().st_size,
+            "mtime_iso": datetime.fromtimestamp(mtime, timezone.utc).isoformat(),
+            "age_h": round(age_h, 2),
+            "age_human": humanize_age(age_h),
+            "status": _status(age_h, t, probe),
+            "fresh_h": t.fresh_h,
+            "stale_h": t.stale_h,
+            **_provenance_fields(probe),
+        }
+        sup = dh.SUPPRESSIONS.get(rel)
+        if sup is not None and today <= sup.until:
+            # Same mute data_health honours: the age is still reported, the
+            # reason and expiry ride along so the page can say why.
+            row["suppressed_until"] = sup.until.isoformat()
+            row["suppression_reason"] = sup.reason
+        rows.append(row)
     return rows
 
 
 def collect_rendered() -> list[dict]:
     """Top-level data files baked into dashboard.html."""
     rows = scan(DATA_DIR, REPO_ROOT)
-    # also pull root-level data-*.json
-    now = datetime.now(timezone.utc).timestamp()
-    for name in ("data-defi.json", "data-whale.json"):
-        p = REPO_ROOT / name
-        if not p.exists():
-            continue
-        mtime = p.stat().st_mtime
-        age_h, probe = _age_and_provenance(p, mtime, now, name)
-        t = THRESHOLDS.get(name, DEFAULT)
-        rows.append({
-            "name": name,
-            "path": name,
-            "size_bytes": p.stat().st_size,
-            "mtime_iso": datetime.fromtimestamp(mtime, timezone.utc).isoformat(),
-            "age_h": round(age_h, 2),
-            "age_human": humanize_age(age_h),
-            "status": classify(age_h, t),
-            "fresh_h": t.fresh_h,
-            "stale_h": t.stale_h,
-            **_provenance_fields(probe),
-        })
+    # Root-level data-*.json feeds, driven by data_health.MANIFEST (this used
+    # to be a hand-typed pair: data-defi.json and data-whale.json).
+    rows += collect_manifest_feeds()
     return rows
 
 
-def collect_stale() -> list[dict]:
-    """Upstream fetcher caches (data/.stale/). Mtime here = last successful fetch."""
-    return scan(STALE_DIR, REPO_ROOT)
+def _is_immutable_month_cache(entry: Path, today: "date | None" = None) -> bool:
+    m = IMMUTABLE_MONTH_CACHE.match(entry.name)
+    if not m:
+        return False
+    today = today or datetime.now(timezone.utc).date()
+    return m.group("ym") < f"{today.year:04d}{today.month:02d}"
+
+
+def collect_stale(stale_dir: Path = STALE_DIR, rel_to: Path = REPO_ROOT) -> list[dict]:
+    """Upstream fetcher caches (data/.stale/). Mtime here = last successful fetch.
+
+    Immutable month caches for months already over are not fetcher caches in
+    that sense — they are a frozen archive whose mtime is meaningless — so
+    they are aggregated into one informational row per prefix instead of one
+    "critical" row each."""
+    rows = scan(stale_dir, rel_to, skip=_is_immutable_month_cache)
+    groups: dict[str, list[Path]] = {}
+    if stale_dir.exists():
+        for entry in sorted(stale_dir.iterdir()):
+            if entry.is_file() and _is_immutable_month_cache(entry):
+                groups.setdefault(IMMUTABLE_MONTH_CACHE.match(entry.name)
+                                  .group("prefix"), []).append(entry)
+    for prefix, files in groups.items():
+        months = sorted(IMMUTABLE_MONTH_CACHE.match(f.name).group("ym") for f in files)
+        rows.append({
+            "name": f"{prefix}_YYYYMM.json ({len(files)} immutable month caches)",
+            "path": f"{stale_dir.relative_to(rel_to).as_posix()}/{prefix}_*.json",
+            "size_bytes": sum(f.stat().st_size for f in files),
+            "mtime_iso": None,
+            "age_h": None,
+            "age_human": f"{months[0][:4]}-{months[0][4:]} → {months[-1][:4]}-{months[-1][4:]}",
+            # Not a freshness verdict: a completed month cannot go stale.
+            # The live feed these back is judged on its own content date.
+            "status": "fresh",
+            "immutable": True,
+            "files": len(files),
+            "months": [months[0], months[-1]],
+        })
+    return rows
 
 
 def collect_summit() -> list[dict]:
@@ -794,6 +1011,7 @@ def main() -> int:
         print(f"  [date-key drift] {r['path']}: {r.get('date_unresolved', '')}")
 
     summary = {
+        "immutable_caches": sum(r.get("files", 0) for r in stale if r.get("immutable")),
         "fresh": sum(1 for r in rendered + stale + lthcs if r.get("status") == "fresh"),
         "stale": sum(1 for r in rendered + stale + lthcs if r.get("status") == "stale"),
         "critical": sum(1 for r in rendered + stale + lthcs if r.get("status") == "critical"),

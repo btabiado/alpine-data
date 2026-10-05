@@ -64,7 +64,7 @@ on:
 
 jobs:
   backfill:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest becomes 26.04 on 2026-10-19 and setup-python needs a toolcache build for the image
     timeout-minutes: 350   # 5h50m — under GH's 6h job cap
     permissions:
       contents: read

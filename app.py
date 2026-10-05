@@ -620,6 +620,12 @@ def build_lthcs_payload() -> dict:
         if isinstance(scores, list) and scores:
             # Top movers by 30d drift (the snapshot field).
             def _drift(row): return row.get("drift_30d") or 0.0
+            def _subs(row):
+                # A pillar in dropped_pillars was not measured: publish null,
+                # never the placeholder older snapshots stored for it.
+                dropped = set(row.get("dropped_pillars") or [])
+                return {k: (None if k in dropped else v)
+                        for k, v in (row.get("subscores") or {}).items()}
             def _row(row):
                 return {
                     "ticker": row.get("ticker"),
@@ -627,7 +633,7 @@ def build_lthcs_payload() -> dict:
                     "band": row.get("band"),
                     "drift_30d": row.get("drift_30d"),
                     "sector": row.get("sector"),
-                    "subscores": row.get("subscores") or {},
+                    "subscores": _subs(row),
                 }
             sorted_by_drift = sorted(
                 [r for r in scores if r.get("ticker")],
@@ -638,6 +644,24 @@ def build_lthcs_payload() -> dict:
                 "gainers": [_row(r) for r in sorted_by_drift[:5]],
                 "decliners": [_row(r) for r in sorted_by_drift[-5:][::-1]],
             }
+            # 30d drift whose window straddles a methodology break mixes a
+            # model/coverage change into the move: say so next to the movers.
+            snap_date = snap.get("calc_date") or snap_file.stem
+            try:
+                from datetime import timedelta as _td30
+                from lthcs import methodology as _meth
+                anchor = (datetime.strptime(snap_date, "%Y-%m-%d")
+                          - _td30(days=30)).strftime("%Y-%m-%d")
+                spanned = _meth.breaks_between(anchor, snap_date)
+            except Exception:
+                spanned = []
+            if spanned:
+                out["movers"]["methodology_breaks"] = spanned
+                out["movers"]["note"] = (
+                    "30d drift spans a methodology change on "
+                    + ", ".join(b["date"] for b in spanned)
+                    + " (" + "; ".join(b["summary"] for b in spanned)
+                    + "): part of these moves is the model change, not the market.")
             out["universe_count"] = len(scores)
             out.setdefault("as_of", snap.get("calc_date"))
             out["available"] = True
@@ -655,6 +679,27 @@ def build_lthcs_payload() -> dict:
         print(f"[lthcs] insights error: {e}", file=sys.stderr)
         out["insights"] = []
     return out
+
+
+def _methodology_breaks_between(start_exclusive, end_inclusive) -> list:
+    """LTHCS methodology breaks inside (start, end]; [] if unavailable."""
+    try:
+        from lthcs import methodology as _meth
+        return _meth.breaks_between(start_exclusive, end_inclusive)
+    except Exception:
+        return []
+
+
+def _methodology_insight(spanned: list, what: str) -> dict:
+    dates = ", ".join(b["date"] for b in spanned)
+    return {
+        "category": "methodology",
+        "icon": "🛠️",
+        "headline": f"Methodology change {dates}: {what} — not a market signal",
+        "detail": "; ".join(b["detail"] for b in spanned),
+        "severity": "medium",
+        "methodology_breaks": [b["date"] for b in spanned],
+    }
 
 
 def compute_lthcs_insights(
@@ -773,7 +818,13 @@ def compute_lthcs_insights(
                         s_today = float(index_today.get("score") or 0)
                         s_yest = float(y.get("score") or 0)
                         delta = s_today - s_yest
-                        if abs(delta) >= 1:
+                        spanned = _methodology_breaks_between(
+                            yest.strftime("%Y-%m-%d"), as_of)
+                        if spanned and abs(delta) >= 1:
+                            candidates.append(_methodology_insight(
+                                spanned, f"Composite Index moved {s_yest:+.0f} → "
+                                         f"{s_today:+.0f} over {back}d"))
+                        elif abs(delta) >= 1:
                             sev = "high" if abs(delta) >= 10 else \
                                   "medium" if abs(delta) >= 5 else "low"
                             arrow = "▲" if delta > 0 else "▼"
@@ -794,7 +845,7 @@ def compute_lthcs_insights(
                             })
                     break
         except Exception:
-            pass
+            pass  # optional insight card; malformed index history must not break the build
 
     # ---- (6): Macro regime ----
     breadth_file = None
@@ -858,6 +909,7 @@ def compute_lthcs_insights(
                 })
 
     # ---- (8): Band moves vs. yesterday ----
+    band_window = None
     if history_dir.exists():
         band_changes = []
         try:
@@ -880,6 +932,7 @@ def compute_lthcs_insights(
                 latest, prev = by_date[0], by_date[1]
                 if latest.get("band") and prev.get("band") and \
                         latest.get("band") != prev.get("band"):
+                    band_window = (prev.get("date"), latest.get("date"))
                     band_changes.append({
                         "ticker": hd.get("ticker") or hp.stem,
                         "from_band": prev.get("band"),
@@ -890,7 +943,7 @@ def compute_lthcs_insights(
                         ),
                     })
         except Exception:
-            pass
+            pass  # optional insight card; malformed ticker history must not break the build
         if len(band_changes) >= 5:
             band_changes.sort(key=lambda c: -abs(c["score_delta"]))
             top3 = band_changes[:3]
@@ -899,13 +952,21 @@ def compute_lthcs_insights(
                 f"({c['score_delta']:+.1f})"
                 for c in top3
             )
-            candidates.append({
-                "category": "movers",
-                "icon": "📈",
-                "headline": f"{len(band_changes)} tickers shifted band overnight",
-                "detail": tail,
-                "severity": "medium",
-            })
+            # A band shift across a methodology break (2026-10-04: SEC
+            # financial data restored, 98 tickers changed band) is the model
+            # changing, not the market: relabel instead of a movers signal.
+            spanned = _methodology_breaks_between(*band_window) if band_window else []
+            if spanned:
+                candidates.append(_methodology_insight(
+                    spanned, f"{len(band_changes)} tickers shifted band"))
+            else:
+                candidates.append({
+                    "category": "movers",
+                    "icon": "📈",
+                    "headline": f"{len(band_changes)} tickers shifted band overnight",
+                    "detail": tail,
+                    "severity": "medium",
+                })
 
     # ---- Prioritize: high > medium > low, with category diversity ----
     candidates.sort(key=lambda i: SEV_RANK.get(i.get("severity"), 9))
@@ -1298,6 +1359,9 @@ HTML_TEMPLATE = r"""<!doctype html>
 </script>
 <style>
 :root{
+  /* Dark-only page: native controls (scrollbars, selects, date inputs,
+     default link colours) render in their dark variants. */
+  color-scheme:dark;
   --bg:#0b0d12; --panel:#141821; --panel2:#1b2030; --border:#252b3a;
   --text:#e6e8ee; --muted:#8a93a6; --btc:#f7931a; --eth:#627eea; --link:#2a5ada; --ltc:#bfbbbb;
   --green:#22c55e; --red:#ef4444; --amber:#f59e0b; --purple:#a78bfa; --cyan:#06b6d4;
@@ -1781,6 +1845,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 #chatFab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:#a78bfa;color:#000;border:0;cursor:pointer;font-size:24px;box-shadow:0 4px 14px rgba(167,139,250,.4);z-index:39;transition:transform .15s}
 #chatFab:hover{transform:scale(1.08)}
 #chatFab.hidden{display:none}
+/* The FAB floats over the right edge of the content. Two mitigations: the
+   page ends with enough room to scroll the last rows clear of it, and the FAB
+   steps up out of the way whenever a control (e.g. Overview's "Configure",
+   a feed row) is underneath it — see chatFabDodge() in the script. */
+body{padding-bottom:88px}
+@media (max-width:640px){#chatFab{width:46px;height:46px;font-size:21px;bottom:14px;right:14px}}
+#chatFab.dodge{transform:translateY(-68px)}
+#chatFab.dodge:hover{transform:translateY(-68px) scale(1.08)}
 /* Recent symbol-lookup chips. Rendered below the header symbol-search form
    by renderSymbolRecentChips(); hidden via .hidden when the localStorage
    list is empty. The chip's × (.symbol-recent-chip-x) removes a single
@@ -2417,6 +2489,23 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   .travel-count{flex:1 1 100%;margin-left:0;text-align:right}
   .travel-grid{grid-template-columns:1fr;gap:8px}
 }
+
+/* Keyboard focus ring for the header symbol search: its inline style sets
+   outline:none, which left no visible focus at all. */
+#symbolSearchInput:focus-visible{outline:2px solid var(--purple) !important;outline-offset:1px;border-color:var(--purple) !important}
+
+/* Phone tap targets (audit: < 24px). */
+/* UAP map: side panel stacks under the map so the 12-column tile grid gets
+   the full width (tiles were 8x8px in the squeezed left column). */
+@media (max-width:640px){ #mufonMapGrid{grid-template-columns:1fr !important} }
+/* AI News top-funded company links: 12px tall inline text. */
+#aiTopFundedTable td a{display:inline-block;padding:6px 0;margin:-6px 0}
+/* POC overlay checkbox (13x13). */
+#pocOverlayToggle{width:20px;height:20px}
+/* Multichain whale tx-hash links (11px tall inline text). */
+a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7px 0;margin:-7px 0}
+/* Travel "Enroll in STEP" and similar contact links (16px tall). */
+.travel-contact-link{display:inline-block;padding:6px 2px;margin:-6px -2px}
 
 /* Stock Flows rank rows. The six fixed/min tracks summed to ~485px, which
    forced a horizontal page scroll on a 390px phone. Under 480px the MFI/CMF
@@ -4675,7 +4764,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">
             Data: NUFORC via community archive — sighting <strong>reports</strong>, not verified phenomena.
             Filed shapes and durations are eyewitness claims. Browse the live database at
-            <a href="https://nuforc.org/" target="_blank" rel="noopener noreferrer">nuforc.org</a>.
+            <a href="https://nuforc.org/" target="_blank" rel="noopener noreferrer" style="color:#60a5fa">nuforc.org</a>.
           </div>
         </div>
       </div>
@@ -5964,6 +6053,9 @@ function signalCardAsOfTitle(s){
 // Coinbase International perp rows carry the exchange's own quote timestamp
 // (as_of / as_of_ts). Oldest across the rows we actually average.
 function perpsFreshness(){
+  const pfund = (DATA.market || {}).perp_funding;
+  if (pfund) return (pfund.available && pfund.as_of)
+    ? { date: fDay(pfund.as_of), stale: 0, total: (pfund.rows || []).length } : null;
   const perps = ((DATA.market || {}).coinbase_intl_perps) || [];
   if (!Array.isArray(perps) || !perps.length) return null;
   const dates = perps.map(p => fDay(p && (p.as_of || p.as_of_ts))).filter(Boolean);
@@ -6138,14 +6230,32 @@ function defiFreshness(){
 // date to show, so we say so (rule 5) rather than printing social.fetched_at.
 function socialFreshness(){
   const s = socialData() || {};
-  const santStale = !!((s.santiment || {}).stale);
+  const sant = s.santiment || {};
+  const santStale = !!sant.stale;
+  // Santiment's same-day series (DAA, 24h actives, dev activity, devs) DO
+  // carry observation dates — the Santiment cards print them as "data
+  // through". The strip reports the OLDEST of those across coins (rule 3)
+  // instead of "as of —". Reddit / CryptoCompare stay undated and are
+  // disclosed in the hover.
+  const coins = sant.coins || {};
+  const lasts = [];
+  Object.keys(coins).forEach(k => {
+    const c = coins[k] || {};
+    const per = [c.daily_active_addresses, c.active_addresses_24h, c.dev_activity, c.dev_contributors]
+      .map(ser => fLast(ser)).filter(Boolean);
+    if (per.length) lasts.push(fMin(per));
+  });
   return {
-    date: null,
+    date: lasts.length ? fMin(lasts) : null,
     stale: 0,
     total: 0,
-    title: 'Reddit / CryptoCompare / Santiment ship point-in-time counts with no '
-         + 'observation date. social.fetched_at is fetch time, so it is not shown '
-         + 'as a freshness date.'
+    label: lasts.length ? 'Santiment data through' : 'as of',
+    title: (lasts.length
+             ? 'Oldest last observation across the Santiment on-chain/dev series ('
+               + lasts.length + ' coin' + (lasts.length === 1 ? '' : 's') + '). '
+             : '')
+         + 'Reddit / CryptoCompare ship point-in-time counts with no observation '
+         + 'date; social.fetched_at is fetch time, so it is not shown as a freshness date.'
          + (santStale ? ' Santiment is currently served from its daily-gated cache.' : ''),
   };
 }
@@ -6176,7 +6286,8 @@ function moneyFlowFreshness(){
   const src = mfx.sources || {};
   const parts = [];
   const named = [];
-  const mmfD = fLast((src.mmf || {}).weekly);
+  // A FRED fallback MMF block (ICI blocked) is display-only, not a composite input.
+  const mmfD = (src.mmf || {}).fallback ? null : fLast((src.mmf || {}).weekly);
   if (mmfD){ parts.push(mmfD); named.push('ICI money-market weekly'); }
   const mfD = fLast((src.mf_flows || {}).weekly);
   if (mfD){ parts.push(mfD); named.push('ICI equity mutual-fund weekly'); }
@@ -6190,13 +6301,10 @@ function moneyFlowFreshness(){
       ? 'Oldest of the ' + parts.length + ' dated inputs (' + named.join(', ') + ').'
       : 'None of the Money Flow inputs carry an observation date.')
     + (perIndex
-        ? ' The ' + perIndex + ' per-index MFI/CMF legs are computed from Yahoo '
-          + 'daily bars whose dates are not carried into the payload, so they '
-          + 'are excluded from this minimum.'
-        : '')
-    + ' money_flow.as_of is no longer a clock read — _composite_as_of derives '
-    + 'it from these same legs, or leaves it null — so it is redundant with '
-    + 'this minimum rather than excluded from it.';
+        ? ' The ' + perIndex + ' per-index MFI/CMF readings come from daily '
+          + 'price bars that are not dated in this snapshot, so they are not '
+          + 'part of this date.'
+        : '');
   return { date: parts.length ? fMin(parts) : null, stale: 0,
            total: parts.length, title: title };
 }
@@ -7081,6 +7189,11 @@ function renderCoinbaseIntlPerps(){
   const shorts = perps.filter(p => p && typeof p.funding_rate === 'number' && p.funding_rate < 0)
                       .sort((a,b) => a.funding_rate - b.funding_rate)
                       .slice(0, 6);
+  const cieSt = (DATA.market || {}).coinbase_intl_perps_status || {};
+  const cieWhy = (cieSt.available === false && cieSt.reason)
+    ? '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">'
+      + 'Coinbase International perps unavailable: ' + escapeHtml(String(cieSt.reason)) + '.</td></tr>'
+    : null;
   const emptyRow = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">No perpetuals data — wait for next refresh</td></tr>';
 
   function rowFor(p){
@@ -7102,8 +7215,8 @@ function renderCoinbaseIntlPerps(){
 
   const longsBody  = document.querySelector('#cieLongsTable tbody');
   const shortsBody = document.querySelector('#cieShortsTable tbody');
-  if (longsBody)  longsBody.innerHTML  = longs.length  ? longs.map(rowFor).join('')  : emptyRow;
-  if (shortsBody) shortsBody.innerHTML = shorts.length ? shorts.map(rowFor).join('') : emptyRow;
+  if (longsBody)  longsBody.innerHTML  = longs.length  ? longs.map(rowFor).join('')  : (cieWhy || emptyRow);
+  if (shortsBody) shortsBody.innerHTML = shorts.length ? shorts.map(rowFor).join('') : (cieWhy || emptyRow);
 }
 
 // CADLI BTC reference price chart — 90d daily close from the CoinDesk CADLI
@@ -7125,7 +7238,18 @@ function renderCadliChart(){
       + (cst.checked_at ? ' Checked ' + String(cst.checked_at).slice(0, 16).replace('T', ' ') + ' UTC.' : '')
       + ' No series in this build \u2014 an absence, not a reading of zero.'
     : 'No CADLI BTC reference data — wait for next refresh.';
-  if (!chartOrEmpty('cadliBtcChart', series.length > 0, cadliMsg)) {
+  const ok = chartOrEmpty('cadliBtcChart', series.length > 0, cadliMsg);
+  // Unavailable: collapse the ~380px chart box to the height of its message
+  // instead of leaving a large empty frame. Restored when data returns.
+  const cv = document.getElementById('cadliBtcChart');
+  const wrap = cv && cv.parentElement;
+  if (wrap){
+    wrap.style.height = ok ? '' : 'auto';
+    wrap.style.minHeight = ok ? '' : '0';
+    const em = wrap.querySelector('.chart-empty');
+    if (em) em.style.position = ok ? 'absolute' : 'static';
+  }
+  if (!ok) {
     destroy('cadliBtc');
     return;
   }
@@ -7208,7 +7332,8 @@ function signalColor(score){
   if (score >= 20) return '#22c55e';
   if (score > -20) return '#f59e0b';
   if (score > -50) return '#ef4444';
-  return '#b91c1c';
+  // Was #b91c1c: 2.75:1 on the dark panels. #f87171 is 6.4:1.
+  return '#f87171';
 }
 
 function renderSignalCard(asset, container){
@@ -7581,7 +7706,7 @@ function renderTop20Signals(){
     {key:'buy',         glyph:'✓',  label:'BUY',         color:'#22c55e'},
     {key:'hold',        glyph:'◯',  label:'HOLD',        color:'#f59e0b'},
     {key:'sell',        glyph:'↓',  label:'SELL',        color:'#ef4444'},
-    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#b91c1c'},
+    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#f87171'},
   ];
   // Outer #top20SignalCards is an auto-fit grid, so each section becomes a
   // column on laptop widths. Previously every empty bucket consumed a full
@@ -8474,9 +8599,21 @@ function renderMoneyFlowTab(){
     const src = mfx.sources || {};
     const blocks = [];
 
+    // A leg the fetcher could not read ships available:false + a reason;
+    // disclose it instead of silently dropping the block.
+    const unavailBlock = (title, b) => `
+        <div style="padding:8px 0;border-top:1px solid #1f2533">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em">${title}</div>
+          <div style="font-size:11px;color:#fb923c;margin-top:2px">Unavailable — ${escapeHtml(String(b.unavailable_reason))}</div>
+        </div>`;
+    const srcNote = b => b && b.note
+      ? `<div class="sub" style="font-size:10px;color:#fb923c;margin-top:2px">${escapeHtml(String(b.note))}</div>` : '';
+
     // Money-market funds (cash on the sidelines).
     const mmf = src.mmf || null;
-    if (mmf && Array.isArray(mmf.weekly) && mmf.weekly.length){
+    if (mmf && (!Array.isArray(mmf.weekly) || !mmf.weekly.length) && mmf.unavailable_reason){
+      blocks.push(unavailBlock('MONEY-MARKET FUNDS', mmf));
+    } else if (mmf && Array.isArray(mmf.weekly) && mmf.weekly.length){
       const latest = mmf.weekly[mmf.weekly.length - 1] || {};
       const unit = escapeHtml(mmf.unit || 'USD billions');
       // MMF balances are trillions-scale — roll >=$1,000B up to $T for readability.
@@ -8505,12 +8642,15 @@ function renderMoneyFlowTab(){
           </div>
           ${wowHtml}
           <div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">week of ${escapeHtml(latest.date || mmf.as_of || '—')}</div>
+          ${srcNote(mmf)}
         </div>`);
     }
 
     // Equity mutual-fund flows.
     const mf = src.mf_flows || null;
-    if (mf && Array.isArray(mf.weekly) && mf.weekly.length){
+    if (mf && (!Array.isArray(mf.weekly) || !mf.weekly.length) && mf.unavailable_reason){
+      blocks.push(unavailBlock('EQUITY MUTUAL-FUND FLOWS', mf));
+    } else if (mf && Array.isArray(mf.weekly) && mf.weekly.length){
       const latest = mf.weekly[mf.weekly.length - 1] || {};
       const unit = escapeHtml(mf.unit || 'USD billions');
       const fmtB = v => {
@@ -9232,6 +9372,9 @@ function _drawRealEstate(host, d){
                    : (MUFON_STATE_NAMES[code]||code) + ': no data';
     return ''
       + '<g class="reTile" data-restate="' + code + '" role="button" tabindex="0" style="cursor:pointer">'
+      // Invisible hit area spanning the gutter: the drawn tile is ~23px on a
+      // phone; this takes the tap target past 24px without changing the look.
+      +   '<rect x="'+(x-RE_GAP/2)+'" y="'+(y-RE_GAP/2)+'" width="'+(RE_CELL+RE_GAP)+'" height="'+(RE_CELL+RE_GAP)+'" fill="transparent"></rect>'
       +   '<rect x="'+x+'" y="'+y+'" width="'+RE_CELL+'" height="'+RE_CELL+'" rx="6" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+strokeW+'">'
       +     '<title>'+tip+'</title>'
       +   '</rect>'
@@ -10900,6 +11043,10 @@ function renderDefi(){
   const bridgesBody = document.querySelector('#defiBridgesTable tbody');
   const bridgesMeta = defi.bridges || {};
   if (bridgesCard && bridgesBody) {
+    // The 24h/7d column headers only make sense above real rows; over the
+    // "Unavailable" message they were empty scaffolding.
+    const bridgesHead = document.querySelector('#defiBridgesTable thead');
+    if (bridgesHead) bridgesHead.style.display = bridges.length ? '' : 'none';
     if (bridges.length) {
       bridgesCard.classList.remove('hidden');
       // fetch_market emits daily_/weekly_volume_usd; the older names are kept
@@ -12323,7 +12470,7 @@ function renderStocksTab(){
     {key:'buy',         glyph:'✓',  label:'BUY',         color:'#22c55e'},
     {key:'hold',        glyph:'◯',  label:'HOLD',        color:'#f59e0b'},
     {key:'sell',        glyph:'↓',  label:'SELL',        color:'#ef4444'},
-    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#b91c1c'},
+    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#f87171'},
   ];
   const html = sections.map(sec => {
     const items = byBucket[sec.key];
@@ -12658,7 +12805,9 @@ function renderAiSecFormD(){
     tb.innerHTML = '<tr><td colspan="6" style="padding:14px;color:var(--muted)">No AI-adjacent Form D filings in the last 60 days. EDGAR may be unreachable, or no qualifying issuers filed in that window.</td></tr>';
     return;
   }
-  if (badge) badge.textContent = 'EDGAR · ' + rows.length + ' filings · last 60d';
+  const fdCov = ((DATA.market||{}).ai_funding||{}).form_d_coverage || {};
+  const fdOf = (Number(fdCov.ai_matches) > rows.length) ? (' of ' + fdCov.ai_matches) : '';
+  if (badge) badge.textContent = 'EDGAR · ' + rows.length + fdOf + ' filings · last 60d';
   // Sort by filed_date desc so the freshest deals lead.
   const sorted = rows.slice().sort((a,b) => {
     const da = a && a.filed_date ? Date.parse(a.filed_date) : 0;
@@ -13278,13 +13427,22 @@ function paintSentimentCard(prefix, net, label, color, posPct, neuPct, negPct, s
   const barPos = document.getElementById(prefix + 'BarPos');
   const barNeu = document.getElementById(prefix + 'BarNeu');
   const barNeg = document.getElementById(prefix + 'BarNeg');
+  // Grey the reading out when its OLDEST dated input is more than 7 days old:
+  // a vivid "BULLISH +40" over week-old inputs reads as a current call. The
+  // freshness stamp underneath still says exactly how old.
+  const fAge = (fresh && fresh.date) ? freshness(fresh.date, {}).ageDays : null;
+  const staleScore = fAge != null && fAge > 7;
+  const shown = staleScore ? 'var(--muted)' : color;
+  card.classList.toggle('sentiment-stale', staleScore);
   if (scoreEl){
     scoreEl.textContent = (net >= 0 ? '+' : '') + net;
-    scoreEl.style.color = color;
+    scoreEl.style.color = shown;
+    if (staleScore) scoreEl.title = 'Greyed out: the oldest input behind this score is ' + fAge + ' days old.';
+    else scoreEl.removeAttribute('title');
   }
   if (labelEl){
     labelEl.textContent = label;
-    labelEl.style.color = color;
+    labelEl.style.color = shown;
   }
   if (sublineEl){
     sublineEl.textContent = subline;
@@ -13505,6 +13663,10 @@ function refreshCompositeHistoryAffordances(){
       : 'This index has no usable daily history yet — open for the details.');
     card.classList.add('histcard');
     card.setAttribute('data-histcard', key);
+    // The whole card opens the history on click; make that reachable from
+    // the keyboard too (Enter/Space on the focused card — see the keydown
+    // handler next to the delegated click below).
+    if (!card.hasAttribute('tabindex')) card.setAttribute('tabindex', '0');
   });
 }
 
@@ -13815,6 +13977,13 @@ function closeCompositeHistory(){
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeCompositeHistory();
+    // Keyboard twin of the whole-card click: only when the card ITSELF has
+    // focus, so Enter on a link/button inside it keeps its own meaning.
+    if ((e.key === 'Enter' || e.key === ' ') && e.target && e.target.hasAttribute
+        && e.target.hasAttribute('data-histcard')){
+      e.preventDefault();
+      openCompositeHistory(e.target.getAttribute('data-histcard'));
+    }
   });
   // FOCUS TRAP (audit V2-E). The modal already declared role="dialog"
   // aria-modal="true", moved focus to its close button on open and restored
@@ -13911,12 +14080,17 @@ function renderOverviewSentiment(){
     components.push(clampScore(avg));
     inputLabels.push('signal avg');
   }
-  // 3) Avg Coinbase Intl perp funding rate. > 0.0001 (0.01%) per +0.0001
-  //    contributes +20; clamp to ±100. Positive funding = crowded longs.
-  const perps = Array.isArray(m.coinbase_intl_perps) ? m.coinbase_intl_perps : [];
-  const rates = perps
-    .map(p => p && Number(p.funding_rate))
-    .filter(v => isFinite(v));
+  // 3) Avg perp funding rate. > 0.0001 (0.01%) per +0.0001 contributes +20;
+  //    clamp to ±100. Positive funding = crowded longs. Sourced from
+  //    market.perp_funding (OKX BTC/ETH/LINK/LTC, fresh rows only): the
+  //    Coinbase Intl perps are paused/delisted and their frozen quotes must not
+  //    vote. Older payloads without perp_funding fall back to the perp rows.
+  const pfund = m.perp_funding || null;
+  const rates = pfund
+    ? ((pfund.available && isFinite(Number(pfund.avg_rate))) ? [Number(pfund.avg_rate)] : [])
+    : (Array.isArray(m.coinbase_intl_perps) ? m.coinbase_intl_perps : [])
+        .map(p => p && Number(p.funding_rate))
+        .filter(v => isFinite(v));
   if (rates.length){
     const avgRate = rates.reduce((a,b)=>a+b,0) / rates.length;
     components.push(clampScore((avgRate / 0.0001) * 20));
@@ -15205,7 +15379,7 @@ function renderTopNewsSentiment(){
     const titleAttr = r.recent
       .map(rc => `${rc.sentiment[0]} · ${(rc.title || '').replace(/"/g, '”').slice(0, 100)}`)
       .join('\n');
-    return `<div class="top-news-sentiment-row" data-tns-symbol="${escapeHtml(r.symbol)}" style="cursor:pointer" title="${escapeHtml(titleAttr || (r.symbol + ': no headline matches'))}">
+    return `<div class="top-news-sentiment-row" data-tns-symbol="${escapeHtml(r.symbol)}" role="button" tabindex="0" aria-label="${escapeHtml(r.symbol)} news sentiment: ${r.total} mention${r.total === 1 ? '' : 's'}, net ${escapeHtml(String(netLbl))} — open headlines" style="cursor:pointer" title="${escapeHtml(titleAttr || (r.symbol + ': no headline matches'))}">
       <div>
         <div class="tns-sym">${escapeHtml(r.symbol)}</div>
         <div class="tns-name">${escapeHtml(r.name)}</div>
@@ -15224,9 +15398,13 @@ function renderTopNewsSentiment(){
   }).join('');
   // Click any row → open the detail modal for that coin. Delegated so
   // re-renders don't need to re-bind.
-  host.querySelectorAll('[data-tns-symbol]').forEach(el =>
-    el.addEventListener('click', () => openNewsSentimentDetail(el.getAttribute('data-tns-symbol')))
-  );
+  host.querySelectorAll('[data-tns-symbol]').forEach(el => {
+    el.addEventListener('click', () => openNewsSentimentDetail(el.getAttribute('data-tns-symbol')));
+    // role=button rows: Enter/Space activate, as for a native button.
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openNewsSentimentDetail(el.getAttribute('data-tns-symbol')); }
+    });
+  });
 }
 
 function renderResearchNews(){
@@ -15978,6 +16156,9 @@ function avBootAviation(DATA){
 
 }
 
+// true until the first (boot) selectTab(); see there. `var` (hoisted) so a
+// call that lands before this line runs reads undefined, i.e. "replace".
+var _tabHistReplace = true;
 function selectTab(t){
   state.tab = t;
   // Keep the URL hash in sync so every tab is deep-linkable & shareable
@@ -15989,9 +16170,16 @@ function selectTab(t){
     const _curHash = (location.hash || '').replace(/^#/, '');
     const _wantHash = (t === 'overview') ? '' : t;
     if (_curHash !== _wantHash) {
-      history.replaceState(null, '',
-        _wantHash ? '#' + _wantHash : location.pathname + location.search);
+      const _url = _wantHash ? '#' + _wantHash : location.pathname + location.search;
+      // A user-initiated tab change gets its own history entry, so Back
+      // returns to the previous tab instead of leaving the site after a few
+      // clicks. The first paint (and Back/Forward replays, whose hash already
+      // matches) replace instead. pushState fires no hashchange either, so
+      // the re-entrancy guarantee above still holds.
+      if (_tabHistReplace !== false) history.replaceState(null, '', _url);
+      else history.pushState({ tab: t }, '', _url);
     }
+    _tabHistReplace = false;   // only the very first (boot) paint replaces
   } catch (_) {}
   // Kick off lazy load of any sidecar this tab needs. Fire-and-forget —
   // renderAll() below runs immediately with an empty subtree (the
@@ -16189,6 +16377,38 @@ function openChat(){ chatDock?.classList.add('open'); chatFab?.classList.add('hi
 function closeChat(){ chatDock?.classList.remove('open'); chatFab?.classList.remove('hidden'); }
 
 chatFab?.addEventListener('click', openChat);
+// Keep the chat FAB off interactive content: if a link/button/input sits
+// under its resting position, lift it (CSS .dodge). Checked on scroll/resize,
+// throttled to one rAF; the test always uses the RESTING rect so the lifted
+// state can't oscillate.
+(function chatFabDodge(){
+  if (!chatFab || !document.elementsFromPoint) return;
+  let queued = false;
+  const CTRL = 'a[href],button,input,select,textarea,summary,[role="button"],[role="tab"],[tabindex="0"]';
+  function check(){
+    queued = false;
+    if (chatFab.classList.contains('hidden')) return;
+    const r = chatFab.getBoundingClientRect();
+    const lift = chatFab.classList.contains('dodge') ? 68 : 0;
+    const top = r.top + lift, bottom = r.bottom + lift;
+    const pts = [[r.left + r.width / 2, top + r.height / 2], [r.left + 4, top + 4], [r.right - 4, top + 4],
+                 [r.left + 4, bottom - 4], [r.right - 4, bottom - 4]];
+    let hit = false;
+    for (const [x, y] of pts){
+      for (const el of document.elementsFromPoint(x, y)){
+        if (el === chatFab || chatFab.contains(el) || el === document.body || el === document.documentElement) continue;
+        if (el.closest && el.closest(CTRL) && !el.closest('#chatDock')){ hit = true; break; }
+      }
+      if (hit) break;
+    }
+    chatFab.classList.toggle('dodge', hit);
+  }
+  const queue = () => { if (!queued){ queued = true; requestAnimationFrame(check); } };
+  window.addEventListener('scroll', queue, { passive: true });
+  window.addEventListener('resize', queue);
+  document.addEventListener('click', () => setTimeout(queue, 50));
+  setTimeout(queue, 1500);
+})();
 document.getElementById('chatClose')?.addEventListener('click', closeChat);
 
 function appendMsg(role, text){
@@ -17149,7 +17369,7 @@ function liveComputeSignal(rows){
 function liveSignalColor(label){
   if (label === 'STRONG BUY') return '#16a34a';
   if (label === 'BUY') return '#22c55e';
-  if (label === 'STRONG SELL') return '#b91c1c';
+  if (label === 'STRONG SELL') return '#f87171';  // text colour; #b91c1c was 2.75:1
   if (label === 'SELL') return '#ef4444';
   return '#f59e0b';
 }
@@ -19257,6 +19477,8 @@ function renderMufonMap(){
     const strokeW = isSel ? 2.5 : 1;
     return ''
       + '<g class="mufonTile" data-state="'+code+'" role="button" tabindex="0" style="cursor:pointer">'
+      // Invisible hit area spanning the gutter (bigger tap target, same look).
+      +   '<rect x="'+(x-GAP/2)+'" y="'+(y-GAP/2)+'" width="'+(CELL+GAP)+'" height="'+(CELL+GAP)+'" fill="transparent"></rect>'
       +   '<rect x="'+x+'" y="'+y+'" width="'+CELL+'" height="'+CELL+'" rx="6" '
       +     'fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+strokeW+'">'
       +     '<title>'+ (MUFON_STATE_NAMES[code]||code) +': '+c.toLocaleString()+' sightings</title>'
@@ -21625,6 +21847,12 @@ function _tabFromHash(){
     renderAll();
   });
 })();
+// Back/Forward across the entries selectTab() pushes. The Overview entry has
+// no hash, so hashchange's _tabFromHash() alone can't route back to it.
+window.addEventListener('popstate', () => {
+  const h = location.hash ? _tabFromHash() : 'overview';
+  if (h && h !== state.tab) selectTab(h);
+});
 window.addEventListener('hashchange', () => {
   const h = _tabFromHash();
   if (h === 'summit') { window.location.replace('landscape/?pres=absent'); return; }

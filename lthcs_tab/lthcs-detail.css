@@ -172,6 +172,12 @@
 .lthcs-modal-root .lthcs-modal-band-badge[data-band="monitor"] { background: var(--band-monitor, #D89148); }
 .lthcs-modal-root .lthcs-modal-band-badge[data-band="weakening"] { background: var(--band-weakening, #B85A3E); }
 .lthcs-modal-root .lthcs-modal-band-badge[data-band="review"] { background: var(--band-review, #7A2E1F); }
+/* White on the light band fills measured 2.4:1 (gold), 2.6:1 (amber) and
+   3.9:1 (green); near-black reads at 4.6-7.2:1. */
+.lthcs-modal-root .lthcs-modal-band-badge[data-band="high"],
+.lthcs-modal-root .lthcs-modal-band-badge[data-band="high_confidence"],
+.lthcs-modal-root .lthcs-modal-band-badge[data-band="constructive"],
+.lthcs-modal-root .lthcs-modal-band-badge[data-band="monitor"] { color: #111; }
 
 .lthcs-modal-root .lthcs-modal-confidence-chip {
   display: inline-block;

@@ -4,6 +4,8 @@
    ========================================================================= */
 
 :root {
+  /* Dark-only pages: native controls (scrollbars, selects, inputs) follow. */
+  color-scheme: dark;
   /* Band colors — must match data/lthcs/weights.json `score_bands` */
   --band-elite: #1F3A5F;
   --band-high: #4A8F5F;
@@ -57,7 +59,9 @@
 
   --text-primary: #E6E9EE;
   --text-secondary: #9CA3AF;
-  --text-tertiary: #6B7280;
+  /* Was #6B7280: 3.5-3.9:1 on the card/elevated backgrounds. #8B93A1 is
+     5.1-5.7:1 there and still reads as the tertiary tier. */
+  --text-tertiary: #8B93A1;
 
   --border-subtle: #2A323D;
   --border-strong: #3A4452;

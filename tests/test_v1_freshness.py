@@ -772,8 +772,12 @@ def test_money_flow_resolver_ignores_the_payload_as_of(resolve):
     r = resolve("moneyFlowFreshness", data)
     assert r["date"] == "2026-07-08", "must be the oldest dated input, not the clock"
     assert "2026-08-03" != r["date"]
-    assert "clock read" in r["title"]
-    assert "per-index MFI/CMF legs" in r["title"], "undated inputs must be disclosed"
+    # The hover is user-facing copy (the developer notes about the old clock
+    # read were removed per the UX audit); the undated legs must still be
+    # disclosed in plain words.
+    assert "per-index MFI/CMF readings" in r["title"], "undated inputs must be disclosed"
+    assert "not part of this date" in r["title"]
+    assert "_composite_as_of" not in r["title"]
 
 
 def test_money_flow_resolver_is_unavailable_with_no_dated_sources(resolve):

@@ -623,7 +623,9 @@ def test_pages_publishes_the_latest_report():
     stage = [s for s in pages["jobs"]["build"]["steps"]
              if "cp dashboard.html _site/index.html" in (s.get("run") or "")]
     assert len(stage) == 1
-    assert "cp audit/daily/latest.* _site/audit/" in stage[0]["run"]
+    run = stage[0]["run"]
+    assert "for f in audit/daily/latest.md audit/daily/latest.json; do" in run
+    assert 'cp "$f" _site/audit/' in run
 
 
 def test_api_changes_fall_back_to_the_previous_report(dar):
@@ -664,3 +666,32 @@ def test_tab_strip_shrinking_or_vanishing_is_flagged(dar):
     assert sev["ux:v1:phone:tab-count"] == "P1"
     assert sev["ux:v1:desktop:no-tabs"] == "P1"
     assert "ux:v1:desktop:tab-count" not in sev   # zero is reported as no-tabs, once
+
+
+def test_pages_stage_step_survives_missing_audit_report():
+    """The stage step runs under `shopt -s nullglob`; a `latest.*` glob that
+    matches nothing made `ls` succeed and `cp` fail with no source, which
+    broke the 2026-10-04 deploy before the first audit report existed."""
+    import subprocess
+    import tempfile
+    from pathlib import Path
+
+    import yaml
+
+    repo = Path(__file__).resolve().parent.parent
+    wf = yaml.safe_load((repo / ".github/workflows/pages.yml").read_text())
+    step = next(s for s in wf["jobs"]["build"]["steps"]
+                if s.get("name") == "Stage site directory")
+    run = step["run"]
+    start = run.index("for f in audit/daily/latest.md")
+    snippet = run[start:run.index("done", start) + len("done")]
+    with tempfile.TemporaryDirectory() as d:
+        script = "set -e\nshopt -s nullglob\nmkdir -p _site\n" + snippet + "\n"
+        r = subprocess.run(["bash", "-c", script], cwd=d, capture_output=True, text=True)
+        assert r.returncode == 0, r.stderr
+        assert not (Path(d) / "_site/audit").exists()
+        (Path(d) / "audit/daily").mkdir(parents=True)
+        (Path(d) / "audit/daily/latest.md").write_text("x")
+        r = subprocess.run(["bash", "-c", script], cwd=d, capture_output=True, text=True)
+        assert r.returncode == 0, r.stderr
+        assert (Path(d) / "_site/audit/latest.md").exists()

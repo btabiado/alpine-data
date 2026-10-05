@@ -28,12 +28,13 @@ existing scoring functions.
 Pure stdlib — no pip install. Non-zero exit fails the workflow on purpose so a
 dead fetcher is visible in the Actions UI rather than silently stale.
 """
+import calendar
 import json
 import sys
 import urllib.request
 import urllib.error
 import time
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 ENDPOINT = "https://api.usaspending.gov/api/v2/search/spending_over_time/"
 # Browser UA + retry mirrors the TS adapters: USAspending intermittently 525s
@@ -100,6 +101,45 @@ def collapse_by_period(results, value_field):
     return sorted(by_period.items())
 
 
+# DoD contract actions reach USAspending on a 90-day delay (DoD's operational-
+# security deferral), so the last ~3 months read as near-zero (verified
+# 2026-10-04: Jun $43.2B, Jul $2.6B, Aug $22M, Sep $74M, Oct $0). Grants have
+# no such deferral, but the current month is always partial.
+DOD_REPORTING_LAG_DAYS = 90
+GRANTS_REPORTING_LAG_DAYS = 0
+
+
+def mark_incomplete(series, period_key, today, lag_days):
+    """Flag months that cannot be complete yet, in place; return the summary.
+
+    A month is incomplete when it has not ended (current partial month) or
+    when it ended inside the reporting-lag window (``month_end > today -
+    lag_days``). Values are kept — they are real partial sums — but each such
+    row carries ``incomplete: true`` + a reason so consumers do not read a lag
+    artefact (e.g. DoD Oct = $0) as a collapse in obligations.
+    """
+    cutoff = today - timedelta(days=lag_days)
+    complete_through = None
+    incomplete = []
+    for row in series:
+        y, m = (int(x) for x in str(row[period_key]).split("-")[:2])
+        month_end = date(y, m, calendar.monthrange(y, m)[1])
+        if month_end >= today:
+            row["incomplete"] = True
+            row["incomplete_reason"] = "current partial month"
+        elif month_end > cutoff:
+            row["incomplete"] = True
+            row["incomplete_reason"] = f"inside {lag_days}-day reporting lag"
+        else:
+            row["incomplete"] = False
+            complete_through = row[period_key]
+            continue
+        incomplete.append(row[period_key])
+    return {"reporting_lag_days": lag_days,
+            "complete_through": complete_through,
+            "incomplete_periods": incomplete}
+
+
 def months_ago_iso(now, months):
     """First-of-window date `months` before `now`, as 'YYYY-MM-DD' (mirrors TS)."""
     y = now.year
@@ -138,6 +178,8 @@ def main():
         "award_type_codes": GRANT_AWARD_TYPE_CODES,
         "value_field": "Grant_Obligations",
         "series": grant_series,
+        **mark_incomplete(grant_series, "period", now.date(),
+                          GRANTS_REPORTING_LAG_DAYS),
     }
 
     # ── ADW-444: DoD contract obligations, ~13-month window (aggregated_amount) ─
@@ -166,6 +208,8 @@ def main():
         "agency": "Department of Defense (awarding toptier)",
         "value_field": "aggregated_amount",
         "series": dod_series,
+        **mark_incomplete(dod_series, "month", now.date(),
+                          DOD_REPORTING_LAG_DAYS),
     }
 
     with open("data-usaspending.json", "w") as f:
@@ -174,9 +218,11 @@ def main():
     g_last = grant_series[-1]
     d_last = dod_series[-1]
     print(f"wrote data-usaspending.json | grants {len(grant_series)} periods "
-          f"(latest {g_last['period']}={g_last['obligated']:.0f}) | "
+          f"(latest {g_last['period']}={g_last['obligated']:.0f}; complete through "
+          f"{out['grants']['complete_through']}) | "
           f"dod {len(dod_series)} months "
-          f"(latest {d_last['month']}={d_last['totalAmount']:.0f})")
+          f"(latest {d_last['month']}={d_last['totalAmount']:.0f}; complete through "
+          f"{out['dod_contracts']['complete_through']})")
     return 0
 
 

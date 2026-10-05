@@ -3,7 +3,7 @@
 Targets:
   - _ai_keyword_hit         (issuer-name word-boundary matcher)
   - _parse_form_d_xml       (primary_doc.xml field extractor)
-  - _fetch_sec_form_d_filings_impl  (one-shot search + optional enrich)
+  - _fetch_sec_form_d_filings_impl  (paged AI search + optional enrich)
   - fetch_sec_form_d_filings        (stale-fallback wrapper)
 
 All HTTP is mocked via ``unittest.mock.patch`` on ``fetch_market._sec_get``.
@@ -276,3 +276,99 @@ def test_wrapper_saves_on_success():
         out = fetch_market.fetch_sec_form_d_filings()
     assert out == live
     save.assert_called_once_with("fetch_sec_form_d_filings", live)
+
+
+# ============================================================================
+# Window coverage — server-side AI query, paged with from=
+# ============================================================================
+#
+# The unfiltered Form D search is >=10,000 hits per 60 days and the old code
+# read only the first 100 (all from one filing day), so the AI tab showed
+# "2 filings · last 60d". These pin full-window coverage.
+
+def _hit(name, cik, adsh, file_date, items=("06B",)):
+    return {
+        "_id": f"{adsh}:primary_doc.xml",
+        "_source": {
+            "display_names": [f"{name}  (CIK {cik})"],
+            "ciks": [cik], "form": "D", "file_date": file_date,
+            "adsh": adsh, "items": list(items),
+        },
+    }
+
+
+def test_fetch_form_d_pages_through_whole_window_with_server_side_query():
+    page1 = [_hit(f"Acme AI {i}", f"{i:010d}", f"{i:010d}-26-000001",
+                  "2026-10-02") for i in range(100)]
+    page2 = [_hit(f"Beta Robotics {i}", f"{i+500:010d}", f"{i+500:010d}-26-000001",
+                  "2026-08-06") for i in range(40)]
+    calls = []
+
+    def fake(url, params=None, timeout=20):
+        calls.append(dict(params or {}))
+        body = page1 if not (params or {}).get("from") else page2
+        return {"hits": {"total": {"value": 140}, "hits": body}}
+
+    with patch.object(fetch_market, "_sec_get", side_effect=fake), \
+         patch.object(fetch_market.time, "sleep") as slept:
+        out = fetch_market._fetch_sec_form_d_filings_impl(
+            days=60, max_results=500, enrich_details=False)
+
+    assert len(calls) == 2
+    assert calls[1]["from"] == 100
+    assert '"artificial intelligence"' in calls[0]["q"] and "robotics" in calls[0]["q"]
+    assert slept.called                       # paced between pages
+    assert len(out) == 140
+    assert out[-1]["filed_date"] == "2026-08-06"   # oldest part of window reached
+    cov = fetch_market._SEC_FORM_D_LAST_COVERAGE
+    assert cov["complete"] is True and cov["fts_hits_scanned"] == 140
+    assert cov["ai_matches"] == 140
+
+
+def test_fetch_form_d_takes_exemptions_from_search_hit_and_dedupes():
+    body = [
+        _hit("Zeus Robotics Inc.", "0002156179", "0002156179-26-000001",
+             "2026-10-02", items=("06B", "3C.7")),
+        _hit("Zeus Robotics Inc.", "0002156179", "0002156179-26-000001",
+             "2026-10-02", items=("06B", "3C.7")),
+    ]
+    with patch.object(fetch_market, "_sec_get",
+                      return_value={"hits": {"total": {"value": 2}, "hits": body}}):
+        out = fetch_market._fetch_sec_form_d_filings_impl(
+            days=60, max_results=20, enrich_details=False)
+    assert len(out) == 1
+    assert out[0]["exemptions"] == ["06B", "3C.7"]
+
+
+_LIVE_SHAPE_XML = """<?xml version="1.0"?>
+<edgarSubmission xmlns="http://www.sec.gov/edgar/formd">
+  <offeringData>
+    <federalExemptionsExclusions><item>06b</item></federalExemptionsExclusions>
+    <typeOfFiling><dateOfFirstSale><value>2026-09-11</value></dateOfFirstSale></typeOfFiling>
+    <offeringSalesAmounts>
+      <totalOfferingAmount>220000</totalOfferingAmount>
+      <totalAmountSold>220000</totalAmountSold>
+    </offeringSalesAmounts>
+  </offeringData>
+</edgarSubmission>"""
+
+
+def test_parse_form_d_xml_live_nested_schema():
+    out = fetch_market._parse_form_d_xml(_LIVE_SHAPE_XML)
+    assert out["date_of_first_sale"] == "2026-09-11"
+    assert out["exemptions"] == ["06b"]
+    assert out["total_offering_amount"] == 220000.0
+
+
+def test_parse_form_d_xml_yet_to_occur():
+    xml = ("<edgarSubmission><offeringData><typeOfFiling><dateOfFirstSale>"
+           "<yetToOccur>true</yetToOccur></dateOfFirstSale></typeOfFiling>"
+           "</offeringData></edgarSubmission>")
+    assert fetch_market._parse_form_d_xml(xml)["date_of_first_sale"] == "yet to occur"
+
+
+def test_sec_headers_prefer_sec_user_agent_env(monkeypatch):
+    monkeypatch.setenv("SEC_USER_AGENT", "Alpine Data ops@example.com")
+    assert fetch_market._sec_headers()["User-Agent"] == "Alpine Data ops@example.com"
+    monkeypatch.delenv("SEC_USER_AGENT")
+    assert fetch_market._sec_headers()["User-Agent"] == fetch_market.SEC_UA

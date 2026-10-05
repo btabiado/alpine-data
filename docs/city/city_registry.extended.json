@@ -33,7 +33,7 @@
         "polarity": 0,
         "metric": "count",
         "supplementary": true,
-        "note": "CONFIRMED live (max inspection_date 2026-05-29; ~1.4k/mo). Polarity 0: inspection VOLUME is workload, not an outcome — more or fewer inspections is neither good nor bad on its own (the editorial signal is the Fail/Pass rate via the `results` column, not count). pillar_hint context. Latest complete month 2026-04."
+        "note": "Polarity 0: inspection VOLUME is workload, not an outcome — more or fewer inspections is neither good nor bad on its own (the editorial signal is the Fail/Pass rate via the `results` column, not count). pillar_hint context."
       },
       {
         "pillar_hint": "public_safety",
@@ -44,7 +44,7 @@
         "polarity": -1,
         "metric": "count",
         "supplementary": true,
-        "note": "CONFIRMED live (max crash_date 2026-05-30; ~8-9k/mo, dense). Polarity -1: fewer reported crashes is favorable (Vision-Zero framing). pillar_hint public_safety but SUPPLEMENTARY — display alongside the crime pillar, not summed into it. Latest complete month 2026-04."
+        "note": "Polarity -1: fewer reported crashes is favorable (Vision-Zero framing). pillar_hint public_safety but SUPPLEMENTARY — display alongside the crime pillar, not summed into it."
       },
       {
         "pillar_hint": "context",
@@ -55,7 +55,7 @@
         "polarity": 0,
         "metric": "count",
         "supplementary": true,
-        "note": "CONFIRMED live (max tow_date 2026-05-31) BUT this is a ROLLING ~90-day inventory snapshot, not a historical series: min(tow_date)=2026-03-03, max=2026-05-31, total ~4.7k rows. CANNOT support a 12-month baseline or YoY — render as a recent-volume tile only (status insufficient_history in scorer output); do NOT z-score. Polarity 0: tow counts reflect enforcement/relocation activity, not safety or wellbeing. pillar_hint context."
+        "note": "ROLLING ~90-day inventory snapshot, not a historical series: it CANNOT support a 12-month baseline or YoY — render as a recent-volume tile only (status insufficient_history in scorer output); do NOT z-score. Polarity 0: tow counts reflect enforcement/relocation activity, not safety or wellbeing. pillar_hint context."
       },
       {
         "pillar_hint": "development_economy",
@@ -67,7 +67,7 @@
         "polarity": 1,
         "metric": "count",
         "supplementary": true,
-        "note": "CONFIRMED live. license_start_date gives a clean recent flow (~2.0-2.3k/mo) ONCE future-dated rows are filtered: raw agg returns a large NULL bucket (~2.7k) plus forward-dated noise (2026-08/09/11), so filter `license_start_date IS NOT NULL AND license_start_date < <next-month>` before bucketing. date_issued is an even cleaner alternative (~2.3-2.7k/mo, no future noise, max 2026-05-29) and mirrors the backbone Building-Permits issue_date framing — use it if the future-date filter on license_start_date proves fragile. Polarity +1: new/renewed licenses up-is-favorable. pillar_hint development_economy. Latest complete month 2026-04."
+        "note": "license_start_date gives a clean recent flow ONCE future-dated rows are filtered (raw aggregation returns a large NULL bucket plus forward-dated noise), so filter `license_start_date IS NOT NULL AND license_start_date < <next-month>` before bucketing. date_issued is a cleaner alternative that mirrors the backbone Building-Permits issue_date framing. Polarity +1: new/renewed licenses up-is-favorable. pillar_hint development_economy."
       }
     ],
     "nyc": [
@@ -80,7 +80,7 @@
         "polarity": 0,
         "metric": "count",
         "supplementary": true,
-        "note": "CONFIRMED live (~6.5-9.3k/mo, dense). MUST filter placeholder rows: ~3,434 records carry inspection_date='1900-01-01' (never-inspected / new establishments) — filter `inspection_date > '1901-01-01'` before bucketing or date_trunc_ym buries a huge 1900 bucket. Polarity 0: inspection VOLUME is workload, not outcome (signal = critical_flag / score, not count). pillar_hint context. Latest complete month 2026-04."
+        "note": "MUST filter placeholder rows: records with inspection_date='1900-01-01' (never-inspected / new establishments) — filter `inspection_date > '1901-01-01'` before bucketing or date_trunc_ym buries a huge 1900 bucket. Polarity 0: inspection VOLUME is workload, not outcome (signal = critical_flag / score, not count). pillar_hint context."
       },
       {
         "pillar_hint": "public_safety",
@@ -91,7 +91,7 @@
         "polarity": -1,
         "metric": "count",
         "supplementary": true,
-        "note": "CONFIRMED live (max crash_date 2026-05-26; ~6-6.7k/mo, dense). NYC Vision Zero crash file. Polarity -1: fewer collisions is favorable. pillar_hint public_safety, SUPPLEMENTARY (display alongside the NYPD-complaints pillar, not summed in). Latest complete month 2026-04."
+        "note": "NYC Vision Zero crash file. Polarity -1: fewer collisions is favorable. pillar_hint public_safety, SUPPLEMENTARY (display alongside the NYPD-complaints pillar, not summed in)."
       }
     ],
     "sf": [
@@ -105,7 +105,7 @@
         "polarity": 1,
         "metric": "count",
         "supplementary": true,
-        "note": "CONFIRMED live (data_as_of 2026-05-30; max dba_start_date 2026-05-29). dba_start_date gives a clean dense flow of new business registrations (~0.75-1.5k/mo) when filtered to a recent window. location_start_date is the alternative (original location open date; slightly more back-loaded). Polarity +1: new business registrations up-is-favorable. pillar_hint development_economy. Latest complete month 2026-04."
+        "note": "dba_start_date gives a dense flow of new business registrations when filtered to a recent window. location_start_date is the alternative (original location open date; slightly more back-loaded). Polarity +1: new business registrations up-is-favorable. pillar_hint development_economy."
       }
     ],
     "seattle": [
@@ -118,7 +118,7 @@
         "polarity": 0,
         "metric": "count",
         "supplementary": true,
-        "note": "CONFIRMED live (max datetime 2026-05-30 23:51; very dense ~8.2-9.4k/mo). Seattle Fire Dept real-time 911 dispatch log. Polarity 0: fire/medic call VOLUME is demand/workload, not a safety outcome (rises with population, weather, season; no clean good/bad direction). pillar_hint context — render as a city-services activity tile, do not z-score into a pillar. Latest complete month 2026-04."
+        "note": "Seattle Fire Dept real-time 911 dispatch log. Polarity 0: fire/medic call VOLUME is demand/workload, not a safety outcome (rises with population, weather, season; no clean good/bad direction). pillar_hint context — render as a city-services activity tile, do not z-score into a pillar."
       }
     ]
   }

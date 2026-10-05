@@ -291,7 +291,7 @@ def _compute_from_series(
             f = float(v)
         except (TypeError, ValueError):
             continue
-        if f != f:  # NaN
+        if math.isnan(f):  # NaN
             continue
         cleaned.append(f)
     if not cleaned:

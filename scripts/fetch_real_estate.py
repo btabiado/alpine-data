@@ -224,7 +224,7 @@ def load_census_msa_names(no_cache: bool) -> list[dict[str, object]] | None:
         try:
             cache_path.unlink()
         except OSError:
-            pass
+            pass  # best-effort; at worst the existing cache file is reused
     try:
         body = fmc.fetch_gazetteer_txt(cache_path)
         rows = fmc.parse_gazetteer(body)
@@ -290,7 +290,7 @@ def load_metros_from_zillow(
             import fetch_metro_coords as fmc
             match_fn = fmc.match_metro
         except ImportError:
-            pass
+            pass  # matcher is optional; fall back to built-in overrides
 
     out: list[dict[str, object]] = []
     for i, row in enumerate(rows, start=1):
@@ -353,7 +353,7 @@ def http_get(url: str, cache_path: Path | None, no_cache: bool) -> tuple[bytes, 
                         ts = parsedate_to_datetime(last_mod).timestamp()
                         os.utime(cache_path, (ts, ts))
                     except (TypeError, ValueError):
-                        pass
+                        pass  # unparseable Last-Modified; keep the file's current mtime
             return body, last_mod
     except urllib.error.HTTPError as e:
         if e.code == 304 and cache_path and cache_path.exists():
@@ -753,7 +753,7 @@ def build_metro(metro_def: dict[str, object], zillow: dict, redfin: dict) -> dic
             try:
                 region_id = int(row.get("RegionID") or 0) or None
             except ValueError:
-                pass
+                pass  # non-numeric RegionID; leave region_id unset
 
     # Active listings (inventory; best-effort URL).
     inv_row, inv_dates = z_get("inventory")
