@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-04T13:02:44Z",
+  "generated_at": "2026-10-05T15:37:43Z",
   "methodology_version": "1.1",
   "as_of": "2026-09",
   "methodology_disclosures": [
@@ -27,7 +27,7 @@
         "label": "On baseline",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": 0.05463291033549803,
+        "composite_c": 0.05315505301727189,
         "pillars": [
           {
             "key": "city_services",
@@ -200,7 +200,7 @@
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": -0.812455638308347,
+            "score_d": -0.8168892102630253,
             "feeds": [
               {
                 "label": "Crimes 2001-present",
@@ -209,13 +209,13 @@
                 "complete_through": "2026-08",
                 "note": "excludes last ~7 days; latest complete month lags to prior month",
                 "status": "ok",
-                "recent": 20777,
+                "recent": 20785,
                 "recent_period": "2026-08",
-                "baseline_mean": 19439.5,
-                "baseline_std": 1646.2437294236436,
-                "z": 0.812455638308347,
-                "yoy_pct": -2.847657345927242,
-                "d": -0.812455638308347,
+                "baseline_mean": 19440.083333333332,
+                "baseline_std": 1646.3880900491097,
+                "z": 0.8168892102630253,
+                "yoy_pct": -2.810249696062845,
+                "d": -0.8168892102630253,
                 "series": [
                   {
                     "month": "2023-09",
@@ -267,11 +267,11 @@
                   },
                   {
                     "month": "2024-09",
-                    "n": 23031
+                    "n": 23032
                   },
                   {
                     "month": "2024-10",
-                    "n": 22522
+                    "n": 22523
                   },
                   {
                     "month": "2024-11",
@@ -323,11 +323,11 @@
                   },
                   {
                     "month": "2025-11",
-                    "n": 18493
+                    "n": 18494
                   },
                   {
                     "month": "2025-12",
-                    "n": 17594
+                    "n": 17595
                   },
                   {
                     "month": "2026-01",
@@ -343,23 +343,23 @@
                   },
                   {
                     "month": "2026-04",
-                    "n": 19147
+                    "n": 19148
                   },
                   {
                     "month": "2026-05",
-                    "n": 21149
+                    "n": 21150
                   },
                   {
                     "month": "2026-06",
-                    "n": 20035
+                    "n": 20036
                   },
                   {
                     "month": "2026-07",
-                    "n": 21254
+                    "n": 21256
                   },
                   {
                     "month": "2026-08",
-                    "n": 20777
+                    "n": 20785
                   }
                 ]
               }
@@ -536,14 +536,14 @@
         ]
       },
       "context": {
-        "median_income": null,
-        "median_rent": null,
-        "median_home_value": null,
-        "median_real_estate_taxes": null,
-        "effective_property_tax_rate": null,
+        "median_income": 77902,
+        "median_rent": 1440,
+        "median_home_value": 334100,
+        "median_real_estate_taxes": 4943,
+        "effective_property_tax_rate": 0.014794971565399582,
         "unemployment_rate": 6.0,
         "aqi": null,
-        "context_score": 0
+        "context_score": 38
       },
       "disclosures": [
         "Crimes 2001-present: excludes last ~7 days; latest complete month lags to prior month"
@@ -559,7 +559,7 @@
           "dataset": "4ijn-s7e5",
           "polarity": 0,
           "complete_through": "2026-09",
-          "note": "CONFIRMED live (max inspection_date 2026-05-29; ~1.4k/mo). Polarity 0: inspection VOLUME is workload, not an outcome \u2014 more or fewer inspections is neither good nor bad on its own (the editorial signal is the Fail/Pass rate via the `results` column, not count). pillar_hint context. Latest complete month 2026-04.",
+          "note": "Polarity 0: inspection VOLUME is workload, not an outcome \u2014 more or fewer inspections is neither good nor bad on its own (the editorial signal is the Fail/Pass rate via the `results` column, not count). pillar_hint context.",
           "status": "ok",
           "recent": 1064,
           "recent_period": "2026-09",
@@ -720,15 +720,15 @@
           "dataset": "85ca-t3if",
           "polarity": -1,
           "complete_through": "2026-09",
-          "note": "CONFIRMED live (max crash_date 2026-05-30; ~8-9k/mo, dense). Polarity -1: fewer reported crashes is favorable (Vision-Zero framing). pillar_hint public_safety but SUPPLEMENTARY \u2014 display alongside the crime pillar, not summed into it. Latest complete month 2026-04.",
+          "note": "Polarity -1: fewer reported crashes is favorable (Vision-Zero framing). pillar_hint public_safety but SUPPLEMENTARY \u2014 display alongside the crime pillar, not summed into it.",
           "status": "ok",
-          "recent": 9548,
+          "recent": 9573,
           "recent_period": "2026-09",
-          "baseline_mean": 9117.0,
-          "baseline_std": 619.0654246523545,
-          "z": 0.6962107441907849,
-          "yoy_pct": 5.584429945814442,
-          "d": -0.6962107441907849,
+          "baseline_mean": 9116.916666666666,
+          "baseline_std": 619.0085430661591,
+          "z": 0.7367965086139178,
+          "yoy_pct": 5.860886873825058,
+          "d": -0.7367965086139178,
           "series": [
             {
               "month": "2023-10",
@@ -868,11 +868,11 @@
             },
             {
               "month": "2026-08",
-              "n": 9540
+              "n": 9539
             },
             {
               "month": "2026-09",
-              "n": 9548
+              "n": 9573
             }
           ]
         },
@@ -881,9 +881,9 @@
           "dataset": "ygr5-vcbg",
           "polarity": 0,
           "complete_through": "2026-09",
-          "note": "CONFIRMED live (max tow_date 2026-05-31) BUT this is a ROLLING ~90-day inventory snapshot, not a historical series: min(tow_date)=2026-03-03, max=2026-05-31, total ~4.7k rows. CANNOT support a 12-month baseline or YoY \u2014 render as a recent-volume tile only (status insufficient_history in scorer output); do NOT z-score. Polarity 0: tow counts reflect enforcement/relocation activity, not safety or wellbeing. pillar_hint context.",
+          "note": "ROLLING ~90-day inventory snapshot, not a historical series: it CANNOT support a 12-month baseline or YoY \u2014 render as a recent-volume tile only (status insufficient_history in scorer output); do NOT z-score. Polarity 0: tow counts reflect enforcement/relocation activity, not safety or wellbeing. pillar_hint context.",
           "status": "insufficient_history",
-          "recent": 2587,
+          "recent": 2568,
           "recent_period": "2026-09",
           "baseline_mean": null,
           "baseline_std": null,
@@ -893,15 +893,15 @@
           "series": [
             {
               "month": "2026-07",
-              "n": 1227
+              "n": 1171
             },
             {
               "month": "2026-08",
-              "n": 2867
+              "n": 2865
             },
             {
               "month": "2026-09",
-              "n": 2587
+              "n": 2568
             }
           ]
         },
@@ -910,7 +910,7 @@
           "dataset": "r5kz-chrr",
           "polarity": 1,
           "complete_through": "2026-09",
-          "note": "CONFIRMED live. license_start_date gives a clean recent flow (~2.0-2.3k/mo) ONCE future-dated rows are filtered: raw agg returns a large NULL bucket (~2.7k) plus forward-dated noise (2026-08/09/11), so filter `license_start_date IS NOT NULL AND license_start_date < <next-month>` before bucketing. date_issued is an even cleaner alternative (~2.3-2.7k/mo, no future noise, max 2026-05-29) and mirrors the backbone Building-Permits issue_date framing \u2014 use it if the future-date filter on license_start_date proves fragile. Polarity +1: new/renewed licenses up-is-favorable. pillar_hint development_economy. Latest complete month 2026-04.",
+          "note": "license_start_date gives a clean recent flow ONCE future-dated rows are filtered (raw aggregation returns a large NULL bucket plus forward-dated noise), so filter `license_start_date IS NOT NULL AND license_start_date < <next-month>` before bucketing. date_issued is a cleaner alternative that mirrors the backbone Building-Permits issue_date framing. Polarity +1: new/renewed licenses up-is-favorable. pillar_hint development_economy.",
           "status": "ok",
           "recent": 2311,
           "recent_period": "2026-09",
@@ -1073,178 +1073,33 @@
       "name": "New York City",
       "scope": "city",
       "pulse": {
-        "score": 54,
+        "score": 53,
         "glyph": "up",
         "label": "Improving",
-        "pillars_present": 3,
+        "pillars_present": 2,
         "pillars_total": 3,
-        "composite_c": 0.2111660572765094,
+        "composite_c": 0.15670130250846204,
         "pillars": [
           {
             "key": "city_services",
             "name": "City Services",
-            "score_d": 0.320095566812604,
+            "score_d": null,
             "feeds": [
               {
                 "label": "311 (2010-present)",
                 "dataset": "erm2-nwe9",
                 "polarity": -1,
-                "complete_through": "2026-09",
-                "note": "~38M rows; REQUIRES app token + recent $where filter or it times out",
-                "status": "ok",
-                "recent": 323608,
-                "recent_period": "2026-09",
-                "baseline_mean": 328577.1666666667,
-                "baseline_std": 15524.009645456365,
-                "z": -0.320095566812604,
-                "yoy_pct": 6.912819970662473,
-                "d": 0.320095566812604,
-                "series": [
-                  {
-                    "month": "2023-10",
-                    "n": 302769
-                  },
-                  {
-                    "month": "2023-11",
-                    "n": 280046
-                  },
-                  {
-                    "month": "2023-12",
-                    "n": 271817
-                  },
-                  {
-                    "month": "2024-01",
-                    "n": 287186
-                  },
-                  {
-                    "month": "2024-02",
-                    "n": 240436
-                  },
-                  {
-                    "month": "2024-03",
-                    "n": 266604
-                  },
-                  {
-                    "month": "2024-04",
-                    "n": 267565
-                  },
-                  {
-                    "month": "2024-05",
-                    "n": 283982
-                  },
-                  {
-                    "month": "2024-06",
-                    "n": 306200
-                  },
-                  {
-                    "month": "2024-07",
-                    "n": 298936
-                  },
-                  {
-                    "month": "2024-08",
-                    "n": 284823
-                  },
-                  {
-                    "month": "2024-09",
-                    "n": 306770
-                  },
-                  {
-                    "month": "2024-10",
-                    "n": 306803
-                  },
-                  {
-                    "month": "2024-11",
-                    "n": 293516
-                  },
-                  {
-                    "month": "2024-12",
-                    "n": 313949
-                  },
-                  {
-                    "month": "2025-01",
-                    "n": 348180
-                  },
-                  {
-                    "month": "2025-02",
-                    "n": 255364
-                  },
-                  {
-                    "month": "2025-03",
-                    "n": 281221
-                  },
-                  {
-                    "month": "2025-04",
-                    "n": 272549
-                  },
-                  {
-                    "month": "2025-05",
-                    "n": 295059
-                  },
-                  {
-                    "month": "2025-06",
-                    "n": 306442
-                  },
-                  {
-                    "month": "2025-07",
-                    "n": 315883
-                  },
-                  {
-                    "month": "2025-08",
-                    "n": 304039
-                  },
-                  {
-                    "month": "2025-09",
-                    "n": 302684
-                  },
-                  {
-                    "month": "2025-10",
-                    "n": 336612
-                  },
-                  {
-                    "month": "2025-11",
-                    "n": 304905
-                  },
-                  {
-                    "month": "2025-12",
-                    "n": 332103
-                  },
-                  {
-                    "month": "2026-01",
-                    "n": 348511
-                  },
-                  {
-                    "month": "2026-02",
-                    "n": 334691
-                  },
-                  {
-                    "month": "2026-03",
-                    "n": 342388
-                  },
-                  {
-                    "month": "2026-04",
-                    "n": 302191
-                  },
-                  {
-                    "month": "2026-05",
-                    "n": 331980
-                  },
-                  {
-                    "month": "2026-06",
-                    "n": 334834
-                  },
-                  {
-                    "month": "2026-07",
-                    "n": 343123
-                  },
-                  {
-                    "month": "2026-08",
-                    "n": 328904
-                  },
-                  {
-                    "month": "2026-09",
-                    "n": 323608
-                  }
-                ]
+                "complete_through": null,
+                "note": "~38M rows; REQUIRES app token + recent $where filter or it times out; Socrata request to data.cityofnewyork.us failed: Socrata request to https://data.cityofnewyork.us/resource/erm2-nwe9.json failed after 3 attempts: HTTPSConnectionPool(host='data.cityofnewyork.us', port=443): Read timed out. (read timeout=120)",
+                "status": "fetch_error",
+                "recent": null,
+                "recent_period": null,
+                "baseline_mean": null,
+                "baseline_std": null,
+                "z": null,
+                "yoy_pct": null,
+                "d": null,
+                "series": null
               }
             ]
           },
@@ -1257,7 +1112,7 @@
                 "label": "NYPD Complaints",
                 "dataset": "5uac-w243",
                 "polarity": -1,
-                "complete_through": "2026-08",
+                "complete_through": "2026-06",
                 "note": "YTD file lags ~1 month; baseline qgea-i56i same col",
                 "status": "ok",
                 "recent": 44606,
@@ -1583,14 +1438,14 @@
         ]
       },
       "context": {
-        "median_income": null,
-        "median_rent": null,
-        "median_home_value": null,
-        "median_real_estate_taxes": null,
-        "effective_property_tax_rate": null,
+        "median_income": 80483,
+        "median_rent": 1821,
+        "median_home_value": 777600,
+        "median_real_estate_taxes": 6547,
+        "effective_property_tax_rate": 0.008419495884773663,
         "unemployment_rate": 5.3,
         "aqi": null,
-        "context_score": 21
+        "context_score": 46
       },
       "disclosures": [
         "311 (2010-present): ~38M rows; REQUIRES app token + recent $where filter or it times out",
@@ -1598,7 +1453,7 @@
         "DOB Permit Issuance: issuance_date is TEXT -> date_trunc_ym fails. Bucket via substring(issuance_date,7,4)||'-'||substring(issuance_date,1,2) and filter IS NOT NULL, OR use dobrundate (real calendar_date, ~1-day proxy)."
       ],
       "data_health": {
-        "feeds_ok": 3,
+        "feeds_ok": 2,
         "feeds_total": 3,
         "last_updated": "2026-06-01T00:00:00+00:00"
       },
@@ -1608,7 +1463,7 @@
           "dataset": "43nn-pn8j",
           "polarity": 0,
           "complete_through": "2026-09",
-          "note": "CONFIRMED live (~6.5-9.3k/mo, dense). MUST filter placeholder rows: ~3,434 records carry inspection_date='1900-01-01' (never-inspected / new establishments) \u2014 filter `inspection_date > '1901-01-01'` before bucketing or date_trunc_ym buries a huge 1900 bucket. Polarity 0: inspection VOLUME is workload, not outcome (signal = critical_flag / score, not count). pillar_hint context. Latest complete month 2026-04.",
+          "note": "MUST filter placeholder rows: records with inspection_date='1900-01-01' (never-inspected / new establishments) \u2014 filter `inspection_date > '1901-01-01'` before bucketing or date_trunc_ym buries a huge 1900 bucket. Polarity 0: inspection VOLUME is workload, not outcome (signal = critical_flag / score, not count). pillar_hint context.",
           "status": "ok",
           "recent": 9532,
           "recent_period": "2026-09",
@@ -1768,8 +1623,8 @@
           "label": "Motor Vehicle Collisions - Crashes",
           "dataset": "h9gi-nx95",
           "polarity": -1,
-          "complete_through": "2026-09",
-          "note": "CONFIRMED live (max crash_date 2026-05-26; ~6-6.7k/mo, dense). NYC Vision Zero crash file. Polarity -1: fewer collisions is favorable. pillar_hint public_safety, SUPPLEMENTARY (display alongside the NYPD-complaints pillar, not summed in). Latest complete month 2026-04.",
+          "complete_through": "2026-05",
+          "note": "NYC Vision Zero crash file. Polarity -1: fewer collisions is favorable. pillar_hint public_safety, SUPPLEMENTARY (display alongside the NYPD-complaints pillar, not summed in).",
           "status": "ok",
           "recent": 7413,
           "recent_period": "2026-05",
@@ -2208,7 +2063,7 @@
                 "label": "B&S Permits 2020+",
                 "dataset": "pi9x-tg5x",
                 "polarity": 1,
-                "complete_through": "2026-09",
+                "complete_through": "2026-08",
                 "note": null,
                 "status": "ok",
                 "recent": 5562,
@@ -2370,14 +2225,14 @@
         ]
       },
       "context": {
-        "median_income": null,
-        "median_rent": null,
-        "median_home_value": null,
-        "median_real_estate_taxes": null,
-        "effective_property_tax_rate": null,
+        "median_income": 81939,
+        "median_rent": 1933,
+        "median_home_value": 921200,
+        "median_real_estate_taxes": 6050,
+        "effective_property_tax_rate": 0.006567520625271385,
         "unemployment_rate": 5.0,
         "aqi": null,
-        "context_score": 30
+        "context_score": 52
       },
       "disclosures": [
         "MyLA311 Cases: RESOLVED: LA retired the 'MyLA311 Service Request Data {year}' series ~Aug 2025 (old h73f-gn57=2025 is dead for current data). Current product = 'MyLA311 Cases {year}'. 2026 = 2cy6-i7zn (date col createddate, live, ~185k/mo). Baseline = 73a2-6ar5 ('MyLA311 Cases March 2025 to December 2025'). Resolve current-year by catalog search: GET data.lacity.org/api/catalog/v1?q=MyLA311%20Cases -> item titled 'MyLA311 Cases {currentYear}'. Do NOT auto-build '...Service Request Data {year}' IDs.",
@@ -2399,7 +2254,7 @@
         "label": "Worsening",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": -0.9651034405612275,
+        "composite_c": -0.9885753365754303,
         "pillars": [
           {
             "key": "city_services",
@@ -2572,7 +2427,7 @@
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": -1.1883923003712693,
+            "score_d": -1.2588079884138779,
             "feeds": [
               {
                 "label": "SPD Crime 2008+",
@@ -2581,13 +2436,13 @@
                 "complete_through": "2026-09",
                 "note": "CORRECTED: column is 'report_date_time' (underscores), not 'report_datetime'. 2019 RMS change = continuity breakpoint.",
                 "status": "ok",
-                "recent": 6948,
+                "recent": 6971,
                 "recent_period": "2026-09",
                 "baseline_mean": 6559.833333333333,
                 "baseline_std": 326.6317583388908,
-                "z": 1.1883923003712693,
-                "yoy_pct": -0.15806868802988935,
-                "d": -1.1883923003712693,
+                "z": 1.2588079884138779,
+                "yoy_pct": 0.17243856875987928,
+                "d": -1.2588079884138779,
                 "series": [
                   {
                     "month": "2023-10",
@@ -2731,7 +2586,7 @@
                   },
                   {
                     "month": "2026-09",
-                    "n": 6948
+                    "n": 6971
                   }
                 ]
               }
@@ -2908,14 +2763,14 @@
         ]
       },
       "context": {
-        "median_income": null,
-        "median_rent": null,
-        "median_home_value": null,
-        "median_real_estate_taxes": null,
-        "effective_property_tax_rate": null,
+        "median_income": 123860,
+        "median_rent": 2030,
+        "median_home_value": 938600,
+        "median_real_estate_taxes": 7337,
+        "effective_property_tax_rate": 0.00781696143191988,
         "unemployment_rate": 4.5,
         "aqi": null,
-        "context_score": 45
+        "context_score": 58
       },
       "disclosures": [
         "Customer Service Requests: CORRECTED: column is 'createddate' (one word), not 'created_date'.",
@@ -2933,7 +2788,7 @@
           "dataset": "kzjm-xkqj",
           "polarity": 0,
           "complete_through": "2026-09",
-          "note": "CONFIRMED live (max datetime 2026-05-30 23:51; very dense ~8.2-9.4k/mo). Seattle Fire Dept real-time 911 dispatch log. Polarity 0: fire/medic call VOLUME is demand/workload, not a safety outcome (rises with population, weather, season; no clean good/bad direction). pillar_hint context \u2014 render as a city-services activity tile, do not z-score into a pillar. Latest complete month 2026-04.",
+          "note": "Seattle Fire Dept real-time 911 dispatch log. Polarity 0: fire/medic call VOLUME is demand/workload, not a safety outcome (rises with population, weather, season; no clean good/bad direction). pillar_hint context \u2014 render as a city-services activity tile, do not z-score into a pillar.",
           "status": "ok",
           "recent": 9601,
           "recent_period": "2026-09",
@@ -3101,7 +2956,7 @@
         "label": "Worsening",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": -0.530722042015677,
+        "composite_c": -0.5397230939566785,
         "pillars": [
           {
             "key": "city_services",
@@ -3274,7 +3129,7 @@
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": 0.9106308624403011,
+            "score_d": 0.8836277066172965,
             "feeds": [
               {
                 "label": "Police Incident Reports",
@@ -3283,13 +3138,13 @@
                 "complete_through": "2026-09",
                 "note": "2018 portal/system migration = continuity breakpoint",
                 "status": "ok",
-                "recent": 7325,
+                "recent": 7338,
                 "recent_period": "2026-09",
-                "baseline_mean": 7760.833333333333,
-                "baseline_std": 478.6059327765264,
-                "z": -0.9106308624403011,
-                "yoy_pct": -7.01954810865702,
-                "d": 0.9106308624403011,
+                "baseline_mean": 7761.416666666667,
+                "baseline_std": 479.1799345989168,
+                "z": -0.8836277066172965,
+                "yoy_pct": -6.854531607006854,
+                "d": 0.8836277066172965,
                 "series": [
                   {
                     "month": "2023-10",
@@ -3413,11 +3268,11 @@
                   },
                   {
                     "month": "2026-04",
-                    "n": 7550
+                    "n": 7551
                   },
                   {
                     "month": "2026-05",
-                    "n": 8453
+                    "n": 8454
                   },
                   {
                     "month": "2026-06",
@@ -3429,11 +3284,11 @@
                   },
                   {
                     "month": "2026-08",
-                    "n": 8322
+                    "n": 8327
                   },
                   {
                     "month": "2026-09",
-                    "n": 7325
+                    "n": 7338
                   }
                 ]
               }
@@ -3610,14 +3465,14 @@
         ]
       },
       "context": {
-        "median_income": null,
-        "median_rent": null,
-        "median_home_value": null,
-        "median_real_estate_taxes": null,
-        "effective_property_tax_rate": null,
+        "median_income": 140970,
+        "median_rent": 2476,
+        "median_home_value": 1394500,
+        "median_real_estate_taxes": 9862,
+        "effective_property_tax_rate": 0.00707206884187881,
         "unemployment_rate": 4.2,
         "aqi": null,
-        "context_score": 55
+        "context_score": 50
       },
       "disclosures": [
         "Police Incident Reports: 2018 portal/system migration = continuity breakpoint"
@@ -3633,15 +3488,15 @@
           "dataset": "g8m3-pdis",
           "polarity": 1,
           "complete_through": "2026-09",
-          "note": "CONFIRMED live (data_as_of 2026-05-30; max dba_start_date 2026-05-29). dba_start_date gives a clean dense flow of new business registrations (~0.75-1.5k/mo) when filtered to a recent window. location_start_date is the alternative (original location open date; slightly more back-loaded). Polarity +1: new business registrations up-is-favorable. pillar_hint development_economy. Latest complete month 2026-04.",
+          "note": "dba_start_date gives a dense flow of new business registrations when filtered to a recent window. location_start_date is the alternative (original location open date; slightly more back-loaded). Polarity +1: new business registrations up-is-favorable. pillar_hint development_economy.",
           "status": "ok",
-          "recent": 789,
+          "recent": 794,
           "recent_period": "2026-09",
-          "baseline_mean": 1001.4166666666666,
-          "baseline_std": 219.58235293898784,
-          "z": -0.9673667479357404,
-          "yoy_pct": -12.624584717607974,
-          "d": -0.9673667479357404,
+          "baseline_mean": 1002.0,
+          "baseline_std": 220.12004300684055,
+          "z": -0.9449389394928298,
+          "yoy_pct": -12.070874861572536,
+          "d": -0.9449389394928298,
           "series": [
             {
               "month": "2023-10",
@@ -3701,7 +3556,7 @@
             },
             {
               "month": "2024-12",
-              "n": 730
+              "n": 731
             },
             {
               "month": "2025-01",
@@ -3753,7 +3608,7 @@
             },
             {
               "month": "2026-01",
-              "n": 1636
+              "n": 1638
             },
             {
               "month": "2026-02",
@@ -3765,7 +3620,7 @@
             },
             {
               "month": "2026-04",
-              "n": 1146
+              "n": 1149
             },
             {
               "month": "2026-05",
@@ -3781,11 +3636,11 @@
             },
             {
               "month": "2026-08",
-              "n": 856
+              "n": 858
             },
             {
               "month": "2026-09",
-              "n": 789
+              "n": 794
             }
           ]
         }
@@ -3812,7 +3667,7 @@
                 "label": "Miami-Dade 311",
                 "dataset": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/data_311_2023/FeatureServer/0",
                 "polarity": -1,
-                "complete_through": "2026-09",
+                "complete_through": "2023-12",
                 "note": "STALE: this is the 2023 yearly snapshot (ticket_created_date_time range 2023-01-01 -> 2024-01-01). County 311 is published only as frozen per-year snapshots ('311 Service Requests - Miami-Dade County - {year}'); latest = 2023. NO current County 311 feed exists (alternates b74b1dd0=2018 max, a6b9c3e3=OBJECTID-only, 7cc10915=City-of-Miami footprint max 2024-08). opendata.miamidade.gov is the same ArcGIS Hub org (no Socrata BETA found). Resolve latest snapshot by catalog title pattern; use created_year_month (int yyyymm) for bucketing. Expect Miami Services = stale in P0; Miami likely ships 2-of-3 pillars.",
                 "status": "stale",
                 "recent": 26241,
@@ -4000,7 +3855,7 @@
                 "label": "FBI CDE (fallback)",
                 "dataset": "FL0130000",
                 "polarity": -1,
-                "complete_through": "2026-09",
+                "complete_through": "2026-08",
                 "note": "ORI FL0130000 resolved keyless from agencies endpoint. Spec's 'MDSO' = this county PD entry (county PD->Sheriff transition not yet renamed in CDE). City-of-Miami-proper PD = FL0130600 if scope flips. Re-verified 2026-10-04: the cde.ucr.cjis.gov/LATEST summarized DATA series is served keyless (a bogus API_KEY returns the same body), so no key is needed. CDE refreshes mid-month; the month in progress at last_refresh_date is not scored.",
                 "status": "ok",
                 "recent": 332,
@@ -4162,14 +4017,14 @@
         ]
       },
       "context": {
-        "median_income": null,
-        "median_rent": null,
-        "median_home_value": null,
-        "median_real_estate_taxes": null,
-        "effective_property_tax_rate": null,
+        "median_income": 71753,
+        "median_rent": 1829,
+        "median_home_value": 463000,
+        "median_real_estate_taxes": 3744,
+        "effective_property_tax_rate": 0.008086393088552916,
         "unemployment_rate": 2.7,
         "aqi": null,
-        "context_score": 100
+        "context_score": 69
       },
       "disclosures": [
         "Footprint = Miami-Dade County (not the City of Miami). County 311 excludes City-of-Miami-proper requests.",
