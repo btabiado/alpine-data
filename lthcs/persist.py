@@ -687,6 +687,31 @@ class LthcsPersist:
         _atomic_write_json(path, payload)
         return removed
 
+    def drop_synthetic_entries(self, ticker: str, dates: Iterable[str]) -> int:
+        """Remove the ``synthetic: true`` rows dated in ``dates``; real rows
+        on those dates are never touched. Returns the number removed.
+
+        Used by scripts/lthcs_prune_carried_forward_history.py, which decides
+        from the snapshots which synthetic rows are carried-forward copies
+        for a ticker that was not being scored.
+        """
+        wanted = {str(d) for d in dates}
+        path = self.history_path(ticker)
+        if not wanted or not path.exists():
+            return 0
+        try:
+            payload = _read_json(path)
+        except (OSError, json.JSONDecodeError):
+            return 0
+        history: List[Dict[str, Any]] = list(payload.get("history") or [])
+        kept = [row for row in history
+                if not (row.get("synthetic") and row.get("date") in wanted)]
+        removed = len(history) - len(kept)
+        if removed:
+            payload["history"] = kept
+            _atomic_write_json(path, payload)
+        return removed
+
     # ------------------------------------------------------------------
     # Index
     # ------------------------------------------------------------------

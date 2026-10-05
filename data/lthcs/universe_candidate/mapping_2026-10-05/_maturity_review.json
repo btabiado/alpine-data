@@ -1,0 +1,399 @@
+{
+ "generated": "2026-10-05",
+ "heuristic": "data/lthcs/sp500_candidate_seed.json maturity_stage_heuristic",
+ "rule_for_financials": "Financials-sector names: banks, insurers and asset managers are financial (the seed's definition). Brokers, exchanges and processors default to financial too (seed precedent, 51 of 52 Financials) unless SEC data meets the growth_compounder clause (>20% revenue growth on the latest fiscal year, the measure lthcs.pillars.adoption.compute_revenue_growth_yoy uses); MSCI is the seed's precedent for that exception.",
+ "rule_for_spin_offs": "A spin-off is not an IPO: the 'IPO <5y ago' growth clause is not applied to it. The stage then follows the remaining clauses on SEC data.",
+ "sources": {
+  "sec_companyfacts": "https://data.sec.gov/api/xbrl/companyfacts/CIK##########.json (10-K / 10-Q facts only; DEF 14A pay-versus-performance facts excluded)",
+  "sec_submissions": "https://data.sec.gov/submissions/CIK##########.json and the 8-Ks cited per ticker",
+  "yahoo_snapshot": "data/lthcs/universe_candidate/sp500_2026-10-05/_yahoo_metrics.json (market cap, first trade date)",
+  "fetched": "2026-10-05"
+ },
+ "tickers": {
+  "APO": {
+   "entity": "APOLLO GLOBAL MANAGEMENT, INC.",
+   "from": "financial",
+   "to": "financial",
+   "reason": "Asset manager with a retirement-services insurer (Athene): squarely the seed definition of financial (banks / insurance / asset managers). Revenue swings are insurance / investment-result driven (FY2023 +198% on the Athene merger, FY2024 -20%, FY2025 +22.7%), not a growth-company profile; GAAP profitable (FY2025 net income $3.49B). Kept financial.",
+   "sec_xbrl": {
+    "cik": "0001858681",
+    "revenue_concept": "Revenues",
+    "revenue_fy": {
+     "2022-12-31": 10968000000,
+     "2023-12-31": 32644000000,
+     "2024-12-31": 26114000000,
+     "2025-12-31": 32049000000
+    },
+    "net_income_fy": {
+     "2022-12-31": -1961000000,
+     "2023-12-31": 5047000000,
+     "2024-12-31": 4577000000,
+     "2025-12-31": 3492000000
+    },
+    "revenue_yoy_latest_fy": 0.2273,
+    "revenue_cagr_3y": 0.4296,
+    "revenue_ttm": {
+     "end": "2026-06-30",
+     "ttm": 35899000000,
+     "prior_ttm": 25418000000,
+     "growth": 0.4123
+    },
+    "net_income_ttm": {
+     "end": "2026-06-30",
+     "ttm": 1875000000,
+     "prior_ttm": 3369000000
+    }
+   },
+   "pipeline_revenue_growth_yoy": 0.2273,
+   "pipeline_revenue_growth_note": null,
+   "listing": {
+    "first_trade": "2011-03-30",
+    "event": "IPO (NYSE) of Apollo Global Management; current registrant CIK 1858681 is the 2022 Apollo/Athene holding company (S-4 effective 2021-11-04)"
+   },
+   "yahoo_2026-10-05": {
+    "marketCap": 67333730304,
+    "trailingEps": 2.79,
+    "revenueGrowth_quarterly": 0.638
+   }
+  },
+  "COIN": {
+   "entity": "Coinbase Global, Inc.",
+   "from": "financial",
+   "to": "financial",
+   "reason": "Exchange: the seed and Wave A class every exchange (CME, ICE, NDAQ, CBOE) and processor as financial (51 of 52 Financials). Not a growth profile on SEC data: FY2025 revenue +9.4%, TTM to 2026-06-30 -10.4%, TTM GAAP net loss -$0.99B; listed 2021-04-14, so the IPO<5y clause no longer applies. Kept financial.",
+   "sec_xbrl": {
+    "cik": "0001679788",
+    "revenue_concept": "Revenues",
+    "revenue_fy": {
+     "2022-12-31": 3194208000,
+     "2023-12-31": 3108383000,
+     "2024-12-31": 6564028000,
+     "2025-12-31": 7181325000
+    },
+    "net_income_fy": {
+     "2022-12-31": -2624949000,
+     "2023-12-31": 94871000,
+     "2024-12-31": 2579066000,
+     "2025-12-31": 1260327000
+    },
+    "revenue_yoy_latest_fy": 0.094,
+    "revenue_cagr_3y": 0.31,
+    "revenue_ttm": {
+     "end": "2026-06-30",
+     "ttm": 6282872000,
+     "prior_ttm": 7008333000,
+     "growth": -0.1035
+    },
+    "net_income_ttm": {
+     "end": "2026-06-30",
+     "ttm": -987766000,
+     "prior_ttm": 2861179000
+    }
+   },
+   "pipeline_revenue_growth_yoy": 0.094,
+   "pipeline_revenue_growth_note": null,
+   "listing": {
+    "first_trade": "2021-04-14",
+    "event": "direct listing (Nasdaq)"
+   },
+   "yahoo_2026-10-05": {
+    "marketCap": 48282157056,
+    "trailingEps": -3.84,
+    "revenueGrowth_quarterly": -0.173
+   }
+  },
+  "CPAY": {
+   "entity": "Corpay, Inc",
+   "from": "financial",
+   "to": "financial",
+   "reason": "Payment processor: seed precedent (FI, FIS, GPN, JKHY) is financial. Fails the >20% growth test on the fiscal-year measure the pipeline uses (FY2025 revenue +13.9%, 3y CAGR 9.7%; only the acquisition-boosted TTM window reaches +20.4%); GAAP profitable, public since 2010. Kept financial.",
+   "sec_xbrl": {
+    "cik": "0001175454",
+    "revenue_concept": "Revenues",
+    "revenue_fy": {
+     "2022-12-31": 3427129000,
+     "2023-12-31": 3757719000,
+     "2024-12-31": 3974589000,
+     "2025-12-31": 4528403000
+    },
+    "net_income_fy": {
+     "2022-12-31": 954327000,
+     "2023-12-31": 981890000,
+     "2024-12-31": 1003746000,
+     "2025-12-31": 1069826000
+    },
+    "revenue_yoy_latest_fy": 0.1393,
+    "revenue_cagr_3y": 0.0973,
+    "revenue_ttm": {
+     "end": "2026-06-30",
+     "ttm": 5020502000,
+     "prior_ttm": 4171325000,
+     "growth": 0.2036
+    },
+    "net_income_ttm": {
+     "end": "2026-06-30",
+     "ttm": 1140798000,
+     "prior_ttm": 1049753000
+    }
+   },
+   "pipeline_revenue_growth_yoy": 0.1393,
+   "pipeline_revenue_growth_note": null,
+   "listing": {
+    "first_trade": "2010-12-15",
+    "event": "IPO as FleetCor Technologies (renamed Corpay 2024)"
+   },
+   "yahoo_2026-10-05": {
+    "marketCap": 25909278720,
+    "trailingEps": 16.45,
+    "revenueGrowth_quarterly": 0.215
+   }
+  },
+  "HOOD": {
+   "entity": "Robinhood Markets, Inc.",
+   "from": "financial",
+   "to": "growth_compounder",
+   "reason": "Retail broker, not a bank / insurer / asset manager (the seed's definition of financial), and growth is its defining trait on every SEC measure: revenue FY2025 +51.6%, FY2024 +58.2%, 3y CAGR 48.8%, TTM +38.3%; GAAP profitable since FY2024 (FY2025 net income $1.88B, TTM $2.07B). Meets the heuristic's growth_compounder clause (>20% YoY); the seed's one Financials exception (MSCI -> growth_compounder) is the precedent. Changed to growth_compounder.",
+   "sec_xbrl": {
+    "cik": "0001783879",
+    "revenue_concept": "Revenues",
+    "revenue_fy": {
+     "2022-12-31": 1358000000,
+     "2023-12-31": 1865000000,
+     "2024-12-31": 2951000000,
+     "2025-12-31": 4473000000
+    },
+    "net_income_fy": {
+     "2022-12-31": -1028000000,
+     "2023-12-31": -541000000,
+     "2024-12-31": 1411000000,
+     "2025-12-31": 1883000000
+    },
+    "revenue_yoy_latest_fy": 0.5158,
+    "revenue_cagr_3y": 0.4879,
+    "revenue_ttm": {
+     "end": "2026-06-30",
+     "ttm": 4932000000,
+     "prior_ttm": 3567000000,
+     "growth": 0.3827
+    },
+    "net_income_ttm": {
+     "end": "2026-06-30",
+     "ttm": 2072000000,
+     "prior_ttm": 1788000000
+    }
+   },
+   "pipeline_revenue_growth_yoy": 0.5158,
+   "pipeline_revenue_growth_note": null,
+   "listing": {
+    "first_trade": "2021-07-29",
+    "event": "IPO (Nasdaq)"
+   },
+   "yahoo_2026-10-05": {
+    "marketCap": 101362540544,
+    "trailingEps": 2.27,
+    "revenueGrowth_quarterly": 0.323
+   }
+  },
+  "IBKR": {
+   "entity": "INTERACTIVE BROKERS GROUP, INC.",
+   "from": "financial",
+   "to": "financial",
+   "reason": "Broker, so the growth test decides; it falls just short on the fiscal-year measure: total net revenues FY2025 +19.7% (TTM +21.3%, 3y CAGR 26.5%). GAAP profitable (FY2025 net income to common $0.98B), public since 2007. Kept financial (default for Financials); borderline, re-check on the FY2026 10-K.",
+   "sec_xbrl": {
+    "cik": "0001381197",
+    "revenue_concept": "RevenuesNetOfInterestExpense",
+    "revenue_fy": {
+     "2022-12-31": 3067000000,
+     "2023-12-31": 4340000000,
+     "2024-12-31": 5185000000,
+     "2025-12-31": 6205000000
+    },
+    "net_income_fy": {
+     "2022-12-31": 380000000,
+     "2023-12-31": 600000000,
+     "2024-12-31": 755000000,
+     "2025-12-31": 984000000
+    },
+    "revenue_yoy_latest_fy": 0.1967,
+    "revenue_cagr_3y": 0.2648,
+    "revenue_ttm": {
+     "end": "2026-06-30",
+     "ttm": 6863000000,
+     "prior_ttm": 5659000000,
+     "growth": 0.2128
+    },
+    "net_income_ttm": {
+     "end": "2026-06-30",
+     "ttm": 1126000000,
+     "prior_ttm": 838000000
+    }
+   },
+   "pipeline_revenue_growth_yoy": 0.2342,
+   "pipeline_revenue_growth_note": "pipeline concepts (Revenues / RevenueFromContractWithCustomerExcludingAssessedTax); for IBKR that is commissions only, so total net revenues (RevenuesNetOfInterestExpense) are used above",
+   "listing": {
+    "first_trade": "2007-05-04",
+    "event": "IPO (Nasdaq)"
+   },
+   "yahoo_2026-10-05": {
+    "marketCap": 150446915584,
+    "trailingEps": 2.52,
+    "revenueGrowth_quarterly": 0.263
+   }
+  },
+  "ECHO": {
+   "entity": "EchoStar Corporation",
+   "from": "recovery_stabilization",
+   "to": "recovery_stabilization",
+   "reason": "Revenue down three straight years (FY2025 -5.2%, 3y CAGR -7.0%, TTM -5.2%); GAAP net loss FY2025 -$14.50B (incl. a $5.78B indefinite-lived intangible impairment) and TTM -$4.77B even after a +$8.46B Q2 2026 quarter; listed since 2008. The literal pre_profit_growth clause (negative GAAP earnings) is rejected: revenue is shrinking and the company is not pre-profit. Operational stress is in the numbers. Kept recovery_stabilization.",
+   "sec_xbrl": {
+    "cik": "0001415404",
+    "revenue_concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+    "revenue_fy": {
+     "2022-12-31": 18634246000,
+     "2023-12-31": 17015598000,
+     "2024-12-31": 15825516000,
+     "2025-12-31": 15004989000
+    },
+    "net_income_fy": {
+     "2019-12-31": -62917000,
+     "2023-12-31": -1702057000,
+     "2024-12-31": -119546000,
+     "2025-12-31": -14497180000
+    },
+    "revenue_yoy_latest_fy": -0.0518,
+    "revenue_cagr_3y": -0.0697,
+    "revenue_ttm": {
+     "end": "2026-06-30",
+     "ttm": 14653925000,
+     "prior_ttm": 15452639000,
+     "growth": -0.0517
+    },
+    "net_income_ttm": {
+     "end": "2026-06-30",
+     "ttm": -4771841000,
+     "prior_ttm": -657448000
+    }
+   },
+   "pipeline_revenue_growth_yoy": -0.0518,
+   "pipeline_revenue_growth_note": null,
+   "listing": {
+    "first_trade": "2008-01-02",
+    "event": "spin-off from DISH Network"
+   },
+   "yahoo_2026-10-05": {
+    "marketCap": 27409393664,
+    "trailingEps": -24.77,
+    "revenueGrowth_quarterly": -0.04
+   }
+  },
+  "MRNA": {
+   "entity": "Moderna, Inc.",
+   "from": "recovery_stabilization",
+   "to": "recovery_stabilization",
+   "reason": "Revenue collapsed from $19.26B (FY2022) to $1.94B (FY2025; -40% FY2025, TTM -27.6%); GAAP losses FY2023-FY2025 and TTM (-$3.15B); IPO 2018. Not pre_profit_growth (GAAP profits of $12.2B / $8.4B in FY2021-22; revenue shrinking) and not yet recovery_rerating (no trough: revenue still falling). Kept recovery_stabilization; note the TTM loss has not narrowed yet (-$3.15B vs -$2.90B).",
+   "sec_xbrl": {
+    "cik": "0001682852",
+    "revenue_concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+    "revenue_fy": {
+     "2022-12-31": 19263000000,
+     "2023-12-31": 6848000000,
+     "2024-12-31": 3236000000,
+     "2025-12-31": 1944000000
+    },
+    "net_income_fy": {
+     "2022-12-31": 8362000000,
+     "2023-12-31": -4714000000,
+     "2024-12-31": -3561000000,
+     "2025-12-31": -2822000000
+    },
+    "revenue_yoy_latest_fy": -0.3993,
+    "revenue_cagr_3y": -0.5344,
+    "revenue_ttm": {
+     "end": "2026-06-30",
+     "ttm": 2228000000,
+     "prior_ttm": 3078000000,
+     "growth": -0.2762
+    },
+    "net_income_ttm": {
+     "end": "2026-06-30",
+     "ttm": -3151000000,
+     "prior_ttm": -2903000000
+    }
+   },
+   "pipeline_revenue_growth_yoy": -0.3993,
+   "pipeline_revenue_growth_note": null,
+   "listing": {
+    "first_trade": "2018-12-07",
+    "event": "IPO (Nasdaq)"
+   },
+   "yahoo_2026-10-05": {
+    "marketCap": 75858812928,
+    "trailingEps": -7.98,
+    "revenueGrowth_quarterly": 0.021
+   }
+  },
+  "FDXF": {
+   "entity": "FedEx Freight Holding Company, Inc.",
+   "from": "growth_compounder",
+   "to": "standard_compounder",
+   "reason": "Spin-off, not an IPO, so the heuristic's 'IPO <5y ago' growth clause does not apply; no growth either: revenue FY2026 (May) -1.1%, FY2025 -5.6%. GAAP profitable (FY2026 net income $0.66B), market cap $16.9B (inside the $5B-$200B standard band). Not mature (<$200B), not pre-profit or in recovery. Changed to standard_compounder. (The seed applied the IPO clause literally to the SOLV / VLTO spin-offs; those entries are unchanged here.)",
+   "sec_xbrl": {
+    "cik": "0002082247",
+    "revenue_concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+    "revenue_fy": {
+     "2024-05-31": 9424000000,
+     "2025-05-31": 8892000000,
+     "2026-05-31": 8795000000
+    },
+    "net_income_fy": {
+     "2024-05-31": 1574000000,
+     "2025-05-31": 1346000000,
+     "2026-05-31": 655000000
+    },
+    "revenue_yoy_latest_fy": -0.0109
+   },
+   "pipeline_revenue_growth_yoy": -0.0109,
+   "pipeline_revenue_growth_note": null,
+   "listing": {
+    "first_trade": "2026-05-27",
+    "event": "spin-off from FedEx effective 2026-06-01 (8-K filed 2026-06-01, accession 0001104659-26-068521: FedEx distributed 80.1% of FedEx Freight common stock); the 2026-05-27 first trade is when-issued trading"
+   },
+   "yahoo_2026-10-05": {
+    "marketCap": 16879100928,
+    "trailingEps": 4.38,
+    "revenueGrowth_quarterly": 0.048
+   }
+  },
+  "HONA": {
+   "entity": "Honeywell Aerospace Inc",
+   "from": "growth_compounder",
+   "to": "standard_compounder",
+   "reason": "Spin-off, not an IPO, so the 'IPO <5y ago' growth clause does not apply; revenue +5.4% YoY in its first 10-Q (quarter to 2026-06-27: $4.52B vs $4.29B); GAAP net income positive ($0.25B that quarter); market cap $49.0B (inside the $5B-$200B band). Changed to standard_compounder. (SOLV / VLTO, earlier spin-offs the seed put in growth_compounder, are unchanged here.)",
+   "sec_xbrl": {
+    "cik": "0002089271",
+    "revenue_concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+    "revenue_fy": {},
+    "net_income_fy": {},
+    "revenue_quarters": {
+     "2025-06-28": 4289000000,
+     "2026-06-27": 4522000000
+    },
+    "net_income_quarters": {
+     "2025-06-28": 844000000,
+     "2026-06-27": 246000000
+    }
+   },
+   "pipeline_revenue_growth_yoy": null,
+   "pipeline_revenue_growth_note": null,
+   "listing": {
+    "first_trade": "2026-06-15",
+    "event": "spin-off from Honeywell effective 2026-06-29; regular-way trading on Nasdaq from 2026-06-29 under CUSIP 43849R105 (8-K filed 2026-06-29, accession 0001628280-26-045874); the 2026-06-15 first trade is when-issued trading"
+   },
+   "yahoo_2026-10-05": {
+    "marketCap": 49010401280,
+    "trailingEps": 3.28,
+    "revenueGrowth_quarterly": 0.054
+   }
+  }
+ }
+}
