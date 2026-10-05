@@ -191,6 +191,22 @@ def test_coingecko_first_then_cached_for_the_rest_of_the_utc_day():
     assert len(r.calls) == 2
 
 
+def test_a_series_fetched_today_that_lags_a_day_is_not_refetched_or_flagged_stale():
+    """Some coins' CoinGecko series end the day before yesterday. Fetched
+    today, nothing newer exists yet: no re-fetch, and not served as stale."""
+    lag_end = TODAY - timedelta(days=1)        # last close labelled TODAY-2
+    r = _Router([("market_chart", (200, _cg_chart(days=30, end=lag_end)))])
+    now = datetime(TODAY.year, TODAY.month, TODAY.day, 3, tzinfo=timezone.utc)
+    with patch.object(fetch_market, "_get_status", r), \
+         patch.object(fetch_market, "datetime", wraps=datetime) as dt:
+        dt.now.return_value = now
+        first = fetch_market.crypto_daily_series("figure-heloc", "FIGR_HELOC", 180, today=TODAY)
+        again = fetch_market.crypto_daily_series("figure-heloc", "FIGR_HELOC", 180, today=TODAY)
+    assert first["as_of"] == "2026-10-03" and first["source"] == "coingecko"
+    assert again["cache"] == "today" and not again.get("stale")
+    assert len(r.calls) == 1
+
+
 def test_falls_back_to_exchanges_in_order_and_says_volume_is_exchange_only():
     r = _Router([("market_chart", (429, None)), ("coinbase.com", (404, None)),
                  ("kraken.com", (200, {"error": [], "result": {"SOLUSD": [
@@ -201,6 +217,27 @@ def test_falls_back_to_exchanges_in_order_and_says_volume_is_exchange_only():
     assert s["market_cap"] == []
     assert s["attempts"] == ["coingecko:429", "coinbase:none", "kraken:ok"]
     assert r.hosts() == ["api.coingecko.com", "api.exchange.coinbase.com", "api.kraken.com"]
+
+
+def test_a_source_whose_newest_bar_is_old_does_not_count_as_answering():
+    """Coinbase still serves DAI-USD candles that end 2026-05-04. A dead
+    market's months-old profile must never be published as the coin's
+    current one: the chain moves on, and with nothing current it is a gap."""
+    old_end = datetime(2026, 5, 5, tzinfo=timezone.utc).date()
+    r = _Router([("market_chart", (429, None)),
+                 ("coinbase.com", (200, _cb_rows(n=30, end=old_end))),
+                 ("kraken.com", (200, {"error": [], "result": {"DAIUSD": [
+                     [_day_s(TODAY - timedelta(days=i)), "1", "1", "1", "1.0", "1.0", "9", 3]
+                     for i in range(1, 15)]}}))])
+    with patch.object(fetch_market, "_get_status", r):
+        s = fetch_market.crypto_daily_series("dai", "DAI", 180, today=TODAY)
+    assert s["source"] == "kraken" and s["as_of"] == "2026-10-04"
+    assert "coinbase:stale(last bar 2026-05-04)" in s["attempts"]
+    only_old = _Router([("market_chart", (429, None)),
+                        ("coinbase.com", (200, _cb_rows(n=30, end=old_end)))])
+    with patch.object(fetch_market, "_get_status", only_old):
+        gap = fetch_market.crypto_daily_series("dai2", "DAI", 180, today=TODAY)
+    assert gap["price"] == [] and gap["source"] is None
 
 
 def test_fallback_series_from_today_gets_one_coingecko_retry_then_is_kept():
@@ -529,6 +566,8 @@ def test_browser_lookup_is_keyless_and_free(rel):
     assert "cryptocompare.com" not in fn and "histoday?" not in fn
     assert "x-cg-" not in src and "COINGECKO_API_KEY" not in src     # never ship a key
     assert "api.binance.com" not in fn
+    # A delisted pair's months-old candles are rejected, not shown as live.
+    assert "lastDay >= oldestOk" in fn
 
 
 @pytest.mark.parametrize("rel", ["app.py", "v2/app.py"])

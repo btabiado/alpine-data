@@ -17455,11 +17455,16 @@ async function liveCryptoLookup(symbol){
   const sym = String(symbol || '').toUpperCase();
   if (!/^[A-Z0-9]{1,12}$/.test(sym)) throw new Error('not a crypto ticker');
   const errors = [];
+  // A source only counts if its newest complete close is at most 2 days old:
+  // an exchange that delisted a pair can keep serving candles that end months
+  // ago (Coinbase DAI-USD ends 2026-05-04), and that must never be shown as live.
+  const oldestOk = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10);
   for (const fn of [_liveCoinGecko, _liveCoinbase, _liveKraken, _liveBinanceUs]){
     try {
       const out = await fn(sym);
-      if (out && out.rows && out.rows.length >= 10) return out;
-      errors.push(fn.name + ': not enough data');
+      const lastDay = out && out.rows && out.rows.length ? out.rows[out.rows.length - 1].date : '';
+      if (out && out.rows && out.rows.length >= 10 && lastDay >= oldestOk) return out;
+      errors.push(fn.name + (lastDay && lastDay < oldestOk ? ': stale (last close ' + lastDay + ')' : ': not enough data'));
     } catch (err){
       errors.push(fn.name + ': ' + ((err && err.message) || err));
     }

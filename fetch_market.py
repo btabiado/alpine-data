@@ -3255,6 +3255,12 @@ DAILY_SERIES_FALLBACKS = ("coinbase", "kraken", "binance_us")
 # A series served from cache after every live source failed is only honest
 # for so long. Same bound as the poc_top carry-forward below.
 DAILY_SERIES_STALE_MAX_DAYS = 7
+# A source only counts as answering if its newest complete bar is recent.
+# Yesterday's close is the norm; one extra day covers an upstream that
+# publishes late. Anything older is a dead or delisted market — Coinbase
+# still serves DAI-USD candles that end 2026-05-04 — and is skipped, never
+# shown as the coin's current profile.
+DAILY_SERIES_MAX_LAG_DAYS = 2
 COINGECKO_SWEEP_PACE_S = 2.5        # 24 calls/min, under the Demo plan's 30
 COINGECKO_SWEEP_MAX_CALLS = 60      # hard per-run cap for the sweep
 COINGECKO_MAX_ATTEMPTS_PER_COIN_PER_DAY = 2
@@ -3504,7 +3510,14 @@ def crypto_daily_series(coin_id: str | None, symbol: str, days: int = 180, *,
     key = f"daily_series_{coin_id or sym}"
     cached = _stale_read_raw(key)
     cached = cached if isinstance(cached, dict) and cached.get("price") else None
-    cached_fresh = bool(cached and (cached.get("as_of") or "") >= yesterday)
+    oldest_ok = (today - timedelta(days=DAILY_SERIES_MAX_LAG_DAYS)).isoformat()
+    # Fresh = nothing newer can exist yet: the series reaches yesterday's
+    # close, or it was fetched today and the upstream simply publishes a day
+    # late for this coin (re-asking would only spend budget on the same bars).
+    cached_fresh = bool(cached and (
+        (cached.get("as_of") or "") >= yesterday
+        or (str(cached.get("fetched_at") or "")[:10] == today.isoformat()
+            and (cached.get("as_of") or "") >= oldest_ok)))
 
     if cached_fresh and cached.get("source") == "coingecko":
         return {**cached, "cache": "today", "coingecko_calls": 0, "attempts": []}
@@ -3512,13 +3525,23 @@ def crypto_daily_series(coin_id: str | None, symbol: str, days: int = 180, *,
     attempts: list[str] = []
     calls = 0
     series = None
+
+    def _current(s: dict | None, name: str) -> bool:
+        last = _series_last_common_date(s)
+        if s and last and last < oldest_ok:
+            attempts.append(f"{name}:stale(last bar {last})")
+            return False
+        return bool(s and last)
+
     if coin_id and allow_coingecko and budget.allow():
         status, s = coingecko_daily_series(coin_id, days, today)
         budget.record(status)
         calls = 1
-        attempts.append(f"coingecko:{status}")
-        if s:
+        if s and _current(s, "coingecko"):
+            attempts.append(f"coingecko:{status}")
             series = {**s, "source": "coingecko", "volume_basis": "aggregate"}
+        elif not s:
+            attempts.append(f"coingecko:{status}")
     elif coin_id:
         attempts.append("coingecko:skipped (budget)")
 
@@ -3536,6 +3559,8 @@ def crypto_daily_series(coin_id: str | None, symbol: str, days: int = 180, *,
             except Exception as e:  # one bad venue must not end the chain
                 print(f"  [daily-series] {sym} {name}: {type(e).__name__}", file=sys.stderr)
                 s = None
+            if s and not _current(s, name):
+                continue
             attempts.append(f"{name}:{'ok' if s else 'none'}")
             if s:
                 series = {**s, "market_cap": [], "source": name, "volume_basis": "exchange"}
