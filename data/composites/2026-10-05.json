@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-05",
-  "generated_at": "2026-10-05T00:26:05Z",
+  "generated_at": "2026-10-05T00:29:15Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-04",
       "label": null,
-      "note": "40 coins; 8 buy+, 6 sell+",
-      "score": 5,
+      "note": "40 coins; 8 buy+, 5 sell+",
+      "score": 8,
       "stale": false
     },
     "defi_sentiment": {
@@ -41,21 +41,21 @@
       "as_of": "2026-10-04",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": -16,
+      "score": -15,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-10-04",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": -16,
+      "score": -15,
       "stale": false
     },
     "futures_sentiment_eth": {
       "as_of": "2026-10-04",
       "label": "BALANCED",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": -7,
+      "score": -8,
       "stale": false
     },
     "futures_sentiment_link": {
