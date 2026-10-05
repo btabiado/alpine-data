@@ -274,7 +274,7 @@ def test_stocks_signals_row_as_of_none_when_history_empty():
 # 4. poc_top — carried-forward entries report their TRUE age
 # ============================================================================
 
-def _cc_series(n: int, end: str) -> dict:
+def _daily_series(n: int, end: str) -> dict:
     last = datetime.strptime(end, "%Y-%m-%d").replace(tzinfo=timezone.utc)
     dates = [(last - timedelta(days=n - 1 - i)).strftime("%Y-%m-%d")
              for i in range(n)]
@@ -312,10 +312,11 @@ def test_poc_entry_as_of_falls_back_when_as_of_is_junk():
 
 def test_compute_poc_top_markets_fresh_entry_dated_from_series(tmp_path, monkeypatch):
     monkeypatch.setattr(fetch_market, "CACHE", tmp_path)
+    monkeypatch.setattr(fetch_market, "_STALE_DIR", tmp_path / ".stale")
     top = [{"id": "bitcoin", "symbol": "btc", "name": "Bitcoin",
             "image": "x", "price_usd": 50_000.0}]
-    with patch.object(fetch_market, "cryptocompare_market",
-                      return_value=_cc_series(180, "2026-08-01")):
+    with patch.object(fetch_market, "crypto_daily_series",
+                      return_value=_daily_series(180, "2026-08-01")):
         out = fetch_market.compute_poc_top_markets(top, n=1, days=180)
     assert len(out) == 1
     assert out[0]["as_of"] == "2026-08-01"
@@ -326,6 +327,7 @@ def test_compute_poc_top_markets_carry_forward_does_not_advance_as_of(tmp_path, 
     """The core stale-keep rule: a re-served entry keeps the date it was
     originally observed on."""
     monkeypatch.setattr(fetch_market, "CACHE", tmp_path)
+    monkeypatch.setattr(fetch_market, "_STALE_DIR", tmp_path / ".stale")
     recent = (datetime.now(timezone.utc) - timedelta(days=3)).strftime("%Y-%m-%d")
     (tmp_path / "market.json").write_text(json.dumps({"poc_top": [{
         "coin_id": "bitcoin", "symbol": "BTC", "name": "Bitcoin",
@@ -334,7 +336,7 @@ def test_compute_poc_top_markets_carry_forward_does_not_advance_as_of(tmp_path, 
     }]}))
     top = [{"id": "bitcoin", "symbol": "btc", "name": "Bitcoin",
             "image": "x", "price_usd": 50_000.0}]
-    with patch.object(fetch_market, "cryptocompare_market",
+    with patch.object(fetch_market, "crypto_daily_series",
                       return_value={"price": [], "volume": []}):
         out = fetch_market.compute_poc_top_markets(top, n=1, days=60)
     assert len(out) == 1
@@ -347,6 +349,7 @@ def test_compute_poc_top_markets_carry_forward_backfills_as_of(tmp_path, monkeyp
     """A previous entry with no as_of at all gets one derived from its own
     signal_history — not from the clock."""
     monkeypatch.setattr(fetch_market, "CACHE", tmp_path)
+    monkeypatch.setattr(fetch_market, "_STALE_DIR", tmp_path / ".stale")
     recent = (datetime.now(timezone.utc) - timedelta(days=2)).strftime("%Y-%m-%d")
     (tmp_path / "market.json").write_text(json.dumps({"poc_top": [{
         "coin_id": "bitcoin", "symbol": "BTC", "name": "Bitcoin",
@@ -355,22 +358,23 @@ def test_compute_poc_top_markets_carry_forward_backfills_as_of(tmp_path, monkeyp
     }]}))
     top = [{"id": "bitcoin", "symbol": "btc", "name": "Bitcoin",
             "image": "x", "price_usd": 50_000.0}]
-    with patch.object(fetch_market, "cryptocompare_market",
+    with patch.object(fetch_market, "crypto_daily_series",
                       return_value={"price": [], "volume": []}):
         out = fetch_market.compute_poc_top_markets(top, n=1, days=60)
     assert out[0]["as_of"] == recent
 
 
 def test_compute_poc_top_markets_per_symbol_stale_cache_is_flagged(tmp_path, monkeypatch):
-    """cryptocompare_market has its OWN stale-fallback; entries built from
-    it must be counted as cached too, and dated by the cached series."""
+    """crypto_daily_series has its OWN (bounded) stale-fallback; entries built
+    from it must be counted as cached too, and dated by the cached series."""
     monkeypatch.setattr(fetch_market, "CACHE", tmp_path)
-    cached = _cc_series(180, LONG_AGO)
+    monkeypatch.setattr(fetch_market, "_STALE_DIR", tmp_path / ".stale")
+    cached = _daily_series(180, LONG_AGO)
     cached["stale"] = True
     cached["stale_age_sec"] = 999
     top = [{"id": "bitcoin", "symbol": "btc", "name": "Bitcoin",
             "image": "x", "price_usd": 50_000.0}]
-    with patch.object(fetch_market, "cryptocompare_market", return_value=cached):
+    with patch.object(fetch_market, "crypto_daily_series", return_value=cached):
         out = fetch_market.compute_poc_top_markets(top, n=1, days=180)
     assert out[0]["stale"] is True
     assert out[0]["as_of"] == LONG_AGO

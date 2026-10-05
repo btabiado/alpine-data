@@ -184,28 +184,28 @@ def test_signals_top20_searchable_by_symbol_in_dashboard_html():
     )
 
 
-def test_cc_news_sentiment_keyed_by_lowercase_symbol():
+def test_headline_sentiment_keyed_by_lowercase_symbol():
     """The symbol-search modal looks up sentiment for a coin via
-    ``market.social.cc_news.coins[<lower-symbol>]``. Confirm the keys are
+    ``market.social.headline_sentiment.coins[<lower-symbol>]``. Confirm the keys are
     lowercase ticker strings so the JS lookup (which lowercases user input)
     actually hits."""
     market = _load_market_or_skip()
     social = market.get("social")
     if not isinstance(social, dict):
         pytest.skip("market.social not available")
-    cc_news = social.get("cc_news")
+    cc_news = social.get("headline_sentiment")
     if not isinstance(cc_news, dict):
-        pytest.skip("market.social.cc_news not available")
+        pytest.skip("market.social.headline_sentiment not available")
     coins = cc_news.get("coins")
     if not isinstance(coins, dict) or not coins:
-        pytest.skip("market.social.cc_news.coins not available or empty")
+        pytest.skip("market.social.headline_sentiment.coins not available or empty")
 
     for key in coins.keys():
         assert isinstance(key, str) and key, (
-            f"cc_news.coins has a non-string or empty key: {key!r}"
+            f"headline_sentiment.coins has a non-string or empty key: {key!r}"
         )
         assert key == key.lower(), (
-            f"cc_news.coins key {key!r} is not lowercase; the symbol search "
+            f"headline_sentiment.coins key {key!r} is not lowercase; the symbol search "
             "modal lowercases user input before lookup, so non-lowercase "
             "keys will never be found"
         )

@@ -1143,7 +1143,7 @@ def _try_cached_payload_lookup(sym: str) -> tuple[int, dict] | tuple[None, None]
     fall through to ``_try_crypto_lookup`` / ``_try_stock_lookup``.
 
     This is the server-side counterpart to the JS resolver gap fix — it
-    means a user lookup of BTC/NVDA/USDT never hits CryptoCompare or Yahoo
+    means a user lookup of BTC/NVDA/USDT never hits CoinGecko or Yahoo
     when the dashboard already has the data, sidestepping rate-limit churn.
     """
     market = _load_cached_market()
@@ -1244,10 +1244,15 @@ def _symbol_lookup_compute(symbol: str) -> tuple[int, dict]:
         never burn an upstream call on a symbol the dashboard already has
         scored data for.
       * 4-5 letter all-alpha tickers (e.g. AAPL, MSTR, RIVN, TSLA, GME) →
-        Yahoo first, CryptoCompare second. Several meme/scam crypto tokens
+        Yahoo first, crypto second. Several meme/scam crypto tokens
         share their tickers with real equities (GME, AAPL, NVDA), and the
         equity is almost always what the user means.
-      * Everything else (BTC, ETH, SOL, …) → CryptoCompare first.
+      * Everything else (BTC, ETH, SOL, …) → crypto first.
+
+    The crypto branch is fetch_market.crypto_daily_market_by_symbol: CoinGecko
+    (ticker resolved to a coin id, cached top-50 list first) with Coinbase ->
+    Kraken -> Binance.US fallbacks. It used to be CryptoCompare histoday,
+    which needs a paid key since 2026-10.
     """
     sym = symbol.upper()
 
@@ -1292,10 +1297,14 @@ def _symbol_lookup_compute(symbol: str) -> tuple[int, dict]:
 
 
 def _try_crypto_lookup(sym: str) -> tuple[int, dict]:
-    """CryptoCompare histoday branch — returns (200, body) on success or
-    (404, {error}) when the upstream has no data for this symbol."""
+    """Free daily-series branch (CoinGecko, then Coinbase / Kraken /
+    Binance.US) — returns (200, body) on success or (404, {error}) when no
+    source has data for this ticker. The body says which source answered and
+    whether its volume is the market's (CoinGecko) or one exchange's."""
+    market = _load_cached_market() or {}
     try:
-        crypto = fetch_market.cryptocompare_market(sym, days=180) or {}
+        crypto = fetch_market.crypto_daily_market_by_symbol(
+            sym, days=180, markets_top=market.get("markets_top") or []) or {}
     except Exception as e:
         print(f"[symbol_lookup] crypto fetch failed for {sym}: {type(e).__name__}: {e}",
               file=sys.stderr)
@@ -1325,7 +1334,11 @@ def _try_crypto_lookup(sym: str) -> tuple[int, dict]:
         return 200, {
             "symbol":     sym,
             "kind":       "crypto",
-            "name":       sym,
+            "name":       crypto.get("name") or sym,
+            "coin_id":    crypto.get("coin_id"),
+            "source":     crypto.get("source"),
+            "volume_basis": crypto.get("volume_basis"),
+            "as_of":      crypto.get("as_of"),
             "price":      price,
             "score":      signal.get("score"),
             "label":      signal.get("label"),

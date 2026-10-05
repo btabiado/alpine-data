@@ -1,8 +1,11 @@
 """
 Free, no-API-key market and whale-activity fetchers.
 
-Sources (all free, no auth required):
-  CoinGecko       price, 24h volume, market cap
+Sources (all free; CoinGecko takes an optional Demo key):
+  CoinGecko       price, 24h volume, market cap, daily closes for the top 50
+  Coinbase / Kraken / Binance.US  keyless daily-candle fallbacks for the top 50
+  Google News RSS headlines for Alpine Data's own keyword sentiment
+  GitHub REST     repository stats for the Research tab
   OKX             funding rate, open interest, long/short ratio
   Deribit         DVOL (implied volatility index)
   Alternative.me  Fear & Greed Index
@@ -1833,100 +1836,6 @@ def fetch_ai_funding() -> dict:
     }
 
 
-COINDESK_CADLI_URL = "https://data-api.coindesk.com/index/cc/v1/historical/days"
-# CryptoCompare is CoinDesk Data now: one key, issued at developers.coindesk.com,
-# authenticates both min-api.cryptocompare.com and data-api.coindesk.com. The
-# repo already plumbs it under this name (pages.yml fetch + V2 build + probe).
-CADLI_KEY_ENV = "CRYPTOCOMPARE_API_KEY"
-
-
-def _cadli_rows(j: Any) -> list[dict]:
-    """Daily OHLC rows from a CoinDesk index ``historical/days`` body."""
-    if not isinstance(j, dict):
-        return []
-    rows = j.get("Data") or []
-    if not isinstance(rows, list):
-        return []
-    out = []
-    for r in rows:
-        if not isinstance(r, dict):
-            continue
-        ts = r.get("TIMESTAMP")
-        if not ts or r.get("CLOSE") is None:
-            continue
-        out.append({
-            "date": datetime.fromtimestamp(int(ts), tz=timezone.utc).strftime("%Y-%m-%d"),
-            "open": r.get("OPEN"),
-            "high": r.get("HIGH"),
-            "low": r.get("LOW"),
-            "close": r.get("CLOSE"),
-            "volume": r.get("VOLUME"),
-        })
-    out.sort(key=lambda x: x["date"])
-    return out
-
-
-def _cadli_unavailable_reason(status: int | None, key_configured: bool) -> str:
-    if status in (401, 403):
-        if key_configured:
-            return f"CoinDesk Data API rejected the configured API key (HTTP {status})"
-        return (f"CoinDesk Data API now requires an API key (HTTP {status}); "
-                "none is configured for this build")
-    if status == 429:
-        return "CoinDesk Data API rate-limited this build (HTTP 429)"
-    if status is None:
-        return "CoinDesk Data API did not respond"
-    if status == 200:
-        return "CoinDesk Data API returned no CADLI rows"
-    return f"CoinDesk Data API returned HTTP {status}"
-
-
-def coindesk_cadli(days: int = 90, now: datetime | None = None) -> dict:
-    """CoinDesk CADLI BTC-USD daily OHLC plus a status record saying why not.
-
-    Returns ``{"rows": [...], "status": {...}}``. ``rows`` is the series that
-    ships as ``market.cadli_btc`` (shape unchanged); ``status`` ships alongside
-    as ``market.cadli_btc_status``.
-
-    Since 2026-10 the whole CoinDesk Data API (data-api.coindesk.com, and the
-    min-api / data-api cryptocompare.com hosts) answers keyless requests with
-    HTTP 401 "API key required". A free registered key restores it, sent as
-    ``Authorization: Apikey <key>`` (the documented header; never the
-    ``api_key`` query param, which would put the secret into any logged URL).
-    Without one the series is empty, and ``status`` carries the reason so the
-    card states it instead of "wait for next refresh". CADLI is CoinDesk's
-    proprietary index, so no other provider's BTC price is substituted under
-    its name. Never raises.
-    """
-    checked_at = (now or datetime.now(timezone.utc)).isoformat(timespec="seconds")
-    key = os.environ.get(CADLI_KEY_ENV, "").strip()
-    headers = dict(H)
-    if key:
-        headers["Authorization"] = f"Apikey {key}"
-    status: int | None = None
-    rows: list[dict] = []
-    try:
-        status, j = _get_status(
-            COINDESK_CADLI_URL,
-            {"market": "cadli", "instrument": "BTC-USD", "limit": str(days)},
-            headers=headers,
-        )
-        if status == 200:
-            rows = _cadli_rows(j)
-    except Exception as e:  # parse surprises must not take down fetch_trading
-        print(f"  [coindesk_cadli] {type(e).__name__}", file=sys.stderr)
-    st: dict[str, Any] = {
-        "available": bool(rows),
-        "key_env": CADLI_KEY_ENV,
-        "key_configured": bool(key),
-        "checked_at": checked_at,
-    }
-    if not rows:
-        st["http_status"] = status
-        st["reason"] = _cadli_unavailable_reason(status, bool(key))
-    return {"rows": rows, "status": st}
-
-
 def mempool_difficulty_adjustment() -> dict:
     """BTC difficulty retarget countdown + estimate (mempool.space)."""
     j = _get("https://mempool.space/api/v1/difficulty-adjustment")
@@ -2489,107 +2398,204 @@ def reddit_crypto_stats() -> dict:
     }
 
 
-def cryptocompare_social_stats() -> dict:
-    """Per-coin social + dev stats from CryptoCompare (now hosted under CoinDesk
-    after the 2026 migration). Endpoint: /data/social/coin/latest?coinId=N.
-    As of 2026 this requires an API key — set CRYPTOCOMPARE_API_KEY in env
-    (free tier 100k calls/month; sign up at developers.coindesk.com).
-    Without a key, the endpoint returns HTTP 200 with Response='Error' and
-    empty Data; we skip cleanly and the UI renders "no data" rather than dashes.
+# ----- community + developer stats (CoinGecko profile + GitHub REST) ----------
+#
+# This card used to read CryptoCompare /data/social/coin/latest (Twitter,
+# Reddit, GitHub). That endpoint needs a paid CoinDesk Data key since 2026-10.
+# CoinGecko's /coins/{id} was the planned replacement, but CoinGecko stopped
+# returning its `community_data` and `developer_data` objects on 2026-08-28
+# (the query params are still accepted and ignored — see
+# docs.coingecko.com/reference/coins-id). So the card carries only what a free
+# source really publishes:
+#
+#   CoinGecko /coins/{id}  watchlist_portfolio_users and the up/down vote split
+#                          (CoinGecko's own users' votes, labelled as such)
+#   GitHub REST /repos     stars, forks, watchers, open issues + PRs, last push,
+#                          commits to the default branch in the last 30 days
+#
+# Twitter/X followers and Reddit activity have no free source here any more.
+# They are NOT emitted (never zero-filled); the payload lists them under
+# `unavailable` with the reason, and Reddit subscriber counts stay on the
+# Reddit cards (Reddit's own API). Refreshed once per UTC day — these are slow
+# counters — which keeps the CoinGecko spend at 4 calls/day.
 
-    Coin IDs are CryptoCompare's internal numeric IDs (not symbols):
-      BTC=1182, ETH=7605, LINK=46472, LTC=3808
-    Returns Twitter followers, Reddit subscribers, GitHub stars/forks/PRs,
-    code activity. Each call has its own try/except so partial failures
-    don't kill the whole section."""
-    import os
-    api_key = os.environ.get("CRYPTOCOMPARE_API_KEY", "")
-    # CryptoCompare internal coin IDs (NOT symbols). 46472 used to map to
-    # LINK in older docs but now returns "Coin id is invalid"; the canonical
-    # ID is 309621 (verified via /data/all/coinlist?fsym=LINK in 2026-05).
-    COINS = {
-        "btc":  {"id": 1182,   "name": "Bitcoin"},
-        "eth":  {"id": 7605,   "name": "Ethereum"},
-        "link": {"id": 309621, "name": "Chainlink"},
-        "ltc":  {"id": 3808,   "name": "Litecoin"},
-    }
-    out: dict[str, dict] = {}
-    for sym, meta in COINS.items():
-        try:
-            params = {"coinId": meta["id"]}
-            # Auth via Authorization header is the documented v2 path; the
-            # api_key query-string param is also accepted for backwards-compat.
-            headers = dict(H)
-            if api_key:
-                headers["Authorization"] = f"Apikey {api_key}"
-                params["api_key"] = api_key
-            r = requests.get(
-                "https://min-api.cryptocompare.com/data/social/coin/latest",
-                params=params,
-                headers=headers, timeout=15,
-            )
-            if r.status_code != 200:
-                print(f"  [cryptocompare] {sym} -> {r.status_code}", file=sys.stderr)
-                continue
-            body = r.json() or {}
-            # Without a key, the legacy endpoint returns HTTP 200 with
-            # {"Response": "Error", "Message": "auth key required", "Data": {}}.
-            # Skip cleanly so the UI shows "no data" cards instead of all-dash.
-            if body.get("Response") == "Error" or not body.get("Data"):
-                msg = (body.get("Message") or "")[:80]
-                hint = "" if api_key else " (set CRYPTOCOMPARE_API_KEY)"
-                print(f"  [cryptocompare] {sym} skipped: {msg}{hint}", file=sys.stderr)
-                continue
-            j = body["Data"]
-            general = (j.get("General") or {})
-            twitter = (j.get("Twitter") or {})
-            reddit  = (j.get("Reddit") or {})
-            repo    = (j.get("CodeRepository") or {}).get("List") or []
-            # Aggregate across multiple repos if listed
-            stars = forks = subs = pulls = issues = 0
-            for r_ in repo:
-                if not isinstance(r_, dict):
-                    continue
-                stars  += int(r_.get("stars") or 0)
-                forks  += int(r_.get("forks") or 0)
-                subs   += int(r_.get("subscribers") or 0)
-                pulls  += int(r_.get("open_pull_issues") or 0)
-                issues += int(r_.get("open_total_issues") or 0)
-            out[sym] = {
-                "name": meta["name"],
-                "points": general.get("Points"),
-                "twitter_followers": twitter.get("followers"),
-                "twitter_statuses": twitter.get("statuses"),
-                "reddit_subscribers": reddit.get("subscribers"),
-                "reddit_active_users": reddit.get("active_users"),
-                "reddit_posts_per_day": reddit.get("posts_per_day"),
-                "reddit_comments_per_day": reddit.get("comments_per_day"),
-                "github_stars": stars,
-                "github_forks": forks,
-                "github_subscribers": subs,
-                "github_open_pulls": pulls,
-                "github_open_issues": issues,
-                "github_repo_count": len(repo),
-            }
-        except Exception as e:
-            print(f"  [cryptocompare] {sym} error: {e}", file=sys.stderr)
-        time.sleep(0.3)
+COMMUNITY_DEV_COINS: tuple[tuple[str, str, str, str], ...] = (
+    # (asset key, CoinGecko id, display name, primary GitHub repository)
+    ("btc",  "bitcoin",   "Bitcoin",   "bitcoin/bitcoin"),
+    ("eth",  "ethereum",  "Ethereum",  "ethereum/go-ethereum"),
+    ("link", "chainlink", "Chainlink", "smartcontractkit/chainlink"),
+    ("ltc",  "litecoin",  "Litecoin",  "litecoin-project/litecoin"),
+)
+GITHUB_API = "https://api.github.com"
+COMMUNITY_DEV_UNAVAILABLE = {
+    "twitter_followers": ("CoinGecko stopped returning community_data on 2026-08-28 and "
+                          "X/Twitter has no free API, so follower counts are not shown."),
+    "reddit_subscribers": ("No longer in CoinGecko's response (community_data removed "
+                           "2026-08-28). Subscriber counts are on the Reddit cards, from "
+                           "Reddit's own API."),
+    "reddit_active_users": "Same as reddit_subscribers.",
+    "github_open_pulls": ("GitHub's repository endpoint counts open issues and pull requests "
+                          "together; shown combined as github_open_issues_and_prs."),
+}
+COMMUNITY_DEV_SOURCES = {
+    "coingecko": "CoinGecko /coins/{id}: watchlist_portfolio_users, sentiment_votes_up/down_percentage",
+    "github": "GitHub REST /repos/{owner}/{repo} and /commits?since=<30 days ago>",
+}
+_COMMUNITY_DEV_CACHE_KEY = "community_dev_stats"
+
+
+def _github_headers(url: str) -> dict:
+    """GitHub REST headers. The Actions GITHUB_TOKEN (if mapped) rides along
+    ONLY to api.github.com, never to another host — same rule as the CoinGecko
+    key in `_headers_for`."""
+    h = {**H, "Accept": "application/vnd.github+json",
+         "X-GitHub-Api-Version": "2022-11-28"}
+    tok = os.environ.get("GITHUB_TOKEN", "").strip()
+    if tok and (urlsplit(url).hostname or "").lower() == "api.github.com":
+        h["Authorization"] = f"Bearer {tok}"
+    return h
+
+
+def _github_last_page(link_header: str | None) -> int | None:
+    """The page number of rel="last" in a GitHub ``Link`` header, or None."""
+    for part in (link_header or "").split(","):
+        if 'rel="last"' in part:
+            m = re.search(r"[?&]page=(\d+)", part)
+            if m:
+                return int(m.group(1))
+    return None
+
+
+def github_repo_stats(repo: str, now: datetime | None = None) -> dict | None:
+    """Stars / forks / watchers / open issues+PRs / last push for `repo`, plus
+    the number of commits on its default branch in the last 30 days (counted
+    from the Link header of a per_page=1 listing: one request, exact count)."""
+    if not isinstance(repo, str) or not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo):
+        return None
+    url = f"{GITHUB_API}/repos/{repo}"
+    status, j = _get_status(url, headers=_github_headers(url), timeout=15)
+    if status != 200 or not isinstance(j, dict):
+        return None
+    now = now or datetime.now(timezone.utc)
+    since = (now - timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    commits_30d = None
+    curl = f"{url}/commits"
+    try:
+        r = requests.get(curl, params={"since": since, "per_page": "1"},
+                         headers=_github_headers(curl), timeout=15)
+        if r.status_code == 200:
+            last = _github_last_page(r.headers.get("Link"))
+            body = r.json()
+            commits_30d = last if last is not None else (len(body) if isinstance(body, list) else None)
+        else:
+            print(f"  [github] {repo} commits -> {r.status_code}", file=sys.stderr)
+    except Exception as e:
+        print(f"  [github] {repo} commits: {type(e).__name__}", file=sys.stderr)
     return {
-        "available": bool(out),
-        "coins": out,
-        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "github_repo": repo,
+        "github_stars": j.get("stargazers_count"),
+        "github_forks": j.get("forks_count"),
+        "github_watchers": j.get("subscribers_count"),
+        "github_open_issues_and_prs": j.get("open_issues_count"),
+        "github_pushed_at": j.get("pushed_at"),
+        "github_commits_30d": commits_30d,
+        "github_commits_since": since[:10],
     }
 
+
+def coingecko_coin_profile(coin_id: str) -> tuple[int | None, dict | None]:
+    """The community fields CoinGecko still publishes for a coin (one call)."""
+    if not isinstance(coin_id, str) or not _CG_ID_RE.match(coin_id):
+        return None, None
+    status, j = _get_status(
+        f"https://api.coingecko.com/api/v3/coins/{coin_id}",
+        {"localization": "false", "tickers": "false", "market_data": "false",
+         "community_data": "false", "developer_data": "false", "sparkline": "false"},
+        timeout=20,
+    )
+    if status != 200 or not isinstance(j, dict):
+        return status, None
+    prof = {
+        "coingecko_watchlist_users": j.get("watchlist_portfolio_users"),
+        "coingecko_votes_up_pct": j.get("sentiment_votes_up_percentage"),
+        "coingecko_votes_down_pct": j.get("sentiment_votes_down_percentage"),
+        "coingecko_last_updated": j.get("last_updated"),
+    }
+    if all(v is None for k, v in prof.items() if k != "coingecko_last_updated"):
+        return status, None
+    return status, prof
+
+
+def community_dev_stats(now: datetime | None = None, *, pace_s: float = 1.0) -> dict:
+    """Per-coin community + developer stats for BTC/ETH/LINK/LTC (the Research
+    tab card). Once per UTC day: a result already observed today is reused
+    as-is (its ``fetched_at`` is the real time it was fetched)."""
+    now = now or datetime.now(timezone.utc)
+    today = _utc_today(now).isoformat()
+    cached = _stale_read_raw(_COMMUNITY_DEV_CACHE_KEY)
+    if isinstance(cached, dict) and cached.get("available") and cached.get("observed_date") == today:
+        return {**cached, "coingecko_calls": 0, "cache": "today"}
+    coins: dict[str, dict] = {}
+    cg_calls = 0
+    for key, cg_id, name, repo in COMMUNITY_DEV_COINS:
+        row: dict[str, Any] = {"name": name, "coingecko_id": cg_id}
+        _status, prof = coingecko_coin_profile(cg_id)
+        cg_calls += 1
+        gh = github_repo_stats(repo, now)
+        if prof:
+            row.update(prof)
+        if gh:
+            row.update(gh)
+        if prof or gh:
+            row["sources"] = [lbl for lbl, ok in (("CoinGecko", prof), ("GitHub", gh)) if ok]
+            coins[key] = row
+        if pace_s:
+            time.sleep(pace_s)
+    out = {
+        "available": bool(coins),
+        "coins": coins,
+        "sources": COMMUNITY_DEV_SOURCES,
+        "unavailable": COMMUNITY_DEV_UNAVAILABLE,
+        "observed_date": today,
+        "coingecko_calls": cg_calls,
+        "fetched_at": now.isoformat(timespec="seconds"),
+    }
+    if coins:
+        _stale_save(_COMMUNITY_DEV_CACHE_KEY, out)
+    return out
+
+
+# ----- headline sentiment, computed by Alpine Data ----------------------------
+#
+# Replaces CryptoCompare's data-api news list and its POSITIVE/NEGATIVE/NEUTRAL
+# labels (paid key since 2026-10). The headlines now come from Google News RSS
+# search (free, keyless) and the sentiment is OUR OWN, computed here by a small
+# committed keyword rule — not CoinDesk's/CryptoCompare's labels, not a paid
+# API, not an LLM. The rule, the word lists and the source ship with every
+# payload under `method`, and every count says how many headlines it is out of.
+
+GOOGLE_NEWS_RSS = "https://news.google.com/rss/search"
+HEADLINE_WINDOW_DAYS = 7
+GOOGLE_NEWS_SAMPLE_CAP = 100   # Google News RSS returns at most this many items
 
 # Generic noise filtered out of the keyword-cloud aggregation.
-_CC_KW_STOP = {
-    "crypto", "cryptocurrency", "cryptocurrencies", "blockchain",
-    "market", "markets", "news", "price", "prices", "trading",
-    "trader", "traders", "coin", "coins", "token", "tokens",
-    "update", "report", "analysis",
+_HEADLINE_STOPWORDS = {
+    "crypto", "cryptocurrency", "cryptocurrencies", "blockchain", "market",
+    "markets", "news", "price", "prices", "trading", "trader", "traders", "coin",
+    "coins", "token", "tokens", "update", "report", "analysis", "the", "and",
+    "for", "with", "from", "into", "after", "amid", "over", "this", "that",
+    "what", "why", "how", "will", "could", "would", "can", "may", "says", "said",
+    "its", "are", "was", "were", "has", "have", "had", "not", "but", "you",
+    "your", "new", "now", "today", "week", "more", "than", "out", "about", "who",
+    "here", "just", "top", "all", "his", "her", "they", "their", "our", "per",
+    "via", "vs", "off", "under", "near", "next", "first", "year", "years", "day",
+    "days", "usd", "price-prediction", "prediction", "predictions", "million",
+    "billion", "january", "february", "march", "april", "june", "july", "august",
+    "september", "october", "november", "december", "monday", "tuesday",
+    "wednesday", "thursday", "friday", "saturday", "sunday",
 }
-# Per-coin aliases also dropped (e.g. don't show "bitcoin" as a tag on the BTC card)
-_CC_CAT_ALIASES = {
+# Per-coin aliases also dropped (don't show "bitcoin" as a tag on the BTC card)
+_COIN_ALIASES = {
     "BTC":  {"btc", "bitcoin", "xbt"},
     "ETH":  {"eth", "ethereum", "ether"},
     "LINK": {"link", "chainlink"},
@@ -2597,196 +2603,185 @@ _CC_CAT_ALIASES = {
 }
 
 
-def _cc_aggregate_keywords(arts: list[dict], cat: str, top_n: int = 10) -> list[dict]:
-    """Bucket KEYWORDS across articles, score by frequency × sentiment skew.
-    sentiment_skew > 0 → keyword appears more in positive context; <0 negative."""
-    drop = _CC_KW_STOP | _CC_CAT_ALIASES.get(cat, set())
-    sent_val = {"POSITIVE": 1, "NEGATIVE": -1, "NEUTRAL": 0}
-    counts: dict[str, int] = {}
-    skew_sum: dict[str, int] = {}
-    for a in arts:
-        if not isinstance(a, dict):
+def _strip_publisher_suffix(title: str, source: str) -> str:
+    """Google News titles end in " - <Publisher>"; scoring the publisher name
+    would make e.g. every "Yahoo Finance" headline hit the keyword "fine"."""
+    t = (title or "").strip()
+    src = (source or "").strip()
+    if src and t.endswith(" - " + src):
+        return t[: -(len(src) + 3)].rstrip()
+    return t
+
+
+def google_news_rss(query: str, *, timeout: int = 15) -> tuple[int | None, list[dict]]:
+    """``(http_status, items)`` for a Google News RSS search. Items:
+    ``{title, url, source, source_url, ts, date}``, publisher suffix stripped
+    from the title. No key, no cookies."""
+    import xml.etree.ElementTree as ET
+    from email.utils import parsedate_to_datetime
+    try:
+        r = requests.get(GOOGLE_NEWS_RSS, params={"q": query, "hl": "en-US", "gl": "US",
+                                                  "ceid": "US:en"},
+                         headers=H, timeout=timeout)
+    except Exception as e:
+        print(f"  [google-news] {query!r}: {type(e).__name__}", file=sys.stderr)
+        return None, []
+    if r.status_code != 200:
+        print(f"  [google-news] {query!r} -> {r.status_code}", file=sys.stderr)
+        return r.status_code, []
+    try:
+        root = ET.fromstring(r.content)
+    except ET.ParseError:
+        print(f"  [google-news] {query!r}: unparseable RSS", file=sys.stderr)
+        return 200, []
+    items: list[dict] = []
+    for it in root.findall(".//item"):
+        src_el = it.find("source")
+        source = (src_el.text or "").strip() if src_el is not None else ""
+        title = _strip_publisher_suffix(it.findtext("title") or "", source)
+        link = (it.findtext("link") or "").strip()
+        if not title or not link:
             continue
-        raw = a.get("KEYWORDS") or ""
-        s = sent_val.get((a.get("SENTIMENT") or "").upper(), 0)
-        seen: set[str] = set()
-        for tok in str(raw).split(","):
-            kw = tok.strip().lower()
-            if not kw or len(kw) < 3 or kw.isdigit() or kw in drop:
-                continue
-            if kw in seen:
-                continue
-            seen.add(kw)
-            counts[kw] = counts.get(kw, 0) + 1
-            skew_sum[kw] = skew_sum.get(kw, 0) + s
-    ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:top_n]
-    return [
-        {"kw": kw, "count": n,
-         "sentiment_skew": round(skew_sum[kw] / n, 3) if n else 0.0}
-        for kw, n in ranked
-    ]
-
-
-def _cc_news_trend(category: str, days: int = 7, page_size: int = 50,
-                   max_pages: int = 5) -> list[dict]:
-    """Paginate cc data-api news backwards via to_ts, bucket by UTC date,
-    return last `days` days of {date, pos, neg, neu, net}. Keyless."""
-    cutoff = int(time.time()) - days * 86400
-    buckets: dict[str, dict[str, int]] = {}
-    to_ts = None
-    for _page in range(max_pages):
-        params = {"lang": "EN", "categories": category, "limit": page_size}
-        if to_ts is not None:
-            params["to_ts"] = to_ts
+        ts = None
+        date_str = ""
         try:
-            r = requests.get(
-                "https://data-api.cryptocompare.com/news/v1/article/list",
-                params=params, headers=H, timeout=15,
-            )
-            if r.status_code != 200:
-                print(f"  [cc-news-trend] {category} -> {r.status_code}", file=sys.stderr)
-                break
-            arts = (r.json() or {}).get("Data") or []
-        except Exception as e:
-            print(f"  [cc-news-trend] {category} error: {e}", file=sys.stderr)
-            break
-        if not arts:
-            break
-        oldest = None
-        for a in arts:
-            ts = a.get("PUBLISHED_ON") or 0
-            if not ts:
+            dt = parsedate_to_datetime((it.findtext("pubDate") or "").strip())
+            if dt is not None:
+                dt = dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+                ts = int(dt.timestamp())
+                date_str = dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M")
+        except (TypeError, ValueError, IndexError):
+            pass
+        items.append({
+            "title": title[:240],
+            "url": link,
+            "source": source or "Google News",
+            "source_url": (src_el.get("url") if src_el is not None else "") or "",
+            "ts": ts,
+            "date": date_str,
+        })
+    return 200, items
+
+
+def _coin_news_query(name: str) -> str:
+    """Google News query for one coin: the name in quotes, the word crypto to
+    keep "Chainlink" from meaning fencing, last HEADLINE_WINDOW_DAYS days."""
+    return f'"{name}" crypto when:{HEADLINE_WINDOW_DAYS}d'
+
+
+def _norm_title(t: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", (t or "").lower())[:60]
+
+
+def _headline_keywords(scored: list[tuple[dict, str]], drop: set[str],
+                       top_n: int = 10) -> list[dict]:
+    """Most frequent headline words (once per headline), with the mean of our
+    own sentiment labels on the headlines that contain them (+1/-1/0)."""
+    val = {"POSITIVE": 1, "NEGATIVE": -1, "NEUTRAL": 0}
+    counts: dict[str, int] = {}
+    skew: dict[str, int] = {}
+    stop = _HEADLINE_STOPWORDS | {d.lower() for d in drop}
+    for it, label in scored:
+        for kw in set(re.findall(r"[a-z][a-z0-9-]{2,}", (it.get("title") or "").lower())):
+            if kw in stop or kw.strip("-") in stop:
                 continue
-            oldest = ts if oldest is None else min(oldest, ts)
-            if ts < cutoff:
-                continue
-            d = datetime.fromtimestamp(ts, timezone.utc).date().isoformat()
-            b = buckets.setdefault(d, {"pos": 0, "neg": 0, "neu": 0})
-            s = (a.get("SENTIMENT") or "").upper()
-            if   s == "POSITIVE": b["pos"] += 1
-            elif s == "NEGATIVE": b["neg"] += 1
-            elif s == "NEUTRAL":  b["neu"] += 1
-        if oldest is None or oldest < cutoff:
-            break
-        to_ts = oldest - 1
-        time.sleep(0.3)
-    today = datetime.now(timezone.utc).date()
-    out = []
-    for i in range(days - 1, -1, -1):
+            counts[kw] = counts.get(kw, 0) + 1
+            skew[kw] = skew.get(kw, 0) + val.get(label, 0)
+    ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:top_n]
+    return [{"kw": kw, "count": n, "sentiment_skew": round(skew[kw] / n, 3)}
+            for kw, n in ranked]
+
+
+def summarize_headlines(items: list[dict], *, aliases: set[str] | None = None,
+                        now: datetime | None = None,
+                        window_days: int = HEADLINE_WINDOW_DAYS,
+                        top_articles: int = 5) -> dict:
+    """Score each headline with `_score_news_item_sentiment` (title only — RSS
+    descriptions from Google News are just a link) and aggregate: counts,
+    percentages, net score, the most recent headlines, a keyword cloud and a
+    per-day count for the last `window_days` UTC days. Every number counts
+    headlines in THIS sample; nothing is extrapolated."""
+    now = now or datetime.now(timezone.utc)
+    scored = [(it, _score_news_item_sentiment({"title": it.get("title")})) for it in items or []]
+    pos = sum(1 for _, s in scored if s == "POSITIVE")
+    neg = sum(1 for _, s in scored if s == "NEGATIVE")
+    neu = len(scored) - pos - neg
+    total = len(scored)
+    newest = sorted(scored, key=lambda x: x[0].get("ts") or 0, reverse=True)
+    today = _utc_today(now)
+    buckets: dict[str, dict[str, int]] = {}
+    for it, s in scored:
+        ts = it.get("ts")
+        if not isinstance(ts, (int, float)):
+            continue
+        d = datetime.fromtimestamp(ts, timezone.utc).date().isoformat()
+        b = buckets.setdefault(d, {"pos": 0, "neg": 0, "neu": 0})
+        b[{"POSITIVE": "pos", "NEGATIVE": "neg"}.get(s, "neu")] += 1
+    trend = []
+    for i in range(window_days - 1, -1, -1):
         d = (today - timedelta(days=i)).isoformat()
         b = buckets.get(d, {"pos": 0, "neg": 0, "neu": 0})
-        out.append({"date": d, "pos": b["pos"], "neg": b["neg"],
-                    "neu": b["neu"], "net": b["pos"] - b["neg"]})
-    return out
-
-
-def _cc_trend_should_refresh() -> bool:
-    """Trend is ~16 extra calls. Refresh only at the top of each hour (first
-    5 minutes). Other minutes reuse the previous cached trend."""
-    return datetime.now(timezone.utc).minute < 5
-
-
-def _cc_trend_from_cache(sym: str) -> list[dict]:
-    """Read previous trend_7d from data/market.json so non-refresh minutes
-    can rehydrate without re-fetching."""
-    try:
-        prev = json.loads((CACHE / "market.json").read_text())
-        return (((prev.get("social") or {}).get("cc_news") or {})
-                .get("coins", {}).get(sym, {}).get("trend_7d")) or []
-    except Exception:
-        return []
-
-
-def cryptocompare_news_sentiment() -> dict:
-    """Per-coin news sentiment via CryptoCompare's keyless data-api endpoint.
-    Returns sentiment counts, top 5 headlines, top-10 keyword cloud (with
-    sentiment skew), and a 7-day daily sentiment trend (rate-limited to hourly).
-    """
-    CATS = {"btc": "BTC", "eth": "ETH", "link": "LINK", "ltc": "LTC"}
-    refresh_trend = _cc_trend_should_refresh()
-    out: dict[str, dict] = {}
-    for sym, cat in CATS.items():
-        try:
-            r = requests.get(
-                "https://data-api.cryptocompare.com/news/v1/article/list",
-                params={"lang": "EN", "categories": cat, "limit": 50},
-                headers=H, timeout=15,
-            )
-            if r.status_code != 200:
-                print(f"  [cc-news] {cat} -> {r.status_code}", file=sys.stderr)
-                continue
-            body = r.json() or {}
-            arts = body.get("Data") or []
-            if not arts:
-                continue
-            pos = neg = neu = 0
-            for a in arts:
-                s = (a.get("SENTIMENT") or "").upper()
-                if s == "POSITIVE":  pos += 1
-                elif s == "NEGATIVE": neg += 1
-                elif s == "NEUTRAL":  neu += 1
-            top = []
-            for a in arts[:5]:
-                if not isinstance(a, dict):
-                    continue
-                top.append({
-                    "title": (a.get("TITLE") or "")[:140],
-                    "url": a.get("URL"),
-                    "sentiment": (a.get("SENTIMENT") or "").upper(),
-                    "source": ((a.get("SOURCE_DATA") or {}).get("NAME")) or a.get("SOURCE_ID"),
-                    "published_on": a.get("PUBLISHED_ON"),
-                    "upvotes": a.get("UPVOTES"),
-                    "keywords_raw": a.get("KEYWORDS") or "",
-                })
-            total = pos + neg + neu
-            # Keyword cloud + per-coin trend (cached unless hourly refresh window)
-            top_keywords = _cc_aggregate_keywords(arts, cat, top_n=10)
-            if refresh_trend:
-                trend_7d = _cc_news_trend(cat, days=7)
-            else:
-                trend_7d = _cc_trend_from_cache(sym)
-            out[sym] = {
-                "category": cat,
-                "article_count": len(arts),
-                "positive": pos,
-                "negative": neg,
-                "neutral": neu,
-                "positive_pct": (pos / total * 100) if total else None,
-                "negative_pct": (neg / total * 100) if total else None,
-                "neutral_pct":  (neu / total * 100) if total else None,
-                "net_score": pos - neg,
-                "top_articles": top,
-                "top_keywords": top_keywords,
-                "trend_7d": trend_7d,
-            }
-        except Exception as e:
-            print(f"  [cc-news] {cat} error: {e}", file=sys.stderr)
-        time.sleep(0.3)
+        trend.append({"date": d, **b, "net": b["pos"] - b["neg"]})
     return {
-        "available": bool(out),
-        "coins": out,
-        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "article_count": total,
+        "sample_capped": total >= GOOGLE_NEWS_SAMPLE_CAP,
+        "positive": pos,
+        "negative": neg,
+        "neutral": neu,
+        "positive_pct": (pos / total * 100) if total else None,
+        "negative_pct": (neg / total * 100) if total else None,
+        "neutral_pct": (neu / total * 100) if total else None,
+        "net_score": pos - neg,
+        "top_articles": [{
+            "title": it.get("title"),
+            "url": it.get("url"),
+            "sentiment": s,
+            "source": it.get("source"),
+            "published_on": it.get("ts"),
+            "date": it.get("date"),
+        } for it, s in newest[:top_articles]],
+        "top_keywords": _headline_keywords(scored, aliases or set()),
+        "trend_7d": trend,
     }
 
 
-# --- Per-coin CC news scoring for the Research-tab Top-25 card -------------
+def headline_sentiment(now: datetime | None = None, *, pace_s: float = 0.3) -> dict:
+    """Research-tab per-coin headline sentiment for BTC/ETH/LINK/LTC (the
+    "deep coverage" block in the news modal). One Google News query per coin."""
+    now = now or datetime.now(timezone.utc)
+    coins: dict[str, dict] = {}
+    for key, _cg_id, name, _repo in COMMUNITY_DEV_COINS:
+        q = _coin_news_query(name)
+        _status, items = google_news_rss(q)
+        if items:
+            coins[key] = {"category": key.upper(), "query": q,
+                          **summarize_headlines(items, aliases=_COIN_ALIASES.get(key.upper()),
+                                                now=now)}
+        if pace_s:
+            time.sleep(pace_s)
+    return {
+        "available": bool(coins),
+        "coins": coins,
+        "method": HEADLINE_SENTIMENT_METHOD,
+        "source": "Google News RSS search",
+        "fetched_at": now.isoformat(timespec="seconds"),
+    }
+
+
+# --- Per-coin headline scoring for the Research-tab Top-25 card ---------------
 #
 # The RSS pipeline (`crypto_news_rss` + frontend `groupNewsBySymbol`) only
-# matches ~14 of the top-25 coins because the 5 RSS feeds we pull rarely name
-# the long-tail alt-coins (FIGR_HELOC, WBT, USDS, LEO, XMR, TON, XLM, DAI,
-# LTC, USD1, etc.). CryptoCompare's data-api news endpoint accepts a
-# `categories=<COIN>` param and returns up to 50 articles tagged TO that
-# coin, regardless of which publisher wrote them. Fanning out 25 calls (one
-# per top-25 symbol) and aggregating per-coin sentiment server-side lifts
-# coverage substantially and avoids shipping ~1,250 raw articles to the
-# browser.
+# matches ~14 of the top-25 coins because the 5 publisher feeds rarely name the
+# long-tail coins. One Google News search per top-25 coin, scored server-side
+# with the SAME rule the frontend applies to the publisher feeds, lifts coverage
+# without shipping ~2,500 raw headlines to the browser. Headlines that are also
+# in the publisher-feed corpus are dropped here, because the frontend ADDS
+# these counts to its own and would otherwise count them twice.
 #
-# We deliberately re-port the frontend keyword lists rather than reuse
-# `_AI_NEWS_POSITIVE_KEYWORDS` — the JS `_NEWS_POS_KEYWORDS` /
-# `_NEWS_NEG_KEYWORDS` are tuned for crypto (rally/surge/inflows vs
-# crash/dump/liquidation) not AI launches/funding. Keeping the two lists
-# IDENTICAL across Python and JS is the whole point: the merged counts must
-# agree with whatever the JS would have produced if it scored the same items.
+# Keeping the keyword lists and the matching rule IDENTICAL across Python and
+# JS is the whole point (tests/test_crypto_free_sources.py checks it): the
+# merged counts must agree with what the JS would have produced on the same
+# headlines.
 _NEWS_POS_KEYWORDS_PER_COIN = (
     "rally", "surge", "soars", "soar", "jumps", "jump", "gains", "gain",
     "breakout", "breakthrough", "launches", "launch", "partnership", "adopts",
@@ -2797,7 +2792,7 @@ _NEWS_POS_KEYWORDS_PER_COIN = (
     "etf approval",
 )
 _NEWS_NEG_KEYWORDS_PER_COIN = (
-    "hack", "hacked", "exploit", "exploited", "lawsuit", "sued", "sec ", "fine",
+    "hack", "hacked", "exploit", "exploited", "lawsuit", "sued", "sec", "fine",
     "crash", "plunge", "plunges", "dump", "dumps", "tumbles", "tumble", "sinks",
     "sink", "slide", "slides", "falls", "fall", "loses", "loss", "losses",
     "fraud", "investigation", "probe", "ban", "banned", "banning", "breach",
@@ -2808,18 +2803,46 @@ _NEWS_NEG_KEYWORDS_PER_COIN = (
 )
 
 
+def _kw_pattern(words) -> re.Pattern:
+    """Whole-word / whole-phrase matcher for a keyword list. Substring matching
+    used to score "against" as a gain, "finance" as a fine and "path" as an
+    all-time high."""
+    alts = sorted({w.strip().lower() for w in words if w.strip()}, key=len, reverse=True)
+    return re.compile(r"(?<![a-z0-9])(?:" + "|".join(re.escape(a) for a in alts) + r")(?![a-z0-9])")
+
+
+_NEWS_POS_RE = _kw_pattern(_NEWS_POS_KEYWORDS_PER_COIN)
+_NEWS_NEG_RE = _kw_pattern(_NEWS_NEG_KEYWORDS_PER_COIN)
+
+HEADLINE_SENTIMENT_METHOD = {
+    "name": "Alpine Data headline keyword score",
+    "computed_by": "Alpine Data, from headline text only",
+    "source": ("Google News RSS search (news.google.com/rss/search), query "
+               f"'\"<coin name>\" crypto when:{HEADLINE_WINDOW_DAYS}d'"),
+    "rule": ("A headline is POSITIVE if it contains at least one positive keyword and no "
+             "negative keyword, NEGATIVE if the reverse, otherwise NEUTRAL (both or "
+             "neither). Whole words/phrases only, case-insensitive. net = positive - negative."),
+    "lexicon": {"positive": list(_NEWS_POS_KEYWORDS_PER_COIN),
+                "negative": list(_NEWS_NEG_KEYWORDS_PER_COIN)},
+    "window": (f"last {HEADLINE_WINDOW_DAYS} days; Google News returns at most "
+               f"{GOOGLE_NEWS_SAMPLE_CAP} headlines per query, so counts describe a sample, "
+               "not every article published"),
+    "not": "Not CoinDesk or CryptoCompare labels, not a paid API, not an LLM.",
+}
+
+
 def _score_news_item_sentiment(item: dict) -> str:
-    """Port of the JS `scoreNewsItemSentiment` in app.py. POSITIVE iff ≥1
-    positive keyword hit and 0 negative hits, NEGATIVE iff the reverse,
-    otherwise NEUTRAL. Lower-cases title+body before substring-matching.
-    Keep keyword lists in sync with the JS `_NEWS_POS_KEYWORDS` /
-    `_NEWS_NEG_KEYWORDS` constants in app.py.
+    """Port of the JS `scoreNewsItemSentiment` in app.py / v2/app.py. POSITIVE
+    iff >= 1 positive keyword and 0 negative keywords, NEGATIVE iff the
+    reverse, otherwise NEUTRAL. Whole-word matching on lower-cased title+body.
+    Keep the lists and the rule in sync with the JS `_NEWS_POS_KEYWORDS` /
+    `_NEWS_NEG_KEYWORDS`.
     """
     title = (item.get("title") or "") if isinstance(item, dict) else ""
     body = (item.get("body") or "") if isinstance(item, dict) else ""
     text = (str(title) + " " + str(body)).lower()
-    has_pos = any(kw in text for kw in _NEWS_POS_KEYWORDS_PER_COIN)
-    has_neg = any(kw in text for kw in _NEWS_NEG_KEYWORDS_PER_COIN)
+    has_pos = bool(_NEWS_POS_RE.search(text))
+    has_neg = bool(_NEWS_NEG_RE.search(text))
     if has_pos and not has_neg:
         return "POSITIVE"
     if has_neg and not has_pos:
@@ -2827,123 +2850,108 @@ def _score_news_item_sentiment(item: dict) -> str:
     return "NEUTRAL"
 
 
-def _fetch_cc_per_coin_news_impl(
+def _fetch_headline_sentiment_by_coin_impl(
     coins: list[dict],
     *,
-    per_coin_limit: int = 50,
-    sleep_between: float = 0.06,
+    exclude_titles: set[str] | None = None,
+    sleep_between: float = 0.3,
+    now: datetime | None = None,
 ) -> dict:
-    """Hit CryptoCompare's `/news/v1/article/list?categories=<SYM>` for each
-    coin and aggregate per-coin sentiment counts using the same keyword
-    scorer the frontend uses for RSS items. Designed to fan out to ~25 calls
-    (top-25 by mcap) — well within CC's free-tier rate limit (~50 calls/sec).
+    """One Google News search per coin, scored with `_score_news_item_sentiment`.
 
-    The endpoint is keyless for low-volume use, but we pass `Authorization`
-    if `CRYPTOCOMPARE_API_KEY` is set so we benefit from the higher quota.
+    `exclude_titles` holds normalized titles already in the publisher-feed
+    corpus (`market.news`), which the frontend scores itself; those are dropped
+    so the merged counts never count one headline twice.
 
-    Returns `{symbol_upper: {symbol, name, total, positive, negative,
-    neutral, net_score, recent: [{title, url, source, date, sentiment, ts}],
-    article_count}}`. Symbols with zero matched articles are omitted so the
-    frontend can cheaply check `if (cc[sym])`.
+    Returns `{available, coins: {SYMBOL: {symbol, name, total, positive,
+    negative, neutral, net_score, recent: [...5], article_count,
+    excluded_duplicates, query}}, method, source, fetched_at}`. Coins with no
+    headlines are omitted so the frontend can check `if (rows[sym])`.
     """
-    import os
-    api_key = os.environ.get("CRYPTOCOMPARE_API_KEY", "").strip()
-    headers = dict(H)
-    if api_key:
-        headers["Authorization"] = f"Apikey {api_key}"
+    now = now or datetime.now(timezone.utc)
+    exclude = exclude_titles or set()
     out: dict[str, dict] = {}
-    # CC doesn't tag every CG-listed coin. Categories the endpoint rejects
-    # come back as HTTP 400 "Category ... does not exist" — we log + skip.
     for c in coins or []:
         if not isinstance(c, dict):
             continue
         sym = (c.get("symbol") or "").upper().strip()
-        name = c.get("name") or ""
-        if not sym:
+        name = (c.get("name") or "").strip()
+        if not sym or not name:
             continue
-        category = sym
+        q = _coin_news_query(name)
         try:
-            params = {"lang": "EN", "categories": category, "limit": per_coin_limit}
-            r = requests.get(
-                "https://data-api.cryptocompare.com/news/v1/article/list",
-                params=params, headers=headers, timeout=15,
-            )
-            if r.status_code != 200:
-                # 400 = unknown category (e.g. FIGR_HELOC, USDS, CC, USD1),
-                # 401/429 = auth/rate-limit. All non-fatal per-coin.
-                print(f"  [cc-per-coin-news] {sym} -> {r.status_code}", file=sys.stderr)
+            _status, items = google_news_rss(q)
+        except Exception as e:
+            print(f"  [headline-sentiment] {sym}: {type(e).__name__}", file=sys.stderr)
+            items = []
+        seen: set[str] = set()
+        kept: list[dict] = []
+        dupes = 0
+        for it in items:
+            k = _norm_title(it.get("title"))
+            if not k or k in seen:
                 continue
-            body = r.json() or {}
-            arts = body.get("Data") or []
-            if not arts:
+            seen.add(k)
+            if k in exclude:
+                dupes += 1
                 continue
+            kept.append(it)
+        if kept:
             pos = neg = neu = 0
-            recent: list[dict] = []
-            for a in arts:
-                if not isinstance(a, dict):
-                    continue
-                # CC payload field names differ from our RSS schema; remap so
-                # the scorer (which reads .title/.body) works directly.
-                item = {
-                    "title": (a.get("TITLE") or "")[:240],
-                    "body":  (a.get("BODY")  or "")[:280],
-                }
-                label = _score_news_item_sentiment(item)
-                if   label == "POSITIVE": pos += 1
-                elif label == "NEGATIVE": neg += 1
-                else:                     neu += 1
-                if len(recent) < 5:
-                    src = ((a.get("SOURCE_DATA") or {}).get("NAME")) or a.get("SOURCE_ID") or ""
-                    ts = a.get("PUBLISHED_ON")
-                    date_str = ""
-                    if isinstance(ts, (int, float)) and ts > 0:
-                        date_str = datetime.fromtimestamp(int(ts), timezone.utc).strftime("%Y-%m-%d %H:%M")
-                    recent.append({
-                        "title": item["title"],
-                        "url": a.get("URL") or "",
-                        "source": src,
-                        "date": date_str,
-                        "ts": int(ts) if isinstance(ts, (int, float)) else None,
-                        "sentiment": label,
-                        "body": item["body"],
-                    })
-            total = pos + neg + neu
-            if total == 0:
-                continue
+            labelled = []
+            for it in kept:
+                label = _score_news_item_sentiment({"title": it.get("title")})
+                pos += label == "POSITIVE"
+                neg += label == "NEGATIVE"
+                neu += label == "NEUTRAL"
+                labelled.append((it, label))
+            labelled.sort(key=lambda x: x[0].get("ts") or 0, reverse=True)
             out[sym] = {
                 "symbol": sym,
                 "name": name,
-                "total": total,
+                "total": pos + neg + neu,
                 "positive": pos,
                 "negative": neg,
                 "neutral": neu,
                 "net_score": pos - neg,
-                "recent": recent,
-                "article_count": len(arts),
+                "recent": [{
+                    "title": it.get("title") or "",
+                    "url": it.get("url") or "",
+                    "source": it.get("source") or "",
+                    "date": it.get("date") or "",
+                    "ts": it.get("ts"),
+                    "sentiment": label,
+                    "body": "",
+                } for it, label in labelled[:5]],
+                "article_count": len(kept),
+                "excluded_duplicates": dupes,
+                "query": q,
             }
-        except Exception as e:
-            print(f"  [cc-per-coin-news] {sym} error: {e}", file=sys.stderr)
         if sleep_between:
             time.sleep(sleep_between)
     return {
         "available": bool(out),
         "coins": out,
-        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "method": HEADLINE_SENTIMENT_METHOD,
+        "source": "Google News RSS search",
+        "fetched_at": now.isoformat(timespec="seconds"),
     }
 
 
-def fetch_cc_per_coin_news(markets_top: list[dict], top_n: int = 25) -> dict:
-    """Stale-fallback wrapper. Slices `markets_top` to the top-N coins (by
-    list order — markets_top is already mcap-sorted) and asks CC for per-
-    coin sentiment. On total failure (no key + 4xx storm, or network down)
-    falls back to the last successful run so the frontend still gets counts.
-    """
+def fetch_headline_sentiment_by_coin(markets_top: list[dict], top_n: int = 25,
+                                     news: list[dict] | None = None) -> dict:
+    """Stale-fallback wrapper. Slices `markets_top` to the top-N coins (list
+    order is market-cap order) and scores each coin's Google News headlines.
+    `news` is the publisher-feed corpus, used only to drop duplicates. On total
+    failure falls back to the last successful run (tagged stale)."""
     coins = (markets_top or [])[:top_n]
-    cache_key = "fetch_cc_per_coin_news"
+    exclude = {_norm_title(n.get("title")) for n in news or [] if isinstance(n, dict)}
+    exclude.discard("")
+    cache_key = "fetch_headline_sentiment_by_coin"
     try:
-        out = _fetch_cc_per_coin_news_impl(coins)
+        out = _fetch_headline_sentiment_by_coin_impl(coins, exclude_titles=exclude)
     except Exception as e:
-        print(f"  [fetch_cc_per_coin_news] fatal {e}", file=sys.stderr)
+        print(f"  [fetch_headline_sentiment_by_coin] fatal {type(e).__name__}", file=sys.stderr)
         out = None
     if isinstance(out, dict) and out.get("available") and out.get("coins"):
         _stale_save(cache_key, out)
@@ -2954,6 +2962,7 @@ def fetch_cc_per_coin_news(markets_top: list[dict], top_n: int = 25) -> dict:
     return out if isinstance(out, dict) else {
         "available": False,
         "coins": {},
+        "method": HEADLINE_SENTIMENT_METHOD,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 
@@ -3192,83 +3201,455 @@ def compute_poc_all(market: dict) -> dict:
     return out
 
 
-def _cryptocompare_market_impl(symbol: str, days: int = 180) -> dict:
-    """Daily OHLCV from CryptoCompare histoday. No key required for basic
-    usage; honors CRYPTOCOMPARE_API_KEY env var if set. Same shape as
-    coingecko_market — {price, volume} where each is [{date, value}]."""
-    sym = (symbol or "").upper()
-    if not sym or len(sym) > 12:
-        return {"price": [], "volume": []}
-    days = max(1, min(days, 2000))
-    import os
-    headers = dict(H)
-    key = os.environ.get("CRYPTOCOMPARE_API_KEY", "").strip()
-    if key:
-        headers["authorization"] = f"Apikey {key}"
+# ----- free daily close / volume / market-cap series --------------------------
+#
+# The top-50 POC sweep (and the server-side "look up any crypto" path) used to
+# read CryptoCompare histoday. Since 2026-10 the whole CoinDesk/CryptoCompare
+# API answers keyless requests with 401 and this deployment has no paid key, so
+# the series now come from free sources, in this order:
+#
+#   1. CoinGecko /coins/{id}/market_chart?interval=daily — aggregate USD volume
+#      across every venue CoinGecko tracks (the closest free match to
+#      CryptoCompare's CCCAGG `volumeto`), plus market cap, which the Alpine
+#      Large-Cap Crypto Index needs.
+#   2. Coinbase Exchange daily candles   (<SYM>-USD)
+#   3. Kraken OHLC                        (<SYM>USD)
+#   4. Binance.US klines                  (<SYM>USD, then <SYM>USDT)
+#
+# 2-4 are keyless and are used only when CoinGecko fails for that coin. Their
+# volume is ONE exchange's volume, not the market's, so the series says so
+# (`volume_basis: "exchange"`) and every POC entry carries its `source`.
+# (api.binance.com is not used: it answers 451 to US hosts, GitHub runners
+# included.)
+#
+# DATES. Every series is a close series of COMPLETE UTC days, labelled with
+# the day the close belongs to. CoinGecko's daily points are stamped 00:00 UTC
+# and carry the close of the day that just ended — checked 2026-10-05: CG
+# 2026-10-05T00:00 SOL 121.52 vs Coinbase's 2026-10-04 candle close 121.57 —
+# so they are labelled with the PREVIOUS day. The trailing "now" sample and
+# each exchange's still-open candle are partial days and are dropped. The
+# newest bar is therefore yesterday's close, never a moving intraday read.
+#
+# BUDGET (CoinGecko Demo plan: 30 calls/min, ~10k calls/month). A complete
+# series cannot change until the next UTC midnight, so each coin's series is
+# cached in data/.stale/ (restored between CI runs) and CoinGecko is asked at
+# most COINGECKO_MAX_ATTEMPTS_PER_COIN_PER_DAY times per coin per UTC day —
+# one call, plus one retry if the first answer was a failure that fell back to
+# an exchange. Calls are paced COINGECKO_SWEEP_PACE_S apart, capped per run,
+# and a run that sees three 429s in a row stops calling CoinGecko and uses the
+# exchanges. Top-50 sweep: <= 50 calls/day normally, <= 100 worst case.
+
+CG_MARKET_CHART_URL = "https://api.coingecko.com/api/v3/coins/{id}/market_chart"
+CG_SEARCH_URL = "https://api.coingecko.com/api/v3/search"
+COINBASE_CANDLES_URL = "https://api.exchange.coinbase.com/products/{sym}-USD/candles"
+KRAKEN_OHLC_URL = "https://api.kraken.com/0/public/OHLC"
+BINANCE_US_KLINES_URL = "https://api.binance.us/api/v3/klines"
+
+DAILY_SERIES_SOURCE_LABELS = {
+    "coingecko": "CoinGecko market_chart: aggregate USD volume across the venues CoinGecko tracks",
+    "coinbase": "Coinbase Exchange daily candles: Coinbase-only volume (USD volume = base volume x close)",
+    "kraken": "Kraken OHLC: Kraken-only volume (USD volume = base volume x VWAP)",
+    "binance_us": "Binance.US klines: Binance.US-only quote volume (USD or USDT pair)",
+}
+DAILY_SERIES_FALLBACKS = ("coinbase", "kraken", "binance_us")
+# A series served from cache after every live source failed is only honest
+# for so long. Same bound as the poc_top carry-forward below.
+DAILY_SERIES_STALE_MAX_DAYS = 7
+COINGECKO_SWEEP_PACE_S = 2.5        # 24 calls/min, under the Demo plan's 30
+COINGECKO_SWEEP_MAX_CALLS = 60      # hard per-run cap for the sweep
+COINGECKO_MAX_ATTEMPTS_PER_COIN_PER_DAY = 2
+_CG_LEDGER_KEY = "coingecko_sweep_ledger"
+
+_CG_ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,99}$")
+_TICKER_RE = re.compile(r"^[A-Z0-9]{1,12}$")
+
+
+def _utc_today(now: datetime | None = None):
+    return (now or datetime.now(timezone.utc)).astimezone(timezone.utc).date()
+
+
+def _stale_read_raw(funcname: str):
+    """The cached value for `funcname` exactly as saved — no stale tags, no
+    log line. For caches that are FRESH by construction (a complete-day
+    series fetched earlier today), where `_stale_load`'s "stale" tag would be
+    a false statement."""
     try:
-        r = requests.get(
-            "https://min-api.cryptocompare.com/data/v2/histoday",
-            params={"fsym": sym, "tsym": "USD", "limit": str(days)},
-            timeout=15, headers=headers,
-        )
-        if r.status_code != 200:
-            # Say WHY. This used to return empty silently, and three layers of
-            # stale-keep sit on top of it, so a persistent failure surfaced
-            # only as a chart frozen months in the past — the top-50 signal
-            # breadth sat at 2026-06-09 for eight weeks — with no way to tell
-            # whether it was rate limiting, auth, or a schema change.
-            print(f"  [cryptocompare] {sym}: HTTP {r.status_code}", file=sys.stderr)
-            return {"price": [], "volume": []}
-        j = r.json()
-    except Exception as e:
-        print(f"  [cryptocompare] {sym}: {type(e).__name__}: {e}", file=sys.stderr)
-        return {"price": [], "volume": []}
-    if not isinstance(j, dict) or j.get("Response") != "Success":
-        resp = j.get("Response") if isinstance(j, dict) else "<non-dict>"
-        msg = j.get("Message") if isinstance(j, dict) else None
-        print(f"  [cryptocompare] {sym}: Response={resp!r}"
-              f"{' — ' + str(msg) if msg else ''}", file=sys.stderr)
-        return {"price": [], "volume": []}
-    rows = (j.get("Data") or {}).get("Data") or []
-    prices, volumes = [], []
-    for row in rows:
-        try:
-            t = int(row.get("time"))
-            close = float(row.get("close"))
-            volto = float(row.get("volumeto") or 0)  # USD volume
-            if close <= 0:
-                continue
-            date = datetime.fromtimestamp(t, tz=timezone.utc).strftime("%Y-%m-%d")
-            prices.append({"date": date, "value": close})
-            volumes.append({"date": date, "value": volto})
-        except (ValueError, TypeError, KeyError):
+        p = _stale_path(funcname)
+        if not p.exists():
+            return None
+        return json.loads(p.read_text()).get("value")
+    except Exception:
+        return None
+
+
+class CoinGeckoBudget:
+    """Per-run CoinGecko spend for a sweep: a hard call cap, a pause after each
+    call (Demo plan: 30 calls/min) and a breaker that stops calling after three
+    consecutive 429s, so a throttled run falls back to the keyless exchanges
+    instead of hammering a limit it has already hit."""
+
+    def __init__(self, max_calls: int = COINGECKO_SWEEP_MAX_CALLS,
+                 pace_s: float = COINGECKO_SWEEP_PACE_S):
+        self.max_calls = max_calls
+        self.pace_s = pace_s
+        self.calls = 0
+        self.consecutive_429 = 0
+        self.statuses: dict[str, int] = {}
+
+    def allow(self) -> bool:
+        return self.calls < self.max_calls and self.consecutive_429 < 3
+
+    def record(self, status: int | None) -> None:
+        self.calls += 1
+        k = str(status)
+        self.statuses[k] = self.statuses.get(k, 0) + 1
+        self.consecutive_429 = self.consecutive_429 + 1 if status == 429 else 0
+        if self.pace_s:
+            time.sleep(self.pace_s)
+
+    def summary(self) -> dict:
+        return {"calls": self.calls, "max_calls": self.max_calls,
+                "statuses": dict(self.statuses),
+                "breaker_tripped": self.consecutive_429 >= 3}
+
+
+def _series_from_maps(price_by: dict, vol_by: dict, cap_by: dict | None = None) -> dict:
+    dates = sorted(d for d, v in price_by.items() if isinstance(v, (int, float)) and v > 0)
+    return {
+        "price": [{"date": d, "value": price_by[d]} for d in dates],
+        "volume": [{"date": d, "value": vol_by[d]} for d in dates
+                   if isinstance(vol_by.get(d), (int, float))],
+        "market_cap": [{"date": d, "value": cap_by[d]} for d in dates
+                       if cap_by and isinstance(cap_by.get(d), (int, float)) and cap_by[d] > 0],
+    }
+
+
+def _trim_series(s: dict, days: int) -> dict:
+    keep = set(sorted({p["date"] for p in s.get("price") or []})[-days:])
+    return {k: [p for p in (s.get(k) or []) if p.get("date") in keep]
+            for k in ("price", "volume", "market_cap")}
+
+
+def _cg_daily_points(points, today) -> dict:
+    """``[[ms, value], ...]`` from market_chart -> {close-day ISO: value}.
+
+    Only 00:00:00 UTC samples are kept and each is labelled with the day it
+    closes (the previous UTC day). Anything else is an intraday sample (the
+    trailing "now" point) and is a partial day, so it is dropped."""
+    out: dict[str, float] = {}
+    for p in points or []:
+        if not (isinstance(p, (list, tuple)) and len(p) >= 2):
             continue
-    return {"price": prices, "volume": volumes}
+        try:
+            dt = datetime.fromtimestamp(float(p[0]) / 1000, tz=timezone.utc)
+            val = float(p[1])
+        except (TypeError, ValueError, OverflowError, OSError):
+            continue
+        if (dt.hour, dt.minute, dt.second) != (0, 0, 0):
+            continue
+        day = (dt - timedelta(days=1)).date()
+        if day >= today:
+            continue
+        out[day.isoformat()] = val
+    return out
 
 
-def cryptocompare_market(symbol: str, days: int = 180) -> dict:
-    """Stale-fallback wrapper around `_cryptocompare_market_impl`.
+def coingecko_daily_series(coin_id: str, days: int = 180,
+                           today=None) -> tuple[int | None, dict | None]:
+    """``(http_status, series_or_None)`` from CoinGecko market_chart.
 
-    CryptoCompare's free tier can rate-limit or briefly 5xx during top-N
-    sweeps. If the price array comes back empty we fall back to the cached
-    prior result for this exact ``symbol`` so the section isn't blanked by
-    a single transient failure. Mirrors the `coingecko_market` pattern.
+    Series: ``{price, volume, market_cap}`` lists of ``{date, value}``, complete
+    UTC days only. The Demo key rides along via `_headers_for` (CoinGecko
+    hosts only)."""
+    if not isinstance(coin_id, str) or not _CG_ID_RE.match(coin_id):
+        return None, None
+    today = today or _utc_today()
+    status, j = _get_status(
+        CG_MARKET_CHART_URL.format(id=coin_id),
+        {"vs_currency": "usd", "days": str(int(days)), "interval": "daily"},
+        timeout=20,
+    )
+    if status != 200 or not isinstance(j, dict):
+        return status, None
+    price = _cg_daily_points(j.get("prices"), today)
+    if not price:
+        return status, None
+    s = _series_from_maps(price, _cg_daily_points(j.get("total_volumes"), today),
+                          _cg_daily_points(j.get("market_caps"), today))
+    return status, _trim_series(s, days)
+
+
+def coinbase_daily_series(symbol: str, days: int = 180, today=None) -> dict | None:
+    """Coinbase Exchange daily candles ``[time, low, high, open, close, volume]``.
+    Volume is in the base asset, so USD volume = volume x close (an
+    approximation of the day's quote volume)."""
+    sym = (symbol or "").upper()
+    if not _TICKER_RE.match(sym):
+        return None
+    today = today or _utc_today()
+    status, j = _get_status(COINBASE_CANDLES_URL.format(sym=sym),
+                            {"granularity": "86400"}, timeout=15)
+    if status != 200 or not isinstance(j, list):
+        return None
+    price, vol = {}, {}
+    for r in j:
+        try:
+            day = datetime.fromtimestamp(int(r[0]), tz=timezone.utc).date()
+            close, base_vol = float(r[4]), float(r[5])
+        except (TypeError, ValueError, IndexError, OverflowError, OSError):
+            continue
+        if day >= today or close <= 0:
+            continue
+        price[day.isoformat()] = close
+        vol[day.isoformat()] = base_vol * close
+    return _trim_series(_series_from_maps(price, vol), days) if price else None
+
+
+def kraken_daily_series(symbol: str, days: int = 180, today=None) -> dict | None:
+    """Kraken OHLC ``[time, open, high, low, close, vwap, volume, count]``.
+    USD volume = base volume x VWAP (close when VWAP is 0, i.e. no trades)."""
+    sym = (symbol or "").upper()
+    if not _TICKER_RE.match(sym):
+        return None
+    today = today or _utc_today()
+    since = int(datetime(today.year, today.month, today.day, tzinfo=timezone.utc).timestamp()
+                - (days + 2) * 86400)
+    status, j = _get_status(KRAKEN_OHLC_URL, {"pair": f"{sym}USD", "interval": "1440",
+                                              "since": str(since)}, timeout=15)
+    if status != 200 or not isinstance(j, dict) or j.get("error"):
+        return None
+    result = j.get("result") or {}
+    rows = next((v for k, v in result.items() if k != "last" and isinstance(v, list)), None)
+    if not rows:
+        return None
+    price, vol = {}, {}
+    for r in rows:
+        try:
+            day = datetime.fromtimestamp(int(r[0]), tz=timezone.utc).date()
+            close, vwap, base_vol = float(r[4]), float(r[5]), float(r[6])
+        except (TypeError, ValueError, IndexError, OverflowError, OSError):
+            continue
+        if day >= today or close <= 0:
+            continue
+        price[day.isoformat()] = close
+        vol[day.isoformat()] = base_vol * (vwap if vwap > 0 else close)
+    return _trim_series(_series_from_maps(price, vol), days) if price else None
+
+
+def binance_us_daily_series(symbol: str, days: int = 180, today=None) -> dict | None:
+    """Binance.US klines; index 7 is the quote-asset volume (USD or USDT)."""
+    sym = (symbol or "").upper()
+    if not _TICKER_RE.match(sym):
+        return None
+    today = today or _utc_today()
+    rows = None
+    for quote in ("USD", "USDT"):
+        status, j = _get_status(BINANCE_US_KLINES_URL,
+                                {"symbol": f"{sym}{quote}", "interval": "1d",
+                                 "limit": str(min(int(days) + 1, 1000))}, timeout=15)
+        if status == 200 and isinstance(j, list) and j:
+            rows = j
+            break
+    if not rows:
+        return None
+    price, vol = {}, {}
+    for r in rows:
+        try:
+            day = datetime.fromtimestamp(int(r[0]) / 1000, tz=timezone.utc).date()
+            close, quote_vol = float(r[4]), float(r[7])
+        except (TypeError, ValueError, IndexError, OverflowError, OSError):
+            continue
+        if day >= today or close <= 0:
+            continue
+        price[day.isoformat()] = close
+        vol[day.isoformat()] = quote_vol
+    return _trim_series(_series_from_maps(price, vol), days) if price else None
+
+
+_DAILY_FALLBACK_FETCHERS = {
+    "coinbase": lambda sym, days, today: coinbase_daily_series(sym, days, today),
+    "kraken": lambda sym, days, today: kraken_daily_series(sym, days, today),
+    "binance_us": lambda sym, days, today: binance_us_daily_series(sym, days, today),
+}
+
+
+def _series_last_common_date(s: dict | None) -> str | None:
+    if not isinstance(s, dict):
+        return None
+    pd = {p.get("date") for p in s.get("price") or [] if p.get("date")}
+    vd = {p.get("date") for p in s.get("volume") or [] if p.get("date")}
+    common = pd & vd if vd else pd
+    return max(common) if common else None
+
+
+def crypto_daily_series(coin_id: str | None, symbol: str, days: int = 180, *,
+                        today=None, budget: CoinGeckoBudget | None = None,
+                        allow_coingecko: bool = True) -> dict:
+    """Complete-day close/volume(/market cap) series for one coin, from the
+    first free source that answers (CoinGecko, then Coinbase, Kraken,
+    Binance.US). Never raises.
+
+    Returns ``{price, volume, market_cap, source, volume_basis, as_of,
+    coingecko_calls, attempts[, cache][, stale]}``. ``market_cap`` is only
+    filled from CoinGecko. ``cache: "today"`` means the series was fetched
+    earlier this UTC day and is still complete (nothing newer exists until the
+    next UTC midnight). ``stale: True`` means every live source failed and an
+    older cached series (at most DAILY_SERIES_STALE_MAX_DAYS old) is served;
+    its ``as_of`` stays the day it was observed.
     """
     sym = (symbol or "").upper()
-    cache_key = f"cryptocompare_market_{sym}"
-    try:
-        out = _cryptocompare_market_impl(symbol, days)
-    except Exception as e:
-        print(f"  [cryptocompare_market] {sym}: fatal {e}", file=sys.stderr)
-        out = None
-    # Empty price array == failed fetch; everything else == success.
-    if isinstance(out, dict) and out.get("price"):
-        _stale_save(cache_key, out)
-        return out
-    cached = _stale_load(cache_key)
-    if cached is not None:
-        return cached
-    return out if isinstance(out, dict) else {"price": [], "volume": []}
+    today = today or _utc_today()
+    yesterday = (today - timedelta(days=1)).isoformat()
+    budget = budget or CoinGeckoBudget(max_calls=1, pace_s=0)
+    key = f"daily_series_{coin_id or sym}"
+    cached = _stale_read_raw(key)
+    cached = cached if isinstance(cached, dict) and cached.get("price") else None
+    cached_fresh = bool(cached and (cached.get("as_of") or "") >= yesterday)
+
+    if cached_fresh and cached.get("source") == "coingecko":
+        return {**cached, "cache": "today", "coingecko_calls": 0, "attempts": []}
+
+    attempts: list[str] = []
+    calls = 0
+    series = None
+    if coin_id and allow_coingecko and budget.allow():
+        status, s = coingecko_daily_series(coin_id, days, today)
+        budget.record(status)
+        calls = 1
+        attempts.append(f"coingecko:{status}")
+        if s:
+            series = {**s, "source": "coingecko", "volume_basis": "aggregate"}
+    elif coin_id:
+        attempts.append("coingecko:skipped (budget)")
+
+    if series is None and cached_fresh:
+        # A fallback series fetched earlier today is complete; CoinGecko just
+        # failed again (or was not asked), so keep it rather than re-pulling
+        # the exchanges for the same days.
+        return {**cached, "cache": "today", "coingecko_calls": calls,
+                "attempts": attempts}
+
+    if series is None:
+        for name in DAILY_SERIES_FALLBACKS:
+            try:
+                s = _DAILY_FALLBACK_FETCHERS[name](sym, days, today)
+            except Exception as e:  # one bad venue must not end the chain
+                print(f"  [daily-series] {sym} {name}: {type(e).__name__}", file=sys.stderr)
+                s = None
+            attempts.append(f"{name}:{'ok' if s else 'none'}")
+            if s:
+                series = {**s, "market_cap": [], "source": name, "volume_basis": "exchange"}
+                break
+
+    if series is not None:
+        series["as_of"] = _series_last_common_date(series)
+        series["fetched_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        _stale_save(key, series)
+        return {**series, "coingecko_calls": calls, "attempts": attempts}
+
+    if cached and cached.get("as_of"):
+        try:
+            age = (today - datetime.strptime(cached["as_of"], "%Y-%m-%d").date()).days
+        except ValueError:
+            age = None
+        if age is not None and age <= DAILY_SERIES_STALE_MAX_DAYS:
+            print(f"  [daily-series] {sym}: every source failed ({', '.join(attempts)}); "
+                  f"serving cache observed {cached['as_of']}", file=sys.stderr)
+            return {**cached, "stale": True, "coingecko_calls": calls, "attempts": attempts}
+    print(f"  [daily-series] {sym}: no source answered ({', '.join(attempts)})", file=sys.stderr)
+    return {"price": [], "volume": [], "market_cap": [], "source": None,
+            "volume_basis": None, "as_of": None, "coingecko_calls": calls,
+            "attempts": attempts}
+
+
+def fetch_top_daily_series(top_markets: list[dict], n: int = 50, days: int = 180, *,
+                           today=None, budget: CoinGeckoBudget | None = None) -> dict:
+    """Daily series for the top `n` coins, with the run's source/budget record.
+
+    Returns ``{"series": {coin_id: series}, "meta": {...}}``. ``meta`` is what
+    ships as ``market.poc_top_meta``: per-source counts, how many came from
+    today's cache, which are stale or missing, and the CoinGecko calls this
+    run actually made.
+    """
+    today = today or _utc_today()
+    budget = budget or CoinGeckoBudget()
+    ledger = _stale_read_raw(_CG_LEDGER_KEY)
+    if not isinstance(ledger, dict) or ledger.get("date") != today.isoformat():
+        ledger = {"date": today.isoformat(), "attempts": {}}
+    attempts = ledger.setdefault("attempts", {})
+    series: dict[str, dict] = {}
+    by_source: dict[str, int] = {}
+    from_cache = 0
+    stale: list[str] = []
+    missing: list[str] = []
+    for c in (top_markets or [])[:n]:
+        coin_id = c.get("id") if isinstance(c, dict) else None
+        symbol = ((c.get("symbol") if isinstance(c, dict) else "") or "").upper()
+        if not coin_id or not symbol:
+            continue
+        allow = int(attempts.get(coin_id, 0)) < COINGECKO_MAX_ATTEMPTS_PER_COIN_PER_DAY
+        s = crypto_daily_series(coin_id, symbol, days, today=today, budget=budget,
+                                allow_coingecko=allow)
+        if s.get("coingecko_calls"):
+            attempts[coin_id] = int(attempts.get(coin_id, 0)) + int(s["coingecko_calls"])
+        series[coin_id] = s
+        src = s.get("source") or "none"
+        by_source[src] = by_source.get(src, 0) + 1
+        if s.get("cache") == "today":
+            from_cache += 1
+        if s.get("stale"):
+            stale.append(symbol)
+        if not s.get("price"):
+            missing.append(symbol)
+    _stale_save(_CG_LEDGER_KEY, ledger)
+    meta = {
+        "requested": min(n, len(top_markets or [])),
+        "by_source": by_source,
+        "served_from_today_cache": from_cache,
+        "stale": stale,
+        "missing": missing,
+        "coingecko_this_run": budget.summary(),
+        "coingecko_calls_today": sum(int(v) for v in attempts.values()),
+        "coingecko_max_per_coin_per_day": COINGECKO_MAX_ATTEMPTS_PER_COIN_PER_DAY,
+        "date_basis": ("complete UTC days only; the newest bar is the previous "
+                       "UTC day's close"),
+        "source_labels": DAILY_SERIES_SOURCE_LABELS,
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+    return {"series": series, "meta": meta}
+
+
+def resolve_coingecko_id(symbol: str, markets_top: list[dict] | None = None) -> tuple[str | None, str | None]:
+    """``(coin_id, name)`` for a ticker: the cached top-N list first, then
+    CoinGecko /search (one call). Ties go to the best market-cap rank, so
+    "BTC" is Bitcoin and not a token that borrowed its ticker."""
+    sym = (symbol or "").upper()
+    if not _TICKER_RE.match(sym):
+        return None, None
+    for c in markets_top or []:
+        if isinstance(c, dict) and str(c.get("symbol") or "").upper() == sym and c.get("id"):
+            return c["id"], c.get("name")
+    status, j = _get_status(CG_SEARCH_URL, {"query": sym}, timeout=15)
+    if status != 200 or not isinstance(j, dict):
+        return None, None
+    hits = [c for c in (j.get("coins") or [])
+            if isinstance(c, dict) and str(c.get("symbol") or "").upper() == sym
+            and isinstance(c.get("id"), str) and _CG_ID_RE.match(c["id"])]
+    if not hits:
+        return None, None
+    hits.sort(key=lambda c: (c.get("market_cap_rank") is None, c.get("market_cap_rank") or 0))
+    return hits[0]["id"], hits[0].get("name")
+
+
+def crypto_daily_market_by_symbol(symbol: str, days: int = 180,
+                                  markets_top: list[dict] | None = None) -> dict:
+    """Server-side "look up any crypto": resolve the ticker to a CoinGecko id
+    (cached list first) and return its daily series, falling back to the
+    exchanges by ticker when CoinGecko has nothing. Adds ``coin_id`` and
+    ``name`` when resolved."""
+    coin_id, name = resolve_coingecko_id(symbol, markets_top)
+    s = crypto_daily_series(coin_id, symbol, days)
+    return {**s, "coin_id": coin_id, "name": name}
 
 
 def poc_entry_as_of(entry: dict | None) -> str | None:
@@ -3301,33 +3682,37 @@ def poc_entry_as_of(entry: dict | None) -> str | None:
 
 
 def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
-                             days: int = 180) -> list[dict]:
-    """Fetch market_chart and compute multi-timeframe POC + migration + naked
-    POCs for the top `n` coins by market cap. Used by the "Top 25 POC" UI.
+                             days: int = 180,
+                             series_by_id: dict[str, dict] | None = None) -> list[dict]:
+    """Multi-timeframe POC + migration + naked POCs + rolling signal score for
+    the top `n` coins by market cap. Feeds the "Top 50 POC" table and the
+    top-50 signal-breadth chart (and, via data/composites, the
+    poc_signal_breadth history).
 
-    Calls `cryptocompare_market(symbol, days)` per coin -- NOT CoinGecko.
-    This docstring said CoinGecko for a long time after the implementation had
-    already moved, which matters: it is the only high-volume coin loop in the
-    file, so anyone budgeting CoinGecko quota from this line over-counts by
-    roughly 4x. CoinGecko is called exactly 4 times in this module
-    (market_chart x4 assets, global, coins/markets, search/trending ~= 7 calls
-    per run), comfortably inside the ~30/min free tier. Skips
-    coins whose price/volume series come back empty or whose POC compute
-    yields nothing usable.
+    Price/volume come from `crypto_daily_series` (CoinGecko market_chart, then
+    Coinbase -> Kraken -> Binance.US), normally pre-fetched by
+    `fetch_top_daily_series` and passed in as `series_by_id` so the Alpine
+    index can reuse the same pulls. When `series_by_id` is None it is fetched
+    here. This used to call CryptoCompare histoday, and before that this
+    comment claimed Binance klines, which it never was — anyone budgeting
+    quota from the comment was budgeting the wrong API.
+
+    Each entry carries ``source`` (which API the series came from) and
+    ``volume_basis`` ("aggregate" for CoinGecko's cross-venue volume,
+    "exchange" for a single exchange's volume), because a POC built from one
+    venue's volume is a different measurement from one built from the market's.
 
     Returns up to `n` entries with the schema the dashboard expects:
-        {coin_id, symbol, name, image, current_price,
-         poc: {d30, d90, d180, migration, naked, migration_series}}
+        {coin_id, symbol, name, image, current_price, as_of, source,
+         volume_basis, poc: {d30, d90, d180, migration, naked,
+         migration_series}, signal_history[, stale]}
     """
     if not top_markets:
         return []
-    # Binance public klines API has ~1200 req/min limits with no key, so this
-    # comfortably covers a top-25 sweep. CoinGecko's 30/min free tier was
-    # hitting 429 on most coins given the rest of fetch_trading already burns
-    # ~10 calls. Stablecoins and unlisted-on-Binance coins fall back to the
-    # stale cache from the previous run.
     out: list[dict] = []
     coins = top_markets[:n]
+    if series_by_id is None:
+        series_by_id = fetch_top_daily_series(coins, n=n, days=days)["series"]
     LOOKBACKS = (("d30", 30, 60), ("d90", 90, 80), ("d180", 180, 100))
     # Build a stale-keep map from the previous market.json so any coin we fail
     # to fetch this run keeps its last good POC entry.
@@ -3397,9 +3782,9 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
         symbol = (c.get("symbol") or "").upper()
         if not coin_id or not symbol:
             continue
-        m = cryptocompare_market(symbol, days=days)
-        prices = (m or {}).get("price") or []
-        volumes = (m or {}).get("volume") or []
+        m = series_by_id.get(coin_id) or {}
+        prices = m.get("price") or []
+        volumes = m.get("volume") or []
         if not prices or not volumes:
             if coin_id in stale_map:
                 out.append(_carry_forward(coin_id))
@@ -3426,14 +3811,16 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
         )
         entry = {
             "coin_id":       coin_id,
-            "symbol":        (c.get("symbol") or "").upper(),
+            "symbol":        symbol,
             "name":          c.get("name"),
             "image":         c.get("image"),
             "current_price": c.get("price_usd"),
             # Last date present in BOTH the price and volume series — the
-            # newest bar the POC/score were actually computed from, from
-            # CryptoCompare's own daily timestamps. Not a clock reading.
+            # newest complete daily bar the POC/score were computed from,
+            # labelled by the UTC day it closes. Not a clock reading.
             "as_of":         common[-1] if common else None,
+            "source":        m.get("source"),
+            "volume_basis":  m.get("volume_basis"),
             "poc": {
                 **tfs,
                 "migration":        compute_poc_migration(tfs.get("d30"), tfs.get("d90")),
@@ -3442,15 +3829,223 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
             },
             "signal_history": signal_history,
         }
-        # `cryptocompare_market` has its own per-symbol stale-fallback and
-        # tags the dict it returns. Surface that here too, so the UI's
-        # "N of M served from cache" count covers BOTH stale paths and not
-        # just the copy-forward one below. The `as_of` above is already the
+        # `crypto_daily_series` serves a bounded (<= 7 day) cached series when
+        # every live source failed, and tags it. Surface that here too, so the
+        # UI's "N of M served from cache" count covers BOTH stale paths and not
+        # just the copy-forward one above. The `as_of` above is already the
         # cached series' own last date, so it stays honest either way.
-        if isinstance(m, dict) and m.get("stale"):
+        if m.get("stale"):
             entry["stale"] = True
         out.append(entry)
     return out
+
+
+# ----- Alpine Large-Cap Crypto Index (replaces the CoinDesk CADLI chart) ------
+#
+# The Futures tab used to chart CoinDesk's CADLI BTC reference price. CADLI is
+# CoinDesk's proprietary index and its API needs a paid key since 2026-10, so
+# it cannot be shown, and it cannot be reproduced either. In its place this is
+# Alpine Data's OWN index, built only from CoinGecko daily closes and market
+# caps that the top-50 POC sweep already pulls (zero extra API calls). It is
+# never labelled CADLI and never presented as CoinDesk's.
+
+ALPINE_INDEX_NAME = "Alpine Large-Cap Crypto Index"
+ALPINE_INDEX_CODE = "ALCI-10"
+ALPINE_INDEX_CONSTITUENTS = 10
+ALPINE_INDEX_WINDOW_DAYS = 90
+ALPINE_INDEX_BASE_LEVEL = 100.0
+ALPINE_PEG_BAND = 0.03
+ALPINE_STABLECOIN_IDS = frozenset({
+    "tether", "usd-coin", "dai", "usds", "ethena-usde", "usd1-wlfi",
+    "first-digital-usd", "paypal-usd", "true-usd", "frax", "ripple-usd",
+    "global-dollar", "falcon-finance", "usual-usd", "binance-usd", "gemini-dollar",
+    "paxos-standard", "liquity-usd", "crvusd", "gho", "susds", "ethena-staked-usde",
+    "eurc", "stasis-eurs", "agora-dollar", "sky-dollar", "usdd",
+})
+ALPINE_NON_CRYPTO_IDS = frozenset({
+    # tokenized real-world assets: gold, loans, money-market / T-bill funds
+    "tether-gold", "pax-gold", "figure-heloc", "hashnote-usyc",
+    "ondo-us-dollar-yield", "blackrock-usd-institutional-digital-liquidity-fund",
+    "franklin-onchain-u-s-government-money-fund", "ondo-short-term-us-government-bond-fund",
+})
+ALPINE_DERIVATIVE_IDS = frozenset({
+    # wrapped / staked / bridged versions of another coin (double counting)
+    "wrapped-bitcoin", "staked-ether", "wrapped-steth", "weth", "coinbase-wrapped-btc",
+    "wrapped-eeth", "ether-fi-staked-eth", "rocket-pool-eth", "mantle-staked-ether",
+    "wrapped-beacon-eth", "lombard-staked-btc", "solv-btc", "jito-staked-sol",
+    "binance-staked-sol", "kelp-dao-restaked-eth", "renzo-restaked-eth",
+    "binance-peg-weth", "wbnb", "wrapped-solana", "bitcoin-avalanche-bridged-btc-b",
+    "binance-bitcoin", "cbeth", "coinbase-wrapped-staked-eth", "msol", "jupiter-staked-sol",
+})
+_ALPINE_DERIVATIVE_NAME_RE = re.compile(r"\b(wrapped|bridged|staked|restaked)\b", re.I)
+ALPINE_INDEX_METHOD = {
+    "summary": ("Market-cap-weighted price index of the 10 largest eligible coins, "
+                "rebased to 100 at the first day of the 90-day window shown."),
+    "universe": ("The 50 largest coins by market cap on CoinGecko at fetch time "
+                 "(the list the POC table uses)."),
+    "eligibility": ("Excludes stablecoins (a named list, plus any coin whose every close "
+                    "in the window is within ±3% of $1), tokenized real-world assets "
+                    "(gold, loans, money-market funds) and wrapped, staked or bridged "
+                    "versions of other coins. A coin also needs CoinGecko market-cap "
+                    "history in this run; one served by an exchange fallback is left "
+                    "out and listed under excluded."),
+    "selection": ("The 10 largest eligible coins by CoinGecko market cap at the base "
+                  "date, re-selected at the first daily close of each calendar month. "
+                  "Every change is listed under constituent_changes."),
+    "weighting": ("Each day's index return is the average of the constituents' price "
+                  "returns weighted by their previous-day CoinGecko market caps. No "
+                  "weight cap, so Bitcoin dominates."),
+    "data": ("CoinGecko /coins/{id}/market_chart daily closes and market caps (00:00 UTC "
+             "samples, labelled with the UTC day they close). Complete days only. A day "
+             "on which any constituent has no price is not computed and is listed under "
+             "gaps; the next computed day chains from the last computed one. Nothing is "
+             "interpolated or filled."),
+    "caveats": ("Survivorship: only coins in today's top 50 can be constituents at any "
+                "point in the window, so a coin that was large earlier and has since "
+                "dropped out is missing. Market caps are CoinGecko's estimates. This is "
+                "Alpine Data's own index, not CoinDesk's CADLI or any licensed benchmark."),
+}
+
+
+def _alpine_exclusion(coin: dict, s: dict | None, window: set[str]) -> str | None:
+    """Why `coin` cannot be an index constituent this run, or None."""
+    cid = str(coin.get("id") or "")
+    name = str(coin.get("name") or "")
+    if cid in ALPINE_STABLECOIN_IDS:
+        return "stablecoin"
+    if cid in ALPINE_NON_CRYPTO_IDS:
+        return "tokenized real-world asset (gold, loans, funds)"
+    if cid in ALPINE_DERIVATIVE_IDS or _ALPINE_DERIVATIVE_NAME_RE.search(name):
+        return "wrapped, staked or bridged version of another coin"
+    if not isinstance(s, dict) or s.get("source") != "coingecko" or not s.get("market_cap"):
+        return "no CoinGecko market-cap history in this run"
+    closes = [p.get("value") for p in s.get("price") or []
+              if p.get("date") in window and isinstance(p.get("value"), (int, float))]
+    if closes and all(abs(v - 1.0) <= ALPINE_PEG_BAND for v in closes):
+        return "stablecoin (every close in the window within ±3% of $1)"
+    return None
+
+
+def compute_alpine_index(top_markets: list[dict], series_by_id: dict[str, dict], *,
+                         n: int = ALPINE_INDEX_CONSTITUENTS,
+                         window_days: int = ALPINE_INDEX_WINDOW_DAYS,
+                         now: datetime | None = None) -> dict:
+    """Alpine Large-Cap Crypto Index over the last `window_days` complete days.
+
+    See ALPINE_INDEX_METHOD for the rules; every one of them is applied here
+    and nothing else is. Returns ``{available, name, code, series: [{date,
+    value}], base_date, base_level, as_of, constituents, initial_constituents,
+    constituent_changes, gaps, excluded, method, ...}``; ``available: False``
+    with a ``reason`` when there is not enough CoinGecko history to compute it.
+    Pure: no network.
+    """
+    now = now or datetime.now(timezone.utc)
+    today = _utc_today(now)
+    base = {
+        "name": ALPINE_INDEX_NAME,
+        "code": ALPINE_INDEX_CODE,
+        "computed_by": "Alpine Data",
+        "replaces": ("CoinDesk CADLI BTC reference chart. CADLI is CoinDesk's proprietary "
+                     "index and its API needs a paid CoinDesk key since 2026-10; this is a "
+                     "different, independently computed index."),
+        "source": "CoinGecko /coins/{id}/market_chart (daily close price and market cap)",
+        "method": ALPINE_INDEX_METHOD,
+        "constituent_count": n,
+        "window_days": window_days,
+        "computed_at": now.isoformat(timespec="seconds"),
+    }
+    end = today - timedelta(days=1)
+    window = [(end - timedelta(days=i)).isoformat() for i in range(window_days - 1, -1, -1)]
+    wset = set(window)
+    price: dict[str, dict[str, float]] = {}
+    cap: dict[str, dict[str, float]] = {}
+    label: dict[str, tuple[str, str]] = {}
+    excluded: dict[str, list[str]] = {}
+    for c in top_markets or []:
+        if not isinstance(c, dict) or not c.get("id"):
+            continue
+        cid = c["id"]
+        sym = str(c.get("symbol") or "").upper()
+        s = (series_by_id or {}).get(cid)
+        why = _alpine_exclusion(c, s, wset)
+        if why:
+            excluded.setdefault(why, []).append(sym or cid)
+            continue
+        price[cid] = {p["date"]: float(p["value"]) for p in s.get("price") or []
+                      if p.get("date") in wset and isinstance(p.get("value"), (int, float))
+                      and p["value"] > 0}
+        cap[cid] = {p["date"]: float(p["value"]) for p in s.get("market_cap") or []
+                    if p.get("date") in wset and isinstance(p.get("value"), (int, float))
+                    and p["value"] > 0}
+        label[cid] = (sym or cid, str(c.get("name") or cid))
+    base["excluded"] = excluded
+    base["eligible_count"] = len(price)
+
+    def _select(d: str) -> list[str] | None:
+        ranked = sorted((cid for cid in price if cap[cid].get(d) and price[cid].get(d)),
+                        key=lambda cid: -cap[cid][d])
+        return ranked[:n] if len(ranked) >= n else None
+
+    def _syms(ids) -> list[str]:
+        return [label[i][0] for i in ids]
+
+    if len(price) < n:
+        return {**base, "available": False, "series": [],
+                "reason": (f"Only {len(price)} eligible coins had CoinGecko market-cap history "
+                           f"in this run; the index needs {n}. Not computed rather than "
+                           f"computed from fewer constituents.")}
+    base_date = next((d for d in window if _select(d)), None)
+    if base_date is None:
+        return {**base, "available": False, "series": [],
+                "reason": (f"No day in the {window_days}-day window had prices and market caps "
+                           f"for {n} eligible coins.")}
+    members = _select(base_date)
+    initial = list(members)
+    sel_month = base_date[:7]
+    level = ALPINE_INDEX_BASE_LEVEL
+    series = [{"date": base_date, "value": round(level, 4)}]
+    prev = base_date
+    changes: list[dict] = []
+    gaps: list[dict] = []
+    for d in window[window.index(base_date) + 1:]:
+        missing = [label[c][0] for c in members if not price[c].get(d)]
+        if missing or not all(price[c].get(prev) and cap[c].get(prev) for c in members):
+            gaps.append({"date": d, "missing": missing or ["previous-day market cap"]})
+            continue
+        tot = sum(cap[c][prev] for c in members)
+        level *= sum(cap[c][prev] / tot * (price[c][d] / price[c][prev]) for c in members)
+        series.append({"date": d, "value": round(level, 4)})
+        prev = d
+        if d[:7] != sel_month:
+            new = _select(d)
+            if new:
+                if set(new) != set(members):
+                    changes.append({"date": d,
+                                    "added": _syms(c for c in new if c not in members),
+                                    "removed": _syms(c for c in members if c not in new)})
+                members = new
+                sel_month = d[:7]
+    tot = sum(cap[c][prev] for c in members if cap[c].get(prev)) or 0.0
+    constituents = sorted((
+        {"coin_id": c, "symbol": label[c][0], "name": label[c][1],
+         "market_cap_usd": cap[c].get(prev),
+         "weight_pct": round(cap[c][prev] / tot * 100, 2) if tot and cap[c].get(prev) else None}
+        for c in members), key=lambda r: -(r["market_cap_usd"] or 0))
+    return {
+        **base,
+        "available": len(series) >= 2,
+        **({} if len(series) >= 2 else {
+            "reason": "Fewer than two computable days in the window."}),
+        "series": series,
+        "base_date": base_date,
+        "base_level": ALPINE_INDEX_BASE_LEVEL,
+        "as_of": prev,
+        "change_pct": round(level / ALPINE_INDEX_BASE_LEVEL * 100 - 100, 2),
+        "constituents": constituents,
+        "initial_constituents": _syms(initial),
+        "constituent_changes": changes,
+        "gaps": gaps,
+    }
 
 
 def compute_poc_migration(d30: dict | None, d90: dict | None) -> dict | None:
@@ -3949,13 +4544,13 @@ def compute_whale_sentiment_eth(whale: dict) -> dict | None:
 
 
 async def _fetch_social_async() -> dict:
-    """Concurrent implementation of ``fetch_social``. Schema-identical to
-    the sequential version; just runs the 4 independent sub-fetchers in
-    parallel via ``asyncio.gather`` + ``asyncio.to_thread``. They hit 4
-    different domains (reddit.com, min-api.cryptocompare.com,
-    data-api.cryptocompare.com, api.santiment.net), so there's no shared
-    rate-limit contention — wall time collapses to max(durations)."""
-    print("    [social] reddit + cryptocompare + cc-news + santiment in parallel...")
+    """Concurrent implementation of ``fetch_social``. Runs the 4 independent
+    sub-fetchers in parallel via ``asyncio.gather`` + ``asyncio.to_thread``.
+    They hit different hosts (reddit.com, CoinGecko + GitHub, Google News,
+    api.santiment.net), so there's no shared rate-limit contention — wall time
+    collapses to max(durations). community_dev_stats makes at most 4 CoinGecko
+    calls per UTC day (it reuses today's result), paced 1 s apart."""
+    print("    [social] reddit + community/dev + headline sentiment + santiment in parallel...")
 
     def _reddit() -> dict:
         try:
@@ -3964,18 +4559,18 @@ async def _fetch_social_async() -> dict:
             print(f"  [reddit] fatal: {e}", file=sys.stderr)
             return {"available": False, "reason": "fetch_error", "subreddits": {}}
 
-    def _cc() -> dict:
+    def _community() -> dict:
         try:
-            return cryptocompare_social_stats()
+            return community_dev_stats()
         except Exception as e:
-            print(f"  [cryptocompare] fatal: {e}", file=sys.stderr)
+            print(f"  [community-dev] fatal: {type(e).__name__}", file=sys.stderr)
             return {"available": False, "reason": "fetch_error", "coins": {}}
 
-    def _ccnews() -> dict:
+    def _headlines() -> dict:
         try:
-            return cryptocompare_news_sentiment()
+            return headline_sentiment()
         except Exception as e:
-            print(f"  [cc-news] fatal: {e}", file=sys.stderr)
+            print(f"  [headline-sentiment] fatal: {type(e).__name__}", file=sys.stderr)
             return {"available": False, "reason": "fetch_error", "coins": {}}
 
     def _san() -> dict:
@@ -3985,10 +4580,10 @@ async def _fetch_social_async() -> dict:
             print(f"  [santiment] fatal: {e}", file=sys.stderr)
             return {"available": False, "reason": "fetch_error", "coins": {}}
 
-    reddit, cc, cc_news, san = await asyncio.gather(
+    reddit, community, headlines, san = await asyncio.gather(
         asyncio.to_thread(_reddit),
-        asyncio.to_thread(_cc),
-        asyncio.to_thread(_ccnews),
+        asyncio.to_thread(_community),
+        asyncio.to_thread(_headlines),
         asyncio.to_thread(_san),
     )
 
@@ -3998,20 +4593,20 @@ async def _fetch_social_async() -> dict:
         prev = _social_stale_fallback("reddit", {})
         if isinstance(prev, dict) and prev.get("subreddits"):
             reddit = {**prev, "stale": True}
-    if not cc.get("available"):
-        prev = _social_stale_fallback("cryptocompare", {})
+    if not community.get("available"):
+        prev = _social_stale_fallback("community_dev", {})
         if isinstance(prev, dict) and prev.get("coins"):
-            cc = {**prev, "stale": True}
-    if not cc_news.get("available"):
-        prev = _social_stale_fallback("cc_news", {})
+            community = {**prev, "stale": True}
+    if not headlines.get("available"):
+        prev = _social_stale_fallback("headline_sentiment", {})
         if isinstance(prev, dict) and prev.get("coins"):
-            cc_news = {**prev, "stale": True}
+            headlines = {**prev, "stale": True}
 
     return {
-        "available": any(s.get("available") for s in (reddit, cc, cc_news, san)),
+        "available": any(s.get("available") for s in (reddit, community, headlines, san)),
         "reddit": reddit,
-        "cryptocompare": cc,
-        "cc_news": cc_news,
+        "community_dev": community,
+        "headline_sentiment": headlines,
         "santiment": san,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
@@ -4022,17 +4617,18 @@ def fetch_social() -> dict:
     on-chain + news signals from 4 independent free sources, each handled
     separately so partial failures degrade gracefully:
 
-      reddit          — subscribers + active users + top 24h posts (often
-                        blocked on cloud IPs with HTTP 403; works locally)
-      cryptocompare   — per-coin Twitter/Reddit/GitHub social+dev stats
-                        (requires CryptoCompare auth as of 2026; will skip
-                        on missing key)
-      cc_news         — per-coin news sentiment via the keyless data-api
-                        (POSITIVE/NEGATIVE/NEUTRAL counts + top headlines)
-      santiment       — DAA + dev-activity (one fetch per UTC day; see santiment_gate)
+      reddit             — subscribers + active users + top 24h posts (often
+                           blocked on cloud IPs with HTTP 403; works locally)
+      community_dev      — per-coin CoinGecko watchlist/vote counts + GitHub
+                           repo stats (once per UTC day; see community_dev_stats)
+      headline_sentiment — per-coin Google News headlines scored by Alpine
+                           Data's own keyword rule (see HEADLINE_SENTIMENT_METHOD)
+      santiment          — DAA + dev-activity (one fetch per UTC day; see santiment_gate)
 
-    LunarCrush was removed — their v4 API is gated behind the Builder plan
-    (~$240/mo); no free endpoints exist. See commit log for the decision.
+    CryptoCompare social + news (the old `cryptocompare` / `cc_news` keys) were
+    removed in 2026-10: the CoinDesk/CryptoCompare API needs a paid key.
+    LunarCrush was removed earlier — their v4 API is gated behind the Builder
+    plan (~$240/mo); no free endpoints exist.
 
     The 4 sub-fetchers run concurrently via ``_fetch_social_async``. This
     public function stays sync so callers in ``fetch_all`` /
@@ -5624,8 +6220,10 @@ def whale_proxies_btc() -> dict:
 # Concurrency configuration. CoinGecko's free tier is ~30 req/min, so we
 # serialize CG calls through a 1-permit semaphore AND enforce a 0.6s gap
 # between successive calls (100/min headroom mathematically; 0.6s in
-# practice protects against the per-IP burst limiter). Other APIs
-# (CryptoCompare, DeFiLlama, mempool.space, etc.) tolerate much higher
+# practice protects against the per-IP burst limiter). The top-50 daily-series
+# sweep (fetch_top_daily_series) runs in Batch 2, after these, with its own
+# 2.5 s pacing and per-run cap (CoinGeckoBudget). Other APIs
+# (Coinbase, Kraken, DeFiLlama, mempool.space, etc.) tolerate much higher
 # concurrency — we cap them at 10 simultaneously to avoid local socket
 # exhaustion and being mistaken for a scraper.
 CG_PACE = 0.6
@@ -5646,8 +6244,9 @@ async def _cg_call(fn: Callable, *args: Any, **kwargs: Any) -> Any:
 
 async def _bg_call(fn: Callable, *args: Any, **kwargs: Any) -> Any:
     """Run an arbitrary synchronous fetcher in a thread under the generic
-    concurrency cap. Used for all non-CG sources (CryptoCompare, OKX,
-    DeFiLlama, mempool.space, Coinbase, Yahoo, FRED, etc.)."""
+    concurrency cap. Used for all non-CG sources (OKX, DeFiLlama,
+    mempool.space, Coinbase, Yahoo, FRED, Google News, etc.) and for the
+    top-50 daily-series sweep, which paces its own CoinGecko calls."""
     async with _generic_semaphore:
         return await asyncio.to_thread(fn, *args, **kwargs)
 
@@ -5701,7 +6300,7 @@ async def _fetch_trading_async() -> dict:
         chains, protocols, yields_top, bridges,        # DeFiLlama tabular × 4
         tvl_eth, tvl_sol, tvl_arb, tvl_base,           # DeFiLlama historical × 4
         news, ai_news, ai_funding, ai_curated,         # news × 4
-        cadli, yahoo_idx, stocks_signals, fng,         # cadli, yahoo × 2, F&G
+        yahoo_idx, stocks_signals, fng,                # yahoo × 2, F&G
         money_flow_block,                              # Money Flow Index (MFX)
     ) = await asyncio.gather(
         _timed("coingecko_market(btc)",   _cg_call(coingecko_market, "bitcoin")),
@@ -5748,7 +6347,6 @@ async def _fetch_trading_async() -> dict:
         _timed("fetch_ai_news",           _bg_call(fetch_ai_news)),
         _timed("fetch_ai_funding",        _bg_call(fetch_ai_funding)),
         _timed("load_ai_curated",         _bg_call(load_ai_curated)),
-        _timed("coindesk_cadli",          _bg_call(coindesk_cadli, 90)),
         _timed("yahoo_indices",           _bg_call(yahoo_indices)),
         _timed("fetch_stocks_signals",    _bg_call(fetch_stocks_signals, 50)),
         _timed("fear_greed",              _bg_call(fear_greed)),
@@ -5776,25 +6374,35 @@ async def _fetch_trading_async() -> dict:
     top_markets = top_markets_raw or stale_keep_markets_top()
 
     # ---- Batch 2: depends on top_markets ------------------------------------
-    # compute_poc_top_markets fans out 50 cryptocompare_market calls. We
-    # already keep those serialized inside the function (it loops), but
-    # CryptoCompare tolerates parallelism — wrap the whole call in a single
-    # thread so it can run alongside any straggling Batch 1 work. (Most of
-    # Batch 1 will be done by now since CG-bound tasks dominate.)
-    # fetch_cc_per_coin_news fans out 25 CC news calls — also depends on
-    # top_markets (to pick which symbols to score). Same parallelism story
-    # as compute_poc_top_markets; the two run side-by-side here.
-    print("  Batch 2: compute_poc_top_markets + cc_per_coin_news (depends on top_markets)...")
-    poc_top, cc_per_coin_news = await asyncio.gather(
+    # fetch_top_daily_series pulls a complete-day close/volume/market-cap
+    # series for each of the top 50 (CoinGecko market_chart, then Coinbase ->
+    # Kraken -> Binance.US). It is cached per coin per UTC day, so only the
+    # first run of a day spends CoinGecko calls (<= 50, paced 2.5 s apart);
+    # every later run that day is served from data/.stale/. The POC table, the
+    # signal-breadth chart AND the Alpine Large-Cap Crypto Index are all
+    # computed from those same series — the index costs no extra call.
+    # fetch_headline_sentiment_by_coin runs alongside: 25 Google News RSS
+    # queries (no CoinGecko), deduplicated against the publisher feeds.
+    print("  Batch 2: top-50 daily series + per-coin headlines (depend on top_markets)...")
+    top_series, headline_by_coin = await asyncio.gather(
         _timed(
-            "compute_poc_top_markets",
-            _bg_call(compute_poc_top_markets, top_markets, 50),
+            "fetch_top_daily_series",
+            _bg_call(fetch_top_daily_series, top_markets, 50, 180),
         ),
         _timed(
-            "fetch_cc_per_coin_news",
-            _bg_call(fetch_cc_per_coin_news, top_markets, 25),
+            "fetch_headline_sentiment_by_coin",
+            _bg_call(fetch_headline_sentiment_by_coin, top_markets, 25, news),
         ),
     )
+    series_by_id = (top_series or {}).get("series") or {}
+    poc_top = compute_poc_top_markets(top_markets, 50, 180, series_by_id=series_by_id)
+    try:
+        alpine_index = compute_alpine_index(top_markets, series_by_id)
+    except Exception as e:  # a method bug must not take down fetch_trading
+        print(f"  [alpine-index] {type(e).__name__}: {e}", file=sys.stderr)
+        alpine_index = {"available": False, "name": ALPINE_INDEX_NAME,
+                        "reason": f"index computation failed ({type(e).__name__})",
+                        "series": []}
 
     # ETH/BTC ratio from prices
     btc_p = {p["date"]: p["value"] for p in btc_mkt["price"]}
@@ -5892,20 +6500,27 @@ async def _fetch_trading_async() -> dict:
         "markets_top": top_markets,
         "trending": trending,
         "poc_top": poc_top,
+        # Which source each top-50 series came from, today-cache hits, stale /
+        # missing coins and the CoinGecko calls this run made. See
+        # fetch_top_daily_series.
+        "poc_top_meta": (top_series or {}).get("meta") or {},
         "defi": defi_block,
         "news": news,
-        # Per-coin CC news sentiment (top-25 by mcap). Keyed by uppercase
-        # symbol. Frontend `groupNewsBySymbol` merges these counts on top of
-        # RSS counts so coins that aren't named in the 5 RSS feeds still get
-        # scored. See `fetch_cc_per_coin_news` for the shape.
-        "news_sentiment_by_coin": cc_per_coin_news,
+        # Per-coin headline sentiment (top-25 by mcap): Google News RSS
+        # headlines scored by Alpine Data's own keyword rule, minus any
+        # headline already in `news`. Keyed by uppercase symbol. Frontend
+        # `groupNewsBySymbol` adds these counts to its RSS counts so coins that
+        # aren't named in the 5 publisher feeds still get scored. See
+        # `fetch_headline_sentiment_by_coin` for the shape.
+        "news_sentiment_by_coin": headline_by_coin,
         "ai_news": ai_news,
         "ai_funding": ai_funding,
         "ai_curated": ai_curated,
-        "cadli_btc": cadli["rows"],
-        # Why cadli_btc is empty, when it is (the CoinDesk Data API now needs
-        # a key). The Futures card prints `reason` instead of a bare empty state.
-        "cadli_btc_status": cadli["status"],
+        # Alpine Large-Cap Crypto Index: Alpine Data's own cap-weighted index
+        # of the 10 largest eligible coins, from CoinGecko closes + market caps.
+        # It took the Futures-tab slot of the CoinDesk CADLI chart (CADLI's API
+        # needs a paid key since 2026-10) and is never labelled as CADLI.
+        "alpine_index": alpine_index,
         "yahoo_indices": yahoo_idx,
         "stocks_signals": stocks_signals,
         "money_flow": money_flow_block,

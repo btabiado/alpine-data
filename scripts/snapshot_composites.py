@@ -779,14 +779,15 @@ def _whale_sentiments(whale: dict) -> tuple[dict, dict]:
 # says so in `unavailable` so scripts/history_continuity.py discloses the
 # null instead of paging a new gap every day. Once the key is set the marker
 # is not written, and a null that persists is a real gap again.
-KEY_GATED: dict[str, tuple[str, str]] = {
-    "poc_signal_breadth": (
-        "CRYPTOCOMPARE_API_KEY",
-        "market.poc_top comes from CryptoCompare histoday (compute_poc_top_markets), "
-        "which answers keyless requests with 401 since 2026-10; "
-        "CRYPTOCOMPARE_API_KEY is not configured, so there is nothing to average.",
-    ),
-}
+#
+# Empty since 2026-10. Its one entry was poc_signal_breadth, gated on
+# CRYPTOCOMPARE_API_KEY while market.poc_top came from CryptoCompare histoday.
+# poc_top now comes from free sources (CoinGecko market_chart, then Coinbase /
+# Kraken / Binance.US candles — see fetch_market.crypto_daily_series), so a
+# null poc_signal_breadth is a REAL gap and must fail the continuity check.
+# Snapshots already written with the old marker keep it; they describe the
+# days they were written on.
+KEY_GATED: dict[str, tuple[str, str]] = {}
 
 
 def unavailable_by_design(idx: dict, env=None) -> dict:

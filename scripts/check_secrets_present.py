@@ -86,17 +86,19 @@ KEYS: list[tuple[str, str, str]] = [
                                                                                 "city-daily"),
     ("AIRNOW_API_KEY",        "City: AirNow air quality",                       "city-daily"),
     ("FRED_API_KEY",          "Macro overlay, CPI, metals, real estate",        "pages, lthcs-daily, real-estate-daily"),
-    # Was annotated "pages, lthcs-crypto-daily". lthcs-crypto-daily.yml passed it
-    # alongside COINGECKO_API_KEY as a placeholder for a future on-chain upgrade,
-    # and the crypto pipeline read neither, so both mappings were removed. Unlike
-    # COINGECKO_API_KEY below, this one has NOT been un-retired: verified against
-    # this branch, nothing under lthcs/ or in scripts/lthcs_crypto_daily.py reads
-    # CRYPTOCOMPARE_API_KEY. The claim is therefore just "pages" (V1 fetch, V2
-    # build, and the api-status probe).
-    # A CoinDesk Data key (CryptoCompare runs on CoinDesk Data now; free keys at
-    # developers.coindesk.com). Both hosts 401 keyless requests since 2026-10.
-    ("CRYPTOCOMPARE_API_KEY", "Per-coin OHLCV -> POC + signal-breadth chart; "
-                              "CADLI BTC reference chart; CC social/news",   "pages"),
+    # RETIRED 2026-10. CryptoCompare runs on CoinDesk Data now and every host
+    # (min-api / data-api.cryptocompare.com, data-api.coindesk.com) 401s keyless
+    # requests; the owner chose not to buy a plan. Everything it fed moved to
+    # free sources: top-50 POC + signal breadth -> CoinGecko market_chart with
+    # Coinbase/Kraken/Binance.US fallbacks; CADLI chart -> Alpine Data's own
+    # Large-Cap Crypto Index (CoinGecko market caps); social/dev stats ->
+    # CoinGecko + GitHub; news sentiment -> Google News RSS scored by our own
+    # keyword rule. No workflow maps it and no code reads it, so setting it
+    # does nothing. Kept in the report so a leftover secret reads as dead.
+    ("CRYPTOCOMPARE_API_KEY", "NOTHING since 2026-10. Was per-coin OHLCV, the "
+                              "CADLI chart and CC social/news; all replaced "
+                              "with free sources",
+                                                                                "(retired — replaced by free sources)"),
     ("GLASSNODE_API_KEY",     "True BTC whale-cohort metrics",                  "pages"),
     ("COINMETRICS_API_KEY",   "ETH whale series on the Whale tab",              "pages"),
     ("ETHERSCAN_API_KEY",     "ETH blocks/day chart on the Whale tab",          "pages"),

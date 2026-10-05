@@ -69,7 +69,7 @@ def client(tmp_path: Path, monkeypatch):
 
 
 def _canned_crypto_series(days: int = 180) -> dict:
-    """Return a synthetic CryptoCompare-style {price, volume} pair.
+    """Return a synthetic crypto_daily_series-style {price, volume} pair.
 
     Values trend up slowly so compute_stock_signal produces a non-degenerate
     score (above SMAs, positive momentum). Enough rows to satisfy the
@@ -129,10 +129,13 @@ def test_symbol_endpoint_validates_input(client):
 
 def test_symbol_endpoint_returns_crypto_data(client, monkeypatch):
     """Happy path: BTC resolves through the crypto branch. Mock
-    ``cryptocompare_market`` so the test never touches the network."""
+    ``crypto_daily_market_by_symbol`` (CoinGecko -> Coinbase -> Kraken ->
+    Binance.US) so the test never touches the network."""
     monkeypatch.setattr(
-        fetch_market, "cryptocompare_market",
-        lambda symbol, days=180: _canned_crypto_series(),
+        fetch_market, "crypto_daily_market_by_symbol",
+        lambda symbol, days=180, markets_top=None: {
+            **_canned_crypto_series(), "source": "coingecko",
+            "volume_basis": "aggregate", "coin_id": "bitcoin", "name": "Bitcoin"},
     )
 
     r = client.get("/api/symbol/BTC")
@@ -150,6 +153,9 @@ def test_symbol_endpoint_returns_crypto_data(client, monkeypatch):
     # POC sub-keys the dashboard renderer reads
     for k in ("d30", "d90", "d180", "naked", "migration_series"):
         assert k in body["poc"], f"poc.{k} missing from response"
+    # Which free source answered, and whether its volume is the market's.
+    assert body["source"] == "coingecko" and body["volume_basis"] == "aggregate"
+    assert body["name"] == "Bitcoin" and body["coin_id"] == "bitcoin"
 
 
 def test_symbol_endpoint_returns_stock_data(client, monkeypatch):
@@ -157,8 +163,8 @@ def test_symbol_endpoint_returns_stock_data(client, monkeypatch):
     branch. Mock both fetchers — crypto returns empty (forcing fallthrough),
     yahoo returns canned history."""
     monkeypatch.setattr(
-        fetch_market, "cryptocompare_market",
-        lambda symbol, days=180: {"price": [], "volume": []},
+        fetch_market, "crypto_daily_market_by_symbol",
+        lambda symbol, days=180, markets_top=None: {"price": [], "volume": []},
     )
     monkeypatch.setattr(
         fetch_market, "yahoo_chart_history",
@@ -181,8 +187,8 @@ def test_symbol_endpoint_404_when_both_sources_empty(client, monkeypatch):
     must return 404 rather than a stub 200 with null fields — the JS client
     branches on status to display "symbol not found"."""
     monkeypatch.setattr(
-        fetch_market, "cryptocompare_market",
-        lambda symbol, days=180: {"price": [], "volume": []},
+        fetch_market, "crypto_daily_market_by_symbol",
+        lambda symbol, days=180, markets_top=None: {"price": [], "volume": []},
     )
     monkeypatch.setattr(
         fetch_market, "yahoo_chart_history",
@@ -200,7 +206,7 @@ def test_symbol_endpoint_404_when_both_sources_empty(client, monkeypatch):
 #
 # The polish/symbol-coverage branch added a cached-payload pre-pass so any
 # symbol the dashboard already has scored data for is returned without a
-# round-trip to CryptoCompare/Yahoo. These tests verify the cached path
+# round-trip to CoinGecko/Yahoo. These tests verify the cached path
 # returns 200 + a non-empty body for representative tickers from each
 # cached source (stocks_signals, poc_top, markets_top), without making any
 # real network calls.
@@ -226,8 +232,8 @@ def test_symbol_endpoint_cached_stocks_signal(client, tmp_path, monkeypatch):
     })
     monkeypatch.setattr(fetch_market, "yahoo_chart_history",
                         lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call Yahoo")))
-    monkeypatch.setattr(fetch_market, "cryptocompare_market",
-                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call CC")))
+    monkeypatch.setattr(fetch_market, "crypto_daily_market_by_symbol",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call the live crypto fetcher")))
 
     r = client.get("/api/symbol/NVDA")
     assert r.status_code == 200, r.get_data(as_text=True)
@@ -241,7 +247,7 @@ def test_symbol_endpoint_cached_stocks_signal(client, tmp_path, monkeypatch):
 
 def test_symbol_endpoint_cached_poc_top(client, tmp_path, monkeypatch):
     """A symbol present in cached ``poc_top`` resolves with the full POC
-    bundle attached — no CryptoCompare call needed."""
+    bundle attached — no live crypto call needed."""
     _write_cached_market(tmp_path, {
         "poc_top": [{
             "coin_id": "solana", "symbol": "SOL", "name": "Solana",
@@ -256,8 +262,8 @@ def test_symbol_endpoint_cached_poc_top(client, tmp_path, monkeypatch):
             "signal_history": [{"date": "2024-01-01", "score": 10, "price": 150.0}],
         }],
     })
-    monkeypatch.setattr(fetch_market, "cryptocompare_market",
-                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call CC")))
+    monkeypatch.setattr(fetch_market, "crypto_daily_market_by_symbol",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call the live crypto fetcher")))
 
     r = client.get("/api/symbol/SOL")
     assert r.status_code == 200, r.get_data(as_text=True)
@@ -285,8 +291,8 @@ def test_symbol_endpoint_cached_markets_top_stables_and_obscure(client, tmp_path
             {"rank": 12,"id": "avalanche","symbol": "AVAX",       "name": "Avalanche","price_usd": 35.0,   "market_cap_usd": 1.4e10, "volume_24h_usd": 5e8,  "change_24h_pct": 2.0,  "change_7d_pct": 7.0, "sparkline_7d": [33, 34, 35]},
         ],
     })
-    monkeypatch.setattr(fetch_market, "cryptocompare_market",
-                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call CC")))
+    monkeypatch.setattr(fetch_market, "crypto_daily_market_by_symbol",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call the live crypto fetcher")))
     monkeypatch.setattr(fetch_market, "yahoo_chart_history",
                         lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call Yahoo")))
 
@@ -330,8 +336,8 @@ def test_symbol_endpoint_cashtag_prefix(client, tmp_path, monkeypatch):
             "change_24h_pct": 1.0, "change_7d_pct": 2.0, "sparkline_7d": [64500, 65000],
         }],
     })
-    monkeypatch.setattr(fetch_market, "cryptocompare_market",
-                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call CC")))
+    monkeypatch.setattr(fetch_market, "crypto_daily_market_by_symbol",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call the live crypto fetcher")))
 
     # Flask test client URL-encodes the ``$`` automatically.
     r = client.get("/api/symbol/$BTC")
@@ -346,8 +352,8 @@ def test_symbol_endpoint_404_message_mentions_coverage_scope(client, tmp_path, m
     seeing a generic "not found"."""
     # Empty cache, both live fetchers return empty.
     _write_cached_market(tmp_path, {})
-    monkeypatch.setattr(fetch_market, "cryptocompare_market",
-                        lambda symbol, days=180: {"price": [], "volume": []})
+    monkeypatch.setattr(fetch_market, "crypto_daily_market_by_symbol",
+                        lambda symbol, days=180, markets_top=None: {"price": [], "volume": []})
     monkeypatch.setattr(fetch_market, "yahoo_chart_history",
                         lambda symbol, range_="6mo": [])
 

@@ -360,14 +360,17 @@ def test_market_json_renderer_paths_exist():
     market = _load_json_or_skip(MARKET_JSON)
     for p in _REQUIRED_NON_EMPTY:
         _assert_present_non_empty(market, p, "market.json")
-    # Futures-tab CADLI series. Since 2026-10 the CoinDesk Data API needs a key,
-    # so an empty series is legitimate when the payload says why; an empty one
-    # with no stated reason is still a wiring bug.
-    if (market.get("cadli_btc_status") or {}).get("available") is False:
-        _assert_key_present(market, "cadli_btc", "market.json")
-        assert market["cadli_btc_status"].get("reason"), "cadli_btc empty with no reason"
+    # Futures-tab Alpine Large-Cap Crypto Index (replaced the CoinDesk CADLI
+    # chart in 2026-10). A market.json from an older build predates it and is
+    # skipped like the other runtime-computed keys; a present index that is
+    # unavailable must say why, and an available one must carry a series.
+    idx = market.get("alpine_index")
+    if not isinstance(idx, dict):
+        _skip_if_runtime_key_missing(market, "alpine_index", "market.json")
+    elif idx.get("available") is False:
+        assert idx.get("reason"), "alpine_index unavailable with no reason"
     else:
-        _assert_present_non_empty(market, "cadli_btc[0].close", "market.json")
+        _assert_present_non_empty(market, "alpine_index.series[0].value", "market.json")
     for p in _REQUIRED_KEY_PRESENT_MARKET:
         _assert_key_present(market, p, "market.json")
     for p in _RUNTIME_COMPUTED_NON_EMPTY_MARKET:

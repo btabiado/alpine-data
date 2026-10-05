@@ -118,11 +118,12 @@ jobs:
         # report to $GITHUB_STEP_SUMMARY itself. Re-running it to build a
         # summary would evaluate the feeds a third time and could print a
         # verdict contradicting the one that decided whether to file the issue.
-        env:
-          # Presence only: a known_gaps.json entry with `until_env` (a source
-          # unavailable until its key is configured) stops disclosing the gap
-          # once the key exists, so a null with the key set fails again.
-          CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
+        #
+        # A known_gaps.json entry may carry `until_env` (a source unavailable
+        # until its key is configured). None does today: the one that did,
+        # poc_signal_breadth / CRYPTOCOMPARE_API_KEY, was retired in 2026-10
+        # when the series moved to free sources. Map the variable here if a
+        # new until_env entry is ever added.
         run: |
           set +e
           python scripts/data_health.py --mode "$MODE" $REMEDIATE

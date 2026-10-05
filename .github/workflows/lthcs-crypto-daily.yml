@@ -76,6 +76,8 @@ jobs:
         # absent: verified against this branch, nothing under lthcs/ or in
         # scripts/lthcs_crypto_daily.py reads either name. Do not re-add them
         # until a reader exists, for the same reason they were removed.
+        # (CRYPTOCOMPARE_API_KEY has since been retired repo-wide, 2026-10:
+        # every CryptoCompare/CoinDesk dependency moved to free sources.)
         env:
           COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
         # --force: re-running on a date that already has a snapshot is OK

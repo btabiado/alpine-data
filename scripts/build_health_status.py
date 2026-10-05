@@ -142,6 +142,14 @@ THRESHOLDS: dict[str, Threshold] = {
     "etherscan_gas.json": Threshold(2, 6),
     # daily-ish upstream caches
     "fetch_fred.json": Threshold(30, 72),
+    # Refreshed once per UTC day BY DESIGN (fetch_market): the top-50 per-coin
+    # complete-day close series (one file per coin, matched by
+    # DAILY_SERIES_CACHE below), the CoinGecko call ledger that caps that
+    # sweep, and the CoinGecko/GitHub community stats. Up to a day plus a
+    # cron slip old is normal, not stale.
+    "daily_series_*.json": Threshold(30, 54),
+    "coingecko_sweep_ledger.json": Threshold(30, 54),
+    "community_dev_stats.json": Threshold(30, 54),
     "fetch_sec_form_d_filings.json": Threshold(30, 72),
     "fetch_yc_ai_companies.json": Threshold(168, 720),
     # LTHCS pipeline (daily cron)
@@ -200,6 +208,14 @@ TRADING_DAY_FEEDS = frozenset({"btc_flows.csv", "eth_flows.csv",
 # aggregated into ONE row (collect_stale); the live feed they back
 # (data-mufon.json) is judged on its own content date.
 IMMUTABLE_MONTH_CACHE = re.compile(r"^(?P<prefix>nuforc_subndx)_(?P<ym>\d{6})\.json$")
+
+# fetch_market.crypto_daily_series writes one cache per top-50 coin; they share
+# one threshold (daily by design) instead of each falling to DEFAULT's 6h/24h.
+DAILY_SERIES_CACHE = re.compile(r"^daily_series_[A-Za-z0-9_.-]+\.json$")
+
+
+def _stale_threshold_key(entry: Path) -> str:
+    return "daily_series_*.json" if DAILY_SERIES_CACHE.match(entry.name) else entry.name
 
 
 def classify(age_h: float, t: Threshold) -> str:
@@ -875,7 +891,8 @@ def collect_stale(stale_dir: Path = STALE_DIR, rel_to: Path = REPO_ROOT) -> list
     that sense — they are a frozen archive whose mtime is meaningless — so
     they are aggregated into one informational row per prefix instead of one
     "critical" row each."""
-    rows = scan(stale_dir, rel_to, skip=_is_immutable_month_cache)
+    rows = scan(stale_dir, rel_to, threshold_key_fn=_stale_threshold_key,
+                skip=_is_immutable_month_cache)
     groups: dict[str, list[Path]] = {}
     if stale_dir.exists():
         for entry in sorted(stale_dir.iterdir()):

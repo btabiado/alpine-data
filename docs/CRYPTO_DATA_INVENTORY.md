@@ -194,11 +194,11 @@ These were considered and rejected. One-line reasons follow.
 11. **Pump.fun / GMGN.ai unofficial APIs** — memecoin scraping; fragile and out of scope for BTC/ETH/LINK/LTC focus.
 12. **Crypto Slam, NFTGo, DappRadar** — NFT/dapp focus; out of scope.
 13. **Genesis Volatility / blockanalitica.com** — overlap Laevitas at a higher price.
-14. **CryptoCompare (CCData/CoinDesk Data) free tier** — sunsetting May 21, 2026; the integrated cadli endpoint should be wrapped with a fallback before then.
+14. **CryptoCompare (CCData/CoinDesk Data) free tier** — gone: since 2026-10 every endpoint 401s without a paid key. Removed from the dashboard entirely; the CADLI chart was replaced by Alpine Data's own Large-Cap Crypto Index (CoinGecko market caps), the top-50 OHLCV by CoinGecko + Coinbase/Kraken/Binance.US candles, and news sentiment by Google News RSS scored with our own keyword rule.
 15. **Sentora commercial API** — IntoTheBlock's legacy API has been deprecated; current API is enterprise-gated.
 
 ---
 
 ## Notes on the integrated set (referenced for overlap)
 
-For reference, the dashboard already covers: CoinGecko (price/MC), OKX (funding/OI/LS), Deribit (DVOL), Alternative.me (F&G), blockchain.info (BTC on-chain), mempool.space (BTC fees/hashrate), DeFiLlama (TVL/yields/bridges), Etherscan v2 (ETH gas), CoinDesk cadli (BTC OHLC), FRED (DXY/SPX/Gold/10Y/M2), Yahoo (Dow/SPX/Nasdaq/VIX/gold futures), bitinfocharts (BTC whale supply), Crypto RSS (CoinDesk/Cointelegraph/Decrypt/The Block/Bitcoin Magazine), CryptoCompare CCCAGG. Glassnode is wired but inactive pending paid key.
+For reference, the dashboard already covers: CoinGecko (price/MC), OKX (funding/OI/LS), Deribit (DVOL), Alternative.me (F&G), blockchain.info (BTC on-chain), mempool.space (BTC fees/hashrate), DeFiLlama (TVL/yields/bridges), Etherscan v2 (ETH gas), Alpine Large-Cap Crypto Index (own, from CoinGecko market caps; replaced CoinDesk CADLI 2026-10), FRED (DXY/SPX/Gold/10Y/M2), Yahoo (Dow/SPX/Nasdaq/VIX/gold futures), bitinfocharts (BTC whale supply), Crypto RSS (CoinDesk/Cointelegraph/Decrypt/The Block/Bitcoin Magazine), Google News RSS (headline sentiment computed by Alpine Data), Coinbase/Kraken/Binance.US daily candles (fallbacks). Glassnode is wired but inactive pending paid key.

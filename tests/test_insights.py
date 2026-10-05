@@ -647,29 +647,33 @@ def test_poc_dense_single_asset_fires():
 
 # ---------- new social-tab rules ----------
 
-def test_social_cc_news_sentiment_skew_fires():
+def test_social_headline_sentiment_skew_fires():
     payload = _empty_payload(market={"social": {
-        "cc_news": {"fetched_at": _recent(0) + "T12:00:00+00:00", "coins": {
+        "headline_sentiment": {"fetched_at": _recent(0) + "T12:00:00+00:00", "coins": {
             "btc": {"net_score": 8, "article_count": 30,
                     "positive": 20, "negative": 12, "neutral": 18},
         }},
     }})
     out = insights.build_insights(payload, limit=100)
-    hits = [i for i in out if "news sentiment skews" in i.get("headline", "").lower()]
-    assert hits, "expected CC news sentiment skew insight"
+    hits = [i for i in out if "headline sentiment skews" in i.get("headline", "").lower()]
+    assert hits, "expected headline sentiment skew insight"
+    # The insight must say whose numbers these are: our own keyword score of
+    # Google News headlines, not a vendor's sentiment labels.
+    assert all("Alpine Data" in i["detail"] and "30 Google News headlines" in i["detail"]
+               for i in hits)
     for i in hits:
         assert i["tab"] == "social"
 
 
-def test_social_cc_news_silent_when_balanced():
+def test_social_headline_sentiment_silent_when_balanced():
     payload = _empty_payload(market={"social": {
-        "cc_news": {"fetched_at": _recent(0) + "T12:00:00+00:00", "coins": {
+        "headline_sentiment": {"fetched_at": _recent(0) + "T12:00:00+00:00", "coins": {
             "btc": {"net_score": 2, "article_count": 30,
                     "positive": 12, "negative": 10, "neutral": 28},
         }},
     }})
     out = insights.build_insights(payload, limit=100)
-    hits = [i for i in out if "news sentiment skews" in i.get("headline", "").lower()]
+    hits = [i for i in out if "headline sentiment skews" in i.get("headline", "").lower()]
     assert not hits, f"expected no skew insight for balanced sentiment, got {hits!r}"
 
 
@@ -984,7 +988,7 @@ def test_new_rules_idempotent_on_repeat_invocation():
                                           "magnitude": "STRONG", "between_pocs": False},
                             "naked": [],
                             "migration_series": _dated([79_000, 80_000], key="poc")}},
-            "social": {"cc_news": {"fetched_at": _recent(0) + "T12:00:00+00:00",
+            "social": {"headline_sentiment": {"fetched_at": _recent(0) + "T12:00:00+00:00",
                                    "coins": {"btc": {"net_score": 8, "article_count": 30,
                                                      "positive": 20, "negative": 12,
                                                      "neutral": 18}}}},
@@ -1226,7 +1230,7 @@ def test_social_stale_legs_emit_no_present_tense_insight():
     """
     out = insights.build_insights(_empty_payload(market={"social": {
         "fetched_at": _recent(0) + "T19:06:48+00:00",   # build time — a lie
-        "cc_news": {"fetched_at": _stale() + "T12:00:00+00:00", "stale": True,
+        "headline_sentiment": {"fetched_at": _stale() + "T12:00:00+00:00", "stale": True,
                     "coins": {"btc": {"net_score": 14, "article_count": 40,
                                       "positive": 27, "negative": 13, "neutral": 10}}},
         "reddit": {"fetched_at": _stale() + "T12:00:00+00:00", "stale": True,

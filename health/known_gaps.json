@@ -31,20 +31,6 @@
       "fillable": false
     },
     {
-      "feed": "data/composites/",
-      "history": "daily snapshots",
-      "field": "indexes.poc_signal_breadth",
-      "start": "2026-10-05",
-      "end": null,
-      "until_env": "CRYPTOCOMPARE_API_KEY",
-      "reason": "Open-ended, unavailable by design: market.poc_top is built from CryptoCompare histoday, which answers keyless requests with 401 since 2026-10 (api_status: CryptoCompare/CoinDesk auth_required, key_state unset). Nothing to average until CRYPTOCOMPARE_API_KEY is configured. Stops applying the moment that env var is set in the monitor's environment, so a null with the key present fails again. Snapshots written after this change also carry the reason in their own `unavailable` field.",
-      "backfill_attempted": [
-        "upstream: min-api.cryptocompare.com histoday returns 401 without a key; no keyless historical source for the same per-coin series",
-        "git: data/market.json is never committed"
-      ],
-      "fillable": false
-    },
-    {
       "feed": "data/lthcs/",
       "history": "daily crypto snapshots",
       "start": "2026-09-14",

@@ -5,12 +5,13 @@ Targets (all in ``fetch_market``):
   - yahoo_chart_history
   - compute_stock_signal
   - fetch_stocks_signals
-  - cryptocompare_market
   - compute_poc_top_markets
 
-HTTP is mocked via ``unittest.mock.patch`` on ``fetch_market._get`` and
-``fetch_market.requests.get`` (for functions that bypass ``_get`` such as
-``cryptocompare_market``). No live network calls.
+HTTP is mocked via ``unittest.mock.patch`` on ``fetch_market._get``; the POC
+tests patch ``fetch_market.crypto_daily_series`` (the free CoinGecko ->
+Coinbase -> Kraken -> Binance.US daily-series fetcher, tested on its own in
+tests/test_crypto_free_sources.py). It replaced ``cryptocompare_market`` in
+2026-10. No live network calls.
 """
 from __future__ import annotations
 
@@ -329,106 +330,11 @@ def test_fetch_stocks_signals_handles_empty_history_per_symbol():
     assert out[0]["label"] == "HOLD"
 
 
-# ============================================================================
-# cryptocompare_market
-# ============================================================================
-
-def _make_cc_response(success: bool, rows: list[dict]) -> MagicMock:
-    """Build a fake requests.Response mock."""
-    resp = MagicMock()
-    resp.status_code = 200
-    payload = {
-        "Response": "Success" if success else "Error",
-        "Data": {"Data": rows},
-    }
-    resp.json = MagicMock(return_value=payload)
-    return resp
-
-
 def _isolate_stale(monkeypatch, tmp_path):
     """Point the stale-cache dir at a fresh temp dir so individual tests do
-    not see (or pollute) each other's persisted stale snapshots."""
+    not see (or pollute) each other's persisted stale snapshots (the daily
+    sweep writes its CoinGecko call ledger there)."""
     monkeypatch.setattr(fetch_market, "_STALE_DIR", tmp_path / ".stale")
-
-
-def test_cryptocompare_market_happy_path(monkeypatch, tmp_path):
-    _isolate_stale(monkeypatch, tmp_path)
-    base = int(datetime(2025, 1, 1, tzinfo=timezone.utc).timestamp())
-    rows = [
-        {"time": base + i * 86400, "close": 100.0 + i, "volumeto": 10_000 + i * 100}
-        for i in range(5)
-    ]
-    resp = _make_cc_response(True, rows)
-    with patch.object(fetch_market.requests, "get", return_value=resp):
-        out = fetch_market.cryptocompare_market("BTC", days=10)
-    assert isinstance(out, dict)
-    assert "price" in out and "volume" in out
-    assert len(out["price"]) == 5
-    assert len(out["volume"]) == 5
-    assert out["price"][0]["date"] == "2025-01-01"
-    assert out["price"][0]["value"] == 100.0
-    assert out["volume"][0]["value"] == 10_000.0
-
-
-def test_cryptocompare_market_response_not_success(monkeypatch, tmp_path):
-    """Response != Success and no stale cache -> {price: [], volume: []}."""
-    _isolate_stale(monkeypatch, tmp_path)
-    rows = [{"time": 1, "close": 100.0, "volumeto": 1.0}]
-    resp = _make_cc_response(False, rows)
-    with patch.object(fetch_market.requests, "get", return_value=resp):
-        out = fetch_market.cryptocompare_market("BTC", days=10)
-    assert out == {"price": [], "volume": []}
-
-
-def test_cryptocompare_market_zero_or_missing_volume(monkeypatch, tmp_path):
-    _isolate_stale(monkeypatch, tmp_path)
-    base = int(datetime(2025, 1, 1, tzinfo=timezone.utc).timestamp())
-    rows = [
-        {"time": base,             "close": 100.0, "volumeto": 0},
-        {"time": base + 86400,     "close": 101.0},  # missing volumeto entirely
-        {"time": base + 86400 * 2, "close": 102.0, "volumeto": 5_000},
-    ]
-    resp = _make_cc_response(True, rows)
-    with patch.object(fetch_market.requests, "get", return_value=resp):
-        out = fetch_market.cryptocompare_market("BTC", days=10)
-    # All three rows kept; missing/zero volume becomes 0.0
-    assert len(out["price"]) == 3
-    assert len(out["volume"]) == 3
-    assert out["volume"][0]["value"] == 0.0
-    assert out["volume"][1]["value"] == 0.0
-    assert out["volume"][2]["value"] == 5_000.0
-
-
-def test_cryptocompare_market_empty_symbol_returns_empty(monkeypatch, tmp_path):
-    _isolate_stale(monkeypatch, tmp_path)
-    out = fetch_market.cryptocompare_market("", days=10)
-    assert out == {"price": [], "volume": []}
-
-
-def test_cryptocompare_market_skips_nonpositive_close(monkeypatch, tmp_path):
-    _isolate_stale(monkeypatch, tmp_path)
-    base = int(datetime(2025, 1, 1, tzinfo=timezone.utc).timestamp())
-    rows = [
-        {"time": base,             "close": 0.0,   "volumeto": 100},
-        {"time": base + 86400,     "close": -5.0,  "volumeto": 200},
-        {"time": base + 86400 * 2, "close": 99.0,  "volumeto": 300},
-    ]
-    resp = _make_cc_response(True, rows)
-    with patch.object(fetch_market.requests, "get", return_value=resp):
-        out = fetch_market.cryptocompare_market("BTC", days=10)
-    assert len(out["price"]) == 1
-    assert out["price"][0]["value"] == 99.0
-
-
-def test_cryptocompare_market_http_error_returns_empty(monkeypatch, tmp_path):
-    """status_code != 200 and no stale cache -> empty dict."""
-    _isolate_stale(monkeypatch, tmp_path)
-    resp = MagicMock()
-    resp.status_code = 500
-    resp.json = MagicMock(return_value={})
-    with patch.object(fetch_market.requests, "get", return_value=resp):
-        out = fetch_market.cryptocompare_market("BTC", days=10)
-    assert out == {"price": [], "volume": []}
 
 
 # ============================================================================
@@ -453,6 +359,7 @@ def _series(n: int, base_price: float = 100.0,
 def test_compute_poc_top_markets_happy_path(tmp_path, monkeypatch):
     # Redirect CACHE so the stale-load doesn't read the real file.
     monkeypatch.setattr(fetch_market, "CACHE", tmp_path)
+    _isolate_stale(monkeypatch, tmp_path)
     prices, vols = _series(60)
 
     top = [
@@ -461,8 +368,9 @@ def test_compute_poc_top_markets_happy_path(tmp_path, monkeypatch):
         {"id": "ethereum", "symbol": "eth", "name": "Ethereum",
          "image": "https://example/eth.png", "price_usd": 3_000.0},
     ]
-    with patch.object(fetch_market, "cryptocompare_market",
-                      return_value={"price": prices, "volume": vols}):
+    with patch.object(fetch_market, "crypto_daily_series",
+                      return_value={"price": prices, "volume": vols,
+                                    "source": "coingecko", "volume_basis": "aggregate"}):
         out = fetch_market.compute_poc_top_markets(top, n=2, days=60)
 
     assert len(out) == 2
@@ -486,6 +394,24 @@ def test_compute_poc_top_markets_happy_path(tmp_path, monkeypatch):
     assert out[0]["coin_id"] == "bitcoin"
     assert out[0]["symbol"] == "BTC"  # uppercased
     assert out[0]["current_price"] == 50_000.0
+    # Every entry says which API its series came from and whose volume it is.
+    assert out[0]["source"] == "coingecko" and out[0]["volume_basis"] == "aggregate"
+
+
+def test_compute_poc_top_markets_uses_prefetched_series_without_fetching(tmp_path, monkeypatch):
+    """`series_by_id` (from fetch_top_daily_series, shared with the Alpine
+    index) is used as-is: no second fetch, and an exchange-sourced series is
+    labelled as exchange-only volume."""
+    monkeypatch.setattr(fetch_market, "CACHE", tmp_path)
+    prices, vols = _series(60)
+    top = [{"id": "bitcoin", "symbol": "btc", "name": "Bitcoin",
+            "image": "x", "price_usd": 50_000.0}]
+    series = {"bitcoin": {"price": prices, "volume": vols,
+                          "source": "kraken", "volume_basis": "exchange"}}
+    with patch.object(fetch_market, "crypto_daily_series") as fetch:
+        out = fetch_market.compute_poc_top_markets(top, n=1, days=60, series_by_id=series)
+    fetch.assert_not_called()
+    assert out[0]["source"] == "kraken" and out[0]["volume_basis"] == "exchange"
 
 
 def test_compute_poc_top_markets_empty_returns_empty():
@@ -493,10 +419,11 @@ def test_compute_poc_top_markets_empty_returns_empty():
 
 
 def test_compute_poc_top_markets_stale_keep_loads_prev(tmp_path, monkeypatch):
-    """When cryptocompare returns empty for a coin, it should pull the
+    """When every free source returns empty for a coin, it should pull the
     previous entry from data/market.json (if present) and emit it with
     stale=True."""
     monkeypatch.setattr(fetch_market, "CACHE", tmp_path)
+    _isolate_stale(monkeypatch, tmp_path)
     prev_payload = {
         "poc_top": [
             {
@@ -513,8 +440,8 @@ def test_compute_poc_top_markets_stale_keep_loads_prev(tmp_path, monkeypatch):
         {"id": "bitcoin", "symbol": "btc", "name": "Bitcoin",
          "image": "x", "price_usd": 50_000.0},
     ]
-    # cryptocompare_market returns empty -> stale path triggers.
-    with patch.object(fetch_market, "cryptocompare_market",
+    # crypto_daily_series returns empty -> stale path triggers.
+    with patch.object(fetch_market, "crypto_daily_series",
                       return_value={"price": [], "volume": []}):
         out = fetch_market.compute_poc_top_markets(top, n=1, days=60)
 
@@ -525,24 +452,26 @@ def test_compute_poc_top_markets_stale_keep_loads_prev(tmp_path, monkeypatch):
 
 def test_compute_poc_top_markets_skips_missing_id_or_symbol(tmp_path, monkeypatch):
     monkeypatch.setattr(fetch_market, "CACHE", tmp_path)
+    _isolate_stale(monkeypatch, tmp_path)
     top = [
         {"id": None, "symbol": "btc"},        # missing id
         {"id": "ethereum", "symbol": ""},     # missing symbol
     ]
-    with patch.object(fetch_market, "cryptocompare_market") as ccm:
+    with patch.object(fetch_market, "crypto_daily_series") as ccm:
         out = fetch_market.compute_poc_top_markets(top, n=5, days=60)
     assert out == []
     ccm.assert_not_called()
 
 
 def test_compute_poc_top_markets_no_prev_file_no_stale(tmp_path, monkeypatch):
-    """No market.json on disk + empty cryptocompare -> coin simply skipped."""
+    """No market.json on disk + empty daily series -> coin simply skipped."""
     monkeypatch.setattr(fetch_market, "CACHE", tmp_path)
+    _isolate_stale(monkeypatch, tmp_path)
     top = [
         {"id": "bitcoin", "symbol": "btc", "name": "Bitcoin",
          "image": "x", "price_usd": 50_000.0},
     ]
-    with patch.object(fetch_market, "cryptocompare_market",
+    with patch.object(fetch_market, "crypto_daily_series",
                       return_value={"price": [], "volume": []}):
         out = fetch_market.compute_poc_top_markets(top, n=1, days=60)
     assert out == []
