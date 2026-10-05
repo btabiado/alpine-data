@@ -11,6 +11,19 @@ on:
     # day spends those calls; see fetch_market.fetch_top_daily_series).
     - cron: "0 * * * *"
   workflow_dispatch: {}
+  # Publish the daily audit report as soon as it is committed. daily-audit.yml
+  # commits audit/daily/latest.{md,json} through api-commit.sh with the
+  # workflow GITHUB_TOKEN, and a commit made with GITHUB_TOKEN never fires
+  # `push` (it is also [skip ci]), so the report only reached the site on the
+  # next scheduled run here. That "hourly" cron in practice fires a few times a
+  # day: on 2026-10-05 the first report landed at 18:29Z, the last deploy had
+  # run at 18:14Z, and /audit/latest.md stayed 404 for 5+ hours afterwards.
+  # workflow_run runs this file from main at main's newest commit (never the
+  # triggering run's code), so it builds exactly what a push to main would.
+  workflow_run:
+    workflows: [daily-audit]
+    types: [completed]
+    branches: [main]
 
 permissions:
   # `write` (was `read`) so the composite-index snapshot can be committed back
@@ -19,7 +32,12 @@ permissions:
   contents: write
   pages: write
   id-token: write
-  actions: read   # build_backfill_jobs.py reads r2-backfill workflow run history
+  actions: read   # build_backfill_jobs.py reads r2-backfill workflow run history; publish_github_status.py reads every workflow's runs and jobs
+  # Read-only, for scripts/publish_github_status.py (/health/github_status.json):
+  checks: read            # failed jobs' annotations + open PRs' head check runs
+  pull-requests: read     # open PRs
+  issues: read            # open issues
+  security-events: read   # open code-scanning alerts
 
 concurrency:
   # Renamed from "pages" to escape a wedged run in the OLD group: run 844
@@ -1168,6 +1186,29 @@ jobs:
           Source: https://github.com/btabiado/alpine-data
           Generated: $(date -u)
           EOF
+
+      - name: Publish GitHub status JSON (/health/github_status.json)
+        # Workflow runs (+ derived failing / not-running flags and failed-run
+        # annotations), open PRs on alpine-data and adw-site, open issues, and
+        # code-scanning / Dependabot alert counts, read with this run's token
+        # and published next to /health/. The daily audit agent can fetch the
+        # site but not the GitHub API, so this is its view of GitHub.
+        # Written straight into _site/health/ (after the stage step's
+        # `cp -R health/*`, so nothing has to be mirrored afterwards).
+        # Observability only: a failing API section is recorded as
+        # "unavailable" inside the file, and a crash here must never block the
+        # deploy -- `|| echo` plus continue-on-error, as for /health/ above.
+        # Budget: <= 100 API calls (~50 in practice) against GITHUB_TOKEN's
+        # 1000/h. adw-site is private, so its PRs read as unavailable unless
+        # the optional ADW_SITE_TOKEN secret (read-only, adw-site) is set.
+        timeout-minutes: 4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ADW_SITE_TOKEN: ${{ secrets.ADW_SITE_TOKEN }}
+        run: >-
+          python scripts/publish_github_status.py --out _site/health/github_status.json
+          || echo "::warning title=GitHub status not published::publish_github_status.py failed; /health/github_status.json is missing from this deploy"
+        continue-on-error: true
 
       - name: Upload daily snapshot to ADW R2 archive
         # Archives all data-*.json sidecars to ADW R2 warehouse for future
