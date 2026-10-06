@@ -594,6 +594,9 @@ def _etf_daily_totals(path: Path) -> list[tuple[str, float]]:
         dated.append((d, r))
     dated.sort(key=lambda t: t[0])
 
+    grid: list[list] = []
+    last_seen: dict[int, int] = {}
+    edge = 0
     if total_col is None:
         grid = [[_cell(r.get(c)) for c in fund_cols] for _, r in dated]
         last_seen = {k: i for i, vals in enumerate(grid)
