@@ -30,9 +30,14 @@ class Threshold:
     stale_h: float
 
 
-# Per-source freshness thresholds (hours).
+# Per-source freshness thresholds (hours): THE one table. /health/ colours a
+# row with it and scripts/data_health.py fails a feed past `stale_h`, so the
+# two monitors cannot disagree about a feed (they used to: data_health kept a
+# second, per-feed `limit_h` in its MANIFEST). Look entries up with
+# threshold_for(); keys are a file name, or a repo-relative path where a name
+# is not enough (a directory feed).
 # - fresh: age below this → green
-# - stale: age below this → amber; above → red
+# - stale: age below this → amber; above → red, and data_health fails it
 # Defaults chosen from how often each pipeline actually refreshes:
 # market/whale = hourly cron, ETF flows = Farside daily, AI news = a few times
 # per day, LTHCS = daily, insights = daily.
@@ -71,12 +76,15 @@ THRESHOLDS: dict[str, Threshold] = {
     # Monday and ~4d across a Monday holiday.
     "data-equity-etf-flows.json": Threshold(96, 168),
     # Daily history rows scripts/snapshot_history.py appends for deploy-time
-    # sidecars. The stock file gains a row-set per completed TRADING day (so
-    # it shares the equity cadence); the travel summary gains one per day.
+    # sidecars. The stock file gains a row-set per completed TRADING day, the
+    # same cadence as the data-stock-money-flow.json sidecar it records, so it
+    # shares that feed's 120h limit (it was 168h here and 120h in
+    # data_health, so /health/ stayed amber for two days after the watchdog
+    # had already failed it). The travel summary gains one row per day.
     # The change log's last row is the last level CHANGE, which can be weeks
     # old on a perfectly healthy feed, so it is watched through the summary
     # and only alarms here if nothing has changed for half a year.
-    "stock_money_flow_history.csv": Threshold(96, 168),
+    "stock_money_flow_history.csv": Threshold(96, 120),
     "travel_advisory_levels.csv": Threshold(30, 48),
     "travel_advisory_changes.csv": Threshold(2160, 4380),
     # data-city.json is judged on cities[].data_health.last_updated (see
@@ -113,13 +121,42 @@ THRESHOLDS: dict[str, Threshold] = {
     # The point of this entry stays the same: when it is red, it is red for a
     # true reason.
     "data-city.json": Threshold(62 * 24, 160 * 24),
-    # data-aviation.json is dated by its OLDEST component, the FAA airman roll:
-    # an ANNUAL study stamped Dec 31 (data_health MANIFEST, cadence "annual").
-    # Under the manifest-derived default (fresh = limit/2 = 200d) it turned
-    # amber every July on the current roll, the "looks broken" light this
-    # table exists to remove. Fresh while the roll is under a year old; the
-    # critical limit stays data_health's 400d.
+    # data-aviation.json is a COMPOSITE of three vintages dated by its OLDEST
+    # component (data_date), the FAA airman roll: an ANNUAL study stamped
+    # Dec 31 (data_health MANIFEST, cadence "annual"). Under the 24h default it
+    # read 215d STALE every day, a permanently red light. Fresh while the roll
+    # is under a year old; 400d gives the annual roll a ~5-week grace window
+    # before alarming.
+    #
+    # ACCEPTED COST: because the composite takes the oldest component, a 400d
+    # budget also means the two ~monthly components (registry, market
+    # snapshot) could freeze for over a year without tripping this. Fixing
+    # that means watching the three components separately, which needs an
+    # owner for the file first.
+    #
+    # Checked 2026-10-05: faa.gov's U.S. Civil Airmen Statistics page calls it
+    # "an annual study", lists "2025 Active Civil Airmen Statistics" as the
+    # newest roll and was last updated 2026-04-07. So 2025-12-31 IS the
+    # current vintage, and if the 2026 roll posts as late as the 2025 one did,
+    # this limit fires ~2027-02-04, some weeks before it can be refreshed.
+    # That alarm is then "annual roll due: check faa.gov", not rot; it is left
+    # on purpose.
     "data-aviation.json": Threshold(365 * 24, 400 * 24),
+    # TSA's age is measured from the newest checkpoint date, and TSA posts
+    # yesterday's count, so a healthy file is already ~24h old at fetch time
+    # and the 14:10Z cron routinely starts hours late. 48h tolerates that and
+    # still flags a single missed day.
+    "data-tsa.json": Threshold(24, 48),
+    # `as_of` is the date of the last DAILY BAR (the oldest across scored
+    # tickers), so it only moves on trading days. At the 15:00Z check,
+    # Friday's bar is ~87h old on Monday, and ~111h on the Tuesday after a
+    # Monday market holiday (or the Monday after Good Friday). 120h covers
+    # those without hiding a feed that has really stopped for a trading week.
+    "data-stock-money-flow.json": Threshold(60, 120),
+    # A directory feed (data_health SERIES), judged on its newest daily
+    # snapshot: one per pages build. 48h tolerates a quiet weekend without
+    # tolerating a genuinely dead snapshotter.
+    "data/composites/": Threshold(24, 48),
     # real_estate.json is a once-a-day cron; 12h old is normal, not "stale".
     "real_estate.json": Threshold(30, 48),
     # metro_coords.json is STATIC reference data — Census CBSA gazetteer
@@ -363,17 +400,16 @@ def trading_day_age_h(last: date, now_ts: float) -> float:
     return hours
 
 
-def threshold_for(name: str, limit_h: "float | None" = None) -> Threshold:
-    """Threshold for a feed, honouring a data_health MANIFEST ``limit_h``.
+def threshold_for(key: str) -> Threshold:
+    """THRESHOLDS entry for a repo-relative path (or a bare file name).
 
-    data_health fails a feed past ``limit_h or THRESHOLDS[name].stale_h``; the
-    same number is /health/'s critical boundary so the two cannot disagree.
+    The full path wins, then the file name, then DEFAULT. Both monitors call
+    this: /health/ colours a row by it and data_health fails a feed past its
+    ``stale_h``, so there is one number per feed, not one per monitor.
     """
-    base = THRESHOLDS.get(name, DEFAULT)
-    if not limit_h:
-        return base
-    fresh = base.fresh_h if name in THRESHOLDS else limit_h / 2
-    return Threshold(min(fresh, limit_h), limit_h)
+    if key in THRESHOLDS:
+        return THRESHOLDS[key]
+    return THRESHOLDS.get(Path(key).name, DEFAULT)
 
 
 @dataclass
@@ -723,11 +759,6 @@ def resolve_age(path: Path, now_ts: float, rel: "str | None" = None) -> AgeProbe
     return probe
 
 
-def _content_age_h(path: Path, now_ts: float) -> "float | None":
-    """Back-compatible wrapper — age in hours, or None when unresolvable."""
-    return _content_age_probe(path, now_ts).age_h
-
-
 def _age_and_provenance(entry: Path, mtime: float, now: float,
                         rel: "str | None" = None) -> "tuple[float, AgeProbe]":
     """mtime age, raised to the content age when the file states one.
@@ -790,8 +821,7 @@ def scan(path: Path, rel_to: Path, threshold_key_fn=None,
             continue
         rel = entry.relative_to(rel_to).as_posix()
         age_h, probe = _age_and_provenance(entry, mtime, now, rel)
-        key = threshold_key_fn(entry) if threshold_key_fn else entry.name
-        t = THRESHOLDS.get(key, DEFAULT)
+        t = threshold_for(threshold_key_fn(entry) if threshold_key_fn else rel)
         rows.append({
             "name": entry.name,
             "path": str(entry.relative_to(rel_to)),
@@ -830,10 +860,11 @@ def collect_manifest_feeds(root: Path = REPO_ROOT) -> list[dict]:
     """One row per ROOT-LEVEL feed in data_health.MANIFEST (data-*.json).
 
     These were the tabs /health/ never covered (City, Travel, Aviation/TSA,
-    UAP, CPI, Metals, Supplies, Money Flow, Stock Flow). The feed list, the
-    per-feed limit and the suppressions all come from data_health, so the two
-    monitors judge the same files against the same numbers; ages come from the
-    shared resolve_age (in-payload data dates, not mtime). A DEPLOYED feed is
+    UAP, CPI, Metals, Supplies, Money Flow, Stock Flow). The feed list and the
+    suppressions come from data_health and the limit from threshold_for, the
+    same lookup data_health fails a feed by, so the two monitors judge the same
+    files against the same numbers; ages come from the shared resolve_age
+    (in-payload data dates, not mtime). A DEPLOYED feed is
     read from its built_path, the copy this build publishes. Files absent on
     disk produce no row; build_tab_view reports them as missing.
     """
@@ -851,7 +882,7 @@ def collect_manifest_feeds(root: Path = REPO_ROOT) -> list[dict]:
             continue
         mtime = p.stat().st_mtime
         age_h, probe = _age_and_provenance(p, mtime, now, rel)
-        t = threshold_for(Path(rel).name, feed.limit_h)
+        t = threshold_for(rel)
         row = {
             "name": rel,
             "path": rel,
@@ -946,7 +977,7 @@ def collect_summit() -> list[dict]:
             continue
         age_h, probe = _age_and_provenance(p, mtime, now,
                                            f"snowflake_summit/{name}")
-        t = THRESHOLDS.get(name, DEFAULT)
+        t = threshold_for(f"snowflake_summit/{name}")
         rows.append({
             "name": f"snowflake_summit/{name}",
             "path": f"snowflake_summit/{name}",
@@ -978,7 +1009,7 @@ def collect_lthcs() -> list[dict]:
             return None
         rel = entry.relative_to(REPO_ROOT)
         age_h = (now - mtime) / 3600.0
-        t = THRESHOLDS.get(entry.name, DEFAULT)
+        t = threshold_for(rel.as_posix())
         return {
             "name": str(rel.relative_to(Path("data/lthcs"))),
             "path": str(rel),

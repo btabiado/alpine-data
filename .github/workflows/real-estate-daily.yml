@@ -36,7 +36,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
@@ -59,11 +58,26 @@ jobs:
         # resulting commit is auto-signed by GitHub (Verified badge).
         # See .github/scripts/api-commit.sh — its retry loop mirrors the
         # rebase-on-conflict behaviour the old shell loop provided.
+        #
+        # The fetcher restamps generated_at / fetched_at on every run, and
+        # the upstreams publish monthly, so on most days those stamps are the
+        # only change (27 of 30 commits in September 2026). Skip the commit
+        # then. json_content_changed.py exits 1 only for "nothing but the
+        # ignored keys changed"; anything it cannot judge counts as changed.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AUTHOR_NAME: real-estate-bot
           AUTHOR_EMAIL: real-estate-bot@users.noreply.github.com
         run: |
+          rc=0
+          python .github/scripts/json_content_changed.py data/real_estate.json \
+            --ignore-key generated_at --ignore-key fetched_at || rc=$?
+          if [ "$rc" -eq 1 ]; then
+            echo "real-estate: only run timestamps changed; nothing to commit."
+            exit 0
+          elif [ "$rc" -ne 0 ]; then
+            exit "$rc"
+          fi
           git add data/real_estate.json
           .github/scripts/api-commit.sh \
             "real-estate: daily refresh $(date -u +%Y-%m-%d) [skip ci]"

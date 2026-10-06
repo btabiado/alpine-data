@@ -2,9 +2,11 @@
 
 * ``ubuntu-latest`` moves to Ubuntu 26.04 on 2026-10-19. Every job that runs
   actions/setup-python with a pinned interpreter depends on the image's
-  toolcache having that build, so those jobs pin ``ubuntu-24.04``; jobs with
-  no image dependency (CodeQL, the dockerised TruffleHog, deploy-pages) may
-  stay on ``ubuntu-latest``.
+  toolcache having that build, so those jobs pin ``ubuntu-24.04``. CodeQL
+  (its Python extraction uses the image's Python) and TruffleHog pin it too;
+  only pages.yml's deploy job, which just runs deploy-pages, may stay on
+  ``ubuntu-latest``.
+* Only the jobs that read git history check out all of it.
 * No action may run on the deprecated Node 20 runtime: every remote action is
   SHA-pinned with a version comment (all current pins are node24 or
   composite, verified against each action.yml on 2026-10-04).
@@ -54,3 +56,30 @@ def test_codeql_pin_comment_matches_its_major():
     text = (WORKFLOWS / "codeql.yml").read_text()
     # 8aad20d1 is codeql-action 4.36.2 (node24); it used to be labelled "# v3".
     assert "8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v3" not in text
+
+
+def test_codeql_and_trufflehog_pin_an_explicit_ubuntu_image():
+    for wf in ("codeql.yml", "trufflehog-weekly.yml"):
+        doc = yaml.safe_load((WORKFLOWS / wf).read_text())
+        for name, job in doc["jobs"].items():
+            assert re.fullmatch(r"ubuntu-\d{2}\.04", str(job.get("runs-on"))), (wf, name)
+
+
+# Workflows whose scripts read git history: data-health (history_continuity's
+# `git log` for daily-commit feeds), r2-backfill (its commit walk) and the
+# TruffleHog full-history scan. Everything else only fetches and commits
+# through .github/scripts/api-commit.sh, which reads the base commit from the
+# API, so a depth-1 checkout is enough and saves ~135 MB per run.
+FULL_HISTORY = {"data-health.yml", "r2-backfill.yml", "trufflehog-weekly.yml"}
+
+
+def test_only_history_readers_check_out_full_history():
+    full = set()
+    for wf in sorted(WORKFLOWS.glob("*.yml")):
+        doc = yaml.safe_load(wf.read_text())
+        for job in (doc.get("jobs") or {}).values():
+            for step in job.get("steps") or []:
+                if str(step.get("uses", "")).startswith("actions/checkout@") \
+                        and (step.get("with") or {}).get("fetch-depth") == 0:
+                    full.add(wf.name)
+    assert full == FULL_HISTORY

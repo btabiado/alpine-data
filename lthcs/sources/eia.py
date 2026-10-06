@@ -5,15 +5,14 @@ Demand Environment Score (DES) pillar — especially for energy-exposed
 tickers (XOM, CVX, TSLA, LCID).
 
 V1 surface area is intentionally narrow: WTI crude, Brent crude, and US
-regular gasoline retail price. Each is a thin wrapper around a single
-generic :func:`get_series` call.
+regular gasoline retail price. Each is a fixed route/facet spec over a
+single generic :func:`get_series` call.
 
 Public functions:
     * :func:`get_series` — generic data fetch for any EIA v2 route
     * :func:`get_wti` — WTI crude spot price (daily)
-    * :func:`get_brent` — Brent crude spot price (daily)
-    * :func:`get_gasoline` — US regular gasoline retail price (weekly)
-    * :func:`get_latest_value` — newest observation for one of the above
+    * :func:`get_latest_value` — newest observation for ``"wti"``,
+      ``"brent"`` (daily) or ``"gasoline"`` (US regular retail, weekly)
 
 All upstream calls go through:
     * a 24h :class:`FileCache` (``"eia"``), and
@@ -195,16 +194,6 @@ def _get_spec_series(key: str) -> List[Dict[str, Any]]:
 def get_wti() -> List[Dict[str, Any]]:
     """WTI (Cushing OK) crude spot price, daily, oldest -> newest."""
     return _get_spec_series("wti")
-
-
-def get_brent() -> List[Dict[str, Any]]:
-    """Brent crude spot price, daily, oldest -> newest."""
-    return _get_spec_series("brent")
-
-
-def get_gasoline() -> List[Dict[str, Any]]:
-    """US regular gasoline retail price, weekly, oldest -> newest."""
-    return _get_spec_series("gasoline")
 
 
 def get_latest_value(

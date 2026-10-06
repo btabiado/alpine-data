@@ -445,19 +445,6 @@ def la_311_datasets_by_year(*, app_token=None, session=None) -> Optional[dict]:
     return by_year
 
 
-def la_current_311_dataset(*, app_token=None, session=None, fallback="2cy6-i7zn") -> str:
-    """The newest 'MyLA311 Cases {year}' dataset id in the LA catalog.
-
-    Returns ``fallback`` (``2cy6-i7zn`` = 'MyLA311 Cases 2026' at freeze time) on ANY
-    failure (network, non-200, no match, malformed). ``feed_series`` does not use this:
-    the newest year on its own drops every earlier year (see ``_la_311_year_plan``).
-    """
-    by_year = la_311_datasets_by_year(app_token=app_token, session=session)
-    if not by_year:
-        return fallback
-    return by_year[max(by_year)]
-
-
 def _extract_cases_year(name: str) -> Optional[int]:
     """If ``name`` is exactly a 'MyLA311 Cases {year}' title, return the int year; else None.
 

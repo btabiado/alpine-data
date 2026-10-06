@@ -101,7 +101,6 @@ def test_poisoned_legacy_cache_is_deleted_and_never_replayed(monkeypatch, stale_
     out = fm.blockchair_eth_large_transactions_with_status(1_000_000, 10, now=NOW)
     assert out == {"rows": [], "status": {**out["status"], "source": "unavailable"}}
     assert not legacy.exists()
-    assert fm.blockchair_eth_large_transactions(now=NOW) == []
 
 
 def test_stale_cache_replay_is_trimmed_to_the_window(monkeypatch, stale_dir):

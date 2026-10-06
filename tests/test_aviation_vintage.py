@@ -148,13 +148,13 @@ def test_monitors_report_the_annual_cadence(av):
     bhs = _scripts_module("build_health_status")
     feed = dh.MANIFEST["data-aviation.json"]
     assert feed.cadence == "annual"
-    # data_health's fail limit is unchanged; /health/ is fresh for a year.
-    assert feed.limit_h == 400 * 24.0
-    t = bhs.threshold_for("data-aviation.json", feed.limit_h)
+    # One threshold for both monitors: data_health fails it past 400d;
+    # /health/ is fresh for a year.
+    t = bhs.threshold_for("data-aviation.json")
     assert (t.fresh_h, t.stale_h) == (365 * 24, 400 * 24)
     rows = {r["name"]: r for r in bhs.collect_manifest_feeds()}
     assert rows["data-aviation.json"]["cadence"] == "annual"
-    r = dh.Result("data-aviation.json", dh.OK, 6672.0, feed.limit_h, cadence=feed.cadence)
+    r = dh.Result("data-aviation.json", dh.OK, 6672.0, t.stale_h, cadence=feed.cadence)
     assert "[cadence: annual]" in r.line()
 
 

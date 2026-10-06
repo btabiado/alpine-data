@@ -301,17 +301,6 @@ def test_user_message_handles_missing_insider_and_holdings():
     assert payload["prior_day"]["available"] is False
 
 
-def test_prompt_hash_is_deterministic_and_changes_with_input():
-    h1 = narratives_llm._prompt_hash("hello", "claude-haiku-4-5")
-    h2 = narratives_llm._prompt_hash("hello", "claude-haiku-4-5")
-    h3 = narratives_llm._prompt_hash("hello!", "claude-haiku-4-5")
-    h4 = narratives_llm._prompt_hash("hello", "claude-sonnet-4-5")
-    assert h1 == h2
-    assert h1 != h3
-    assert h1 != h4
-    assert len(h1) == 64  # sha256 hex
-
-
 # ---------------------------------------------------------------------------
 # Four-section parser
 # ---------------------------------------------------------------------------
