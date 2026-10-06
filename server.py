@@ -336,7 +336,8 @@ def index() -> Response:
     # tab-specific payloads (whale) are stripped from the inlined HTML and
     # served from /data-<key>.json instead. Cuts ~840KB off the first byte.
     trimmed, _sidecars, manifest = dash.split_payload_for_sidecars(payload)
-    html = dash.render_html(trimmed, share_token=share_token, sidecars_manifest=manifest)
+    html = dash.render_html(trimmed, share_token=share_token, sidecars_manifest=manifest,
+                            flask_mode=True)
     return Response(html, mimetype="text/html")
 
 
@@ -366,7 +367,7 @@ def share_view(token: str) -> Response:
     # Validated above; escaping is a no-op for token_urlsafe tokens (see
     # _live_share_token) and keeps the reflected value HTML-safe regardless.
     html = dash.render_html(trimmed, share_token=_html_escape(token),
-                            sidecars_manifest=manifest)
+                            sidecars_manifest=manifest, flask_mode=True)
     return Response(html, mimetype="text/html")
 
 

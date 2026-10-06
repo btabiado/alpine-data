@@ -309,7 +309,28 @@ def test_whale_eth_renderers_coerce_and_undo_wei(path):
 @pytest.mark.parametrize("path", ["app.py", "v2/app.py"])
 def test_static_mirror_drops_the_dead_bookmarklet_link(path):
     js = _template_js(ROOT / path)
-    assert 'id="bookmarkletLink"' in js
+    # app.py emits the anchor via a placeholder (server-side, Flask only);
+    # v2/app.py still has it inline. Both keep the client-side removal.
+    assert 'id="bookmarkletLink"' in js or "__BOOKMARKLET_LINK__" in js
     i = js.index("if (!isServer){")
     assert "getElementById('bookmarkletLink')" in js[i:i + 4000]
     assert ".remove()" in js[i:i + 4000]
+
+
+def test_bookmarklet_link_rendered_only_in_flask_mode():
+    import app as dash
+
+    static_html = dash.render_html({})
+    assert 'href="/bookmarklet"' not in static_html
+    assert "__BOOKMARKLET_LINK__" not in static_html
+
+    flask_html = dash.render_html({}, flask_mode=True)
+    assert flask_html.count('href="/bookmarklet"') == 1
+    assert 'id="bookmarkletLink"' in flask_html
+    assert "__BOOKMARKLET_LINK__" not in flask_html
+
+
+def test_server_renders_dashboard_in_flask_mode():
+    src = (ROOT / "server.py").read_text(encoding="utf-8")
+    calls = re.findall(r"dash\.render_html\((.*?)\)\n", src, re.S)
+    assert calls and all("flask_mode=True" in c for c in calls)
