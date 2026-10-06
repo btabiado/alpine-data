@@ -24,7 +24,9 @@
       <div class="lthcs-header-inner">
         <div class="lthcs-header-titles">
           <h1 class="lthcs-title">LTHCS &middot; Long-Term Hold Confidence Score</h1>
-          <p class="lthcs-subtitle">Daily scoring across 168 US-listed names (DJIA&nbsp;30 &middot; NASDAQ-100 &middot; S&amp;P&nbsp;100)</p>
+          <!-- The count is filled from universe.json by lthcs-tab.js; without it
+               the line still reads correctly, just without a number. -->
+          <p class="lthcs-subtitle">Daily scoring across <span id="lthcs-universe-count">US-listed names</span> (S&amp;P&nbsp;500 &middot; Dow&nbsp;30 &middot; NASDAQ-100 &middot; Index Exiles)</p>
         </div>
         <div class="lthcs-header-meta">
           <!-- Freshness stamp. "Data as of" (not "Last updated") because the
@@ -342,8 +344,8 @@
       <p>
         <strong>Not investment advice.</strong> LTHCS V1, computed daily from free-tier data.
         See <button type="button" class="lthcs-footer-link" id="lthcs-footer-about-link" aria-label="About LTHCS methodology">methodology &amp; sources</button>
-        or the spec on
-        <a href="https://github.com/btabiado/alpine-data/blob/main/PHASE_1_BUILD_SPEC.md" target="_blank" rel="noopener" class="lthcs-footer-link">GitHub</a>.
+        or the methodology on
+        <a href="https://github.com/btabiado/alpine-data/blob/main/README_LTHCS.md" target="_blank" rel="noopener" class="lthcs-footer-link">GitHub</a>.
       </p>
     </footer>
 

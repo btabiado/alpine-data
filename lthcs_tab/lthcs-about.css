@@ -155,28 +155,27 @@
   border-radius: 6px;
 }
 
-.lthcs-about-feed-table {
+.lthcs-about-wide-table {
   margin-top: 0;
   font-size: 12.5px;
   min-width: 620px;
 }
 
-.lthcs-about-feed-table th,
-.lthcs-about-feed-table td {
+.lthcs-about-wide-table th,
+.lthcs-about-wide-table td {
   padding: 6px 10px;
 }
 
-.lthcs-about-feed-table tbody tr:nth-child(even) td {
+.lthcs-about-wide-table tbody tr:nth-child(even) td {
   background: rgba(255, 255, 255, 0.02);
 }
 
-.lthcs-about-feed-table tbody tr:last-child td {
-  border-bottom: none;
+.lthcs-about-cov {
+  white-space: nowrap;
 }
 
-.lthcs-about-feed-table .lthcs-about-notes {
-  color: var(--muted, #9ca3af);
-  font-size: 12px;
+.lthcs-about-wide-table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .lthcs-about-list {
