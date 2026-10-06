@@ -12,9 +12,9 @@
    previous behaviour in that case.
 
    The URL is resolved against this module, not the page: lthcs_tab/ is
-   staged both at /lthcs/ (data at /data/lthcs/) and at /lthcs/lthcs_tab/
-   (data mirrored at /lthcs/data/lthcs/), and '../data/lthcs/' is right from
-   both, exactly like the pages' own DATA_ROOT.
+   staged both at /lthcs/ and at /lthcs/lthcs_tab/ (for the subpages), and
+   scripts/stage_lthcs_site.py gives the second copy one more '../', so both
+   resolve to the site's single /data/lthcs/ copy.
    ========================================================================= */
 
 const INDEX_URL = new URL('../data/lthcs/file_index.json', import.meta.url).href;
