@@ -316,6 +316,7 @@ def test_failure_reason_reaches_the_payload_note(monkeypatch):
     """
     monkeypatch.setattr(socrata, "feed_series", lambda *a, **k: (_ for _ in ()).throw(
         socrata.SocrataError("connection reset")))
+    monkeypatch.setattr(city_context, "build_context", lambda *a, **k: None)
     since = fetch_city._month_minus(LIVE_MONTH, 37) + "-01"
     city = fetch_city.build_city(CITY_CFG, as_of=LIVE_MONTH, since_date=since)
 
@@ -330,6 +331,7 @@ def test_failure_reason_reaches_the_payload_note(monkeypatch):
 def test_registry_note_is_preserved_alongside_the_failure_reason(monkeypatch):
     monkeypatch.setattr(socrata, "feed_series", lambda *a, **k: (_ for _ in ()).throw(
         socrata.SocrataError("boom")))
+    monkeypatch.setattr(city_context, "build_context", lambda *a, **k: None)
     cfg = json.loads(json.dumps(CITY_CFG))
     cfg["feeds"] = [dict(cfg["feeds"][0], note="2018 portal migration breakpoint")]
     since = fetch_city._month_minus(LIVE_MONTH, 37) + "-01"
