@@ -1,6 +1,6 @@
 name: catalog-health
 
-# Monthly link-health re-check for the Data Sources Catalog (/health/#catalog).
+# Weekly link-health re-check for the Data Sources Catalog (/health/#catalog).
 #
 # scripts/check_catalog_links.py HTTP-checks every unique URL in
 # health/api_catalog.json and writes health/catalog_health.json (+ .md),
@@ -9,9 +9,11 @@ name: catalog-health
 # without this job that file goes stale (it had no regenerating workflow
 # before — only manual runs).
 #
-# build_catalog_xlsx.py then rebuilds the downloadable workbook
-# (health/api-catalog.xlsx) so its Freshness/Health column stays in sync with
-# the JSON. The original landscape PDF (health/api-catalog.pdf) is NOT touched.
+# The downloadable workbook (health/api-catalog.xlsx) is no longer built or
+# committed here: pages.yml builds it from these JSON files on every deploy, so
+# its Freshness/Health column always matches them. (As a zip it delta-compressed
+# badly; its weekly commits were 11% of repo history.) The landscape PDF
+# (health/api-catalog.pdf) is NOT touched.
 #
 # Runs at 08:00 UTC every Monday (weekly) — offset from the daily data
 # bots (real-estate 06:00, city 07:00) so they don't race the same commit.
@@ -52,27 +54,23 @@ jobs:
           python-version: "3.11"
 
       - name: Install deps
-        # requests = the link checker's only third-party import;
-        # openpyxl = the xlsx builder's. Everything else is stdlib.
-        run: pip install requests openpyxl
+        # requests = the link checker's only third-party import. Everything
+        # else is stdlib.
+        run: pip install requests
 
       - name: Re-check catalog links
         # Writes health/catalog_health.json + health/catalog_health.md.
         # Exit 0 even with dead links (flagging is the job, not failing CI).
         run: python scripts/check_catalog_links.py
 
-      - name: Rebuild catalog spreadsheet
-        # Regenerates health/api-catalog.xlsx from the fresh health data.
-        run: python scripts/build_catalog_xlsx.py
-
       - name: Commit refreshed catalog health via signed API commit
         # Mirrors city-daily/real-estate-daily: API-based commit so the bot
         # commit is GitHub-signed (Verified). api-commit.sh reads the staged
-        # index, so all three files round-trip in one commit; it no-ops if
-        # nothing changed.
+        # index, so both files round-trip in one commit; it no-ops if nothing
+        # changed.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git add health/catalog_health.json health/catalog_health.md health/api-catalog.xlsx
+          git add health/catalog_health.json health/catalog_health.md
           .github/scripts/api-commit.sh \
-            "catalog-health: monthly link re-check $(date -u +%Y-%m-%d) [skip ci]"
+            "catalog-health: weekly link re-check $(date -u +%Y-%m-%d) [skip ci]"

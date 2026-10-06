@@ -88,6 +88,7 @@ jobs:
             data/whale.json
             data/.stale/
             snowflake_summit/.enrich_cache.json
+            data-opensky-positions.json
           key: fetched-data-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             fetched-data-
@@ -167,6 +168,31 @@ jobs:
       # calls. The old standalone fetch here (and the daily cron) got Yahoo-
       # throttled (0/219); both removed. The data-*.json copy step below deploys
       # the sidecar.
+
+      - name: Fetch OpenSky flight positions (deploy-time, never committed)
+        # The Aviation tab's Flight Map reads data-opensky-positions.json. It used
+        # to be committed by aviation-opensky.yml on every run: 978 versions of a
+        # 200 KB single-line file were 46% of all repo history, for data whose only
+        # value is the latest snapshot (R2 archives each deploy's copy via
+        # upload_to_r2.py). It is now fetched here and staged with the other
+        # data-*.json sidecars. One OpenSky /states/all call per deploy.
+        #
+        # fetch_opensky.py also rewrites data-opensky.json from the same response,
+        # so the Live Traffic tile and the map agree. aviation-opensky.yml still
+        # commits data-opensky.json (511 B) as the cold-checkout floor.
+        #
+        # On a failed fetch the previous deploy's file, restored by the cache step
+        # above, is staged instead. The map labels it with its own snapshot time,
+        # and data_health --mode built flags it if it ages past its limit.
+        # Non-fatal: the rest of the site must deploy regardless.
+        timeout-minutes: 3
+        env:
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+        run: >-
+          python fetch_opensky.py
+          || echo "::warning title=OpenSky positions not refreshed::fetch_opensky.py failed; the Flight Map serves the previous deploy's snapshot if one was cached, otherwise its empty state"
+        continue-on-error: true
 
       - name: Validate V1 dashboard JS structure
         # Structural lint of the freshly-built dashboard.html inline <script>,
@@ -812,6 +838,19 @@ jobs:
         # when these files are missing.
         if: hashFiles('scripts/build_lthcs_site_index.py') != ''
         run: python scripts/build_lthcs_site_index.py --root data/lthcs || echo "[lthcs-index] build failed; pages fall back to probing"
+        continue-on-error: true
+
+      - name: Build the API catalog workbook (deploy-time, never committed)
+        # /health/'s "Excel (.xlsx)" download. It is derived entirely from the
+        # committed health/api_catalog.json and health/catalog_health.json, and it
+        # used to be committed weekly by catalog-health.yml. An .xlsx is a zip, so
+        # git stored every version whole: 19 versions of ~885 KB were 11% of all
+        # repo history. Built here before staging so `cp -R health/*` publishes it.
+        # Non-fatal: /health/ deploys regardless, and a failure is annotated.
+        run: |
+          pip install -q openpyxl==3.1.5
+          python scripts/build_catalog_xlsx.py \
+            || echo "::warning title=API catalog workbook not built::build_catalog_xlsx.py failed; /health/api-catalog.xlsx is missing from this deploy"
         continue-on-error: true
 
       - name: Stage site directory

@@ -322,8 +322,12 @@ MANIFEST: dict[str, Feed] = {
         COMMITTED, "aviation-opensky.yml (hourly)", "python fetch_opensky.py",
         history=(History("data-opensky.json", DAILY, "git",
                          label="daily commits"),)),
+    # Live Flight Map positions. Fetched by pages.yml at deploy time and never
+    # committed (its hourly commits were 46% of repo history); the previous
+    # deploy's copy is restored from the Actions cache if a fetch fails.
+    # Judged in --mode built, against the file the deploy is about to serve.
     "data-opensky-positions.json": Feed(
-        COMMITTED, "aviation-opensky.yml (hourly)", "python fetch_opensky.py"),
+        BUILT, "fetch_opensky.py, inside pages.yml (deploy-time, never committed)"),
     "data-aviation.json": Feed(
         # No dedicated fetch_aviation.py exists; the file is consumed by app.py
         # and health/build_r2_coverage.py. Refresher intentionally left None
