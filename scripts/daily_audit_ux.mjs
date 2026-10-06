@@ -11,7 +11,7 @@
 //     with the outermost offending elements named
 //   * visible text matching NaN / undefined / [object Object] / Infinity
 //   * page weight (encoded bytes) and request count for the initial load
-//   * for V1 (/) and V2 (/v2/): every top-level tab is opened the way a user
+//   * for V1 (/): every top-level tab is opened the way a user
 //     would — on the phone by tapping the dropdown button first, then tapping
 //     the item. Before each tap the item's centre is hit-tested with
 //     document.elementFromPoint; if something else is on top, the tab is
@@ -43,7 +43,6 @@ const DEFAULT_BASE = 'https://btabiado.github.io/alpine-data';
 
 export const PAGES = [
   { key: 'v1', path: '/', tabs: true },
-  { key: 'v2', path: '/v2/', tabs: true },
   { key: 'summit', path: '/summit/' },
   { key: 'health', path: '/health/' },
   { key: 'real-estate', path: '/real-estate/' },

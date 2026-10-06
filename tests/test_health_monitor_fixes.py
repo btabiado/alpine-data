@@ -131,7 +131,7 @@ def test_manifest_rows_use_payload_dates_suppressions_and_unavailable(bhs, dh, t
     _write(tmp_path / "data-mf-flows.json",
            {"as_of": None, "weekly": [], "available": False,
             "unavailable_reason": "ICI download failed: HTTP 403"})
-    _write(tmp_path / "v2" / "data-mufon.json",          # DEPLOYED built_path
+    _write(tmp_path / "data-mufon.json",                 # the committed frozen cache
            {"generated_at": datetime.now(timezone.utc).isoformat(),
             "date_range": ["1906-11-11", "2026-06-09"]})
     _write(tmp_path / "data-city.json",

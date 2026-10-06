@@ -125,7 +125,7 @@ def test_cadli_is_retired_everywhere():
     hosts = [(urllib.parse.urlsplit(t["url"]).hostname or "") for t in api_status.TARGETS]
     assert not [h for h in hosts
                 if any(h == d or h.endswith("." + d) for d in retired)]
-    for rel in ("fetch_market.py", "app.py", "v2/app.py", "server.py", "api_status.py"):
+    for rel in ("fetch_market.py", "app.py", "server.py", "api_status.py"):
         src = (ROOT / rel).read_text()
         for host in ("data-api.coindesk.com", "min-api.cryptocompare.com",
                      "data-api.cryptocompare.com"):
@@ -241,10 +241,10 @@ def test_santiment_probe_sends_a_query_document():
 
 
 # --------------------------------------------------------------------------
-# The dashboards render the reasons (V1 at /, V2 at /v2/)
+# The dashboard renders the reasons (V1 at /)
 # --------------------------------------------------------------------------
 
-@pytest.mark.parametrize("rel", ["app.py", "v2/app.py"])
+@pytest.mark.parametrize("rel", ["app.py"])
 def test_dashboards_disclose_unavailable_sources(rel):
     src = (ROOT / rel).read_text()
     # The Alpine index (CADLI's replacement) states the fetcher's reason when

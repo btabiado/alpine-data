@@ -426,7 +426,7 @@ def _extract_function(js: str, name: str) -> str:
     raise AssertionError("unbalanced braces")  # pragma: no cover
 
 
-@pytest.fixture(scope="module", params=["v2/app.py", "app.py"])
+@pytest.fixture(scope="module", params=["app.py"])
 def mufon_freshness(request):
     py_mini_racer = pytest.importorskip(
         "py_mini_racer", reason="V8 needed to execute the shipped JS")
@@ -473,7 +473,7 @@ def test_dashboard_freshness_null_without_a_data_date(mufon_freshness):
                             "date_range": [None, None]}) is None
 
 
-@pytest.mark.parametrize("rel", ["v2/app.py", "app.py"])
+@pytest.mark.parametrize("rel", ["app.py"])
 def test_map_and_trend_notes_use_the_real_bucket_anchor(rel):
     js = _template_js(rel)
     assert "historical mirror cutoff" not in js

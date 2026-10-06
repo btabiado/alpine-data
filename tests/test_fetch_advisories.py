@@ -262,7 +262,7 @@ def test_utf8_bom_is_consumed(monkeypatch):
 # The committed payload itself — what readers actually load
 # --------------------------------------------------------------------------
 
-@pytest.mark.parametrize("rel", ["data-travel.json", "v2/data-travel.json"])
+@pytest.mark.parametrize("rel", ["data-travel.json"])
 def test_committed_payload_carries_no_entity_text(rel):
     """Regenerating this file is a network operation, so the parser fix alone
     would not clear what is already on disk. This locks the one-off
@@ -280,7 +280,7 @@ def test_committed_payload_carries_no_entity_text(rel):
     assert not offenders, offenders[:5]
 
 
-@pytest.mark.parametrize("rel", ["data-travel.json", "v2/data-travel.json"])
+@pytest.mark.parametrize("rel", ["data-travel.json"])
 def test_committed_payload_carries_no_mojibake(rel):
     path = ROOT / rel
     if not path.exists():

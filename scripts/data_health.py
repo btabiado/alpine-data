@@ -372,8 +372,8 @@ MANIFEST: dict[str, Feed] = {
     "data/ai_curated.json": Feed(
         # Corrected owner. Nothing regenerates this file: it is a hand-curated
         # snapshot (compiled_at), and fetch_market.load_ai_curated() only READS
-        # it, wiki-enriches it in memory and inlines it into dashboard.html and
-        # v2/dashboard.html as DATA.market.ai_curated. It is not published as a
+        # it, wiki-enriches it in memory and inlines it into dashboard.html
+        # as DATA.market.ai_curated. It is not published as a
         # file (<site>/data/ai_curated.json is a 404), and the live pages carry
         # the very same compiled_at as the repo copy, so the repo copy IS the
         # deployed data and REPO is the right source. When it is red, the fix
@@ -451,13 +451,14 @@ MANIFEST: dict[str, Feed] = {
     # coincidence — they froze *because* nothing was watching, so the V2 build
     # timeout that starved them produced no signal for eight weeks.
     "data-mufon.json": Feed(
-        # DEPLOYED: v2/app.py writes v2/data-mufon.json and the staging step
-        # copies it to the site root; the root repo file is a frozen fallback
-        # (last committed 2026-06-08) that the deploy never reads.
-        COMMITTED, "fetch_mufon.py, called by v2/app.py inside pages.yml "
-                   "(deployed from v2/data-mufon.json, never committed back)",
-        "python fetch_mufon.py", source=DEPLOYED,
-        built_path="v2/data-mufon.json"),
+        # The committed NUFORC month cache, frozen at 2026-06-09 and published
+        # as is: nothing refreshes it (see the suppression below). Until V2 was
+        # retired (2026-10) the V2 build rebuilt v2/data-mufon.json hourly and
+        # the deploy served that; the repo file is now exactly what the site
+        # serves, so REPO is the right source. No refresher: running
+        # fetch_mufon.py would scrape nuforc.org, which is what is not allowed.
+        COMMITTED, "committed frozen NUFORC cache (no fetcher runs: nuforc.org "
+                   "blocks automated access and its terms forbid harvesting)"),
     "data-stock-money-flow.json": Feed(
         # Corrected owner: the standalone daily cron referenced by .gitignore
         # (stock-money-flow-daily.yml) does not exist. pages.yml line ~113
@@ -537,9 +538,12 @@ MANIFEST: dict[str, Feed] = {
     "data-metals.json": Feed(BUILT, "fetch_metals.py, inside pages.yml"),
     "data-supplies.json": Feed(BUILT, "fetch_supplies.py, inside pages.yml"),
     "data-cpi.json": Feed(BUILT, "fetch_cpi.py, inside pages.yml"),
+    "data-stock-prices.json": Feed(
+        BUILT, "fetch_stock_prices.py, inside pages.yml (7-day hourly closes, "
+               "published at the site root)"),
     # The four build artifacts the built-mode check reported as UNWATCHED.
     "data-defi.json": Feed(
-        BUILT, "app.py / v2/app.py lazy sidecar from fetch_market's DeFi subtree"),
+        BUILT, "app.py lazy sidecar from fetch_market's DeFi subtree"),
     "data-mmf.json": Feed(
         BUILT, "fetch_money_flows.py, via fetch_market.build_money_flow_payload "
                "inside pages.yml (ICI; FRED WRMFNS fallback)"),
@@ -557,8 +561,8 @@ MANIFEST: dict[str, Feed] = {
     "data/coinbase.json": Feed(BUILT, "fetch_coinbase.py, inside pages.yml"),
     # data/cpi.json, data/metals.json and data/supplies.json were listed here
     # and reported MISSING on every build: nothing writes them. fetch_cpi /
-    # fetch_metals / fetch_supplies dual-write v2/data-X.json and the root
-    # data-X.json (their DEFAULT_OUT_V1), which are the entries above.
+    # fetch_metals / fetch_supplies write the root data-X.json, which are the
+    # entries above.
     "data/insights_history.json": Feed(BUILT, "insights.py, inside pages.yml"),
 
     # --- legitimately static ------------------------------------------------

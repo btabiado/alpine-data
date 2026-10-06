@@ -138,7 +138,7 @@ def test_fetch_whale_ships_rows_and_status(monkeypatch):
     assert eth["large_transactions_status"]["source"] == "live"
 
 
-@pytest.mark.parametrize("rel", ["app.py", "v2/app.py"])
+@pytest.mark.parametrize("rel", ["app.py"])
 def test_dashboards_filter_client_side_and_show_an_empty_state(rel):
     src = (ROOT / rel).read_text(encoding="utf-8")
     i = src.index("function renderEthWhaleAlerts(){")

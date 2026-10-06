@@ -49,7 +49,6 @@ from pathlib import Path
 # its index.html exists (same gate the old bash branches used).
 SUBPAGES = {
     "lthcs_table": "table",
-    "lthcs_tab_v2": "v2",
     "lthcs_health": "health",
     "lthcs_backtest": "backtest",
     "lthcs_crypto": "crypto",

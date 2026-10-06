@@ -22,7 +22,6 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 V1_APP = ROOT / "app.py"
-V2_APP = ROOT / "v2" / "app.py"
 
 # Properties that make an element clip or re-anchor its position:fixed
 # descendants (mask/clip-path clip the painted output; transform, filter,
@@ -99,12 +98,3 @@ def test_the_menus_are_still_fixed_on_phones(v1_tpl):
     assert m and "position:fixed" in m.group(1)
 
 
-def test_v2_flat_strip_has_no_popout_inside_its_masked_tabs():
-    """V2 keeps a directional mask on .tabs, which is only safe because its
-    strip is flat: nothing inside it pops out below the strip. If a dropdown
-    is ever added there, the mask has to go the same way as V1's."""
-    tpl = _template(V2_APP)
-    strip = re.search(r'<div class="tabs" role="tablist">(.*?)\n</div>', tpl, re.S)
-    assert strip, "V2 tab strip markup not found"
-    assert "tabgroup-menu" not in strip.group(1)
-    assert "aria-haspopup" not in strip.group(1)

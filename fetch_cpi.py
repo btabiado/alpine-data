@@ -33,7 +33,7 @@ Sources (all free, requires self-service FRED API key):
     CUUR0000SEEB     Tuition, other school fees, and childcare (NSA)
     CUUR0000SEED     Telephone services (parent incl. cellular, NSA)
 
-Output: v2/data-cpi.json (sidecar for the V2 dashboard's Consumer Price Index tab).
+Output: data-cpi.json (sidecar for the dashboard's Consumer Price Index tab).
 
 Schema (matches what the front-end consumes):
     {
@@ -58,13 +58,13 @@ Resilience:
   * Per-series try/except — one series failing does NOT block the others.
     Failed series ship with {"id": ..., "error": "..."} and zero observations.
   * Stale-fallback: if EVERY series fetch errors out AND a prior good
-    v2/data-cpi.json exists (fred_available=true with non-empty observations),
+    data-cpi.json exists (fred_available=true with non-empty observations),
     we preserve it (no overwrite) and exit non-zero.
   * Mirrors fetch_advisories.py and fetch_market.py conventions
     (shared UA string, requests session, per-source try/except).
 
 CLI:
-    python fetch_cpi.py                 # default --out v2/data-cpi.json
+    python fetch_cpi.py                 # default --out data-cpi.json
     python fetch_cpi.py --out PATH      # custom output path
     python fetch_cpi.py --no-network    # offline self-test (no HTTP)
 """
@@ -85,21 +85,18 @@ import requests
 UA = "Mozilla/5.0 (compatible; etf-flow-dashboard/1.0)"
 H = {"User-Agent": UA}
 ROOT = Path(__file__).parent
-DEFAULT_OUT = ROOT / "v2" / "data-cpi.json"
-# V1 dual-write target — the V1 dashboard lazy-loads /data-cpi.json via the
-# same SIDECARS mechanism it already uses for whale/defi (those live at
-# data-whale.json / data-defi.json next to dashboard.html). Writing here
-# keeps V2's existing wiring untouched while giving V1 a self-contained
-# sidecar that the CI stage step picks up automatically (it globs
-# `data-*.json` at repo root). Pass --out-v1 '' to disable.
-DEFAULT_OUT_V1 = ROOT / "data-cpi.json"
+DEFAULT_OUT = ROOT / "data-cpi.json"
+# Optional second copy (--out-v1). It mirrored the output into the repo root
+# for V1 while the retired V2 dashboard owned DEFAULT_OUT (v2/); DEFAULT_OUT
+# is now the root file the dashboard reads, so the mirror is off by default.
+DEFAULT_OUT_V1 = ""
 
 FRED_OBS_URL = "https://api.stlouisfed.org/fred/series/observations"
 
 # Series catalog. `kind` drives front-end formatting:
 #   - "index"  -> plain number (e.g. 318.4)
 #   - "dollar" -> "$3.79" formatting
-# `category` groups cards into sections in the V2 UI.
+# `category` groups cards into sections in the CPI tab.
 # Category render order is enforced front-end via CATEGORY_ORDER (must match).
 SERIES_CATALOG: list[dict[str, str]] = [
     # --- Headlines -----------------------------------------------------------
@@ -423,7 +420,7 @@ def _all_series_failed(payload: dict) -> bool:
 
 
 def _prior_is_good(path: Path) -> bool:
-    """Existing v2/data-cpi.json is considered good when fred_available is
+    """Existing data-cpi.json is considered good when fred_available is
     True AND at least one series has observations. The empty-state seed
     (fred_available=False) does NOT count and must not be preserved over a
     real-but-broken fetch — we'd rather show the fresh "all failed" payload
@@ -453,7 +450,7 @@ _SAMPLE_FIXTURE = {
 }
 
 
-# Categories that must be present in the catalog. The V2 front-end pins the
+# Categories that must be present in the catalog. The front-end pins the
 # render order; if either side drifts the front-end falls back to "other".
 EXPECTED_CATEGORIES = {
     "headlines", "food", "energy", "housing",
@@ -529,8 +526,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", default=str(DEFAULT_OUT),
                     help=f"Output JSON path (default: {DEFAULT_OUT})")
     ap.add_argument("--out-v1", default=str(DEFAULT_OUT_V1),
-                    help=f"V1 dashboard dual-write path (default: {DEFAULT_OUT_V1}; "
-                         f"pass empty string '' to disable)")
+                    help="Optional second output path (default: none)")
     ap.add_argument("--no-network", action="store_true",
                     help="Run offline parser self-test and exit (no HTTP).")
     args = ap.parse_args(argv)
@@ -548,7 +544,7 @@ def main(argv: list[str] | None = None) -> int:
         v1_out_path = Path(args.out_v1)
 
     def _write_v1(payload_dict: dict) -> None:
-        """Mirror the V2 payload to data/cpi.json so the V1 dashboard's
+        """Mirror the payload to the optional second path (--out-v1) so the dashboard's
         lazy-load can pick it up. Failure here is non-fatal — V1 just shows
         its empty state until the next run."""
         if v1_out_path is None:

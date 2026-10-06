@@ -19,8 +19,7 @@ Three layers, mirroring tests/test_v1_freshness.py:
    the assertions run against the code that actually ships rather than a
    reimplementation of it.
 
-3. **Cross-frontend parity + source contracts** — the pieces that must not
-   drift from v2/app.py, and the things that must never reappear in the source
+3. **Source contracts** — the things that must never reappear in the source
    (``as of ${DATA.generated_at}``, a bare ``fMax`` in a composite stamp).
 
 The failure mode being guarded is the time-axis version of the whale defect:
@@ -42,7 +41,6 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 V1_APP = ROOT / "app.py"
-V2_APP = ROOT / "v2" / "app.py"
 
 
 # ---------------------------------------------------------------- helpers ---
@@ -445,25 +443,6 @@ def test_identical_values_render_on_one_flat_line(chart_ctx):
     assert len(set(_cys(out))) == 1
 
 
-def test_axis_floor_is_identical_to_v2(v1_js):
-    """One dialect, two frontends. If the floors drift, the same archive
-    reads as two different pictures depending on which URL you opened."""
-    if not V2_APP.exists():  # pragma: no cover - repo layout guard
-        pytest.skip("v2/app.py not present")
-    src = V2_APP.read_text(encoding="utf-8")
-    v2_js = src[src.index('HTML_TEMPLATE = r"""') + len('HTML_TEMPLATE = r"""'):]
-    v1_fn = strip_comments(extract_function(v1_js, "compositeHistoryChart"))
-    v2_fn = strip_comments(extract_function(v2_js, "compositeHistoryChart"))
-
-    def axis_block(fn: str) -> str:
-        i = fn.index("const MIN_SPAN")
-        j = fn.index("const X = ms =>", i)
-        return "\n".join(l.strip() for l in fn[i:j].splitlines() if l.strip())
-
-    assert axis_block(v1_fn) == axis_block(v2_fn), (
-        "the composite-history y-axis floor has drifted between V1 and V2")
-
-
 def test_point_text_is_escaped(chart_ctx):
     out = svg_for(chart_ctx, [_pt("2026-07-01", 1, label="<script>x</script>")])
     assert "<script>" not in out
@@ -533,18 +512,6 @@ def test_chart_unavailable_stub_is_defined_before_any_renderer_runs(v1_js):
     assert m and stub < m.start()
 
 
-def test_chart_unavailable_stub_matches_v2(v1_js):
-    """Two frontends, one stub. V2 shipped it first."""
-    if not V2_APP.exists():  # pragma: no cover
-        pytest.skip("v2/app.py not present")
-    v2 = V2_APP.read_text(encoding="utf-8")
-    for line in ("function ChartUnavailable(canvas){",
-                 "this.destroy = function(){};",
-                 "window.Chart.__unavailable = true;",
-                 "Chart library unavailable — the numbers and "):
-        assert line in v1_js and line in v2, line
-
-
 def test_history_card_map_covers_every_composite_card(v1_js):
     """Every composite card on the page is clickable — including the ones the
     archive does not record yet, which open an honest 'not recorded' note
@@ -592,26 +559,6 @@ def test_history_modal_markup_is_present_and_accessible(v1_js):
 def test_history_modal_returns_focus_to_the_opener(v1_js):
     fn = extract_function(v1_js, "closeCompositeHistory")
     assert "_compositeHistoryReturnFocus" in fn and ".focus()" in fn
-
-
-def test_python_loader_matches_v2s(v1app):
-    """The two builders must fold the archive identically — the whole point of
-    a shared honesty contract is that both frontends tell the same story."""
-    if not V2_APP.exists():  # pragma: no cover
-        pytest.skip("v2/app.py not present")
-    v1_src = V1_APP.read_text(encoding="utf-8")
-    v2_src = V2_APP.read_text(encoding="utf-8")
-
-    def body(src):
-        i = src.index("def load_composite_history(")
-        j = src.index("\ndef ", i + 10)
-        # strip docstring + the print prefix that names the frontend
-        b = src[i:j]
-        b = re.sub(r'""".*?"""', "", b, count=1, flags=re.S)
-        return b.replace("[v2][composites]", "[composites]")
-
-    assert body(v1_src) == body(v2_src), (
-        "load_composite_history() has drifted between app.py and v2/app.py")
 
 
 def test_container_overflow_guard_is_present(v1_js):
@@ -822,22 +769,6 @@ def test_per_asset_modal_discloses_which_asset_it_is_showing(v1_js):
     body = extract_function(v1_js, "compositeHistoryBodyHtml")
     assert "This card is per-asset" in body
     assert "compositeHistoryAssetOf(key)" in body
-
-
-def test_history_resolvers_match_v2s(v1_js):
-    """A fix in one frontend only is a half fix."""
-    if not V2_APP.exists():  # pragma: no cover
-        pytest.skip("v2/app.py not present")
-    src = V2_APP.read_text(encoding="utf-8")
-    v2_js = src[src.index('HTML_TEMPLATE = r"""') + len('HTML_TEMPLATE = r"""'):]
-    for name in ("compositeHistoryCardFor", "compositeHistoryAssetOf",
-                 "compositeHistoryKeyFor", "compositeHistoryTitleFor"):
-        assert extract_function(v1_js, name) == extract_function(v2_js, name), name
-    assert registry_block(v1_js).replace("test_v1_composite_history", "X") == \
-        registry_block(v2_js).replace("test_v2_composite_history", "X")
-
-
-# ================= 5. Unbreakable upstream text (Item 8) ====================
 
 
 def test_every_upstream_article_row_can_wrap(v1_js):

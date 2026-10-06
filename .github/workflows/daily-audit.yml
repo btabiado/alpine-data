@@ -7,9 +7,9 @@ name: daily-audit
 #                                  days, API-status changes, and cheap spot
 #                                  checks of the live site against primary
 #                                  sources (no secrets needed)
-#   scripts/daily_audit_ux.mjs     Playwright: /, /v2/, /summit/, /health/,
+#   scripts/daily_audit_ux.mjs     Playwright: /, /summit/, /health/,
 #                                  /real-estate/, /lthcs/ at 390px and 1440px;
-#                                  every V1/V2 tab opened the way a user would
+#                                  every V1 tab opened the way a user would
 #   scripts/daily_audit_report.py  problems + new/ongoing/fixed vs. yesterday
 #
 # Output, committed back once a day (signed, via api-commit.sh, [skip ci]):

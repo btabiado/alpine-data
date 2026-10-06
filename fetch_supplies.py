@@ -27,7 +27,7 @@ plus loaded-imports-only (the leading-indicator subset for US consumer
 demand). L.A. alone moves ~10M TEU/yr — about a quarter of US container
 traffic — and is the largest single port indicator we have.
 
-Output: v2/data-supplies.json (sidecar for the V2 dashboard's "Supplies" tab).
+Output: data-supplies.json (sidecar for the dashboard's "Supplies" tab).
 
 Schema:
     {
@@ -72,7 +72,7 @@ the prior value for that key (read from the existing output file). The other
 sources continue. Worst case the file is unchanged.
 
 CLI:
-    python fetch_supplies.py                  # default --out v2/data-supplies.json
+    python fetch_supplies.py                  # default --out data-supplies.json
     python fetch_supplies.py --out PATH       # custom output path
     python fetch_supplies.py --no-network     # offline parser self-test only
 """
@@ -103,14 +103,11 @@ UA = (
 )
 H = {"User-Agent": UA, "Accept": "text/html,application/xhtml+xml,application/json"}
 ROOT = Path(__file__).parent
-DEFAULT_OUT = ROOT / "v2" / "data-supplies.json"
-# V1 dual-write target — the V1 dashboard lazy-loads /data-supplies.json via
-# the same SIDECARS mechanism it already uses for whale/defi (those live at
-# data-whale.json / data-defi.json next to dashboard.html). Writing here
-# keeps V2's existing wiring untouched while giving V1 a self-contained
-# sidecar that the CI stage step picks up automatically (it globs
-# `data-*.json` at repo root). Pass --out-v1 '' to disable.
-DEFAULT_OUT_V1 = ROOT / "data-supplies.json"
+DEFAULT_OUT = ROOT / "data-supplies.json"
+# Optional second copy (--out-v1). It mirrored the output into the repo root
+# for V1 while the retired V2 dashboard owned DEFAULT_OUT (v2/); DEFAULT_OUT
+# is now the root file the dashboard reads, so the mirror is off by default.
+DEFAULT_OUT_V1 = ""
 
 # Port of L.A. publishes one HTML page per calendar year with a monthly table.
 # URL pattern is stable back to 1995; the current-year page is updated in the
@@ -685,8 +682,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", default=str(DEFAULT_OUT),
                     help=f"Output JSON path (default: {DEFAULT_OUT})")
     ap.add_argument("--out-v1", default=str(DEFAULT_OUT_V1),
-                    help=f"V1 dashboard dual-write path (default: {DEFAULT_OUT_V1}; "
-                         f"pass empty string '' to disable)")
+                    help="Optional second output path (default: none)")
     ap.add_argument("--no-network", action="store_true",
                     help="Run offline parser self-test and exit (no HTTP).")
     args = ap.parse_args(argv)
