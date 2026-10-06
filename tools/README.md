@@ -35,8 +35,7 @@ under a path-agnostic name. Use this entrypoint for V1:
 
 ```
 python tools/validate_dashboard.py dashboard.html       # V1
-python tools/validate_dashboard.py v2/dashboard.html    # V2 (same checks)
-python tools/validate_dashboard.py                      # defaults to v2/dashboard.html
+python tools/validate_dashboard.py                      # defaults to dashboard.html (V2 was retired in 2026-10)
 ```
 
 `pages.yml` calls it after both the V1 and the V2 generate steps. Renaming

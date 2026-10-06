@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import sys
 import webbrowser
 from datetime import datetime
@@ -101,8 +100,7 @@ def defi_observation_date(defi: dict) -> str | None:
     must render an explicit "unavailable" state rather than substituting a
     build/fetch timestamp.
 
-    Byte-equivalent to v2/app.py's function of the same name; both frontends
-    consume the same ``market.json``.
+    (The retired V2 frontend carried an identical copy; this is now the only one.)
     """
     hist = (defi or {}).get("tvl_history")
     if not isinstance(hist, dict):
@@ -373,7 +371,7 @@ def load_composite_history(max_snapshots: int = COMPOSITE_HISTORY_MAX_SNAPSHOTS)
     Never raises: a missing directory or an unparseable file is a gap in the
     series, not a reason to fail a build.
 
-    Byte-for-byte the same loader v2/app.py carries. Change one, change both.
+    (The retired V2 frontend carried the same loader; this is now the only one.)
     """
     out: dict = {"snapshots": 0, "first_snapshot": None,
                  "last_snapshot": None, "indexes": {}}
@@ -1041,68 +1039,6 @@ def load_json(path: Path) -> dict:
         return {}
 
 
-# Top-level sidecar keys that move on EVERY fetch even when not one observation
-# changed: the build/fetch stamp, and the fetcher's own per-run bookkeeping
-# (how many months it pulled, how long it took, whether the network was up).
-#
-# By rule 1 of the honesty contract the age the page reports comes from the
-# DATA — the UAP tab's freshness is mufonFreshness(), which reads
-# `date_range[1]`, the newest SIGHTING, and never `generated_at`. So a payload
-# whose only difference is one of these fields is the same data seen again, and
-# rewriting a git-tracked file for it is pure churn.
-SIDECAR_VOLATILE_KEYS = ("generated_at", "fetched_at", "_nuforc_live_meta")
-
-
-def _sidecar_substance(path: Path):
-    """The sidecar's payload minus per-run bookkeeping, or ``None`` if it can't
-    be read as JSON at all (missing file, truncated write, HTML error page)."""
-    try:
-        obj = json.loads(path.read_text())
-    except Exception:
-        return None
-    if not isinstance(obj, dict):
-        return obj
-    return {k: v for k, v in obj.items() if k not in SIDECAR_VOLATILE_KEYS}
-
-
-def copy_sidecar_if_changed(src: Path, dst: Path, label: str) -> bool:
-    """Copy ``src`` over ``dst`` only when the DATA differs. Returns whether it
-    copied.
-
-    ``dst`` here is a git-TRACKED file (see the data-mufon.json carve-out in
-    .gitignore) and ``src`` is a build product regenerated on every run. An
-    unconditional ``shutil.copyfile`` therefore left the working tree dirty
-    after every single local build, which is how a previous round committed
-    data churn through ``git add -A``.
-
-    Three cases, in order:
-
-    * ``src`` is unreadable as JSON — refuse to clobber a readable ``dst``. A
-      truncated or half-written fetch must not destroy the committed
-      stale-keep fallback the carve-out exists to provide.
-    * substance identical (only ``SIDECAR_VOLATILE_KEYS`` moved) — skip. The
-      served file keeps its older stamp, which is honest: the observations
-      behind it really are the same ones.
-    * anything else — copy, because the deployed page needs the current data.
-    """
-    src_sub = _sidecar_substance(src)
-    if src_sub is None:
-        if dst.exists() and _sidecar_substance(dst) is not None:
-            print(f"  [{label}] {src.name} is not readable JSON — kept the "
-                  f"existing {dst.name} rather than overwriting it with it",
-                  file=sys.stderr)
-            return False
-        shutil.copyfile(src, dst)
-        return True
-    if dst.exists() and _sidecar_substance(dst) == src_sub:
-        print(f"  [{label}] {dst.name} already holds this data "
-              f"(only the build stamp differs) — not rewritten")
-        return False
-    shutil.copyfile(src, dst)
-    print(f"  [{label}] {dst.name} updated from {src.parent.name}/{src.name}")
-    return True
-
-
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-open", action="store_true", help="don't open the browser")
@@ -1141,7 +1077,7 @@ def main() -> int:
     # prior good JSON on failure. Runs unconditionally (not behind
     # --fetch-market) because the source is a free public scrape and the
     # data only changes when State Dept reissues an advisory — same gating
-    # as the V2 build does.
+    # as the retired V2 build used.
     try:
         import fetch_advisories
         rc = fetch_advisories.main(["--out", str(ROOT / "data-travel.json")])
@@ -1172,44 +1108,24 @@ def main() -> int:
         sidecar_path.write_text(json.dumps(blob))
         print(f"  Wrote {sidecar_path.name} ({sidecar_path.stat().st_size:,} bytes)")
 
-    # External sidecars produced by standalone fetchers (fetch_cpi.py,
-    # fetch_supplies.py, fetch_metals.py — each dual-writes to v2/data-X.json
-    # AND data-X.json at repo root). Always declare them in the manifest —
-    # in CI, V1 builds BEFORE V2 (which is what triggers the dual-write
-    # fetchers), so the .exists() check we used to do would always miss and
-    # the JS lazy-loader would never try the fetch. By the time the page is
-    # served from _site/, V2 has run and the files exist. The JS-side fetch
-    # gracefully handles 404 → empty-state, so unconditional declaration is
-    # safe and lets V1 pick up the data on the first deploy.
+    # External sidecars written outside this build: data-cpi.json,
+    # data-supplies.json and data-metals.json by fetch_cpi.py / fetch_supplies.py
+    # / fetch_metals.py in pages.yml's "Fetch dashboard sidecars" step, which
+    # runs AFTER this render. Always declared, so the page tries the fetch; the
+    # JS lazy-loader turns a 404 into the tab's empty state.
     #
-    # Travel Advisories (data-travel.json) is in this same group: the V1
-    # build calls fetch_advisories.main() above with --out pointing at the
-    # V1 root, so the file is written before render_html. Declared
-    # unconditionally for the same reason as cpi/supplies/metals — the JS
-    # lazy-loader handles a missing file as an empty-state.
+    # Travel Advisories (data-travel.json) is in this same group: this build
+    # calls fetch_advisories.main() above with --out pointing at the repo root,
+    # so the file is written before render_html. Declared unconditionally for
+    # the same reason.
     for ext_key in ("cpi", "supplies", "metals", "travel"):
         manifest[ext_key] = f"data-{ext_key}.json"
-    # UAP/MUFON sidecar: only v2/app.py owns the network fetch (writes
-    # v2/data-mufon.json). Serve it from the V1 root so production V1 doesn't
-    # depend on the /v2/ preview path. Locally we copy the already-built v2
-    # file across (best-effort, no network); in CI the workflow stages the
-    # freshly-built v2/data-mufon.json to the root after the V2 step. The JS
-    # lazy-loader treats a missing file as an empty state.
-    #
-    # DIRECTION: v2/ is authoritative for CONTENT (it owns the fetch) but the
-    # ROOT file is the one git tracks — a committed stale-keep fallback, see the
-    # .gitignore carve-out. So the copy is v2 -> root, guarded, never the other
-    # way. It used to run unconditionally, which meant every local build
-    # rewrote a tracked file with nothing but a new `generated_at`; one
-    # accidental `git add -A` then committed pure data churn (it has happened).
-    # copy_if_changed() compares the SUBSTANCE and leaves the tracked file
-    # byte-identical when only the build stamp moved.
-    _mufon_src = ROOT / "v2" / "data-mufon.json"
-    if _mufon_src.exists():
-        try:
-            copy_sidecar_if_changed(_mufon_src, ROOT / "data-mufon.json", "mufon")
-        except OSError as e:
-            print(f"  [mufon] could not copy {_mufon_src} -> root: {e}", file=sys.stderr)
+    # UAP/MUFON sidecar (data-mufon.json at repo root): the committed NUFORC
+    # month cache, frozen at 2026-06-09. nuforc.org answers automated requests
+    # with a Cloudflare challenge and its terms forbid harvesting, so nothing
+    # refreshes it (see fetch_mufon.py). The file says so itself (`_stale`,
+    # `data_through`, `live_refresh`), and the tab shows "not refreshed · data
+    # through ...". Published as is by the stage step's data-*.json glob.
     manifest["mufon"] = "data-mufon.json"
 
     # City Pulse sidecar (data-city.json at repo root): written out-of-band by
@@ -1559,7 +1475,7 @@ header .meta{color:var(--muted);font-size:12px}
    overflow-wrap is inherited, so one class on the row element covers the
    headline, the body and the source chip, and `anywhere` (not `break-word`)
    also lowers min-content so the enclosing grid track shrinks with it.
-   Identical rule in v2/app.py. */
+   */
 /* Rule 2 lives on the .metals-grid2 / .supplies-grid declarations themselves,
    further down this stylesheet — an override up here would lose the cascade
    to the later same-specificity rule. */
@@ -1571,7 +1487,7 @@ header .meta{color:var(--muted);font-size:12px}
    positioned, because every one of these cards already puts its big score in
    the top-right corner and an overlay chip would land on top of it. Adding a
    row at the bottom cannot reflow anything above it.
-   Mirrors v2/app.py's .v2-hist* block; V1 palette tokens (--purple is the
+   Ported from the retired V2 frontend's .v2-hist* block; V1 palette tokens (--purple is the
    composite-card accent, already the border-left colour on all seven .card
    sentiment cards). */
 .histcard{cursor:pointer}
@@ -1642,8 +1558,8 @@ header .meta{color:var(--muted);font-size:12px}
 .chart-card h2{font-size:13px;margin:0;font-weight:600}
 .chart-card .desc{font-size:11px;color:var(--muted)}
 /* --- DATA FRESHNESS STAMPS ------------------------------------------------
-   Shared vocabulary with V2 (v2/app.py) and lthcs_tab/lthcs-freshness.js so
-   the three frontends stay diffable: same class names, same four tones,
+   Shared vocabulary with lthcs_tab/lthcs-freshness.js so the two frontends
+   stay diffable: same class names, same four tones,
    same thresholds (see freshness() in the script below).
 
    DELIBERATE TOKEN CHOICE: the tints use V1's own --amber / --red, NOT the
@@ -2552,8 +2468,8 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
 
 /* ===================== TOUCH BLOCK (site audit V2-C) =====================
    Deliberately LAST in the sheet so these win on source order. Gated on a
-   coarse pointer OR a phone-width viewport, matching the equivalent block in
-   v2/app.py, so the production and preview frontends behave identically.
+   coarse pointer OR a phone-width viewport (ported from the retired V2
+   frontend).
 
    V2-C — the Travel sub-view buttons measured 69.4x28, 72.6x28, 72.6x28,
    93.9x28 and 83.8x28 at 360x740 with a coarse pointer. The 44px touch floor
@@ -2587,8 +2503,8 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
      this way" cue, and a far better one than an invisible gradient mask.
      Smallest button is then 61.4x44, still clear of the 44px floor.
 
-     This is the one place V1 deviates from v2/app.py's touch block, and it
-     deviates by two declarations. V2 should adopt the same two. */
+     This is the one place V1 deviated from the retired V2 frontend's touch
+     block, by two declarations. */
   .travel-subtabs{position:sticky;top:0;z-index:6;
     background:var(--bg);margin-left:-2px;margin-right:-2px;
     padding-left:2px;padding-right:2px;gap:3px;
@@ -4439,8 +4355,8 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
   <!-- ============ CPI TAB (ported from V2) ============ -->
   <!-- 22 FRED Consumer Price Index series across 7 categories (Headlines /
        Food / Energy / Housing / Cars / Healthcare / Other). Sidecar is
-       data-cpi.json — dual-written by fetch_cpi.py to v2/data-cpi.json
-       AND data-cpi.json. Loads lazily via SIDECAR_FOR_TAB.cpi the first
+       data-cpi.json — written by fetch_cpi.py in pages.yml's "Fetch
+       dashboard sidecars" step. Loads lazily via SIDECAR_FOR_TAB.cpi the first
        time the user opens this tab. When FRED_API_KEY is unset the
        payload arrives with fred_available=false and we render an
        empty-state explainer instead of an empty grid. -->
@@ -5310,8 +5226,7 @@ window.addEventListener('error', e => {
 // downgraded to a no-op rather than allowed to take the page down with them.
 // Real Chart.js, when it loads, is left completely untouched.
 //
-// Byte-for-byte the same stub V2 carries (v2/app.py). If you change one,
-// change both — a fix that lands in only one frontend is a half fix.
+// (The retired V2 frontend carried the same stub.)
 //
 // WHAT CHANGED WHEN CHART.JS STOPPED BLOCKING THE PARSER: this test used to
 // run right here, at parse time, when a synchronous script-src tag in <head>
@@ -5402,8 +5317,8 @@ async function loadSidecar(name){
 
 // Which sidecar (if any) each tab needs. Tabs absent here are eager-rendered.
 // cpi / supplies / metals payloads are produced by standalone fetchers
-// (fetch_cpi.py / fetch_supplies.py / fetch_metals.py) which dual-write to
-// v2/data-X.json AND data-X.json — the latter is what V1 loads here.
+// (fetch_cpi.py / fetch_supplies.py / fetch_metals.py) which pages.yml's
+// "Fetch dashboard sidecars" step runs, writing data-X.json at the repo root.
 // travel sidecar is written by fetch_advisories.py from the V1 build itself
 // (see main() in app.py) to /data-travel.json at repo root.
 const SIDECAR_FOR_TAB = {
@@ -5603,10 +5518,10 @@ function baseOpts({yLabel='', tooltipFmt=null}={}){
 // DATA FRESHNESS — one implementation, used by every stamp on the page
 // ============================================================================
 // This is the PRODUCTION frontend (`/dashboard.html`, deployed by
-// .github/workflows/pages.yml). The helper family below is a byte-for-byte
-// port of v2/app.py's; lthcs_tab/lthcs-freshness.js carries a third copy as
+// .github/workflows/pages.yml). The helper family below was ported from the
+// retired V2 frontend; lthcs_tab/lthcs-freshness.js carries a second copy as
 // an ES module. Same thresholds, same wording, same tones. If you change a
-// rule, change it in all three or the frontends drift apart.
+// rule, change it in both or the frontends drift apart.
 //
 // THE RULES THIS ENFORCES (do not "simplify" any of them away):
 //
@@ -5753,9 +5668,8 @@ function freshnessHtml(isoDate, opts){
 //
 // This is done ONCE here rather than at the 30-odd call sites, and it is
 // deliberately attached to the RENDERED CHIP rather than edited into
-// freshnessHtml()/paintFreshness(): those two are byte-for-byte parity-locked
-// against v2/app.py (tests/test_v1_freshness.py::test_helper_is_byte_identical_
-// to_v2) and V2 is not this lane's to change. Working on `.v2-fresh[title]`
+// freshnessHtml()/paintFreshness(), which are shared vocabulary with
+// lthcs_tab/lthcs-freshness.js. Working on `.v2-fresh[title]`
 // also catches the chips paintFreshness() writes, the tab strips, and the
 // header stamp — every chip on the page, from one place.
 //
@@ -13565,8 +13479,8 @@ function hideSentimentCard(prefix){
 // "not recorded" explanation — silently hiding the gap is how the archive
 // went a whole release unnoticed and unread in the first place.
 //
-// Mirrors v2/app.py's block one-for-one (same card set, same thresholds, same
-// stale marker, same copy). Change one, change both.
+// Ported one-for-one from the retired V2 frontend (same card set, same
+// thresholds, same stale marker, same copy).
 const COMPOSITE_HISTORY_CARDS = [
   { card: 'cryptoSignalsSentimentCard', key: 'crypto_signal_sentiment', archived: true,
     title: 'Crypto Signal Sentiment',
@@ -13758,8 +13672,7 @@ function compositeHistoryChart(points){
   // series is unaffected — the floor only ever widens the domain, never
   // narrows it, so no real movement is ever compressed out of view.
   //
-  // Kept numerically identical to v2/app.py compositeHistoryChart() so the
-  // production and preview frontends cannot drift apart.
+  // Ported from the retired V2 frontend's compositeHistoryChart().
   const MIN_SPAN = 20;
   if (y1 - y0 < MIN_SPAN){
     const mid = (y0 + y1) / 2;
@@ -14056,8 +13969,7 @@ function closeCompositeHistory(){
   // treating as modal, with no way to tell they had left. aria-modal is a
   // promise to the AT; the trap is what makes it true.
   //
-  // Byte-for-byte the same behaviour as v2/app.py's trap so production and
-  // preview cannot drift apart.
+  // Same behaviour as the retired V2 frontend's trap.
   document.addEventListener('keydown', e => {
     if (e.key !== 'Tab') return;
     const modal = document.getElementById('compositeHistoryModal');

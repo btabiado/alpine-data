@@ -102,7 +102,6 @@ def test_rss_items_really_carry_no_indicator_codes():
 
 @pytest.mark.parametrize("rel,list_fn,ov_fn", [
     ("app.py", "renderTravelListV1", "renderTravelOverviewV1"),
-    ("v2/app.py", "renderTravelList", "renderTravelOverview"),
 ])
 def test_dashboard_says_unavailable_and_hides_the_terror_counter(rel, list_fn, ov_fn):
     src = (ROOT / rel).read_text(encoding="utf-8")

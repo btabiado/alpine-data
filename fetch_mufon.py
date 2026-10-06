@@ -1,14 +1,14 @@
 """
 UAP / NUFORC sightings fetcher.
 
-The MUFON / UAP tab on the V2 dashboard has three sections:
+The MUFON / UAP tab on the dashboard has three sections:
   1. Latest Updates  — curated static cards, baked into HTML_TEMPLATE.
   2. Document Library — curated static external links, baked into HTML_TEMPLATE.
   3. US Sightings Map — driven by THIS fetcher's output.
 
 This module only powers section 3 (the state heat-map). Sections 1 and 2 do
 not change often enough to warrant a fetcher; the operator updates them by
-editing v2/app.py directly.
+editing app.py directly.
 
 Data sources — historical mirror PLUS live NUFORC scrape
 --------------------------------------------------------
@@ -54,7 +54,7 @@ committed month cache (data frozen at 2026-06-09) and says so loudly: a
 ``_stale`` / ``data_through`` / ``live_refresh`` in the payload so the
 dashboard can show the real data date instead of the build clock.
 
-Output schema (sidecar v2/data-mufon.json) ::
+Output schema (sidecar data-mufon.json) ::
 
     {
       "generated_at": "2026-05-25T19:30:00Z",
@@ -126,7 +126,7 @@ shapes are kept as named entries — everything else collapses into "other".
 
 CLI ::
 
-    python fetch_mufon.py                       # default --out v2/data-mufon.json
+    python fetch_mufon.py                       # default --out data-mufon.json
     python fetch_mufon.py --out PATH
     python fetch_mufon.py --no-network          # offline parser self-test
     python fetch_mufon.py --months-back N       # legacy relative window; default is
@@ -157,7 +157,10 @@ from typing import Any
 UA = ("Mozilla/5.0 (compatible; alpine-data/1.0 "
       "+https://btabiado.github.io/alpine-data/)")
 ROOT = Path(__file__).parent
-DEFAULT_OUT = ROOT / "v2" / "data-mufon.json"
+# Nothing runs this in CI any more: the V2 build that did was retired in
+# 2026-10, and the committed data-mufon.json (frozen at 2026-06-09) is
+# published as is. See the "Status since 2026-06-10" note above.
+DEFAULT_OUT = ROOT / "data-mufon.json"
 
 # NUFORC scrape configuration. The wdtNonce lives in a hidden input on any
 # /subndx/?id=e<YYYYMM> page (the /ndx/?id=event index renders the
@@ -167,11 +170,10 @@ NUFORC_BASE = "https://nuforc.org"
 NUFORC_MONTH_PAGE = f"{NUFORC_BASE}/subndx/?id=e"  # + YYYYMM
 NUFORC_AJAX_URL = f"{NUFORC_BASE}/wp-admin/admin-ajax.php"
 NUFORC_REQUEST_DELAY_SEC = 2.0      # polite floor between requests
-# Must stay UNDER the `timeout-minutes` of the V2 build step in
-# .github/workflows/pages.yml (currently 6 min = 360s), otherwise this graceful
-# cap can never fire: GitHub SIGKILLs the step first and we lose the partial
-# payload AND the stopped_reason diagnostic. 240s leaves ~2 min of headroom for
-# the rest of v2/app.py (notably fetch_stock_prices, ~10s for 50 tickers).
+# Sized for the retired V2 build step in pages.yml (6 min = 360s), which ran
+# this fetcher until 2026-10: under a step timeout this graceful cap must fire
+# first, or GitHub SIGKILLs the step and the partial payload AND the
+# stopped_reason diagnostic are lost. Keep it under any step that runs it.
 #
 # Was 900s, justified by a ~9min cold start with no cache. That justification
 # is obsolete: data/.stale/nuforc_subndx_*.json is committed to the repo (see

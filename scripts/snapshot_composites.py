@@ -71,7 +71,7 @@ DESIGN NOTES
 * Missing inputs are recorded as null rather than skipped, so a gap in the
   series is visible as a gap.
 * THE ARITHMETIC MIRRORS THE SHIPPED JS. Every composite here is also computed
-  in the browser by app.py / v2/app.py; the archive is worthless if it stores a
+  in the browser by app.py; the archive is worthless if it stores a
   different number than the card displayed, so clampScore(), Math.round() and
   sentimentBucket() are ported exactly (see _clamp / _jsround / _bucket).
   Verified by executing both against one payload — the built dashboard.html in
@@ -209,8 +209,8 @@ def _whale_sentiment_date(sent) -> str | None:
 # ---------------------------------------------------------------------------
 # Shared arithmetic — the browser's, ported exactly.
 #
-# Every composite below is ALSO computed in JS at render time (app.py /
-# v2/app.py). The archive is only worth keeping if the number it stores is the
+# Every composite below is ALSO computed in JS at render time (app.py).
+# The archive is only worth keeping if the number it stores is the
 # number the card showed, so these mirror the shipped helpers one-for-one:
 # clampScore(), Math.round() and sentimentBucket().
 # ---------------------------------------------------------------------------
@@ -287,7 +287,7 @@ def _last(series, field: str):
 def _signals_top20(market: dict) -> list:
     """The top-50 simplified signal rows the cards score from.
 
-    ``signals_top20`` is computed at RENDER time by app.py / v2/app.py and
+    ``signals_top20`` is computed at RENDER time by app.py and
     only ever exists in their in-memory payload — it is never written to
     data/market.json, which is all this script can see. Recompute it from
     the same pure function the builders call, over the same markets_top
@@ -741,7 +741,7 @@ def stocks_signal_breadth(market: dict) -> dict | None:
 def _whale_sentiments(whale: dict) -> tuple[dict, dict]:
     """(BTC, ETH) whale-sentiment composites for a whale tree.
 
-    app.py and v2/app.py compute both at RENDER time (build_payload attaches
+    app.py computes both at RENDER time (build_payload attaches
     ``whale["sentiment"]`` and ``whale["eth"]["sentiment"]`` in memory) and
     never write them back to data/whale.json, which is all this script reads.
     So every snapshot from 2026-08-02 on archived ``whale_sentiment_btc`` and
@@ -853,7 +853,7 @@ def collect() -> dict:
         u = (sym or "").upper()
         return u.startswith("USD") or u.endswith("USD") or u == "DAI"
 
-    # `signals_top20` is computed at RENDER time by app.py / v2/app.py and
+    # `signals_top20` is computed at RENDER time by app.py and
     # only ever exists in their in-memory payload — it is never written to
     # data/market.json, which is all this script can see. That is why every
     # committed snapshot so far records `crypto_signal_sentiment: null`:

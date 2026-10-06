@@ -550,7 +550,7 @@ def _js_list(src: str, name: str) -> list[str]:
     return re.findall(r"'([^']*)'", body)
 
 
-@pytest.mark.parametrize("rel", ["app.py", "v2/app.py"])
+@pytest.mark.parametrize("rel", ["app.py"])
 def test_js_and_python_keyword_lists_and_rule_are_identical(rel):
     """The frontend ADDS the backend's Google News counts to its own RSS
     counts, so both must score with the same lists and the same rule."""
@@ -565,7 +565,7 @@ def test_js_and_python_keyword_lists_and_rule_are_identical(rel):
 # dashboards: no CryptoCompare in the browser, no key in the browser
 # --------------------------------------------------------------------------
 
-@pytest.mark.parametrize("rel", ["app.py", "v2/app.py"])
+@pytest.mark.parametrize("rel", ["app.py"])
 def test_browser_lookup_is_keyless_and_free(rel):
     src = (ROOT / rel).read_text()
     fn_start = src.index("// --- live crypto helpers (cache-miss fallback for lookupSymbol) ---")
@@ -580,7 +580,7 @@ def test_browser_lookup_is_keyless_and_free(rel):
     assert "lastDay >= oldestOk" in fn
 
 
-@pytest.mark.parametrize("rel", ["app.py", "v2/app.py"])
+@pytest.mark.parametrize("rel", ["app.py"])
 def test_dashboards_read_the_new_fields_and_label_them(rel):
     src = (ROOT / rel).read_text()
     for old in ("social.cryptocompare", "social.cc_news", "(socialData().cryptocompare",

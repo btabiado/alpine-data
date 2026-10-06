@@ -5,7 +5,7 @@ Sources (all free, no auth required):
   travel.state.gov HTML  per-country advisory level, risk codes, date
   travel.state.gov RSS   security alerts / advisory-update bulletins
 
-Output: v2/data-travel.json (sidecar for the V2 dashboard's Travel Advisories tab).
+Output: data-travel.json (sidecar for the dashboard's Travel Advisories tab).
 
 Schema (matches what the front-end consumes):
     {
@@ -28,11 +28,11 @@ a day. We do NOT enforce that here; leaving the cadence decision to the
 caller keeps this module a pure pipeline step.
 
 Resilience: on any scrape failure (or zero-advisory result) we read the
-existing v2/data-travel.json, log a warning, and exit non-zero WITHOUT
+existing data-travel.json, log a warning, and exit non-zero WITHOUT
 overwriting it. The dashboard never sees an empty advisories list.
 
 CLI:
-    python fetch_advisories.py                 # default --out v2/data-travel.json
+    python fetch_advisories.py                 # default --out data-travel.json
     python fetch_advisories.py --out PATH      # custom output path
     python fetch_advisories.py --no-network    # offline parser self-test only
 """
@@ -66,7 +66,7 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "
       "(KHTML, like Gecko) Version/17.0 Safari/605.1.15")
 H = {"User-Agent": UA}
 ROOT = Path(__file__).parent
-DEFAULT_OUT = ROOT / "v2" / "data-travel.json"
+DEFAULT_OUT = ROOT / "data-travel.json"
 
 # One retry with a short backoff. Akamai occasionally serves a transient
 # 403/503 to a cold connection; one retry costs ~2s and removes the cheapest
@@ -1306,7 +1306,7 @@ STALE_ALERT_DAYS = 3
 def _annotate(level: str, title: str, message: str) -> None:
     """Emit a GitHub Actions annotation *and* a plain line.
 
-    The build invokes this fetcher inside app.py/v2/app.py, whose step in
+    The build invokes this fetcher inside app.py, whose step in
     pages.yml ends with `|| echo`, so a non-zero exit alone can never surface.
     A ``::error::`` workflow command is picked up from stdout regardless of
     exit code and shows on the run summary page, so the alarm does not depend

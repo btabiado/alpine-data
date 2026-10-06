@@ -704,7 +704,7 @@ def test_every_registry_key_the_cards_claim_is_written(sc):
     round is closing."""
     import re
     writer = (REPO_ROOT / "scripts" / "snapshot_composites.py").read_text()
-    for app_file in ("app.py", "v2/app.py"):
+    for app_file in ("app.py",):
         path = REPO_ROOT / app_file
         if not path.exists():  # pragma: no cover
             continue

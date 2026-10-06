@@ -109,9 +109,9 @@ KEYS: list[tuple[str, str, str]] = [
     ("SOSOVALUE_API_KEY",     "NOTHING. api.sosovalue.com no longer resolves "
                               "(NXDOMAIN); the API subdomain was decommissioned",
                                                                                 "(retired — upstream gone)"),
-    ("EIA_API_KEY",           "Energy supplies (V2)",                           "pages"),
-    ("ALPHA_VANTAGE_API_KEY", "LTHCS financial pillar",                         "pages, lthcs-daily"),
-    ("FINNHUB_API_KEY",       "LTHCS thesis pillar",                            "pages"),
+    ("EIA_API_KEY",           "LTHCS demand pillar (EIA Brent/gasoline)",      "lthcs-daily, lthcs-news-hourly"),
+    ("ALPHA_VANTAGE_API_KEY", "LTHCS financial pillar",                         "lthcs-daily, lthcs-news-hourly"),
+    ("FINNHUB_API_KEY",       "LTHCS thesis pillar",                            "lthcs-daily, lthcs-news-hourly"),
     ("R2_ACCESS_KEY_ID",      "R2 warehouse archive upload",                    "pages, r2-backfill"),
     # Live, not retired: fetch_market.py and lthcs/sources/crypto_data.py both
     # read it (wired in by #29), and pages.yml + lthcs-crypto-daily.yml pass it.
