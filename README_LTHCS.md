@@ -188,7 +188,7 @@ CLI flags (see `python lthcs_daily.py --help` for the full list):
 |---|---|
 | `--tickers AAPL,NVDA` | Restrict to a subset (default: all active in `universe.json`). |
 | `--force` | Overwrite today's snapshot/narratives/variable_detail if present. |
-| `--catch-up` | Forward-fill any missing dates between the last history entry and today. |
+| `--catch-up` | Forward-fill days the cron missed (no snapshot file) between each active ticker's last history entry and today, as `synthetic: true` copies of its last score. Never past a run that did not score the ticker, nor from a score older than its universe `added_on`. |
 | `--skip-thesis` | Bypass Alpha Vantage (Thesis falls back to Finnhub or neutral 50). |
 | `--news-only` | Hourly path: refresh news-derived inputs only (Finnhub recommendations, SEC 8-K, Yahoo earnings, sector RSS). Re-emits today's snapshot with a refreshed Thesis sub-score and recomputed composite. Requires today's snapshot to already exist. Used by the `lthcs-news-hourly.yml` workflow. |
 | `--as-of YYYY-MM-DD` | Backfill mode: compute the pipeline as if it were the given date. |

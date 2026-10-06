@@ -9,8 +9,10 @@ data/lthcs/universe_candidate/mapping_2026-10-05/ (no network):
 * The nine maturity stages the sync marked uncertain are decided.
 * The strict-bank allowlist holds every active bank that files the bank
   XBRL concept family.
-* No carried-forward synthetic history rows remain for BK / EA / DOW, and
-  the pruning rule keeps real rows and gap-day fills.
+* No carried-forward synthetic history rows remain for BK / EA / DOW (DOW's
+  were re-created by the 2026-10-06 catch-up and removed again), every
+  synthetic row left is a gap-day fill, and the pruning rule keeps real rows
+  and gap-day fills.
 """
 
 from __future__ import annotations
@@ -191,6 +193,44 @@ def test_no_carried_forward_rows_left_for_bk_ea_dow() -> None:
         assert not [row for row in hist if row.get("synthetic") and row["date"] > last_real], t
         assert r["ticker_rows_in_those_snapshots"] == 0 and r["snapshot_files_on_removed_dates"] > 0
         assert sorted(row["date"] for row in hist if row.get("synthetic")) == r["synthetic_rows_kept"]
+
+
+def test_dow_rows_recreated_by_the_2026_10_06_catch_up_are_removed() -> None:
+    # The 2026-10-06 lthcs-daily --catch-up (commit 5433902b) wrote DOW's
+    # 2026-05-16 score onto every day 05-17..10-05 again: DOW is active
+    # (re-added 2026-10-05), and catch-up then only skipped inactive tickers.
+    record = _json(EVIDENCE / "_synthetic_rows_removed_2026-10-06.json")["tickers"]
+    assert {t: r["removed_count"] for t, r in record.items()} == {"DOW": 142}
+    r = record["DOW"]
+    assert (r["removed_from"], r["removed_to"]) == ("2026-05-17", "2026-10-05")
+    assert r["ticker_rows_in_those_snapshots"] == 0 and r["snapshot_files_on_removed_dates"] == 129
+    hist = LthcsPersist(DATA).read_history("DOW")["history"]
+    assert not [row for row in hist if row.get("synthetic")]
+    assert not {row["date"] for row in hist} & set(r["removed_dates"])
+
+
+def test_every_equity_synthetic_row_is_a_gap_day_fill() -> None:
+    # The catch-up rule (LthcsPersist.fill_history_gaps) on committed data: a
+    # synthetic row copies the ticker's last real row, no run (snapshot file)
+    # happened between that row and the synthetic day, so the day itself was
+    # a missed run (health/known_gaps.json), and that real row is not older
+    # than the ticker's universe added_on.
+    store = LthcsPersist(DATA)
+    snapshot_dates = store.list_snapshot_dates()
+    bad = []
+    for e in _universe():
+        last_real = None
+        for row in sorted(store.read_history(e["ticker"])["history"], key=lambda r: r["date"]):
+            if not row.get("synthetic"):
+                last_real = row
+                continue
+            ok = (last_real is not None
+                  and not any(last_real["date"] < s <= row["date"] for s in snapshot_dates)
+                  and (row["score"], row["band"]) == (last_real["score"], last_real["band"])
+                  and (not e.get("added_on") or last_real["date"] >= e["added_on"]))
+            if not ok:
+                bad.append((e["ticker"], row["date"]))
+    assert not bad, bad[:10]
 
 
 def test_carried_forward_rule_keeps_real_rows_and_gap_day_fills() -> None:

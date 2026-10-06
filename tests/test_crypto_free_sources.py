@@ -177,18 +177,28 @@ def _cb_rows(n=20, end=TODAY):
 
 
 def test_coingecko_first_then_cached_for_the_rest_of_the_utc_day():
+    # The cache entry's fetched_at comes from the wall clock, so the clock is
+    # frozen on the same UTC day as `today` (it used to be the real clock,
+    # and on 2026-10-06 the "next day" call below found a series "fetched
+    # today" and was not refreshed).
     r = _Router([("market_chart", (200, _cg_chart(days=30)))])
-    with patch.object(fetch_market, "_get_status", r):
+    with patch.object(fetch_market, "_get_status", r), \
+         patch.object(fetch_market, "datetime", wraps=datetime) as dt:
+        dt.now.return_value = NOW
         s1 = fetch_market.crypto_daily_series("solana", "SOL", 180, today=TODAY)
         s2 = fetch_market.crypto_daily_series("solana", "SOL", 180, today=TODAY)
     assert s1["source"] == "coingecko" and s1["volume_basis"] == "aggregate"
     assert s1["as_of"] == "2026-10-04" and s1["coingecko_calls"] == 1
+    assert s1["fetched_at"].startswith("2026-10-05")
     assert s2["cache"] == "today" and s2["coingecko_calls"] == 0
     assert len(r.calls) == 1, "a complete-day series must not be re-fetched the same UTC day"
     # ...but the next UTC day it is refreshed.
-    with patch.object(fetch_market, "_get_status", r):
-        fetch_market.crypto_daily_series("solana", "SOL", 180, today=TODAY + timedelta(days=1))
+    with patch.object(fetch_market, "_get_status", r), \
+         patch.object(fetch_market, "datetime", wraps=datetime) as dt:
+        dt.now.return_value = NOW + timedelta(days=1)
+        s3 = fetch_market.crypto_daily_series("solana", "SOL", 180, today=TODAY + timedelta(days=1))
     assert len(r.calls) == 2
+    assert s3.get("cache") is None and s3["coingecko_calls"] == 1
 
 
 def test_a_series_fetched_today_that_lags_a_day_is_not_refetched_or_flagged_stale():

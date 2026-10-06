@@ -478,9 +478,10 @@ def _resolve_aaii_year(month: int, day: int) -> int:
     AAII publishes weekly, so the latest row is always within the last
     couple of weeks of today. We assume current year unless that would
     put the row more than ~60 days in the future, in which case roll
-    back to the prior year.
+    back to the prior year. "Today" comes from ``_today_iso()``, the
+    module's one clock (tests pin it).
     """
-    today = _dt.date.today()
+    today = _dt.date.fromisoformat(_today_iso())
     try:
         candidate = _dt.date(today.year, month, day)
     except ValueError:
