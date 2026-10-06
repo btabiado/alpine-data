@@ -330,3 +330,140 @@ def test_catchup_then_today_write_produces_continuous_history(store: LthcsPersis
     # The two gap days are synthetic.
     assert next(r for r in history if r["date"] == "2026-05-15")["synthetic"] is True
     assert next(r for r in history if r["date"] == "2026-05-14")["synthetic"] is True
+
+
+# ---------------------------------------------------------------------------
+# Membership: no row for a day the ticker was not being scored
+# ---------------------------------------------------------------------------
+# Catch-up copies a score only onto days the daily run missed (no snapshot
+# file: the gap days health/known_gaps.json discloses) and only while the
+# ticker was in the scored set. Regression for 2026-10-06: DOW was scored once
+# on 2026-05-16, left the universe on 05-17, was re-added on 2026-10-05, and
+# the nightly --catch-up wrote 142 copies of its May score (05-17..10-05).
+
+def _seed_snapshot(store: LthcsPersist, day: str, tickers: List[str]) -> None:
+    store.snapshots_dir.mkdir(parents=True, exist_ok=True)
+    rows = [{"ticker": t, "lthcs_score": 50.0, "band": "monitor"} for t in tickers]
+    store.snapshot_path(day).write_text(
+        json.dumps({"calc_date": day, "scores": rows}), encoding="utf-8")
+
+
+def test_ticker_added_after_the_gap_gets_no_rows(store: LthcsPersist) -> None:
+    # No snapshot files at all, so every day in the gap looks like a missed
+    # run; universe added_on alone must stop the carry.
+    _seed_history(store, "DOW", [{"date": "2026-05-16", "score": 48.8, "band": "review"}])
+    written = store.fill_history_gaps(
+        today="2026-10-06", tickers=["DOW"], added_on={"DOW": "2026-10-05"})
+    assert written == 0
+    assert _read(store, "DOW")["history"] == [
+        {"date": "2026-05-16", "score": 48.8, "band": "review"}]
+
+
+def test_added_on_on_or_before_the_last_real_row_still_fills(store: LthcsPersist) -> None:
+    _seed_history(store, "AAPL", [{"date": "2026-10-03", "score": 60.0, "band": "monitor"}])
+    _seed_history(store, "MSFT", [{"date": "2026-10-03", "score": 70.0, "band": "constructive"}])
+    written = store.fill_history_gaps(
+        today="2026-10-06", tickers=["AAPL", "MSFT"],
+        added_on={"AAPL": "2026-10-03", "MSFT": "2026-02-01"})
+    assert written == 4  # 10-04 and 10-05 for each
+    for t in ("AAPL", "MSFT"):
+        dates = sorted(r["date"] for r in _read(store, t)["history"] if r.get("synthetic"))
+        assert dates == ["2026-10-04", "2026-10-05"]
+
+
+def test_unparseable_added_on_is_ignored(store: LthcsPersist) -> None:
+    _seed_history(store, "AAPL", [{"date": "2026-10-03", "score": 60.0, "band": "monitor"}])
+    written = store.fill_history_gaps(
+        today="2026-10-05", tickers=["AAPL"], added_on={"AAPL": "late May 2026"})
+    assert written == 1
+
+
+def test_no_copy_across_a_run_that_left_the_ticker_out(store: LthcsPersist) -> None:
+    # DOW: scored 05-16, then runs on 05-17 / 05-18 / 05-20 scored the others
+    # but not DOW; 05-19 is a missed-run gap day. AAPL kept being scored and
+    # gets the 05-19 gap-day row; DOW gets nothing, not even on the gap day.
+    _seed_history(store, "DOW", [{"date": "2026-05-16", "score": 48.8, "band": "review"}])
+    _seed_history(store, "AAPL", [
+        {"date": "2026-05-18", "score": 60.0, "band": "monitor"},
+        {"date": "2026-05-17", "score": 59.0, "band": "monitor"},
+        {"date": "2026-05-16", "score": 58.0, "band": "monitor"},
+    ])
+    _seed_snapshot(store, "2026-05-16", ["AAPL", "DOW"])
+    for day in ("2026-05-17", "2026-05-18", "2026-05-20"):
+        _seed_snapshot(store, day, ["AAPL"])
+    # AAPL's 05-20 row was written by that day's run.
+    store.append_history_entry("AAPL", "2026-05-20", 61.0, "monitor", MODEL_VERSION)
+    written = store.fill_history_gaps(today="2026-05-21", tickers=["AAPL", "DOW"])
+    assert written == 0  # AAPL is up to date; DOW is not filled
+    assert [r["date"] for r in _read(store, "DOW")["history"]] == ["2026-05-16"]
+
+    # Same store, but AAPL's last real row is 05-18 and the 05-19 run was
+    # missed: the gap-day fill (health/known_gaps.json policy) is kept.
+    path = store.history_path("AAPL")
+    payload = json.loads(path.read_text())
+    payload["history"] = [r for r in payload["history"] if r["date"] != "2026-05-20"]
+    path.write_text(json.dumps(payload))
+    store.snapshot_path("2026-05-20").unlink()
+    written = store.fill_history_gaps(today="2026-05-20", tickers=["AAPL", "DOW"])
+    assert written == 1
+    assert [r for r in _read(store, "AAPL")["history"] if r.get("synthetic")] == [
+        {"date": "2026-05-19", "score": 60.0, "band": "monitor", "synthetic": True}]
+    assert [r["date"] for r in _read(store, "DOW")["history"]] == ["2026-05-16"]
+
+
+def test_day_with_a_snapshot_never_gets_a_copy(store: LthcsPersist) -> None:
+    # Last real row 05-10; 05-11 and 05-12 were missed (no snapshot), the
+    # 05-13 run happened without the ticker. Only the missed days before
+    # that run are filled; 05-13 and 05-14 are not.
+    _seed_history(store, "XYZ", [{"date": "2026-05-10", "score": 55.0, "band": "monitor"}])
+    _seed_snapshot(store, "2026-05-10", ["XYZ"])
+    _seed_snapshot(store, "2026-05-13", ["OTHER"])
+    written = store.fill_history_gaps(today="2026-05-15", tickers=["XYZ"])
+    assert written == 2
+    assert sorted(r["date"] for r in _read(store, "XYZ")["history"] if r.get("synthetic")) == [
+        "2026-05-11", "2026-05-12"]
+    # Idempotent: a second run adds nothing.
+    assert store.fill_history_gaps(today="2026-05-15", tickers=["XYZ"]) == 0
+
+
+def test_existing_carried_rows_are_not_extended(store: LthcsPersist) -> None:
+    # A file still holding copies written past a run that left the ticker
+    # out (the pre-fix catch-up did this) is not extended further.
+    _seed_history(store, "DOW", [
+        {"date": "2026-05-18", "score": 48.8, "band": "review", "synthetic": True},
+        {"date": "2026-05-17", "score": 48.8, "band": "review", "synthetic": True},
+        {"date": "2026-05-16", "score": 48.8, "band": "review"},
+    ])
+    _seed_snapshot(store, "2026-05-17", ["AAPL"])
+    assert store.fill_history_gaps(today="2026-05-21", tickers=["DOW"]) == 0
+    assert len(_read(store, "DOW")["history"]) == 3
+
+
+def test_daily_catch_up_passes_universe_added_on(tmp_path: Path) -> None:
+    # The lthcs_daily --catch-up wiring: active universe + added_on from
+    # universe.json. DOW (re-added 2026-10-05, last real row 2026-05-16)
+    # gets no rows over the gap; AAPL, scored through 10-04, gets the 10-05
+    # gap day; BK (inactive) gets nothing.
+    import types
+
+    import lthcs_daily
+
+    store = LthcsPersist(tmp_path)
+    _seed_history(store, "DOW", [{"date": "2026-05-16", "score": 48.8, "band": "review"}])
+    _seed_history(store, "AAPL", [{"date": "2026-10-04", "score": 60.0, "band": "monitor"}])
+    _seed_history(store, "BK", [{"date": "2026-07-09", "score": 59.6, "band": "weakening"}])
+    state = lthcs_daily.PipelineState(args=types.SimpleNamespace(catch_up=True))
+    state.persist = store
+    state.calc_date = "2026-10-06"
+    state.by_ticker = {
+        "AAPL": {"ticker": "AAPL", "active": True},
+        "DOW": {"ticker": "DOW", "active": True, "added_on": "2026-10-05"},
+        "BK": {"ticker": "BK", "active": False},
+    }
+    state.active_tickers = ["AAPL", "DOW"]
+    assert lthcs_daily._catch_up_history(state) == 1
+    assert _read(store, "DOW")["history"] == [
+        {"date": "2026-05-16", "score": 48.8, "band": "review"}]
+    assert [r["date"] for r in _read(store, "BK")["history"]] == ["2026-07-09"]
+    assert [(r["date"], r.get("synthetic")) for r in _read(store, "AAPL")["history"]] == [
+        ("2026-10-05", True), ("2026-10-04", None)]

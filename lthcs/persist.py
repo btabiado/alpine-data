@@ -24,7 +24,7 @@ import re
 import tempfile
 from datetime import date as _date_cls, timedelta
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Mapping, Optional
 
 
 # ---------------------------------------------------------------------------
@@ -531,30 +531,48 @@ class LthcsPersist:
         *,
         max_entries: int = 365,
         tickers: Optional[Iterable[str]] = None,
+        added_on: Optional[Mapping[str, Any]] = None,
     ) -> int:
-        """Forward-fill missing days between each ticker's last entry and ``today``.
+        """Forward-fill missed run days between each ticker's last entry and ``today``.
 
-        For every per-ticker history file under ``history/by_ticker/``:
-          * Read the file and find the most recent real entry (latest date).
-          * If that date is already ``today - 1`` (or later), do nothing.
-          * Otherwise, for each calendar day strictly between
-            ``last_date + 1`` and ``today - 1`` inclusive, append a
-            synthetic entry copying the most recent entry's score + band
-            and marked ``synthetic: True``. ``today``'s own entry is NOT
-            written here — the caller (Stage 8) writes that via
-            :meth:`rebuild_history_for_all_tickers`.
+        For a ticker whose latest history entry is older than ``today - 1``,
+        each calendar day D after that entry, up to ``today - 1``, gets a
+        synthetic entry (a copy of the latest entry's score + band, marked
+        ``synthetic: True``) only when the ticker WOULD have been scored on D
+        had the daily run happened. That needs all of:
+
+          * No snapshot file for D: the run never happened (missed or late
+            cron). These are the gap days health/known_gaps.json discloses,
+            and every ticker that was being scored gets the same flat row so
+            charts have no hole. A day WITH a snapshot file was run: the
+            ticker was either scored (its real row is already here) or left
+            out, so a copy of an older score is never written for it.
+          * No run between the ticker's last real (non-synthetic) row and D.
+            The first snapshot file after that row is a run that did not
+            give the ticker a row, so it had stopped being scored (left the
+            universe). Nothing is filled from there on, also when the ticker
+            later rejoins: its old score is not a score for the new stint.
+          * That last real row is not older than the ticker's ``added_on``
+            date in universe.json (``added_on`` maps ticker -> YYYY-MM-DD;
+            values that do not parse are ignored). A row from before the
+            ticker (re)joined the universe belongs to an earlier membership.
+            DOW was scored once on 2026-05-16, left the universe on 05-17
+            and was re-added on 2026-10-05; without these two rules the
+            2026-10-06 run gave it 142 copies of its May score.
+
+        ``today``'s own entry is NOT written here: the caller (Stage 8)
+        writes it via :meth:`rebuild_history_for_all_tickers`.
 
         Idempotent: a ticker whose history already runs up to ``today - 1``
-        (real or synthetic) gets no new writes. A ticker whose history is
-        empty (never scored) is skipped — there's nothing to forward-fill
-        from. Each ticker is written atomically so a crash mid-loop never
-        leaves a half-rewritten file.
+        (real or synthetic) gets no new writes. A ticker with no real entry
+        (never scored) is skipped: there's nothing to forward-fill from.
+        Each ticker is written atomically so a crash mid-loop never leaves a
+        half-rewritten file.
 
-        ``tickers`` (optional) limits the fill to those symbols — the daily
+        ``tickers`` (optional) limits the fill to those symbols. The daily
         pipeline passes the ACTIVE universe so a delisted / renamed ticker
-        (inactive in universe.json) stops getting flat synthetic rows the
-        moment it stops being scored. ``None`` keeps the legacy behaviour of
-        filling every history file.
+        (inactive in universe.json) is never filled. ``None`` considers
+        every history file.
 
         Returns the total number of synthetic entries written across all
         tickers. Use the count to detect when catch-up was active (>0)
@@ -570,11 +588,27 @@ class LthcsPersist:
         except ValueError as exc:
             raise ValueError("today must parse as ISO date: %s" % exc) from exc
 
+        joined_by_file: Dict[str, str] = {}
+        for sym, day in (added_on or {}).items():
+            day_str = str(day or "")[:10]
+            if not _DATE_RE.match(day_str):
+                continue
+            try:
+                _date_cls.fromisoformat(day_str)
+                joined_by_file[self.history_path(str(sym)).name] = day_str
+            except ValueError:
+                continue
+        snapshot_dates = sorted(self.list_snapshot_dates())
+
         total_synthetic = 0
         affected_tickers = 0
+        not_carried: List[str] = []
 
         if not self.history_dir.exists():
             return 0
+
+        gap_end = today_dt - timedelta(days=1)
+        gap_end_str = gap_end.isoformat()
 
         for entry in sorted(self.history_dir.iterdir()):
             if not entry.is_file():
@@ -617,9 +651,26 @@ class LthcsPersist:
             # Only forward-fill strictly into the past relative to today.
             # If the latest entry is already today or later, the schedule
             # is up-to-date and nothing to do.
-            gap_end = today_dt - timedelta(days=1)
             if latest_dt >= gap_end:
                 continue
+
+            ticker_label = str(payload.get("ticker") or entry.stem)
+            last_real = max(
+                (r["date"] for r in history_sorted
+                 if not r.get("synthetic") and isinstance(r.get("date"), str)
+                 and _DATE_RE.match(r["date"])),
+                default=None,
+            )
+            if last_real is None:
+                continue
+            joined = joined_by_file.get(entry.name)
+            if joined is not None and last_real < joined:
+                # Last real score is from an earlier membership.
+                not_carried.append(ticker_label)
+                continue
+            # The first run after the last real row did not score the ticker
+            # (else that row would not be the last): fill only before it.
+            stop_at = next((d for d in snapshot_dates if last_real < d <= gap_end_str), None)
 
             last_score = latest.get("score")
             last_band = latest.get("band") or "review"
@@ -629,6 +680,8 @@ class LthcsPersist:
             cursor = latest_dt + timedelta(days=1)
             while cursor <= gap_end:
                 cursor_str = cursor.isoformat()
+                if stop_at is not None and cursor_str >= stop_at:
+                    break
                 # Idempotency: skip dates that already have an entry —
                 # important so running --catch-up twice doesn't duplicate
                 # synthetic rows.
@@ -643,6 +696,9 @@ class LthcsPersist:
                     )
                 cursor += timedelta(days=1)
 
+            if stop_at is not None and not new_entries:
+                not_carried.append(ticker_label)
+
             if not new_entries:
                 continue
 
@@ -656,6 +712,14 @@ class LthcsPersist:
             total_synthetic += len(new_entries)
             affected_tickers += 1
 
+        if not_carried:
+            print(
+                "  Catch-up: no synthetic rows for %d ticker(s) not scored since "
+                "their last real row (not in a run since, or joined the universe "
+                "after it): %s"
+                % (len(not_carried), ", ".join(not_carried[:20])
+                   + (" ..." if len(not_carried) > 20 else ""))
+            )
         if total_synthetic:
             print(
                 "✓ Catch-up: filled %d synthetic entries across %d tickers"
