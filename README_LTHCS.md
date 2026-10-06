@@ -1,10 +1,19 @@
-# LTHCS Phase 1 / V1 — README
+# LTHCS — README
 
-**Long-Term Hold Confidence Score** — a sibling page on the `alpine-data` GitHub Pages site, with a daily Python pipeline that computes scores for 74 active US-listed tickers and persists them as JSON files in the repo.
+**Long-Term Hold Confidence Score.** A daily 0–100 score for every active ticker in [`data/lthcs/universe.json`](data/lthcs/universe.json), published as JSON files in the repo and rendered by the `/lthcs/` pages of the `alpine-data` GitHub Pages site.
 
 🌐 **Live URL:** https://btabiado.github.io/alpine-data/lthcs/
 
-This README is for Bryan to set the project up the first time and run it daily after that. The full build specification for Claude Code is in [`PHASE_1_BUILD_SPEC.md`](PHASE_1_BUILD_SPEC.md). The project conventions Claude Code reads on every session are in [`SKILL.md`](SKILL.md).
+## Current state (2026-10)
+
+- **Universe:** the S&P 500 and Dow 30, plus NASDAQ-100 names and Index Exiles (names that left every tracked index but are still scored): 519 tickers, 515 active. The file is the source of truth; pages read the count from it.
+- **Bands:** `data/lthcs/weights.json` → `score_bands`, recalibrated 2026-10-06: elite 70–100, high_confidence 63–69, constructive 52–62, monitor 42–51, weakening 33–41, review 0–32. Crypto scores use the same bands.
+- **Runs:** in GitHub Actions; see [Automation schedule](#automation-schedule-github-actions). Nobody runs the pipeline by hand for production.
+- **Thesis pillar:** dropped for every name today. The daily job passes `--skip-thesis` and no `FINNHUB_API_KEY` secret is set, so its weight is spread over the other four pillars. The About modal on `/lthcs/` shows live per-pillar coverage.
+
+This README covers setup and operation. Repo-wide conventions for agents are in [`SKILL.md`](SKILL.md). [`PHASE_1_BUILD_SPEC.md`](PHASE_1_BUILD_SPEC.md) is the original May 2026 plan and is kept for history; its universe, bands and layout are out of date.
+
+The sections from "V1 status" to "Phase 1–4 ship summary" are a record of May 2026 and are left as written.
 
 ---
 
@@ -28,7 +37,7 @@ All 10 weeks of the build plan shipped. The framework runs end-to-end, and Phase
 **Universe:** 75 entries / 74 active. WBA marked inactive (Walgreens taken private late 2025).
 
 **V1 limitations honestly disclosed in the About modal** (as of 2026-05-20):
-- Thesis pillar now sources from **Finnhub `/news-sentiment`** (commit `10daa39`) — coverage jumped from 145 → 166 tickers vs the prior Alpha Vantage `NEWS_SENTIMENT` rotation. AV's free-tier `NEWS_SENTIMENT` is retained as a degraded fallback; see `memory/alpha_vantage_news_sentiment_quirk.md` for the AND-not-OR multi-ticker quirk that drove the migration.
+- Thesis pillar now sources from **Finnhub `/news-sentiment`** (commit `10daa39`) — coverage jumped from 145 → 166 tickers vs the prior Alpha Vantage `NEWS_SENTIMENT` rotation. AV's free-tier `NEWS_SENTIMENT` is retained as a degraded fallback; an AND-not-OR multi-ticker quirk in that endpoint drove the migration.
 - Google Trends acceleration (40% of Adoption) ships partial coverage via the weekly batch (~11/167 names); Phase 2 upgrade to a non-rate-limited source is queued (Tier 2 #14).
 - 13F holdings change (Institutional) — **Phase 1 + Phase 2 SHIPPED** (commits `29f2140`, `a27823f`). CUSIP coverage 50 → 169, then AUM-weighted across 113 managers. Phase 3 (finer manager-weighting heuristics) still open.
 - Banks: **bank-cohort revenue ranking SHIPPED** (`e793a6b`) — JPM Financial Evolution sub-pillar 27 → 100 once benchmarked against the bank cohort instead of universe-wide.
@@ -53,7 +62,7 @@ The framework grew substantially across two days. Headline deliverables:
 ### Data-layer improvements
 
 - **Thesis: Finnhub `/news-sentiment` migration** (`10daa39`) — coverage 145 → 166 tickers, replaces the AV `NEWS_SENTIMENT` rotation that suffered the AND-not-OR multi-ticker bug.
-- **Crypto universe expansion** (`88912bb`) — 3 → 10 large-cap assets, scored daily at 22:00 UTC by `scripts/lthcs_crypto_daily.py`.
+- **Crypto universe expansion** (`88912bb`) — 3 → 10 large-cap assets, scored daily by `scripts/lthcs_crypto_daily.py` (now at 11:47 UTC; see the schedule below).
 - **13F Phase 2** (`a27823f`) — 113 managers, AUM-weighted ranking; Phase 1 (`29f2140`) had already taken CUSIP coverage 50 → 169.
 - **Bank-cohort revenue ranking** (`e793a6b`) — JPM Financial Evolution sub-pillar 27 → 100.
 - **HW/SW compound peer-group key** (`eca7560`) — `(maturity_stage, sector_group, tech_sub_bucket)` resolves the bimodal Tech-compounder cohort flagged in `peer-group-audit §3.4`.
@@ -69,7 +78,12 @@ The framework grew substantially across two days. Headline deliverables:
 
 ### LLM shadows (Tier 5 #23 + #28)
 
-CI now sets `LTHCS_LLM_SENTIMENT_ENABLED=1` + `LTHCS_LLM_NARRATIVES_ENABLED=1` in `lthcs-daily.yml` (`c8b74c1`). **To actually fire the shadows, add `ANTHROPIC_API_KEY` to repo secrets.** Without the secret, both modules log-and-skip cleanly. Projected cost: **~$0.50/day combined** (sentiment + narratives) on Haiku 4.5 with prompt caching across the full universe.
+CI sets `LTHCS_LLM_SENTIMENT_ENABLED=1` + `LTHCS_LLM_NARRATIVES_ENABLED=1` in `lthcs-daily.yml` (`c8b74c1`). **Neither shadow runs today:**
+
+- The `ANTHROPIC_API_KEY` repo secret is unset. Without it, both modules log and skip.
+- The daily job passes `--skip-thesis`, so the sentiment shadow stays off even with a key.
+
+The daily cost caps were scaled to the 515-ticker universe (2026-10): narratives `$6.17` (`LTHCS_LLM_NARRATIVES_MAX_USD_PER_DAY`) and sentiment `$3.08` (`LTHCS_LLM_SENTIMENT_MAX_USD_PER_DAY`). Both use Haiku 4.5 with prompt caching.
 
 ### UI niceties (Phase 4 polish)
 
@@ -120,7 +134,7 @@ source .venv/bin/activate                  # macOS / Linux
 pip install -r requirements.txt
 ```
 
-Requirements are intentionally minimal: `requests`, `python-dotenv`, `pydantic`, `yfinance`, `pytrends`. No pandas, no numpy unless something downstream forces it.
+For tests and local tools, also `pip install -r requirements-dev.txt`.
 
 ### 5. Verify the install
 
@@ -128,58 +142,37 @@ Requirements are intentionally minimal: `requests`, `python-dotenv`, `pydantic`,
 python -m lthcs.validate
 ```
 
-Should print: `✓ universe.json valid (75 tickers)` and `✓ weights.json valid (9 profiles)`.
+It checks `universe.json` and `weights.json` against their schemas and prints one ✓ line per check, for example `✓ universe.json valid (519 tickers, 515 active, ...)`.
 
-### 6. Run your first daily pipeline (smoke test with 3 tickers)
+### 6. Smoke-test the pipeline on 3 tickers
 
 ```bash
 python lthcs_daily.py --tickers AAPL,LCID,INTC --dry-run
 ```
 
-Should print each stage's `✓` line, end with three computed scores, and write nothing (dry run). Expected band placements (cutoffs: `data/lthcs/weights.json` → `score_bands`, shared by equity and crypto scores):
-- **AAPL** — High Confidence
-- **LCID** — Monitor or Weakening (Pre-Profit Growth weighting; weak Financial Evolution)
-- **INTC** — Review (Recovery Stabilization weighting; multiple thesis-break flags)
-
-If the smoke test looks right, run for real:
-
-```bash
-python lthcs_daily.py --tickers AAPL,LCID,INTC
-```
-
-This writes `data/lthcs/snapshots/<today>.json` (and friends) with three entries.
+It prints one `✓` line per stage and ends with three computed scores. `--dry-run` writes nothing. Without it, the run writes `data/lthcs/snapshots/<today>.json` with only these three tickers. Don't commit that: production snapshots come only from the scheduled `lthcs-daily.yml` run.
 
 ### 7. View it locally
 
 ```bash
 python -m http.server 8000
-# Open http://localhost:8000 in your browser
-# Click the new "LTHCS" tab
+# Open http://localhost:8000/lthcs_tab/ (the card view; data loads from ../data/lthcs/)
 ```
 
-You should see 3 score cards (AAPL, LCID, INTC). Search and filters work even on a small universe. Click any card to open the detail modal.
+Click any card to open the detail modal.
 
-### 8. Push to production
+### 8. Production
 
-```bash
-git add data/lthcs/ index.html js/lthcs/ css/lthcs.css lthcs/ lthcs_daily.py requirements.txt .env.example .gitignore
-git commit -m "lthcs: initial 3-ticker snapshot"
-git push
-```
-
-Within ~1 minute, the new tab will be live at `https://btabiado.github.io/alpine-data/`.
+There is no manual push step. `main` is protected, and the scheduled workflows commit data through `.github/scripts/api-commit.sh`. Code changes go through a pull request, and `pages.yml` deploys `main`.
 
 ---
 
-## Daily workflow (after V1 is live)
+## Running the pipeline locally
+
+Production runs in GitHub Actions (below). A local full run is for development only, and takes over an hour at 515 tickers because SEC EDGAR is rate-limited:
 
 ```bash
-cd ~/Documents/alpine-data
-source .venv/bin/activate
-python lthcs_daily.py                       # Full run, all 75 tickers, ~45-60 sec
-git add data/lthcs/
-git commit -m "lthcs: daily snapshot $(date +%Y-%m-%d)"
-git push
+python lthcs_daily.py --dry-run             # all active tickers, nothing written
 ```
 
 CLI flags (see `python lthcs_daily.py --help` for the full list):
@@ -194,9 +187,7 @@ CLI flags (see `python lthcs_daily.py --help` for the full list):
 | `--as-of YYYY-MM-DD` | Backfill mode: compute the pipeline as if it were the given date. |
 | `--dry-run` | Compute everything but skip persistence. |
 
-That's it. Three lines once a day. No server, no cron, no database, no cloud bill.
-
-If you skip a day, no harm done — the gap is visible in the history files and the dashboard shows the most recent snapshot regardless of date.
+If a scheduled day is missed, the gap stays visible in the history files and the pages show the most recent snapshot with its own date.
 
 ### Automation schedule (GitHub Actions)
 
@@ -205,39 +196,40 @@ In production, the dashboard refreshes itself without you running anything local
 | Workflow | Cadence | What it does | Sources touched |
 |---|---|---|---|
 | `lthcs-daily.yml` | Daily, 23:00 UTC | Full pipeline (`lthcs_daily.py --catch-up --skip-thesis`). Computes every pillar, writes the canonical daily snapshot, appends each ticker's history entry, refreshes the macro / breadth / index files. `LTHCS_LLM_SENTIMENT_ENABLED=1` + `LTHCS_LLM_NARRATIVES_ENABLED=1` shadows run when `ANTHROPIC_API_KEY` is set (`c8b74c1`). | All sources (Yahoo, SEC EDGAR XBRL, FRED, EIA, SEC 13F, SEC Form 4, Finnhub `/news-sentiment`, sector RSS, Google Trends cache). |
-| `lthcs-news-hourly.yml` | Hourly, minute 15 | News-only refresh (`lthcs_daily.py --news-only --force`). Recomputes Thesis + composite for every ticker using fresh news inputs; reuses the morning's Adoption / Institutional / Financial / DES sub-scores untouched. Does NOT append to history (the daily run owns that). | Finnhub recommendations, SEC 8-K, Yahoo earnings, sector RSS only. |
-| `lthcs-crypto-daily.yml` | Daily, 11:47 UTC (was 22:00 until 2026-10-04, then 12:00) | Crypto pillar snapshot — 10-asset universe (BTC, ETH, SOL, ADA, AVAX, DOT, LINK, POL, XRP, DOGE) into `data/lthcs/crypto/`. 8-day initial backfill seeded; race-safe push retry. Surfaced at `/lthcs/crypto/`. Workflow `8af023b` + `88912bb`. | Coingecko / on-chain proxies; see `docs/lthcs-crypto-pillar-adapter-spec.md`. |
+| `lthcs-news-hourly.yml` | Hourly | News-only refresh (`lthcs_daily.py --news-only --force`). Recomputes Thesis + composite for every ticker using fresh news inputs; reuses the morning's Adoption / Institutional / Financial / DES sub-scores untouched. Does NOT append to history (the daily run owns that). | Finnhub recommendations, SEC 8-K, Yahoo earnings, sector RSS only. |
+| `lthcs-crypto-daily.yml` | Daily, 11:47 UTC (was 22:00 until 2026-10-04, then 12:00) | Crypto pillar snapshot — 10-asset universe (BTC, ETH, SOL, ADA, AVAX, DOT, LINK, POL, XRP, DOGE) into `data/lthcs/snapshots_crypto/`. 8-day initial backfill seeded; race-safe push retry. Surfaced at `/lthcs/crypto/`. Workflow `8af023b` + `88912bb`. | Coingecko / on-chain proxies; see `docs/lthcs-crypto-pillar-adapter-spec.md`. |
 | `lthcs-backtest-daily.yml` | Daily, 23:30 UTC | Runs the backtest engine (`scripts/lthcs_backtest.py`) — non-overlapping P&L + per-pillar attribution + strategy variants + Sharpe CIs → `data/lthcs/backtest/`. Race-safe push retry. Workflow `580d341`. | (read-only over snapshots) |
-| `lthcs-trends-daily.yml` | Daily, 04:00 UTC | Refreshes Google Trends acceleration cache (daily replacement of the weekly batch — Sunday-only batch caused weekly cliff-effects on Adoption). | Google Trends. |
-| `lthcs-trends-weekly.yml` | Weekly Mon, 04:00 UTC | Legacy weekly batch — kept as failsafe behind the daily trends cron. | Google Trends. |
+| `lthcs-trends-daily.yml` | Daily, 04:13 UTC | Refreshes Google Trends acceleration cache (daily replacement of the weekly batch — Sunday-only batch caused weekly cliff-effects on Adoption). | Google Trends. |
+| `lthcs-trends-weekly.yml` | Weekly Mon, 02:47 UTC | Legacy weekly batch — kept as failsafe behind the daily trends cron. | Google Trends. |
 | `lthcs-validate-weekly.yml` | Weekly Mon, 05:00 UTC | `scripts/lthcs_backfill_validate.py` over every snapshot day: files present (gaps disclosed in `health/known_gaps.json` are reported, not failed), ticker coverage (a ticker counts from its first score or the day after its universe `added_on`), score / band sanity, variable_detail + narrative completeness, sampled history continuity. A red run has one `::error` annotation per failing check and a per-check table in the job summary. | (read-only) |
-| `lthcs-β-verdict-monthly.yml` | Monthly 1st, 08:00 UTC | Re-runs the Adoption-pillar β post-mortem against the latest 30-day window; emits SHIP/HOLD verdict + per-cohort IC. Workflow part of `fdf2384`. | (read-only) |
+| `lthcs-beta-verdict-monthly.yml` | Monthly 1st, 08:00 UTC | Re-runs the Adoption-pillar β post-mortem against the latest 30-day window; emits SHIP/HOLD verdict + per-cohort IC. Workflow part of `fdf2384`. | (read-only) |
 | `lthcs-quality-audit-monthly.yml` | Monthly 1st, 09:00 UTC | Monthly pillar-quality audit runner; output surfaced at `/lthcs/health/quality.html`. Workflows `68b43d6` + `fdf2384`. | (read-only) |
 | `lthcs-tune-weights-monthly.yml` | Monthly 1st, 07:00 UTC | Adaptive weight tuning sweep. | (read-only) |
 | `lthcs-backtest-monthly.yml` | Monthly 1st, 06:00 UTC | Backtest sweep across the rolling window. | (read-only) |
 
-The hourly news-only path keeps Thesis sub-scores and the composite band fresh on a tight cadence without burning API quotas or churning slow-moving fundamentals — Finnhub's 7-day cache means most hours are net-zero network. Concurrency is set to `cancel-in-progress: true` so a newer hour always wins. The new daily crons (`crypto`, `backtest`, `trends`) and monthly crons (`β-verdict`, `quality-audit`) are intentionally staggered so two workflows never push to `main` in the same minute.
+The hourly news-only path keeps Thesis sub-scores and the composite band fresh on a tight cadence without burning API quotas or churning slow-moving fundamentals — Finnhub's 7-day cache means most hours are net-zero network. Concurrency is set to `cancel-in-progress: true` so a newer hour always wins. The new daily crons (`crypto`, `backtest`, `trends`) and monthly crons (`beta-verdict`, `quality-audit`) are intentionally staggered so two workflows never push to `main` in the same minute.
 
 ---
 
-## What goes where on your laptop
+## What lives where
 
 ```
-~/Documents/alpine-data/        ← The repo (everything lives here)
-├── .env                                   ← Your API keys (gitignored)
-├── .cache/lthcs/                          ← Raw API responses (gitignored)
-└── data/lthcs/                            ← The LTHCS data (COMMITTED to git)
-    ├── universe.json                      ← 75 tickers
-    ├── weights.json                       ← Pillar weights by maturity stage
-    ├── snapshots/2026-05-16.json          ← Today's scores for all 75
-    ├── variable_detail/2026-05-16.json    ← Every variable behind today's scores
-    ├── narratives/2026-05-16.json         ← Today's narrative per ticker
-    └── history/by_ticker/AAPL.json        ← 365-day rolling history per ticker
+alpine-data/
+├── .env                                   ← your API keys for local runs (gitignored)
+├── .cache/lthcs/                          ← raw API responses (gitignored)
+└── data/lthcs/                            ← the LTHCS data (committed)
+    ├── universe.json                      ← the universe (active flag per ticker)
+    ├── weights.json                       ← pillar weights by maturity stage + score bands
+    ├── snapshots/<date>.json              ← that day's scores for every active ticker
+    ├── variable_detail/<date>.json        ← every variable behind that day's scores
+    ├── narratives/<date>.json             ← that day's narrative per ticker
+    ├── snapshots_crypto/<date>.json       ← crypto scores
+    └── history/by_ticker/<TICKER>.json    ← per-ticker score history
 ```
 
-**Nothing lives outside this folder.** Snapshots are versioned in git, so the historical confidence graph (the moat in §5.1) is literally the git history of `data/lthcs/snapshots/`. Every score the system has ever produced is timestamped, signed by GitHub, and free to query.
+Snapshots are versioned in git, so the history of every score is the git history of `data/lthcs/snapshots/`. The commits are made through the GitHub API and signed by GitHub.
 
-**`.cache/` and `.env` never leave your laptop.** They're in `.gitignore` so an accidental `git add .` won't push them.
+`.cache/` and `.env` are in `.gitignore`, so an accidental `git add .` won't commit them.
 
 ---
 
@@ -253,9 +245,9 @@ To remove a ticker, set `"active": false` rather than deleting the entry — tha
 
 Don't overwrite. Append. If a score needs to be corrected:
 
-1. Increment `model_version` in `lthcs/__init__.py` (e.g., `v1.0.0` → `v1.0.1`)
-2. Add a note in `data/lthcs/restatements.md` explaining what changed and why
-3. Run the daily pipeline with `--force` to overwrite the affected dates *or* let the new version run forward from today
+1. Increment `model_version` in `lthcs/__init__.py` (e.g., `v1.1.1` → `v1.1.2`).
+2. Record the change as a `methodology_breaks` entry (date, pillars, summary, detail), so the pages can explain the jump and re-anchor drift.
+3. Let the new version run forward from the next scheduled run.
 
 The original score remains in git history for auditability — same principle as financial restatements.
 
@@ -283,16 +275,13 @@ The original score remains in git history for auditability — same principle as
 | `SEC_USER_AGENT` empty | 8-K + 13F + Form 4 fetches degrade to "no events"; pillars still score. | SEC requires a real email. |
 | `ANTHROPIC_API_KEY` missing | **LLM sentiment shadow disabled; production Thesis byte-unaffected.** Shadow files in `data/lthcs/llm_sentiment/` simply aren't written. | Shadow path only; never read by Stage 4 (Tier 5 #28, spec `docs/lthcs-llm-sentiment-shadow-spec.md`). |
 | `LTHCS_LLM_SENTIMENT_ENABLED` unset / `"0"` | Shadow run is a no-op (no API call, no files). Default. | Flip to `"1"` to enable. |
-| Cost cap hit (`LTHCS_LLM_SENTIMENT_MAX_USD_PER_DAY`, default `$1.00`) | Shadow persistence aborted cleanly; prior day's shadow file is last good record; production Thesis unaffected. | Haiku 4.5 + caching is ~$0.034/day on the AI cohort, ~$0.19/day on the full 167-ticker universe — well under the cap. |
+| Cost cap hit (`LTHCS_LLM_SENTIMENT_MAX_USD_PER_DAY`, default `$3.08`; narratives `LTHCS_LLM_NARRATIVES_MAX_USD_PER_DAY`, default `$6.17`) | Shadow persistence aborted cleanly; prior day's shadow file is last good record; production Thesis unaffected. | Both caps were scaled from the 167-ticker defaults to 515 tickers (2026-10). |
 
 ### How to enable the LLM sentiment shadow run
 
-```bash
-# 1. Add ANTHROPIC_API_KEY as a repo secret (Settings -> Secrets -> Actions).
-# 2. Flip the env block in .github/workflows/lthcs-daily.yml:
-#       LTHCS_LLM_SENTIMENT_ENABLED: "1"
-# 3. Push. Tomorrow's nightly writes data/lthcs/llm_sentiment/<date>.json.
-```
+1. Add `ANTHROPIC_API_KEY` as a repo secret (Settings → Secrets and variables → Actions).
+2. `lthcs-daily.yml` already sets `LTHCS_LLM_SENTIMENT_ENABLED: "1"`.
+3. The sentiment shadow sits in the Thesis cascade, which the daily job skips (`--skip-thesis`). Dropping that flag also spends the Alpha Vantage quota, so decide that first.
 
 ---
 
@@ -346,7 +335,7 @@ python scripts/lthcs_backtest.py --engine pnl --attribute \
 
 **First baseline (2026-05-19, 90-day history):** trading days = 64, total return +17.7%, ann. Sharpe **+2.6** (vs the inflated +19.4 legacy headline), max DD −10.6%, hit rate 59.4%, avg hold 11.8d, 53 trades over 22 unique tickers. Per-band: high_confidence +41.5% > constructive +12.9% > weakening +3.8% > monitor +2.8% > elite 0% > review −1.0% — the framework's band ordering holds out of sample.
 
-**Phase 2 — per-pillar attribution (2026-05-19):** Δ-Sharpe vs baseline 2.61 over the 64-trading-day window — Financial Evolution −1.27, Institutional Confidence −1.15, Adoption Momentum −1.00, DES −0.45, Thesis Integrity −0.09 (Thesis is neutralized at 50 today per `memory/alpha_vantage_news_sentiment_quirk.md`). Negative Δ means removing the pillar hurt — i.e. the pillar contributed positively. Numbers live in `data/lthcs/backtest/2026-05-18_validation/pillar_attribution.json`; the V1 backtest tab renders a bar chart.
+**Phase 2 — per-pillar attribution (2026-05-19):** Δ-Sharpe vs baseline 2.61 over the 64-trading-day window — Financial Evolution −1.27, Institutional Confidence −1.15, Adoption Momentum −1.00, DES −0.45, Thesis Integrity −0.09 (Thesis was neutralized at 50 at the time). Negative Δ means removing the pillar hurt — i.e. the pillar contributed positively. Numbers live in `data/lthcs/backtest/2026-05-18_validation/pillar_attribution.json`; the V1 backtest tab renders a bar chart.
 
 **Phase 3 — strategy variants (2026-05-19, `9e13452`)**: long/short, dollar-neutral, top-K, band-weighted. `dollar_neutral` surfaces at **+3.1 Sharpe**. Selectable in the backtest UI via the profile picker (`a17d8a9`). A/B view at `/lthcs/backtest/ab.html` (`5381c69`) — GG's tweak validated at **+0.184 Sharpe** vs baseline. Sharpe / Sortino now ship with 95% block-bootstrap confidence intervals (`afab1b9`).
 

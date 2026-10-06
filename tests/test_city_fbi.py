@@ -206,7 +206,9 @@ def test_resolve_ori_non_json_raises():
 
 
 # --------------------------------------------------------------------------- #
-# resolve_ori — LIVE smoke (keyless). Skips cleanly if offline.
+# resolve_ori — LIVE smoke (keyless). Opt-in network test: skipped in CI, and
+# skips cleanly if offline. The reachability probe runs inside the test, not
+# in a skipif at import, so collecting the suite never opens a connection.
 # --------------------------------------------------------------------------- #
 def _online() -> bool:
     try:
@@ -216,9 +218,11 @@ def _online() -> bool:
         return False
 
 
-@pytest.mark.skipif(not _online(), reason="CDE host unreachable; skipping live smoke")
+@pytest.mark.network
 def test_resolve_ori_live_smoke_miami_dade():
     """LIVE keyless check: the real CDE agencies endpoint -> FL0130000."""
+    if not _online():
+        pytest.skip("CDE host unreachable; skipping live smoke")
     ori = resolve_ori("FL", "Miami-Dade")  # real module session, no key needed
     assert ori == "FL0130000"
 
