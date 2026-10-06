@@ -104,7 +104,8 @@ def test_pages_builds_the_workbook_before_staging_health():
     stage = _index(steps, lambda s: s.get("name") == "Stage site directory")
     assert build < stage
     assert "cp -R health/* _site/health/" in steps[stage]["run"]
-    assert "openpyxl==" in steps[build]["run"]           # pinned
+    assert "-c requirements-jobs.txt openpyxl" in steps[build]["run"]   # pinned there
+    assert "openpyxl==" in (ROOT / "requirements-jobs.txt").read_text(encoding="utf-8")
     assert steps[build].get("continue-on-error") is True
     # The download link it serves is still there.
     assert 'href="./api-catalog.xlsx"' in (ROOT / "health" / "index.html").read_text(encoding="utf-8")
