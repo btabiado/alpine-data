@@ -76,9 +76,13 @@ def test_parses_farside_shape_into_wide_csv():
     assert rows[0][0] == "2024-01-11"
     # '(95.1)' is Farside's negative notation
     assert rows[0][header.index("GBTC")] == "-95.1"
-    # '-' means no flow, and thousands separators must survive
-    assert rows[1][header.index("IBIT")] == "0"
+    # '-' means IBIT has not reported: an empty cell, not 0 ...
+    assert rows[1][header.index("IBIT")] == ""
+    # ... thousands separators must survive ...
     assert rows[1][header.index("FBTC")] == "1234.5"
+    # ... and Farside's Total (a sum of whatever is filled in) is not the
+    # day's total while a fund that reported the day before is missing.
+    assert rows[1][header.index("Total")] == ""
 
 
 def test_skips_non_date_footer_rows():
@@ -258,8 +262,13 @@ def test_genuine_all_zero_trading_day_is_kept():
     assert unsettled == []
 
 
-def test_row_with_one_reading_survives_and_its_dashes_are_zero():
-    """A settled row's per-fund '-' means that fund saw no flow: a zero."""
+def test_row_with_one_reading_survives_and_its_dashes_stay_empty():
+    """A row with one reading is written, but its '-' cells are NOT zeros.
+
+    This test used to pin the opposite ('-' on a written row means 0). That
+    is how 2026-10-02 shipped as IBIT 0 / Total 31.7 while IBIT simply had
+    not reported yet; it later came in at 158.2 and the day at 189.9.
+    """
     n = len(_real_columns("btc_flows.csv")) - 1
     cells = ["-"] * n
     cells[0] = "250.0"                                   # IBIT reported
@@ -268,7 +277,8 @@ def test_row_with_one_reading_survives_and_its_dashes_are_zero():
 
     assert len(rows) == 1
     assert rows[0][header.index("IBIT")] == "250"
-    assert rows[0][header.index("FBTC")] == "0"
+    assert rows[0][header.index("FBTC")] == ""
+    assert rows[0][header.index("Total")] == ""
 
 
 def test_date_only_row_is_treated_as_no_reading():
@@ -440,3 +450,205 @@ def test_committed_csv_has_no_pre_launch_or_duplicate_rows(name, first_day):
     assert not [d for d in dates if d < first_day], "rows before first ETF trading day"
     assert len(dates) == len(set(dates)), "duplicate dates"
     assert fef.duplicate_value_rows(rows) == [], "copy-pasted multi-fund rows"
+
+
+# ---------- unreported cells and Farside's running Total ----------
+#
+# Farside's Total column is a SUM over whatever cells are filled in, so it
+# prints a number on a day nobody has reported (0.0) and a partial sum on a
+# day still being published. Both reached data/btc_flows.csv as real flows:
+#   2026-10-06,0,0,0,0,0,0,0,0,0,0,0,0,0     (committed 15:59Z, before the close)
+#   2026-10-02,0,29.3,...,2.4,0,0,31.7       (IBIT not in yet; final day 189.9)
+# These pin the shapes that produced them.
+
+from datetime import date, timedelta  # noqa: E402
+
+
+def _cells(header: list[str], **vals: str) -> list[str]:
+    """Value cells in `header` order: every fund '-' unless given."""
+    return [vals.get(c, "-") for c in header[1:]]
+
+
+def _real_header() -> list[str]:
+    return _real_columns("btc_flows.csv")
+
+
+def test_todays_row_with_farside_formula_total_is_not_written():
+    """Every fund '-', Total '0.0' (the formula over empty cells): no row."""
+    hdr = _real_header()
+    settled = _cells(hdr, **{c: "1.5" for c in hdr[1:]})
+    today = _cells(hdr, Total="0.0")
+    html = _real_shape_html(_row("05 Oct 2026", *settled),
+                            _row("06 Oct 2026", *today))
+    unsettled: list[str] = []
+    withheld: list[str] = []
+    _h, rows = fef.parse_flow_table(html, BTC_REQUIRE, unsettled, withheld)
+
+    assert [r[0] for r in rows] == ["2026-10-05"]
+    assert unsettled == ["2026-10-06"]
+    assert withheld == []          # not written at all, so nothing to withhold
+
+
+def test_partly_published_day_keeps_its_readings_and_withholds_the_total():
+    """The 2026-10-02 shape: FBTC and MSBT in, IBIT and the rest still '-'."""
+    hdr = _real_header()
+    quiet = {c: "0.0" for c in hdr[1:]}
+    settled = _cells(hdr, **{**quiet, "IBIT": "195.6", "FBTC": "(60.7)",
+                             "Total": "134.9"})
+    partial = _cells(hdr, FBTC="29.3", MSBT="2.4", Total="31.7")
+    html = _real_shape_html(_row("01 Oct 2026", *settled),
+                            _row("02 Oct 2026", *partial))
+    withheld: list[str] = []
+    header, rows = fef.parse_flow_table(html, BTC_REQUIRE, withheld=withheld)
+
+    day = dict(zip(header, rows[1]))
+    assert day["date"] == "2026-10-02"
+    assert day["FBTC"] == "29.3" and day["MSBT"] == "2.4"   # real readings stay
+    assert day["IBIT"] == "" and day["GBTC"] == ""          # not reported != 0
+    assert day["Total"] == "", "a partial sum must not be published as the day"
+    assert withheld == ["2026-10-02"]
+    # The complete day before keeps Farside's Total and its literal zeros.
+    prev = dict(zip(header, rows[0]))
+    assert prev["Total"] == "134.9" and prev["GBTC"] == "0"
+
+
+def test_dash_for_a_fund_not_launched_yet_does_not_withhold_the_total():
+    """MSBT shows '-' until its first session; that is not a missing report."""
+    hdr = _real_header()
+    base = {c: "1.0" for c in hdr[1:] if c not in ("MSBT", "Total")}
+    rows_html = [
+        _row(f"{d:02d} Apr 2026", *_cells(hdr, **base, Total="11.0"))
+        for d in (6, 7)
+    ]
+    html = _real_shape_html(*rows_html)
+    withheld: list[str] = []
+    header, rows = fef.parse_flow_table(html, BTC_REQUIRE, withheld=withheld)
+
+    assert withheld == []
+    assert [dict(zip(header, r))["Total"] for r in rows] == ["11", "11"]
+    assert dict(zip(header, rows[1]))["MSBT"] == ""
+
+
+def test_market_holiday_row_is_not_written_even_when_farside_prints_zeros():
+    """2025-02-17 was Presidents' Day: no session, so no flow, not a 0 flow."""
+    html = _farside_html(
+        _row("14 Feb 2025", "10.0", "0.0", "(5.0)", "5.0")
+        + _row("17 Feb 2025", "0.0", "0.0", "0.0", "0.0")      # NYSE closed
+        + _row("15 Feb 2025", "-", "-", "-", "0.0")            # a Saturday
+        + _row("18 Feb 2025", "1.0", "2.0", "3.0", "6.0")
+    )
+    unsettled: list[str] = []
+    _h, rows = fef.parse_flow_table(html, BTC_REQUIRE, unsettled)
+
+    assert [r[0] for r in rows] == ["2025-02-14", "2025-02-18"]
+    assert sorted(unsettled) == ["2025-02-15", "2025-02-17"]
+
+
+def test_withhold_incomplete_totals_does_not_let_a_closed_fund_blank_history():
+    """A fund that closes and shows '-' for good is not a gap in every later
+    day. On settled rows it never holds a Total back; near the newest edge it
+    still does (there it looks exactly like a fund that has not reported), but
+    only while it reported within the lookback."""
+    rows = [[f"d{i:02d}", "1", "2", "3"] for i in range(3)]
+    rows += [[f"d{i:02d}", "1", None, "1"] for i in range(3, 15)]
+    withheld = fef.withhold_incomplete_totals(rows, 3, lookback=10, settling=5)
+
+    assert withheld == ["d10", "d11", "d12"]      # edge rows within lookback
+    assert all(r[3] == "1" for r in rows[3:10])   # settled history untouched
+
+
+def test_withhold_incomplete_totals_blanks_a_settled_gap_in_a_live_fund():
+    """A fund that reports before AND after a '-' day did not close; that day's
+    Total is a sum without it, so it is withheld even deep in history."""
+    rows = [[f"d{i:02d}", "1", "2", "3"] for i in range(12)]
+    rows[4][2] = None
+    withheld = fef.withhold_incomplete_totals(rows, 3, lookback=10, settling=5)
+    assert withheld == ["d04"] and rows[4][3] is None
+
+
+def _trading_days(start: date, n: int) -> list[date]:
+    out, d = [], start
+    while len(out) < n:
+        if not fef.market_closed(d.isoformat()):
+            out.append(d)
+        d += timedelta(days=1)
+    return out
+
+
+def _source_rows(days: list[date], override: dict | None = None) -> str:
+    override = override or {}
+    return "".join(
+        _row(d.strftime("%d %b %Y"), *override.get(d.isoformat(), ("10", "20", "30", "60")))
+        for d in days
+    )
+
+
+def test_refresh_drops_stored_zero_rows_the_source_does_not_back(tmp_path, monkeypatch):
+    """History written by the old parser heals on the next run.
+
+    * a stored all-zero row on a NYSE holiday goes (no session, no flow);
+    * a stored all-zero row for a day the source lists with no reading goes;
+    * a stored partial row is replaced by the source's complete one;
+    * a real stored row the source no longer lists is kept.
+    """
+    days = _trading_days(date(2026, 1, 5), fef.MIN_ROWS + 10)
+    unreported = days[20].isoformat()
+    partial = days[-1].isoformat()
+    csv_path = tmp_path / "btc_flows.csv"
+    csv_path.write_text(
+        "date,IBIT,FBTC,GBTC,Total\n"
+        "2025-02-17,0,0,0,0\n"                 # Presidents' Day, as filed
+        "2025-03-03,5,0,0,5\n"                 # real, no longer on the page
+        f"{unreported},0,0,0,0\n"              # '-' row the old parser zeroed
+        f"{partial},,20,,\n",                  # half published last run
+        encoding="utf-8",
+    )
+    monkeypatch.setitem(fef.SOURCES, "btc", {
+        "url": "https://example.invalid/btc", "csv": csv_path,
+        "require": BTC_REQUIRE,
+    })
+    html = _farside_html(_source_rows(days, {unreported: ("-", "-", "-", "0.0")}))
+    monkeypatch.setattr(fef, "fetch_html", lambda _u: html)
+
+    assert fef.refresh("btc") == 0
+    text = csv_path.read_text()
+    assert "2025-02-17" not in text
+    assert f"{unreported}," not in text
+    assert "2025-03-03,5,0,0,5" in text
+    assert f"{partial},10,20,30,60" in text
+
+
+def test_refresh_refuses_when_settled_history_is_full_of_dashes(tmp_path, monkeypatch):
+    """If Farside starts printing '-' for a settled zero, most historical
+    Totals would be withheld. That is a convention change: go red, keep the
+    file, do not blank the history."""
+    days = _trading_days(date(2026, 1, 5), fef.MIN_ROWS + 10)
+    flaky = {d.isoformat(): ("10", "-", "30", "40")
+             for i, d in enumerate(days) if i % 2}
+    csv_path = _seed(tmp_path, "btc_flows.csv", "2026-01-02")
+    before = csv_path.read_text()
+    monkeypatch.setitem(fef.SOURCES, "btc", {
+        "url": "https://example.invalid/btc", "csv": csv_path,
+        "require": BTC_REQUIRE,
+    })
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: _farside_html(_source_rows(days, flaky)))
+
+    assert fef.refresh("btc") == 1
+    assert csv_path.read_text() == before
+
+
+@pytest.mark.parametrize("name", ["btc_flows.csv", "eth_flows.csv"])
+def test_committed_csv_has_no_rows_on_market_closed_days(name):
+    """The history fix: no zero-flow rows for days with no US session.
+
+    2025-02-17, 2025-04-18, 2025-05-26, 2025-06-19 and twelve more NYSE
+    holidays sat in btc_flows.csv as rows of zeros. Read the COMMITTED blob
+    (CI stubs the working-tree CSVs)."""
+    proc = subprocess.run(["git", "show", f"HEAD:data/{name}"],
+                          cwd=REPO_ROOT, capture_output=True, text=True)
+    if proc.returncode != 0:
+        pytest.skip(f"git blob for data/{name} unavailable")
+    rows = [l.split(",") for l in proc.stdout.strip().splitlines()[1:]]
+    closed = [r[0] for r in rows if fef.market_closed(r[0])]
+    assert closed == [], f"rows dated on weekends / NYSE holidays: {closed}"

@@ -24,10 +24,21 @@ import argparse
 import json
 import sys
 import webbrowser
-from datetime import datetime
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
+
+try:
+    from zoneinfo import ZoneInfo
+    _ET = ZoneInfo("America/New_York")
+except Exception:  # no tz database: EST is close enough for "has the session opened"
+    _ET = timezone(timedelta(hours=-5))
+
+try:
+    from scripts.history_continuity import NYSE_HOLIDAYS
+except Exception:  # weekday-only calendar is the safe fallback
+    NYSE_HOLIDAYS = frozenset()
 
 
 ROOT = Path(__file__).parent
@@ -181,6 +192,33 @@ def load_csv(path: Path) -> pd.DataFrame:
     return df
 
 
+# Same windows as scripts/fetch_etf_flows (ACTIVE_LOOKBACK / SETTLING_ROWS).
+ETF_ACTIVE_LOOKBACK = 10
+ETF_SETTLING_ROWS = 5
+
+
+def complete_row_total(funds: pd.DataFrame,
+                       lookback: int = ETF_ACTIVE_LOOKBACK,
+                       settling: int = ETF_SETTLING_ROWS) -> pd.Series:
+    """Per-row sum of the fund columns, or NaN when the row is incomplete.
+
+    An empty cell is a fund that has not reported, not a zero, so summing
+    around it would publish a partial day as the day's flow. A row is
+    incomplete when a fund that reported in the previous ``lookback`` rows is
+    missing, except, on rows older than the newest ``settling``, a fund that
+    never reports again (it closed). A fund that has not launched yet does
+    not count. Same rule as scripts/fetch_etf_flows.withhold_incomplete_totals.
+    """
+    has = funds.notna()
+    reporting = (has.astype(float).rolling(lookback, min_periods=1).max()
+                 .shift(1).fillna(0).astype(bool))
+    reports_later = has[::-1].cummax()[::-1].shift(-1, fill_value=False)
+    settled = pd.Series(range(len(funds)), index=funds.index) < len(funds) - settling
+    closed = (~reports_later).apply(lambda col: col & settled)
+    incomplete = (~has & reporting & ~closed).any(axis=1)
+    return funds.sum(axis=1, min_count=1).mask(incomplete)
+
+
 def ensure_total(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
@@ -188,35 +226,107 @@ def ensure_total(df: pd.DataFrame) -> pd.DataFrame:
     if total_col is None:
         numeric = df.drop(columns=["date"]).select_dtypes("number")
         df = df.copy()
-        df["Total"] = numeric.sum(axis=1)
+        df["Total"] = complete_row_total(numeric)
     else:
         df = df.rename(columns={total_col: "Total"})
     return df
 
 
-def aggregate(df: pd.DataFrame) -> dict:
-    if df.empty:
-        return {
-            "daily": [], "weekly": [], "monthly": [], "yearly": [],
-            "cumulative": [], "by_fund": [], "yoy": {},
-            "stats": {}, "funds": [], "last_date": None,
-        }
+def _is_trading_day(d: date) -> bool:
+    return d.weekday() < 5 and d not in NYSE_HOLIDAYS
 
-    daily = df[["date", "Total"]].rename(columns={"Total": "flow"}).copy()
+
+def _latest_opened_session(now: datetime | None = None) -> date:
+    """Most recent NYSE session that has opened as of ``now`` (New York date)."""
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    et = now.astimezone(_ET)
+    d = et.date()
+    if not (_is_trading_day(d) and (et.hour, et.minute) >= (9, 30)):
+        d -= timedelta(days=1)
+        while not _is_trading_day(d):
+            d -= timedelta(days=1)
+    return d
+
+
+def pending_flow_days(df: pd.DataFrame, now: datetime | None = None,
+                      max_unpublished: int = 5) -> list[dict]:
+    """Sessions after the newest complete row whose flows are not in yet.
+
+    Two kinds, both "not reported yet" and never a zero:
+      * ``partial``: a row on file with an empty Total, i.e. some funds have
+        reported and others have not (``reported`` names the ones that have);
+      * ``unpublished``: a session that has opened but has no row at all,
+        typically today before Farside posts. Only listed when there are at
+        most ``max_unpublished`` of them; a longer gap is a stale feed, which
+        the tab's freshness stamp already reports.
+    """
+    if df.empty or "Total" not in df.columns:
+        return []
+    settled = df.loc[df["Total"].notna(), "date"]
+    partial = df[df["Total"].isna()]
+    if len(settled):
+        # An unreported row older than the newest complete day is a gap in
+        # the history, not something still on its way.
+        partial = partial[partial["date"] > settled.max()]
+    fund_cols = [c for c in df.columns if c not in ("date", "Total")]
+    out: list[dict] = [
+        {"date": r["date"].strftime("%Y-%m-%d"), "status": "partial",
+         "reported": [c for c in fund_cols if pd.notna(r[c])]}
+        for _, r in partial.iterrows()
+    ]
+    d = df["date"].max().date() + timedelta(days=1)
+    session = _latest_opened_session(now)
+    unpublished: list[date] = []
+    while d <= session and len(unpublished) <= max_unpublished:
+        if _is_trading_day(d):
+            unpublished.append(d)
+        d += timedelta(days=1)
+    if len(unpublished) <= max_unpublished:
+        out.extend({"date": u.isoformat(), "status": "unpublished"}
+                   for u in unpublished)
+    return out
+
+
+def aggregate(df: pd.DataFrame, now: datetime | None = None) -> dict:
+    empty = {
+        "daily": [], "weekly": [], "monthly": [], "yearly": [],
+        "cumulative": [], "by_fund": [], "yoy": {},
+        "stats": {}, "funds": [], "last_date": None,
+    }
+    if df.empty:
+        return empty
+
+    # A row with an empty Total is a day Farside has not finished publishing
+    # (some funds in, others still "-"). It is not a day of zero flow, so it is
+    # left out of every Total-based series and figure below (charts, 7d/30d,
+    # YTD, all-time, streak, "last day") and listed under stats["pending"]
+    # instead. Its funds that DID report still count in their own per-fund
+    # figures, because those are real readings.
+    settled = df[df["Total"].notna()].reset_index(drop=True)
+    pending = pending_flow_days(df, now=now)
+    if settled.empty:
+        if pending:
+            empty["stats"] = {"pending": pending}
+        return empty
+
+    daily = settled[["date", "Total"]].rename(columns={"Total": "flow"}).copy()
     daily["cumulative"] = daily["flow"].cumsum()
 
-    s = df.set_index("date")["Total"]
-    weekly = s.resample("W-MON", label="left", closed="left").sum().reset_index()
-    weekly.columns = ["date", "flow"]
-    weekly["cumulative"] = weekly["flow"].cumsum()
+    s = settled.set_index("date")["Total"]
 
-    monthly = s.resample("MS").sum().reset_index()
-    monthly.columns = ["date", "flow"]
-    monthly["cumulative"] = monthly["flow"].cumsum()
+    def _buckets(rule: str, **kw) -> pd.DataFrame:
+        # min_count=1 + dropna: a bucket with no reported day is absent, not a
+        # bar of zero flow.
+        b = s.resample(rule, **kw).sum(min_count=1).dropna().reset_index()
+        b.columns = ["date", "flow"]
+        b["cumulative"] = b["flow"].cumsum()
+        return b
 
-    yearly = s.resample("YS").sum().reset_index()
-    yearly.columns = ["date", "flow"]
-    yearly["cumulative"] = yearly["flow"].cumsum()
+    weekly = _buckets("W-MON", label="left", closed="left")
+    monthly = _buckets("MS")
+    yearly = _buckets("YS")
 
     try:
         from fund_meta import name_for as _fund_name
@@ -224,7 +334,8 @@ def aggregate(df: pd.DataFrame) -> dict:
         def _fund_name(s): return s
 
     fund_cols = [c for c in df.columns if c not in ("date", "Total")]
-    fund_cols = [c for c in fund_cols if pd.api.types.is_numeric_dtype(df[c])]
+    fund_cols = [c for c in fund_cols
+                 if pd.api.types.is_numeric_dtype(df[c]) and df[c].notna().any()]
 
     max_d = df["date"].max()
     win30 = max_d - pd.Timedelta(days=30)
@@ -239,6 +350,9 @@ def aggregate(df: pd.DataFrame) -> dict:
         last_30 = float(df[df["date"] >= win30][c].sum())
         last_60 = float(df[df["date"] >= win60][c].sum())
         last_90 = float(df[df["date"] >= win90][c].sum())
+        # The fund's own newest READING, not the table's newest row: on a day
+        # it has not reported yet its last flow is the previous one it posted.
+        reported = df.loc[df[c].notna(), ["date", c]]
         by_fund.append({
             "fund": c,
             "name": _fund_name(c),
@@ -247,22 +361,25 @@ def aggregate(df: pd.DataFrame) -> dict:
             "last_60d": last_60,
             "last_90d": last_90,
             "share_pct": (abs(total) / all_time_abs) * 100.0,
-            "last_flow": float(df[c].iloc[-1]),
-            "last_date": df["date"].iloc[-1].strftime("%Y-%m-%d"),
+            "last_flow": float(reported[c].iloc[-1]),
+            "last_date": reported["date"].iloc[-1].strftime("%Y-%m-%d"),
         })
-        # Daily series for charts (date, flow, cumulative)
+        # Daily series for charts (date, flow, cumulative). One entry per row
+        # so every fund shares the same date axis; flow is None (not 0) where
+        # the fund has not reported, and cumulative carries the running sum of
+        # what it HAS reported (0 before its first session).
         series = df[["date", c]].copy()
-        series["cum"] = series[c].cumsum()
+        series["cum"] = series[c].fillna(0.0).cumsum()
         by_fund_daily[c] = [
             {"date": r["date"].strftime("%Y-%m-%d"),
-             "flow": float(r[c]) if pd.notna(r[c]) else 0.0,
-             "cumulative": float(r["cum"]) if pd.notna(r["cum"]) else 0.0}
+             "flow": float(r[c]) if pd.notna(r[c]) else None,
+             "cumulative": float(r["cum"])}
             for _, r in series.iterrows()
         ]
     by_fund.sort(key=lambda r: r["total"], reverse=True)
 
     yoy = {}
-    df_y = df.copy()
+    df_y = settled.copy()
     df_y["year"] = df_y["date"].dt.year
     df_y["doy"] = df_y["date"].dt.dayofyear
     for year, grp in df_y.groupby("year"):
@@ -270,11 +387,11 @@ def aggregate(df: pd.DataFrame) -> dict:
         doy = grp["doy"].tolist()
         yoy[str(int(year))] = {"doy": doy, "cumulative": cum}
 
-    last = df.iloc[-1]
-    last_7 = df.tail(7)["Total"].sum()
-    last_30 = df.tail(30)["Total"].sum()
-    ytd = df[df["date"].dt.year == df["date"].max().year]["Total"].sum()
-    streak = streak_calc(df["Total"].tolist())
+    last = settled.iloc[-1]
+    last_7 = settled.tail(7)["Total"].sum()
+    last_30 = settled.tail(30)["Total"].sum()
+    ytd = settled[settled["date"].dt.year == settled["date"].max().year]["Total"].sum()
+    streak = streak_calc(settled["Total"].tolist())
 
     stats = {
         "last_day_flow": float(last["Total"]),
@@ -282,8 +399,11 @@ def aggregate(df: pd.DataFrame) -> dict:
         "last_7d": float(last_7),
         "last_30d": float(last_30),
         "ytd": float(ytd),
-        "all_time": float(df["Total"].sum()),
+        "all_time": float(settled["Total"].sum()),
         "streak": streak,
+        # Sessions after last_date whose flows are not in yet. Rendered as
+        # "not reported yet", never as a zero.
+        "pending": pending,
     }
 
     def to_records(d):
@@ -6736,10 +6856,24 @@ function paintCompositeFreshness(prefix, fresh){
 function etfAsset(){ return state.etfAsset; }
 function etfData(){ return DATA[etfAsset()] || {}; }
 
+// Sessions after the last complete day whose flows are not in yet (from
+// aggregate()'s stats.pending). Shown as "not reported yet", never as a 0:
+// Farside posts a day overnight, and a day nobody has reported is not a day
+// of zero flow.
+function etfPendingNote(s){
+  const p = Array.isArray(s && s.pending) ? s.pending : [];
+  return p.filter(x => x && x.date).map(x => {
+    if (x.status !== 'partial') return `${x.date}: not reported yet`;
+    const n = (x.reported || []).length;
+    return `${x.date}: partly reported (${n} fund${n === 1 ? '' : 's'} so far)`;
+  }).join(' · ');
+}
+
 function renderEtfKpis(){
   const d = etfData(); const s = d.stats || {};
   const items = [
-    {label:`Last day (${s.last_date||'—'})`, val:fmtSigned(s.last_day_flow), cls:s.last_day_flow>=0?'green':'red'},
+    {label:`Last day (${s.last_date||'—'})`, val:fmtSigned(s.last_day_flow), cls:s.last_day_flow>=0?'green':'red',
+     sub: etfPendingNote(s)},
     {label:'Last 7 days', val:fmtSigned(s.last_7d), cls:s.last_7d>=0?'green':'red'},
     {label:'Last 30 days', val:fmtSigned(s.last_30d), cls:s.last_30d>=0?'green':'red'},
     {label:'Year to date', val:fmtSigned(s.ytd), cls:s.ytd>=0?'green':'red'},
@@ -6748,7 +6882,9 @@ function renderEtfKpis(){
      cls: s.streak ? (s.streak.direction==='up'?'green':s.streak.direction==='down'?'red':'amber') : ''},
   ];
   document.getElementById('etfKpis').innerHTML = items.map(i =>
-    `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls}">${i.val}</div></div>`
+    `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls}">${i.val}</div>`
+    + (i.sub ? `<div class="sub" style="color:var(--muted);font-size:11px;margin-top:4px">${escapeHtml(i.sub)}</div>` : '')
+    + `</div>`
   ).join('');
   // Staleness chip: flows come from committed CSV (Farside is Cloudflare-blocked),
   // refreshed manually.

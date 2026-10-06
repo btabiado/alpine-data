@@ -93,6 +93,17 @@ def test_etf_csv_with_friday_data_is_fresh_on_sunday(bhs, tmp_path):
     assert bhs.classify(late.age_h, bhs.THRESHOLDS["btc_flows.csv"]) == "critical"
 
 
+def test_etf_csv_pending_row_with_empty_total_does_not_count_as_fresh(bhs, tmp_path):
+    """A half-published day (empty Total) is not data yet. Its date must not
+    make the feed look a day fresher than its last complete row."""
+    p = _write(tmp_path / "btc_flows.csv",
+               "date,IBIT,FBTC,Total\n2026-10-01,5,1,6\n2026-10-02,7,,\n")
+    probe = bhs._content_age_probe(p, _ts(2026, 10, 2, 21, 0))
+    assert probe.age_h == pytest.approx(21.0)          # aged from 10-01
+    only_pending = _write(tmp_path / "eth_flows.csv", "date,ETHA,Total\n2026-10-02,7,\n")
+    assert bhs._content_age_probe(only_pending, _ts(2026, 10, 2, 21, 0)).age_h is None
+
+
 def test_data_health_uses_the_same_trading_day_budget(bhs):
     for rel in ("data/btc_flows.csv", "data/eth_flows.csv", "data/equity_etf_flows.csv"):
         assert bhs.threshold_for(rel) == bhs.THRESHOLDS[Path(rel).name], rel

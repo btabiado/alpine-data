@@ -442,25 +442,38 @@ def test_etf_flow_reads_the_total_column_case_insensitively(sc, tmp_path, monkey
     assert got["as_of"] == "2026-05-12"
 
 
-def test_etf_flow_keeps_an_unreported_row_out_of_the_sum_but_in_the_window(
+def test_etf_flow_leaves_an_unreported_row_out_like_the_daily_series(
         sc, tmp_path, monkeypatch):
-    """The card's windows are the last 7/30 ROWS. Dropping a row with no
-    number would quietly pull an eighth trading day into the 7d sum, and
-    counting it as 0 would invent a day of flat flows. It stays in the
-    window and out of the sum, exactly as flowVal() does with NaN."""
+    """A row with no Total is a day nobody has (fully) reported. Counting it
+    as 0 would invent a day of flat flows, so aggregate() leaves it out of
+    the 'daily' series the card's 7/30-row windows read, and this archive has
+    to do the same or it records a number the card never showed."""
     monkeypatch.setattr(sc, "CACHE", tmp_path)
     _write_caches(tmp_path, {})
     (tmp_path / "btc_flows.csv").write_text(
         "date,IBIT,Total\n"
         "2026-05-10,100.0,100.0\n"
         "2026-05-11,,\n"                       # reported nothing
-        "2026-05-12,150.0,150.0\n")
+        "2026-05-12,150.0,150.0\n"
+        "2026-05-13,40.0,\n")                  # half published: pending
     rows = sc._etf_daily_totals(tmp_path / "btc_flows.csv")
-    assert [d for d, _ in rows] == ["2026-05-10", "2026-05-11", "2026-05-12"]
-    assert rows[1][1] is None                  # absence, not 0.0
+    assert rows == [("2026-05-10", 100.0), ("2026-05-12", 150.0)]
     got = sc.collect()["etf_flow_sentiment_btc"]
-    assert got["score"] == 50                  # (250/500)*100, the None skipped
-    assert got["as_of"] == "2026-05-12"
+    assert got["score"] == 50                  # (250/500)*100, nothing zeroed
+    assert got["as_of"] == "2026-05-12"        # not the pending 05-13
+
+
+def test_etf_flow_fund_sum_fallback_skips_an_incomplete_row(sc, tmp_path, monkeypatch):
+    """No Total column: the per-fund sum is only taken on a complete row, as
+    app.complete_row_total does. FBTC missing on 05-12 is not a 0."""
+    monkeypatch.setattr(sc, "CACHE", tmp_path)
+    _write_caches(tmp_path, {})
+    (tmp_path / "btc_flows.csv").write_text(
+        "date,IBIT,FBTC\n"
+        "2026-05-11,100.0,50.0\n"
+        "2026-05-12,60.0,\n")
+    rows = sc._etf_daily_totals(tmp_path / "btc_flows.csv")
+    assert rows == [("2026-05-11", 150.0)]
 
 
 def test_etf_flow_missing_csv_is_null_not_zero(sc, tmp_path, monkeypatch):
