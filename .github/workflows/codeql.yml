@@ -20,7 +20,7 @@ concurrency:
 jobs:
   analyze:
     name: Analyze Python
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest becomes 26.04 on 2026-10-19; CodeQL's Python extraction uses the image's Python
     timeout-minutes: 360
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
