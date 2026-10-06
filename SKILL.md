@@ -1,114 +1,119 @@
 ---
-name: lthcs-phase1
-description: Use when working on the LTHCS (Long-Term Hold Confidence Score) Phase 1 build for the alpine-data. Covers daily score calculation in Python, JSON snapshot persistence, and the client-side LTHCS tab integration. Trigger whenever the user references LTHCS, the conviction score, the daily pipeline, the new tab on the dashboard, or any file under data/lthcs/ or scripts named lthcs_*.
+name: alpine-data
+description: Conventions for working in the alpine-data repo, which holds a static GitHub Pages dashboard, the LTHCS stock-scoring pipeline, and the scheduled workflows that fetch and commit their data. Use for any change to app.py, the fetchers, lthcs/, the lthcs_* pages, data/, tests/ or .github/.
 ---
 
-# LTHCS Phase 1 — Project conventions for Claude Code
+# alpine-data: conventions for agents
 
-## What this project is
+## What this repo is
 
-A new LTHCS (Long-Term Hold Confidence Score) tab for an existing static GitHub Pages dashboard at `btabiado.github.io/alpine-data`. Two parts:
+- **A static site** on GitHub Pages: <https://btabiado.github.io/alpine-data/>.
+  `.github/workflows/pages.yml` builds it on every push to `main`, hourly, and
+  after the daily audit. Nothing runs server-side for readers.
+- **Scheduled data workflows** (`.github/workflows/*-daily.yml`, `*-hourly.yml`,
+  and so on) fetch from free public sources and commit the results to `main`.
+  The site build reads those committed files.
+- **`server.py`** is an optional local Flask server for the same dashboard. It
+  is not deployed.
+- **`main` is protected.** Changes go through pull requests, and `tests.yml` must
+  pass.
 
-1. **Python daily fetcher/calculator** that runs on the user's laptop, pulls free-tier financial data, computes V1 scores per the LTHCS framework, and writes JSON snapshots to `data/lthcs/`.
-2. **Client-side LTHCS tab** (HTML + vanilla JS + CSS) added to the existing dashboard. Reads the JSON snapshots as static assets, renders score cards, search, filters, and detail modals.
+## Layout
 
-Both parts are **standalone** — they do not touch the existing crypto/ETF/whale/POC tabs.
+| Path | What it is |
+|---|---|
+| `app.py` | Builds `dashboard.html`, the main dashboard: 22 tab buttons in Crypto / Markets / Macro / Explore menus, plus LTHCS, AI News and the Summit launcher. Inline HTML/JS template; data is inlined or lazy-loaded from `data-*.json` sidecars. |
+| `fetch_*.py`, `signals.py`, `insights.py`, `money_flow.py`, `wiki_enrich.py` | Root fetchers and scorers that `app.py` and the workflows call. |
+| `city/`, `fetch_city.py` | City tab (City Pulse) sources and scoring. |
+| `lthcs/` | LTHCS package: `sources/` (API clients behind a file cache), `pillars/` (five pillar scorers), `score.py`, `bands.py`, `persist.py`, `schemas/`. |
+| `lthcs_daily.py` | The daily LTHCS pipeline (8 stages). |
+| `lthcs_tab/` | LTHCS card view (`/lthcs/`) and shared ES modules such as `lthcs-bands.js`, `lthcs-freshness.js` and `lthcs-files.js`. |
+| `lthcs_<page>/` | Other LTHCS pages: help, table, health, history, leaderboards, diff, position, backtest, crypto, public. |
+| `lthcs_mcp/` | Read-only MCP server over `data/lthcs/`. |
+| `data/` | Committed data. `data/lthcs/` holds the universe, weights, dated snapshots and per-ticker history. |
+| `data-*.json` (root) | Committed tab sidecars. Others are build outputs and are gitignored; see `.gitignore`. |
+| `scripts/` | Workflow entry points and maintenance tools. |
+| `tools/` | Validators, such as `tools/validate_dashboard.py` for the built dashboard. |
+| `tests/` | pytest suite. LTHCS tests are in `tests/lthcs/`. |
+| `docs/` | Runbooks and specs. Dated files (`*-2026-05-*.md`) are point-in-time records, not current state. |
+| `v2/`, `lthcs_tab_v2/` | Being retired. Don't build on them. |
 
-## Repo layout (assume working in repo root)
+Facts that are easy to get wrong:
 
-```
-alpine-data/
-├── index.html                          ← existing dashboard; ADD new tab here
-├── app.py                              ← existing fetcher; DO NOT modify
-├── lthcs_daily.py                      ← NEW: daily calculator
-├── lthcs/                              ← NEW: Python package for LTHCS logic
-│   ├── __init__.py
-│   ├── universe.py                     ← loads the 75-ticker universe
-│   ├── sources/                        ← API clients
-│   │   ├── alpha_vantage.py
-│   │   ├── fred.py
-│   │   ├── eia.py
-│   │   └── sec_edgar.py
-│   ├── pillars/                        ← per-pillar scoring
-│   │   ├── adoption.py
-│   │   ├── institutional.py
-│   │   ├── financial.py
-│   │   ├── thesis.py
-│   │   └── des.py
-│   ├── score.py                        ← combines pillars into LTHCS score
-│   ├── normalize.py                    ← percentile/z-score helpers
-│   └── persist.py                      ← writes snapshots, narratives, history
-├── js/
-│   └── lthcs/                          ← NEW: tab JS modules
-│       ├── lthcs-tab.js                ← main controller
-│       ├── lthcs-cards.js              ← score card rendering
-│       ├── lthcs-detail.js             ← detail modal
-│       ├── lthcs-search.js             ← ticker search
-│       └── lthcs-filters.js            ← exchange / band / drift filters
-├── css/
-│   └── lthcs.css                       ← NEW: scoped styles for the tab
-├── data/
-│   └── lthcs/                          ← NEW: all LTHCS data
-│       ├── universe.json
-│       ├── weights.json
-│       ├── snapshots/YYYY-MM-DD.json
-│       ├── variable_detail/YYYY-MM-DD.json
-│       ├── narratives/YYYY-MM-DD.json
-│       └── history/by_ticker/<TICKER>.json
-├── .cache/                             ← NEW: gitignored raw API responses
-│   └── lthcs/<source>/<key>.json
-└── .gitignore                          ← UPDATE: add `.cache/`
-```
+- **LTHCS universe:** `data/lthcs/universe.json`. As of 2026-10 that is the S&P 500
+  and Dow 30, plus NASDAQ-100 names and Index Exiles: 519 tickers, 515 active.
+  Read the count from the file; don't hard-code it in pages or docs.
+- **Score bands:** `data/lthcs/weights.json` → `score_bands`, read through
+  `lthcs/bands.py` (Python) and `lthcs_tab/lthcs-bands.js` (pages). The fallback
+  copies must equal `weights.json`, and `tests/lthcs/test_calibrate_bands.py`
+  enforces that. Recalibrate with `scripts/lthcs_calibrate_bands.py`.
+- **`PHASE_1_BUILD_SPEC.md`** is the original May 2026 plan. Code comments cite
+  its sections, but its universe, bands and layout are out of date.
 
-## Conventions
+## Data honesty (do not "simplify" these away)
 
-- **Python 3.11+.** Use `requests`, `python-dotenv`, `pydantic` for schemas. No pandas unless absolutely needed (keep deps light; this runs on Bryan's laptop).
-- **Vanilla JS.** No React, no build step, no bundler. Match the existing dashboard's pattern (you'll see existing tabs use plain JS modules loaded via `<script type="module">`).
-- **JSON schemas live in `lthcs/schemas/`.** Every file under `data/lthcs/` must validate against a schema. Use pydantic models on the Python side; mirror them in `js/lthcs/schemas.js` for client-side validation.
-- **No score is ever overwritten.** Once a snapshot is written for a date, it's append-only. To restate, increment `model_version` and write under a new date with a note.
-- **Cache aggressively.** Free-tier APIs rate-limit hard (Alpha Vantage = 25 req/day). Every fetch goes through `lthcs/sources/_cache.py` which checks `.cache/lthcs/<source>/<key>.json` first.
-- **Secrets via `.env`.** Never commit keys. The user creates `.env` from `.env.example`. Load with `python-dotenv` in Python and *never* read in client JS.
-- **Idempotent runs.** `python lthcs_daily.py` must be safe to run multiple times the same day — second run is a no-op if today's snapshot exists, unless `--force` is passed.
-- **Clear console output.** Print one line per stage with ✓ on success and ✗ on failure. Bryan will be watching the run; verbosity matters more than log files at V1.
+These rules are enforced in `app.py` (`freshness()`), `lthcs_tab/lthcs-freshness.js`
+and the health scripts.
 
-## When implementing
+1. **A date describes the data.** A stamp reports when the data was observed,
+   never when it was built or fetched. Build time appears only where it is
+   labelled "built".
+2. **A composite is as old as its oldest input.** Use the minimum, never the
+   newest date or an average.
+3. **Gaps are counted and shown.** Dropped pillars, data-quality flags and
+   carried-forward (`stale: true`) entries are shown with their counts.
+4. **No date means "as of —".** Never fall back to today's date.
+5. **Missing is not zero.** Don't write 0, 50 or a copied value for a day or
+   field that was never observed. Carry-forward keeps the original `as_of`, is
+   flagged and is bounded. Don't create synthetic history rows.
+6. **Committed snapshots are append-only.** To restate history, bump
+   `model_version` and record a `methodology_breaks` entry instead of editing
+   old files.
+7. **Respect sources.** Don't scrape a source that forbids it or blocks
+   automation (see the NUFORC note in `fetch_mufon.py`). Keys live in GitHub
+   secrets or `.env`, never in page JS. An unset key turns a feature off with a
+   stated reason.
 
-1. **Read `PHASE_1_BUILD_SPEC.md` first.** That's the master plan.
-2. **Build in milestone order.** Each weekly milestone in the spec produces a working, testable artifact. Don't skip ahead.
-3. **Validate after every stage.** Run `python -m lthcs.validate` after writing any new snapshot. It checks schemas, score ranges (0-100), and required-field completeness.
-4. **Test with 3 tickers first.** Before running on the full 75, test with AAPL, LCID, INTC. They exercise compounder, pre-profit, and recovery scoring paths respectively.
-5. **Match the existing dashboard's visual style.** Look at `css/` and `index.html` for color tokens, card padding, font sizes. Don't introduce a new design system.
+## How data gets committed
 
-## Hard rules
+Workflows never `git push`. They stage files and call
+`.github/scripts/api-commit.sh "<area>: <what> <date> [skip ci]"`. The script
+creates the commit through the GitHub Git Data API, so GitHub signs it
+("Verified"). It retries against a moving `main` and does nothing when nothing
+is staged. Keep the message prefix (`lthcs:`, `city:`, `aviation:` and so on)
+and `[skip ci]`.
 
-- **Never modify `app.py` or existing tabs.** LTHCS is additive only.
-- **Never commit anything under `.cache/`.** Add to `.gitignore` before first commit.
-- **Never put API keys in client JS.** All API calls are server-side in `lthcs_daily.py`.
-- **Never call free-tier APIs in a loop without rate-limiting.** Use `lthcs/sources/_ratelimit.py`.
-- **Never write a score outside [0, 100].** The score combiner caps; if a cap fires more than 5% of the time, log a warning — something is wrong upstream.
-- **Always update `data/lthcs/history/by_ticker/<TICKER>.json` at the end of a daily run** so the client-side chart has fresh data.
+## Tests
 
-## Validation commands
+- **Install:** `pip install -r requirements.txt -r requirements-dev.txt`.
+- **Run:** `python -m pytest tests/ -q`, about 2 minutes. The suite must leave
+  `git status` clean:
+  - `tests/conftest.py` blocks real network access. A test that tries to
+    connect fails, even if the code under test swallowed the error.
+  - Code that writes files is pointed at `tmp_path`.
+  - A test that truly needs the internet is marked `@pytest.mark.network`.
+    Those run locally and are skipped in CI (`CI` set).
+- **CI-faithful run** (what `tests.yml` does). The two stub CSVs and the built
+  `dashboard.html` are throwaway; restore the CSVs afterwards.
 
-```bash
-# After any file change in lthcs/
-python -m lthcs.validate
+  ```bash
+  printf 'date,Total\n2024-01-11,100\n' > data/btc_flows.csv
+  printf 'date,Total\n2024-07-23,50\n' > data/eth_flows.csv
+  python app.py --no-open && python tools/validate_dashboard.py dashboard.html
+  REQUIRE_DASHBOARD=1 python -m pytest tests/ -q
+  git checkout -- data/btc_flows.csv data/eth_flows.csv data-travel.json
+  ```
 
-# After any snapshot write
-python -m lthcs.validate --date 2026-05-16
+  Without the build step, the tests that read `dashboard.html` skip locally.
+  `app.py --no-open` also refreshes `data-travel.json` from travel.state.gov,
+  so restore that file too.
 
-# Smoke test the full pipeline against 3 tickers
-python lthcs_daily.py --tickers AAPL,LCID,INTC --dry-run
+## Commits and pull requests
 
-# Run for real
-python lthcs_daily.py
-```
-
-## Out of scope for Phase 1
-
-- Real-time scoring (Phase 2)
-- API exposure (Phase 2)
-- Backtesting (Phase 3)
-- V2 / V3 model formulas (Phase 2/3)
-- Crypto assets (covered by other tabs; Phase 2 for LTHCS crypto pillar)
-- AI narrative generation via LLM (Phase 1 uses templated narratives; LLM in Phase 2)
+- Subject line: `<area>: <what changed, in plain words>`. Examples:
+  `lthcs: clamp Institutional Confidence to [0, 100]`, `tests: …`,
+  `docs(lthcs): …`, `pages: …`.
+- The body explains why and what was checked.
+- Data commits from workflows end in `[skip ci]`. Human and agent commits don't.
+- Agent commits carry the attribution trailers the session asks for.
+- One topic per pull request. Say what you verified and what you could not.

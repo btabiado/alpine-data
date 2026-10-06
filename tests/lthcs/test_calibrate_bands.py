@@ -402,6 +402,23 @@ def test_fallback_bands_mirror_the_live_weights():
     assert js_ranges == _live_ranges()
 
 
+def test_help_page_fallback_bands_mirror_the_live_weights():
+    # lthcs_help/index.html shows static band ranges until lthcs-help-bands.js
+    # replaces them from weights.json (and for good if that fetch fails or JS
+    # is off). They sat at the pre-2026-10-06 cutoffs after a recalibration,
+    # so keep them in step like the other fallbacks.
+    html = (REPO_ROOT / "lthcs_help" / "index.html").read_text(encoding="utf-8")
+    ui_to_key = {"high": "high_confidence"}
+    found = {
+        ui_to_key.get(m.group(1), m.group(1)): (int(m.group(2)), int(m.group(3)))
+        for m in re.finditer(
+            r'class="lhlp-band" data-band="(\w+)">.*?'
+            r'class="lhlp-band-range">(\d+)&ndash;(\d+)<',
+            html, re.S)
+    }
+    assert found == _live_ranges()
+
+
 def test_dashboard_payload_carries_live_bands_for_the_about_panel(tmp_path, monkeypatch):
     # The dashboard's "About LTHCS" panel used to hard-code its band list
     # (and it had drifted: "Elite (90+) · High (80-89)"); it now renders

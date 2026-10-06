@@ -26,8 +26,10 @@ dashboard.html
 # PUBLIC site never uses a tracked root index.html: pages.yml regenerates
 # from app.py and writes _site/index.html from dashboard.html, and server.py
 # serves "/" by live-rendering via dash.render_html(). Ignore so a local
-# copy is never recommitted.
-index.html
+# copy is never recommitted. Anchored to the root: every sub-site page
+# (lthcs_tab/index.html, health/index.html, ...) is source and must stay
+# addable without `git add -f`.
+/index.html
 # The Pages staging tree. pages.yml's "Stage site directory" step builds this
 # and hands it to upload-pages-artifact; nothing in it is source. Reproducing
 # the staging locally to measure the artifact leaves ~679MB of copied data
@@ -36,13 +38,12 @@ _site/
 # Lazy-loaded sidecar payloads (whale, etc.) — written by app.py next to
 # dashboard.html on every build. Same lifecycle as the HTML itself.
 data-*.json
-# Carve-out: data-travel.json IS committed as a baseline. The State Dept
-# HTML parser in fetch_advisories.py is currently broken (returns 0
-# advisories on May 28+), so CI's fetch always falls back to "scrape
-# failed; preserving prior data-travel.json (no overwrite)" — which
-# requires the file to actually be on disk at checkout time. Once the
-# parser is repaired, every CI run will refresh this file in-place; the
-# committed copy is just the floor.
+# Carve-out: data-travel.json IS committed, as a floor. Every build refreshes
+# it in place from travel.state.gov (app.py -> fetch_advisories.py) and never
+# commits it back. When the scrape fails outright the fetcher keeps the prior
+# file, which therefore has to exist at checkout. (As of 2026-10 the State
+# Dept HTML pages answer 403 to our runners; the RSS fallback still rebuilds
+# the advisories, without risk codes.)
 !data-travel.json
 # Carve-out: data-us_states.json is committed STATIC geometry — 50 states + DC
 # SVG paths (pre-projected Albers USA) built once by
@@ -53,9 +54,13 @@ data-*.json
 # daily by city-daily.yml (mirrors data/real_estate.json's committed-data model)
 # so the V1 build always has city data even on a cold CI checkout.
 !data-city.json
-# Carve-out: data-stock-money-flow.json IS committed — the Stock Flows tab's
-# sidecar (per-stock MFI/CMF money-flow scores), refreshed daily by
-# stock-money-flow-daily.yml so the V1 build always has it on a cold checkout.
+# Carve-out: data-stock-money-flow.json (Stock Flows tab) stays committed only
+# as an empty cold-checkout floor (as_of 2026-06-08, 0 stocks). The real file is
+# written inside pages.yml's fetch-market step on every build (fetch_market ->
+# fetch_stock_money_flow.build_from_signals) and deployed from there, never
+# committed back; the daily workflow that used to commit it was deleted on
+# 2026-06-08. scripts/data_health.py still classifies it as COMMITTED, so
+# reclassify it there before dropping this floor.
 !data-stock-money-flow.json
 # Carve-out: data-aviation.json IS committed — the Aviation tab's static sidecar
 # (FAA airman/registry data, used-market snapshot, live seed). Refreshed by hand.
@@ -80,20 +85,14 @@ data-*.json
 !data-opensky.json
 # Built by pages.yml at deploy time, never committed: data-opensky-positions.json (data-*.json above) and
 health/api-catalog.xlsx
-# Carve-out: data-mufon.json IS committed — the UAP tab's sidecar. It's refreshed
-# live by the V2 build each deploy, but committing a snapshot gives a stale-keep
-# fallback so a V2-build timeout (NUFORC backfill) can't 404 the MUFON tab.
+# Carve-out: data-mufon.json IS committed — the UAP tab's sidecar: the frozen
+# NUFORC cache (data through 2026-06-09), published as is. Nothing refreshes it.
 !data-mufon.json
 # Carve-out: data-city.schema.json is a hand-authored CONTRACT (not a generated
 # sidecar), loaded by the City Pulse conformance tests (tests/test_city_pulse.py).
 # The data-*.json rule above matches it by name and was silently keeping it out of
 # git — which is why those tests FileNotFound in CI. Un-ignore so it ships.
 !docs/city/data-city.schema.json
-# V2 builder output mirrors the production layout one level down.
-v2/dashboard.html
-v2/data-*.json
-# Same carve-out for V2's sidecar — see comment above data-travel.json.
-!v2/data-travel.json
 
 # Local cached fetches stay on your machine (regenerated every run)
 data/*.json
@@ -136,6 +135,9 @@ data/health/*
 
 # Keep schema templates if you want to re-add them later (manually)
 !data/.gitkeep
+# Hand-curated AI-funding seed list, read by fetch_market.load_ai_curated()
+# (the Wikipedia-enriched copy, data/ai_curated_wiki.json, stays ignored).
+!data/ai_curated.json
 # US real-estate snapshot — committed back by real-estate-daily.yml and read
 # by the /real-estate/ page. Updates daily; tracked so the public page works.
 !data/real_estate.json
@@ -146,12 +148,6 @@ data/health/*
 
 # LTHCS — local API response cache (raw vendor data, may have redistribution terms)
 .cache/
-
-# LTHCS — test pollution: unittest.mock occasionally writes a literal
-# `MagicMock/` directory when a patched filesystem call escapes its
-# context. Always safe to delete; recurring across the source-module
-# test suites.
-MagicMock/
 
 # Local env / secrets
 .env
@@ -165,6 +161,9 @@ MagicMock/
 # Snowflake Summit vendor enrichment (generated by enrich_vendors.py)
 snowflake_summit/.enrich_cache.json
 snowflake_summit/enrichment.json
+
+# One-off backfill validation dumps from May 2026; nothing reads them.
+data/lthcs/backfill_validation_*.json
 
 # Deploy-time LTHCS indexes written by scripts/build_lthcs_site_index.py in
 # pages.yml (derived from the committed data on every deploy; never commit).
