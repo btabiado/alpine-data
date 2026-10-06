@@ -179,13 +179,6 @@ def test_csv_age_comes_from_the_last_row(bhs, tmp_path):
     assert probe.age_h == pytest.approx(48, abs=0.1)
 
 
-def test_content_age_h_wrapper_still_returns_a_float_or_none(bhs, tmp_path):
-    """Back-compat: build_health_status.scan() and any external caller."""
-    p = _write(tmp_path, "c.json", {"generated_at": "2026-08-03T00:00:00Z"})
-    assert isinstance(bhs._content_age_h(p, NOW), float)
-    assert bhs._content_age_h(_write(tmp_path, "d.json", {}), NOW) is None
-
-
 # ==========================================================================
 # C (live): the two files named in the bug report, against the real tree
 # ==========================================================================

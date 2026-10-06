@@ -806,21 +806,15 @@ def _nuforc_extract_nonce(html_text: str) -> str | None:
     return None
 
 
-def _nuforc_fetch_month(yyyymm: str, nonce: str,
-                        timeout: int = 60) -> dict | None:
-    """POST the AJAX request that returns one month's sightings. Returns the
-    raw JSON dict (with keys recordsTotal, recordsFiltered, data:[...rows...])
-    or None if the HTTP layer fails. A successful 200 with ``data == []`` IS
-    returned as the dict — the caller decides whether that means 404 or
-    "month exists but empty".
-    """
-    return _nuforc_fetch_month_ex(yyyymm, nonce, timeout=timeout)[0]
-
-
 def _nuforc_fetch_month_ex(yyyymm: str, nonce: str,
                            timeout: int = 60) -> tuple[dict | None, str | None]:
-    """``_nuforc_fetch_month`` plus the failure cause: ``(payload, None)`` on
-    success, ``(None, cause)`` otherwise (cause as in ``_http_fetch``)."""
+    """POST the AJAX request that returns one month's sightings.
+
+    ``(payload, None)`` on success, where payload is the raw JSON dict
+    (recordsTotal, recordsFiltered, data:[...rows...]); a 200 with
+    ``data == []`` is returned as-is and the caller decides whether that
+    means 404 or "month exists but empty". ``(None, cause)`` otherwise
+    (cause as in ``_http_fetch``)."""
     body = urllib.parse.urlencode({
         "draw": "1",
         "start": "0",

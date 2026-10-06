@@ -411,7 +411,7 @@ def test_feed_series_la_rotation_resolves_then_unions(monkeypatch):
     primary_rows = _agg_rows([("2026-04", 199584)])
     baseline_rows = _agg_rows([("2025-12", 180000)])
     sess = FakeSession([
-        FakeResp(catalog_payload),   # la_current_311_dataset catalog GET
+        FakeResp(catalog_payload),   # la_311_datasets_by_year catalog GET
         FakeResp(primary_rows),      # monthly_counts(2cy6-i7zn)
         FakeResp(baseline_rows),     # monthly_counts(73a2-6ar5 baseline)
     ])
@@ -433,9 +433,9 @@ def test_feed_series_la_rotation_resolves_then_unions(monkeypatch):
 
 
 # --------------------------------------------------------------------------- #
-# 6. la_current_311_dataset: catalog pick + fallback
+# 6. la_311_datasets_by_year: catalog parsing + failure modes
 # --------------------------------------------------------------------------- #
-def test_la_current_311_picks_most_recent_cases_year():
+def test_la_311_by_year_keeps_only_cases_year_titles():
     payload = {
         "results": [
             {"resource": {"id": "dead-2025", "name": "MyLA311 Service Request Data 2025"}},
@@ -445,40 +445,38 @@ def test_la_current_311_picks_most_recent_cases_year():
         ]
     }
     sess = FakeSession(FakeResp(payload))
-    out = socrata.la_current_311_dataset(session=sess)
-    # Picks 'MyLA311 Cases 2026' (most recent), not the retired Service Request Data
-    # series and not the date-range bridge file.
-    assert out == "2cy6-i7zn"
+    out = socrata.la_311_datasets_by_year(session=sess)
+    # Only 'MyLA311 Cases {year}': not the retired Service Request Data series
+    # and not the date-range bridge file.
+    assert out == {2025: "cases-2025", 2026: "2cy6-i7zn"}
     assert sess.calls[0]["url"] == socrata._LA_CATALOG_URL
     assert sess.calls[0]["params"]["q"] == "MyLA311 Cases"
 
 
-def test_la_current_311_fallback_on_http_error():
+def test_la_311_by_year_is_none_on_http_error():
+    # None (not {}) tells feed_series to fall back to the registry ids.
     sess = FakeSession(FakeResp({"err": "x"}, status_code=503, text="down"))
-    out = socrata.la_current_311_dataset(session=sess, fallback="2cy6-i7zn")
-    assert out == "2cy6-i7zn"
+    assert socrata.la_311_datasets_by_year(session=sess) is None
 
 
-def test_la_current_311_fallback_on_no_match():
-    # No 'Cases {year}' item -> fallback (don't construct a Service Request Data id).
+def test_la_311_by_year_is_empty_on_no_match():
+    # No 'Cases {year}' item -> {} (don't construct a Service Request Data id).
     payload = {"results": [
         {"resource": {"id": "dead", "name": "MyLA311 Service Request Data 2025"}},
     ]}
     sess = FakeSession(FakeResp(payload))
-    out = socrata.la_current_311_dataset(session=sess, fallback="fallback-id")
-    assert out == "fallback-id"
+    assert socrata.la_311_datasets_by_year(session=sess) == {}
 
 
-def test_la_current_311_fallback_on_malformed_payload():
+def test_la_311_by_year_is_none_on_malformed_payload():
     sess = FakeSession(FakeResp(_MALFORMED, status_code=200))
-    out = socrata.la_current_311_dataset(session=sess, fallback="fb")
-    assert out == "fb"
+    assert socrata.la_311_datasets_by_year(session=sess) is None
 
 
-def test_la_current_311_passes_app_token_header():
+def test_la_311_by_year_passes_app_token_header():
     payload = {"results": [{"resource": {"id": "2cy6-i7zn", "name": "MyLA311 Cases 2026"}}]}
     sess = FakeSession(FakeResp(payload))
-    socrata.la_current_311_dataset(app_token="tok-1", session=sess)
+    socrata.la_311_datasets_by_year(app_token="tok-1", session=sess)
     assert sess.calls[0]["headers"].get("X-App-Token") == "tok-1"
 
 

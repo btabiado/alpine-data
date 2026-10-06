@@ -296,13 +296,6 @@ function formatScore(n) {
   return Number.isFinite(v) ? v.toFixed(1) : '—';
 }
 
-function formatDrift(n) {
-  const v = Number(n);
-  if (!Number.isFinite(v)) return '0.0';
-  const sign = v > 0 ? '+' : '';
-  return `${sign}${v.toFixed(1)}`;
-}
-
 // ---------------------------------------------------------------------------
 // Task 1: 30-day score-trend helpers
 // ---------------------------------------------------------------------------
@@ -347,13 +340,6 @@ function pickAnchorWithFallback(history, currentDateISO) {
     }
   }
   return null;
-}
-
-// Back-compat alias used elsewhere in the file. Prefers 30 days when
-// possible but uses the fallback chain otherwise.
-function pickThirtyDayAnchor(history, currentDateISO) {
-  const result = pickAnchorWithFallback(history, currentDateISO);
-  return result ? result.anchor : null;
 }
 
 // Compute the score trend for a single ticker. Returns

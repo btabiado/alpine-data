@@ -111,13 +111,3 @@ def ordered_bands(
     return sorted(((k, lo, hi) for k, (lo, hi) in rng.items()), key=lambda t: -t[1])
 
 
-def band_min(
-    band: str,
-    score_bands: Optional[Mapping[str, Mapping[str, Any]]] = None,
-) -> Optional[int]:
-    rng = band_ranges(score_bands)
-    return rng[band][0] if band in rng else None
-
-
-def format_range(lo: int, hi: int, *, dash: str = "-") -> str:
-    return f"{lo}{dash}{hi}"

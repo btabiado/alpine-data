@@ -4,7 +4,6 @@ updates:
     directory: "/"
     schedule: { interval: "weekly", day: "monday", time: "06:00", timezone: "America/Los_Angeles" }
     open-pull-requests-limit: 5
-    labels: ["dependencies", "python"]
     # numpy 2.5 requires Python >= 3.12, but the repo still supports and tests
     # Python 3.11 (tests.yml matrix), so a numpy 2.5 bump breaks `test (3.11)`
     # at "Install dependencies". Ignore rules apply before grouping, so this
@@ -23,4 +22,3 @@ updates:
     directory: "/"
     schedule: { interval: "weekly", day: "monday", time: "06:00", timezone: "America/Los_Angeles" }
     open-pull-requests-limit: 5
-    labels: ["dependencies", "github-actions"]
