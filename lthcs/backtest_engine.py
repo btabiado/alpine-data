@@ -416,55 +416,6 @@ def _bootstrap_resample_indices(
     return idx.reshape(-1)[:n]
 
 
-def _bootstrap_sharpe_ci(
-    daily_returns: pd.Series,
-    n_bootstrap: int = 1000,
-    ci: float = 0.95,
-    seed: int = 42,
-) -> tuple:
-    """Block-bootstrap (circular blocks) 95% CI for the annualized Sharpe.
-
-    Block length follows the Hall–Horowitz rule of thumb
-    ``L = max(1, ceil(N**(1/3)))`` to preserve serial correlation in daily
-    returns. Deterministic for a given ``seed``.
-
-    Returns ``(lower, upper)`` percentile bounds at the requested ``ci``
-    (default 95% -> [2.5%, 97.5%]). Falls back to ``(nan, nan)`` if the
-    return series is degenerate (too short or zero variance).
-    """
-    if daily_returns is None:
-        return (float("nan"), float("nan"))
-    r = daily_returns.dropna()
-    n = len(r)
-    if n < 2:
-        return (float("nan"), float("nan"))
-    arr = r.to_numpy(dtype=float, copy=False)
-    if not np.isfinite(arr).all():
-        arr = arr[np.isfinite(arr)]
-        n = len(arr)
-        if n < 2:
-            return (float("nan"), float("nan"))
-
-    block_len = max(1, int(math.ceil(n ** (1.0 / 3.0))))
-    rng = np.random.default_rng(int(seed))
-    n_bootstrap = max(1, int(n_bootstrap))
-
-    sharpes = np.empty(n_bootstrap, dtype=float)
-    for b in range(n_bootstrap):
-        idx = _bootstrap_resample_indices(n=n, block_len=block_len, rng=rng)
-        sample = arr[idx]
-        std = sample.std(ddof=1)
-        if std == 0.0 or not np.isfinite(std):
-            sharpes[b] = 0.0
-        else:
-            sharpes[b] = sample.mean() / std * math.sqrt(TRADING_DAYS_PER_YEAR)
-
-    alpha = (1.0 - float(ci)) / 2.0
-    lower = float(np.percentile(sharpes, 100.0 * alpha))
-    upper = float(np.percentile(sharpes, 100.0 * (1.0 - alpha)))
-    return (lower, upper)
-
-
 def _bootstrap_sharpe_sortino_ci(
     daily_returns: pd.Series,
     n_bootstrap: int = 1000,

@@ -64,7 +64,6 @@ from __future__ import annotations
 
 import concurrent.futures
 import datetime as _dt
-import hashlib
 import json
 import logging
 import os
@@ -295,21 +294,6 @@ def _now_iso() -> str:
 # ---------------------------------------------------------------------------
 # Prompt construction
 # ---------------------------------------------------------------------------
-
-
-def _format_subscores(subs: Dict[str, float]) -> str:
-    """Render the 5 pillar sub-scores in a compact, prompt-friendly form."""
-    order = _templated.PILLAR_ORDER
-    parts = []
-    for p in order:
-        name = _templated.HUMAN_PILLAR_NAMES.get(p, p)
-        if p in subs and subs.get(p) is None:
-            # Dropped pillar (not measured): say so instead of inventing 50.
-            parts.append(f"{name}=n/a (dropped, no data)")
-            continue
-        val = float(subs.get(p, 50.0))
-        parts.append(f"{name}={val:.1f}")
-    return ", ".join(parts)
 
 
 def _binding_and_supporting(subs: Dict[str, float]) -> Dict[str, Any]:
@@ -617,15 +601,6 @@ def _ensure_no_injection_in_payload(ticker: str, payload: Dict[str, Any]) -> Non
             raise _InjectionInPayload(
                 f"injection_trigger in narrative payload: {trig[:60]}"
             )
-
-
-def _prompt_hash(user_message: str, model: str) -> str:
-    """SHA-256 the (model, user_message) tuple for idempotency checks."""
-    h = hashlib.sha256()
-    h.update(model.encode("utf-8"))
-    h.update(b"\x1f")
-    h.update(user_message.encode("utf-8"))
-    return h.hexdigest()
 
 
 # ---------------------------------------------------------------------------
@@ -988,7 +963,7 @@ def generate_llm_narrative(
             holdings_data=holdings_data,
             prior_snapshot_row=prior_snapshot_row,
         )
-    except _InjectionInPayload as exc:
+    except _InjectionInPayload:
         # Injection trigger surfaced from a sanitized string in the
         # payload (e.g. an insider name was tampered with). Skip the
         # LLM call entirely and use the templated fallback.

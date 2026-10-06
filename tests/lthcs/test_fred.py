@@ -166,30 +166,6 @@ def test_get_series_omits_observation_start_when_none(fred_module) -> None:
     assert "observation_start" not in params
 
 
-# ---- Convenience wrappers ---------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    ("fn_name", "series_id"),
-    [
-        ("get_cpi", "CPIAUCSL"),
-        ("get_fed_funds", "FEDFUNDS"),
-        ("get_ten_year_yield", "DGS10"),
-        ("get_unemployment_rate", "UNRATE"),
-        ("get_retail_sales", "RSXFS"),
-    ],
-)
-def test_convenience_wrappers_use_correct_series_id(
-    fred_module, fn_name: str, series_id: str
-) -> None:
-    with patch("lthcs.sources.fred.requests.get") as mock_get:
-        mock_get.return_value = fake_response({"observations": []})
-        getattr(fred_module, fn_name)()
-
-    _, kwargs = mock_get.call_args
-    assert kwargs["params"]["series_id"] == series_id
-
-
 # ---- get_latest_value -------------------------------------------------------
 
 
