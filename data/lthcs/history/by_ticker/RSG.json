@@ -1,0 +1,11 @@
+{
+  "ticker": "RSG",
+  "model_version": "v1.1.1",
+  "history": [
+    {
+      "date": "2026-10-06",
+      "score": 54.1,
+      "band": "weakening"
+    }
+  ]
+}

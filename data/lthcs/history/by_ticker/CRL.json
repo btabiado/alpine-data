@@ -1,0 +1,11 @@
+{
+  "ticker": "CRL",
+  "model_version": "v1.1.1",
+  "history": [
+    {
+      "date": "2026-10-06",
+      "score": 46.7,
+      "band": "review"
+    }
+  ]
+}

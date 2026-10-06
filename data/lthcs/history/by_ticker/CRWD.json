@@ -1,7 +1,12 @@
 {
   "ticker": "CRWD",
-  "model_version": "v1.1.0",
+  "model_version": "v1.1.1",
   "history": [
+    {
+      "date": "2026-10-06",
+      "score": 54.8,
+      "band": "weakening"
+    },
     {
       "date": "2026-10-05",
       "score": 56.3,

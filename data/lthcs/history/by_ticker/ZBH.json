@@ -1,0 +1,11 @@
+{
+  "ticker": "ZBH",
+  "model_version": "v1.1.1",
+  "history": [
+    {
+      "date": "2026-10-06",
+      "score": 55.1,
+      "band": "weakening"
+    }
+  ]
+}

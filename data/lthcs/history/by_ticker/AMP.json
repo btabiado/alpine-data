@@ -1,0 +1,11 @@
+{
+  "ticker": "AMP",
+  "model_version": "v1.1.1",
+  "history": [
+    {
+      "date": "2026-10-06",
+      "score": 61.4,
+      "band": "monitor"
+    }
+  ]
+}

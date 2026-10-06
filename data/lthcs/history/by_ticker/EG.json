@@ -1,0 +1,11 @@
+{
+  "ticker": "EG",
+  "model_version": "v1.1.1",
+  "history": [
+    {
+      "date": "2026-10-06",
+      "score": 53.6,
+      "band": "weakening"
+    }
+  ]
+}

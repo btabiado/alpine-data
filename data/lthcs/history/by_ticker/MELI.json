@@ -1,7 +1,12 @@
 {
   "ticker": "MELI",
-  "model_version": "v1.1.0",
+  "model_version": "v1.1.1",
   "history": [
+    {
+      "date": "2026-10-06",
+      "score": 67.2,
+      "band": "monitor"
+    },
     {
       "date": "2026-10-05",
       "score": 62.6,

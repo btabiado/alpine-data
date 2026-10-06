@@ -1,7 +1,12 @@
 {
   "ticker": "HD",
-  "model_version": "v1.1.0",
+  "model_version": "v1.1.1",
   "history": [
+    {
+      "date": "2026-10-06",
+      "score": 34.9,
+      "band": "review"
+    },
     {
       "date": "2026-10-05",
       "score": 33.0,
