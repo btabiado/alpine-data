@@ -125,6 +125,40 @@ def test_etf_cumulative_milestone_survives_a_stale_feed():
     assert milestones, "cumulative milestone should still fire on a stale feed"
 
 
+def test_etf_fund_rules_skip_unreported_funds_and_a_pending_day():
+    """by_fund_daily can run one day past the last complete day (a partly
+    published one), and a fund with flow None has not reported.
+
+    The per-fund rules used to read series[-1], which on such a day is the
+    PENDING date, so they silently stopped firing; and they turned a None
+    flow into 0. They must look up the last complete day and skip None.
+    """
+    settled, pending = _recent(2), _recent(1)
+    payload = {
+        "btc": {
+            "daily": [
+                {"date": _recent(3), "flow": 10.0, "cumulative": 10.0},
+                {"date": settled, "flow": 200.0, "cumulative": 210.0},
+            ],
+            "stats": {"all_time": 210.0},
+            "by_fund_daily": {
+                "IBIT": [{"date": settled, "flow": 180.0, "cumulative": 180.0},
+                         {"date": pending, "flow": 75.0, "cumulative": 255.0}],
+                "FBTC": [{"date": settled, "flow": 20.0, "cumulative": 20.0},
+                         {"date": pending, "flow": None, "cumulative": 20.0}],
+                "GBTC": [{"date": settled, "flow": None, "cumulative": 0.0},
+                         {"date": pending, "flow": None, "cumulative": 0.0}],
+            },
+        },
+        "eth": {}, "market": {}, "signals": {},
+    }
+    assert insights._fund_flows_on(payload["btc"]["by_fund_daily"], settled) == [
+        ("IBIT", 180.0), ("FBTC", 20.0)]          # GBTC: not reported, not 0
+    heads = [i["headline"] for i in insights.build_insights(payload)]
+    assert any("top mover today: IBIT" in h for h in heads), heads
+    assert any("IBIT drove 90% of today's net flow" in h for h in heads), heads
+
+
 def test_signal_insights_tagged_signals():
     """STRONG BUY/SELL and signal flips belong on the Signals tab."""
     payload = {

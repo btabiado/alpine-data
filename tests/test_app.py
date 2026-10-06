@@ -129,6 +129,78 @@ def test_aggregate_buckets_and_cumulative():
     assert out["last_date"] == dates[-1].strftime("%Y-%m-%d")
 
 
+def test_aggregate_leaves_a_partly_reported_day_out_and_marks_it_pending(tmp_path: Path):
+    """An empty cell is "not reported yet", never 0.
+
+    The CSV's newest row is half published: IBIT in, FBTC still empty, so the
+    Total is empty. It must not become today's flow, a zero in the charts, a
+    break in the streak, or a drag on 7d/30d/all-time.
+    """
+    from datetime import datetime, timezone
+    p = tmp_path / "btc_flows.csv"
+    p.write_text(
+        "date,IBIT,FBTC,MSBT,Total\n"
+        "2026-09-30,10.0,5.0,,15.0\n"       # MSBT not launched yet
+        "2026-10-01,20.0,0.0,,20.0\n"
+        "2026-10-02,30.0,-5.0,1.0,26.0\n"
+        "2026-10-05,40.0,,,\n"              # partly published
+    )
+    df = app.ensure_total(app.load_csv(p))
+    out = app.aggregate(df, now=datetime(2026, 10, 6, 15, 0, tzinfo=timezone.utc))
+
+    assert [r["date"] for r in out["daily"]] == ["2026-09-30", "2026-10-01", "2026-10-02"]
+    assert all(r["flow"] != 0 for r in out["daily"])
+    st = out["stats"]
+    assert st["last_date"] == "2026-10-02" and st["last_day_flow"] == 26.0
+    assert st["all_time"] == pytest.approx(61.0)
+    assert st["streak"] == {"direction": "up", "length": 3}
+    assert out["last_date"] == "2026-10-02"
+    # 10-05 partly in; 10-06 (session open at 11:00 ET) not reported at all.
+    assert st["pending"] == [
+        {"date": "2026-10-05", "status": "partial", "reported": ["IBIT"]},
+        {"date": "2026-10-06", "status": "unpublished"},
+    ]
+    # Per fund: a missing cell is None, not 0, and is not someone's last flow.
+    fbtc = {r["date"]: r for r in out["by_fund_daily"]["FBTC"]}
+    assert fbtc["2026-10-05"]["flow"] is None
+    assert fbtc["2026-10-05"]["cumulative"] == pytest.approx(0.0)
+    assert fbtc["2026-10-01"]["flow"] == 0.0           # a reported zero stays
+    msbt = {r["date"]: r for r in out["by_fund_daily"]["MSBT"]}
+    assert msbt["2026-09-30"]["flow"] is None
+    by = {f["fund"]: f for f in out["by_fund"]}
+    assert by["FBTC"]["last_date"] == "2026-10-02" and by["FBTC"]["last_flow"] == -5.0
+    assert by["IBIT"]["total"] == pytest.approx(100.0)  # its 10-05 reading counts
+    json.dumps(out, allow_nan=False)                      # no NaN leaks into JSON
+
+
+def test_aggregate_shows_no_pending_before_the_session_opens():
+    from datetime import datetime, timezone
+    df = app.ensure_total(pd.DataFrame({
+        "date": pd.to_datetime(["2026-10-02", "2026-10-05"]),
+        "Total": [1.0, 2.0],
+    }))
+    # 08:00 ET on Tue 2026-10-06: Monday is in, Tuesday has not opened.
+    early = app.aggregate(df, now=datetime(2026, 10, 6, 12, 0, tzinfo=timezone.utc))
+    assert early["stats"]["pending"] == []
+    # A long gap is a stale feed, not "pending": the freshness stamp says so.
+    late = app.aggregate(df, now=datetime(2026, 11, 30, 18, 0, tzinfo=timezone.utc))
+    assert late["stats"]["pending"] == []
+
+
+def test_ensure_total_does_not_sum_around_a_missing_fund():
+    """No Total column: a row where a reporting fund is empty gets no Total,
+    but a fund that has not launched yet does not hold the sum back."""
+    df = pd.DataFrame({
+        "date": pd.to_datetime(["2026-10-01", "2026-10-02", "2026-10-05"]),
+        "IBIT": [100.0, 50.0, 70.0],
+        "FBTC": [20.0, 10.0, float("nan")],     # FBTC not in yet on 10-05
+        "MSBT": [float("nan"), float("nan"), 3.0],  # launches on 10-05
+    })
+    out = app.ensure_total(df)
+    assert out["Total"].iloc[0] == 120.0 and out["Total"].iloc[1] == 60.0
+    assert pd.isna(out["Total"].iloc[2])
+
+
 # ---------- streak_calc ----------
 
 def test_streak_empty():

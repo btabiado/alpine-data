@@ -539,7 +539,16 @@ def _content_age_probe(path: Path, now_ts: float) -> AgeProbe:
             lines = [ln for ln in path.read_text().splitlines() if ln.strip()]
             if len(lines) < 2:
                 return AgeProbe(note="fewer than two non-blank rows")
-            ds = lines[-1].split(",")[0].strip()[:10]
+            last = lines[-1]
+            if lines[0].rstrip().rsplit(",", 1)[-1].strip().lower() == "total":
+                # A row with an empty Total is a day still being published
+                # (the ETF flow CSVs leave unreported cells empty). It is not
+                # data yet, so it does not make the feed fresh.
+                last = next((ln for ln in reversed(lines[1:])
+                             if ln.rstrip().rsplit(",", 1)[-1].strip()), None)
+                if last is None:
+                    return AgeProbe(note="no row has a Total yet")
+            ds = last.split(",")[0].strip()[:10]
             try:
                 dt = datetime.strptime(ds, "%Y-%m-%d").replace(tzinfo=timezone.utc)
             except ValueError:

@@ -33,7 +33,9 @@ script REFUSES to write unless the parse clearly succeeded:
 
   * the parsed table must contain the fund columns we expect,
   * it must yield at least MIN_ROWS rows,
-  * and its newest date must be >= the newest date already on disk.
+  * its newest date must be >= the newest date already on disk,
+  * and no more than MAX_HISTORICAL_WITHHELD settled rows may have their
+    Total withheld for a missing fund (see ABSENCE IS NOT ZERO).
 
 If any check fails we leave the existing CSV untouched and exit non-zero, so
 the workflow goes red and the failure is visible — the same
@@ -56,24 +58,38 @@ not a day of no flows.
 So `_parse_value` returns None for a cell that carries NO reading and a
 number for one that does, and the two are never conflated:
 
-  * a row where EVERY cell is absent is not a reading of anything, so it is
-    not written at all (and is counted + named on stderr, never dropped
-    silently);
+  * a "-" / blank / "n/a" cell is written as an EMPTY CSV cell, never "0".
+    Farside prints a literal "0.0" for a fund that reported no creations or
+    redemptions; that parses to 0.0 and stays "0". A dash means the fund has
+    not reported (or did not exist yet), which is not the same statement.
+    (If Farside ever starts using "-" for a settled zero, the guard below
+    refuses the write rather than blanking the history.)
+  * Farside's Total column is a running SUM of whatever cells are filled in,
+    so it prints a number even when the day is unreported or half reported.
+    2026-10-06 was committed at 15:59Z, before the US close, as a row of
+    zeros: no fund had reported, yet the row still carried a numeric Total,
+    so the old "skip only all-dash rows" check let it through. 2026-10-02 was
+    first published as Total 31.7 (FBTC + MSBT only) before IBIT's 158.2
+    arrived and it became 189.9. So the Total is kept only when the row is
+    COMPLETE: no fund that was reporting in the previous ACTIVE_LOOKBACK rows
+    is missing. A fund that has not launched yet (no reading in that window)
+    does not hold the Total back. See `withhold_incomplete_totals`.
+  * a row where EVERY cell is absent after that (today before Farside
+    publishes, a market holiday) is not a reading of anything, so it is not
+    written at all, and is named on stderr rather than dropped silently.
+    A row on a weekend or NYSE holiday is never written either unless it
+    carries a non-zero number (which is shouted about): no session, no flow.
   * a row with at least one real number IS a reading, so it is written —
-    INCLUDING an all-zero one. Farside prints a literal "0"/"0.0" on a
-    genuine no-flow trading day, that parses to 0.0, not None, and the row
-    survives. A real zero must stay representable.
-  * within a written row, a per-fund "-" keeps rendering as 0: on a day the
-    table has settled, Farside uses it for "this fund saw no creations or
-    redemptions", which is a reading of zero. Only whole-row absence means
-    "not settled yet".
+    INCLUDING an all-zero one. A real zero must stay representable.
 
 The same split protects the freshness guard. A placeholder row of zeros
 sitting on disk for a date the source has not reached would otherwise make
 `new_newest < old_newest` true forever and wedge the scraper into permanent
-refuse-to-regress. `refresh()` therefore drops all-zero rows dated AFTER the
-newest row the source actually reports, before comparing. That is bounded to
-unsettled dates — committed history is never touched by it.
+refuse-to-regress. `refresh()` therefore drops information-free rows (every
+cell zero or empty) that the source does not back: dated AFTER the newest row
+the source reports, dated on a day the source lists with no reading, or dated
+on a weekend / NYSE holiday. That happens before comparing, and real history,
+including a genuine all-zero day the source still reports, is never touched.
 
 Pure stdlib. Run from the repo root:
     python scripts/fetch_etf_flows.py            # both assets
@@ -88,9 +104,14 @@ import re
 import sys
 import urllib.error
 import urllib.request
-from datetime import datetime
+from datetime import date, datetime
 from html.parser import HTMLParser
 from pathlib import Path
+
+try:  # run as `python scripts/fetch_etf_flows.py`: scripts/ is sys.path[0]
+    from history_continuity import NYSE_HOLIDAYS
+except ImportError:  # imported from the repo root (tests, parse_farside)
+    from scripts.history_continuity import NYSE_HOLIDAYS
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "data"
@@ -119,6 +140,22 @@ SOURCES: dict[str, dict] = {
 }
 
 MIN_ROWS = 100  # both tables have 400+ rows of history; anything less is a bad parse
+
+# A fund counts as "reporting" on a row when it carried a number on any of the
+# previous ACTIVE_LOOKBACK rows: two trading weeks, enough to see through
+# several consecutive half-published days.
+ACTIVE_LOOKBACK = 10
+
+# The newest SETTLING_ROWS rows are where Farside is still filling days in.
+# Withheld Totals are expected there and nowhere else. Older rows are settled:
+# a fund that never reports again has closed, and does not hold a Total back.
+# More than MAX_HISTORICAL_WITHHELD settled rows with a reporting fund on "-"
+# means the "'-' = not reported" assumption above has stopped holding (Farside
+# started using "-" for a settled zero, say). Then most historical Totals
+# would be withheld, so refuse the write: a red run beats quietly blanking
+# the history.
+SETTLING_ROWS = 5
+MAX_HISTORICAL_WITHHELD = 5
 
 # Farside prints "Total" and occasionally an average row; those are not dates.
 _DATE_CELL = re.compile(r"^\s*(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})\s*$")
@@ -207,34 +244,110 @@ def _parse_value(tok: str) -> str | None:
     return f"{v:g}"
 
 
-def _is_all_zero(row: list[str]) -> bool:
-    """True when every value cell of a stored CSV row parses to exactly 0.
+def _num(cell) -> float | None:
+    """A parsed or stored cell as a float, or None when it carries no reading."""
+    if cell is None:
+        return None
+    s = str(cell).strip()
+    if not s:
+        return None
+    try:
+        return float(s)
+    except ValueError:
+        return None
 
-    Used only to identify placeholder rows written for a date the source had
-    not settled. A row that is genuinely all zeros is indistinguishable on
-    disk, which is why callers additionally bound this to dates the source
-    does not report at all.
+
+def carries_no_information(row: list[str]) -> bool:
+    """True when every value cell of a stored CSV row is empty or exactly 0.
+
+    That is the shape the pre-fix scraper wrote for a day Farside had not
+    published, since every "-" became "0", and it says nothing a missing row
+    would not. Callers apply it only to rows the source does not back with a
+    reading: dated past the source's newest day, listed by the source with no
+    reading, or dated on a day the market was closed. A genuine all-zero
+    trading day that the source still reports is never touched.
     """
     for cell in row[1:]:
+        s = (cell or "").strip()
+        if not s:
+            continue
         try:
-            if float(cell) != 0.0:
+            if float(s) != 0.0:
                 return False
         except ValueError:
             return False
     return True
 
 
+def market_closed(iso: str) -> bool:
+    """True on a weekend or an NYSE full-day closure: no session, so no flow."""
+    try:
+        d = date.fromisoformat(iso)
+    except (TypeError, ValueError):
+        return False
+    return d.weekday() >= 5 or d in NYSE_HOLIDAYS
+
+
+def withhold_incomplete_totals(rows: list[list], total_idx: int,
+                               lookback: int = ACTIVE_LOOKBACK,
+                               settling: int = SETTLING_ROWS) -> list[str]:
+    """Blank (in place) the Total of every row where a reporting fund is missing.
+
+    ``rows`` are chronological ``[date, v1, ..., vn]`` lists with None for a
+    cell that carried no reading, and ``total_idx`` is the Total's index in
+    them. A missing fund holds the Total back when it carried a number on any
+    of the previous ``lookback`` rows. Two kinds of "-" do not:
+      * a fund that has not launched yet (no reading in that window; Farside
+        prints "-" before a fund's first session);
+      * on rows older than the newest ``settling`` rows, a fund that never
+        reports again (it closed). Near the newest edge the same shape is far
+        more likely a fund that simply has not reported yet, so it counts.
+
+    Farside's Total is a SUM over whatever cells are filled in. On a day that
+    is still being published it is a partial sum that looks like a total
+    (2026-10-02 read 31.7 until IBIT's 158.2 arrived), and on a day nobody has
+    reported yet it is 0.0. Neither is the day's flow. Returns the dates whose
+    Total was withheld.
+    """
+    last_seen: dict[int, int] = {}
+    for i, r in enumerate(rows):
+        for j in range(1, len(r)):
+            if j != total_idx and r[j] is not None:
+                last_seen[j] = i
+    edge = len(rows) - settling
+    withheld: list[str] = []
+    for i, r in enumerate(rows):
+        if r[total_idx] is None:
+            continue
+        window = rows[max(0, i - lookback):i]
+        for j in range(1, len(r)):
+            if j == total_idx or r[j] is not None:
+                continue
+            if i < edge and last_seen.get(j, -1) < i:
+                continue  # never reports again: closed, not a gap in this day
+            if any(j < len(w) and w[j] is not None for w in window):
+                r[total_idx] = None
+                withheld.append(r[0])
+                break
+    return withheld
+
+
 def parse_flow_table(
     html: str,
     require: tuple[str, ...],
     unsettled: list[str] | None = None,
+    withheld: list[str] | None = None,
 ) -> tuple[list[str], list[list[str]]]:
     """Return (header, rows) in the repo's wide CSV shape, or ([], []) on failure.
 
-    Rows carrying no reading at all — every cell "-", or the date cell alone,
-    which is how Farside renders a day it has not posted yet — are left OUT
-    of `rows`. Pass a list as `unsettled` to receive their dates so the caller
-    can disclose them; absence is reported, never silently discarded.
+    A cell that carries no reading is returned as "" (an empty CSV cell),
+    never "0". The Total is "" as well unless the row is complete (see
+    `withhold_incomplete_totals`); pass a list as `withheld` to receive those
+    dates. Rows that are left with no reading at all (every cell "-", or the
+    date cell alone, which is how Farside renders a day it has not posted
+    yet) and information-free rows dated on a day the market was closed are
+    left OUT of `rows`. Pass a list as `unsettled` to receive their dates, so
+    the caller can disclose them. Absence is reported, never silently dropped.
     """
     p = _TableParser()
     p.feed(html)
@@ -288,8 +401,7 @@ def parse_flow_table(
                 tick = "Total"
             cols.append(tick or "COL%d" % len(cols))
 
-        rows: list[list[str]] = []
-        skipped: list[str] = []
+        raw: list[list] = []
         for row in tbl[header_i + 1:]:
             if not row:
                 continue
@@ -300,37 +412,60 @@ def parse_flow_table(
             # Pad a short row with absence, NOT with zeros. A cell the markup
             # never emitted is missing data; calling it 0 invents a reading.
             vals += [None] * (len(cols) - 1 - len(vals))
+            raw.append([iso] + vals)
+        if not raw:
+            continue
+        raw.sort(key=lambda r: r[0])
+
+        # EARN the "Total" name given to an unlabelled last column above. If
+        # that column is really the daily total it equals the sum of the funds
+        # beside it; if the table shape changed and it is actually a fund,
+        # calling it Total would make ensure_total() adopt one fund's flow as
+        # the whole day's. Check it against the real parsed rows.
+        if unlabelled_last > 0 and not _behaves_like_a_total(raw, unlabelled_last):
+            cols[unlabelled_last] = "COL%d" % unlabelled_last
+            print("[etf-flows] last column is unlabelled and does NOT sum to "
+                  "the funds beside it; leaving it positional so the "
+                  "schema-change guard can refuse the write",
+                  file=sys.stderr)
+
+        total_idx = next((j for j, c in enumerate(cols)
+                          if j and c.lower() == "total"), None)
+        held = withhold_incomplete_totals(raw, total_idx) if total_idx else []
+
+        rows: list[list[str]] = []
+        skipped: list[str] = []
+        for r in raw:
+            vals = r[1:]
             if all(v is None for v in vals):
-                # Not settled yet (or the market was closed): no cell on this
+                # Not published yet, or the market was closed: no cell on this
                 # row is a reading, so the row states nothing. Writing it would
                 # publish a fabricated zero for every fund.
-                skipped.append(iso)
+                skipped.append(r[0])
                 continue
+            if market_closed(r[0]):
+                if all(_num(v) in (None, 0.0) for v in vals):
+                    # No session, so no flow, whatever the template printed.
+                    skipped.append(r[0])
+                    continue
+                print(f"[etf-flows] WARNING: {r[0]} was a market holiday or "
+                      f"weekend but carries non-zero flows; keeping it, "
+                      f"inspect the source", file=sys.stderr)
             # At least one real number, so this day IS a reading and must be
-            # kept even if it totals zero. A remaining per-fund "-" on a
-            # settled row means that fund saw no flow — a zero, not a gap.
-            rows.append([iso] + [("0" if v is None else v) for v in vals])
+            # kept even if it totals zero. Its "-" cells stay empty.
+            rows.append([r[0]] + ["" if v is None else v for v in vals])
 
         if rows:
-            # EARN the "Total" name given to an unlabelled last column above.
-            # If that column is really the daily total it equals the sum of the
-            # funds beside it; if the table shape changed and it is actually a
-            # fund, calling it Total would make ensure_total() adopt one fund's
-            # flow as the whole day's. Check it against the real parsed rows.
-            if unlabelled_last > 0 and not _behaves_like_a_total(rows, unlabelled_last):
-                cols[unlabelled_last] = "COL%d" % unlabelled_last
-                print("[etf-flows] last column is unlabelled and does NOT sum to "
-                      "the funds beside it; leaving it positional so the "
-                      "schema-change guard can refuse the write",
-                      file=sys.stderr)
             if unsettled is not None:
                 unsettled[:] = skipped
+            if withheld is not None:
+                withheld[:] = [d for d in held if d not in skipped]
             return cols, rows
 
     return [], []
 
 
-def _behaves_like_a_total(rows: list[list[str]], idx: int,
+def _behaves_like_a_total(rows: list[list], idx: int,
                           tol: float = 0.15, need: float = 0.8) -> bool:
     """True when column ``idx`` equals the sum of the other value columns.
 
@@ -338,14 +473,13 @@ def _behaves_like_a_total(rows: list[list[str]], idx: int,
     thirteen funds can drift from their own total by a few tenths without
     anything being wrong. Requires agreement on ``need`` of the rows that carry
     enough numbers to judge, so a handful of odd rows cannot veto a real total
-    and a coincidental single match cannot manufacture one.
+    and a coincidental single match cannot manufacture one. Cells with no
+    reading (None or "") are left out of the sum, as Farside leaves them out
+    of its own Total.
     """
     agree = considered = 0
     for r in rows:
-        try:
-            vals = [float(v) for v in r[1:]]
-        except (TypeError, ValueError):
-            continue
+        vals = [_num(v) for v in r[1:]]
         # `idx` indexes `cols`, whose first entry is "date"; `vals` has that
         # entry stripped, so the candidate sits at idx-1 and a row is usable
         # when it has at least idx values. `<=` here skipped EVERY row when the
@@ -354,7 +488,8 @@ def _behaves_like_a_total(rows: list[list[str]], idx: int,
         if len(vals) < idx:
             continue
         cand = vals[idx - 1]
-        others = [v for j, v in enumerate(vals, start=1) if j != idx]
+        others = [v for j, v in enumerate(vals, start=1)
+                  if j != idx and v is not None]
         if cand is None or not others:
             continue
         # An all-zero row agrees with everything; it is not evidence.
@@ -387,16 +522,14 @@ def duplicate_value_rows(rows: list[list[str]], min_nonzero: int = 3) -> list[tu
     Total is excluded) are compared: several funds repeating the exact same
     flows on two different days is a copy-paste signature, whereas a single
     fund printing the same number twice (e.g. ETHA -12.8) is a plausible
-    coincidence and must not be flagged.
+    coincidence and must not be flagged. An empty (unreported) cell compares
+    as absent, not as zero.
     """
     seen: dict[tuple, str] = {}
     dupes: list[tuple[str, str]] = []
     for r in sorted(rows, key=lambda x: x[0]):
-        try:
-            vals = tuple(float(v) for v in r[1:-1])
-        except ValueError:
-            continue
-        if sum(1 for v in vals if v != 0) < min_nonzero:
+        vals = tuple(_num(v) for v in r[1:-1])
+        if sum(1 for v in vals if v) < min_nonzero:
             continue
         if vals in seen:
             dupes.append((seen[vals], r[0]))
@@ -433,7 +566,8 @@ def refresh(asset: str) -> int:
         return 1
 
     unsettled: list[str] = []
-    header, rows = parse_flow_table(html, cfg["require"], unsettled)
+    withheld: list[str] = []
+    header, rows = parse_flow_table(html, cfg["require"], unsettled, withheld)
     if not rows:
         print(f"[{asset}] could not locate the flow table (markup changed?) — "
               f"leaving {path.name} untouched", file=sys.stderr)
@@ -447,23 +581,53 @@ def refresh(asset: str) -> int:
 
     if unsettled:
         print(f"[{asset}] {len(unsettled)} row(s) carried no reading and were not "
-              f"written (unsettled or market closed): {', '.join(unsettled)}",
+              f"written (not published yet, or market closed): "
+              f"{', '.join(unsettled)}", file=sys.stderr)
+
+    # A withheld Total belongs at the newest edge, where Farside is still
+    # filling the day in. Many of them further back mean the "-" convention
+    # this parser relies on has changed; see MAX_HISTORICAL_WITHHELD. The edge
+    # is the newest SETTLING_ROWS rows of the TABLE (written or not), the same
+    # window withhold_incomplete_totals uses.
+    settling = set(sorted([r[0] for r in rows] + unsettled)[-SETTLING_ROWS:])
+    pending = [d for d in withheld if d in settling]
+    historical = [d for d in withheld if d not in settling]
+    if pending:
+        print(f"[{asset}] {len(pending)} partly published day(s) written with "
+              f"an empty Total (funds still missing): {', '.join(pending)}",
+              file=sys.stderr)
+    if len(historical) > MAX_HISTORICAL_WITHHELD:
+        print(f"[{asset}] {len(historical)} settled rows have a fund showing '-' "
+              f"(first: {', '.join(historical[:8])}) — Farside no longer seems to "
+              f"use '-' only for 'not reported'; refusing to blank their Totals "
+              f"in {path.name}", file=sys.stderr)
+        return 1
+    if historical:
+        print(f"[{asset}] WARNING: Total withheld on {len(historical)} settled "
+              f"row(s) where a reporting fund shows '-': {', '.join(historical)}",
               file=sys.stderr)
 
-    # Drop placeholder rows a pre-fix run may have left on disk: all-zero, and
-    # dated AFTER the newest day the source actually reports, so they cannot be
-    # real readings. Left in place they would (a) keep publishing a fake zero
-    # cliff and (b) pin old_newest into the future, making the regress guard
-    # below reject every future fetch forever. Bounded to unsettled dates —
-    # real history, including genuine all-zero days, is never touched.
-    placeholders = [d for d, r in old_rows.items()
-                    if d > new_newest and _is_all_zero(r)]
+    # Drop rows a pre-fix run left on disk that carry no information (every
+    # cell zero or empty) and that the source does not back with a reading:
+    #   * dated AFTER the newest day the source reports. Left in place they
+    #     keep publishing a fake zero cliff and pin old_newest into the future,
+    #     so the regress guard below would reject every future fetch forever;
+    #   * dated on a day the source lists with no reading, or on a weekend or
+    #     NYSE holiday: the old parser wrote those "-" rows as zeros, and the
+    #     merge below would otherwise keep them forever, because the fresh
+    #     parse no longer emits a row to overwrite them with.
+    # Real history, including a genuine all-zero day the source still reports,
+    # is never touched.
+    unbacked = set(unsettled)
+    placeholders = sorted(d for d, r in old_rows.items()
+                          if carries_no_information(r)
+                          and (d > new_newest or d in unbacked or market_closed(d)))
     for d in placeholders:
         del old_rows[d]
     if placeholders:
-        print(f"[{asset}] dropping {len(placeholders)} stale all-zero placeholder "
-              f"row(s) dated past the source's newest day ({new_newest}): "
-              f"{', '.join(sorted(placeholders))}", file=sys.stderr)
+        print(f"[{asset}] dropping {len(placeholders)} information-free row(s) "
+              f"the source does not report (unpublished, holiday or past "
+              f"{new_newest}): {', '.join(placeholders)}", file=sys.stderr)
         old_newest = newest(list(old_rows))
 
     if old_newest and new_newest < old_newest:
