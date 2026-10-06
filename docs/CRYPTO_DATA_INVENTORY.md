@@ -2,6 +2,8 @@
 
 This document is a research-only inventory of crypto data, signal, and analytics providers that could plausibly extend the personal trading dashboard at this repo. Compiled 2026-05-14. Sources that are already integrated (see CONTEXT in the README) are tagged "✓ INTEGRATED" only when referenced as overlap; they are not re-cataloged as new candidates. Pricing was verified via vendor sites / search at the time of writing; where a number could not be confirmed it is shown as `?`. Difficulty and Relevancy scores are subjective judgments for an *active BTC/ETH/LINK/LTC + macro + whale-tracking dashboard*, not generic ratings.
 
+> **Status tags last checked 2026-10-06.** LunarCrush and CryptoCompare were removed, and Binance is not used because it answers 451 to US hosts. The other `[✓ wired]` tags and all prices date from 2026-05-14.
+
 Scoring conventions:
 
 - **Relevancy** (1-10): value for an active trader's daily dashboard. 10 = must-have, 1 = peripheral noise.
@@ -14,14 +16,14 @@ Scoring conventions:
 
 | # | Name | Cat | Relev | Diff | Score | One-line why |
 |---|------|-----|-------|------|-------|--------------|
-| 1 | Binance Public API (futures) [✓ wired] | Derivs | 9 | 2 | 81 | Free, no key needed for public endpoints; funding, OI, mark price across all pairs, plus historical OHLCV. Best public derivatives source. |
+| 1 | Binance Public API (futures) [✗ not used: 451 from US hosts] | Derivs | 9 | 2 | 81 | Free, no key needed for public endpoints; funding, OI, mark price across all pairs, plus historical OHLCV. Best public derivatives source. |
 | 2 | GeckoTerminal API [✓ wired] | Price | 8 | 2 | 72 | Free, 30 calls/min, no key — DEX OHLCV/liquidity across 1,800+ DEXes and 260+ chains. Fills the on-chain price gap. |
 | 3 | Bybit v5 public API | Derivs | 8 | 2 | 72 | Free public endpoints for funding-rate history, OI, kline. Complements OKX and Binance for cross-exchange derivatives consensus. |
 | 4 | CoinGlass (free web data + cheap API) | Derivs | 9 | 3 | 72 | Aggregated cross-exchange liquidation, funding heatmap, long/short — far better aggregation than wiring each exchange individually. |
 | 5 | Coin Metrics Community API [✓ wired] | On-chain | 8 | 2 | 72 | Free, no key; reliable BTC/ETH network metrics. Backup/cross-check for blockchain.info and to add ETH metrics not in current set. |
 | 6 | CryptoPanic news API | News | 7 | 2 | 63 | Free tier with sentiment-voted news, 50-200 req/hr. Adds breaking-news widget with crowd sentiment without scraping RSS. |
 | 7 | Kraken public REST | Price/Derivs | 7 | 2 | 63 | Free, no auth for public spot OHLC + Kraken Futures funding/OI. Diversification away from US-restricted venues. |
-| 8 | LunarCrush API (free tier) [✓ wired] | Sentiment | 8 | 3 | 64 | Social sentiment + Galaxy Score + AltRank for top assets; the cheapest serious social signal. Free tier daily credit pool. |
+| 8 | LunarCrush API (free tier) [✗ removed] | Sentiment | 8 | 3 | 64 | Social sentiment + Galaxy Score + AltRank for top assets; the cheapest serious social signal. Free tier daily credit pool. |
 | 9 | DefiLlama (extra endpoints) | Stable/DeFi | 7 | 2 | 63 | We already use TVL; the same free API also exposes token unlocks, fees/revenue, treasuries, oracle feeds, bridges — easy wins. |
 | 10 | Whale Alert websocket | On-chain | 8 | 4 | 56 | $30/mo (or free RSS-style Twitter mirror) for $1M+ transfer alerts across BTC/ETH/USDT/USDC. Best whale-flow firehose. |
 | 11 | CoinMarketCap free tier | Price | 6 | 2 | 54 | 10K credits/mo, 30 req/min. Useful only as a cross-reference for CoinGecko outages; cheap insurance. |
@@ -68,10 +70,10 @@ Scoring conventions:
 | **Dune Analytics** | https://dune.com/pricing | Custom SQL on indexed chains; community dashboards | Free (no API), Plus $399/mo, Premium $999/mo (API) | API key | 7 | 4 | none | Maybe — only if you'll write custom SQL; otherwise pay for nothing. |
 | **Lookonchain** | https://twitter.com/lookonchain | Curated whale-narrative posts (Twitter feed) | Free; no API | None (X scrape / RSS) | 7 | 7 | partial Whale Alert | Maybe — value is human curation; integrate via X RSS bridge if at all. |
 | **Arkham Intelligence** | https://intel.arkm.com/api/docs | Entity-resolved addresses + portfolio + alerts | Public API launched Feb 2026; request access | API key | 8 | 6 | partial Nansen | Yes — uniquely good entity attribution; gated access is the main hurdle. |
-| **Whale Alert** | https://developer.whale-alert.io/pricing.html | Large transfer firehose (BTC/ETH/USDT/USDC + more) | ALERTS plan ~$30/mo (7-day trial); free Twitter feed | API key | 8 | 4 | partial Lookonchain | Yes — cheap and high-signal; pair with Lookonchain for narrative. |
+| **Whale Alert** | https://developer.whale-alert.io/ | Large transfer firehose (BTC/ETH/USDT/USDC + more) | ALERTS plan ~$30/mo (7-day trial); free Twitter feed | API key | 8 | 4 | partial Lookonchain | Yes — cheap and high-signal; pair with Lookonchain for narrative. |
 | **Blockchair** | https://blockchair.com/api/docs | Multi-chain explorer API (48+ chains incl. LTC) | Free for low volume; paid for higher | API key | 6 | 3 | partial blockchain.info ✓ | Yes — only credible way to add LTC on-chain metrics. |
 | **BlockCypher** | https://www.blockcypher.com/dev/bitcoin/ | BTC/ETH/LTC/DOGE/DASH unified API, address/tx data | Free with rate limits; paid for more | API key | 5 | 3 | overlaps blockchain.info ✓ + mempool ✓ | No — duplicative of what we have. |
-| **Coin Metrics (Community)** [✓ wired] | https://docs.coinmetrics.io/info/account-types | Free Network Data + Market Data subset; no key required | Free (10 req / 6 s) | None | 8 | 2 | overlaps blockchain.info ✓ | Yes — broader coverage than blockchain.info, includes ETH and stablecoin metrics. |
+| **Coin Metrics (Community)** [✓ wired] | https://coverage.coinmetrics.io/ | Free Network Data + Market Data subset; no key required | Free (10 req / 6 s) | None | 8 | 2 | overlaps blockchain.info ✓ | Yes — broader coverage than blockchain.info, includes ETH and stablecoin metrics. |
 | **Etherscan v2 (more endpoints)** | https://docs.etherscan.io/ | Gas (already used), token balances, txlists, ABI, ENS | Free 5 calls/sec | API key ✓ already have | 6 | 2 | ✓ partial | Yes — same key unlocks lots more; cheapest expansion. |
 
 ## 3. Derivatives / Options / Futures
@@ -82,7 +84,7 @@ Scoring conventions:
 | **Laevitas** | https://app.laevitas.ch/dashApi | Options Greeks, IV surfaces, funding, OI across Binance/Deribit/OKX/Bybit/Hyperliquid | Premium ~$50/mo; PAYG with crypto pay | API key | 7 | 4 | partial Deribit ✓ | Maybe — best non-Deribit options-focused source. |
 | **Tardis.dev** | https://tardis.dev/ | Tick-level historical L2/L3 for backtesting | Solo/Pro subscription tiers (specifics gated) | API key | 5 | 5 | none for real-time | No — backtesting tool, not a dashboard feed. |
 | **Velo Data** | https://velodata.app/ | Free terminal aggregating CEX derivatives in browser | Free terminal; API gated | API key | 6 | 5 | overlaps CoinGlass | Maybe — visual-first; programmatic access is unclear. |
-| **Binance Futures public** [✓ wired] | https://developers.binance.com/docs/derivatives | Funding rate, OI, mark, kline, premium index — all coins | Free, no auth for public endpoints | None | 9 | 2 | partial OKX ✓ | Yes — easiest big-win add. |
+| **Binance Futures public** [✗ not used: 451 from US hosts] | https://developers.binance.com/docs/derivatives | Funding rate, OI, mark, kline, premium index — all coins | Free, no auth for public endpoints | None | 9 | 2 | partial OKX ✓ | Yes — easiest big-win add. |
 | **Bybit v5 public** | https://bybit-exchange.github.io/docs/v5/market/history-fund-rate | Funding history, OI, kline, recent trades | Free, no auth | None | 8 | 2 | partial OKX ✓ | Yes — cross-venue confirmation of OKX signals. |
 | **Kraken Futures** | https://docs.kraken.com/api/docs/futures-api/trading/historical-funding-rates/ | Historical funding, OI per instrument | Free public | None | 7 | 2 | partial OKX ✓ | Yes — adds a US-regulated venue datapoint. |
 | **Deribit (already in for DVOL)** | https://docs.deribit.com/ | Options chains, full IV surface, BTC/ETH DVOL | Free | None | — | — | ✓ INTEGRATED (DVOL only) | Yes — expand: pull the full options chain for ATM IV term structure. |
@@ -93,7 +95,7 @@ Scoring conventions:
 
 | Name | URL | What you get | Pricing | Auth | Relev | Diff | Overlap | Worth integrating? |
 |------|-----|--------------|---------|------|-------|------|---------|--------------------|
-| **LunarCrush v4** [✓ wired] | https://lunarcrush.com/about/api | Galaxy Score, AltRank, social volume, bullish/bearish sentiment per asset | Free (basic), Individual $24/mo, Builder $240/mo; credit-metered | API key | 8 | 3 | none currently | Yes — best mainstream social signal at consumer pricing. |
+| **LunarCrush v4** [✗ removed] | https://lunarcrush.com/about/api | Galaxy Score, AltRank, social volume, bullish/bearish sentiment per asset | Free (basic), Individual $24/mo, Builder $240/mo; credit-metered | API key | 8 | 3 | none currently | Yes — best mainstream social signal at consumer pricing. |
 | **The TIE** | https://www.thetie.io/solutions/sentiment-api/ | Quant-grade sentiment back to 2017; institutional | Sales only | API key | 7 | 6 | overlaps LunarCrush | No — institutional pricing, no path for personal. |
 | **Santiment social** | https://santiment.net/ | Social volume, dominance, weighted sentiment | Free + paid tiers (see §2) | API key | 7 | 4 | LunarCrush | Maybe — pick one of LunarCrush vs Santiment. |
 | **Augmento** | https://augmento.ai/ | Sentiment scores from X, Reddit, Bitcointalk | Paid (sales-led); no public price | API key | 6 | 6 | LunarCrush | No — opaque pricing. |
@@ -159,7 +161,7 @@ Most paid signal services charge for what is essentially public TA + hype. Treat
 
 | Name | URL | What you get | Pricing | Auth | Relev | Diff | Overlap | Worth integrating? |
 |------|-----|--------------|---------|------|-------|------|---------|--------------------|
-| **NFTGo** | https://developer.nftgo.io/ | Floor prices, ML-driven NFT valuations, 5,000+ collections | Free tier + paid; `?` | API key | 3 | 4 | none | No — out of scope for BTC/ETH/LINK/LTC dashboard. |
+| **NFTGo** | https://docs.nftgo.io/ | Floor prices, ML-driven NFT valuations, 5,000+ collections | Free tier + paid; `?` | API key | 3 | 4 | none | No — out of scope for BTC/ETH/LINK/LTC dashboard. |
 | **Crypto Slam** | https://cryptoslam.io/ | NFT volume rankings | Free web; API `?` | none / scrape | 2 | 7 | none | No. |
 | **DappRadar** | https://dappradar.com/api | NFT + dapp + token analytics | Free tier with limited endpoints | API key | 3 | 4 | none | No — out of scope. |
 | **DexScreener (memecoin discovery)** | listed in §1 | Trending pairs on Solana / Base / etc. | Free w/ key | API key | 6 | 3 | GeckoTerminal | Maybe — if memecoin / altcoin widget is desired. |
@@ -172,7 +174,7 @@ Most paid signal services charge for what is essentially public TA + hype. Treat
 | **Chainalysis Reactor** | https://www.chainalysis.com/ | Sanctions screening, illicit flow attribution | Enterprise only | OAuth | 5 | 10 | No — no free tier. |
 | **TRM Labs** | https://www.trmlabs.com/ | Same category | Enterprise | OAuth | 5 | 10 | No. |
 | **Elliptic** | https://www.elliptic.co/ | Same category | Enterprise | OAuth | 5 | 10 | No. |
-| **OFAC SDN list (govt)** | https://www.treasury.gov/ofac/downloads/sdnlist.txt | Sanctioned crypto addresses | Free | None | 4 | 4 | Maybe — sanity check for token-flow widgets, but rarely actionable for a trader. |
+| **OFAC SDN list (govt)** | https://sanctionslist.ofac.treas.gov/Home/SdnList | Sanctioned crypto addresses | Free | None | 4 | 4 | Maybe — sanity check for token-flow widgets, but rarely actionable for a trader. |
 | **Arkham public watchlists** | listed in §2 | Government / treasury / fund labeled addresses | Free web | none | 7 | 6 | Yes — entity-resolved flows beat raw on-chain. |
 
 ---

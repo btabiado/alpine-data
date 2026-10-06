@@ -8,7 +8,8 @@ These guard against:
    the JSON payloads. If a fetcher silently drops a key (rate limit, schema
    shift), the dashboard renders empty without erroring. We assert the key
    paths exist and are non-empty.
-3. Smoke check that ``python app.py --no-open`` still rebuilds dashboard.html.
+3. Smoke check that ``python app.py --no-open`` still builds dashboard.html
+   (into a temp dir, with the live travel scrape stubbed).
 
 The tests own no fixtures beyond ``conftest`` and never touch production code.
 """
@@ -19,7 +20,6 @@ import os
 import re
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 import pytest
@@ -389,13 +389,32 @@ def test_whale_json_renderer_paths_exist():
 
 # ---------- 4. Build smoke test ----------
 
+# Runs app.main() the way `python app.py --no-open` does, in a child process,
+# with two changes so the test leaves the checkout alone: everything main()
+# writes (dashboard.html and the data-*.json sidecars) goes to a temp dir,
+# and the travel.state.gov scrape is stubbed (it used to rewrite the
+# committed data-travel.json on every run). The real data/ inputs are read.
+_BUILD_INTO_TMP = """
+import sys
+from pathlib import Path
+root, out = sys.argv[1], Path(sys.argv[2])
+sys.path.insert(0, root)
+import fetch_advisories
+fetch_advisories.main = lambda *a, **k: 0
+import app
+app.ROOT = out
+app.OUT = out / "dashboard.html"
+sys.argv = ["app.py", "--no-open"]
+sys.exit(app.main())
+"""
+
 
 @pytest.mark.skipif(
     os.environ.get("SKIP_BUILD_SMOKE") == "1",
     reason="SKIP_BUILD_SMOKE=1 set",
 )
-def test_app_no_open_rebuilds_dashboard():
-    """``python app.py --no-open`` should exit 0 and update dashboard.html.
+def test_app_no_open_rebuilds_dashboard(tmp_path):
+    """``python app.py --no-open`` should exit 0 and write dashboard.html.
 
     Bounded to 30s; if the build is slower (network rebuild, big payload), the
     test skips rather than fails — the goal is a smoke check, not a stress test.
@@ -403,13 +422,13 @@ def test_app_no_open_rebuilds_dashboard():
     if not (ROOT / "app.py").exists():
         pytest.skip("app.py missing")
 
-    before = DASHBOARD_HTML.stat().st_mtime if DASHBOARD_HTML.exists() else 0.0
-    # Sleep a tick so mtime can strictly advance even on coarse-grained FS.
-    time.sleep(0.05)
+    out_dir = tmp_path / "site"
+    out_dir.mkdir()
+    built = out_dir / "dashboard.html"
     try:
         result = subprocess.run(
-            [sys.executable, "app.py", "--no-open"],
-            cwd=str(ROOT),
+            [sys.executable, "-c", _BUILD_INTO_TMP, str(ROOT), str(out_dir)],
+            cwd=str(tmp_path),
             capture_output=True,
             text=True,
             timeout=30,
@@ -423,12 +442,10 @@ def test_app_no_open_rebuilds_dashboard():
         f"STDOUT (tail):\n{result.stdout[-2000:]}\n"
         f"STDERR (tail):\n{result.stderr[-2000:]}"
     )
-    assert DASHBOARD_HTML.exists(), "dashboard.html missing after build"
-    after = DASHBOARD_HTML.stat().st_mtime
-    assert after > before, (
-        "dashboard.html mtime did not advance — build may have been a no-op "
-        f"(before={before}, after={after})"
-    )
+    assert built.exists(), "dashboard.html missing after build"
+    # A fresh directory, so existing at all means this run wrote it; non-empty
+    # means the build was not a no-op.
+    assert built.stat().st_size > 0, "dashboard.html is empty after build"
 
 
 # ---------- 5. POC <-> signals_top20 join contract ----------
