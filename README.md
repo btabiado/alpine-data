@@ -120,7 +120,6 @@ Endpoints:
 | GET  | `/` | dashboard HTML |
 | GET  | `/api/data` | latest payload as JSON |
 | POST | `/api/refresh` | force re-fetch market + whale |
-| POST | `/api/seed-etf` | seed BTC ETF flows from GitHub mirror |
 | POST | `/api/upload-csv?asset=btc\|eth` | import a pasted CSV/TSV |
 | GET  | `/api/export/csv?series=<path>&from=<date>&to=<date>` | download a time-series as CSV |
 | GET  | `/healthz` | status |
@@ -148,23 +147,17 @@ First paint dropped from ~3.2MB → ~2.4MB by splitting the two heaviest sub-pay
 
 ## Getting ETF flow data
 
-The ETF Flows tab is empty until you load data. Three options:
+The committed CSVs are kept current automatically; you can also paste a table by hand. Two options:
 
-**1. One-click GitHub mirror** (BTC only, ~Jan 2024 → May 2025, Total column only)
-- In the dashboard, click **"Seed BTC from GitHub mirror"**.
-- Or `curl -X POST http://127.0.0.1:8765/api/seed-etf`.
-- Source: [canadiancode/btc-etf-flows](https://github.com/canadiancode/btc-etf-flows). Community-maintained, and **abandoned** — its last row is 2025-05-02 (verified 2026-08-03).
-- Only useful against an empty `data/btc_flows.csv`. The committed file runs to 2026-05-12 with a per-fund breakdown, so in a populated checkout this endpoint **refuses to write** and returns 503 rather than regress the dataset by a year and collapse 13 fund columns into one `Total`.
-
-**2. Paste from Farside** (freshest, manual)
+**1. Paste from Farside** (manual)
 - Visit [farside.co.uk/bitcoin-etf-flow-all-data/](https://farside.co.uk/bitcoin-etf-flow-all-data/) (Cloudflare lets your real browser through; it blocks scripts).
 - Select the table, copy.
 - Click **"Paste CSV…"** in the dashboard, paste, choose BTC or ETH, Import.
 - Tab-separated also works (browser table copy-paste defaults to tabs).
 
-**3. Automatic (CI)** — this is what actually keeps the committed CSVs current
+**2. Automatic (CI)** — this is what actually keeps the committed CSVs current
 - [`scripts/fetch_etf_flows.py`](scripts/fetch_etf_flows.py) scrapes Farside from a GitHub Actions runner on its own cron ([`etf-flows-daily.yml`](.github/workflows/etf-flows-daily.yml)) and commits `data/btc_flows.csv` + `data/eth_flows.csv`. Keyless.
-- There is no paid-API option any more. The CoinGlass and SoSoValue integrations in `fetch_live.py` were removed on 2026-08-03: nothing ever invoked them (`app.py --fetch` was their only caller and no workflow passes `--fetch`), and `api.sosovalue.com` no longer resolves. `COINGLASS_API_KEY` and `SOSOVALUE_API_KEY` are retired and reach no code.
+- There is no paid-API option any more, and the old one-click "Seed BTC" button (the abandoned canadiancode/btc-etf-flows mirror, last row 2025-05-02) and `fetch_live.py` were removed in 2026-10. The CoinGlass and SoSoValue integrations in `fetch_live.py` had been removed on 2026-08-03: nothing ever invoked them (`app.py --fetch` was their only caller and no workflow passes `--fetch`), and `api.sosovalue.com` no longer resolves. `COINGLASS_API_KEY` and `SOSOVALUE_API_KEY` are retired and reach no code.
 
 ## Reality check on history
 
