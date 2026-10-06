@@ -2833,7 +2833,7 @@ HEADLINE_SENTIMENT_METHOD = {
 
 
 def _score_news_item_sentiment(item: dict) -> str:
-    """Port of the JS `scoreNewsItemSentiment` in app.py / v2/app.py. POSITIVE
+    """Port of the JS `scoreNewsItemSentiment` in app.py. POSITIVE
     iff >= 1 positive keyword and 0 negative keywords, NEGATIVE iff the
     reverse, otherwise NEUTRAL. Whole-word matching on lower-cased title+body.
     Keep the lists and the rule in sync with the JS `_NEWS_POS_KEYWORDS` /
