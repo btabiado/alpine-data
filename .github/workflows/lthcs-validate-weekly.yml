@@ -6,8 +6,8 @@ name: lthcs-validate-weekly
 # and an uploaded JSON artifact. Does NOT commit anything —
 # this is pure observability, not data mutation.
 #
-# Scheduled 1 hour after the weekly trends run so the two don't fight
-# for runner pool or git refs.
+# Scheduled after the weekly trends run (Mon 02:47 UTC) so the two don't
+# fight for runner pool or git refs.
 on:
   schedule:
     - cron: "0 5 * * 1"
@@ -29,8 +29,6 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -59,6 +57,11 @@ jobs:
         id: validate
         continue-on-error: true
         run: |
+          # The upload below globs data/lthcs/backfill_validation_*.json, so a
+          # report that was ever committed would ride along in every artifact
+          # (three May reports did until they were deleted). Clear the glob so
+          # the artifact holds this run's report only.
+          rm -f data/lthcs/backfill_validation_*.json
           set +e
           python scripts/lthcs_backfill_validate.py --github 2> "$RUNNER_TEMP/validate.stderr"
           code=$?
@@ -77,8 +80,8 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lthcs-backfill-validation-${{ github.run_id }}
-          # The validator writes data/lthcs/backfill_validation_*.json
-          # with a UTC timestamp suffix; glob picks up whichever ran.
+          # The validator writes data/lthcs/backfill_validation_<UTC ts>.json;
+          # the run step clears the glob first, so this is this run's report.
           path: data/lthcs/backfill_validation_*.json
           if-no-files-found: warn
           retention-days: 90

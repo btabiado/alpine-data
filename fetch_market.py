@@ -4698,80 +4698,6 @@ def _coin_metrics_get(url: str, params: dict) -> dict | list | None:
         return None
 
 
-def _coin_metrics_btc_eth_metrics_impl() -> dict:
-    """Coin Metrics Community API — free network metrics for BTC + ETH.
-    Tier 1 free only; metrics outside free tier return 403 and skip.
-
-    Honors ``COINMETRICS_API_KEY`` env var (sent as ``Authorization:
-    Api-Key <value>``). Falls back to keyless if unset."""
-    metrics = ["PriceUSD", "CapMrktCurUSD"]
-    # Pull each asset+metric pair so we can gracefully degrade
-    out: dict[str, dict[str, list[dict]]] = {"btc": {}, "eth": {}}
-    import time as _time
-    since = (datetime.now(timezone.utc) - timedelta(days=365)).strftime("%Y-%m-%dT00:00:00")
-    for asset in ("btc", "eth"):
-        params = {
-            "assets": asset,
-            "metrics": ",".join(metrics),
-            "start_time": since,
-            "page_size": "1000",
-            "frequency": "1d",
-        }
-        j = _coin_metrics_get("https://community-api.coinmetrics.io/v4/timeseries/asset-metrics", params)
-        if not j or not isinstance(j, dict):
-            continue
-        rows = j.get("data") or []
-        for m in metrics:
-            ser = []
-            for r in rows:
-                v = r.get(m)
-                if v is None:
-                    continue
-                try:
-                    ser.append({"date": (r.get("time") or "")[:10], "value": float(v)})
-                except (ValueError, TypeError):
-                    continue
-            if ser:
-                out[asset][m] = ser
-    return {
-        "btc": out["btc"],
-        "eth": out["eth"],
-        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    }
-
-
-def coin_metrics_btc_eth_metrics() -> dict:
-    """Stale-fallback wrapper around `_coin_metrics_btc_eth_metrics_impl`.
-
-    The free Community API 403s without an API key and rate-limits even
-    with one. When both btc and eth series come back empty we serve the
-    last good payload from `data/.stale/coin_metrics_btc_eth_metrics.json`.
-    """
-    try:
-        out = _coin_metrics_btc_eth_metrics_impl()
-    except Exception as e:
-        print(f"  [coin_metrics_btc_eth_metrics] fatal: {e}", file=sys.stderr)
-        out = None
-    # Success = at least one of btc/eth populated with any metric series.
-    def _has_data(d):
-        if not isinstance(d, dict):
-            return False
-        btc = d.get("btc") or {}
-        eth = d.get("eth") or {}
-        return bool(btc) or bool(eth)
-
-    if _has_data(out):
-        _stale_save("coin_metrics_btc_eth_metrics", out)
-        return out
-    cached = _stale_load("coin_metrics_btc_eth_metrics")
-    if cached is not None:
-        return cached
-    return out if isinstance(out, dict) else {
-        "btc": {}, "eth": {},
-        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    }
-
-
 def coin_metrics_eth_whale_metrics() -> dict:
     """Coin Metrics ETH-only daily series for the Whale tab — active
     addresses, tx count, supply. Keyless community tier is enough.
@@ -5078,19 +5004,6 @@ def blockchair_eth_large_transactions_with_status(
     if recent:
         return {"rows": recent[:limit], "status": {**status, "source": "stale-cache"}}
     return {"rows": [], "status": {**status, "source": "unavailable"}}
-
-
-def blockchair_eth_large_transactions(
-    min_value_usd: float = 1_000_000.0, limit: int = 10,
-    now: datetime | None = None,
-) -> list[dict]:
-    """Rows-only wrapper around `blockchair_eth_large_transactions_with_status`.
-
-    Every row returned is inside the trailing 24h window, whether it came from
-    the live query or the stale cache; an empty list means nothing recent is
-    known. Never raises.
-    """
-    return blockchair_eth_large_transactions_with_status(min_value_usd, limit, now=now)["rows"]
 
 
 def blockchair_chain_stats(chain_slug: str) -> dict:

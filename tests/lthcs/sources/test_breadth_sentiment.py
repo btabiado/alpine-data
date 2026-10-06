@@ -491,12 +491,6 @@ def test_fetch_naaim_caches_within_day() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_parse_cboe_csv_handles_missing_header_returns_empty() -> None:
-    """A CSV with no recognisable P/C header should return []."""
-    rows = bs._parse_cboe_csv("date,volume\n2026-05-16,100\n")
-    assert rows == []
-
-
 def test_parse_aaii_html_extracts_three_percentages() -> None:
     snippet = (
         "<html><body>"

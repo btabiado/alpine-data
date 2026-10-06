@@ -14,8 +14,9 @@ this.
 
 Phase 2's answer is to **spread the work across the week**: process
 a small slice (~30 tickers) per day with aggressive backoff +
-resumable progress. Run daily at 04:00 UTC for 5-6 days and the
-universe gets fully refreshed without ever hitting a sustained 429.
+resumable progress. Run daily (lthcs-trends-daily.yml, 04:13 UTC) and
+the universe gets fully refreshed without ever hitting a sustained 429
+(5-6 days at 167 tickers; about 17 days at 515).
 
 Concretely this script:
 

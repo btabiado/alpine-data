@@ -7,11 +7,6 @@ unemployment, retail sales, etc.
 
 Public functions:
     * ``get_series(series_id, observation_start=None)``
-    * ``get_cpi()``
-    * ``get_fed_funds()``
-    * ``get_ten_year_yield()``
-    * ``get_unemployment_rate()``
-    * ``get_retail_sales()``
     * ``get_latest_value(series_id)``
 
 All upstream calls go through:
@@ -177,31 +172,3 @@ def get_latest_value(
         if row.get("value") is not None:
             return row
     return None
-
-
-# --- Convenience wrappers for the DES pillar inputs. -------------------------
-
-
-def get_cpi() -> List[Dict[str, Any]]:
-    """CPI for All Urban Consumers (CPIAUCSL), monthly, seasonally adjusted."""
-    return get_series("CPIAUCSL")
-
-
-def get_fed_funds() -> List[Dict[str, Any]]:
-    """Effective Federal Funds Rate (FEDFUNDS), monthly average."""
-    return get_series("FEDFUNDS")
-
-
-def get_ten_year_yield() -> List[Dict[str, Any]]:
-    """10-Year Treasury Constant Maturity Rate (DGS10), daily."""
-    return get_series("DGS10")
-
-
-def get_unemployment_rate() -> List[Dict[str, Any]]:
-    """Civilian Unemployment Rate (UNRATE), monthly."""
-    return get_series("UNRATE")
-
-
-def get_retail_sales() -> List[Dict[str, Any]]:
-    """Advance Retail Sales: Retail Trade (RSXFS), monthly."""
-    return get_series("RSXFS")

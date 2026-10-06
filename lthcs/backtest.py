@@ -706,17 +706,6 @@ def _series_to_jsonable(s: pd.Series) -> Dict[str, float]:
     }
 
 
-def _frame_to_jsonable(df: pd.DataFrame) -> Dict[str, Dict[str, float]]:
-    out: Dict[str, Dict[str, float]] = {}
-    for col in df.columns:
-        key = col.strftime("%Y-%m-%d") if hasattr(col, "strftime") else str(col)
-        out[key] = {
-            str(idx): (None if pd.isna(val) else float(val))
-            for idx, val in df[col].items()
-        }
-    return out
-
-
 def serialize_portfolio_result(result: Dict[str, Any]) -> Dict[str, Any]:
     """Convert ``band_portfolio_returns`` output to JSON-serialisable dict."""
     return {
