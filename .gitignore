@@ -85,20 +85,14 @@ data-*.json
 !data-opensky.json
 # Built by pages.yml at deploy time, never committed: data-opensky-positions.json (data-*.json above) and
 health/api-catalog.xlsx
-# Carve-out: data-mufon.json IS committed — the UAP tab's sidecar. It's refreshed
-# live by the V2 build each deploy, but committing a snapshot gives a stale-keep
-# fallback so a V2-build timeout (NUFORC backfill) can't 404 the MUFON tab.
+# Carve-out: data-mufon.json IS committed — the UAP tab's sidecar: the frozen
+# NUFORC cache (data through 2026-06-09), published as is. Nothing refreshes it.
 !data-mufon.json
 # Carve-out: data-city.schema.json is a hand-authored CONTRACT (not a generated
 # sidecar), loaded by the City Pulse conformance tests (tests/test_city_pulse.py).
 # The data-*.json rule above matches it by name and was silently keeping it out of
 # git — which is why those tests FileNotFound in CI. Un-ignore so it ships.
 !docs/city/data-city.schema.json
-# V2 builder output mirrors the production layout one level down.
-v2/dashboard.html
-v2/data-*.json
-# Same carve-out for V2's sidecar — see comment above data-travel.json.
-!v2/data-travel.json
 
 # Local cached fetches stay on your machine (regenerated every run)
 data/*.json
