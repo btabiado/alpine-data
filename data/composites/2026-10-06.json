@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-06",
-  "generated_at": "2026-10-06T15:09:29Z",
+  "generated_at": "2026-10-06T15:17:04Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-06",
       "label": null,
-      "note": "40 coins; 10 buy+, 1 sell+",
-      "score": 22,
+      "note": "40 coins; 9 buy+, 1 sell+",
+      "score": 20,
       "stale": false
     },
     "defi_sentiment": {
@@ -83,7 +83,7 @@
       "as_of": "2026-10-06",
       "label": "Neutral",
       "note": null,
-      "score": 5.42,
+      "score": 7.46,
       "stale": false
     },
     "overview_sentiment": {
