@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-06",
-  "generated_at": "2026-10-06T09:45:14Z",
+  "generated_at": "2026-10-06T12:19:55Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-06",
       "label": null,
-      "note": "40 coins; 11 buy+, 2 sell+",
-      "score": 22,
+      "note": "40 coins; 10 buy+, 2 sell+",
+      "score": 20,
       "stale": false
     },
     "defi_sentiment": {
@@ -55,7 +55,7 @@
       "as_of": "2026-10-05",
       "label": "BALANCED",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 12,
+      "score": 9,
       "stale": false
     },
     "futures_sentiment_link": {
