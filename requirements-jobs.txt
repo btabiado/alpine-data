@@ -7,5 +7,5 @@
 # R2 archive: upload_to_r2.py, health/build_*.py, scripts/backfill_history.py
 # (pages.yml, r2-backfill.yml, history-backfill.yml).
 boto3==1.43.108
-# scripts/build_catalog_xlsx.py writes health/api-catalog.xlsx (catalog-health.yml).
+# scripts/build_catalog_xlsx.py builds health/api-catalog.xlsx at deploy time (pages.yml).
 openpyxl==3.1.5

@@ -83,8 +83,8 @@ data-*.json
 # Carve-out: data-opensky.json IS committed — the Aviation tab's live OpenSky
 # "airborne now" snapshot, refreshed hourly by aviation-opensky.yml.
 !data-opensky.json
-# Carve-out: data-opensky-positions.json — trimmed live positions for the Flight Map (hourly cron)
-!data-opensky-positions.json
+# Built by pages.yml at deploy time, never committed: data-opensky-positions.json (data-*.json above) and
+health/api-catalog.xlsx
 # Carve-out: data-mufon.json IS committed — the UAP tab's sidecar. It's refreshed
 # live by the V2 build each deploy, but committing a snapshot gives a stale-keep
 # fallback so a V2-build timeout (NUFORC backfill) can't 404 the MUFON tab.

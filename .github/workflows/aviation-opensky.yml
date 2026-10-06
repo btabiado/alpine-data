@@ -62,6 +62,14 @@ jobs:
         # GitHub's key, producing the Verified badge. See api-commit.sh.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # data-opensky.json only. fetch_opensky.py also writes
+        # data-opensky-positions.json, which is deliberately NOT committed (it
+        # was 46% of all repo history): pages.yml fetches it at deploy time.
+        # The `git rm --cached` untracks the old committed copy in this bot's
+        # first commit after the change and is a no-op from then on. Doing it
+        # here rather than in the PR keeps that PR from hitting modify/delete
+        # conflicts with the commits this job lands before it merges.
         run: |
-          git add data-opensky.json data-opensky-positions.json
+          git rm -q --cached --ignore-unmatch data-opensky-positions.json
+          git add data-opensky.json
           .github/scripts/api-commit.sh "aviation: refresh OpenSky snapshot $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
