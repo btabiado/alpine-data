@@ -598,6 +598,8 @@ def build_lthcs_payload() -> dict:
           "movers": {"gainers": [...], "decliners": [...]},
           "universe_count": int,
           "insights": [ ... 3-5 insight dicts ... ],
+          "score_bands": [{"key", "label", "min", "max"}, ...] highest first,
+                         the live weights.json cutoffs,
         }
     On any error or missing data, returns {"available": False}.
     """
@@ -608,6 +610,14 @@ def build_lthcs_payload() -> dict:
     if index_file is None and snap_file is None:
         return {"available": False}
     out: dict = {"available": False}
+    try:
+        from lthcs import bands as _bands
+        out["score_bands"] = [
+            {"key": k, "label": _bands.BAND_COLLOQUIAL.get(k, k), "min": lo, "max": hi}
+            for k, lo, hi in _bands.ordered_bands(_bands.load_score_bands())
+        ]
+    except Exception as e:
+        print(f"[lthcs] score bands unavailable: {e}", file=sys.stderr)
     if index_file is not None:
         idx = load_json(index_file)
         if idx:
@@ -9098,6 +9108,12 @@ function renderLthcsInsightsRow(host){
     'color:#0b0d12;font-weight:700;padding:6px 12px;border-radius:6px;' +
     'text-decoration:none;font-size:12px;white-space:nowrap;flex:0 0 auto">' +
     'Open full LTHCS →</a>';
+  // Band cutoffs come from DATA.lthcs.score_bands (weights.json via
+  // lthcs.bands, built in build_lthcs_payload) so a recalibration needs no
+  // edit here.
+  const bandText = (Array.isArray(L.score_bands) ? L.score_bands : [])
+    .map(b => escapeHtml(String(b.label)) + ' (' + Number(b.min) + '-' + Number(b.max) + ')')
+    .join(' · ');
   // "About LTHCS" disclosure — a <details> button next to the CTA.
   // Opens an inline panel explaining what LTHCS is, the 5-pillar
   // calculation, and the data-source lineage. No modal infra needed.
@@ -9122,8 +9138,8 @@ function renderLthcsInsightsRow(host){
     '<p style="margin:0 0 6px 0;color:var(--muted);font-size:12px">' +
     'Each ticker is scored 0-100 across 5 pillars, weighted by its maturity stage ' +
     '(mature compounder / growth / recovery / etc.). Modifiers then refine: HY-stress, ' +
-    'curve inversion, dollar strength, volatility percentile. Final score → band: ' +
-    'Elite (90+) · High (80-89) · Constructive (70-79) · Monitor (60-69) · Weakening (50-59) · Review (0-49).</p>' +
+    'curve inversion, dollar strength, volatility percentile. Final score → band' +
+    (bandText ? ': ' + bandText : ' (see the full LTHCS page)') + '.</p>' +
     '<ul style="margin:6px 0 10px 16px;padding:0;color:var(--text);font-size:12px;line-height:1.5">' +
     '<li><strong>Adoption Momentum</strong> — revenue growth percentile + Google Trends acceleration</li>' +
     '<li><strong>Institutional Confidence</strong> — price momentum + SEC Form 4 insider activity + SEC 13F holdings</li>' +

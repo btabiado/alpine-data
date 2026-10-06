@@ -18,6 +18,8 @@ for p in (str(REPO_ROOT), str(SCRIPTS)):
 
 runner = importlib.import_module("lthcs_quality_audit_runner")
 
+from tests.lthcs.band_fixture import fixture_band_ranges  # noqa: E402
+
 
 # ---------------------------------------------------------------------------
 # Synthetic snapshot helpers
@@ -131,9 +133,15 @@ class TestPillarVerdict:
 
 
 class TestDistributionSummary:
+    # Fixed test band set (elite 85+, high_confidence 80-84, review 0-49), not
+    # the live weights.json, so a recalibration does not move these counts.
+    @pytest.fixture(autouse=True)
+    def _fixed_band_cutoffs(self, monkeypatch):
+        monkeypatch.setattr(runner, "_live_band_ranges", fixture_band_ranges)
+
     def test_critical_when_elite_and_high_empty_and_review_overflowing(self):
         snap = {"scores": [{"lthcs_score": v} for v in [20, 30, 35, 40, 42, 48, 55, 60]]}
-        # 5/8 = 62.5% in review band, both elite + high_conf empty
+        # 6/8 = 75% in review band (< 50), both elite + high_conf empty
         dist = runner._distribution_summary(snap)
         assert dist["critical"] is True
         assert dist["elite_count"] == 0
@@ -149,6 +157,23 @@ class TestDistributionSummary:
         dist = runner._distribution_summary({"scores": []})
         assert dist["critical"] is True
         assert dist["n"] == 0
+
+    def test_fractional_scores_use_half_open_bands(self):
+        snap = {"scores": [{"lthcs_score": v} for v in [49.9, 50.0, 79.9, 80.0, 84.9, 85.0]]}
+        dist = runner._distribution_summary(snap)
+        assert (dist["review_count"], dist["high_conf_count"], dist["elite_count"]) == (1, 2, 1)
+
+
+def test_distribution_summary_reads_live_band_cutoffs():
+    # Unpatched: the cutoffs come from data/lthcs/weights.json.
+    live = json.loads((REPO_ROOT / "data" / "lthcs" / "weights.json").read_text())["score_bands"]
+    elite_lo, high_lo, review_hi = (live["elite"]["min"], live["high_confidence"]["min"],
+                                    live["review"]["max"])
+    scores = [review_hi, review_hi + 1, high_lo, elite_lo - 1, elite_lo, 100]
+    dist = runner._distribution_summary({"scores": [{"lthcs_score": v} for v in scores]})
+    assert dist["band_cutoffs"] == {"elite_min": elite_lo, "high_confidence_min": high_lo,
+                                    "review_max": review_hi}
+    assert (dist["review_count"], dist["high_conf_count"], dist["elite_count"]) == (1, 2, 2)
 
 
 class TestRenderSummary:

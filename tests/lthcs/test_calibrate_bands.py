@@ -1,7 +1,10 @@
 """Tests for ``scripts/lthcs_calibrate_bands.py`` and ``lthcs/bands.py``.
 
 All tests run against synthetic snapshots / a copy of weights.json in
-``tmp_path``; the real ``data/lthcs/`` tree is never modified.
+``tmp_path``; the real ``data/lthcs/`` tree is never modified. The copy
+carries the fixed test band set (tests/lthcs/band_fixture.py) and no
+calibration provenance, so these tests do not depend on what the live bands
+were last calibrated to.
 """
 
 from __future__ import annotations
@@ -9,11 +12,13 @@ from __future__ import annotations
 import importlib.util
 import json
 import random
-import shutil
+import re
 import sys
 from pathlib import Path
 
 import pytest
+
+from tests.lthcs.band_fixture import FIXTURE_SCORE_BANDS, fixture_band_ranges
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SCRIPT_PATH = REPO_ROOT / "scripts" / "lthcs_calibrate_bands.py"
@@ -50,12 +55,34 @@ def _normal_scores(n, mu=48.0, sd=10.0, seed=7):
     return [round(min(99.9, max(1.0, rng.gauss(mu, sd))), 1) for _ in range(n)]
 
 
+def _weights_text_with_fixture_bands(text: str) -> str:
+    """The live weights.json text with the fixture band numbers and without a
+    ``score_bands_calibration`` block. Edited as text so the hand-aligned
+    layout the --write path must preserve is still there."""
+    for b, spec in FIXTURE_SCORE_BANDS.items():
+        pat = re.compile(r'("' + re.escape(b) + r'"\s*:\s*\{\s*"min"\s*:\s*)-?\d+(\s*,\s*"max"\s*:\s*)-?\d+')
+        text, n = pat.subn(lambda m: f'{m.group(1)}{spec["min"]}{m.group(2)}{spec["max"]}', text, count=1)
+        assert n == 1, b
+    key = '"score_bands_calibration"'
+    idx = text.find(key)
+    if idx >= 0:
+        start = text.index(":", idx + len(key)) + 1
+        while text[start] in " \t\r\n":
+            start += 1
+        _, end = json.JSONDecoder().raw_decode(text, start)
+        text = text[:text.rindex(",", 0, idx)] + text[end:]
+    cfg = json.loads(text)
+    assert {k: (v["min"], v["max"]) for k, v in cfg["score_bands"].items()} == fixture_band_ranges()
+    assert "score_bands_calibration" not in cfg
+    return text
+
+
 @pytest.fixture()
 def env(tmp_path):
     snaps = tmp_path / "snapshots"
     snaps.mkdir()
     weights = tmp_path / "weights.json"
-    shutil.copy(REAL_WEIGHTS, weights)
+    weights.write_text(_weights_text_with_fixture_bands(REAL_WEIGHTS.read_text()))
     (snaps / "index.json").write_text("{}")  # non-dated file must be ignored
     return snaps, weights
 
@@ -202,7 +229,7 @@ def test_default_picks_latest_dated_snapshot_and_reports(cal, env, capsys):
     assert "520 scored" in out
     for b in BANDS:
         assert b in out
-    assert "85-100" in out  # current elite range shown
+    assert "85-100" in out  # current (fixture) elite range shown
     assert "elite/high_confidence populated: yes" in out
     assert weights.read_bytes() == before  # no change without --write
 
@@ -352,3 +379,42 @@ def test_band_verdict_review_overflow_scales_with_universe():
     assert "SHIFT-UP" in audit.band_verdict(100, "review", 520)
     # Without a total the legacy absolute threshold still applies.
     assert "SHIFT-UP" in audit.band_verdict(50, "review")
+
+
+def _live_ranges():
+    live = json.loads(REAL_WEIGHTS.read_text())["score_bands"]
+    return {k: (v["min"], v["max"]) for k, v in live.items()}
+
+
+def test_fallback_bands_mirror_the_live_weights():
+    # lthcs.bands.DEFAULT_SCORE_BANDS and lthcs_tab/lthcs-bands.js are only
+    # used when weights.json cannot be read, but then they must not bring
+    # back older cutoffs: a recalibration updates them in the same change.
+    from lthcs import bands
+
+    live = json.loads(REAL_WEIGHTS.read_text())["score_bands"]
+    assert bands.DEFAULT_SCORE_BANDS == live
+    js = (REPO_ROOT / "lthcs_tab" / "lthcs-bands.js").read_text(encoding="utf-8")
+    block = js[js.index("export const DEFAULT_SCORE_BANDS"):]
+    block = block[:block.index("};")]
+    js_ranges = {m.group(1): (int(m.group(2)), int(m.group(3))) for m in re.finditer(
+        r"(\w+):\s*\{\s*min:\s*(\d+),\s*max:\s*(\d+)", block)}
+    assert js_ranges == _live_ranges()
+
+
+def test_dashboard_payload_carries_live_bands_for_the_about_panel(tmp_path, monkeypatch):
+    # The dashboard's "About LTHCS" panel used to hard-code its band list
+    # (and it had drifted: "Elite (90+) · High (80-89)"); it now renders
+    # DATA.lthcs.score_bands, built from weights.json.
+    import app
+
+    snaps = tmp_path / "lthcs" / "snapshots"
+    snaps.mkdir(parents=True)
+    (snaps / "2026-10-06.json").write_text(json.dumps({"calc_date": "2026-10-06", "scores": [
+        {"ticker": "A", "lthcs_score": 60.0, "band": "constructive"}]}))
+    monkeypatch.setattr(app, "DATA_DIR", tmp_path)
+    out = app.build_lthcs_payload()
+    assert [b["key"] for b in out["score_bands"]] == list(BANDS)
+    assert {b["key"]: (b["min"], b["max"]) for b in out["score_bands"]} == _live_ranges()
+    assert "Elite (90+)" not in app.HTML_TEMPLATE
+    assert "L.score_bands" in app.HTML_TEMPLATE
