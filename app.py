@@ -7511,15 +7511,6 @@ function renderSignals(){
   renderPerCoinSignalList();
 }
 
-// Map a signal label to a coarse bucket used by the strip's filter chips
-// and the colored chip on each compact card.
-function labelBucket(label){
-  const L = (label||'').toUpperCase();
-  if (L.indexOf('BUY')  >= 0) return 'buy';
-  if (L.indexOf('SELL') >= 0) return 'sell';
-  return 'hold';
-}
-
 // Inline SVG sparkline for the detail modal. Tries the signal's own
 // sparkline_7d first (top-50 entries carry this), then falls back to
 // the 7-day tail of DATA.market[asset].price for the pinned 4 assets.
@@ -10438,20 +10429,9 @@ function renderMultichainWhale(){
 }
 
 // BTC supply held: whales (≥1,000 BTC addresses) vs non-whales (<1,000 BTC).
-// Real cohort data from bitinfocharts.com — daily back to ~2021-05. Honors
-// the Range selector at the top of the Whale tab via _whaleRangeFilter.
-function _whaleRangeFilter(rows){
-  if (!rows || !rows.length) return rows || [];
-  const range = state.range;
-  if (range === 'ytd'){
-    const yr = new Date(rows[rows.length-1].date).getFullYear();
-    return rows.filter(r => new Date(r.date).getFullYear() === yr);
-  }
-  const days = {'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095}[range] || null;
-  if (!days) return rows;
-  return rows.slice(-days);
-}
-
+// Real cohort data from bitinfocharts.com — daily back to ~2021-05. The chart
+// shows full history with its own bin selector; it does not follow the tab's
+// Range buttons (see renderWhaleCohortChart).
 // Bin daily cohort rows down to weekly / monthly / quarterly / yearly buckets
 // using the LAST value in each window (it's a stock metric — supply held —
 // not a flow, so sampling the period-end value is the right aggregation).
@@ -12029,17 +12009,7 @@ const fmtUsdShort = p => p == null ? '—' :
          p >= 0.01 ? p.toFixed(4) : p.toFixed(6));
 
 // ===== Point of Control =====
-// Multi-timeframe POC ladder. Each card shows 4 timeframes' POCs in a
-// compact table — clustering across timeframes signals high-conviction
-// levels. Inline SVG volume profile histogram visualizes distribution shape.
-const POC_TFS = [['d30','30d'],['d90','90d'],['d180','180d'],['d365','365d']];
-
-// "Clustered" = 3+ of the 4 POCs land within 2% of each other.
-function pocClustered(rows){
-  const pocs = (rows||[]).filter(r => r && r.poc).map(r => r.poc);
-  if (pocs.length < 3) return false;
-  return pocs.some(ref => pocs.filter(p => Math.abs(p-ref)/ref*100 <= 2).length >= 3);
-}
+// Volume-profile renderers shared by the POC top-25 grid and the detail modal.
 
 // Horizontal volume profile SVG. Primary = 90d filled histogram; 30d shown
 // as a dashed overlay for divergence-at-a-glance. POC bin highlighted
@@ -12142,50 +12112,6 @@ function volumeProfileSVGLarge(primary, alt, current){
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-height:420px;display:block;border-radius:6px;background:#0b0d12">
     ${vaBand}${bars}${altLine}${pocLine}${curMarker}${labels}${legend}
   </svg>`;
-}
-
-function volumeProfileSVG(primary, alt, current){
-  const W = 120, H = 140, padL = 4, padR = 4;
-  if (!primary || !primary.buckets || !primary.buckets.length){
-    return `<svg width="${W}" height="${H}"><text x="${W/2}" y="${H/2}" text-anchor="middle" font-size="10" fill="#888">no profile</text></svg>`;
-  }
-  const bks = primary.buckets;
-  const maxV = Math.max(...bks.map(b => b.volume)) || 1;
-  const prices = bks.map(b => b.price);
-  const pMin = prices[0] - primary.step / 2;
-  const pMax = prices[prices.length - 1] + primary.step / 2;
-  const barH = (H - 4) / bks.length;
-  const barW = W - padL - padR;
-  const yFor = i => 2 + (bks.length - 1 - i) * barH;
-  const bars = bks.map((b, i) => {
-    const w = (b.volume / maxV) * barW;
-    const isPoc = Math.abs(b.price - primary.poc) < primary.step / 2 + 1e-6;
-    const inVA  = b.price >= primary.val && b.price <= primary.vah;
-    const fill  = isPoc ? '#ff6b35' : (inVA ? '#4a90e2' : '#7aa7d9');
-    const op    = isPoc ? 1 : (inVA ? 0.85 : 0.45);
-    return `<rect x="${padL}" y="${yFor(i)}" width="${w}" height="${Math.max(1, barH-1)}" fill="${fill}" opacity="${op}"/>`;
-  }).join('');
-  const vaTop = 2 + ((pMax - primary.vah) / (pMax - pMin)) * (H - 4);
-  const vaBot = 2 + ((pMax - primary.val) / (pMax - pMin)) * (H - 4);
-  const vaBand = `<rect x="0" y="${vaTop}" width="${W}" height="${vaBot - vaTop}" fill="#4a90e2" opacity="0.08"/>`;
-  let altLine = '';
-  if (alt && alt.buckets && alt.buckets.length){
-    const maxA = Math.max(...alt.buckets.map(b => b.volume)) || 1;
-    const pts = alt.buckets.map(b => {
-      const y = 2 + ((pMax - b.price) / (pMax - pMin)) * (H - 4);
-      const x = padL + (b.volume / maxA) * barW;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    }).join(' ');
-    altLine = `<polyline points="${pts}" fill="none" stroke="#888" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>`;
-  }
-  let curMarker = '';
-  if (current != null){
-    const clamped = Math.min(Math.max(current, pMin), pMax);
-    const yC = 2 + ((pMax - clamped) / (pMax - pMin)) * (H - 4);
-    const dash = (current < pMin || current > pMax) ? 'stroke-dasharray="3,2"' : '';
-    curMarker = `<line x1="0" y1="${yC}" x2="${W}" y2="${yC}" stroke="#00c853" stroke-width="1.5" ${dash}/>`;
-  }
-  return `<svg width="${W}" height="${H}">${vaBand}${bars}${altLine}${curMarker}</svg>`;
 }
 
 // Tiny inline SVG sparkline of the last 7 days of signal score for a
@@ -13289,93 +13215,6 @@ function pocMigrationSparklineLarge(series){
   </svg>`;
 }
 
-function renderPocCards(){
-  const poc = (DATA.market||{}).poc || {};
-  const host = document.getElementById('pocCards');
-  if (!host) return;
-  host.innerHTML = RESEARCH_ASSETS.map(a => {
-    const d = poc[a];
-    const accent = RESEARCH_ACCENT(a);
-    if (!d || !POC_TFS.some(([k]) => d[k])){
-      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no POC data</div></div>`;
-    }
-    const rows = POC_TFS.map(([k]) => d[k]);
-    const anchor = d.d90 || d.d30 || rows.find(Boolean);
-    // Cluster badge: 3+ TFs within 2%
-    const clustered = pocClustered(rows);
-    const clusterBadge = clustered
-      ? '<span style="background:#a78bfa22;color:#a78bfa;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600" title="3+ timeframes within 2%">🎯 CLUSTERED</span>'
-      : '';
-    // Migration badge: 30d vs 90d POC delta
-    const mig = d.migration;
-    let migBadge = '';
-    if (mig){
-      const cfg = mig.direction === 'UP'
-        ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:`Migrating UP ${mig.delta_pct >= 0 ? '+' : ''}${mig.delta_pct}%`}
-        : mig.direction === 'DOWN'
-        ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:`Migrating DOWN ${mig.delta_pct}%`}
-        : {bg:'#6b728022', fg:'var(--muted)', arrow:'·', label:'Value stable'};
-      const tip = (mig.explanation || '').replace(/"/g,'&quot;');
-      migBadge = `<span title="${tip}" style="background:${cfg.bg};color:${cfg.fg};padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600;cursor:help">${cfg.arrow} ${cfg.label}${mig.between_pocs ? ' ⇆' : ''}</span>`;
-    }
-    // 4-row ladder
-    const ladder = POC_TFS.map(([k, label]) => {
-      const r = d[k];
-      if (!r) return `<tr><td style="color:var(--muted);font-size:10px">${label}</td><td colspan="3" style="color:var(--muted)">—</td></tr>`;
-      const inVA = r.in_value_area;
-      const tag = inVA
-        ? '<span style="background:#22c55e22;color:#22c55e;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">IN VA</span>'
-        : '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>';
-      const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
-      const dt = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + r.distance_pct.toFixed(1) + '%';
-      return `<tr>
-        <td style="color:var(--muted);font-size:10px">${label}</td>
-        <td style="font-weight:600">${fmtUsdShort(r.poc)}</td>
-        <td style="color:${dc};text-align:right">${dt}</td>
-        <td style="text-align:right">${tag}</td>
-      </tr>`;
-    }).join('');
-    // Naked POCs subsection
-    const naked = Array.isArray(d.naked) ? d.naked : [];
-    const cur = anchor && anchor.current;
-    const nakedHtml = naked.length ? `
-      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Naked POCs <span style="opacity:.7">(untested magnet levels, 180d)</span></div>
-        ${naked.map(n => {
-          const isSupport = cur != null && cur > n.poc;
-          const col = isSupport ? '#22c55e' : '#ef4444';
-          const sign = n.distance_pct >= 0 ? '+' : '';
-          return `<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0">
-            <span style="color:${col};font-weight:600">${fmtUsdShort(n.poc)}</span>
-            <span style="color:var(--muted)">${n.days_ago}d ago · ${sign}${n.distance_pct}%</span>
-          </div>`;
-        }).join('')}
-      </div>` : '';
-    const sparkline = pocMigrationSparkline(d.migration_series);
-    return `<div class="card" style="border-left:4px solid ${accent}">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;flex-wrap:wrap">
-        <h3 style="font-size:13px;color:var(--text);margin:0">${a.toUpperCase()}
-          <span class="sub" style="color:var(--muted);font-size:10px">${fmtUsdShort(anchor.current)} now</span>
-        </h3>
-        <div style="display:flex;gap:4px;flex-wrap:wrap">${clusterBadge}${migBadge}</div>
-      </div>
-      ${sparkline}
-      <div style="display:flex;gap:10px;margin-top:8px">
-        <div style="flex:1;min-width:0">
-          <table style="width:100%;font-size:11px;border-collapse:collapse">
-            <thead><tr style="color:var(--muted);font-size:9px;text-align:left">
-              <th>TF</th><th>POC</th><th style="text-align:right">Δ</th><th style="text-align:right">VA</th>
-            </tr></thead>
-            <tbody>${ladder}</tbody>
-          </table>
-        </div>
-        <div style="flex:0 0 120px">${volumeProfileSVG(d.d90, d.d30, anchor.current)}</div>
-      </div>
-      ${nakedHtml}
-    </div>`;
-  }).join('');
-}
-
 // ===== Sentiment composite cards (Overview / DeFi / ETF Flows / Futures) =====
 // Each tab has its own domain-specific sentiment composite card mirroring the
 // visual pattern of #pocSentimentCard. paintSentimentCard() is the shared
@@ -14277,8 +14116,8 @@ function renderFuturesSentiment(){
 
 // ===== POC top-25 grid (Point of Control tab) =====
 // Renders one card per top-25 coin from DATA.market.poc_top. Reuses the
-// renderPocCards() layout but keyed off coin metadata (image/symbol/name/price)
-// instead of the fixed RESEARCH_ASSETS list.
+// layout of the original fixed-asset POC cards (since removed) but keyed off
+// coin metadata (image/symbol/name/price) instead of the RESEARCH_ASSETS list.
 // POC SENTIMENT INDEX — aggregate migration direction across the top 25
 // by signal score. Renders into #pocSentimentCard. Index in [-100,+100]:
 // positive = broad accumulation (POCs drifting higher), negative = broad
