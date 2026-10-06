@@ -81,7 +81,8 @@ jobs:
           python-version: "3.x"
 
       - name: Install boto3
-        run: pip install -q boto3
+        # The pin comes from requirements-jobs.txt.
+        run: pip install -q -c requirements-jobs.txt boto3
 
       - name: Run backfill
         env:

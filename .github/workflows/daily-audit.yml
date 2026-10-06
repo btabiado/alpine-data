@@ -70,10 +70,11 @@ jobs:
 
       - name: Install Python dependencies
         # The audit scripts and data_health.py are standard library; PyYAML
-        # (same pin as requirements.txt) reads the workflow crons.
+        # reads the workflow crons. Its pin comes from requirements.txt (this
+        # line used to hard-code 6.0.2 while requirements.txt had 6.0.3).
         run: |
           python -m pip install --upgrade pip
-          pip install PyYAML==6.0.2
+          pip install -c requirements.txt PyYAML
           # Scratch space for the raw audit JSON, outside the checkout.
           mkdir -p "$RUNNER_TEMP/audit"
 

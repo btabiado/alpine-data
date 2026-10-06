@@ -1,0 +1,11 @@
+# Pins for packages that only individual workflows install. Each of those
+# workflows installs just the package it needs and takes the pin from here,
+# e.g. `pip install -c requirements-jobs.txt boto3`, so the pipelines that
+# install requirements.txt do not pull these in. Keep it free of extras
+# ("pkg[extra]"): pip rejects extras in a constraints file.
+
+# R2 archive: upload_to_r2.py, health/build_*.py, scripts/backfill_history.py
+# (pages.yml, r2-backfill.yml, history-backfill.yml).
+boto3==1.43.108
+# scripts/build_catalog_xlsx.py writes health/api-catalog.xlsx (catalog-health.yml).
+openpyxl==3.1.5

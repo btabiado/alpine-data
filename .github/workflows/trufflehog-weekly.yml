@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   scan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest becomes 26.04 on 2026-10-19; keep the scan off the image switch
     # A full-history scan grows with the repo, and this job had no bound at all,
     # so a hung scan would have held a runner for GitHub's 6-hour default.
     timeout-minutes: 30
