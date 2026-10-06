@@ -1020,12 +1020,29 @@ def _json_for_script(obj) -> str:
             .replace("'", "\\u0027"))
 
 
+# /bookmarklet is a Flask route (server.py). Only emit the link when the HTML is
+# served by Flask; the static GitHub Pages build (`main()`) must not ship a link
+# that 404s there. (The client-side `if (!isServer)` block also removes it, but a
+# dead href in the static HTML is still crawlable and shows up in link checks.)
+BOOKMARKLET_LINK_HTML = (
+    '<a class="btn" id="bookmarkletLink" href="/bookmarklet" target="_blank" '
+    'rel="noopener noreferrer" style="text-decoration:none" '
+    'title="One-click bookmarklet for Farside pages">Get bookmarklet</a>'
+)
+
+
 def render_html(
     payload: dict,
     share_token: str | None = None,
     sidecars_manifest: dict[str, str] | None = None,
+    flask_mode: bool = False,
 ) -> str:
-    html = HTML_TEMPLATE.replace("__DATA_JSON__", _json_for_script(payload))
+    # Substitute the bookmarklet placeholder FIRST, before any payload is
+    # inlined, so data can never collide with the placeholder text.
+    html = HTML_TEMPLATE.replace(
+        "__BOOKMARKLET_LINK__", BOOKMARKLET_LINK_HTML if flask_mode else ""
+    )
+    html = html.replace("__DATA_JSON__", _json_for_script(payload))
     html = html.replace("__SHARE_TOKEN__", _json_for_script(share_token))
     html = html.replace("__SIDECARS_JSON__", _json_for_script(sidecars_manifest or {}))
     return html
@@ -3189,7 +3206,7 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
       <button class="btn" id="loadBtcBtn" title="Paste BTC ETF flow CSV from Farside">Paste BTC</button>
       <button class="btn" id="loadEthBtn" title="Paste ETH ETF flow CSV from Farside">Paste ETH</button>
       <button class="btn" id="seedBtcBtn" title="Pull BTC from canadiancode/btc-etf-flows GitHub mirror (may be stale)">Seed BTC (mirror)</button>
-      <a class="btn" id="bookmarkletLink" href="/bookmarklet" target="_blank" rel="noopener noreferrer" style="text-decoration:none" title="One-click bookmarklet for Farside pages">Get bookmarklet</a>
+      __BOOKMARKLET_LINK__
       <span id="loadStatus" class="sub" style="margin-left:8px;color:var(--muted)"></span>
     </div>
     <!-- Per-tab asset toggle: BTC or ETH (no spot LINK/LTC ETFs exist).
