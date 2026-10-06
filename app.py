@@ -9,7 +9,7 @@ interactive HTML dashboard (dashboard.html).
 Run:
     python app.py            # build + open dashboard
     python app.py --no-open  # just build
-    python app.py --fetch    # fetch live first (needs API key, see fetch_live.py)
+    python app.py --fetch-market   # fetch live market + whale data first (free)
 
 CSV schema (wide, USD millions, negative = outflow):
     date,IBIT,FBTC,BITB,...,Total
@@ -1042,16 +1042,8 @@ def load_json(path: Path) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-open", action="store_true", help="don't open the browser")
-    ap.add_argument("--fetch", action="store_true", help="fetch live ETF flow data (needs API key)")
     ap.add_argument("--fetch-market", action="store_true", help="fetch live market + whale data (free)")
     args = ap.parse_args()
-
-    if args.fetch:
-        try:
-            import fetch_live
-            fetch_live.fetch_all(DATA_DIR)
-        except Exception as e:
-            print(f"[fetch] failed: {e}", file=sys.stderr)
 
     if args.fetch_market:
         try:
@@ -3104,7 +3096,6 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
       <span class="lbl" style="margin:0">Load data</span>
       <button class="btn" id="loadBtcBtn" title="Paste BTC ETF flow CSV from Farside">Paste BTC</button>
       <button class="btn" id="loadEthBtn" title="Paste ETH ETF flow CSV from Farside">Paste ETH</button>
-      <button class="btn" id="seedBtcBtn" title="Pull BTC from canadiancode/btc-etf-flows GitHub mirror (may be stale)">Seed BTC (mirror)</button>
       <a class="btn" id="bookmarkletLink" href="/bookmarklet" target="_blank" rel="noopener noreferrer" style="text-decoration:none" title="One-click bookmarklet for Farside pages">Get bookmarklet</a>
       <span id="loadStatus" class="sub" style="margin-left:8px;color:var(--muted)"></span>
     </div>
@@ -3119,10 +3110,8 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
     <div id="etfEmpty" class="empty hidden">
       <div>No ETF flow data loaded yet.</div>
       <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-        <button class="btn" id="seedBtn" title="Pull from canadiancode/btc-etf-flows GitHub mirror (BTC Total only, may be stale)">Seed BTC from GitHub mirror</button>
         <button class="btn" id="pasteBtn">Paste CSV…</button>
       </div>
-      <div id="seedStatus" class="sub" style="margin-top:10px;color:var(--muted)"></div>
     </div>
     <div id="pasteModal" class="modal-bg hidden">
       <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;width:min(720px,100%);max-height:90vh;display:flex;flex-direction:column;gap:10px">
@@ -16908,23 +16897,8 @@ async function liveRefresh(force){
 
 document.getElementById('refreshBtn')?.addEventListener('click', () => liveRefresh(true));
 
-// Seed BTC from GitHub mirror — function so we can re-bind after innerHTML restore
+// Paste-CSV button — a function so it can be re-bound after an innerHTML restore
 function rebindEtfImportButtons(){
-  const sb = document.getElementById('seedBtn');
-  if (sb && !sb.dataset.bound) {
-    sb.dataset.bound = '1';
-    sb.addEventListener('click', async () => {
-      const s = document.getElementById('seedStatus');
-      s.textContent = 'Pulling from GitHub mirror…';
-      try {
-        const r = await fetch('/api/seed-etf', {method:'POST'});
-        const j = await r.json();
-        if (!j.ok) throw new Error(j.error || 'failed');
-        s.textContent = `Imported ${j.rows} rows. Reloading…`;
-        setTimeout(() => liveRefresh(false), 400);
-      } catch(e) { s.textContent = 'Seed failed: ' + e.message; }
-    });
-  }
   const pb = document.getElementById('pasteBtn');
   if (pb && !pb.dataset.bound) {
     pb.dataset.bound = '1';
@@ -16948,18 +16922,6 @@ document.getElementById('pasteClose')?.addEventListener('click', closeModal);
 // Persistent ETF action-bar buttons
 document.getElementById('loadBtcBtn')?.addEventListener('click', () => openModal('btc'));
 document.getElementById('loadEthBtn')?.addEventListener('click', () => openModal('eth'));
-document.getElementById('seedBtcBtn')?.addEventListener('click', async () => {
-  const s = document.getElementById('loadStatus');
-  s.textContent = 'Pulling from GitHub mirror…';
-  try {
-    const r = await fetch('/api/seed-etf', {method:'POST'});
-    const j = await r.json();
-    if (!j.ok) throw new Error(j.error || 'failed');
-    s.textContent = `Imported ${j.rows} BTC rows. Reloading…`;
-    setTimeout(() => liveRefresh(false), 400);
-    setTimeout(() => s.textContent = '', 4000);
-  } catch(e) { s.textContent = 'Seed failed: ' + e.message; }
-});
 // Click outside the inner box to close
 pasteModal?.addEventListener('click', (e) => { if (e.target === pasteModal) closeModal(); });
 // Escape to close
@@ -17007,12 +16969,11 @@ if (!isServer){
   }
   const _sb = document.getElementById('shareBtn');
   if (_sb) _sb.style.display = 'none';
-  // ETF Flows tab: "Paste BTC", "Paste ETH", "Seed BTC (mirror)" + the
-  // inline "Seed BTC from GitHub mirror" all POST to /api/upload-csv or
-  // /api/seed-etf, which only exist in local Flask mode. On the static
-  // mirror they 404 — hide the buttons entirely. Public-mirror users
-  // refresh the ETF CSVs via the hourly Pages workflow, not by clicking.
-  ['loadBtcBtn', 'loadEthBtn', 'seedBtcBtn', 'seedBtn'].forEach(id => {
+  // ETF Flows tab: "Paste BTC" / "Paste ETH" POST to /api/upload-csv, which
+  // only exists in local Flask mode. On the static mirror it 404s — hide the
+  // buttons entirely. The ETF CSVs are refreshed daily from Farside by
+  // etf-flows-daily.yml, not by clicking.
+  ['loadBtcBtn', 'loadEthBtn'].forEach(id => {
     const b = document.getElementById(id);
     if (b) b.style.display = 'none';
   });
@@ -17210,7 +17171,7 @@ document.getElementById('shareCopyBtn')?.addEventListener('click', () => {
 if (IS_SHARE) {
   // Hide write-action buttons. The chat dock and refresh button mutate
   // server state (or cost Anthropic credits), so they're owner-only.
-  ['refreshBtn','loadBtcBtn','loadEthBtn','seedBtcBtn','chatFab','chatDock'].forEach(id => {
+  ['refreshBtn','loadBtcBtn','loadEthBtn','chatFab','chatDock'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
