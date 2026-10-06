@@ -2,24 +2,63 @@
 
 [![tests](https://github.com/btabiado/alpine-data/actions/workflows/tests.yml/badge.svg)](https://github.com/btabiado/alpine-data/actions/workflows/tests.yml)
 
-Local, live web dashboard for actively monitoring BTC, ETH, LINK, and the broader crypto market. Ten tabs (left → right):
+Crypto, markets and macro dashboards, published as a static site on GitHub Pages (<https://btabiado.github.io/alpine-data/>). Scheduled GitHub Actions workflows fetch the data from free public sources and commit it to this repo, and `pages.yml` rebuilds the site from those files. The same dashboard can also run locally as a live Flask server (`server.py`).
 
-1. **AI News** — RSS-aggregated AI headlines with sentiment, AI-exposed stock signals, AI VC funding KPIs + top-funded companies (Wikipedia infobox enriched), and a live **SEC EDGAR Form D** feed of recent AI-adjacent private placements (keyless).
-2. **Crypto** *(default tab)* — sortable top 25 by market cap with sparklines, 1h/24h/7d/30d %, trending coins, global stats, news + insights above the sentiment block.
-3. **Crypto Signals** — transparent rules-based composite score (−100…+100) per asset with full component breakdown. Top-25 grouped by bucket (Strong Buy → Strong Sell), per-coin signal box + 90-day history chart, plus a 90-day breadth chart. Not investment advice.
-4. **Whale Activity** — BTC on-chain proxies, mining pool concentration, Lightning Network, difficulty adjustment. BTC/ETH switcher with a separate ETH panel (24h EIP-1559 burn, largest tx, ERC-20/721 activity, supply, **ETH Whale Sentiment Index** parallel to BTC's, and an optional 90-day ETH blocks/day chart from Etherscan) plus a dedicated **ETH whale-tx feed** (top 10 recent transactions ≥$1M USD via Blockchair). Whale Alerts feed scans mempool.space for BTC transactions ≥$1M in the latest block. A **multi-chain whale snapshot** beneath the BTC panel surfaces 24h network stats + largest single tx for LTC, BCH, and DOGE.
-5. **Point of Control** — volume-weighted price levels for the **top 50 by market cap** across 30d / 90d / 180d windows. Cards are sorted by signal score (Strong Buy → Strong Sell) and filterable via chips. Click any card to open a full breakdown modal with the POC ladder, migration sparkline, and naked POCs; desktop view has a fullscreen toggle on the volume profile chart.
-6. **Research** — Reddit subreddit stats, community + developer stats (CoinGecko watchlists/votes, GitHub repo stats), headline sentiment computed by Alpine Data from Google News headlines, Santiment daily active addresses, plus per-coin top-25 news sentiment with a click-to-expand article modal.
-7. **DeFi** — KPI strip (total TVL, 24h change, top chain share, dominant category) above a chain selector for **Ethereum / Solana / Arbitrum / Base**. Selecting a chain swaps the panel below to that chain's TVL sparkline, protocols filtered to that chain, and the chain's share of the total. Stablecoin yields and 365-day TVL history per chain surface beneath the per-chain view. Payload is lazy-loaded on first tab-select (see [Performance](#performance)).
-8. **ETF Flows** — daily/weekly/monthly/YoY net flows from US spot BTC and ETH ETFs, per-fund detail.
-9. **Futures** — price, volume, funding rate, open interest, long/short ratio, implied vol (DVOL), Fear & Greed, dominance, ETH/BTC, live news feed. Naked POC overlays on the price chart; 30d POC drift sparkline in each POC card. Side-by-side **crowded longs / crowded shorts** tables built from Coinbase International Exchange perpetual funding rates (246 perps), and CoinDesk CADLI as the regulated reference index used in derivatives settlement. Perpetuals explainer is collapsible on mobile.
-10. **Stocks** — signals for the top 50 most active US stocks via Yahoo Finance, grouped by signal bucket. Compact cards show symbol/name header, big colored score, label (STRONG BUY → STRONG SELL), price + change %, and 30d score sparkline. Click any card to open a modal with the full per-component breakdown (SMA, RSI(14), MACD, 5-day momentum, volume z-score, 50/200 cross). Also hosts the **Traditional Indices** strip (DOW / S&P 500 / NDX / VIX).
+The tab strip has 22 buttons: four menus, two direct tabs and the Summit launcher. The `data-tab` entries in `app.py` are the source of truth for the set and order.
 
-Plus: a rule-based **insights bar** populated across all 10 tabs (29 cross-tab rules + 7 AI News rules); a Claude-powered **Ask the data** chat dock (right side); **Symbol search** — type any ticker (BTC, NVDA, SOL, AAPL...) in the header search box → a universal modal shows the signal score, POC if available, recent news, and sentiment for that symbol. Any crypto symbol not already in the cached top-25 is fetched **LIVE from CryptoCompare** client-side so the lookup covers the long tail (SHIB, INJ, FET, ...). Stock tickers beyond the cached top-50 most-active fall back to a live client-side fetch from **Twelvedata** (free tier: 800 req/day; CORS `*`; user-supplied key stored locally in the browser) with **Alpha Vantage** as a secondary fallback — on first lookup of an uncached ticker the modal walks you through pasting a free API key. The signal is then computed client-side from SMA50/200, RSI(14), 5-day momentum, and the golden-cross axis. When the dashboard is running locally via `python server.py` (same-origin), the search box prefers the `/api/symbol/<symbol>` endpoint, which routes through Yahoo Finance server-side (no rate limit, full 6-component scorer); stock-shaped tickers (4-5 letter alpha) are resolved against Yahoo first to avoid hitting same-named meme/scam crypto tokens (e.g. GME). Optional HTTP Basic Auth, GitHub Pages mirror, Tailscale-ready.
+| Menu | Tabs |
+|---|---|
+| Crypto | Overview, Signals, Whale, Point of Control, DeFi, ETF Flows, Futures |
+| Markets | Stocks, Money Flow, Stock Flows, Research |
+| Macro | CPI, Supplies, Metals, Real Estate |
+| Explore | Travel Advisories, UAP, City, Aviation |
+| Direct | LTHCS, AI News |
+| Launcher | Summit (opens the Competitive Landscape site) |
+
+What the main tabs show:
+
+- **Overview**: sortable top 25 by market cap with sparklines, 1h/24h/7d/30d %, trending coins, global stats, and news and insights above the sentiment block.
+- **Signals**: a transparent rules-based composite score (−100…+100) per asset with the full component breakdown, top 25 grouped by bucket (Strong Buy → Strong Sell), a per-coin 90-day history chart and a 90-day breadth chart. Not investment advice.
+- **Whale**:
+  - BTC on-chain proxies, mining-pool concentration, Lightning Network and the difficulty adjustment.
+  - A BTC/ETH switcher. The ETH panel has the 24h EIP-1559 burn, largest tx, ERC-20/721 activity, supply and the ETH Whale Sentiment Index.
+  - An ETH whale-tx feed (via Blockchair) and a Whale Alerts scan of the latest mempool.space block.
+  - A multi-chain snapshot for LTC, BCH and DOGE.
+- **Point of Control**: volume-weighted price levels for the top 50 by market cap over 30d / 90d / 180d windows, sorted by signal score, with a per-coin breakdown modal.
+- **DeFi**: TVL KPIs and a per-chain view (Ethereum / Solana / Arbitrum / Base), stablecoin yields and 365-day TVL history. Lazy-loaded (see [Performance](#performance)).
+- **ETF Flows**: daily, weekly, monthly and YoY net flows for US spot BTC and ETH ETFs, with per-fund detail.
+- **Futures**:
+  - Price, volume, funding, open interest, long/short ratio, implied vol (DVOL), Fear & Greed, dominance and ETH/BTC.
+  - Crowded longs / crowded shorts tables from Coinbase International Exchange perpetual funding rates.
+  - The Alpine Large-Cap Crypto Index (see [Data sources](#data-sources)).
+- **Stocks**: signals for the top 50 most active US stocks via Yahoo Finance, with a per-stock component modal and the Traditional Indices strip (DOW / S&P 500 / NDX / VIX).
+- **Money Flow / Stock Flows**: the Money Flow Index composite from ETF share-count flows and ICI fund flows (`SPEC_money_flow_index.md`), and per-stock MFI and Chaikin Money Flow for index constituents.
+- **Research**: Reddit subreddit stats, CoinGecko community and GitHub developer stats, and headline sentiment scored by Alpine Data's own keyword rule.
+- **CPI, Supplies, Metals, Real Estate**:
+  - CPI and PCE inflation from FRED.
+  - Supply-chain indicators: Port of L.A. TEU, the inventory-to-sales ratio and the NY Fed GSCPI.
+  - Gold and silver.
+  - A top-50 US metro housing snapshot from Zillow, Redfin and FRED.
+- **Travel Advisories, UAP, City, Aviation**:
+  - U.S. State Department advisories.
+  - A NUFORC sightings map.
+  - City Pulse scores for six US cities.
+  - FAA registry data, OpenSky live traffic and TSA checkpoint throughput.
+- **LTHCS**: a summary of the Long-Term Hold Confidence Score. The full pages are at `/lthcs/` (see [`README_LTHCS.md`](README_LTHCS.md)).
+- **AI News**: RSS AI headlines with sentiment, AI-exposed stock signals, AI VC funding KPIs, and a keyless SEC EDGAR Form D feed of AI-adjacent private placements.
+
+Also on the dashboard:
+
+- A rule-based **insights bar**.
+- A Claude-powered **Ask the data** chat dock. Under `server.py` it uses the server's `ANTHROPIC_API_KEY`. On the public site, the visitor pastes their own key, which stays in their browser.
+- **Symbol search**:
+  - Crypto symbols outside the cached top 25 are fetched live in the browser from CoinGecko, falling back to Coinbase, Kraken and Binance.US daily candles.
+  - Stock tickers outside the cached top 50 use Twelvedata, with Alpha Vantage as the fallback. Both take a free key that the visitor pastes, and it is stored only in their browser.
+  - Under `python server.py`, the search box uses the server's `/api/symbol/<symbol>` (Yahoo Finance) first.
 
 > **Note:** The global BTC/ETH/LINK/LTC asset selector was removed from the header. The internal `state.asset` still defaults to `'btc'`, so the **ETF Flows** and **Futures** tabs are pinned to BTC.
 
-All data sources are **free, no key required** for the core dashboard. Optional keys unlock additional depth (chat, macro overlay, true whale cohorts, social/news, Reddit subscriber counts, ETH whale series, paid ETF APIs) — see [Environment variables](#environment-variables) and [`docs/SETUP.md`](docs/SETUP.md).
+All data sources are **free, no key required** for the core dashboard. Optional keys unlock additional depth (chat, macro overlay, true whale cohorts, Reddit subscriber counts, ETH whale series) — see [Environment variables](#environment-variables) and [`docs/SETUP.md`](docs/SETUP.md).
 
 For a stable public share-link host (your own subdomain over a named Cloudflare Tunnel), use the helper scripts in [`scripts/`](scripts/): `tunnel-status.sh` to diagnose, `tunnel-config.sh` to set up, `tunnel-up.sh` to run. Details in [`docs/SETUP.md`](docs/SETUP.md) §4.
 
@@ -41,12 +80,12 @@ For a stable public share-link host (your own subdomain over a named Cloudflare 
 - **ETH large transactions**: Blockchair (top 10 recent whale txs ≥$1M USD, no key required)
 - **Multi-chain whale snapshot**: Blockchair (LTC, BCH, DOGE 24h network stats + largest single tx, no key required)
 - **Blockchair**: free public endpoints — used for BTC supplementary stats, ETH large transactions, and the LTC/BCH/DOGE multi-chain snapshot
-- **US equities**: Yahoo Finance (top-20 most-active US stocks → daily OHLCV for the Stocks tab signal scores)
+- **US equities**: Yahoo Finance (top-50 most-active US stocks → daily OHLCV for the Stocks tab signal scores)
 - **DeFi**: DeFiLlama (TVL by chain, top 25 protocols, top stablecoin yields, 365-day historical TVL across 4 chains)
 - **News + social**: RSS from CoinDesk, Cointelegraph, Decrypt, The Block, Bitcoin Magazine (deduped headlines); Google News RSS per coin, scored by Alpine Data's own committed keyword rule (no vendor labels, no LLM); CoinGecko community counts + GitHub REST repo stats; Reddit subreddit stats (optional OAuth, RSS-only fallback)
 - **AI news + funding**: RSS from AI-focused outlets; **SEC EDGAR Form D** filings filtered to AI-adjacent issuers (last 60d, keyless); Wikipedia infobox enrichment for top-funded AI companies
 - **Research metrics**: Santiment (daily active addresses, optional)
-- **ETF flows**: Farside Investors via paste workflow + GitHub mirror fallback
+- **ETF flows**: Farside Investors, scraped daily in CI by `scripts/fetch_etf_flows.py` (see [Getting ETF flow data](#getting-etf-flow-data))
 - **Optional macro**: FRED — DXY, S&P 500, Gold, 10Y Treasury, M2 (needs free key)
 - **Optional whale cohorts**: Glassnode (true exchange-flow series), Coin Metrics (ETH whale series), Etherscan (90-day ETH blocks/day chart)
 - **Optional chat**: Anthropic API (Claude) — chat dock with live dashboard as context
@@ -54,12 +93,14 @@ For a stable public share-link host (your own subdomain over a named Cloudflare 
 ## Quickstart
 
 ```bash
-cd ~/alpine-data
+cd alpine-data
 python3 -m venv .venv
-.venv/bin/pip install pandas requests lxml beautifulsoup4 flask
+.venv/bin/pip install -r requirements.txt -r requirements-dev.txt
 .venv/bin/python server.py
 # → open http://127.0.0.1:8765/
 ```
+
+`requirements.txt` is what the pipelines need. `requirements-dev.txt` adds pytest and the packages for the local tools (`server.py`, the LTHCS MCP server).
 
 **Daily startup recipe** (`dash-up` / `dash-status` / `dash-down` aliases): see [`docs/MORNING.md`](docs/MORNING.md).
 
@@ -205,7 +246,7 @@ Not investment advice — same caveat as the crypto signal.
 
 ## Environment variables
 
-All optional. Core dashboard runs with none of these set; the dashboard surfaces a `key_set: false` flag or falls back to a free path where applicable.
+All optional. Core dashboard runs with none of these set; the dashboard surfaces a `key_set: false` flag or falls back to a free path where applicable. [`.env.example`](.env.example) lists every key the code reads, including the LTHCS and City ones; copy it to `.env` for local runs.
 
 | Variable | Used in | Effect when unset |
 |---|---|---|
@@ -213,29 +254,31 @@ All optional. Core dashboard runs with none of these set; the dashboard surfaces
 | `CHAT_MODEL` | `chat.py` | Defaults to `claude-haiku-4-5-20251001` |
 | `FRED_API_KEY` | `fetch_market.py` | Macro overlay (DXY, S&P 500, Gold, 10Y, M2) hidden |
 | `GLASSNODE_API_KEY` | `fetch_market.py` | True whale-cohort metrics off; free on-chain proxies still shown |
-| `CRYPTOCOMPARE_API_KEY` | *(retired 2026-10)* | Nothing. Every CryptoCompare/CoinDesk dependency (top-50 OHLCV, CADLI chart, social/dev stats, news sentiment) was replaced with free sources; no code reads it |
 | `COINGECKO_API_KEY` | `fetch_market.py`, `lthcs/sources/crypto_data.py` | Demo key (sent only to api.coingecko.com). Unset = keyless CoinGecko (~5-30 calls/min), so the daily top-50 sweep falls back to exchange candles more often |
 | `GITHUB_TOKEN` | `fetch_market.py` (Actions token) | Sent only to api.github.com for the Research tab's repo stats; unset = anonymous GitHub API (60 requests/hour per IP) |
 | `COINMETRICS_API_KEY` | `fetch_market.py` | ETH whale series omitted from Whale tab |
 | `ETHERSCAN_API_KEY` | `fetch_market.py` | 90-day ETH blocks-per-day chart on the Whale tab hidden; gas oracle still works (separate keyless endpoint) |
 | `REDDIT_CLIENT_ID` + `REDDIT_CLIENT_SECRET` | `fetch_market.py` | Reddit subscriber counts unavailable; public dashboard falls back to RSS post titles only |
-| `COINGLASS_API_KEY` | *(retired 2026-08-03)* | Nothing. The path it gated was dead code and was removed; crypto ETF flows come from `scripts/fetch_etf_flows.py` |
-| `SOSOVALUE_API_KEY` | *(retired 2026-08-03)* | Nothing. Same removal, and `api.sosovalue.com` no longer resolves |
 | `DASH_USER` + `DASH_PASS` | `server.py` | HTTP Basic Auth disabled (server is open on bound interface) |
 | `HOST` | `server.py` | Defaults to `127.0.0.1` |
 | `PORT` | `server.py` | Defaults to `8765` |
 | `REFRESH_MINUTES` | `server.py` | Defaults to `30`; set `0` to disable background refresh |
 | `SHARE_HOST` | `share.py` | Defaults to `http://127.0.0.1:8765` for share-link generation |
 
+Retired, read by no code: `CRYPTOCOMPARE_API_KEY` (every CryptoCompare/CoinDesk dependency, including the CADLI chart, moved to free sources in 2026-10), `COINGLASS_API_KEY` and `SOSOVALUE_API_KEY` (removed 2026-08-03).
+
 ## Tests
 
 ```bash
-.venv/bin/python -m pytest tests/ -v   # 283 tests, ~2s
+.venv/bin/python -m pytest tests/ -q   # about 4,100 tests, ~2 min
 ```
 
-The suite covers `app.py`, `signals.py`, `server.py` (Flask test client), `chat.py`, `fetch_market.py`, `shares.py`, `insights.py`, `wiki_enrich.py`, CSV export, sidecar split, and FRED/Farside/EDGAR parsers.
-All tests use `tmp_path` and monkeypatched `DATA_DIR` — production CSVs are
-never touched. Network is mocked for fetcher tests.
+The suite covers the dashboard builder, the fetchers, the LTHCS pipeline (`tests/lthcs/`), the City tab, the health monitors and the workflows' own scripts. It must leave `git status` clean:
+
+- Files are written under `tmp_path`.
+- Real network access is blocked by `tests/conftest.py`. A test that needs the internet is marked `@pytest.mark.network` and is skipped in CI.
+
+The tests that read the built `dashboard.html` skip until you run `python app.py --no-open`; CI builds it first. [`SKILL.md`](SKILL.md) has the exact CI-faithful sequence.
 
 ## Whale activity (BTC + ETH)
 
@@ -274,26 +317,23 @@ Columns can be added/removed freely — whatever's there gets aggregated.
 ## Files
 
 ```
-server.py         Flask web server (live mode) + sidecar serving
-app.py            CSV + JSON loader → aggregator → HTML generator (SIDECAR_KEYS split)
-signals.py        Composite BTC/ETH/top-25/stocks signal indicator
-insights.py       Rule-based cross-tab insights bar (29 + 7 AI rules)
-fetch_market.py   Free trading + whale + AI-news + EDGAR Form D fetcher
-fetch_live.py     BTC ETF-flow seeder for the "Seed BTC (mirror)" button only
-wiki_enrich.py    Wikipedia infobox enrichment for top-funded AI companies
-chat.py           Claude-powered "Ask the data" chat dock
-share.py          Read-only share-link minting
-tests/            pytest suite (283 tests)
-data/
-  btc_flows.csv   daily BTC ETF flows
-  eth_flows.csv   daily ETH ETF flows
-  market.json     cached trading data (generated)
-  whale.json      cached whale proxies (generated)
-  ai_curated.json curated AI-funding seed list (Wikipedia-enriched at build)
-dashboard.html    static-mode HTML output (open in browser)
-data-whale.json   lazy-loaded whale sidecar (generated alongside dashboard.html)
-data-defi.json    lazy-loaded DeFi sidecar (generated alongside dashboard.html)
+app.py            dashboard builder: data → dashboard.html + data-*.json sidecars
+server.py         local Flask server (live mode), not deployed
+fetch_*.py        per-source fetchers (market, CPI, metals, supplies, travel, UAP, City, aviation, ...)
+signals.py        rules-based signal scores (crypto + stocks)
+insights.py       insights bar rules
+chat.py           "Ask the data" chat dock
+city/             City tab sources and scoring
+lthcs/            LTHCS scoring package; lthcs_daily.py runs it, lthcs_*/ are its pages
+scripts/          workflow entry points and maintenance tools
+tools/            validators for the built dashboard
+tests/            pytest suite
+data/             committed data (ETF-flow CSVs, data/lthcs/, ...); market.json / whale.json are generated
+data-*.json       tab sidecars next to dashboard.html; some committed, the rest generated (see .gitignore)
+.github/          workflows, and scripts/api-commit.sh for signed data commits
 ```
+
+[`SKILL.md`](SKILL.md) describes the layout and conventions in more detail.
 
 ## Running headless
 
@@ -313,8 +353,8 @@ cat > ~/Library/LaunchAgents/com.user.etfdash.plist <<'PLIST'
 <key>Label</key><string>com.user.etfdash</string>
 <key>ProgramArguments</key>
   <array>
-    <string>/Users/bryantabiadon/alpine-data/.venv/bin/python</string>
-    <string>/Users/bryantabiadon/alpine-data/server.py</string>
+    <string>/path/to/alpine-data/.venv/bin/python</string>
+    <string>/path/to/alpine-data/server.py</string>
   </array>
 <key>RunAtLoad</key><true/>
 <key>KeepAlive</key><true/>

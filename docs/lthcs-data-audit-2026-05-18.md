@@ -407,13 +407,13 @@ the production daily run.
 
 ## Files referenced
 
-- `/Users/bryantabiadon/Documents/alpine-data/data/lthcs/snapshots/2026-05-18.json`
-- `/Users/bryantabiadon/Documents/alpine-data/data/lthcs/variable_detail/2026-05-18.json`
-- `/Users/bryantabiadon/Documents/alpine-data/data/lthcs/variable_detail/2026-05-17.json`
-- `/Users/bryantabiadon/Documents/alpine-data/data/lthcs/insider/2026-05-17.json`
-- `/Users/bryantabiadon/Documents/alpine-data/data/lthcs/holdings/2026-05-17.json`
-- `/Users/bryantabiadon/Documents/alpine-data/data/lthcs/backtest/2026-05-18_validation/report.md`
-- `/Users/bryantabiadon/Documents/alpine-data/data/lthcs/adaptive_weights/2026-05-18_walk_forward_after_fixes.md`
-- `/Users/bryantabiadon/Documents/alpine-data/data/lthcs/weights.json`
-- `/Users/bryantabiadon/Documents/alpine-data/docs/lthcs-open-items-audit.md`
-- `/Users/bryantabiadon/Documents/alpine-data/scripts/lthcs_audit_data_quality.py` (this run's analysis script)
+- `data/lthcs/snapshots/2026-05-18.json`
+- `data/lthcs/variable_detail/2026-05-18.json`
+- `data/lthcs/variable_detail/2026-05-17.json`
+- `data/lthcs/insider/2026-05-17.json`
+- `data/lthcs/holdings/2026-05-17.json`
+- `data/lthcs/backtest/2026-05-18_validation/report.md`
+- `data/lthcs/adaptive_weights/2026-05-18_walk_forward_after_fixes.md`
+- `data/lthcs/weights.json`
+- `docs/lthcs-open-items-audit.md`
+- `scripts/lthcs_audit_data_quality.py` (this run's analysis script)

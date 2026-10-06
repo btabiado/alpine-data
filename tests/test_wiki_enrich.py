@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import patch
 
 
 import wiki_enrich
@@ -329,14 +328,31 @@ def test_enrich_ai_curated_handles_non_dict_input():
 # ----------------------------------------------------------------------------
 
 
-def test_load_ai_curated_never_calls_real_wikipedia():
+def test_load_ai_curated_never_calls_real_wikipedia(tmp_path, monkeypatch):
     """The full load_ai_curated path must not hit the network during tests."""
     import fetch_market
 
-    # Patch the urllib opener at the lowest level so any accidental real
-    # request would raise.
-    with patch("wiki_enrich._http_get_json", return_value=None):
-        out = fetch_market.load_ai_curated()
+    # enrich_companies() binds its fetcher and cache path as keyword-only
+    # defaults when the module is imported, so patching
+    # wiki_enrich._http_get_json (as this test used to) never reached the
+    # call: every company was looked up on live Wikipedia and the cache was
+    # written to data/ai_curated_wiki.json. Swap the bound defaults instead:
+    # the opener returns None for every title, and the cache lives in tmp_path.
+    requested: list[str] = []
+
+    def no_wikipedia(url):
+        requested.append(url)
+        return None
+
+    def offline_fetcher(name):
+        return wiki_enrich.fetch_company_infobox_fields(
+            name, http_get_json=no_wikipedia)
+
+    defaults = wiki_enrich.enrich_companies.__kwdefaults__
+    monkeypatch.setitem(defaults, "fetcher", offline_fetcher)
+    monkeypatch.setitem(defaults, "cache_path", tmp_path / "ai_curated_wiki.json")
+    out = fetch_market.load_ai_curated()
+    assert requested, "the stubbed opener was never reached"
     assert isinstance(out, dict)
     assert "top_funded_companies" in out
     # Companies are still present, just unenriched (Wikipedia returned None
