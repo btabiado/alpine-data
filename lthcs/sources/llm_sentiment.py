@@ -34,7 +34,7 @@ Design goals (mirrors ``lthcs.narratives_llm``)
   ~1.1k system tokens are reused across all 167 tickers in one run.
   Haiku 4.5 + caching is ~$0.19/day for the universe (cost model in
   spec §4).
-* Capped. ``LTHCS_LLM_SENTIMENT_MAX_USD_PER_DAY`` (default ``1.00``)
+* Capped. ``LTHCS_LLM_SENTIMENT_MAX_USD_PER_DAY`` (default ``3.08``)
   aborts persistence cleanly if a run exceeds the budget. Production
   Thesis path is unaffected -- the shadow file simply isn't written.
 * Resilient. 429 / 5xx errors are retried with exponential backoff
@@ -89,9 +89,15 @@ ENV_ENABLED = "LTHCS_LLM_SENTIMENT_ENABLED"
 ENV_MODEL = "LTHCS_LLM_SENTIMENT_MODEL"
 ENV_MAX_USD_PER_DAY = "LTHCS_LLM_SENTIMENT_MAX_USD_PER_DAY"
 
-# Default daily-run cost cap in USD. Spec §4 estimates ~$0.19/day for a
-# 167-ticker Haiku run with caching; this leaves a 5x safety margin.
-DEFAULT_MAX_USD_PER_DAY = 1.0
+# Default daily-run cost cap in USD. Spec §4 estimated ~$0.19/day for a
+# 167-ticker Haiku run with caching and set the cap at $1.00 (~5x). The
+# universe is now 515 tickers, so the cap is scaled by 515/167:
+# 1.00 * 515 / 167 = 3.08 (~$0.59/day estimated at 515, still ~5x). It is
+# NOT raised beyond that proportion. As with narratives_llm, the check runs
+# after the calls, so it decides persistence, not spend. No CI run has
+# measured this path yet: lthcs-daily.yml passes --skip-thesis, which skips
+# the stage that calls it.
+DEFAULT_MAX_USD_PER_DAY = 3.08
 
 # Default retry parameters for 429 / 5xx errors. Spec §6.
 DEFAULT_RETRY_ATTEMPTS = 3
@@ -733,7 +739,7 @@ def compute_llm_sentiment(
         ``max_news_items`` are dropped after ranking by HN points then
         recency.
     model:
-        Anthropic model id. Defaults to ``claude-sonnet-4-5``.
+        Anthropic model id. Defaults to :data:`DEFAULT_MODEL`.
     use_cache:
         When True (default), the system prompt carries an ephemeral
         ``cache_control`` marker so 168 per-ticker calls share the same
@@ -1094,7 +1100,7 @@ def score_universe(
     1. Run :func:`compute_universe_llm_sentiment` across the merged news.
     2. Estimate cost from the response usage objects.
     3. If cost exceeds ``LTHCS_LLM_SENTIMENT_MAX_USD_PER_DAY`` (default
-       $1.00), log and SKIP persistence -- the prior day's shadow file is
+       $3.08), log and SKIP persistence -- the prior day's shadow file is
        the last good record.
     4. Else (when ``persist=True``) write
        ``data/lthcs/llm_sentiment/<calc_date>.json`` and append

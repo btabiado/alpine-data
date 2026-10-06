@@ -93,9 +93,10 @@ def test_etf_csv_with_friday_data_is_fresh_on_sunday(bhs, tmp_path):
     assert bhs.classify(late.age_h, bhs.THRESHOLDS["btc_flows.csv"]) == "critical"
 
 
-def test_data_health_uses_the_same_trading_day_budget(dh):
+def test_data_health_uses_the_same_trading_day_budget(bhs):
     for rel in ("data/btc_flows.csv", "data/eth_flows.csv", "data/equity_etf_flows.csv"):
-        assert dh.MANIFEST[rel].limit_h is None, rel
+        assert bhs.threshold_for(rel) == bhs.THRESHOLDS[Path(rel).name], rel
+        assert Path(rel).name in bhs.TRADING_DAY_FEEDS, rel
 
 
 # ---- immutable month caches ------------------------------------------------
@@ -146,10 +147,41 @@ def test_manifest_rows_use_payload_dates_suppressions_and_unavailable(bhs, dh, t
     if datetime.now(timezone.utc).date() <= dh.SUPPRESSIONS["data-mufon.json"].until:
         assert mufon["suppressed_until"] == dh.SUPPRESSIONS["data-mufon.json"].until.isoformat()
     assert rows["data-city.json"]["date_key"] == "cities[].data_health.last_updated"
-    # critical boundary == data_health's limit for feeds that set one
+    # a feed with an unusual cadence gets its own entry in the one table
     _write(tmp_path / "data-stock-money-flow.json", {"as_of": today})
     rows = {r["path"]: r for r in bhs.collect_manifest_feeds(tmp_path)}
-    assert rows["data-stock-money-flow.json"]["stale_h"] == dh.MANIFEST["data-stock-money-flow.json"].limit_h
+    assert rows["data-stock-money-flow.json"]["stale_h"] == 120
+
+
+def test_health_page_and_watchdog_share_one_threshold_per_feed(bhs, dh, tmp_path, monkeypatch):
+    """/health/ (build_health_status) and data_health used to keep separate
+    tables: THRESHOLDS here, a per-feed limit_h in MANIFEST there, and
+    data/stock_money_flow_history.csv was critical at 168h on one and failed
+    at 120h on the other. Now MANIFEST has no limit field, and for every file
+    both monitors report, /health/'s critical boundary IS data_health's limit."""
+    assert "limit_h" not in dh.Feed.__dataclass_fields__
+    now = datetime.now(timezone.utc)
+    day, stamp = now.date().isoformat(), now.isoformat()
+    for rel in ("data/stock_money_flow_history.csv", "data/travel_advisory_levels.csv",
+                "data/btc_flows.csv", "data/equity_etf_flows.csv"):
+        _write(tmp_path / rel, f"date,x\n{day},1\n")
+    for rel in ("data/real_estate.json", "data-tsa.json", "data-stock-money-flow.json",
+                "data-aviation.json", "data-defi.json", "data-cfpb.json"):
+        _write(tmp_path / rel, {"as_of": day, "generated_at": stamp})
+    _write(tmp_path / "data" / "composites" / f"{day}.json", {"generated_at": stamp})
+
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    watchdog = {r.path: r.limit_h for r in dh.evaluate(dh.BUILT, history=False)
+                if r.limit_h is not None}
+    page = {r["path"]: r["stale_h"]
+            for r in bhs.scan(tmp_path / "data", tmp_path)
+            + bhs.collect_manifest_feeds(tmp_path)}
+
+    both = sorted(set(watchdog) & set(page))
+    assert len(both) >= 9, both          # the comparison really covered feeds
+    assert {p: page[p] for p in both} == {p: watchdog[p] for p in both}
+    assert watchdog["data/stock_money_flow_history.csv"] == 120
+    assert watchdog["data/composites/"] == 48     # a directory feed, keyed by path
 
 
 def test_build_artifacts_are_watched_and_phantoms_removed(dh):

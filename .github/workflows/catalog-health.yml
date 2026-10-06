@@ -45,7 +45,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
@@ -55,8 +54,8 @@ jobs:
 
       - name: Install deps
         # requests = the link checker's only third-party import. Everything
-        # else is stdlib.
-        run: pip install requests
+        # else is stdlib. Pins come from requirements.txt / requirements-jobs.txt.
+        run: pip install -c requirements.txt -c requirements-jobs.txt requests
 
       - name: Re-check catalog links
         # Writes health/catalog_health.json + health/catalog_health.md.

@@ -752,7 +752,7 @@ jobs:
         # repo history. Built here before staging so `cp -R health/*` publishes it.
         # Non-fatal: /health/ deploys regardless, and a failure is annotated.
         run: |
-          pip install -q openpyxl==3.1.5
+          pip install -q -c requirements-jobs.txt openpyxl
           python scripts/build_catalog_xlsx.py \
             || echo "::warning title=API catalog workbook not built::build_catalog_xlsx.py failed; /health/api-catalog.xlsx is missing from this deploy"
         continue-on-error: true
@@ -935,7 +935,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
         run: |
-          pip install -q boto3
+          pip install -q -c requirements-jobs.txt boto3
           python upload_to_r2.py
         continue-on-error: true
 

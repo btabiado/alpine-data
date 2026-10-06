@@ -45,20 +45,6 @@ export async function latestDate(key) {
   return d.length ? d[0] : '';
 }
 
-// true/false when the index knows, null when it doesn't.
-export async function hasDated(key, date) {
-  const d = await datesFor(key);
-  if (d == null) return null;
-  return d.indexOf(date) !== -1;
-}
-
-export async function latestWeek(key) {
-  const idx = await loadFileIndex();
-  if (!idx) return null;
-  const e = (idx.weekly || {})[key];
-  return e && e.latest ? e.latest : '';
-}
-
 // Is <relPath> (relative to data/lthcs/backtest/) on disk? null = unknown.
 export async function hasBacktestFile(relPath) {
   const idx = await loadFileIndex();
