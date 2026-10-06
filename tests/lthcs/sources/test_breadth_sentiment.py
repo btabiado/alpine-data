@@ -164,7 +164,11 @@ def test_fetch_put_call_request_exception_returns_none() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_fetch_aaii_sentiment_happy_path() -> None:
+def test_fetch_aaii_sentiment_happy_path(monkeypatch) -> None:
+    # The fixture's rows say "May 14" with no year; the year comes from the
+    # module clock, pinned to the fixture's week (on the real clock this
+    # read 2027-05-14 from 2027-03-15 on).
+    monkeypatch.setattr(bs, "_today_iso", lambda: "2026-05-18")
     html = _fixture("aaii_sample.html")
     with patch.object(
         bs.requests, "get", return_value=_mock_response(text=html)
@@ -179,6 +183,17 @@ def test_fetch_aaii_sentiment_happy_path() -> None:
     assert result["bull_bear_spread"] == pytest.approx(-13.6, abs=0.01)
     assert result["regime"] == "bearish"
     assert result["week_ending"] == "2026-05-14"
+
+
+@pytest.mark.parametrize("today, raw, expected", [
+    ("2026-05-18", "May 14", "2026-05-14"),
+    ("2027-02-01", "May 14", "2026-05-14"),   # >60 days ahead: last year's
+    ("2027-01-03", "Dec 31", "2026-12-31"),   # across New Year: prior year
+    ("2026-12-30", "Dec 24", "2026-12-24"),
+])
+def test_aaii_short_date_year_comes_from_the_module_clock(monkeypatch, today, raw, expected) -> None:
+    monkeypatch.setattr(bs, "_today_iso", lambda: today)
+    assert bs._parse_aaii_short_date(raw) == expected
 
 
 def test_fetch_aaii_sentiment_fetch_failure_returns_none() -> None:
