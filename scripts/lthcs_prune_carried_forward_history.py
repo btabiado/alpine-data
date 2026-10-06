@@ -5,8 +5,14 @@ Before 2026-10-05 the daily catch-up (``LthcsPersist.fill_history_gaps``)
 forward-filled EVERY ``history/by_ticker/*.json`` file, so a ticker that
 stopped being scored (BK after its 2026-07 ticker change, EA after going
 private, DOW after it left the universe on 2026-05-17) kept receiving one
-flat synthetic row per day, a copy of its last real score. lthcs_daily now
-fills only the active universe; this tool removes the rows already written.
+flat synthetic row per day, a copy of its last real score. lthcs_daily then
+filled only the active universe, which did not cover DOW: it was re-added on
+2026-10-05, so the 2026-10-06 catch-up wrote its 2026-05-16 score onto
+05-17..10-05 again (removed with this tool, record
+``_synthetic_rows_removed_2026-10-06.json``). Catch-up now fills only days
+with no snapshot file, only up to the first run after the ticker's last real
+row, and never from a row older than its universe ``added_on``. This tool
+removes rows already written.
 
 A row is removed only when the data proves it is such a copy:
 

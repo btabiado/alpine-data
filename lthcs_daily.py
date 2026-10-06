@@ -155,10 +155,12 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         "--catch-up",
         action="store_true",
         help=(
-            "Forward-fill any missing dates between the last history entry "
-            "and today. Each gap day gets a synthetic history entry equal to "
-            "the last actual snapshot (marked synthetic=True) so charts have "
-            "no visible gaps when the daily cron missed a run. Idempotent."
+            "Forward-fill days the daily cron missed (no snapshot file) "
+            "between each active ticker's last history entry and today. "
+            "Each such day gets a synthetic history entry equal to the last "
+            "actual score (marked synthetic=True) so charts have no visible "
+            "gaps. Never fills past a run that did not score the ticker, nor "
+            "from a score older than its universe added_on. Idempotent."
         ),
     )
     p.add_argument(
@@ -2021,6 +2023,26 @@ def _snapshot_extras(calc_date: Any) -> Dict[str, Any]:
     return {"methodology_breaks": methodology.recent_breaks(str(calc_date))}
 
 
+def _catch_up_history(state: PipelineState) -> int:
+    """--catch-up: synthetic history rows for missed run days, for tickers
+    that were being scored across them.
+
+    Only the active universe is filled (an inactive / delisted ticker gets
+    nothing; BK/EA accumulated 96/62 copies before that), and each ticker's
+    universe ``added_on`` is passed so a score from an earlier membership is
+    never carried into the current one (DOW, re-added 2026-10-05, had 142
+    copies of its 2026-05-16 score written on 2026-10-06). The snapshot-file
+    rules live in :meth:`LthcsPersist.fill_history_gaps`.
+    """
+    added_on = {
+        sym: str(entry.get("added_on"))[:10]
+        for sym, entry in (state.by_ticker or {}).items()
+        if isinstance(entry, dict) and entry.get("added_on")
+    }
+    return state.persist.fill_history_gaps(
+        today=state.calc_date, tickers=state.active_tickers, added_on=added_on)
+
+
 def _prior_snapshot_by_ticker(state: PipelineState) -> Dict[str, Dict[str, Any]]:
     """Ticker -> row from the newest snapshot strictly before calc_date.
 
@@ -2279,11 +2301,7 @@ def stage_8_persist(state: PipelineState) -> bool:
         # synthetic entries land between the previous real snapshot and
         # today's new one. No-op when no gap exists.
         if state.args.catch_up:
-            # Active universe only: an inactive (delisted / renamed) ticker
-            # must not keep receiving flat synthetic rows after it stopped
-            # being scored (BK/EA accumulated 96/62 such rows before this).
-            synthetic_total = persist.fill_history_gaps(
-                today=state.calc_date, tickers=state.active_tickers)
+            synthetic_total = _catch_up_history(state)
             if state.args.verbose and synthetic_total:
                 print("  catch-up filled %d synthetic entries" % synthetic_total)
         history_count = persist.rebuild_history_for_all_tickers(
