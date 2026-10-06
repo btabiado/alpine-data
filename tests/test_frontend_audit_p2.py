@@ -140,6 +140,12 @@ def test_band_ink_is_dark_on_light_fills():
     mr = pytest.importorskip("py_mini_racer", reason="V8 needed")
     ctx = mr.MiniRacer()
     ctx.eval(bands.replace("export ", "").replace("'use strict';", ""))
+    # Fixed test band set (tests/lthcs/band_fixture.py: elite 85+, constructive
+    # 70-79, monitor 60-69, weakening 50-59, review 0-49) in place of the
+    # module's fallback, which mirrors the live weights.json and moves with a
+    # recalibration.
+    from tests.lthcs.band_fixture import FIXTURE_SCORE_BANDS
+    ctx.eval("current = " + json.dumps(FIXTURE_SCORE_BANDS) + ";")
     ctx.eval(fn.replace("export ", ""))
     assert ctx.call("bandInkForScore", 95) == "#fff"     # elite (navy)
     assert ctx.call("bandInkForScore", 75) == "#111"     # constructive (gold)

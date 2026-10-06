@@ -9,6 +9,7 @@ hit the pure helpers directly.
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
@@ -33,6 +34,12 @@ def _load_audit_module():
 
 
 audit = _load_audit_module()
+
+from tests.lthcs.band_fixture import fixture_bands_low_to_high  # noqa: E402
+
+# Fixed test band set (review 0-49 ... elite 85-100), lowest first, passed
+# explicitly so the counting tests do not depend on the live weights.json.
+FIXTURE_BANDS = fixture_bands_low_to_high()
 
 
 # ---------------------------------------------------------------------------
@@ -145,7 +152,7 @@ def test_histogram_clamps_out_of_range():
 
 def test_band_counts_lines_up_with_documented_thresholds():
     scores = [25, 49, 50, 59, 60, 69, 70, 79, 80, 84, 85, 100]
-    bands = audit.band_counts(scores)
+    bands = audit.band_counts(scores, FIXTURE_BANDS)
     by_name = {name: count for name, _, _, count in bands}
     assert by_name["review"] == 2  # 25, 49
     assert by_name["weakening"] == 2  # 50, 59
@@ -157,11 +164,22 @@ def test_band_counts_lines_up_with_documented_thresholds():
 
 def test_band_counts_handle_fractional_scores_via_floor():
     # 79.4 should floor to 79 → constructive; 80.0 → high_confidence.
-    bands = audit.band_counts([79.4, 80.0, 84.9, 85.0])
+    bands = audit.band_counts([79.4, 80.0, 84.9, 85.0], FIXTURE_BANDS)
     by_name = {name: count for name, _, _, count in bands}
     assert by_name["constructive"] == 1
     assert by_name["high_confidence"] == 2  # 80.0 and 84.9
     assert by_name["elite"] == 1
+
+
+def test_default_bands_are_the_live_weights_bands():
+    # The script's default band table is read from data/lthcs/weights.json.
+    live = json.loads((REPO_ROOT / "data" / "lthcs" / "weights.json").read_text())["score_bands"]
+    expected = sorted(((k, v["min"], v["max"]) for k, v in live.items()), key=lambda t: t[1])
+    assert list(audit.DEFAULT_BANDS) == expected
+    # Each live band's own edges land in it under the default table.
+    edges = [x for _, lo, hi in expected for x in (lo, hi + 0.9 if hi < 100 else 100)]
+    counts = {name: c for name, _, _, c in audit.band_counts(edges)}
+    assert all(c == 2 for c in counts.values()), counts
 
 
 # ---------------------------------------------------------------------------

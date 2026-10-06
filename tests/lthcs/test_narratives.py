@@ -12,11 +12,25 @@ from copy import deepcopy
 from typing import Dict, Optional
 
 
+import pytest
+
+from lthcs import bands as lthcs_bands
+from lthcs import narratives as narratives_mod
 from lthcs.narratives import (
     BAND_DESCRIPTORS,
     HUMAN_PILLAR_NAMES,
     generate_narratives,
 )
+from tests.lthcs.band_fixture import fixture_score_bands
+
+
+@pytest.fixture(autouse=True)
+def _fixed_band_cutoffs(monkeypatch):
+    """Narratives read band floors from weights.json; pin them to the fixed
+    test band set (constructive 70-79, high_confidence 80-84, ...) so the
+    thresholds asserted below do not move with a recalibration. The live
+    test at the end of the band section restores the live reader."""
+    monkeypatch.setattr(narratives_mod, "load_score_bands", fixture_score_bands)
 
 
 # ---------------------------------------------------------------------------
@@ -334,7 +348,7 @@ def test_why_not_to_sell_review_tone_for_review_intc():
 
 
 def test_what_would_break_high_confidence_references_constructive_floor():
-    # high_confidence band min is 80, so next_band_threshold = 79.9.
+    # Fixture high_confidence band min is 80, so next_band_threshold = 79.9.
     out = generate_narratives(_score_dict(band="high_confidence"))
     body = out["what_would_break"]
     # Weakest pillar in the default fixture is thesis_integrity (76.0).
@@ -346,6 +360,15 @@ def test_what_would_break_high_confidence_references_constructive_floor():
     assert "below 80" in body
     assert "Constructive" in body
     assert "structural review" in body
+
+
+def test_what_would_break_cites_the_live_high_confidence_floor(monkeypatch):
+    # Live weights.json bands: the threshold is derived from the file.
+    monkeypatch.setattr(narratives_mod, "load_score_bands", lthcs_bands.load_score_bands)
+    lo, hi = lthcs_bands.band_ranges(lthcs_bands.load_score_bands())["high_confidence"]
+    out = generate_narratives(_score_dict(band="high_confidence", score=float(lo) + 0.4))
+    body = out["what_would_break"]
+    assert f"Constructive composite move below {lo}" in body
 
 
 def test_what_would_break_monitor_band_next_is_weakening():

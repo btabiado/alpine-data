@@ -136,8 +136,8 @@ Should print: `✓ universe.json valid (75 tickers)` and `✓ weights.json valid
 python lthcs_daily.py --tickers AAPL,LCID,INTC --dry-run
 ```
 
-Should print each stage's `✓` line, end with three computed scores, and write nothing (dry run). Expected band placements:
-- **AAPL** — High Confidence (80-89)
+Should print each stage's `✓` line, end with three computed scores, and write nothing (dry run). Expected band placements (cutoffs: `data/lthcs/weights.json` → `score_bands`, shared by equity and crypto scores):
+- **AAPL** — High Confidence
 - **LCID** — Monitor or Weakening (Pre-Profit Growth weighting; weak Financial Evolution)
 - **INTC** — Review (Recovery Stabilization weighting; multiple thesis-break flags)
 

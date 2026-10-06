@@ -8,6 +8,7 @@ from typing import Any, Dict
 
 import pytest
 
+from lthcs.bands import BAND_ORDER_HIGH_TO_LOW
 from lthcs.score import (
     PILLAR_ORDER,
     assign_band,
@@ -19,6 +20,7 @@ from lthcs.score import (
     _load_volatility_modifier_config,
     _parse_trigger_expression,
 )
+from tests.lthcs.band_fixture import FIXTURE_SCORE_BANDS, with_fixture_bands
 
 
 # --- Fixtures ---------------------------------------------------------------
@@ -30,9 +32,18 @@ WEIGHTS_PATH = os.path.join(REPO_ROOT, "data", "lthcs", "weights.json")
 
 
 @pytest.fixture(scope="module")
-def weights_config() -> Dict[str, Any]:
+def live_weights_config() -> Dict[str, Any]:
     with open(WEIGHTS_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+@pytest.fixture(scope="module")
+def weights_config(live_weights_config) -> Dict[str, Any]:
+    """The live weights.json (profiles, modifiers) with the FIXED test band
+    set (tests/lthcs/band_fixture.py) in place of the live score_bands, so
+    the band expectations below do not move when the live bands are
+    recalibrated. TestLiveScoreBands checks the live bands themselves."""
+    return with_fixture_bands(live_weights_config)
 
 
 @pytest.fixture
@@ -125,16 +136,16 @@ class TestComputeVolatilityModifier:
 # --- assign_band -----------------------------------------------------------
 
 class TestAssignBand:
+    # Fixture bands: elite 85-100, high_confidence 80-84, constructive 70-79,
+    # monitor 60-69, weakening 50-59, review 0-49.
     def test_92_is_elite(self, weights_config):
         assert assign_band(92.0, weights_config["score_bands"]) == "elite"
 
     def test_85_is_elite(self, weights_config):
-        # Post-2026-05-18 calibration: elite.min lowered from 90 to 85
-        # so the band is reachable given current pillar ceilings.
+        # Elite's floor is inclusive.
         assert assign_band(85.0, weights_config["score_bands"]) == "elite"
 
     def test_82_is_high_confidence(self, weights_config):
-        # High confidence band is 80..84 after the 2026-05-18 recalibration.
         assert assign_band(82.0, weights_config["score_bands"]) == "high_confidence"
 
     def test_49_is_review(self, weights_config):
@@ -148,6 +159,35 @@ class TestAssignBand:
 
     def test_0_is_review(self, weights_config):
         assert assign_band(0.0, weights_config["score_bands"]) == "review"
+
+
+class TestLiveScoreBands:
+    """The live weights.json bands: expectations derived from the file, so a
+    recalibration only fails these when it breaks the band structure."""
+
+    def test_live_bands_tile_0_to_100_in_order(self, live_weights_config):
+        bands = live_weights_config["score_bands"]
+        assert list(bands) == list(BAND_ORDER_HIGH_TO_LOW)
+        expected_max = 100
+        for key in BAND_ORDER_HIGH_TO_LOW:
+            assert bands[key]["max"] == expected_max, key
+            assert bands[key]["min"] <= bands[key]["max"], key
+            expected_max = bands[key]["min"] - 1
+        assert expected_max == -1
+
+    def test_live_bands_assign_their_own_edges(self, live_weights_config):
+        bands = live_weights_config["score_bands"]
+        for key in BAND_ORDER_HIGH_TO_LOW:
+            lo, hi = bands[key]["min"], bands[key]["max"]
+            assert assign_band(float(lo), bands) == key
+            assert assign_band(min(100.0, hi + 0.9), bands) == key
+            if lo > 0:
+                assert assign_band(lo - 0.1, bands) != key
+
+    def test_band_logic_tests_use_fixture_bands_and_live_profiles(
+            self, weights_config, live_weights_config):
+        assert weights_config["score_bands"] == FIXTURE_SCORE_BANDS
+        assert weights_config["profiles"] == live_weights_config["profiles"]
 
 
 # --- compute_drift ---------------------------------------------------------

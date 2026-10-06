@@ -10,7 +10,10 @@ consumer consistently.
 
 ``DEFAULT_SCORE_BANDS`` is only a fallback for when weights.json is missing
 or unreadable (unit tests with a tmp data root, a partial checkout); it is
-not authoritative and is never written anywhere.
+not authoritative and is never written anywhere. It mirrors the live
+cutoffs (calibrated 2026-10-06 on the first 515-ticker snapshot) so a
+fallback never silently brings back older ones; a test keeps the two equal,
+so update it together with a recalibration.
 """
 
 from __future__ import annotations
@@ -35,12 +38,12 @@ BAND_ORDER_HIGH_TO_LOW: Tuple[str, ...] = (
 )
 
 DEFAULT_SCORE_BANDS: Dict[str, Dict[str, Any]] = {
-    "elite":           {"min": 85, "max": 100, "color": "#1F3A5F", "label": "Elite Confidence Hold"},
-    "high_confidence": {"min": 80, "max": 84,  "color": "#4A8F5F", "label": "High Confidence Hold"},
-    "constructive":    {"min": 70, "max": 79,  "color": "#C9A227", "label": "Constructive Hold"},
-    "monitor":         {"min": 60, "max": 69,  "color": "#D89148", "label": "Monitor Closely"},
-    "weakening":       {"min": 50, "max": 59,  "color": "#B85A3E", "label": "Confidence Weakening"},
-    "review":          {"min": 0,  "max": 49,  "color": "#7A2E1F", "label": "Structural Review Required"},
+    "elite":           {"min": 70, "max": 100, "color": "#1F3A5F", "label": "Elite Confidence Hold"},
+    "high_confidence": {"min": 63, "max": 69,  "color": "#4A8F5F", "label": "High Confidence Hold"},
+    "constructive":    {"min": 52, "max": 62,  "color": "#C9A227", "label": "Constructive Hold"},
+    "monitor":         {"min": 42, "max": 51,  "color": "#D89148", "label": "Monitor Closely"},
+    "weakening":       {"min": 33, "max": 41,  "color": "#B85A3E", "label": "Confidence Weakening"},
+    "review":          {"min": 0,  "max": 32,  "color": "#7A2E1F", "label": "Structural Review Required"},
 }
 
 # Short names used in prose ("a Constructive composite move below 80").
