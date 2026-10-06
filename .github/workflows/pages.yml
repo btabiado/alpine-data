@@ -75,7 +75,7 @@ jobs:
 
       - name: Restore fetched data cache (markets_top stale-keep, etc.)
         # CI runs are stateless — every fetch starts cold. fetch_market.py's
-        # stale-keep fallback (markets_top, lunarcrush) reads from prior
+        # stale-keep fallback (markets_top) reads from prior
         # data/market.json, which doesn't exist on a fresh runner. This
         # cache lets the stale-keep actually work in CI by persisting the
         # most recent successful fetch between runs. Primary key uses
@@ -974,7 +974,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned like every other job: ubuntu-latest becomes 26.04 on 2026-10-19; this job only runs deploy-pages, but no job floats
     timeout-minutes: 10
     environment:
       name: github-pages

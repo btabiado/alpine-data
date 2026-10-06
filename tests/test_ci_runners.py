@@ -3,9 +3,8 @@
 * ``ubuntu-latest`` moves to Ubuntu 26.04 on 2026-10-19. Every job that runs
   actions/setup-python with a pinned interpreter depends on the image's
   toolcache having that build, so those jobs pin ``ubuntu-24.04``. CodeQL
-  (its Python extraction uses the image's Python) and TruffleHog pin it too;
-  only pages.yml's deploy job, which just runs deploy-pages, may stay on
-  ``ubuntu-latest``.
+  (its Python extraction uses the image's Python), TruffleHog and pages.yml's
+  deploy job (which only runs deploy-pages) pin it too: no job floats.
 * Only the jobs that read git history check out all of it.
 * No action may run on the deprecated Node 20 runtime: every remote action is
   SHA-pinned with a version comment (all current pins are node24 or
@@ -83,3 +82,16 @@ def test_only_history_readers_check_out_full_history():
                         and (step.get("with") or {}).get("fetch-depth") == 0:
                     full.add(wf.name)
     assert full == FULL_HISTORY
+
+
+def test_no_job_runs_on_a_floating_image():
+    """pages.yml's deploy job was the last ``ubuntu-latest``. It only runs
+    deploy-pages, but a floating image is still a moving part that changes
+    under a green workflow; every job names its image."""
+    floating = []
+    for wf in sorted(WORKFLOWS.glob("*.yml")):
+        doc = yaml.safe_load(wf.read_text())
+        for name, job in (doc.get("jobs") or {}).items():
+            if not re.fullmatch(r"ubuntu-\d{2}\.04", str(job.get("runs-on"))):
+                floating.append(f"{wf.name}:{name} -> {job.get('runs-on')}")
+    assert not floating, floating
