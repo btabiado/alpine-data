@@ -114,7 +114,11 @@ async function main() {
   // surface the same artifact even if the latest pointer races a write.
   try { window.localStorage.setItem(LAST_RUN_KEY, latest.path); } catch (_e) { /* ignore */ }
 
-  const runRoot = `../${latest.path}`;
+  // latest.path is repo-relative (data/lthcs/backtest/ab_<id>). Map it onto
+  // DATA_ROOT so it resolves wherever pages.yml stages this page.
+  const runRoot = latest.path.startsWith('data/lthcs/')
+    ? `${DATA_ROOT}/${latest.path.slice('data/lthcs/'.length)}`
+    : `../${latest.path}`;
   const [comparison, equityA, equityB, cfgA, cfgB] = await Promise.all([
     tryFetch(`${runRoot}/comparison.json`),
     tryFetch(`${runRoot}/equity_curve_a.json`),

@@ -49,6 +49,13 @@
   </main>
   <script>
     try { document.getElementById('nf-path').textContent = location.pathname; } catch (e) {}
+    // Moved addresses. /lthcs/data/lthcs/... was a second published copy of
+    // /data/lthcs/... (dropped 2026-10 to keep the site under GitHub Pages'
+    // 1 GB limit); send a visitor who followed an old link to the one copy.
+    try {
+      var moved = location.pathname.match(/^(.*?)\/lthcs\/data\/lthcs\/(.*)$/);
+      if (moved) location.replace(moved[1] + '/data/lthcs/' + moved[2] + location.search + location.hash);
+    } catch (e) {}
   </script>
 </body>
 </html>
