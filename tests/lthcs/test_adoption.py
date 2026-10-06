@@ -1,39 +1,14 @@
-"""Tests for lthcs.pillars.adoption.
-
-All Google Trends / pytrends calls are mocked -- no live network.
-"""
+"""Tests for lthcs.pillars.adoption (pure: the pillar makes no network calls)."""
 
 from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Dict, List
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import pandas as pd
 import pytest
 
 from lthcs.pillars import adoption
-from lthcs.sources._cache import FileCache
-
-
-# --- Fixtures ---------------------------------------------------------------
-
-
-@pytest.fixture(autouse=True)
-def _isolate_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Point the trends cache at a per-test directory."""
-    fresh = FileCache("google_trends", root=tmp_path)
-    monkeypatch.setattr(adoption, "_cache", fresh)
-
-
-@pytest.fixture(autouse=True)
-def _fast_bucket(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Replace the rate-limit bucket with one that always succeeds instantly."""
-    fake = MagicMock()
-    fake.acquire.return_value = True
-    fake.try_acquire.return_value = True
-    fake.wait_time.return_value = 0.0
-    monkeypatch.setattr(adoption, "_bucket", fake)
 
 
 def _annual(end_date: str, value: float, fy: int) -> Dict[str, Any]:
@@ -508,136 +483,6 @@ def test_compute_adoption_has_trends_flag_with_trends_data() -> None:
     # Revenue has no rows -> has_revenue=False; but trends still carries
     # its weight component, so subscore is not 50 exactly.
     assert result["data_quality"]["has_revenue"] is False
-
-
-# --- fetch_google_trends_interest (mocked pytrends) ------------------------
-
-
-def test_fetch_google_trends_interest_returns_floats() -> None:
-    fake_df = pd.DataFrame(
-        {
-            "AAPL": [40, 42, 45, 48, 50],
-            "isPartial": [False, False, False, False, False],
-        },
-        index=pd.date_range("2026-05-10", periods=5),
-    )
-
-    with patch("lthcs.pillars.adoption.TrendReq") as mock_trendreq:
-        instance = mock_trendreq.return_value
-        instance.build_payload.return_value = None
-        instance.interest_over_time.return_value = fake_df
-        result = adoption.fetch_google_trends_interest("AAPL", days=5)
-
-    assert result == [40.0, 42.0, 45.0, 48.0, 50.0]
-    assert all(isinstance(x, float) for x in result)
-    mock_trendreq.assert_called_once()
-    instance.build_payload.assert_called_once()
-    args, kwargs = instance.build_payload.call_args
-    # ticker is uppercased and passed as a single-element list.
-    assert args[0] == ["AAPL"]
-    # 5-day window propagated to the timeframe string.
-    assert "5" in kwargs.get("timeframe", args[1] if len(args) > 1 else "")
-
-
-def test_fetch_google_trends_interest_pytrends_exception_returns_empty() -> None:
-    """A pytrends error must not propagate -- caller treats as missing signal."""
-    with patch("lthcs.pillars.adoption.TrendReq") as mock_trendreq:
-        instance = mock_trendreq.return_value
-        instance.build_payload.side_effect = RuntimeError("429 blocked")
-        result = adoption.fetch_google_trends_interest("AAPL", days=90)
-    assert result == []
-
-
-def test_fetch_google_trends_interest_empty_dataframe_returns_empty() -> None:
-    empty_df = pd.DataFrame()
-    with patch("lthcs.pillars.adoption.TrendReq") as mock_trendreq:
-        instance = mock_trendreq.return_value
-        instance.build_payload.return_value = None
-        instance.interest_over_time.return_value = empty_df
-        result = adoption.fetch_google_trends_interest("AAPL", days=90)
-    assert result == []
-
-
-def test_fetch_google_trends_interest_missing_column_returns_empty() -> None:
-    """If Google returns a frame without our keyword column -> []."""
-    fake_df = pd.DataFrame(
-        {
-            "OTHER": [1, 2, 3],
-            "isPartial": [False, False, False],
-        },
-        index=pd.date_range("2026-05-10", periods=3),
-    )
-    with patch("lthcs.pillars.adoption.TrendReq") as mock_trendreq:
-        instance = mock_trendreq.return_value
-        instance.build_payload.return_value = None
-        instance.interest_over_time.return_value = fake_df
-        result = adoption.fetch_google_trends_interest("AAPL", days=3)
-    assert result == []
-
-
-def test_fetch_google_trends_interest_empty_ticker_returns_empty() -> None:
-    assert adoption.fetch_google_trends_interest("", days=90) == []
-    assert adoption.fetch_google_trends_interest("   ", days=90) == []
-
-
-def test_fetch_google_trends_interest_uses_cache_on_second_call() -> None:
-    """Second call with same args must hit the cache, not pytrends."""
-    fake_df = pd.DataFrame(
-        {
-            "AAPL": [10, 20, 30],
-            "isPartial": [False, False, False],
-        },
-        index=pd.date_range("2026-05-10", periods=3),
-    )
-
-    with patch("lthcs.pillars.adoption.TrendReq") as mock_trendreq:
-        instance = mock_trendreq.return_value
-        instance.build_payload.return_value = None
-        instance.interest_over_time.return_value = fake_df
-
-        first = adoption.fetch_google_trends_interest("AAPL", days=3)
-        second = adoption.fetch_google_trends_interest("AAPL", days=3)
-
-    assert first == [10.0, 20.0, 30.0]
-    assert second == [10.0, 20.0, 30.0]
-    # Network only hit once thanks to the FileCache.
-    assert mock_trendreq.call_count == 1
-
-
-def test_fetch_google_trends_interest_acquires_rate_limit_token(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """Confirm the polite TokenBucket is consulted before each live fetch."""
-    bucket = MagicMock()
-    bucket.acquire.return_value = True
-    monkeypatch.setattr(adoption, "_bucket", bucket)
-
-    fake_df = pd.DataFrame(
-        {"AAPL": [1, 2], "isPartial": [False, False]},
-        index=pd.date_range("2026-05-10", periods=2),
-    )
-    with patch("lthcs.pillars.adoption.TrendReq") as mock_trendreq:
-        instance = mock_trendreq.return_value
-        instance.build_payload.return_value = None
-        instance.interest_over_time.return_value = fake_df
-        adoption.fetch_google_trends_interest("AAPL", days=2)
-
-    bucket.acquire.assert_called_once()
-
-
-def test_fetch_google_trends_interest_skips_when_rate_limited(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """If the bucket times out, return [] without calling pytrends."""
-    bucket = MagicMock()
-    bucket.acquire.return_value = False  # never get a token
-    monkeypatch.setattr(adoption, "_bucket", bucket)
-
-    with patch("lthcs.pillars.adoption.TrendReq") as mock_trendreq:
-        result = adoption.fetch_google_trends_interest("AAPL", days=2)
-
-    assert result == []
-    mock_trendreq.assert_not_called()
 
 
 # --- compute_adoption with compound peer-key (Tier 2 #7) -------------------

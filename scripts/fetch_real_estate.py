@@ -690,16 +690,6 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def _kpi_with_yoy(spark: list[float | None], cols_present: int) -> dict:
-    latest = spark[-1] if spark else None
-    year_ago = spark[0] if len(spark) >= 12 else None
-    return {
-        "value": latest,
-        "yoy_pct": yoy_pct(latest, year_ago) if latest is not None and year_ago is not None else None,
-        "spark": spark,
-    }
-
-
 def build_metro(metro_def: dict[str, object], zillow: dict, redfin: dict) -> dict:
     rank = int(metro_def["rank"])
     short = str(metro_def["short"])

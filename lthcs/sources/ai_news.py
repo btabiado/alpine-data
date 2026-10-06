@@ -676,19 +676,6 @@ def _engagement_sentiment_detail(
     return detail
 
 
-def _engagement_sentiment(
-    total_mentions: int, hn_total_points: int, hn_total_comments: int
-) -> Optional[float]:
-    """Back-compat thin wrapper returning just the final sentiment value.
-
-    Existing callers (and tests) read only the scalar score; the new
-    diagnostic fields are surfaced through ``_engagement_sentiment_detail``.
-    """
-    return _engagement_sentiment_detail(
-        total_mentions, hn_total_points, hn_total_comments
-    )["final_sentiment"]
-
-
 def compute_thesis_signal_from_news(news_dict: Dict[str, Any]) -> Dict[str, Any]:
     """Convert an ``aggregate_ai_news`` entry into a Thesis-pillar payload.
 

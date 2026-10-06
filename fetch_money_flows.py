@@ -214,11 +214,6 @@ def _b(millions):
     return round(millions / 1000.0, 2)
 
 
-def _is_date_row(row):
-    """A data row whose first cell parses as a date."""
-    return _parse_date(row.iloc[0]) is not None
-
-
 # ---------------------------------------------------------------------------
 # A) Money Market Fund assets
 # ---------------------------------------------------------------------------
