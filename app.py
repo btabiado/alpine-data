@@ -9131,7 +9131,8 @@ function renderLthcsInsightsRow(host){
     '<div style="font-size:14px;font-weight:700;margin-bottom:8px">What is LTHCS?</div>' +
     '<p style="margin:0 0 10px 0;color:var(--text)">' +
     'The <strong>Long-Term Holding Conviction Score</strong> is a daily 0-100 read on ' +
-    'each of 167 US-listed stocks (DJIA 30 + NASDAQ-100 + S&P 100). It measures whether ' +
+    'every stock in the S&P 500 and the Dow 30, plus NASDAQ-100 names and former index ' +
+    'members still tracked as Index Exiles. It measures whether ' +
     'the underlying business and market context still justify <em>holding</em> the position ' +
     'long-term. Not a trade signal — a conviction signal.</p>' +
     '<div style="font-size:14px;font-weight:700;margin:12px 0 6px 0">How the score is calculated</div>' +
