@@ -14514,9 +14514,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": -0.12,
+        "sec_8k_score": -0.09999999999999999,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 57.0,
+        "events_score_raw": 57.5,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -22189,7 +22189,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 8,
+        "sector_rss_event_count": 9,
         "sector_rss_sectors": [
           "energy"
         ]
@@ -25773,7 +25773,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 8,
+        "sector_rss_event_count": 9,
         "sector_rss_sectors": [
           "energy"
         ]
@@ -33032,7 +33032,7 @@
         "last_scored": null,
         "source": "finnhub_recommendation",
         "has_sector_rss": true,
-        "sector_rss_event_count": 8,
+        "sector_rss_event_count": 9,
         "sector_rss_sectors": [
           "energy"
         ]
@@ -63561,7 +63561,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 8,
+        "sector_rss_event_count": 9,
         "sector_rss_sectors": [
           "energy"
         ]
@@ -68488,8 +68488,8 @@
         "has_sec_8k": false,
         "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": 0.4,
-        "events_score_raw": 70.0,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -71667,7 +71667,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 8,
+        "sector_rss_event_count": 9,
         "sector_rss_sectors": [
           "energy"
         ]
@@ -77176,7 +77176,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 8,
+        "sector_rss_event_count": 9,
         "sector_rss_sectors": [
           "energy"
         ]
@@ -82319,7 +82319,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 8,
+        "sector_rss_event_count": 9,
         "sector_rss_sectors": [
           "energy"
         ]
@@ -94541,7 +94541,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 8,
+        "sector_rss_event_count": 9,
         "sector_rss_sectors": [
           "energy"
         ]
@@ -100447,7 +100447,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 8,
+        "sector_rss_event_count": 9,
         "sector_rss_sectors": [
           "energy"
         ]
