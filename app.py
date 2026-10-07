@@ -2774,6 +2774,11 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
        title="Leaves this dashboard — opens the API Universe, a map of every API in the Data Sources catalog"
        aria-label="API Universe — leaves this dashboard and opens a map of every API in the Data Sources catalog">API Universe<span class="exitmark" aria-hidden="true">&#8599;</span></a>
   </div>
+  <div class="tabgroup tabgroup--solo">
+    <a class="tab tab--solo tab--exit" href="kwg/"
+       title="Opens KWG Customer Insights — brand performance, sales and customer analytics"
+       aria-label="KWG Customer Insights — opens the KnitWell customer insights dashboard">KWG Customer Insights<span class="exitmark" aria-hidden="true">&#8599;</span></a>
+  </div>
   </span>
 </div>
 

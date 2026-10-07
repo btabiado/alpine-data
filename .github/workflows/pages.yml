@@ -779,6 +779,11 @@ jobs:
         run: |
           mkdir -p _site
           cp dashboard.html _site/index.html
+          # KWG is a self-contained dashboard snapshot under /kwg/.
+          if [ -f kwg/dashboard.html ]; then
+            mkdir -p _site/kwg
+            cp kwg/dashboard.html _site/kwg/index.html
+          fi
           # Sidecar payloads (data-<key>.json) are lazy-loaded by the page on
           # tab-select to keep the initial HTML under ~3.5MB. They're written
           # to the repo root by app.py alongside dashboard.html; copy whatever
