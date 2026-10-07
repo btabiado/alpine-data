@@ -59,6 +59,7 @@ SEV_ORDER = {P0: 0, P1: 1, P2: 2}
 PAGE_LABELS = {
     "v1": "V1 (/)", "summit": "/summit/", "health": "/health/",
     "real-estate": "/real-estate/", "lthcs": "/lthcs/",
+    "api-universe": "/api-universe/",
 }
 
 # Thresholds for the P2 "heavy page" flag (initial load, encoded bytes).

@@ -47,6 +47,7 @@ export const PAGES = [
   { key: 'health', path: '/health/' },
   { key: 'real-estate', path: '/real-estate/' },
   { key: 'lthcs', path: '/lthcs/' },
+  { key: 'api-universe', path: '/api-universe/' },
 ];
 
 export const VIEWPORTS = [
