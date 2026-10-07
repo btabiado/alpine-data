@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="description" content="Every public API and data service in Alpine Data's catalog on one radial map: the APIs Alpine Data uses, grouped by domain and category, with filters, search and a browsable table.">
+<title>API Universe · Alpine Data</title>
+<!--
+  /api-universe/ (staged by pages.yml from api_universe/index.html).
+
+  Everything drawn here comes from ./data.json, which
+  scripts/build_api_universe.py builds at deploy time from the committed
+  health/api_catalog.json and health/catalog_health.json. No count is written
+  into this file: totals, categories, domains, in-use, keyless, link problems
+  and the link-check date are all read from the data.
+
+  Third parties, both off the critical path for the text: d3 from jsDelivr
+  under an SRI pin (the site's CDN convention, see real_estate/index.html), and
+  the two display fonts from Google Fonts, loaded as a non-blocking stylesheet
+  so the page paints in the system stack first. If d3 or data.json does not
+  arrive, the figure says so instead of staying blank.
+
+  Theme: the page follows the reader's light/dark preference. The rest of the
+  site is dark-only and has no theme toggle or data-theme convention; the
+  [data-theme] hooks below are kept so one can be added without new tokens.
+-->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&amp;family=Source+Sans+3:wght@400;600;700&amp;display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&amp;family=Source+Sans+3:wght@400;600;700&amp;display=swap"></noscript>
+<style>
+/* Layout: one radial poster (hub → domains → categories → one dot per API), controls above, legend + browse table below */
+:root{
+  --bg:#f6f6f2; --surface:#fcfcfb; --ink:#141412; --ink-2:#52514e; --muted:#85837c;
+  --rule:#dedcd3; --ring:#1b1b19; --node:#ffffff; --tip:#1b1b19; --tip-ink:#f3f2ec; --tip-muted:#b9b7ae;
+  --chip:#ecebe4; --accent:#2a78d6; --critical:#d03b3b; --tip-good:#7fd17f; --tip-bad:#ff8a8a;
+  --d0:#2a78d6; --d1:#eb6834; --d2:#1baf7a; --d3:#eda100; --d4:#e87ba4; --d5:#008300; --d6:#4a3aa7; --d7:#e34948;
+  --font-display:"Outfit", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body:"Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#141413; --surface:#1a1a19; --ink:#f4f3ee; --ink-2:#c3c2b7; --muted:#8f8d85;
+  --rule:#2e2e2b; --ring:#e9e8e1; --node:#202020; --tip:#f4f3ee; --tip-ink:#161615; --tip-muted:#55534d;
+  --chip:#262624; --accent:#3987e5; --critical:#e05555; --tip-good:#006300; --tip-bad:#b42323;
+  --d0:#3987e5; --d1:#d95926; --d2:#199e70; --d3:#c98500; --d4:#d55181; --d5:#008300; --d6:#9085e9; --d7:#e66767;
+  color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#141413; --surface:#1a1a19; --ink:#f4f3ee; --ink-2:#c3c2b7; --muted:#8f8d85;
+  --rule:#2e2e2b; --ring:#e9e8e1; --node:#202020; --tip:#f4f3ee; --tip-ink:#161615; --tip-muted:#55534d;
+  --chip:#262624; --accent:#3987e5; --critical:#e05555; --tip-good:#006300; --tip-bad:#b42323;
+  --d0:#3987e5; --d1:#d95926; --d2:#199e70; --d3:#c98500; --d4:#d55181; --d5:#008300; --d6:#9085e9; --d7:#e66767;
+  color-scheme:dark; }
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--font-body);}
+.wrap{max-width:1180px;margin:0 auto;padding-block:16px 56px;padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));display:grid;gap:18px}
+.crumbs{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:14px}
+.crumbs a{color:var(--accent);font-weight:600;text-decoration:none}
+.crumbs a:hover{text-decoration:underline}
+.crumbs a:focus-visible,.status a:focus-visible,.credit a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+header{display:grid;gap:4px;justify-items:center;text-align:center}
+h1{font:700 clamp(28px,5vw,48px)/1.05 var(--font-display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+.sub{font:300 clamp(17px,2.4vw,24px)/1.2 var(--font-display);color:var(--ink-2);margin:0}
+.sub b{font-weight:700;color:var(--ink)}
+.stats{display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:center;color:var(--ink-2);font-size:14px;margin-top:6px;min-height:21px}
+.stats strong{color:var(--ink);font-variant-numeric:tabular-nums}
+.controls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:center}
+.seg{display:flex;flex-wrap:wrap;gap:4px;background:var(--chip);padding:3px;border-radius:999px}
+.seg button{font:600 13px var(--font-body);border:0;background:transparent;color:var(--ink-2);padding:6px 12px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--rule)}
+.seg button:focus-visible,.domchip:focus-visible,.zoom button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.search{display:flex;align-items:center;gap:6px}
+/* 16px, not 15: iOS Safari zooms the page on focus into any smaller input. */
+.search input{font:16px var(--font-body);padding:7px 12px;border-radius:999px;border:1px solid var(--rule);background:var(--surface);color:var(--ink);width:min(260px,70vw)}
+.figure{position:relative;background:var(--surface);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.figure svg{display:block;width:100%;height:auto;touch-action:pan-y}
+.zoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:4px}
+.zoom[hidden],.hint[hidden]{display:none}
+.zoom button{width:32px;height:32px;border-radius:6px;border:1px solid var(--rule);background:var(--surface);color:var(--ink);font:600 16px var(--font-body);cursor:pointer}
+.hint{position:absolute;left:12px;top:10px;font-size:12px;color:var(--muted);max-width:60%}
+/* Loading notice over the (still empty) wheel, high enough to be above the fold.
+   On failure the empty wheel collapses and the notice takes its place. */
+.status{position:absolute;left:50%;top:min(50%,140px);transform:translate(-50%,-50%);width:min(440px,calc(100% - 32px));margin:0;text-align:center;color:var(--ink-2);font-size:15px}
+.status[hidden]{display:none}
+.figure.failed svg{display:none}
+.figure.failed .status{position:static;transform:none;margin:28px auto}
+.status.error{background:var(--bg);border:1px solid var(--critical);border-radius:6px;padding:14px 16px;color:var(--ink)}
+.status.error strong{display:block;color:var(--critical);font:700 17px/1.3 var(--font-display);margin-bottom:4px}
+.status a{color:var(--accent);font-weight:600}
+.tip{position:fixed;z-index:10;pointer-events:none;background:var(--tip);color:var(--tip-ink);border-radius:6px;padding:12px 14px;max-width:320px;font-size:13px;line-height:1.45;box-shadow:0 6px 24px rgba(0,0,0,.22)}
+.tip h4{margin:0 0 4px;font:700 15px/1.2 var(--font-display)}
+.tip .co{color:var(--tip-muted);margin-bottom:6px}
+.tip .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.pill{display:inline-flex;align-items:center;gap:4px;font:600 11px var(--font-body);letter-spacing:.03em;text-transform:uppercase;padding:2px 7px;border-radius:999px;border:1px solid currentColor}
+.tip .kv{color:var(--tip-muted)} .tip .kv b{color:var(--tip-ink);font-weight:600}
+.below{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:start}
+@media (max-width:760px){.below{grid-template-columns:1fr}}
+.legend h3,.sizekey h3,.detail h3,.browse h2{font:300 18px var(--font-display);letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px;color:var(--ink)}
+.domains{display:flex;flex-wrap:wrap;gap:6px 8px}
+.domchip{display:inline-flex;align-items:center;gap:7px;font:600 14px var(--font-body);color:var(--ink);background:transparent;border:1px solid var(--rule);border-radius:999px;padding:5px 11px 5px 8px;cursor:pointer}
+.domchip .sw{width:12px;height:12px;border-radius:50%}
+.domchip .n{color:var(--muted);font-weight:400;font-variant-numeric:tabular-nums}
+.domchip[aria-pressed="true"]{border-color:var(--ink);background:var(--chip)}
+.marks{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;color:var(--ink-2);font-size:13px}
+.marks span{display:inline-flex;align-items:center;gap:6px}
+.credit{font-size:12px;color:var(--muted);margin-top:10px}
+.credit a{color:inherit;text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:2px}
+.detail{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:14px 16px;min-width:0}
+.detail[hidden]{display:none}
+.detail h4{font:700 18px/1.2 var(--font-display);margin:0}
+.detail p{margin:6px 0;color:var(--ink-2);overflow-wrap:anywhere}
+.detail a{color:var(--accent);font-weight:600}
+.browse{display:grid;gap:10px;min-width:0}
+.browse .bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.browse select{font:16px var(--font-body);padding:6px 10px;border-radius:6px;border:1px solid var(--rule);background:var(--surface);color:var(--ink)}
+.count{color:var(--ink-2);font-size:14px;font-variant-numeric:tabular-nums}
+.tablewrap{overflow:auto;max-height:560px;border:1px solid var(--rule);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:860px;font-size:13.5px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{position:sticky;top:0;background:var(--surface);font:600 12px var(--font-body);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);z-index:1}
+td a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--rule);text-underline-offset:2px}
+td .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.st-use{color:var(--d5);font-weight:700} .st-bad{color:var(--critical);font-weight:600}
+.muted{color:var(--muted)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+svg text{font-family:var(--font-body)}
+.lbl-dom{font-family:var(--font-display);font-weight:600;fill:var(--ink)}
+.lbl-cat{fill:var(--ink-2);font-size:9.5px}
+.lbl-cat.on{fill:var(--ink);font-weight:700}
+.dim .api:not(.hit){opacity:.12}
+.dim .lnk:not(.hit){opacity:.03}
+.dim .cat:not(.hit),.dim .dlnk:not(.hit){opacity:.18}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="crumbs" aria-label="Site">
+    <a href="../">← Dashboard</a>
+    <a href="../health/#catalog">Data Sources catalog</a>
+  </nav>
+
+  <header>
+    <h1>Alpine Data’s API Universe</h1>
+    <p class="sub">every public API &amp; data service in the catalog, <b id="h-total">…</b> of them</p>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <div class="controls">
+    <div class="seg" role="group" aria-label="Show">
+      <button id="m-all" data-mode="all" aria-pressed="true">All</button>
+      <button id="m-use" data-mode="use" aria-pressed="false">In use</button>
+      <button id="m-key" data-mode="keyless" aria-pressed="false">Free &amp; keyless</button>
+      <button id="m-bad" data-mode="bad" aria-pressed="false">Link problems</button>
+    </div>
+    <label class="search"><span class="muted">Find</span><input id="q" type="search" placeholder="API, provider or topic" autocomplete="off"></label>
+  </div>
+
+  <div class="figure">
+    <svg id="wheel" viewBox="-700 -700 1400 1400" role="img" aria-label="Radial map of every API in the Alpine Data catalog. The table below lists every API."></svg>
+    <p class="status" id="status" role="status">Loading the API catalog…</p>
+    <div class="hint" id="hint" hidden>Hover a dot for details · click to pin it</div>
+    <div class="zoom" id="zoom" hidden><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button><button id="zreset" aria-label="Reset zoom">⟲</button></div>
+  </div>
+
+  <div class="below">
+    <section class="legend">
+      <h3>Domains</h3>
+      <div class="domains" id="domains"></div>
+      <div class="marks">
+        <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="var(--d0)" stroke="var(--ring)" stroke-width="1.6"/></svg>In use by Alpine Data (linked to the centre)</span>
+        <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="3" fill="var(--d0)" opacity=".55"/></svg>Available, not yet used</span>
+        <span><svg width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="4" fill="none" stroke="var(--critical)" stroke-width="1.8"/><path d="M4.5 4.5l5 5M9.5 4.5l-5 5" stroke="var(--critical)" stroke-width="1.4"/></svg>Link problem in the last check</span>
+      </div>
+      <p class="credit" id="credit">Source: Alpine Data API catalog (<a href="../health/api_catalog.json">health/api_catalog.json</a>) and its link check (<a href="../health/catalog_health.json">health/catalog_health.json</a>).</p>
+    </section>
+    <aside class="sizekey">
+      <h3>Size of category</h3>
+      <svg width="230" height="96" viewBox="0 0 230 96" aria-label="Circle size scale" id="sizekey"></svg>
+    </aside>
+  </div>
+
+  <section class="detail" id="detail" hidden aria-live="polite"></section>
+
+  <section class="browse" aria-labelledby="browse-h">
+    <h2 id="browse-h">Browse every API</h2>
+    <div class="bar">
+      <select id="fdom" aria-label="Domain"><option value="-1">All domains</option></select>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="tablewrap"><table><thead><tr><th>API</th><th>Provider</th><th>Category</th><th>Status</th><th>Access</th><th>Free tier</th><th>Link check</th></tr></thead><tbody id="rows"></tbody></table></div>
+  </section>
+</div>
+
+<div class="tip" id="tip" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script>
+(function(){
+const esc = s => String(s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const statusEl = document.getElementById('status');
+
+/* A failure says what failed and where to go instead; it never leaves a blank wheel. */
+function showError(why){
+  statusEl.hidden = false; statusEl.classList.add('error'); statusEl.closest('.figure').classList.add('failed');
+  statusEl.innerHTML = `<strong>The API Universe couldn’t load.</strong>${esc(why)} `+
+    `Reload to try again, or browse the same catalog on the <a href="../health/#catalog">Status page</a>.`;
+  document.getElementById('h-total').textContent = '…';
+}
+if (typeof window.d3 === 'undefined'){
+  showError('The chart library (d3, from cdn.jsdelivr.net) did not load.');
+  return;
+}
+fetch('data.json')
+  .then(r => { if (!r.ok) throw new Error(`The catalog data (data.json) answered HTTP ${r.status}.`);
+               return r.json().catch(() => { throw new Error('The catalog data (data.json) is not valid JSON.'); }); })
+  .then(DATA => {
+    if (!DATA || !Array.isArray(DATA.apis) || !DATA.apis.length || !Array.isArray(DATA.cats) || !Array.isArray(DATA.domains) || !DATA.meta)
+      throw new Error('The catalog data (data.json) has no APIs in it.');
+    render(DATA);
+    statusEl.hidden = true;
+  })
+  .catch(err => {
+    const why = err instanceof TypeError && /fetch/i.test(err.message||'') ? 'The catalog data (data.json) could not be fetched.'
+              : (err && err.message) || String(err);
+    showError(why);
+    if (window.console) console.warn('[api-universe]', err);
+  });
+
+function render(DATA){
+const DOMS = DATA.domains, CATS = DATA.cats;
+/* Row layout: scripts/build_api_universe.py FIELDS. */
+const APIS = DATA.apis.map((a,i)=>({i, cat:a[0], name:a[1], co:a[2], free:a[3], price:a[4], blurb:a[5], use:a[6]===1, keyless:a[7]===1, keyreq:a[8]===1, url:a[9], bad:a[10], fr:a[11]===1, dom:CATS[a[0]][1]}));
+const fmt = d3.format(',');
+const dc = i => `var(--d${i})`;
+
+/* ---------- summary numbers (all read from the data) ---------- */
+const nUse = APIS.filter(a=>a.use).length, nKeyless = APIS.filter(a=>a.keyless).length, nBad = APIS.filter(a=>a.bad).length;
+const checked = String(DATA.meta.checked||'').slice(0,10), H = DATA.meta.health||{};
+document.getElementById('h-total').textContent = fmt(APIS.length);
+document.getElementById('wheel').setAttribute('aria-label',
+  `Radial map of ${fmt(APIS.length)} APIs: Alpine Data in the centre, ${DOMS.length} domains, ${CATS.length} categories, one dot per API. The table below lists every API.`);
+document.getElementById('stats').innerHTML =
+  `<span><strong>${CATS.length}</strong> categories</span><span><strong>${DOMS.length}</strong> domains</span>`+
+  `<span><strong>${fmt(nUse)}</strong> in use</span><span><strong>${fmt(nKeyless)}</strong> keyless</span>`+
+  `<span><strong>${fmt(nBad)}</strong> with link problems${checked?` <span class="muted">(links checked ${esc(checked)})</span>`:''}</span>`;
+document.getElementById('credit').innerHTML =
+  `Source: Alpine Data API catalog (<a href="../health/api_catalog.json">health/api_catalog.json</a>) · `+
+  `link check${checked?' '+esc(checked):''} (<a href="../health/catalog_health.json">health/catalog_health.json</a>): `+
+  `${fmt(H.ok||0)} ok, ${fmt(H.gated||0)} gated, ${fmt(H.dead||0)} dead, ${fmt(H.unreachable||0)} unreachable. `+
+  `Free tiers and prices change; check before relying on one.`;
+
+/* ---------- geometry ---------- */
+const catCount = CATS.map((_,ci)=>0); APIS.forEach(a=>catCount[a.cat]++);
+const domCount = DOMS.map(()=>0); APIS.forEach(a=>domCount[a.dom]++);
+const catUse = CATS.map(()=>0); APIS.forEach(a=>{ if(a.use) catUse[a.cat]++; });
+const GAP = 0.45*Math.PI/180, TOTAL = APIS.length;
+const usable = 2*Math.PI - GAP*CATS.length;
+let ang = -Math.PI/2;
+const catGeo = CATS.map((c,ci)=>{ const span = usable*catCount[ci]/TOTAL; const g={a0:ang, a1:ang+span, mid:ang+span/2}; ang += span+GAP; return g; });
+const domGeo = DOMS.map((d,di)=>{ const cs = CATS.map((c,ci)=>ci).filter(ci=>CATS[ci][1]===di);
+  const a0 = catGeo[cs[0]].a0, a1 = catGeo[cs[cs.length-1]].a1; return {a0,a1,mid:(a0+a1)/2,cats:cs}; });
+const pol = (r,a)=>[r*Math.cos(a), r*Math.sin(a)];
+const R_HUB=62, R_DOM=212, R_CAT=[338,370], R_DOT0=430, ROWS=6, ROW_GAP=8.6, R_LBL=R_DOT0+ROWS*ROW_GAP+12;
+const domR = n => 10 + Math.sqrt(n)*2.75;
+const catR = n => 2.6 + Math.sqrt(n)*1.18;
+
+CATS.forEach((c,ci)=>{
+  const list = APIS.filter(a=>a.cat===ci).sort((x,y)=>(y.use-x.use)||x.name.localeCompare(y.name));
+  const per = Math.ceil(list.length/ROWS), g = catGeo[ci];
+  list.forEach((a,k)=>{ const row = k % ROWS, col = Math.floor(k/ROWS); const n = per;
+    const t = n===1?0.5:(col+0.5)/n; const aa = g.a0 + t*(g.a1-g.a0); const r = R_DOT0 + row*ROW_GAP;
+    const p = pol(r,aa); a.x=p[0]; a.y=p[1]; a.ang=aa; });
+});
+
+/* ---------- draw ---------- */
+const svg = d3.select('#wheel');
+const root = svg.append('g');
+const defs = svg.append('defs');
+DOMS.forEach((d,i)=>{ defs.append('marker').attr('id','ah'+i).attr('viewBox','0 0 10 10').attr('refX',9).attr('refY',5)
+  .attr('markerWidth',5).attr('markerHeight',5).attr('orient','auto-start-reverse')
+  .append('path').attr('d','M0,0L10,5L0,10z').attr('fill',dc(i)); });
+
+/* faint guide rings, like the poster's dotted orbits */
+[R_DOM, (R_CAT[0]+R_CAT[1])/2, R_DOT0-14].forEach(r=> root.append('circle').attr('r',r).attr('fill','none')
+  .attr('stroke','var(--rule)').attr('stroke-dasharray','1.5 4').attr('stroke-width',1.2));
+
+/* in-use APIs → hub */
+const gLinks = root.append('g');
+const lnk = gLinks.selectAll('line').data(APIS.filter(a=>a.use)).join('line').attr('class','lnk')
+  .attr('x1',a=>a.x).attr('y1',a=>a.y)
+  .attr('x2',a=>pol(R_HUB+4,a.ang)[0]).attr('y2',a=>pol(R_HUB+4,a.ang)[1])
+  .attr('stroke',a=>dc(a.dom)).attr('stroke-width',.9).attr('opacity',.38).attr('marker-end',a=>`url(#ah${a.dom})`);
+
+/* category → domain links */
+const catPos = CATS.map((c,ci)=>{ const r = R_CAT[ci%2]; const p = pol(r,catGeo[ci].mid); return {x:p[0],y:p[1],r:catR(catCount[ci])}; });
+const domPos = DOMS.map((d,di)=>{ const p = pol(R_DOM,domGeo[di].mid); return {x:p[0],y:p[1],r:domR(domCount[di])}; });
+const gD = root.append('g');
+const dlnk = gD.selectAll('line').data(CATS.map((c,ci)=>ci)).join('line').attr('class','dlnk')
+  .each(function(ci){ const c=catPos[ci], d=domPos[CATS[ci][1]]; const dx=d.x-c.x, dy=d.y-c.y, L=Math.hypot(dx,dy);
+    d3.select(this).attr('x1',c.x+dx/L*c.r).attr('y1',c.y+dy/L*c.r).attr('x2',d.x-dx/L*(d.r+3)).attr('y2',d.y-dy/L*(d.r+3)); })
+  .attr('stroke',ci=>dc(CATS[ci][1])).attr('stroke-width',1.1).attr('opacity',.7).attr('marker-end',ci=>`url(#ah${CATS[ci][1]})`);
+
+/* API dots */
+const gDots = root.append('g');
+const dots = gDots.selectAll('circle').data(APIS).join('circle').attr('class','api')
+  .attr('cx',a=>a.x).attr('cy',a=>a.y).attr('r',a=>a.use?3.4:2.1)
+  .attr('fill',a=>dc(a.dom)).attr('fill-opacity',a=>a.use?1:.55)
+  .attr('stroke',a=>a.use?'var(--ring)':'none').attr('stroke-width',a=>a.use?1.2:0);
+const gBad = root.append('g');
+gBad.selectAll('g').data(APIS.filter(a=>a.bad)).join('g').attr('class','api bad').attr('transform',a=>`translate(${a.x},${a.y})`)
+  .call(g=>{ g.append('circle').attr('r',4.4).attr('fill','none').attr('stroke','var(--critical)').attr('stroke-width',1.3); });
+
+/* category circles */
+const gCat = root.append('g');
+const catSel = gCat.selectAll('g').data(CATS.map((c,ci)=>ci)).join('g').attr('class','cat').attr('data-kind','cat').attr('data-i',ci=>ci)
+  .attr('transform',ci=>`translate(${catPos[ci].x},${catPos[ci].y})`).style('cursor','pointer');
+catSel.append('circle').attr('r',ci=>catPos[ci].r+2.5).attr('fill','var(--surface)');
+catSel.append('circle').attr('r',ci=>catPos[ci].r).attr('fill',ci=>dc(CATS[ci][1]));
+catSel.filter(ci=>catUse[ci]>0).append('circle').attr('r',ci=>Math.max(2,catPos[ci].r*Math.sqrt(catUse[ci]/catCount[ci])))
+  .attr('fill','var(--surface)').attr('fill-opacity',.92);
+
+/* category labels, radial, outside the dot band */
+const short = s => { let t = s.replace(/\s*\(.*?\)\s*/g,' ').replace(/\s+—\s+.*/,'').trim(); return t.length>30 ? t.slice(0,29)+'…' : t; };
+const gLbl = root.append('g');
+const lblSel = gLbl.selectAll('text').data(CATS.map((c,ci)=>ci)).join('text').attr('class','lbl-cat')
+  .each(function(ci){ const a = catGeo[ci].mid, deg = a*180/Math.PI, p = pol(R_LBL,a), flip = Math.cos(a)<0;
+    d3.select(this).attr('transform',`translate(${p[0]},${p[1]}) rotate(${flip?deg+180:deg})`).attr('text-anchor',flip?'end':'start')
+      .attr('dominant-baseline','middle').text(short(CATS[ci][0])); });
+
+/* domain circles + hub */
+const gDom = root.append('g');
+const domSel = gDom.selectAll('g').data(DOMS.map((d,di)=>di)).join('g').attr('class','dom').attr('data-kind','dom').attr('data-i',di=>di)
+  .attr('transform',di=>`translate(${domPos[di].x},${domPos[di].y})`).style('cursor','pointer');
+domSel.append('circle').attr('r',di=>domPos[di].r).attr('fill','var(--node)').attr('stroke','var(--ring)').attr('stroke-width',2);
+domSel.append('circle').attr('r',di=>domPos[di].r-5).attr('fill','none').attr('stroke',di=>dc(di)).attr('stroke-width',3);
+domSel.each(function(di){ const g=d3.select(this), words = DOMS[di].split(/\s+/); const r = domPos[di].r;
+  const lines=[]; let cur=''; words.forEach(w=>{ if((cur+' '+w).trim().length>11 && cur){ lines.push(cur); cur=w; } else cur=(cur+' '+w).trim(); }); lines.push(cur);
+  const fs = Math.max(11, Math.min(15, r/4.4)); const t = g.append('text').attr('class','lbl-dom').attr('text-anchor','middle').attr('font-size',fs);
+  lines.forEach((l,k)=> t.append('tspan').attr('x',0).attr('y',(k-(lines.length-1)/2)*fs*1.1 - fs*0.45).text(l));
+  g.append('text').attr('text-anchor','middle').attr('y',(lines.length/2)*fs*1.1+fs*0.25).attr('font-size',fs*0.82).attr('fill','var(--ink-2)').text(fmt(domCount[di])+' APIs'); });
+const hub = root.append('g').attr('data-kind','hub').style('cursor','default');
+hub.append('circle').attr('r',R_HUB).attr('fill','var(--node)').attr('stroke','var(--ring)').attr('stroke-width',2.5);
+hub.append('text').attr('class','lbl-dom').attr('text-anchor','middle').attr('y',-8).attr('font-size',17).text('ALPINE DATA');
+hub.append('text').attr('text-anchor','middle').attr('y',14).attr('font-size',12.5).attr('fill','var(--ink-2)').text(fmt(nUse)+' APIs in use');
+
+/* size key: three reference sizes scaled to the largest category (100%, 60%, 30%), rounded down to 5s */
+(function(){ const sk = d3.select('#sizekey'); const cx=48, base=90;
+  const top = Math.max(...catCount), f5 = v => Math.max(5, Math.floor(v/5)*5);
+  const vals = [...new Set([top, top*0.6, top*0.3].map(f5))];
+  const k = 40/catR(vals[0]);
+  vals.forEach((v,i)=>{ const r = catR(v)*k; const top = base-2*r; sk.append('circle').attr('cx',cx).attr('cy',base-r).attr('r',r).attr('fill','none').attr('stroke','var(--muted)');
+    const ly = 12+i*26; sk.append('path').attr('d',`M${cx},${top}L${cx+60},${top}L${cx+70},${ly}L${cx+92},${ly}`).attr('fill','none').attr('stroke','var(--rule)');
+    sk.append('text').attr('x',cx+96).attr('y',ly+4).attr('font-size',12).attr('fill','var(--ink-2)').text(v+' APIs'); });
+})();
+
+/* ---------- state, filters, highlight ---------- */
+const state = {mode:'all', dom:-1, q:'', focusCat:-1, pinned:null};
+const matchMode = a => state.mode==='all' || (state.mode==='use'&&a.use) || (state.mode==='keyless'&&a.keyless&&a.fr) || (state.mode==='bad'&&!!a.bad);
+const matchQ = a => !state.q || (a.name+' '+a.co+' '+a.blurb+' '+CATS[a.cat][0]).toLowerCase().includes(state.q);
+const matchDom = a => state.dom<0 || a.dom===state.dom;
+function visible(a){ return matchMode(a)&&matchQ(a)&&matchDom(a)&&(state.focusCat<0||a.cat===state.focusCat); }
+function apply(){
+  const filtering = state.mode!=='all' || state.q || state.dom>=0 || state.focusCat>=0;
+  root.classed('dim', filtering);
+  dots.classed('hit', a=>visible(a));
+  gBad.selectAll('g').classed('hit', a=>visible(a));
+  lnk.classed('hit', a=>visible(a));
+  const catHit = new Set(APIS.filter(visible).map(a=>a.cat));
+  catSel.classed('hit', ci=>catHit.has(ci)); dlnk.classed('hit', ci=>catHit.has(ci));
+  lblSel.classed('on', ci=>filtering && catHit.has(ci));
+  renderTable();
+}
+
+/* ---------- tooltip ---------- */
+const tip = document.getElementById('tip');
+function pills(a){
+  return `<div class="row">`+
+   (a.use?`<span class="pill" style="color:var(--tip-good)">● In use</span>`:`<span class="pill">Available</span>`)+
+   (a.keyless?`<span class="pill">Keyless</span>`:(a.keyreq?`<span class="pill">Key required</span>`:''))+
+   (a.bad?`<span class="pill" style="color:var(--tip-bad)">✕ ${esc(a.bad)}</span>`:'')+`</div>`;
+}
+function apiTip(a){ return `<h4>${esc(a.name)}</h4><div class="co">${esc(a.co)} · ${esc(CATS[a.cat][0])}</div><div>${esc(a.blurb)}</div>`+
+  `<div class="kv" style="margin-top:6px">Free tier: <b>${esc(a.free)}</b></div>`+(a.price&&a.price!=='n/a'?`<div class="kv">Paid: <b>${esc(a.price)}</b></div>`:'')+pills(a); }
+function catTip(ci){ const list = APIS.filter(a=>a.cat===ci); const u = list.filter(a=>a.use);
+  const kl = list.filter(a=>a.keyless).length; const top = (u.length?u:list).slice(0,5).map(a=>esc(a.name)).join(', ');
+  return `<h4>${esc(CATS[ci][0])}</h4><div class="co">${esc(DOMS[CATS[ci][1]])}</div>`+
+    `<div class="kv"><b>${list.length}</b> APIs · <b>${u.length}</b> in use · <b>${kl}</b> keyless</div>`+
+    `<div style="margin-top:6px">${u.length?'In use: ':'Includes: '}${top}${(u.length||list.length)>5?'…':''}</div><div class="kv" style="margin-top:6px">Click to show only this category</div>`; }
+function domTip(di){ const list = APIS.filter(a=>a.dom===di); return `<h4>${esc(DOMS[di])}</h4>`+
+  `<div class="kv"><b>${fmt(list.length)}</b> APIs in <b>${domGeo[di].cats.length}</b> categories · <b>${list.filter(a=>a.use).length}</b> in use</div><div class="kv" style="margin-top:6px">Click to show only this domain</div>`; }
+function showTip(html, ev){ tip.innerHTML = html; tip.hidden = false;
+  const pad=14, w=tip.offsetWidth, h=tip.offsetHeight; let x=ev.clientX+pad, y=ev.clientY+pad;
+  if(x+w>window.innerWidth-8) x=ev.clientX-w-pad; if(y+h>window.innerHeight-8) y=ev.clientY-h-pad;
+  tip.style.left=Math.max(8,x)+'px'; tip.style.top=Math.max(8,y)+'px'; }
+function hideTip(){ tip.hidden = true; }
+
+/* nearest-dot hover via Delaunay, so dots have hit targets larger than the mark */
+const delaunay = d3.Delaunay.from(APIS, a=>a.x, a=>a.y);
+let zk = 1;
+function svgPoint(ev){ const pt = svg.node().createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY;
+  return pt.matrixTransform(root.node().getScreenCTM().inverse()); }
+let hoverDot = null;
+const hl = gDots.append('circle').attr('r',6.5).attr('fill','none').attr('stroke','var(--ink)').attr('stroke-width',1.6).attr('pointer-events','none').style('display','none');
+svg.on('pointermove', ev=>{
+  const kind = ev.target.closest && ev.target.closest('[data-kind]');
+  if(kind && kind.dataset.kind==='cat'){ hl.style('display','none'); hoverDot=null; return showTip(catTip(+kind.dataset.i), ev); }
+  if(kind && kind.dataset.kind==='dom'){ hl.style('display','none'); hoverDot=null; return showTip(domTip(+kind.dataset.i), ev); }
+  const p = svgPoint(ev); const i = delaunay.find(p.x,p.y); const a = APIS[i];
+  if(a && Math.hypot(a.x-p.x,a.y-p.y) < 9/Math.sqrt(zk) && (!root.classed('dim')||visible(a))){
+    hoverDot = a; hl.attr('cx',a.x).attr('cy',a.y).style('display',null); showTip(apiTip(a), ev);
+  } else { hoverDot=null; hl.style('display','none'); hideTip(); }
+});
+svg.on('pointerleave', ()=>{ hideTip(); hl.style('display','none'); hoverDot=null; });
+svg.on('click', ev=>{
+  const kind = ev.target.closest && ev.target.closest('[data-kind]');
+  if(kind && kind.dataset.kind==='cat'){ const ci=+kind.dataset.i; state.focusCat = state.focusCat===ci?-1:ci; apply(); return; }
+  if(kind && kind.dataset.kind==='dom'){ const di=+kind.dataset.i; setDom(state.dom===di?-1:di); return; }
+  if(hoverDot) pin(hoverDot); else if(state.focusCat>=0){ state.focusCat=-1; apply(); }
+});
+const detail = document.getElementById('detail');
+function pin(a){ detail.hidden=false;
+  detail.innerHTML = `<h3>Selected API</h3><h4>${esc(a.name)}</h4><p>${esc(a.co)} · ${esc(CATS[a.cat][0])} · ${esc(DOMS[a.dom])}</p>`+
+   `<p>${esc(a.blurb)}</p><p>Free tier: ${esc(a.free)}${a.price&&a.price!=='n/a'?' · Paid: '+esc(a.price):''}</p>`+
+   `<p>${a.use?'<span class="st-use">● In use by Alpine Data</span>':'Available, not yet used'} · ${a.keyless?'Keyless':(a.keyreq?'Key required':'Access varies')}${a.bad?` · <span class="st-bad">✕ ${esc(a.bad)}</span>`:''}</p>`+
+   (/^https?:\/\//.test(a.url)?`<p><a href="${esc(a.url)}" target="_blank" rel="noopener">Open documentation ↗</a> <span class="muted">${esc(a.url)}</span></p>`:''); }
+
+/* zoom: buttons, ctrl/⌘+wheel, drag when zoomed in */
+const zoom = d3.zoom().scaleExtent([1,8]).translateExtent([[-700,-700],[700,700]])
+  .filter(ev => ev.type==='wheel' ? (ev.ctrlKey||ev.metaKey) : (ev.type==='mousedown' ? (zk>1 && !ev.button) : (ev.type==='touchstart' ? zk>1 : false)))
+  .on('zoom', ev=>{ zk = ev.transform.k; root.attr('transform', ev.transform); });
+svg.call(zoom).on('dblclick.zoom', null);
+document.getElementById('zin').onclick = ()=> svg.transition().duration(250).call(zoom.scaleBy, 1.6);
+document.getElementById('zout').onclick = ()=> svg.transition().duration(250).call(zoom.scaleBy, 1/1.6);
+document.getElementById('zreset').onclick = ()=> svg.transition().duration(250).call(zoom.transform, d3.zoomIdentity);
+if(window.matchMedia('(hover: none)').matches) document.getElementById('hint').textContent = 'Tap a dot to pin it · use + to zoom';
+document.getElementById('hint').hidden = false; document.getElementById('zoom').hidden = false;
+
+/* ---------- controls ---------- */
+document.querySelectorAll('.seg button').forEach(b=> b.addEventListener('click', ()=>{
+  state.mode = b.dataset.mode; document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed', x===b)); apply(); }));
+let qt; document.getElementById('q').addEventListener('input', e=>{ clearTimeout(qt); qt=setTimeout(()=>{ state.q=e.target.value.trim().toLowerCase(); apply(); },120); });
+const domWrap = document.getElementById('domains'), fdom = document.getElementById('fdom');
+DOMS.forEach((d,di)=>{ const b=document.createElement('button'); b.className='domchip'; b.id='dom'+di; b.setAttribute('aria-pressed','false');
+  b.innerHTML = `<span class="sw" style="background:${dc(di)}"></span>${esc(d)} <span class="n">${fmt(domCount[di])}</span>`;
+  b.onclick = ()=> setDom(state.dom===di?-1:di); domWrap.appendChild(b);
+  const o=document.createElement('option'); o.value=di; o.textContent=d; fdom.appendChild(o); });
+fdom.addEventListener('change', ()=> setDom(+fdom.value));
+function setDom(di){ state.dom=di; state.focusCat=-1; fdom.value=di; DOMS.forEach((d,k)=>document.getElementById('dom'+k).setAttribute('aria-pressed', k===di)); apply(); }
+
+/* ---------- table (the accessible view; follows the same filters) ---------- */
+const tbody = document.getElementById('rows'), countEl = document.getElementById('count');
+const sorted = APIS.slice().sort((x,y)=>(x.dom-y.dom)||CATS[x.cat][0].localeCompare(CATS[y.cat][0])||(y.use-x.use)||x.name.localeCompare(y.name));
+function renderTable(){
+  const rows = sorted.filter(visible); countEl.textContent = `${fmt(rows.length)} of ${fmt(APIS.length)} APIs shown`;
+  const frag = document.createDocumentFragment();
+  rows.forEach(a=>{ const tr=document.createElement('tr');
+    const name = /^https?:\/\//.test(a.url) ? `<a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.name)}</a>` : esc(a.name);
+    tr.innerHTML = `<td>${name}</td><td>${esc(a.co)}</td><td><span class="dot" style="background:${dc(a.dom)}"></span>${esc(CATS[a.cat][0])}</td>`+
+      `<td>${a.use?'<span class="st-use">● In use</span>':'<span class="muted">Available</span>'}</td>`+
+      `<td>${a.keyless?'Keyless':(a.keyreq?'Key required':'<span class="muted">Varies</span>')}</td><td>${esc(a.free)}</td>`+
+      `<td>${a.bad?`<span class="st-bad">✕ ${esc(a.bad)}</span>`:'<span class="muted">OK</span>'}</td>`;
+    frag.appendChild(tr); });
+  tbody.replaceChildren(frag);
+}
+apply();
+}
+})();
+</script>
+</body>
+</html>

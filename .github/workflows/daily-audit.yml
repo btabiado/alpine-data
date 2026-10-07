@@ -8,7 +8,8 @@ name: daily-audit
 #                                  checks of the live site against primary
 #                                  sources (no secrets needed)
 #   scripts/daily_audit_ux.mjs     Playwright: /, /summit/, /health/,
-#                                  /real-estate/, /lthcs/ at 390px and 1440px;
+#                                  /real-estate/, /lthcs/, /api-universe/ at
+#                                  390px and 1440px;
 #                                  every V1 tab opened the way a user would
 #   scripts/daily_audit_report.py  problems + new/ongoing/fixed vs. yesterday
 #

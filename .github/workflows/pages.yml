@@ -757,6 +757,24 @@ jobs:
             || echo "::warning title=API catalog workbook not built::build_catalog_xlsx.py failed; /health/api-catalog.xlsx is missing from this deploy"
         continue-on-error: true
 
+      - name: Build the API Universe data (deploy-time, never committed)
+        # /api-universe/ draws every catalog entry on one radial map. Its data,
+        # api_universe/data.json, is a pure transform of the committed
+        # health/api_catalog.json and health/catalog_health.json (no network),
+        # rebuilt here on every deploy so the page always matches the catalog.
+        # The script groups the catalog's categories into domains by name
+        # prefix and refuses to guess: a category that matches no domain (or
+        # two) fails it with the category named. That is an error annotation and
+        # a soft-failed step, not a blocked deploy: the rest of the site ships,
+        # and /api-universe/ says on the page that its data did not load.
+        # tests/test_api_universe.py runs the same mapping over the committed
+        # catalog, so the PR that adds such a category is the one that goes red.
+        run: |
+          python scripts/build_api_universe.py && exit 0
+          echo "::error title=API Universe data not built::scripts/build_api_universe.py failed (see the log above); /api-universe/ is published without data.json and shows a load error. A new catalog category needs a domain prefix in DOMAINS."
+          exit 1
+        continue-on-error: true
+
       - name: Stage site directory
         run: |
           mkdir -p _site
@@ -873,6 +891,22 @@ jobs:
             fi
             if [ -d landscape/icons ]; then
               cp -R landscape/icons _site/landscape/
+            fi
+          fi
+          # Stage the API Universe page under /api-universe/: the page from
+          # api_universe/index.html and its data.json, which the "Build the API
+          # Universe data" step above wrote from the committed catalog. Named
+          # files, not a copy of the directory, so only these two publish. A
+          # missing data.json still stages the page (it says the data did not
+          # load, and links to the catalog on /health/) rather than leaving the
+          # dashboard's nav link pointing at a 404.
+          if [ -f api_universe/index.html ]; then
+            mkdir -p _site/api-universe
+            cp api_universe/index.html _site/api-universe/index.html
+            if [ -f api_universe/data.json ]; then
+              cp api_universe/data.json _site/api-universe/data.json
+            else
+              echo "::warning title=API Universe published without data::api_universe/data.json is missing; /api-universe/ will show its load error"
             fi
           fi
           # Publish the newest daily audit report at /audit/latest.md and

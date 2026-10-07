@@ -1442,9 +1442,9 @@ header .meta{color:var(--muted);font-size:12px}
 /* ---- P4: two nav models, two shapes -------------------------------------
    The tab strip mixes DROPDOWN GROUPS (Crypto▾ Markets▾ Macro▾ Explore▾ —
    pressing one opens a menu) with DIRECT JUMPS (LTHCS, AI News — pressing one
-   changes the panel) and one EXIT (Summit — pressing it leaves the site). They
-   used to be visually identical, so the only way to learn which was which was
-   to press it. Now:
+   changes the panel) and EXITS (Summit, API Universe — pressing one leaves the
+   dashboard). They used to be visually identical, so the only way to learn
+   which was which was to press it. Now:
      menu group  = outlined pill + ▾ caret  -> "this opens something"
      direct jump = flat, underline on active -> "this is a destination"
      exit        = flat + dashed underline + ↗ -> "this leaves"
@@ -1464,8 +1464,10 @@ header .meta{color:var(--muted);font-size:12px}
 /* The pill already carries the active state; the 2px bottom rule the flat
    tabs use would double up and make the pill look clipped. */
 .tabgroup:not(.tabgroup--solo) .tabgroup-btn{border-bottom-width:1px}
-/* An EXIT, not a tab. Dashed underline = "this link goes off this page". */
+/* An EXIT, not a tab. Dashed underline = "this link goes off this page".
+   Summit is a scripted div; API Universe is a real <a>, hence the reset. */
 .tab--exit{color:var(--muted);border-bottom-style:dashed;border-bottom-color:var(--border)}
+a.tab--exit{text-decoration:none}
 .tab--exit:hover{color:var(--text);border-bottom-color:var(--muted)}
 .tab--exit .exitmark{margin-left:5px;font-size:11px;opacity:.85;vertical-align:baseline}
 
@@ -2759,6 +2761,18 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
     <div class="tab tab--solo tab--exit" data-tab="summit" role="link" tabindex="0"
          title="Leaves this dashboard — opens the Competitive Landscape site, where the Summit views now live"
          aria-label="Summit — leaves this dashboard and opens the Competitive Landscape site">Summit<span class="exitmark" aria-hidden="true">&#8599;</span></div>
+  </div>
+  <!-- API Universe opens /api-universe/, a separate page (a radial map of every
+       API in the Data Sources catalog), so it is a real <a href> rather than a
+       scripted tab: no data-tab, which keeps it out of the tab wiring below
+       (.tab[data-tab]) and out of the tab-strip validator, and lets
+       middle-click / open-in-new-tab work. It wears Summit's exit look
+       (.tab--exit, the ↗ glyph, an accessible name that says where it goes)
+       because it does the same thing: it leaves the dashboard. -->
+  <div class="tabgroup tabgroup--solo">
+    <a class="tab tab--solo tab--exit" href="api-universe/"
+       title="Leaves this dashboard — opens the API Universe, a map of every API in the Data Sources catalog"
+       aria-label="API Universe — leaves this dashboard and opens a map of every API in the Data Sources catalog">API Universe<span class="exitmark" aria-hidden="true">&#8599;</span></a>
   </div>
   </span>
 </div>
@@ -16215,7 +16229,9 @@ function selectTab(t){
     try { _activeTab.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'}); }
     catch(_){ _activeTab.scrollIntoView(); }
   }
-  document.querySelectorAll('.tab').forEach(el => {
+  // .tab[data-tab]: the strip's tabs only. The API Universe exit is a plain
+  // <a class="tab"> link, and aria-selected is not allowed on a link.
+  document.querySelectorAll('.tab[data-tab]').forEach(el => {
     const isActive = el.dataset.tab === t;
     el.classList.toggle('active', isActive);
     el.setAttribute('aria-selected', isActive ? 'true' : 'false');
@@ -16807,7 +16823,9 @@ function handleTabActivate(t){
   if (t === 'summit') { window.location.href = 'landscape/?pres=absent'; return; }
   selectTab(t);
 }
-document.querySelectorAll('.tab').forEach(b => {
+// .tab[data-tab], not .tab: the API Universe exit is a real <a href> and must
+// keep the browser's own click / Enter / middle-click behaviour.
+document.querySelectorAll('.tab[data-tab]').forEach(b => {
   b.addEventListener('click', () => handleTabActivate(b.dataset.tab));
   b.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {

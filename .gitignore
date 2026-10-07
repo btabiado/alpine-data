@@ -85,6 +85,9 @@ data-*.json
 !data-opensky.json
 # Built by pages.yml at deploy time, never committed: data-opensky-positions.json (data-*.json above) and
 health/api-catalog.xlsx
+# The /api-universe/ page's data, built from health/api_catalog.json and
+# health/catalog_health.json by scripts/build_api_universe.py on every deploy.
+api_universe/data.json
 # Carve-out: data-mufon.json IS committed — the UAP tab's sidecar: the frozen
 # NUFORC cache (data through 2026-06-09), published as is. Nothing refreshes it.
 !data-mufon.json

@@ -50,6 +50,7 @@ What the main tabs show:
 Also on the dashboard:
 
 - A rule-based **insights bar**.
+- **API Universe** (the last link in the tab bar): `/api-universe/`, a radial map of every API in the Data Sources catalog, with filters, search and a browsable table. The page is `api_universe/index.html`; its `data.json` is built from `health/api_catalog.json` and `health/catalog_health.json` by `scripts/build_api_universe.py` on every deploy.
 - A Claude-powered **Ask the data** chat dock. Under `server.py` it uses the server's `ANTHROPIC_API_KEY`. On the public site, the visitor pastes their own key, which stays in their browser.
 - **Symbol search**:
   - Crypto symbols outside the cached top 25 are fetched live in the browser from CoinGecko, falling back to Coinbase, Kraken and Binance.US daily candles.
@@ -318,6 +319,7 @@ insights.py       insights bar rules
 chat.py           "Ask the data" chat dock
 city/             City tab sources and scoring
 lthcs/            LTHCS scoring package; lthcs_daily.py runs it, lthcs_*/ are its pages
+api_universe/     the /api-universe/ page (its data.json is built at deploy time)
 scripts/          workflow entry points and maintenance tools
 tools/            validators for the built dashboard
 tests/            pytest suite
