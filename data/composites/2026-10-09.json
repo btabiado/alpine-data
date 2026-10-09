@@ -1,6 +1,6 @@
 {
   "as_of": "2026-10-09",
-  "generated_at": "2026-10-09T16:05:04Z",
+  "generated_at": "2026-10-09T16:16:41Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-09",
@@ -13,7 +13,7 @@
       "as_of": "2026-10-09",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": -2,
+      "score": -4,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -39,23 +39,23 @@
     },
     "futures_sentiment": {
       "as_of": "2026-10-08",
-      "label": "CROWDED LONGS",
+      "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 36,
+      "score": 1,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-10-08",
-      "label": "CROWDED LONGS",
+      "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 36,
+      "score": 1,
       "stale": false
     },
     "futures_sentiment_eth": {
-      "as_of": "2026-10-08",
-      "label": "STRONG CROWDED LONGS",
+      "as_of": "2026-10-09",
+      "label": "BALANCED",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 59,
+      "score": 14,
       "stale": false
     },
     "futures_sentiment_link": {
@@ -67,9 +67,9 @@
     },
     "futures_sentiment_ltc": {
       "as_of": "2026-10-08",
-      "label": "STRONG CROWDED LONGS",
+      "label": "BALANCED",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 66,
+      "score": 13,
       "stale": false
     },
     "lthcs_composite": {
@@ -83,7 +83,7 @@
       "as_of": "2026-10-09",
       "label": "Neutral",
       "note": null,
-      "score": -4.78,
+      "score": -4.75,
       "stale": false
     },
     "overview_sentiment": {
@@ -103,8 +103,8 @@
     "stocks_signal_breadth": {
       "as_of": "2026-10-08",
       "label": "NEUTRAL",
-      "note": "50 stocks; 12 buy+, 12 sell+",
-      "score": 0,
+      "note": "50 stocks; 12 buy+, 13 sell+",
+      "score": -2,
       "stale": false
     },
     "whale_sentiment_btc": {
