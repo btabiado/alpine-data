@@ -3,6 +3,11 @@
   "model_version": "v1.1.1",
   "history": [
     {
+      "date": "2026-10-10",
+      "score": 70.7,
+      "band": "elite"
+    },
+    {
       "date": "2026-10-09",
       "score": 71.1,
       "band": "elite"
