@@ -1,6 +1,6 @@
 {
   "as_of": "2026-10-10",
-  "generated_at": "2026-10-10T15:13:00Z",
+  "generated_at": "2026-10-10T15:26:49Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-10",
@@ -55,7 +55,7 @@
       "as_of": "2026-10-09",
       "label": "CROWDED LONGS",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 22,
+      "score": 21,
       "stale": false
     },
     "futures_sentiment_link": {
@@ -103,8 +103,8 @@
     "stocks_signal_breadth": {
       "as_of": "2026-10-09",
       "label": "NEUTRAL",
-      "note": "50 stocks; 12 buy+, 14 sell+",
-      "score": -4,
+      "note": "50 stocks; 13 buy+, 14 sell+",
+      "score": -2,
       "stale": false
     },
     "whale_sentiment_btc": {
