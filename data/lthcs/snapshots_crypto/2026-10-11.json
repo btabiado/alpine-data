@@ -1,0 +1,1465 @@
+{
+  "calc_date": "2026-10-11",
+  "model_version": "v1.1.1",
+  "asset_class": "crypto",
+  "scores": [
+    {
+      "ticker": "BTC",
+      "lthcs_score": 75.0,
+      "band": "elite",
+      "drift_1d": -5.0,
+      "drift_7d": 1.3,
+      "drift_30d": 0.4,
+      "drift_90d": 9.6,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable",
+        "des_asset_inputs_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 43.6,
+        "institutional_confidence": 84.2,
+        "financial_evolution": 76.4,
+        "thesis_integrity": null,
+        "des": null
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "btc",
+      "weights_used": [
+        0.1,
+        0.3,
+        0.25,
+        0.15,
+        0.2
+      ],
+      "effective_weights": [
+        0.15384615384615385,
+        0.4615384615384615,
+        0.3846153846153846,
+        0.0,
+        0.0
+      ],
+      "dropped_pillars": [
+        "des",
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        6.707692307692308,
+        38.86153846153846,
+        29.384615384615383,
+        0.0,
+        0.0
+      ],
+      "sector": "Crypto",
+      "asset_class": "crypto",
+      "pillars_detail": {
+        "adoption_momentum": {
+          "sub_score": 43.6,
+          "components": {
+            "active_addresses_pct_30d": -8.096555645426081,
+            "active_subscore": 33.80688870914784,
+            "tx_volume_pct_30d": -49.8104425302679,
+            "txvol_subscore": 0.18955746973210097,
+            "hash_rate_pct_30d": 20.450237445213126,
+            "security_subscore": 100.0
+          },
+          "data_quality": {
+            "has_active_addresses": true,
+            "has_tx_volume": true,
+            "has_security": true
+          }
+        },
+        "institutional_confidence": {
+          "sub_score": 84.2,
+          "components": {
+            "whale_cohort_pct_30d": null,
+            "whale_subscore": null,
+            "etf_flow_30d_usd_m": 3991.7,
+            "etf_subscore": 100.0,
+            "price_change_pct_30d": 6.3245,
+            "momentum_subscore": 60.54083333333333
+          },
+          "data_quality": {
+            "has_whale_cohort": false,
+            "has_etf_flow": true,
+            "has_price_momentum": true
+          }
+        },
+        "financial_evolution": {
+          "sub_score": 76.4,
+          "components": {
+            "miners_revenue_pct_30d": 21.506939005919197,
+            "revenue_subscore": 76.883673757399,
+            "market_cap_proxy_pct_30d": 6.3245,
+            "realized_subscore": 60.54083333333333,
+            "supply_inflation_pct_yr": 0.83,
+            "supply_subscore": 91.7
+          },
+          "data_quality": {
+            "has_revenue": true,
+            "has_realized_cap": true,
+            "has_supply_inflation": true
+          }
+        },
+        "thesis_integrity": {
+          "sub_score": 50.0,
+          "components": {
+            "funding_rate_pct_8h": null,
+            "funding_rate_30d_mean_pct_8h": null,
+            "funding_subscore": null,
+            "funding_polarity": null,
+            "long_short_ratio": null,
+            "long_short_ratio_30d_mean": null,
+            "ls_subscore": null,
+            "ls_polarity": null,
+            "narrative_sentiment": null,
+            "sentiment_subscore": null
+          },
+          "data_quality": {
+            "has_funding": false,
+            "has_long_short": false,
+            "has_sentiment": false
+          }
+        },
+        "des": {
+          "sub_score": 54.3,
+          "components": {
+            "stablecoin_delta_30d_pct": 0.8555051766869076,
+            "stablecoin_subscore": 54.27752588343454,
+            "exchange_reserves_pct_30d": null,
+            "reserves_subscore": null,
+            "macro_overlay_subscore": null,
+            "macro_inputs": {
+              "hy_oas": null,
+              "vix": null,
+              "ten_y_30d_change_bp": null
+            }
+          },
+          "data_quality": {
+            "has_stablecoin": true,
+            "has_exchange_reserves": false,
+            "has_macro_overlay": false
+          }
+        }
+      }
+    },
+    {
+      "ticker": "ETH",
+      "lthcs_score": 68.1,
+      "band": "high_confidence",
+      "drift_1d": -2.1,
+      "drift_7d": 1.5,
+      "drift_30d": -8.1,
+      "drift_90d": 12.3,
+      "confidence_level": "low",
+      "data_quality_flags": [
+        "thesis_unavailable",
+        "adoption_unavailable",
+        "des_asset_inputs_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": null,
+        "institutional_confidence": 64.1,
+        "financial_evolution": 72.1,
+        "thesis_integrity": null,
+        "des": null
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "eth",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.2,
+        0.2,
+        0.15
+      ],
+      "effective_weights": [
+        0.0,
+        0.5,
+        0.5,
+        0.0,
+        0.0
+      ],
+      "dropped_pillars": [
+        "adoption_momentum",
+        "des",
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.0,
+        32.05,
+        36.05,
+        0.0,
+        0.0
+      ],
+      "sector": "Crypto",
+      "asset_class": "crypto",
+      "pillars_detail": {
+        "adoption_momentum": {
+          "sub_score": 50.0,
+          "components": {
+            "active_addresses_pct_30d": null,
+            "active_subscore": null,
+            "tx_volume_pct_30d": null,
+            "txvol_subscore": null,
+            "active_addr_proxy_pct_30d": null,
+            "security_subscore": null
+          },
+          "data_quality": {
+            "has_active_addresses": false,
+            "has_tx_volume": false,
+            "has_security": false
+          }
+        },
+        "institutional_confidence": {
+          "sub_score": 64.1,
+          "components": {
+            "whale_cohort_pct_30d": null,
+            "whale_subscore": null,
+            "etf_flow_30d_usd_m": 1599.5999999999997,
+            "etf_subscore": 76.66,
+            "price_change_pct_30d": -2.8468,
+            "momentum_subscore": 45.25533333333333
+          },
+          "data_quality": {
+            "has_whale_cohort": false,
+            "has_etf_flow": true,
+            "has_price_momentum": true
+          }
+        },
+        "financial_evolution": {
+          "sub_score": 72.1,
+          "components": {
+            "tx_volume_proxy_pct_30d": null,
+            "revenue_subscore": null,
+            "market_cap_proxy_pct_30d": -2.8468,
+            "realized_subscore": 45.25533333333333,
+            "supply_inflation_pct_yr": 0.1,
+            "supply_subscore": 99.0
+          },
+          "data_quality": {
+            "has_revenue": false,
+            "has_realized_cap": true,
+            "has_supply_inflation": true
+          }
+        },
+        "thesis_integrity": {
+          "sub_score": 50.0,
+          "components": {
+            "funding_rate_pct_8h": null,
+            "funding_rate_30d_mean_pct_8h": null,
+            "funding_subscore": null,
+            "funding_polarity": null,
+            "long_short_ratio": null,
+            "long_short_ratio_30d_mean": null,
+            "ls_subscore": null,
+            "ls_polarity": null,
+            "narrative_sentiment": null,
+            "sentiment_subscore": null
+          },
+          "data_quality": {
+            "has_funding": false,
+            "has_long_short": false,
+            "has_sentiment": false
+          }
+        },
+        "des": {
+          "sub_score": 54.3,
+          "components": {
+            "stablecoin_delta_30d_pct": 0.8555051766869076,
+            "stablecoin_subscore": 54.27752588343454,
+            "exchange_reserves_pct_30d": null,
+            "reserves_subscore": null,
+            "macro_overlay_subscore": null,
+            "macro_inputs": {
+              "hy_oas": null,
+              "vix": null,
+              "ten_y_30d_change_bp": null
+            }
+          },
+          "data_quality": {
+            "has_stablecoin": true,
+            "has_exchange_reserves": false,
+            "has_macro_overlay": false
+          }
+        }
+      }
+    },
+    {
+      "ticker": "SOL",
+      "lthcs_score": 58.4,
+      "band": "constructive",
+      "drift_1d": 2.3,
+      "drift_7d": -2.2,
+      "drift_30d": -7.9,
+      "drift_90d": 0.7,
+      "confidence_level": "low",
+      "data_quality_flags": [
+        "thesis_unavailable",
+        "adoption_unavailable",
+        "des_asset_inputs_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": null,
+        "institutional_confidence": 63.7,
+        "financial_evolution": 54.4,
+        "thesis_integrity": null,
+        "des": null
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "sol",
+      "weights_used": [
+        0.3,
+        0.15,
+        0.2,
+        0.2,
+        0.15
+      ],
+      "effective_weights": [
+        0.0,
+        0.4285714285714286,
+        0.5714285714285715,
+        0.0,
+        0.0
+      ],
+      "dropped_pillars": [
+        "adoption_momentum",
+        "des",
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.0,
+        27.300000000000004,
+        31.08571428571429,
+        0.0,
+        0.0
+      ],
+      "sector": "Crypto",
+      "asset_class": "crypto",
+      "pillars_detail": {
+        "adoption_momentum": {
+          "sub_score": 50.0,
+          "components": {
+            "active_addresses_pct_30d": null,
+            "active_subscore": null,
+            "tx_volume_pct_30d": null,
+            "txvol_subscore": null,
+            "active_addr_proxy_pct_30d": null,
+            "security_subscore": null
+          },
+          "data_quality": {
+            "has_active_addresses": false,
+            "has_tx_volume": false,
+            "has_security": false
+          }
+        },
+        "institutional_confidence": {
+          "sub_score": 63.7,
+          "components": {
+            "whale_cohort_pct_30d": null,
+            "whale_subscore": null,
+            "etf_flow_30d_usd_m": null,
+            "etf_subscore": null,
+            "price_change_pct_30d": 8.2479,
+            "momentum_subscore": 63.746500000000005
+          },
+          "data_quality": {
+            "has_whale_cohort": false,
+            "has_etf_flow": false,
+            "has_price_momentum": true
+          }
+        },
+        "financial_evolution": {
+          "sub_score": 54.4,
+          "components": {
+            "tx_volume_proxy_pct_30d": null,
+            "revenue_subscore": null,
+            "market_cap_proxy_pct_30d": 8.2479,
+            "realized_subscore": 63.746500000000005,
+            "supply_inflation_pct_yr": 5.5,
+            "supply_subscore": 44.99999999999999
+          },
+          "data_quality": {
+            "has_revenue": false,
+            "has_realized_cap": true,
+            "has_supply_inflation": true
+          }
+        },
+        "thesis_integrity": {
+          "sub_score": 50.0,
+          "components": {
+            "funding_rate_pct_8h": null,
+            "funding_rate_30d_mean_pct_8h": null,
+            "funding_subscore": null,
+            "funding_polarity": null,
+            "long_short_ratio": null,
+            "long_short_ratio_30d_mean": null,
+            "ls_subscore": null,
+            "ls_polarity": null,
+            "narrative_sentiment": null,
+            "sentiment_subscore": null
+          },
+          "data_quality": {
+            "has_funding": false,
+            "has_long_short": false,
+            "has_sentiment": false
+          }
+        },
+        "des": {
+          "sub_score": 54.3,
+          "components": {
+            "stablecoin_delta_30d_pct": 0.8555051766869076,
+            "stablecoin_subscore": 54.27752588343454,
+            "exchange_reserves_pct_30d": null,
+            "reserves_subscore": null,
+            "macro_overlay_subscore": null,
+            "macro_inputs": {
+              "hy_oas": null,
+              "vix": null,
+              "ten_y_30d_change_bp": null
+            }
+          },
+          "data_quality": {
+            "has_stablecoin": true,
+            "has_exchange_reserves": false,
+            "has_macro_overlay": false
+          }
+        }
+      }
+    },
+    {
+      "ticker": "ADA",
+      "lthcs_score": 83.8,
+      "band": "elite",
+      "drift_1d": 11.5,
+      "drift_7d": 16.2,
+      "drift_30d": 22.8,
+      "drift_90d": 28.6,
+      "confidence_level": "low",
+      "data_quality_flags": [
+        "thesis_unavailable",
+        "adoption_unavailable",
+        "des_asset_inputs_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": null,
+        "institutional_confidence": 83.3,
+        "financial_evolution": 84.2,
+        "thesis_integrity": null,
+        "des": null
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "layer_1_alt",
+      "weights_used": [
+        0.3,
+        0.15,
+        0.2,
+        0.2,
+        0.15
+      ],
+      "effective_weights": [
+        0.0,
+        0.4285714285714286,
+        0.5714285714285715,
+        0.0,
+        0.0
+      ],
+      "dropped_pillars": [
+        "adoption_momentum",
+        "des",
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.0,
+        35.7,
+        48.11428571428572,
+        0.0,
+        0.0
+      ],
+      "sector": "Crypto",
+      "asset_class": "crypto",
+      "pillars_detail": {
+        "adoption_momentum": {
+          "sub_score": 50.0,
+          "components": {
+            "active_addresses_pct_30d": null,
+            "active_subscore": null,
+            "tx_volume_pct_30d": null,
+            "txvol_subscore": null,
+            "active_addr_proxy_pct_30d": null,
+            "security_subscore": null
+          },
+          "data_quality": {
+            "has_active_addresses": false,
+            "has_tx_volume": false,
+            "has_security": false
+          }
+        },
+        "institutional_confidence": {
+          "sub_score": 83.3,
+          "components": {
+            "whale_cohort_pct_30d": null,
+            "whale_subscore": null,
+            "etf_flow_30d_usd_m": null,
+            "etf_subscore": null,
+            "price_change_pct_30d": 19.9834,
+            "momentum_subscore": 83.30566666666667
+          },
+          "data_quality": {
+            "has_whale_cohort": false,
+            "has_etf_flow": false,
+            "has_price_momentum": true
+          }
+        },
+        "financial_evolution": {
+          "sub_score": 84.2,
+          "components": {
+            "tx_volume_proxy_pct_30d": null,
+            "revenue_subscore": null,
+            "market_cap_proxy_pct_30d": 19.9834,
+            "realized_subscore": 83.30566666666667,
+            "supply_inflation_pct_yr": 1.5,
+            "supply_subscore": 85.0
+          },
+          "data_quality": {
+            "has_revenue": false,
+            "has_realized_cap": true,
+            "has_supply_inflation": true
+          }
+        },
+        "thesis_integrity": {
+          "sub_score": 50.0,
+          "components": {
+            "funding_rate_pct_8h": null,
+            "funding_rate_30d_mean_pct_8h": null,
+            "funding_subscore": null,
+            "funding_polarity": null,
+            "long_short_ratio": null,
+            "long_short_ratio_30d_mean": null,
+            "ls_subscore": null,
+            "ls_polarity": null,
+            "narrative_sentiment": null,
+            "sentiment_subscore": null
+          },
+          "data_quality": {
+            "has_funding": false,
+            "has_long_short": false,
+            "has_sentiment": false
+          }
+        },
+        "des": {
+          "sub_score": 54.3,
+          "components": {
+            "stablecoin_delta_30d_pct": 0.8555051766869076,
+            "stablecoin_subscore": 54.27752588343454,
+            "exchange_reserves_pct_30d": null,
+            "reserves_subscore": null,
+            "macro_overlay_subscore": null,
+            "macro_inputs": {
+              "hy_oas": null,
+              "vix": null,
+              "ten_y_30d_change_bp": null
+            }
+          },
+          "data_quality": {
+            "has_stablecoin": true,
+            "has_exchange_reserves": false,
+            "has_macro_overlay": false
+          }
+        }
+      }
+    },
+    {
+      "ticker": "AVAX",
+      "lthcs_score": 87.1,
+      "band": "elite",
+      "drift_1d": 0.5,
+      "drift_7d": 19.6,
+      "drift_30d": 24.0,
+      "drift_90d": 43.7,
+      "confidence_level": "low",
+      "data_quality_flags": [
+        "thesis_unavailable",
+        "adoption_unavailable",
+        "des_asset_inputs_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": null,
+        "institutional_confidence": 100.0,
+        "financial_evolution": 77.5,
+        "thesis_integrity": null,
+        "des": null
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "layer_1_alt",
+      "weights_used": [
+        0.3,
+        0.15,
+        0.2,
+        0.2,
+        0.15
+      ],
+      "effective_weights": [
+        0.0,
+        0.4285714285714286,
+        0.5714285714285715,
+        0.0,
+        0.0
+      ],
+      "dropped_pillars": [
+        "adoption_momentum",
+        "des",
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.0,
+        42.85714285714286,
+        44.28571428571429,
+        0.0,
+        0.0
+      ],
+      "sector": "Crypto",
+      "asset_class": "crypto",
+      "pillars_detail": {
+        "adoption_momentum": {
+          "sub_score": 50.0,
+          "components": {
+            "active_addresses_pct_30d": null,
+            "active_subscore": null,
+            "tx_volume_pct_30d": null,
+            "txvol_subscore": null,
+            "active_addr_proxy_pct_30d": null,
+            "security_subscore": null
+          },
+          "data_quality": {
+            "has_active_addresses": false,
+            "has_tx_volume": false,
+            "has_security": false
+          }
+        },
+        "institutional_confidence": {
+          "sub_score": 100.0,
+          "components": {
+            "whale_cohort_pct_30d": null,
+            "whale_subscore": null,
+            "etf_flow_30d_usd_m": null,
+            "etf_subscore": null,
+            "price_change_pct_30d": 40.0966,
+            "momentum_subscore": 100.0
+          },
+          "data_quality": {
+            "has_whale_cohort": false,
+            "has_etf_flow": false,
+            "has_price_momentum": true
+          }
+        },
+        "financial_evolution": {
+          "sub_score": 77.5,
+          "components": {
+            "tx_volume_proxy_pct_30d": null,
+            "revenue_subscore": null,
+            "market_cap_proxy_pct_30d": 40.0966,
+            "realized_subscore": 100.0,
+            "supply_inflation_pct_yr": 4.5,
+            "supply_subscore": 55.0
+          },
+          "data_quality": {
+            "has_revenue": false,
+            "has_realized_cap": true,
+            "has_supply_inflation": true
+          }
+        },
+        "thesis_integrity": {
+          "sub_score": 50.0,
+          "components": {
+            "funding_rate_pct_8h": null,
+            "funding_rate_30d_mean_pct_8h": null,
+            "funding_subscore": null,
+            "funding_polarity": null,
+            "long_short_ratio": null,
+            "long_short_ratio_30d_mean": null,
+            "ls_subscore": null,
+            "ls_polarity": null,
+            "narrative_sentiment": null,
+            "sentiment_subscore": null
+          },
+          "data_quality": {
+            "has_funding": false,
+            "has_long_short": false,
+            "has_sentiment": false
+          }
+        },
+        "des": {
+          "sub_score": 54.3,
+          "components": {
+            "stablecoin_delta_30d_pct": 0.8555051766869076,
+            "stablecoin_subscore": 54.27752588343454,
+            "exchange_reserves_pct_30d": null,
+            "reserves_subscore": null,
+            "macro_overlay_subscore": null,
+            "macro_inputs": {
+              "hy_oas": null,
+              "vix": null,
+              "ten_y_30d_change_bp": null
+            }
+          },
+          "data_quality": {
+            "has_stablecoin": true,
+            "has_exchange_reserves": false,
+            "has_macro_overlay": false
+          }
+        }
+      }
+    },
+    {
+      "ticker": "DOT",
+      "lthcs_score": 63.7,
+      "band": "high_confidence",
+      "drift_1d": 12.8,
+      "drift_7d": -0.1,
+      "drift_30d": 5.1,
+      "drift_90d": 27.2,
+      "confidence_level": "low",
+      "data_quality_flags": [
+        "thesis_unavailable",
+        "adoption_unavailable",
+        "des_asset_inputs_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": null,
+        "institutional_confidence": 79.1,
+        "financial_evolution": 52.1,
+        "thesis_integrity": null,
+        "des": null
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "layer_1_alt",
+      "weights_used": [
+        0.3,
+        0.15,
+        0.2,
+        0.2,
+        0.15
+      ],
+      "effective_weights": [
+        0.0,
+        0.4285714285714286,
+        0.5714285714285715,
+        0.0,
+        0.0
+      ],
+      "dropped_pillars": [
+        "adoption_momentum",
+        "des",
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.0,
+        33.9,
+        29.771428571428576,
+        0.0,
+        0.0
+      ],
+      "sector": "Crypto",
+      "asset_class": "crypto",
+      "pillars_detail": {
+        "adoption_momentum": {
+          "sub_score": 50.0,
+          "components": {
+            "active_addresses_pct_30d": null,
+            "active_subscore": null,
+            "tx_volume_pct_30d": null,
+            "txvol_subscore": null,
+            "active_addr_proxy_pct_30d": null,
+            "security_subscore": null
+          },
+          "data_quality": {
+            "has_active_addresses": false,
+            "has_tx_volume": false,
+            "has_security": false
+          }
+        },
+        "institutional_confidence": {
+          "sub_score": 79.1,
+          "components": {
+            "whale_cohort_pct_30d": null,
+            "whale_subscore": null,
+            "etf_flow_30d_usd_m": null,
+            "etf_subscore": null,
+            "price_change_pct_30d": 17.4673,
+            "momentum_subscore": 79.11216666666667
+          },
+          "data_quality": {
+            "has_whale_cohort": false,
+            "has_etf_flow": false,
+            "has_price_momentum": true
+          }
+        },
+        "financial_evolution": {
+          "sub_score": 52.1,
+          "components": {
+            "tx_volume_proxy_pct_30d": null,
+            "revenue_subscore": null,
+            "market_cap_proxy_pct_30d": 17.4673,
+            "realized_subscore": 79.11216666666667,
+            "supply_inflation_pct_yr": 7.5,
+            "supply_subscore": 25.0
+          },
+          "data_quality": {
+            "has_revenue": false,
+            "has_realized_cap": true,
+            "has_supply_inflation": true
+          }
+        },
+        "thesis_integrity": {
+          "sub_score": 50.0,
+          "components": {
+            "funding_rate_pct_8h": null,
+            "funding_rate_30d_mean_pct_8h": null,
+            "funding_subscore": null,
+            "funding_polarity": null,
+            "long_short_ratio": null,
+            "long_short_ratio_30d_mean": null,
+            "ls_subscore": null,
+            "ls_polarity": null,
+            "narrative_sentiment": null,
+            "sentiment_subscore": null
+          },
+          "data_quality": {
+            "has_funding": false,
+            "has_long_short": false,
+            "has_sentiment": false
+          }
+        },
+        "des": {
+          "sub_score": 54.3,
+          "components": {
+            "stablecoin_delta_30d_pct": 0.8555051766869076,
+            "stablecoin_subscore": 54.27752588343454,
+            "exchange_reserves_pct_30d": null,
+            "reserves_subscore": null,
+            "macro_overlay_subscore": null,
+            "macro_inputs": {
+              "hy_oas": null,
+              "vix": null,
+              "ten_y_30d_change_bp": null
+            }
+          },
+          "data_quality": {
+            "has_stablecoin": true,
+            "has_exchange_reserves": false,
+            "has_macro_overlay": false
+          }
+        }
+      }
+    },
+    {
+      "ticker": "LINK",
+      "lthcs_score": 78.3,
+      "band": "elite",
+      "drift_1d": 6.1,
+      "drift_7d": 3.8,
+      "drift_30d": 0.6,
+      "drift_90d": 22.5,
+      "confidence_level": "low",
+      "data_quality_flags": [
+        "thesis_unavailable",
+        "adoption_unavailable",
+        "des_asset_inputs_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": null,
+        "institutional_confidence": 70.0,
+        "financial_evolution": 85.0,
+        "thesis_integrity": null,
+        "des": null
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "oracle_defi",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.25,
+        0.15,
+        0.15
+      ],
+      "effective_weights": [
+        0.0,
+        0.4444444444444445,
+        0.5555555555555556,
+        0.0,
+        0.0
+      ],
+      "dropped_pillars": [
+        "adoption_momentum",
+        "des",
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.0,
+        31.111111111111114,
+        47.22222222222222,
+        0.0,
+        0.0
+      ],
+      "sector": "Crypto",
+      "asset_class": "crypto",
+      "pillars_detail": {
+        "adoption_momentum": {
+          "sub_score": 50.0,
+          "components": {
+            "active_addresses_pct_30d": null,
+            "active_subscore": null,
+            "tx_volume_pct_30d": null,
+            "txvol_subscore": null,
+            "active_addr_proxy_pct_30d": null,
+            "security_subscore": null
+          },
+          "data_quality": {
+            "has_active_addresses": false,
+            "has_tx_volume": false,
+            "has_security": false
+          }
+        },
+        "institutional_confidence": {
+          "sub_score": 70.0,
+          "components": {
+            "whale_cohort_pct_30d": null,
+            "whale_subscore": null,
+            "etf_flow_30d_usd_m": null,
+            "etf_subscore": null,
+            "price_change_pct_30d": 11.9747,
+            "momentum_subscore": 69.95783333333333
+          },
+          "data_quality": {
+            "has_whale_cohort": false,
+            "has_etf_flow": false,
+            "has_price_momentum": true
+          }
+        },
+        "financial_evolution": {
+          "sub_score": 85.0,
+          "components": {
+            "tx_volume_proxy_pct_30d": null,
+            "revenue_subscore": null,
+            "market_cap_proxy_pct_30d": 11.9747,
+            "realized_subscore": 69.95783333333333,
+            "supply_inflation_pct_yr": 0.0,
+            "supply_subscore": 100.0
+          },
+          "data_quality": {
+            "has_revenue": false,
+            "has_realized_cap": true,
+            "has_supply_inflation": true
+          }
+        },
+        "thesis_integrity": {
+          "sub_score": 50.0,
+          "components": {
+            "funding_rate_pct_8h": null,
+            "funding_rate_30d_mean_pct_8h": null,
+            "funding_subscore": null,
+            "funding_polarity": null,
+            "long_short_ratio": null,
+            "long_short_ratio_30d_mean": null,
+            "ls_subscore": null,
+            "ls_polarity": null,
+            "narrative_sentiment": null,
+            "sentiment_subscore": null
+          },
+          "data_quality": {
+            "has_funding": false,
+            "has_long_short": false,
+            "has_sentiment": false
+          }
+        },
+        "des": {
+          "sub_score": 54.3,
+          "components": {
+            "stablecoin_delta_30d_pct": 0.8555051766869076,
+            "stablecoin_subscore": 54.27752588343454,
+            "exchange_reserves_pct_30d": null,
+            "reserves_subscore": null,
+            "macro_overlay_subscore": null,
+            "macro_inputs": {
+              "hy_oas": null,
+              "vix": null,
+              "ten_y_30d_change_bp": null
+            }
+          },
+          "data_quality": {
+            "has_stablecoin": true,
+            "has_exchange_reserves": false,
+            "has_macro_overlay": false
+          }
+        }
+      }
+    },
+    {
+      "ticker": "POL",
+      "lthcs_score": 23.3,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": -16.3,
+      "drift_30d": -16.4,
+      "drift_90d": -32.0,
+      "confidence_level": "low",
+      "data_quality_flags": [
+        "thesis_unavailable",
+        "adoption_unavailable",
+        "des_asset_inputs_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": null,
+        "institutional_confidence": 0.6,
+        "financial_evolution": 40.3,
+        "thesis_integrity": null,
+        "des": null
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "layer_2",
+      "weights_used": [
+        0.3,
+        0.15,
+        0.2,
+        0.2,
+        0.15
+      ],
+      "effective_weights": [
+        0.0,
+        0.4285714285714286,
+        0.5714285714285715,
+        0.0,
+        0.0
+      ],
+      "dropped_pillars": [
+        "adoption_momentum",
+        "des",
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.0,
+        0.2571428571428572,
+        23.02857142857143,
+        0.0,
+        0.0
+      ],
+      "sector": "Crypto",
+      "asset_class": "crypto",
+      "pillars_detail": {
+        "adoption_momentum": {
+          "sub_score": 50.0,
+          "components": {
+            "active_addresses_pct_30d": null,
+            "active_subscore": null,
+            "tx_volume_pct_30d": null,
+            "txvol_subscore": null,
+            "active_addr_proxy_pct_30d": null,
+            "security_subscore": null
+          },
+          "data_quality": {
+            "has_active_addresses": false,
+            "has_tx_volume": false,
+            "has_security": false
+          }
+        },
+        "institutional_confidence": {
+          "sub_score": 0.6,
+          "components": {
+            "whale_cohort_pct_30d": null,
+            "whale_subscore": null,
+            "etf_flow_30d_usd_m": null,
+            "etf_subscore": null,
+            "price_change_pct_30d": -29.618,
+            "momentum_subscore": 0.636666666666669
+          },
+          "data_quality": {
+            "has_whale_cohort": false,
+            "has_etf_flow": false,
+            "has_price_momentum": true
+          }
+        },
+        "financial_evolution": {
+          "sub_score": 40.3,
+          "components": {
+            "tx_volume_proxy_pct_30d": null,
+            "revenue_subscore": null,
+            "market_cap_proxy_pct_30d": -29.618,
+            "realized_subscore": 0.636666666666669,
+            "supply_inflation_pct_yr": 2.0,
+            "supply_subscore": 80.0
+          },
+          "data_quality": {
+            "has_revenue": false,
+            "has_realized_cap": true,
+            "has_supply_inflation": true
+          }
+        },
+        "thesis_integrity": {
+          "sub_score": 50.0,
+          "components": {
+            "funding_rate_pct_8h": null,
+            "funding_rate_30d_mean_pct_8h": null,
+            "funding_subscore": null,
+            "funding_polarity": null,
+            "long_short_ratio": null,
+            "long_short_ratio_30d_mean": null,
+            "ls_subscore": null,
+            "ls_polarity": null,
+            "narrative_sentiment": null,
+            "sentiment_subscore": null
+          },
+          "data_quality": {
+            "has_funding": false,
+            "has_long_short": false,
+            "has_sentiment": false
+          }
+        },
+        "des": {
+          "sub_score": 54.3,
+          "components": {
+            "stablecoin_delta_30d_pct": 0.8555051766869076,
+            "stablecoin_subscore": 54.27752588343454,
+            "exchange_reserves_pct_30d": null,
+            "reserves_subscore": null,
+            "macro_overlay_subscore": null,
+            "macro_inputs": {
+              "hy_oas": null,
+              "vix": null,
+              "ten_y_30d_change_bp": null
+            }
+          },
+          "data_quality": {
+            "has_stablecoin": true,
+            "has_exchange_reserves": false,
+            "has_macro_overlay": false
+          }
+        }
+      }
+    },
+    {
+      "ticker": "XRP",
+      "lthcs_score": 62.7,
+      "band": "constructive",
+      "drift_1d": 5.9,
+      "drift_7d": -2.6,
+      "drift_30d": -18.0,
+      "drift_90d": 9.7,
+      "confidence_level": "low",
+      "data_quality_flags": [
+        "thesis_unavailable",
+        "adoption_unavailable",
+        "des_asset_inputs_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": null,
+        "institutional_confidence": 53.4,
+        "financial_evolution": 76.7,
+        "thesis_integrity": null,
+        "des": null
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "payments",
+      "weights_used": [
+        0.2,
+        0.3,
+        0.2,
+        0.15,
+        0.15
+      ],
+      "effective_weights": [
+        0.0,
+        0.6,
+        0.4,
+        0.0,
+        0.0
+      ],
+      "dropped_pillars": [
+        "adoption_momentum",
+        "des",
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.0,
+        32.04,
+        30.680000000000003,
+        0.0,
+        0.0
+      ],
+      "sector": "Crypto",
+      "asset_class": "crypto",
+      "pillars_detail": {
+        "adoption_momentum": {
+          "sub_score": 50.0,
+          "components": {
+            "active_addresses_pct_30d": null,
+            "active_subscore": null,
+            "tx_volume_pct_30d": null,
+            "txvol_subscore": null,
+            "active_addr_proxy_pct_30d": null,
+            "security_subscore": null
+          },
+          "data_quality": {
+            "has_active_addresses": false,
+            "has_tx_volume": false,
+            "has_security": false
+          }
+        },
+        "institutional_confidence": {
+          "sub_score": 53.4,
+          "components": {
+            "whale_cohort_pct_30d": null,
+            "whale_subscore": null,
+            "etf_flow_30d_usd_m": null,
+            "etf_subscore": null,
+            "price_change_pct_30d": 2.0163,
+            "momentum_subscore": 53.3605
+          },
+          "data_quality": {
+            "has_whale_cohort": false,
+            "has_etf_flow": false,
+            "has_price_momentum": true
+          }
+        },
+        "financial_evolution": {
+          "sub_score": 76.7,
+          "components": {
+            "tx_volume_proxy_pct_30d": null,
+            "revenue_subscore": null,
+            "market_cap_proxy_pct_30d": 2.0163,
+            "realized_subscore": 53.3605,
+            "supply_inflation_pct_yr": 0.0,
+            "supply_subscore": 100.0
+          },
+          "data_quality": {
+            "has_revenue": false,
+            "has_realized_cap": true,
+            "has_supply_inflation": true
+          }
+        },
+        "thesis_integrity": {
+          "sub_score": 50.0,
+          "components": {
+            "funding_rate_pct_8h": null,
+            "funding_rate_30d_mean_pct_8h": null,
+            "funding_subscore": null,
+            "funding_polarity": null,
+            "long_short_ratio": null,
+            "long_short_ratio_30d_mean": null,
+            "ls_subscore": null,
+            "ls_polarity": null,
+            "narrative_sentiment": null,
+            "sentiment_subscore": null
+          },
+          "data_quality": {
+            "has_funding": false,
+            "has_long_short": false,
+            "has_sentiment": false
+          }
+        },
+        "des": {
+          "sub_score": 54.3,
+          "components": {
+            "stablecoin_delta_30d_pct": 0.8555051766869076,
+            "stablecoin_subscore": 54.27752588343454,
+            "exchange_reserves_pct_30d": null,
+            "reserves_subscore": null,
+            "macro_overlay_subscore": null,
+            "macro_inputs": {
+              "hy_oas": null,
+              "vix": null,
+              "ten_y_30d_change_bp": null
+            }
+          },
+          "data_quality": {
+            "has_stablecoin": true,
+            "has_exchange_reserves": false,
+            "has_macro_overlay": false
+          }
+        }
+      }
+    },
+    {
+      "ticker": "DOGE",
+      "lthcs_score": 54.5,
+      "band": "constructive",
+      "drift_1d": 6.6,
+      "drift_7d": -2.8,
+      "drift_30d": -7.8,
+      "drift_90d": 9.6,
+      "confidence_level": "low",
+      "data_quality_flags": [
+        "thesis_unavailable",
+        "adoption_unavailable",
+        "des_asset_inputs_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": null,
+        "institutional_confidence": 51.0,
+        "financial_evolution": 58.0,
+        "thesis_integrity": null,
+        "des": null
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "meme",
+      "weights_used": [
+        0.4,
+        0.1,
+        0.1,
+        0.25,
+        0.15
+      ],
+      "effective_weights": [
+        0.0,
+        0.5,
+        0.5,
+        0.0,
+        0.0
+      ],
+      "dropped_pillars": [
+        "adoption_momentum",
+        "des",
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.0,
+        25.5,
+        29.0,
+        0.0,
+        0.0
+      ],
+      "sector": "Crypto",
+      "asset_class": "crypto",
+      "pillars_detail": {
+        "adoption_momentum": {
+          "sub_score": 50.0,
+          "components": {
+            "active_addresses_pct_30d": null,
+            "active_subscore": null,
+            "tx_volume_pct_30d": null,
+            "txvol_subscore": null,
+            "active_addr_proxy_pct_30d": null,
+            "security_subscore": null
+          },
+          "data_quality": {
+            "has_active_addresses": false,
+            "has_tx_volume": false,
+            "has_security": false
+          }
+        },
+        "institutional_confidence": {
+          "sub_score": 51.0,
+          "components": {
+            "whale_cohort_pct_30d": null,
+            "whale_subscore": null,
+            "etf_flow_30d_usd_m": null,
+            "etf_subscore": null,
+            "price_change_pct_30d": 0.6244,
+            "momentum_subscore": 51.04066666666667
+          },
+          "data_quality": {
+            "has_whale_cohort": false,
+            "has_etf_flow": false,
+            "has_price_momentum": true
+          }
+        },
+        "financial_evolution": {
+          "sub_score": 58.0,
+          "components": {
+            "tx_volume_proxy_pct_30d": null,
+            "revenue_subscore": null,
+            "market_cap_proxy_pct_30d": 0.6244,
+            "realized_subscore": 51.04066666666667,
+            "supply_inflation_pct_yr": 3.5,
+            "supply_subscore": 65.0
+          },
+          "data_quality": {
+            "has_revenue": false,
+            "has_realized_cap": true,
+            "has_supply_inflation": true
+          }
+        },
+        "thesis_integrity": {
+          "sub_score": 50.0,
+          "components": {
+            "funding_rate_pct_8h": null,
+            "funding_rate_30d_mean_pct_8h": null,
+            "funding_subscore": null,
+            "funding_polarity": null,
+            "long_short_ratio": null,
+            "long_short_ratio_30d_mean": null,
+            "ls_subscore": null,
+            "ls_polarity": null,
+            "narrative_sentiment": null,
+            "sentiment_subscore": null
+          },
+          "data_quality": {
+            "has_funding": false,
+            "has_long_short": false,
+            "has_sentiment": false
+          }
+        },
+        "des": {
+          "sub_score": 54.3,
+          "components": {
+            "stablecoin_delta_30d_pct": 0.8555051766869076,
+            "stablecoin_subscore": 54.27752588343454,
+            "exchange_reserves_pct_30d": null,
+            "reserves_subscore": null,
+            "macro_overlay_subscore": null,
+            "macro_inputs": {
+              "hy_oas": null,
+              "vix": null,
+              "ten_y_30d_change_bp": null
+            }
+          },
+          "data_quality": {
+            "has_stablecoin": true,
+            "has_exchange_reserves": false,
+            "has_macro_overlay": false
+          }
+        }
+      }
+    }
+  ]
+}
