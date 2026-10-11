@@ -1,6 +1,6 @@
 {
- "generated": "2026-10-10",
- "gathered_at": "2026-10-11T12:39:03Z",
+ "generated": "2026-10-11",
+ "gathered_at": "2026-10-11T18:04:24Z",
  "items": [
   {
    "vendor": "Semarchy",
@@ -4521,15 +4521,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "ThoughtSpot",
-   "headline": "ThoughtSpot - 2026 Funding Rounds & List of Investors",
-   "date": "2026-09-12",
-   "url": "https://news.google.com/rss/articles/CBMirwFBVV95cUxQeWdUNDI2SC1lQkUxYVpHaFVzbzNUWU5RTkhXYTRlblU3OGx0dkJSOVFidUwyNzFCS1FsZHk3c1B4UVNFMXZ4LVlXZzF6clQwaV9uOS0zVjFFMmZpdU5CMzFrdFFTU1JLNldkU0I4ZFFyXzlZekxSMlJLR1NXM0d5RWNtaHlhRl81M28yTVdNNmZJTkFnVnN5WjVVLV9Ta1J3ZFoyUXQ2QnRzMHp0c0Fn?oc=5",
-   "source": "tracxn.com",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "OpenAI",
    "headline": "How Dario Amodei's \"Big Blob Of Compute\" Essay At OpenAI In 2017 Had Predicted Some Parts Of The AI Revolution",
    "date": "2026-10-07",
@@ -5885,6 +5876,42 @@
    "date": "2026-09-19",
    "url": "https://news.google.com/rss/articles/CBMioAFBVV95cUxPdlVhOW5qdVRQeFhfaDJTQ1Nic2VpVzJMZHpqbFM4Ql9tU0VpbG1HM1RYWm91S2NlbnpFZHZXVEJuSkIxMURQd1hlY0VQWG1UaWdROHBEcXFMUVpuUFBmSEVMM091bnNPMFNCN2dWNEszQ003ZzZITFBtbWxvV3FIVERaajBPQjg4T0pjUkREa2o0cjlQUmhDUlN5Q0VicUV2?oc=5",
    "source": "Dealroom",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Reducto",
+   "headline": "Reducto's Alhait and Agarwal: Parsing 3 Million Epstein-File Pages Exposed AI's Redaction Blind Spot",
+   "date": "2026-10-11",
+   "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE8yc29UUUVsNzFoZ0tiQVhLYV9xUmNjandPTjRIbzlDUm9aQXQ5Zlp6T0hDZUlBNjMtSXpHcG4tWXoxOGRweElvMlhPb25WNnBiVFp2YUVEZ3pPUkU?oc=5",
+   "source": "BigGo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "ThoughtSpot",
+   "headline": "ThoughtSpot Showcases Agentic Analytics Strategy With Ecosystem Partners",
+   "date": "2026-10-11",
+   "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxPNnpBWGsycndQT3V1MHpINEdZek5JVjBjb01NTnI2UjJ4TUYxTEphNzZOR0tmdVBqT084dHV6VWFCYlFiMDF3LWg1X2FfZ2FlSEpMUHBEMWlNbktPNUdIaVpKR3dnVjNJRldRWWlhXzgtbHNlcUJmR21OdlBGLS1JR1hrV3UtS3BtMEFic2ZjTDRuNzQwRTdHU0FVal9RalVyRnNmZEpKdS1lNmwwRUFiTkh5UXNKdVFkelJORA?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Reducto",
+   "headline": "Parsing the Epstein Files for JMail — Palak Agarwal & Omar Alhait, Reducto｜AI Engineer",
+   "date": "2026-10-09",
+   "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE03dDUxdnBnOHN0R0lVSldfZmRadm1ka3drMzBiWE93eVl6WEFWMEpmeTcyWkZqMnJwS3VfT1lIRHJvNkdEdTZuZUFfWDRGTnlRZVdUTHJ3MDh3ZVBiem1j?oc=5",
+   "source": "finance.biggo.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Reltio",
+   "headline": "Reltio’s Newest Innovations Empower Data Leaders with Premier Data Unification and AI Capabilities",
+   "date": "2026-09-28",
+   "url": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxPaDVFLWwtbzZaTXk4NWJBTUJhc1pBczhzSVAySnljNWlaSFpWVFQ4LUlLTTJYZTR0M1hNNVZBdE53Yl9wUkVrMEFvQkFfbVVaanRTNHpPcVFwaGwyZkhfZDhZeXkwNVhaWk9GcXNlM0VtV2Z2UlhaQUpNSW5FOXlFX3p1amdjVG1nWUNkelFuS0t1RHdJSjl5YjhwZjNQbG9fTFhxbm9Dd0NXVGJic091UWhPc01hY29RUS0yR0w2U011bUxsWkJfWDZteC1wWXdYSzRVeDBndW41ejZwLWRUaw?oc=5",
+   "source": "HPCwire",
    "summary": "",
    "relevance": "medium"
   }
