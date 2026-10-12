@@ -1,0 +1,49 @@
+name: crypto-odds-daily
+
+# Daily refresh for /crypto-odds/ (option-implied settlement odds for BTC, ETH, XRP).
+# crypto_odds/build_odds.py snapshots Deribit's public option chains, fits the market-implied
+# curves with the vendored research engine (crypto_odds/engine), and rewrites crypto_odds/odds.json.
+# If no chain is usable it exits non-zero and the last-good odds.json stays in place.
+#
+# 14:15 UTC, offset from the other data bots (06:00, 07:00, 08:30). [skip ci] keeps the push from
+# retriggering pages.yml; its hourly cron publishes the new odds.json.
+on:
+  schedule:
+    - cron: "15 14 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crypto-odds-daily-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-24.04  # pinned, matching the repo's other Python jobs
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.11"
+
+      - name: Install engine dependencies
+        run: pip install -r crypto_odds/requirements.txt
+
+      - name: Build odds.json from live Deribit chains
+        timeout-minutes: 8
+        run: python crypto_odds/build_odds.py
+
+      - name: Commit odds snapshot via signed API commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHOR_NAME: crypto-odds-bot
+          AUTHOR_EMAIL: crypto-odds-bot@users.noreply.github.com
+        run: |
+          git add crypto_odds/odds.json
+          .github/scripts/api-commit.sh \
+            "crypto-odds: option-implied odds snapshot $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"

@@ -810,6 +810,12 @@ jobs:
             mkdir -p "$d"
             cp site_static/v2-redirect.html "$d/index.html"
           done
+          # Stage the Crypto Price Odds page under /crypto-odds/: the static page plus its two JSON files.
+          # odds.json is refreshed by crypto-odds-daily.yml; the vendored engine is not published.
+          if [ -f crypto_odds/index.html ]; then
+            mkdir -p _site/crypto-odds
+            cp crypto_odds/index.html crypto_odds/odds.json crypto_odds/findings.json _site/crypto-odds/
+          fi
           # Stage the US Real Estate Markets page under /real-estate/. Source
           # at real_estate/index.html (self-contained — inline CSS/JS, Chart.js
           # via CDN with SRI). Reads data from /data/real_estate.json built by

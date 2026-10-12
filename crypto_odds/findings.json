@@ -1,0 +1,359 @@
+{
+ "run_id": "20261012T122644Z_b031128d",
+ "engine_revision": "afb6d8a47d39c94588ab9773d7ec177c6247c2b3",
+ "holdout_seal": {
+  "settlement": "2025-08-30",
+  "spot": "2025-04-02"
+ },
+ "holdout_opened": false,
+ "metric": "Brier skill vs past event frequency (climatology); 95% block-bootstrap interval; development period only",
+ "cells": [
+  {
+   "cohort": "settlement",
+   "asset": "BTC",
+   "h": 30,
+   "indep_outcomes": 53.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.0704,
+   "best_baseline_ci": [
+    -0.0401,
+    0.1928
+   ],
+   "best_baseline_reliably_better": false,
+   "dvol_q_bss": 0.0637,
+   "dvol_q_ci": [
+    -0.0474,
+    0.175
+   ]
+  },
+  {
+   "cohort": "settlement",
+   "asset": "BTC",
+   "h": 60,
+   "indep_outcomes": 25.0,
+   "best_baseline": "garch_t",
+   "best_baseline_bss": 0.0361,
+   "best_baseline_ci": [
+    -0.1586,
+    0.2313
+   ],
+   "best_baseline_reliably_better": false,
+   "dvol_q_bss": 0.0398,
+   "dvol_q_ci": [
+    -0.1676,
+    0.2159
+   ]
+  },
+  {
+   "cohort": "settlement",
+   "asset": "BTC",
+   "h": 90,
+   "indep_outcomes": 16.0,
+   "best_baseline": "garch_t",
+   "best_baseline_bss": 0.0777,
+   "best_baseline_ci": [
+    -0.2412,
+    0.3746
+   ],
+   "best_baseline_reliably_better": false,
+   "dvol_q_bss": 0.0409,
+   "dvol_q_ci": [
+    -0.2994,
+    0.3858
+   ]
+  },
+  {
+   "cohort": "settlement",
+   "asset": "ETH",
+   "h": 30,
+   "indep_outcomes": 52.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.1034,
+   "best_baseline_ci": [
+    -0.0096,
+    0.2115
+   ],
+   "best_baseline_reliably_better": false,
+   "dvol_q_bss": 0.0976,
+   "dvol_q_ci": [
+    -0.014,
+    0.2098
+   ]
+  },
+  {
+   "cohort": "settlement",
+   "asset": "ETH",
+   "h": 60,
+   "indep_outcomes": 25.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.1089,
+   "best_baseline_ci": [
+    -0.114,
+    0.3048
+   ],
+   "best_baseline_reliably_better": false,
+   "dvol_q_bss": 0.1079,
+   "dvol_q_ci": [
+    -0.1042,
+    0.2941
+   ]
+  },
+  {
+   "cohort": "settlement",
+   "asset": "ETH",
+   "h": 90,
+   "indep_outcomes": 16.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.1424,
+   "best_baseline_ci": [
+    -0.3035,
+    0.4355
+   ],
+   "best_baseline_reliably_better": false,
+   "dvol_q_bss": 0.1465,
+   "dvol_q_ci": [
+    -0.254,
+    0.4319
+   ]
+  },
+  {
+   "cohort": "settlement",
+   "asset": "LINK",
+   "h": 30,
+   "indep_outcomes": 26.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.005,
+   "best_baseline_ci": [
+    -0.0392,
+    0.0587
+   ],
+   "best_baseline_reliably_better": false
+  },
+  {
+   "cohort": "settlement",
+   "asset": "LINK",
+   "h": 60,
+   "indep_outcomes": 12.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.0612,
+   "best_baseline_ci": [
+    0.017,
+    0.0998
+   ],
+   "best_baseline_reliably_better": true
+  },
+  {
+   "cohort": "settlement",
+   "asset": "XRP",
+   "h": 30,
+   "indep_outcomes": 27.0,
+   "best_baseline": "fhs_ewma",
+   "best_baseline_bss": -0.0165,
+   "best_baseline_ci": [
+    -0.0574,
+    0.0216
+   ],
+   "best_baseline_reliably_better": false
+  },
+  {
+   "cohort": "settlement",
+   "asset": "XRP",
+   "h": 60,
+   "indep_outcomes": 12.0,
+   "best_baseline": "fhs_ewma",
+   "best_baseline_bss": -0.0511,
+   "best_baseline_ci": [
+    -0.0928,
+    -0.0039
+   ],
+   "best_baseline_reliably_better": false
+  },
+  {
+   "cohort": "spot",
+   "asset": "BTC",
+   "h": 30,
+   "indep_outcomes": 103.0,
+   "best_baseline": "fhs_ewma",
+   "best_baseline_bss": -0.0303,
+   "best_baseline_ci": [
+    -0.073,
+    0.0085
+   ],
+   "best_baseline_reliably_better": false,
+   "dvol_q_bss": 0.0295,
+   "dvol_q_ci": [
+    -0.0741,
+    0.1259
+   ]
+  },
+  {
+   "cohort": "spot",
+   "asset": "BTC",
+   "h": 60,
+   "indep_outcomes": 50.0,
+   "best_baseline": "fhs_ewma",
+   "best_baseline_bss": -0.0472,
+   "best_baseline_ci": [
+    -0.1132,
+    0.0223
+   ],
+   "best_baseline_reliably_better": false,
+   "dvol_q_bss": 0.0324,
+   "dvol_q_ci": [
+    -0.1942,
+    0.2352
+   ]
+  },
+  {
+   "cohort": "spot",
+   "asset": "BTC",
+   "h": 90,
+   "indep_outcomes": 33.0,
+   "best_baseline": "fhs_ewma",
+   "best_baseline_bss": -0.0451,
+   "best_baseline_ci": [
+    -0.1379,
+    0.0554
+   ],
+   "best_baseline_reliably_better": false,
+   "dvol_q_bss": 0.0448,
+   "dvol_q_ci": [
+    -0.2898,
+    0.2762
+   ]
+  },
+  {
+   "cohort": "spot",
+   "asset": "ETH",
+   "h": 30,
+   "indep_outcomes": 93.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.0089,
+   "best_baseline_ci": [
+    -0.0599,
+    0.077
+   ],
+   "best_baseline_reliably_better": false,
+   "dvol_q_bss": 0.0514,
+   "dvol_q_ci": [
+    -0.0339,
+    0.1325
+   ]
+  },
+  {
+   "cohort": "spot",
+   "asset": "ETH",
+   "h": 60,
+   "indep_outcomes": 45.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.0021,
+   "best_baseline_ci": [
+    -0.1307,
+    0.1324
+   ],
+   "best_baseline_reliably_better": false,
+   "dvol_q_bss": 0.0149,
+   "dvol_q_ci": [
+    -0.1256,
+    0.1413
+   ]
+  },
+  {
+   "cohort": "spot",
+   "asset": "ETH",
+   "h": 90,
+   "indep_outcomes": 30.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.0202,
+   "best_baseline_ci": [
+    -0.1649,
+    0.2083
+   ],
+   "best_baseline_reliably_better": false,
+   "dvol_q_bss": 0.0136,
+   "dvol_q_ci": [
+    -0.2207,
+    0.2296
+   ]
+  },
+  {
+   "cohort": "spot",
+   "asset": "LINK",
+   "h": 30,
+   "indep_outcomes": 55.0,
+   "best_baseline": "lognormal_ewma",
+   "best_baseline_bss": 0.0427,
+   "best_baseline_ci": [
+    -0.0428,
+    0.1283
+   ],
+   "best_baseline_reliably_better": false
+  },
+  {
+   "cohort": "spot",
+   "asset": "LINK",
+   "h": 60,
+   "indep_outcomes": 26.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.0245,
+   "best_baseline_ci": [
+    -0.1548,
+    0.1932
+   ],
+   "best_baseline_reliably_better": false
+  },
+  {
+   "cohort": "spot",
+   "asset": "LINK",
+   "h": 90,
+   "indep_outcomes": 17.0,
+   "best_baseline": "lognormal_ewma",
+   "best_baseline_bss": 0.0899,
+   "best_baseline_ci": [
+    -0.2126,
+    0.2972
+   ],
+   "best_baseline_reliably_better": false
+  },
+  {
+   "cohort": "spot",
+   "asset": "XRP",
+   "h": 30,
+   "indep_outcomes": 86.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.0377,
+   "best_baseline_ci": [
+    -0.0071,
+    0.0877
+   ],
+   "best_baseline_reliably_better": false
+  },
+  {
+   "cohort": "spot",
+   "asset": "XRP",
+   "h": 60,
+   "indep_outcomes": 42.0,
+   "best_baseline": "lognormal_ewma",
+   "best_baseline_bss": 0.0494,
+   "best_baseline_ci": [
+    -0.0271,
+    0.1345
+   ],
+   "best_baseline_reliably_better": false
+  },
+  {
+   "cohort": "spot",
+   "asset": "XRP",
+   "h": 90,
+   "indep_outcomes": 27.0,
+   "best_baseline": "lognormal_ewma",
+   "best_baseline_bss": 0.0569,
+   "best_baseline_ci": [
+    -0.0492,
+    0.1687
+   ],
+   "best_baseline_reliably_better": false
+  }
+ ],
+ "ml_status": "Machine-learning results are being re-run after an independent review found the calibration step exaggerated their losses. They will appear here once corrected."
+}

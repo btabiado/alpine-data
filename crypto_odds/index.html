@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%278%27 cy=%278%27 r=%277%27 fill=%27%233987e5%27/%3E%3C/svg%3E">
+<title>Crypto Price Odds</title>
+<meta name="description" content="What option markets imply about where BTC, ETH and XRP will settle, and whether history or machine learning beats the base rate.">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0b0d12; --panel:#141821; --panel2:#1b2030; --border:#252b3a;
+  --text:#e6e8ee; --muted:#8a93a6; --faint:#5b6478;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --good:#22c55e; --bad:#ef4444; --warn:#f59e0b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+a{color:var(--s1)}
+header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:17px;margin:0;font-weight:600}
+header .back{color:var(--muted);text-decoration:none;font-size:13px}
+header .asof{margin-left:auto;color:var(--muted);font-size:12px;text-align:right}
+main{max-width:1180px;margin:0 auto;padding:20px 24px 48px}
+.lede{font-size:15px;color:var(--text);max-width:820px;margin:4px 0 14px}
+.note{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--muted);font-size:13px;max-width:900px}
+.note b{color:var(--text)}
+h2{font-size:16px;margin:28px 0 8px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:14px 0 8px}
+.pill{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:999px;padding:6px 14px;font:inherit;cursor:pointer}
+.pill[aria-pressed="true"]{background:var(--panel2);border-color:var(--s1);color:#fff}
+.pill.small{padding:4px 10px;font-size:12.5px}
+.pill:disabled{opacity:.45;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}
+.card h3{margin:0 0 4px;font-size:14px}
+.card .sub{color:var(--muted);font-size:12.5px;margin-bottom:8px}
+.chart{position:relative}
+svg{display:block;width:100%;height:auto}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px}
+.legend i{display:inline-block;width:18px;height:0;border-top:2px solid;vertical-align:middle;margin-right:6px}
+.tip{position:absolute;pointer-events:none;background:#0f1320;border:1px solid var(--border);border-radius:6px;padding:6px 9px;font-size:12px;color:var(--text);white-space:nowrap;display:none;z-index:2}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+th{color:var(--muted);font-weight:500;font-size:12px}
+td:first-child,th:first-child{text-align:left}
+.na{color:var(--faint)}
+.chip{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11.5px;border:1px solid var(--border);color:var(--muted)}
+.chip.good{border-color:#1f6f3f;color:var(--good)}
+.chip.bad{border-color:#7a2a2a;color:#f39a9a}
+.scroll{overflow-x:auto}
+.kpis{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0 2px}
+.kpi{background:var(--panel2);border-radius:8px;padding:8px 12px;min-width:140px}
+.kpi .v{font-size:18px;font-weight:600}
+.kpi .l{color:var(--muted);font-size:12px}
+footer{color:var(--faint);font-size:12px;margin-top:36px;border-top:1px solid var(--border);padding-top:12px}
+.unavail{color:var(--muted);padding:30px 10px;text-align:center}
+@media (max-width:600px){header,main{padding-left:16px;padding-right:16px}header .asof{margin-left:0;text-align:left}.kpi{flex:1 1 calc(50% - 6px);min-width:0}.kpi .v{font-size:16px}}
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="../">&larr; BDT Dashboards</a>
+  <h1>Crypto Price Odds</h1>
+  <div class="asof" id="asof">Loading&hellip;</div>
+</header>
+<main>
+  <p class="lede">What the options market is pricing for where BTC, ETH and XRP will settle on each listed expiry date, and whether price history or machine learning can do better than the simple base rate.</p>
+  <div class="note"><b>How to read this.</b> Each probability is <b>market-implied (risk-neutral)</b>: what option prices on Deribit imply about the settlement price, including any risk premium. It is not a forecast and not investment advice. The <b>range</b> is every probability consistent with the quoted bid/ask prices; it is quote uncertainty, not a confidence interval. &ldquo;Unavailable&rdquo; means the market doesn't quote far enough out to say, never 0%.</div>
+
+  <div class="row" id="assetTabs" role="tablist" aria-label="Asset"></div>
+  <div class="row" id="expiryTabs" aria-label="Expiry"></div>
+  <div id="assetView"></div>
+
+  <h2>Can price history beat the base rate?</h2>
+  <p class="lede" id="findingsLede"></p>
+  <div class="row" id="cohortTabs"></div>
+  <div class="card scroll"><table id="findingsTable"></table></div>
+  <p class="note" id="findingsNote" style="margin-top:10px"></p>
+
+  <footer id="footer"></footer>
+</main>
+<div class="tip" id="tip"></div>
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const pct = v => v == null ? null : (v < 0.01 ? "<1%" : v > 0.99 ? ">99%" : Math.round(v*100) + "%");
+const money = (x, ref) => x == null ? "—" : (ref >= 100 ? "$" + Math.round(x).toLocaleString("en-US") : "$" + x.toFixed(2));
+const LABEL = {climatology:"Past frequency", lognormal_rv90:"Lognormal, 90-day vol", lognormal_ewma:"Lognormal, EWMA vol",
+  lognormal_ewma_drift:"Lognormal + drift", fhs_ewma:"Filtered hist. simulation", garch_t:"GARCH(1,1)-t",
+  logit_A:"Logistic regression", rf_A:"Random forest", xgb_A:"XGBoost"};
+let odds, findings, state = {asset:null, expiry:null, cohort:"settlement"};
+const tip = $("tip");
+
+function showTip(html, ev){ tip.innerHTML = html; tip.style.display = "block";
+  const x = ev.clientX + 14, y = ev.clientY + 14;
+  tip.style.left = Math.min(x, window.innerWidth - tip.offsetWidth - 8) + "px"; tip.style.top = (y + window.scrollY) + "px"; }
+function hideTip(){ tip.style.display = "none"; }
+
+function pills(el, items, isOn, onPick, cls){
+  el.innerHTML = "";
+  items.forEach((it, i) => { const b = document.createElement("button");
+    b.className = "pill" + (cls ? " " + cls : ""); b.textContent = it.label; b.disabled = !!it.disabled;
+    b.setAttribute("aria-pressed", isOn(it, i) ? "true" : "false"); b.onclick = () => onPick(it, i); el.appendChild(b); });
+}
+
+function render(){
+  const assets = odds.assets;
+  if (!state.asset) state.asset = assets.find(a => a.status === "ok").asset;
+  pills($("assetTabs"), assets.map(a => ({label: a.asset + (a.status === "ok" ? "" : " · n/a"), key: a.asset})),
+        it => it.key === state.asset, it => { state.asset = it.key; state.expiry = null; render(); });
+  const a = assets.find(x => x.asset === state.asset);
+  const view = $("assetView");
+  if (a.status !== "ok"){ $("expiryTabs").innerHTML = "";
+    view.innerHTML = `<div class="card unavail"><b>${a.asset}: market-implied odds unavailable.</b><br>${a.reason}</div>`; return; }
+  if (state.expiry == null){ const ye = a.expiries.findIndex(e => /year-end/.test(e.horizon)); state.expiry = ye >= 0 ? ye : a.expiries.length - 1; }
+  pills($("expiryTabs"), a.expiries.map(e => ({label: e.expiry_utc.slice(0,10) + " · " + Math.round(e.days) + "d"})),
+        (it, i) => i === state.expiry, (it, i) => { state.expiry = i; render(); }, "small");
+  const e = a.expiries[state.expiry];
+  let up = e.targets.filter(t => t.event === "S_T > K");
+  if (up.some(t => t.label.startsWith("$"))) up = up.filter(t => t.label.startsWith("$"));  // chart one target family
+  const best = up.filter(t => t.q != null);
+  view.innerHTML = `
+    <div class="kpis">
+      <div class="kpi"><div class="v">${money(a.spot, a.spot)}</div><div class="l">${a.asset} settlement-index spot</div></div>
+      <div class="kpi"><div class="v">${e.expiry_utc.slice(0,10)}</div><div class="l">expiry, 08:00 UTC · ${Math.round(e.days)} days</div></div>
+      <div class="kpi"><div class="v">${(e.atm_iv*100).toFixed(0)}%</div><div class="l">at-the-money implied vol</div></div>
+      <div class="kpi"><div class="v">${money(e.support[0], a.spot)}–${money(e.support[1], a.spot)}</div><div class="l">strikes with usable quotes</div></div>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <div class="card"><h3>Chance ${a.asset} settles above each price</h3>
+        <div class="sub">${a.family} options · curve status: ${e.curve_status}${/nearest/.test(e.horizon) ? " · " + e.horizon : ""}</div>
+        <div class="chart" id="chart"></div>
+        <div class="legend"><span><i style="border-color:var(--s1)"></i>Market-implied (full option chain)</span>
+          <span><i style="border-color:var(--s2);border-top-style:dashed"></i>Single-volatility benchmark (Black-76)</span>
+          <span><i style="border-color:#c9cfdb;border-top-width:1px"></i>Target with quote-feasible range</span></div>
+      </div>
+      <div class="card scroll"><h3>Targets</h3><div class="sub">Upside: chance of settling above. Downside: chance of settling below.</div>
+        <table><thead><tr><th>Target</th><th>Price</th><th>Event</th><th>Market odds</th><th>Range</th><th>Benchmark</th></tr></thead>
+        <tbody>${e.targets.map(t => `<tr><td>${t.label}</td><td>${money(t.K, a.spot)}</td><td>${t.event === "S_T > K" ? "above" : "below"}</td>
+          <td>${t.q == null ? '<span class="na" title="' + (t.note||"").replace(/"/g,"&quot;") + '">unavailable</span>' : "<b>" + pct(t.q) + "</b>"}</td>
+          <td>${t.lo == null ? '<span class="na">—</span>' : pct(t.lo) + "–" + pct(t.hi)}</td>
+          <td class="${t.q == null ? 'na' : ''}">${t.black76 == null ? "—" : pct(t.black76)}${t.q == null && t.black76 != null ? " †" : ""}</td></tr>`).join("")}</tbody></table>
+        <div class="sub" style="margin-top:8px">† Benchmark extrapolated beyond quoted strikes; not supported by market quotes.</div>
+      </div>
+    </div>`;
+  drawChart(a, e, up);
+}
+
+function drawChart(a, e, targets){
+  const W = 720, H = 360, m = {l:52, r:16, t:12, b:40};
+  const xs = e.curve.map(p => p[0]); const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const X = k => m.l + (k - x0) / (x1 - x0) * (W - m.l - m.r), Y = q => m.t + (1 - q) * (H - m.t - m.b);
+  const path = pts => pts.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)).join("");
+  const ticksY = [0, .25, .5, .75, 1];
+  const tx = []; for (let i = 0; i <= 5; i++) tx.push(x0 + (x1 - x0) * i / 5);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Exceedance probability curve for ${a.asset}">`;
+  ticksY.forEach(q => { s += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(q)}" y2="${Y(q)}" stroke="#252b3a"/>
+    <text x="${m.l - 8}" y="${Y(q) + 4}" fill="#8a93a6" font-size="11" text-anchor="end">${q * 100}%</text>`; });
+  tx.forEach((k, i) => { const anc = i === 0 ? "start" : i === tx.length - 1 ? "end" : "middle";
+    s += `<text x="${X(k)}" y="${H - m.b + 18}" fill="#8a93a6" font-size="11" text-anchor="${anc}">${money(k, a.spot)}</text>`; });
+  s += `<text x="${(m.l + W - m.r) / 2}" y="${H - 4}" fill="#8a93a6" font-size="11" text-anchor="middle">settlement price at expiry</text>`;
+  if (a.spot >= x0 && a.spot <= x1) s += `<line x1="${X(a.spot)}" x2="${X(a.spot)}" y1="${m.t}" y2="${H - m.b}" stroke="#5b6478" stroke-dasharray="2 3"/>
+    <text x="${X(a.spot) + 4}" y="${m.t + 12}" fill="#8a93a6" font-size="11">spot</text>`;
+  if (e.black76_curve.length) s += `<path d="${path(e.black76_curve)}" fill="none" stroke="var(--s2)" stroke-width="1.6" stroke-dasharray="5 4"/>`;
+  s += `<path d="${path(e.curve)}" fill="none" stroke="var(--s1)" stroke-width="2.2"/>`;
+  targets.filter(t => t.q != null && t.K >= x0 && t.K <= x1).forEach((t, i) => {
+    s += `<g class="tgt" data-i="${i}"><line x1="${X(t.K)}" x2="${X(t.K)}" y1="${Y(t.lo)}" y2="${Y(t.hi)}" stroke="#c9cfdb" stroke-width="1.2"/>
+      <circle cx="${X(t.K)}" cy="${Y(t.q)}" r="5" fill="#0b0d12" stroke="#c9cfdb" stroke-width="2"/>
+      <circle cx="${X(t.K)}" cy="${Y(t.q)}" r="14" fill="transparent"/></g>`; });
+  s += `<line id="xh" y1="${m.t}" y2="${H - m.b}" stroke="#8a93a6" stroke-width="1" visibility="hidden"/>
+    <rect id="hit" x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent"/></svg>`;
+  const el = $("chart"); el.innerHTML = s;
+  const svg = el.querySelector("svg"), xh = svg.querySelector("#xh"), hit = svg.querySelector("#hit");
+  const interp = (pts, k) => { for (let i = 1; i < pts.length; i++) if (pts[i][0] >= k) { const [a0, b0] = pts[i - 1], [a1, b1] = pts[i];
+      return b0 + (b1 - b0) * (k - a0) / (a1 - a0); } return null; };
+  hit.addEventListener("mousemove", ev => { const r = svg.getBoundingClientRect(); const px = (ev.clientX - r.left) / r.width * W;
+    const k = x0 + (px - m.l) / (W - m.l - m.r) * (x1 - x0); xh.setAttribute("x1", px); xh.setAttribute("x2", px); xh.setAttribute("visibility", "visible");
+    const q = interp(e.curve, k), b = interp(e.black76_curve, k);
+    showTip(`Above <b>${money(k, a.spot)}</b><br><span style="color:var(--s1)">Market-implied:</span> ${pct(q)}` +
+      (b != null ? `<br><span style="color:var(--s2)">Benchmark:</span> ${pct(b)}` : ""), ev); });
+  hit.addEventListener("mouseleave", () => { xh.setAttribute("visibility", "hidden"); hideTip(); });
+  const shown = targets.filter(t => t.q != null && t.K >= x0 && t.K <= x1);
+  svg.querySelectorAll(".tgt").forEach(g => { const t = shown[+g.dataset.i];
+    g.addEventListener("mousemove", ev => { ev.stopPropagation(); xh.setAttribute("visibility", "hidden");
+      showTip(`<b>${t.label}</b> · above ${money(t.K, a.spot)}<br>Market-implied: <b>${pct(t.q)}</b><br>Range from quotes: ${pct(t.lo)}–${pct(t.hi)}` +
+        (t.black76 != null ? `<br>Benchmark: ${pct(t.black76)}` : ""), ev); });
+    g.addEventListener("mouseleave", hideTip); });
+}
+
+function renderFindings(){
+  const cells = findings.cells;
+  const sig = cells.filter(c => c.best_ml_reliably_better).length;
+  const blWins = cells.filter(c => c.best_baseline_reliably_better).length;
+  const ml = cells.filter(c => c.best_ml_bss != null);
+  const hasML = ml.length > 0;
+  let lede = `<b>Mostly no.</b> Across ${cells.length} asset × horizon tests scored against outcomes they never saw, ` +
+    `models built from price history beat the simple base rate (how often the move happened before) with confidence in only ${blWins}.`;
+  if (hasML) { const mlMax = Math.max(...ml.map(c => c.best_ml_bss)), mlMin = Math.min(...ml.map(c => c.best_ml_bss));
+    lede += ` Machine-learning models did so in ${sig}; the best ML model per test scored between ${(mlMin*100).toFixed(0)}% and ` +
+      `${(mlMax*100).toFixed(0)}% Brier skill (negative = worse than the base rate).`; }
+  else if (findings.ml_status) lede += ` ${findings.ml_status}`;
+  $("findingsLede").innerHTML = lede;
+  pills($("cohortTabs"), [{label:"Settlement prices (Deribit)", k:"settlement"}, {label:"Spot closes (Coinbase/Bitstamp)", k:"spot"}],
+        it => it.k === state.cohort, it => { state.cohort = it.k; renderFindings(); }, "small");
+  const f = v => v == null ? '<span class="na">—</span>' : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";
+  const chip = (v, ci, good) => v == null ? "" : good ? ' <span class="chip good">reliably better</span>' :
+    (ci && ci[1] < 0 ? ' <span class="chip bad">reliably worse</span>' : "");
+  const rows = cells.filter(c => c.cohort === state.cohort).sort((a, b) => a.asset.localeCompare(b.asset) || a.h - b.h);
+  $("findingsTable").innerHTML = `<thead><tr><th>Asset</th><th>Horizon</th><th>≈ independent outcomes</th><th>Best history model</th>
+    <th>Its skill</th><th>Implied-vol benchmark (DVOL)</th>${hasML ? "<th>Best ML model</th><th>Its skill</th>" : ""}</tr></thead><tbody>` +
+    rows.map(c => `<tr><td>${c.asset}</td><td>${c.h} days</td><td>${c.indep_outcomes}</td><td>${LABEL[c.best_baseline] || c.best_baseline}</td>
+      <td>${f(c.best_baseline_bss)}${chip(c.best_baseline_bss, c.best_baseline_ci, c.best_baseline_reliably_better)}</td>
+      <td>${f(c.dvol_q_bss)}</td>${hasML ? `<td>${c.best_ml ? LABEL[c.best_ml] : "—"}</td>
+      <td>${f(c.best_ml_bss)}${chip(c.best_ml_bss, c.best_ml_ci, c.best_ml_reliably_better)}</td>` : ""}</tr>`).join("") + "</tbody>";
+  $("findingsNote").innerHTML = `<b>Method.</b> Every forecast used only data available on its date and was scored against what happened ` +
+    `(${findings.metric}). Skill is relative to the base rate: 0% = no better, positive = better. The final ` +
+    `20% of history is sealed for one final test (settlement from ${findings.holdout_seal.settlement}, spot from ${findings.holdout_seal.spot}). ` +
+    `With only a few dozen non-overlapping outcomes per test, most differences are within noise.`;
+}
+
+Promise.all([fetch("odds.json").then(r => r.json()), fetch("findings.json").then(r => r.json())]).then(([o, f]) => {
+  odds = o; findings = f;
+  const t = new Date(o.as_of_utc);
+  $("asof").innerHTML = `Market data as of ${t.toISOString().slice(0,16).replace("T", " ")} UTC<br>` +
+    t.toLocaleString("en-US", {timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short"}) + " New York";
+  render(); renderFindings();
+  $("footer").innerHTML = `Source: ${o.source}. Probabilities are risk-neutral (Q) and include any risk premium. ` +
+    `They are not forecasts or investment advice. LINK has no listed options on any reachable venue. Engine revision ` +
+    `<code>${o.engine_revision.slice(0, 7)}</code> · odds run <code>${o.run_id}</code> · findings run <code>${f.run_id}</code>.`;
+}).catch(err => { $("asof").textContent = "Data unavailable"; $("assetView").innerHTML =
+  `<div class="card unavail">Could not load the latest odds (${err}).</div>`; });
+})();
+</script>
+</body>
+</html>

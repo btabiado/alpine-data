@@ -2685,6 +2685,7 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
             title="Send this page's current address to another app (system share sheet). Different from 🔗 New link, which mints a fresh read-only link with an expiry."
             aria-label="Send this page to another app using the system share sheet">↗<span class="hbl"> Send</span></button>
     <button class="btn" id="textBtn" type="button" hidden title="Text a link to this page" aria-label="Text a link to this page">💬<span class="hbl"> Text</span></button>
+    <a class="btn" href="crypto-odds/" title="Option-implied settlement odds for BTC, ETH and XRP" aria-label="Crypto price odds from option markets">◈<span class="hbl"> Crypto Odds</span></a>
     <a class="btn" href="health/apis.html" title="All data sources + live API status" aria-label="All data sources and live API status">◉<span class="hbl"> Data Sources</span></a>
     <a class="btn" href="https://btabiado.github.io/BDT_Codex_projects_2026/Sharktank/" title="Shark Tank Intelligence — investor, deal &amp; outcome analytics" aria-label="Shark Tank Intelligence dashboard">🦈<span class="hbl"> Shark Tank</span></a>
   </div>
