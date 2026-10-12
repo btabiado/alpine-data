@@ -93,7 +93,12 @@ backtest:
   reliability_bins: [0.0, 0.02, 0.05, 0.10, 0.20, 0.30, 0.50, 0.70, 0.90, 1.0]
   min_independent_events: 10    # fewer event-containing non-overlapping windows -> target flagged untestable
   verdict_seeds: 5              # better/worse verdicts must agree across this many bootstrap seeds
-  ml:                           # Stage 4, predeclared before any ML result was seen
+  ml:                           # Stage 4. v1 predeclared before any ML result; v2 changes (below) predeclared after
+                                #   the Stage 4 audit and before the holdout is opened: shrink-only calibration for all
+                                #   models, wider logistic C grid, per-target class gate, fallback params retuned.
+                                #   Tuning budget: <= 12 trials per tuning event per (asset, cohort, h, side, model),
+                                #   retuned yearly; this exceeds a literal "20 per model/cohort" reading (disclosed).
+    version: v2
     models: [logit_A, rf_A, xgb_A, xgb_AD]
     refit_days: 30              # walk-forward evaluation blocks
     retune_days: 365
@@ -101,6 +106,7 @@ backtest:
     inner_val_fraction: 0.25
     min_distinct_outcome_dates: 50   # brief s.8 screening gate
     min_class_dates: 20
+    cal_min_class_dates: 10      # calibration slice must hold this many distinct event and non-event dates
     workers: 12
   promotion:                    # predeclared; applied once, on the sealed holdout
     rule: >-

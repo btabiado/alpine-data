@@ -275,15 +275,17 @@ def stage4_section(rdir: Path, dev: pd.DataFrame, man: dict, bt: dict) -> str:
     if S4.empty:
         return ""
     o = ["## Stage 4: ML challengers (development period)\n"]
-    o.append("Logistic regression, random forest and XGBoost, each trained walk-forward: refit every "
+    o.append(f"ML {bt['ml'].get('version', 'v1')}. Logistic regression, random forest and XGBoost, each trained walk-forward: refit every "
              f"{bt['ml']['refit_days']} days on labels already matured, tuned with at most {bt['ml']['tuning_trials']} "
-             "predeclared trials per year on a purged inner validation slice, and (for the tree models) calibrated on "
-             "that slice. They are scored on the same rows as the baselines, which here means the rows the ML models "
+             "predeclared trials per year on a purged inner validation slice, and calibrated on that slice with shrink-only "
+             "Platt scaling, which can pull forecasts toward the base rate but never sharpen them. Each target needs its "
+             "own minimum count of events and non-events before it is forecast. They are scored on the same rows as the baselines, which here means the rows the ML models "
              "cover, so baseline skill in this table differs slightly from the Stage 3 tables.\n")
     ml = S4[S4["model"].isin(ML_NAMES)]
     beat_clim = ml[(ml["dbrier_ci_hi"] < 0) & ml["verdict_seed_stable"]]
-    beat_best = ml[ml["dbest_ci_hi"] < 0]
-    worse_best = ml[ml["dbest_ci_lo"] > 0]
+    stable = ml["dbest_seed_stable"] if "dbest_seed_stable" in ml else True
+    beat_best = ml[(ml["dbest_ci_hi"] < 0) & stable]
+    worse_best = ml[(ml["dbest_ci_lo"] > 0) & stable]
     point_best = ml[ml["dbrier_vs_best_baseline"] < 0]
     cells = S4[["cohort", "asset", "h"]].drop_duplicates()
     o.append(f"- **Cells scored:** {len(cells)} cohort × asset × horizon cells with ML coverage.\n"
@@ -355,8 +357,32 @@ def stage4_section(rdir: Path, dev: pd.DataFrame, man: dict, bt: dict) -> str:
         o.append(_md_table(g.reset_index()) + "\n")
         ok = lg[lg["status"] == "ok"]
         if len(ok) and "calibrated" in ok:
-            o.append(f"Tree-model refits calibrated on a past-only slice: {int(ok['calibrated'].astype(str).eq('True').sum())} "
-                     f"of {int(ok['model'].isin(['rf_A', 'xgb_A', 'xgb_AD']).sum())}.\n")
+            cal = ok["calibrated"].astype(str).eq("True")
+            o.append(f"ML refits calibrated on a past-only slice: {int(cal.sum())} of {len(ok)}. The rest had too few events "
+                     "in the slice and were left uncalibrated. "
+                     + (f"Median fitted calibration slope: {ok['cal_slope'].median():.2f}. The bound is 1, which means no "
+                        "shrinkage: the slice next to the training data shares its regime and does not reveal the "
+                        "overconfidence that appears out of sample. " if "cal_slope" in ok else ""))
+        if "params" in ok:
+            tun = ok[ok["model"] == "logit_A"].drop_duplicates(["asset", "cohort", "h", "side", "tuned_at"])
+            hit = tun["params"].astype(str).str.contains("'C': 0.0001").sum()
+            o.append(f"Logistic tuning events that chose the smallest C offered (1e-4): {int(hit)} of {len(tun)}. The data "
+                     "keep asking for more regularization. The grid was fixed before this run and is not widened after "
+                     "seeing results.\n")
+    C = pd.read_csv(rdir / "coverage.csv") if (rdir / "coverage.csv").exists() else pd.DataFrame()
+    if len(C):
+        cv = C.pivot_table(index=["cohort", "asset"], columns="model", values="covered")
+        mlc = [m for m in ML_NAMES if m in cv]
+        if "climatology" in cv and mlc:
+            ratio = cv[mlc].div(cv["climatology"], axis=0)
+            low = (ratio < 0.9).sum().sum()
+            o.append("### Coverage\n")
+            o.append(f"Before an ML model may forecast a target, the class gates require enough matured events and "
+                     f"non-events for that target. That cuts ML coverage: in {int(low)} of {ratio.size} model × "
+                     "cohort × asset combinations, ML covers under 90% of the rows past frequency covers (median ratio "
+                     f"{ratio.stack().median():.2f}). Promotion condition (4) therefore fails in those cells whatever "
+                     "the skill.\n")
+            o.append(_md_table(ratio.round(2).reset_index().astype(str)) + "\n")
     o.append("### Promotion rule (predeclared, applied once on the holdout)\n")
     o.append("> " + " ".join(bt["promotion"]["rule"].split()) + "\n")
     o.append("XGBoost quantile regression is deferred, because the data cannot support it. With 12–100 approximately "

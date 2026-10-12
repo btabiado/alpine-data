@@ -1,6 +1,6 @@
 {
- "run_id": "20261012T122644Z_b031128d",
- "engine_revision": "afb6d8a47d39c94588ab9773d7ec177c6247c2b3",
+ "run_id": "20261012T133252Z_4b3620f0",
+ "engine_revision": "b03c7a53510fa9c8f18b9cd68edc0cae9c31629a",
  "holdout_seal": {
   "settlement": "2025-08-30",
   "spot": "2025-04-02"
@@ -20,6 +20,13 @@
     0.1928
    ],
    "best_baseline_reliably_better": false,
+   "best_ml": "logit_A",
+   "best_ml_bss": -0.1001,
+   "best_ml_ci": [
+    -0.2953,
+    0.0728
+   ],
+   "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0637,
    "dvol_q_ci": [
     -0.0474,
@@ -38,6 +45,13 @@
     0.2313
    ],
    "best_baseline_reliably_better": false,
+   "best_ml": "logit_A",
+   "best_ml_bss": -0.0278,
+   "best_ml_ci": [
+    -0.3148,
+    0.2331
+   ],
+   "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0398,
    "dvol_q_ci": [
     -0.1676,
@@ -56,6 +70,13 @@
     0.3746
    ],
    "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.0523,
+   "best_ml_ci": [
+    -0.3823,
+    0.2797
+   ],
+   "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0409,
    "dvol_q_ci": [
     -0.2994,
@@ -74,6 +95,13 @@
     0.2115
    ],
    "best_baseline_reliably_better": false,
+   "best_ml": "logit_A",
+   "best_ml_bss": -0.0796,
+   "best_ml_ci": [
+    -0.1855,
+    0.0222
+   ],
+   "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0976,
    "dvol_q_ci": [
     -0.014,
@@ -92,6 +120,13 @@
     0.3048
    ],
    "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.0922,
+   "best_ml_ci": [
+    -0.3491,
+    0.1252
+   ],
+   "best_ml_reliably_better": false,
    "dvol_q_bss": 0.1079,
    "dvol_q_ci": [
     -0.1042,
@@ -110,6 +145,13 @@
     0.4355
    ],
    "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.0611,
+   "best_ml_ci": [
+    -0.5073,
+    0.235
+   ],
+   "best_ml_reliably_better": false,
    "dvol_q_bss": 0.1465,
    "dvol_q_ci": [
     -0.254,
@@ -127,7 +169,14 @@
     -0.0392,
     0.0587
    ],
-   "best_baseline_reliably_better": false
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.1522,
+   "best_ml_ci": [
+    -0.3053,
+    -0.0067
+   ],
+   "best_ml_reliably_better": false
   },
   {
    "cohort": "settlement",
@@ -140,7 +189,14 @@
     0.017,
     0.0998
    ],
-   "best_baseline_reliably_better": true
+   "best_baseline_reliably_better": true,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.5828,
+   "best_ml_ci": [
+    -1.4402,
+    -0.0985
+   ],
+   "best_ml_reliably_better": false
   },
   {
    "cohort": "settlement",
@@ -153,7 +209,14 @@
     -0.0574,
     0.0216
    ],
-   "best_baseline_reliably_better": false
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.0915,
+   "best_ml_ci": [
+    -0.2109,
+    0.0108
+   ],
+   "best_ml_reliably_better": false
   },
   {
    "cohort": "settlement",
@@ -166,7 +229,14 @@
     -0.0928,
     -0.0039
    ],
-   "best_baseline_reliably_better": false
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": 0.0009,
+   "best_ml_ci": [
+    -0.1714,
+    0.1897
+   ],
+   "best_ml_reliably_better": false
   },
   {
    "cohort": "spot",
@@ -180,6 +250,13 @@
     0.0085
    ],
    "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.1242,
+   "best_ml_ci": [
+    -0.2223,
+    -0.0376
+   ],
+   "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0295,
    "dvol_q_ci": [
     -0.0741,
@@ -198,6 +275,13 @@
     0.0223
    ],
    "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.2149,
+   "best_ml_ci": [
+    -0.3946,
+    -0.0481
+   ],
+   "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0324,
    "dvol_q_ci": [
     -0.1942,
@@ -216,6 +300,13 @@
     0.0554
    ],
    "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.2787,
+   "best_ml_ci": [
+    -0.5253,
+    -0.0501
+   ],
+   "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0448,
    "dvol_q_ci": [
     -0.2898,
@@ -234,6 +325,13 @@
     0.077
    ],
    "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.1332,
+   "best_ml_ci": [
+    -0.2148,
+    -0.0527
+   ],
+   "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0514,
    "dvol_q_ci": [
     -0.0339,
@@ -252,6 +350,13 @@
     0.1324
    ],
    "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.2104,
+   "best_ml_ci": [
+    -0.3761,
+    -0.0616
+   ],
+   "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0149,
    "dvol_q_ci": [
     -0.1256,
@@ -270,6 +375,13 @@
     0.2083
    ],
    "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.2189,
+   "best_ml_ci": [
+    -0.4249,
+    -0.0357
+   ],
+   "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0136,
    "dvol_q_ci": [
     -0.2207,
@@ -287,7 +399,14 @@
     -0.0428,
     0.1283
    ],
-   "best_baseline_reliably_better": false
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.0691,
+   "best_ml_ci": [
+    -0.1426,
+    0.0045
+   ],
+   "best_ml_reliably_better": false
   },
   {
    "cohort": "spot",
@@ -300,7 +419,14 @@
     -0.1548,
     0.1932
    ],
-   "best_baseline_reliably_better": false
+   "best_baseline_reliably_better": false,
+   "best_ml": "logit_A",
+   "best_ml_bss": -0.0868,
+   "best_ml_ci": [
+    -0.2597,
+    0.0879
+   ],
+   "best_ml_reliably_better": false
   },
   {
    "cohort": "spot",
@@ -313,7 +439,14 @@
     -0.2126,
     0.2972
    ],
-   "best_baseline_reliably_better": false
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.0695,
+   "best_ml_ci": [
+    -0.3373,
+    0.163
+   ],
+   "best_ml_reliably_better": false
   },
   {
    "cohort": "spot",
@@ -326,7 +459,14 @@
     -0.0071,
     0.0877
    ],
-   "best_baseline_reliably_better": false
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.0473,
+   "best_ml_ci": [
+    -0.1141,
+    0.0244
+   ],
+   "best_ml_reliably_better": false
   },
   {
    "cohort": "spot",
@@ -339,7 +479,14 @@
     -0.0271,
     0.1345
    ],
-   "best_baseline_reliably_better": false
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.1253,
+   "best_ml_ci": [
+    -0.2295,
+    -0.0276
+   ],
+   "best_ml_reliably_better": false
   },
   {
    "cohort": "spot",
@@ -352,8 +499,15 @@
     -0.0492,
     0.1687
    ],
-   "best_baseline_reliably_better": false
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.2147,
+   "best_ml_ci": [
+    -0.3728,
+    -0.07
+   ],
+   "best_ml_reliably_better": false
   }
  ],
- "ml_status": "Machine-learning results are being re-run after an independent review found the calibration step exaggerated their losses. They will appear here once corrected."
+ "ml_note": "ML models (logistic regression, random forest, XGBoost) were trained walk-forward with past-only tuning and shrink-only calibration. None beat the base rate or the best history model in any test."
 }

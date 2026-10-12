@@ -73,7 +73,7 @@ footer{color:var(--faint);font-size:12px;margin-top:36px;border-top:1px solid va
   <div class="row" id="expiryTabs" aria-label="Expiry"></div>
   <div id="assetView"></div>
 
-  <h2>Can price history beat the base rate?</h2>
+  <h2>Can history or machine learning beat the base rate?</h2>
   <p class="lede" id="findingsLede"></p>
   <div class="row" id="cohortTabs"></div>
   <div class="card scroll"><table id="findingsTable"></table></div>
@@ -199,7 +199,8 @@ function renderFindings(){
     `models built from price history beat the simple base rate (how often the move happened before) with confidence in only ${blWins}.`;
   if (hasML) { const mlMax = Math.max(...ml.map(c => c.best_ml_bss)), mlMin = Math.min(...ml.map(c => c.best_ml_bss));
     lede += ` Machine-learning models did so in ${sig}; the best ML model per test scored between ${(mlMin*100).toFixed(0)}% and ` +
-      `${(mlMax*100).toFixed(0)}% Brier skill (negative = worse than the base rate).`; }
+      `${(mlMax*100).toFixed(0)}% Brier skill (negative = worse than the base rate): they were overconfident about ` +
+    `patterns that later reversed.`; }
   else if (findings.ml_status) lede += ` ${findings.ml_status}`;
   $("findingsLede").innerHTML = lede;
   pills($("cohortTabs"), [{label:"Settlement prices (Deribit)", k:"settlement"}, {label:"Spot closes (Coinbase/Bitstamp)", k:"spot"}],
@@ -217,7 +218,8 @@ function renderFindings(){
   $("findingsNote").innerHTML = `<b>Method.</b> Every forecast used only data available on its date and was scored against what happened ` +
     `(${findings.metric}). Skill is relative to the base rate: 0% = no better, positive = better. The final ` +
     `20% of history is sealed for one final test (settlement from ${findings.holdout_seal.settlement}, spot from ${findings.holdout_seal.spot}). ` +
-    `With only a few dozen non-overlapping outcomes per test, most differences are within noise.`;
+    `With only a few dozen non-overlapping outcomes per test, most differences are within noise.` +
+    (findings.ml_note ? ` ${findings.ml_note}` : "");
 }
 
 Promise.all([fetch("odds.json").then(r => r.json()), fetch("findings.json").then(r => r.json())]).then(([o, f]) => {

@@ -178,6 +178,7 @@ def score_group(g: pd.DataFrame, models: list[str], h: int, cfg: dict, rng,
                          "best_baseline": best_bl,
                          "dbrier_vs_best_baseline": float(np.nanmean(mats[m] - mats[best_bl])),
                          **_ci_vs(mats[m] - mats[best_bl], idx, m == best_bl),
+                         "dbest_seed_stable": _seed_stable(mats[m] - mats[best_bl], [idx] + extra, m == best_bl),
                          "verdict_seeds": len(extra) + 1 if m != ref else 0,
                          "mean_logloss": per_target[(per_target["model"] == m) & per_target["target"].isin(tt)]["logloss"].mean()})
     return per_target, pd.DataFrame(lead)
@@ -188,6 +189,17 @@ def _ci_vs(D, idx, same: bool) -> dict:
         return {"dbest_ci_lo": 0.0, "dbest_ci_hi": 0.0}
     b = np.array([np.nanmean(D[:, ib]) for ib in idx])
     return {"dbest_ci_lo": float(np.percentile(b, 2.5)), "dbest_ci_hi": float(np.percentile(b, 97.5))}
+
+
+def _seed_stable(D, idx_list, same: bool) -> bool:
+    if same:
+        return True
+    v = set()
+    for ix in idx_list:
+        b = np.array([np.nanmean(D[:, ib]) for ib in ix])
+        lo, hi = np.percentile(b, [2.5, 97.5])
+        v.add("better" if hi < 0 else ("worse" if lo > 0 else "nd"))
+    return len(v) <= 1
 
 
 def reliability(df: pd.DataFrame, models: list[str], bins: list[float], h: int, B: int, rng) -> pd.DataFrame:
