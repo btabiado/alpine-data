@@ -1,19 +1,19 @@
 {
   "as_of": "2026-10-12",
-  "generated_at": "2026-10-12T09:00:37Z",
+  "generated_at": "2026-10-12T13:36:04Z",
   "indexes": {
     "crypto_signal_sentiment": {
-      "as_of": "2026-10-11",
+      "as_of": "2026-10-12",
       "label": null,
-      "note": "40 coins; 4 buy+, 12 sell+",
-      "score": -20,
+      "note": "40 coins; 3 buy+, 15 sell+",
+      "score": -30,
       "stale": false
     },
     "defi_sentiment": {
       "as_of": "2026-10-12",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": -3,
+      "score": -4,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -41,21 +41,21 @@
       "as_of": "2026-10-11",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 18,
+      "score": 17,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-10-11",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 18,
+      "score": 17,
       "stale": false
     },
     "futures_sentiment_eth": {
       "as_of": "2026-10-11",
       "label": "CROWDED LONGS",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 33,
+      "score": 31,
       "stale": false
     },
     "futures_sentiment_link": {
@@ -80,31 +80,31 @@
       "stale": false
     },
     "money_flow_index": {
-      "as_of": "2026-10-09",
+      "as_of": "2026-10-12",
       "label": "Neutral",
       "note": null,
-      "score": -3.17,
+      "score": -10.41,
       "stale": false
     },
     "overview_sentiment": {
-      "as_of": "2026-10-11",
+      "as_of": "2026-10-12",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": 9,
+      "score": 8,
       "stale": false
     },
     "poc_signal_breadth": {
       "as_of": "2026-10-10",
       "label": null,
       "note": "49 coins; mean of latest per-coin signal",
-      "score": 3,
+      "score": 2,
       "stale": false
     },
     "stocks_signal_breadth": {
       "as_of": "2026-10-09",
-      "label": "NEUTRAL",
-      "note": "50 stocks; 12 buy+, 14 sell+",
-      "score": -4,
+      "label": "STRONG DISTRIBUTION",
+      "note": "7 stocks; 0 buy+, 5 sell+",
+      "score": -71,
       "stale": false
     },
     "whale_sentiment_btc": {
