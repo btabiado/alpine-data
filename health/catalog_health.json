@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-10-05T17:04:22+00:00",
+  "checked_at": "2026-10-12T17:43:00+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1914,
-    "gated": 174,
-    "dead": 27,
-    "unreachable": 77
+    "ok": 1895,
+    "gated": 177,
+    "dead": 30,
+    "unreachable": 90
   },
   "dead": [
     {
@@ -23,6 +23,13 @@
       ]
     },
     {
+      "url": "https://cloverly.com/api",
+      "code": 404,
+      "services": [
+        "Cloverly API"
+      ]
+    },
+    {
       "url": "https://docs.data.nasdaq.com/",
       "code": 404,
       "services": [
@@ -34,6 +41,13 @@
       "code": 404,
       "services": [
         "EUDAT B2SHARE REST API"
+      ]
+    },
+    {
+      "url": "https://docs.stackai.com/interface-and-deployment/api-reference/run-flow",
+      "code": 404,
+      "services": [
+        "Stack AI (Run Flow API)"
       ]
     },
     {
@@ -104,6 +118,14 @@
       "code": 404,
       "services": [
         "Anaconda.org (conda) API"
+      ]
+    },
+    {
+      "url": "https://www.ebi.ac.uk/gwas/rest/docs/api",
+      "code": 410,
+      "services": [
+        "GWAS Catalog REST API (EBI/NHGRI)",
+        "NHGRI-EBI GWAS Catalog REST API"
       ]
     },
     {
@@ -216,20 +238,6 @@
       ]
     },
     {
-      "url": "https://api.archives-ouvertes.fr/docs",
-      "code": null,
-      "services": [
-        "HAL API (Archives Ouvertes)"
-      ]
-    },
-    {
-      "url": "https://api.archives-ouvertes.fr/docs/search",
-      "code": null,
-      "services": [
-        "HAL Theses API (CCSD/CNRS)"
-      ]
-    },
-    {
       "url": "https://api.fatcat.wiki/",
       "code": null,
       "services": [
@@ -244,10 +252,10 @@
       ]
     },
     {
-      "url": "https://api.medrxiv.org/",
-      "code": null,
+      "url": "https://api.justyy.workers.dev/api/factor/",
+      "code": 503,
       "services": [
-        "medRxiv API"
+        "Integer Factorization API (justyy / HelloACM)"
       ]
     },
     {
@@ -269,6 +277,20 @@
       "code": null,
       "services": [
         "USDA FAS OpenData (PSD/ESR/GATS)"
+      ]
+    },
+    {
+      "url": "https://apps.fas.usda.gov/psdonline/app/index.html",
+      "code": null,
+      "services": [
+        "USDA FAS Cotton & Textile Trade Data (PSD / GATS)"
+      ]
+    },
+    {
+      "url": "https://apps.fs.usda.gov/fiadb-api/",
+      "code": null,
+      "services": [
+        "USDA Forest Service FIADB-API / EVALIDator"
       ]
     },
     {
@@ -393,6 +415,27 @@
       ]
     },
     {
+      "url": "https://eric.ed.gov/?api",
+      "code": null,
+      "services": [
+        "ERIC (Education Resources Information Center) API"
+      ]
+    },
+    {
+      "url": "https://eric.ed.gov/?api=",
+      "code": null,
+      "services": [
+        "ERIC (Education Resources Information Center) API"
+      ]
+    },
+    {
+      "url": "https://esmis.nal.usda.gov/api-documentation",
+      "code": null,
+      "services": [
+        "USDA ESMIS API"
+      ]
+    },
+    {
       "url": "https://fakeapi.platzi.com/",
       "code": null,
       "services": [
@@ -404,6 +447,30 @@
       "code": null,
       "services": [
         "Internet Archive Scholar / Fatcat API"
+      ]
+    },
+    {
+      "url": "https://fdc.nal.usda.gov/api-guide/",
+      "code": null,
+      "services": [
+        "USDA FoodData Central",
+        "USDA FoodData Central API",
+        "USDA FoodData Central API"
+      ]
+    },
+    {
+      "url": "https://fdc.nal.usda.gov/cndb/",
+      "code": null,
+      "services": [
+        "USDA FNS Child Nutrition Database (CNDB)"
+      ]
+    },
+    {
+      "url": "https://fdc.nal.usda.gov/download-datasets/",
+      "code": null,
+      "services": [
+        "USDA FoodData Central Downloadable Datasets",
+        "USDA FoodData Central FNDDS / Foundation Foods (data type)"
       ]
     },
     {
@@ -444,6 +511,13 @@
       ]
     },
     {
+      "url": "https://greekwordnet.chs.harvard.edu/api",
+      "code": null,
+      "services": [
+        "Ancient Greek WordNet API"
+      ]
+    },
+    {
       "url": "https://gssdataexplorer.norc.org/",
       "code": null,
       "services": [
@@ -456,13 +530,6 @@
       "code": null,
       "services": [
         "USDA Hemp eManagement Platform (HeMP) Public/LE Search Tool"
-      ]
-    },
-    {
-      "url": "https://iiif.bodleian.ox.ac.uk/iiif/",
-      "code": null,
-      "services": [
-        "Digital Bodleian / Oxford IIIF (added in verify)"
       ]
     },
     {
@@ -501,6 +568,20 @@
       ]
     },
     {
+      "url": "https://mrdata.usgs.gov/",
+      "code": null,
+      "services": [
+        "USGS Mineral Resources Online Spatial Data"
+      ]
+    },
+    {
+      "url": "https://mrdata.usgs.gov/mrds/",
+      "code": null,
+      "services": [
+        "USGS Mineral Resources Data System (MRDS)"
+      ]
+    },
+    {
       "url": "https://mymarketnews.ams.usda.gov/mars-api/getting-started",
       "code": null,
       "services": [
@@ -512,13 +593,6 @@
       "code": null,
       "services": [
         "USDA CropScape / Cropland Data Layer"
-      ]
-    },
-    {
-      "url": "https://ndltd.org/thesis-resources/global-etd-search/",
-      "code": null,
-      "services": [
-        "NDLTD Global ETD Search"
       ]
     },
     {
@@ -560,6 +634,15 @@
       ]
     },
     {
+      "url": "https://ourairports.com/data/",
+      "code": null,
+      "services": [
+        "OurAirports Open Data",
+        "OurAirports (open data)",
+        "OurAirports (open data)"
+      ]
+    },
+    {
       "url": "https://platform.docs.opentargets.org/data-access/graphql-api",
       "code": null,
       "services": [
@@ -571,6 +654,13 @@
       "code": null,
       "services": [
         "PlayHT (Play.ht) TTS API"
+      ]
+    },
+    {
+      "url": "https://pncp.gov.br/api/pncp/swagger-ui/index.html",
+      "code": null,
+      "services": [
+        "Brazil PNCP (Portal Nacional de Contratacoes Publicas) API"
       ]
     },
     {
@@ -616,6 +706,24 @@
       ]
     },
     {
+      "url": "https://scholia.toolforge.org/",
+      "code": 503,
+      "services": [
+        "Scholia"
+      ]
+    },
+    {
+      "url": "https://sdmdataaccess.nrcs.usda.gov/",
+      "code": null,
+      "services": [
+        "USDA Soil Data Access (NRCS SSURGO)",
+        "USDA NRCS Soil Data Access (SDA)",
+        "USDA NRCS Soil Data Access (SDA) Web Service",
+        "USDA NRCS Soil Data Access (SDA)",
+        "USDA NRCS Soil Data Access (SSURGO)"
+      ]
+    },
+    {
       "url": "https://search.patentsview.org/docs/",
       "code": null,
       "services": [
@@ -638,7 +746,7 @@
     },
     {
       "url": "https://tle.ivanstanojevic.me/api/tle/",
-      "code": null,
+      "code": 508,
       "services": [
         "TLE API (tle.ivanstanojevic.me)"
       ]
@@ -662,13 +770,6 @@
       "code": null,
       "services": [
         "Plant.id (Kindwise)"
-      ]
-    },
-    {
-      "url": "https://wiki.cancerimagingarchive.net/display/Public/TCIA+Application+Programming+Interface+(API)+Guides",
-      "code": null,
-      "services": [
-        "The Cancer Imaging Archive (TCIA) REST API"
       ]
     },
     {
@@ -700,17 +801,41 @@
       ]
     },
     {
-      "url": "https://www.crystallography.net/",
-      "code": null,
+      "url": "https://www.data.gov.in/apis",
+      "code": 503,
       "services": [
-        "Crystallography Open Database (COD)"
+        "data.gov.in (OGD Platform India) API"
       ]
     },
     {
-      "url": "https://www.mousemine.org/mousemine/",
-      "code": 502,
+      "url": "https://www.ers.usda.gov/data-products/cotton-wool-and-textile-data",
+      "code": null,
       "services": [
-        "Mouse Genome Informatics (MGI / MouseMine)"
+        "USDA ERS Cotton, Wool & Textile Data"
+      ]
+    },
+    {
+      "url": "https://www.ers.usda.gov/developer/data-apis",
+      "code": null,
+      "services": [
+        "USDA ERS Data APIs (ARMS)",
+        "USDA ERS ARMS Data API (Economic Research Service)",
+        "USDA ERS Data APIs (Economic Research Service)"
+      ]
+    },
+    {
+      "url": "https://www.fsis.usda.gov/science-data/developer-resources/mpi-api",
+      "code": null,
+      "services": [
+        "USDA FSIS Establishments (MPI) API"
+      ]
+    },
+    {
+      "url": "https://www.fsis.usda.gov/science-data/developer-resources/recall-api",
+      "code": null,
+      "services": [
+        "USDA FSIS Recall API",
+        "USDA FSIS Recall API"
       ]
     },
     {

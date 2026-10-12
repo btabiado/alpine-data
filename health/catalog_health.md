@@ -1,13 +1,15 @@
-# Catalog link health — 2026-10-05T17:04:22+00:00
+# Catalog link health — 2026-10-12T17:43:00+00:00
 
 - **Total URLs:** 2192
-- ✅ ok: 1914  ·  🔒 gated (exists, auth/bot-walled): 174  ·  ❌ dead (404/410): 27  ·  ⚠️ unreachable (timeout/5xx): 77
+- ✅ ok: 1895  ·  🔒 gated (exists, auth/bot-walled): 177  ·  ❌ dead (404/410): 30  ·  ⚠️ unreachable (timeout/5xx): 90
 
 ## ❌ Dead (404/410) — review/remove
 - `404` http://numbersapi.com/ — Numbers API (numbersapi.com)
 - `404` https://bible.helloao.org/ — Free Use Bible API (AO Lab)
+- `404` https://cloverly.com/api — Cloverly API
 - `404` https://docs.data.nasdaq.com/ — Nasdaq Data Link (formerly Quandl)
 - `404` https://docs.eudat.eu/b2share/httpapi/ — EUDAT B2SHARE REST API
+- `404` https://docs.stackai.com/interface-and-deployment/api-reference/run-flow — Stack AI (Run Flow API)
 - `404` https://docs.stratz.com/ — STRATZ (Dota 2)
 - `404` https://efile.fara.gov/api — FARA eFile API (DOJ Foreign Agents Registration)
 - `404` https://getbible.net/docs — GetBible.net API v2
@@ -18,6 +20,7 @@
 - `404` https://support.travelpayouts.com/hc/en-us/articles/115000150945-Hotel-data-API — Hotellook / Travelpayouts Hotel Data API
 - `404` https://websites.psychology.uwa.edu.au/school/mrcdatabase/uwa_mrc.htm — MRC Psycholinguistic Database
 - `404` https://www.anaconda.com/docs/reference/api/main — Anaconda.org (conda) API
+- `410` https://www.ebi.ac.uk/gwas/rest/docs/api — GWAS Catalog REST API (EBI/NHGRI), NHGRI-EBI GWAS Catalog REST API
 - `404` https://www.fda.gov/drugs/drug-approvals-and-databases/orange-book-data-files — FDA Orange Book Data Files (Approved Drug Products + patents/exclusivity), FDA Orange Book Data Files (Approved Drug Products w/ TE Evaluations), FDA Orange Book Data Files
 - `404` https://www.fda.gov/drugs/fda-adverse-event-monitoring-system-aems/faers-quarterly-data-files-documentation — FDA FAERS/AEMS Quarterly Data Files (bulk download)
 - `404` https://www.fda.gov/drugs/fda-adverse-event-monitoring-system-aems/fda-adverse-event-monitoring-system-aems-public-dashboard — FDA FAERS/AEMS Public Dashboard
@@ -35,14 +38,14 @@
 ## ⚠️ Unreachable (timeout/5xx/000) — often transient or bot-blocked
 - `None` http://www.openthesis.org/ — OpenThesis.org
 - `None` https://api-ccte.epa.gov/docs — EPA CompTox / Computational Toxicology & Exposure APIs (CTX/CCTE)
-- `None` https://api.archives-ouvertes.fr/docs — HAL API (Archives Ouvertes)
-- `None` https://api.archives-ouvertes.fr/docs/search — HAL Theses API (CCSD/CNRS)
 - `None` https://api.fatcat.wiki/ — Fatcat / IA Scholar
 - `None` https://api.fatcat.wiki/redoc — Fatcat / Internet Archive Scholar API
-- `None` https://api.medrxiv.org/ — medRxiv API
+- `503` https://api.justyy.workers.dev/api/factor/ — Integer Factorization API (justyy / HelloACM)
 - `None` https://api.pharmgkb.org/swagger/ — PharmGKB REST API
 - `None` https://api.trade.gov/console/ — ITA Consolidated Screening List (CSL) API (Commerce)
 - `None` https://apps.fas.usda.gov/opendatawebv2/ — USDA FAS OpenData (PSD/ESR/GATS)
+- `None` https://apps.fas.usda.gov/psdonline/app/index.html — USDA FAS Cotton & Textile Trade Data (PSD / GATS)
+- `None` https://apps.fs.usda.gov/fiadb-api/ — USDA Forest Service FIADB-API / EVALIDator
 - `None` https://assignment-api.uspto.gov/ — USPTO Patent Assignment Search API
 - `None` https://bcl.nrel.gov/api/ — NREL/NLR Building Component Library API
 - `502` https://biolincc.nhlbi.nih.gov/ — NHLBI BioLINCC (Biologic Specimen and Data Repository)
@@ -60,51 +63,64 @@
 - `None` https://docs.wild-card.ai/agentsjson/introduction — agents.json (Wildcard AI)
 - `None` https://elexicon.wustl.edu/ — English Lexicon Project (ELP)
 - `None` https://en.wikichip.org/ — WikiChip
+- `None` https://eric.ed.gov/?api — ERIC (Education Resources Information Center) API
+- `None` https://eric.ed.gov/?api= — ERIC (Education Resources Information Center) API
+- `None` https://esmis.nal.usda.gov/api-documentation — USDA ESMIS API
 - `None` https://fakeapi.platzi.com/ — Platzi Fake Store API
 - `None` https://fatcat.wiki/ — Internet Archive Scholar / Fatcat API
+- `None` https://fdc.nal.usda.gov/api-guide/ — USDA FoodData Central, USDA FoodData Central API, USDA FoodData Central API
+- `None` https://fdc.nal.usda.gov/cndb/ — USDA FNS Child Nutrition Database (CNDB)
+- `None` https://fdc.nal.usda.gov/download-datasets/ — USDA FoodData Central Downloadable Datasets, USDA FoodData Central FNDDS / Foundation Foods (data type)
 - `None` https://fred.stlouisfed.org/categories/32217 — FRED (commodity & metals price series)
 - `None` https://fred.stlouisfed.org/docs/api/fred/ — FRED — Federal Reserve Economic Data API, FRED (Federal Reserve Bank of St. Louis), FRED API (manufacturing/IP indicators)
 - `None` https://fred.stlouisfed.org/series/WPU03 — FRED Textile & Apparel Price Indexes
 - `None` https://fred.stlouisfed.org/series/WPU081 — FRED - Lumber & Wood Products PPI (St. Louis Fed)
 - `503` https://gazetteer.dainst.org/ — iDAI.gazetteer / iDAI.world (DAI)
+- `None` https://greekwordnet.chs.harvard.edu/api — Ancient Greek WordNet API
 - `None` https://gssdataexplorer.norc.org/ — GSS Data Explorer (NORC General Social Survey), GSS Data Explorer (NORC, General Social Survey)
 - `None` https://hemp.ams.usda.gov/s/PublicSearchTool — USDA Hemp eManagement Platform (HeMP) Public/LE Search Tool
-- `None` https://iiif.bodleian.ox.ac.uk/iiif/ — Digital Bodleian / Oxford IIIF (added in verify)
 - `None` https://jrct.niph.go.jp/ — jRCT / JPRN (Japan Registry of Clinical Trials)
 - `None` https://maps.bts.dot.gov/services/rest/services/NTAD/MilitaryBases/MapServer — BTS / NTAD Military Bases (USDOT ArcGIS MapServer)
 - `None` https://maps.bts.dot.gov/services/rest/services/NTAD/MilitaryBases/MapServer/0 — BTS / NTAD Military Bases (USDOT ArcGIS REST)
 - `None` https://matmatch.com/ — Matmatch
 - `None` https://modeldb.science/ — ModelDB
+- `None` https://mrdata.usgs.gov/ — USGS Mineral Resources Online Spatial Data
+- `None` https://mrdata.usgs.gov/mrds/ — USGS Mineral Resources Data System (MRDS)
 - `None` https://mymarketnews.ams.usda.gov/mars-api/getting-started — USDA AMS My Market News (MARS API)
 - `None` https://nassgeodata.gmu.edu/CropScape/ — USDA CropScape / Cropland Data Layer
-- `None` https://ndltd.org/thesis-resources/global-etd-search/ — NDLTD Global ETD Search
 - `None` https://neuroquery.org/ — NeuroQuery API, NeuroQuery
 - `503` https://openei.org/services/doc/rest/util_rates/ — OpenEI Utility Rate Database (URDB) API, OpenEI Utility Rate Database (URDB) API
 - `None` https://optimade.openmaterialsdb.se/ — Open Materials Database (OMDB)
 - `502` https://oqmd.org/ — OQMD (Open Quantum Materials Database)
 - `502` https://oqmd.org/api/ — OQMD (Open Quantum Materials Database) API, OQMD (Open Quantum Materials Database)
+- `None` https://ourairports.com/data/ — OurAirports Open Data, OurAirports (open data), OurAirports (open data)
 - `None` https://platform.docs.opentargets.org/data-access/graphql-api — Open Targets Platform GraphQL API
 - `None` https://play.ht/ — PlayHT (Play.ht) TTS API
+- `None` https://pncp.gov.br/api/pncp/swagger-ui/index.html — Brazil PNCP (Portal Nacional de Contratacoes Publicas) API
 - `None` https://podaac.jpl.nasa.gov/ — NASA PO.DAAC Earthdata
 - `None` https://prime-numbers-api.com/ — Prime Numbers API (prime-numbers-api.com)
 - `None` https://rctportal.niph.go.jp/en — JPRN / NIPH Clinical Trials Search Portal (Japan)
 - `None` https://remote.universal-robots.com/ — Universal Robots API (UR Cloud)
 - `None` https://sanskritwordnet.chs.harvard.edu/api — Sanskrit WordNet API (CHS Harvard)
 - `None` https://schema.oasf.agntcy.org/ — AGNTCY — Open Agentic Schema Framework (OASF)
+- `503` https://scholia.toolforge.org/ — Scholia
+- `None` https://sdmdataaccess.nrcs.usda.gov/ — USDA Soil Data Access (NRCS SSURGO), USDA NRCS Soil Data Access (SDA), USDA NRCS Soil Data Access (SDA) Web Service, USDA NRCS Soil Data Access (SDA), USDA NRCS Soil Data Access (SSURGO)
 - `None` https://search.patentsview.org/docs/ — PatentsView PatentSearch API
 - `None` https://snowstorm-training.snomedtools.org/fhir/metadata — SNOMED CT Snowstorm public training FHIR API
 - `None` https://stats.un.org/SDGAPI/swagger/ — SDMX Global Registry / UNdata2 (added in verify)
-- `None` https://tle.ivanstanojevic.me/api/tle/ — TLE API (tle.ivanstanojevic.me)
+- `508` https://tle.ivanstanojevic.me/api/tle/ — TLE API (tle.ivanstanojevic.me)
 - `None` https://trialstreamer.robotreviewer.net/ — Trialstreamer
 - `None` https://water.weather.gov/ahps/ — NWS / NOAA Advanced Hydrologic Prediction Service (AHPS)
 - `None` https://web.plant.id/plant-identification-api/ — Plant.id (Kindwise)
-- `None` https://wiki.cancerimagingarchive.net/display/Public/TCIA+Application+Programming+Interface+(API)+Guides — The Cancer Imaging Archive (TCIA) REST API
 - `None` https://www.2dmatpedia.org/ — 2DMatPedia
 - `None` https://www.acq.osd.mil/eie/imr/rpid/library.html — DoD RPID / Base Structure Report (real-property footprint)
 - `None` https://www.brocade.io/ — Brocade.io
 - `None` https://www.clinicalstudydatarequest.com/ — ClinicalStudyDataRequest.com (CSDR)
-- `None` https://www.crystallography.net/ — Crystallography Open Database (COD)
-- `502` https://www.mousemine.org/mousemine/ — Mouse Genome Informatics (MGI / MouseMine)
+- `503` https://www.data.gov.in/apis — data.gov.in (OGD Platform India) API
+- `None` https://www.ers.usda.gov/data-products/cotton-wool-and-textile-data — USDA ERS Cotton, Wool & Textile Data
+- `None` https://www.ers.usda.gov/developer/data-apis — USDA ERS Data APIs (ARMS), USDA ERS ARMS Data API (Economic Research Service), USDA ERS Data APIs (Economic Research Service)
+- `None` https://www.fsis.usda.gov/science-data/developer-resources/mpi-api — USDA FSIS Establishments (MPI) API
+- `None` https://www.fsis.usda.gov/science-data/developer-resources/recall-api — USDA FSIS Recall API, USDA FSIS Recall API
 - `None` https://www.nrcs.usda.gov/resources/data-and-reports/web-soil-survey — USDA NRCS Web Soil Survey / spatial WMS-WFS
 - `None` https://www.nvr.navy.mil/ — Naval Vessel Register (NVR)
 - `None` https://www.searates.com/integrations/api-container-tracking/ — SeaRates Tracking API
