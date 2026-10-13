@@ -1,6 +1,6 @@
 {
  "generated": "2026-10-12",
- "gathered_at": "2026-10-12T01:16:58Z",
+ "gathered_at": "2026-10-13T01:21:16Z",
  "items": [
   {
    "vendor": "Semarchy",
@@ -3189,15 +3189,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Cloudera",
-   "headline": "Leo Brunnick, Chief Product Officer at Cloudera – Interview Series",
-   "date": "2026-10-01",
-   "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxNeFQ4UFNOOEFVaU0yM3JqRlVfcjhsaC1sXzUtNWZhcXdGNE1PODFOUzdzUDVrSWZZQlE0SXRhRkVsVXlmUWxHbGt4UkY1blJBOERrcFZtWkdNcWNFbjlwLWZpbmdHYmY4RXZvbGo3MThmRTQxUWFNcmk2OHR4S1JwaGlkSVQ4VnlsT0dpVFdn?oc=5",
-   "source": "Unite.AI",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "dbt Labs",
    "headline": "Omni Highlights Deeper Integration With dbt Labs to Enhance Data Trust",
    "date": "2026-10-01",
@@ -3331,24 +3322,6 @@
    "source": "Investor's Business Daily",
    "summary": "",
    "relevance": "high"
-  },
-  {
-   "vendor": "Microsoft",
-   "headline": "Microsoft joins AI data standards group Apache Ossie",
-   "date": "2026-09-30",
-   "url": "https://news.google.com/rss/articles/CBMinwFBVV95cUxNdkk2NjI1cEJoS2puVE40a3JMVDN0MV9idFBwaEVsV01GTEZUUng4N2Q1OXFvNHIyLWF3blp5dklOcVRJRTdTWmNIWUpMYUEtSDVUU01JSEZrSnlLY256ZmNoWDZ3VnBLYzlFSTFCQmoxRU9tLVNEOFBiVFhfb1N0QUh6YngwNVphSmpvX0tTVUVZajhOQUxpVFF1WkFyNGM?oc=5",
-   "source": "디지털투데이",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "OneTrust",
-   "headline": "OneTrust CORIE Adds Runtime AI Agent Governance Controls",
-   "date": "2026-09-30",
-   "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxONWN4aENuUG9lTTVxb3AzSU93M0stWFEtTmlGYnVlb253WFg1Q1I2c3RKeFVEWERyb2Q4T2pQTUNpbUQwc2FOOUQtbXF0dGVHM0dqaEpock04U0JVbkZVLUY4NFBNVnBkV3hSSHJYSlV0NjFNdXFoU29Ka3Qycm1rU290aFR2YVJacFpEQV9PcUUwZmRqSjMtMHBZdw?oc=5",
-   "source": "Channel Insider",
-   "summary": "",
-   "relevance": "medium"
   },
   {
    "vendor": "Atlan",
@@ -3527,15 +3500,6 @@
    "date": "2026-09-25",
    "url": "https://news.google.com/rss/articles/CBMipwFBVV95cUxNU3p0ODNNLVQzQjRrb3NfMkYzZ1J0cmgtMmJHLXZjdF81R1lLTk9BRUpnbktTOEtKUlBLVWlwN1Q1enQ1cl9yMGk2U1pPZ1dLdmk2UTBuU042c3lvemJpT2pLRXBRdlVzZDNzalJINWJmd3VSQUVPQktBYXZXSXFXaU1oU3lic0tKTWRESnVfRTlNNmw0U3lhdnZUTEdSSURBTWp6RnJmSQ?oc=5",
    "source": "app.dealroom.co",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Alteryx",
-   "headline": "Alteryx Highlights the Role of Business Logic in Scaling Trusted Enterprise AI",
-   "date": "2026-09-24",
-   "url": "https://news.google.com/rss/articles/CBMizwFBVV95cUxQSWFzeTJWYm1KS0ktNGt5NlZEVGJzWF9rcG1BSHhCWFNxaWV1VEh5QUVaUzFiSTh5Z0hwNjl2ZUpPamNyQ2FIZXAzeEN5RGw1dk9KTWxmTVAzczhCSGttSUp2NVY1cHBSMHZZTkx3dWdQZFV2ekpRSS1jakpoSnZ2WHlsS1BxZ0oyZkd1TTFPbmxKUTF1UE9JdzlPTHNiMDRWY1M4ZS1rbzRDbGw4VjZzbHI1bHAwclY1eHVjUGQzRDl2NVBQTXJOdDRONUdiUkk?oc=5",
-   "source": "firstindia.co.in",
    "summary": "",
    "relevance": "medium"
   },
@@ -3954,15 +3918,6 @@
    "relevance": "high"
   },
   {
-   "vendor": "ServiceNow",
-   "headline": "Oracle Jumps 5% as Fusion Claw Launch Adds 25 Agentic Applications; Salesforce Holds Flat, ServiceNow Slips",
-   "date": "2026-09-29",
-   "url": "https://news.google.com/rss/articles/CBMi4gFBVV95cUxNaWZGZGlMR1hGM0UxQUxXYm1IODVuOVFqSTNkR2Y4ekxDQkpMMlg1MmpYSHpTcWRvXzdESERZUDZFeTNXdmR0NzJDbGl3dnhGSVlJMTllVjVjOU03R05wQlNjaGxPdmJNSXRyUy1KZXlGZlpIZmJLN1ZBbHJlSzVEX1MtRnkyS1JDZE9hNjQ3TTR2YTVYMlhZY3hVdXFlUDVUZzBJODYyVW9VajRncmQzbjBiVWRZZ25zT2ZFUjFnZUNEclp6cWoxYzdsRWpPdmJodUowUWVhRjVnZm02c1ZkYkx3?oc=5",
-   "source": "24/7 Wall St.",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Row Zero",
    "headline": "Databricks buys Row Zero to aid spreadsheet governance for users, AI",
    "date": "2026-09-25",
@@ -4247,15 +4202,6 @@
    "date": "2026-10-04",
    "url": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxNOFRkMXV4MHJMM0ZzN25EVnlYbXJQdTM3YTZxQ0ZxdkprR29OUjhwUmZDX0FxcmxKbEFRa3FlMzFsQ0VHdEVHeU8zWl9XYXhiNldtMWhlMUlILXN2dFJDZkQtNl9PeVdmTWZkMnlQZFFjaGhzNngzUTFwR3hYaG1UYmNqY25mRzF6YWdsMTZpZW5jVzJFUDlvTzFQaENKb1A5ODNqY3pzMXRXQlluWHNVeGhJWVlUNlpMbVBFZVJPS242dUVkVVlGYXdodTZ1QTVwNnVSczZ4ZU9WOUNB0gHkAUFVX3lxTE43cF9tNk5pOHJpYW5ROGtwRGYxcDRCNFZRamFKUzRfZUpETjhpeXJqNjYyc3NzaVBCalNJZ2Q3b0NrSVdDamF1N2hwd0R4SGdWYXBCdUI0eHJENDgtMUo4ejktb29wZ2FTOE1XeFpWQTR4a2NGR0k5bG5uazFWaFFCMDRqOFEwNDJVbnhmdHEwZ2p5VGVETUdLTXZzUXBySzZfUXVTSkU1RmhYZ3JzZVhFc2tlVThOV0NHZ0Q4YjktOTFOVFY4eUxBRWlNc1ZGZjVncDNtcXR0MzFYOEFrMllTYTFkNA?oc=5",
    "source": "InfotechLead",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Replit",
-   "headline": "Conversational Business Visualizations: Replit Skips SQL by Folding Atta's Charts Into…",
-   "date": "2026-10-04",
-   "url": "https://news.google.com/rss/articles/CBMifkFVX3lxTFBqUVVhUGJFLXU0TlJBSVZJSjNZUlk2dDVmdll0a3luakRMOTdYS0Zva3A0VWFCem12LTNfMHZ6eGgxbTJWbWtleUdKbHFTaDhDN0JGLWxNMFNYOVVOckh5SjZCNDdTbUxMRjhxaGtDeDNRamd5a3Bvck5WdmZtdw?oc=5",
-   "source": "Trend Hunter",
    "summary": "",
    "relevance": "medium"
   },
@@ -5412,15 +5358,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Hightouch",
-   "headline": "Hightouch Acquires Strata to Expand Integrations Across the Marketing Stack",
-   "date": "2026-10-09",
-   "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxPR0N2Y3lUVjJZdVdoNnI2V3E1MXhlQXNudVhwY0diVHZQMm94RmhBblRsd0dBaUtKbzE0aG5LV1hLdFRIZ0ZGNURFUmJYSlBCSTdpSmVyRDdwb21NamJLTVU1ak1WWlh6MWdicVJfVm9lOF80RzhkU0ZPd1NkVUl1azlrRXVVTnNRZm5hWWFGQWEyV3FLOEdwR2dFY19CbmUxSWl6RktKTE1abk1vX2czSl85dEhEV2JLVDR4SXlldkItbzhSc0M1cmdqSWs?oc=5",
-   "source": "Business Wire",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Mastech Digital",
    "headline": "Mastech Digital Q2 2026 Earnings Call: Complete Transcript",
    "date": "2026-10-09",
@@ -5948,6 +5885,87 @@
    "date": "2026-09-17",
    "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE13MHlvWDYzdWxBWUNYLThTQzYtZTdzUEp1d2pSZ1JHWVZRdFhxbm8zcC1GanNrc3lvc1F6SEtNWjk1MUFjMXBFTU9SY3BNN0tWTnVUT1h0TktrYXJa?oc=5",
    "source": "YouTube",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Hightouch",
+   "headline": "Hightouch Acquires Strata To Expand Marketing Integrations",
+   "date": "2026-10-12",
+   "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxPYTZkaDJaMk9tVkZ1QWdNMHlVNTBrSW9wU2dyeUpNY1FqNGRYMjNTc25VX2Z0dGh2allVVzhpY21uLUhTSDk5R1FpYmJ3eTlabDBpOG8xQXRhbVNXYnM2emxIbi1RUFlFbHk4UTRXNlRQak9pT1JtWnl4US1QRWJlck00LUrSAYoBQVVfeXFMT3VpMUNTbGpoOVVOeGxFRFlzeWhSSFNBRWNRbXVnUUIzWUJUbGszdTlNVkZocGRIOExPaE9mcVZubE9LZjdQMW1Fa1F3ejNHaEtOWW1YQzZiU1ZkX3ZzdHM4UnppR1kyRlJpTXI2OGQzOFFVQ2pvNGMtalFvVnJwMkpYTmtCUHVzZDFB?oc=5",
+   "source": "Pulse 2.0",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "ServiceNow",
+   "headline": "Adobe Falls 4% as Wells Fargo Cuts to Underweight With $225 Target; ServiceNow Climbs 3%, Intuit Ticks Up",
+   "date": "2026-10-12",
+   "url": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxQSzlzT1ZhQzYwUHE3NFVxWXduVGlkOGpja2RCTm1LSmNidkVka056S1l3R2RwTnFzMUhTZkR0QlVfWHg5eVV2YWFpazRoeGZTc3pmT0NqczdScU13dDVHd29NcVNvZHJBUzBJbkhXYWpxbThPTnMzTUxJZ0x0bl9Va0JSR0VORHdnWG9VUEhvRENUUTl3N1hpNUZZcks3QkJ5aHlhM1BBcmN6X3VHc1NBaXNXUzZJZ3VDR0VtR0g5WUFibkZ0VXNrTmRDQlJBYzlNM2c5TTVJV0MwTGJI?oc=5",
+   "source": "24/7 Wall St.",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Replit",
+   "headline": "Replit CEO fires back at Apple: The justification for blocking our app is a 'total lie' and we will see them in court!",
+   "date": "2026-10-11",
+   "url": "https://news.google.com/rss/articles/CBMi8gFBVV95cUxNU1VTNFdZa3hUanpRNzYzT2NxdzZya3VMNmVUY0M3QzlfXzFzcXVpblBfTGVvNnBQbG9lR010aEt4MDNtdEotZ0owYUhTXzFGNmxyUEhOMmdUWUp3b19vV3J5cTVYS2F6REVmUjVCOE9QVVhvcFFNYmdPSV9wQkxDZDM2UHBSTm1jbVRBVFYyU1E3VXRLVk1aS2NqUW0wejVybkRxand0NXpBWmhyMDNXeG5MTFo0Zi1XN3YxTzh2WHktN1BKTHRmenhKdU5lbkhfNzdkaVlRSm91d2o3aFFHa2hvYVdPcWg4ZGNPU0hKWEl3QQ?oc=5",
+   "source": "آي-فون إسلام",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Alteryx",
+   "headline": "Alteryx One Launches on Snowflake Marketplace with Governed, In-Place Analytics for Business Teams",
+   "date": "2026-10-09",
+   "url": "https://news.google.com/rss/articles/CBMi4AFBVV95cUxPc01hRGs3R1A5dXcwQWFvT3JYTlFDemFiYUJBUzhzYnpfM0ZZMnpzcWlHbTJzLWhraWp1Q2l1Vm8xOUJRdHo1SE1zUVNHcllsdU5fSlRkeG5aSzB0SGpsZ2hLaTVwX3NVSUtGb2pQQTZIVVd4YlFwUXRUV3hvREZBVk5JSlVibElkcWlJbWxHTWppdS1meGg4b3VWNzBuZjU0TEw5Yk8wdXlvcGNQNGlxZzdxNXZtWmZuVE15c2wwMldrQzlqdnEtSEtxajhlZUR1Z19QMy1pVjh3Ry0wdlhpUw?oc=5",
+   "source": "HPCwire",
+   "summary": "",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Cloudera, stc group partner to accelerate digital transformation in Middle East",
+   "date": "2026-10-07",
+   "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxOU2tOZnZ3RGZhdmRnQjFsWHdaZ0MtN1hrcHgtZ0F1YzNuay1pYnNVY0piMHcyYUVvcjJCZjByS2xRdUFGVUI4b0kxTUxYYVhNQU9qZ05jQXR2X05iMG9BdFhtdE1FMVZMLWRKakxrcEczS0hXWk92aWRnN3NFekxNOXdKTkFwZWUtMGVhYkpqcUl3bkFRV2ZZSGtLZFJ0SDV1d2dYc3VCWjNCRHZ0dlYyNzMtMXNlaDBXMHc?oc=5",
+   "source": "TradeArabia",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Microsoft",
+   "headline": "Microsoft Corp. Stock Grades | MSFT",
+   "date": "2026-10-07",
+   "url": "https://news.google.com/rss/articles/CBMirAJBVV95cUxPMHNyVURwWWVlVGRnNkFob25LMzZzWnBPQmdBUnVPN25SS1ExbF9TRk5KdmpIS3JrRzFma1RtWEZEazhRbkRxSDViOUFvT3VKMHpYbE1rdlFqNjE2bGxQOUQ1RFZoSFBodFVKU0hoU09oYnpXSV85WHF0bkJSd2h2d1h0aXFqUm50Z1NrLVlhcTdWU1hmWUsxcDAxc2xWUmxqRmIxMXcyRzVXWmtialJCdzdKXzRQeWlrLS1YU1VSNzRRMjYwRnpoLVJfM01nODd2WUNGbzB5Y041WmVidnhNUUNQUlU5Y29PcTM4RnhmeWdIQmZlYi1PSVJiVVhHQnVCcjhZMDlGbV9LN3JVQWFlN0NkVy1rYi1kXzdsZEtNWEJoNGp3Q2hsUTA3WnA?oc=5",
+   "source": "Barron's",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Contentsquare",
+   "headline": "Contentsquare Deepens Design Analytics Integration With Figma",
+   "date": "2026-10-06",
+   "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxQaVBMVlFkcWNCRTlDVEdLOXllUXJRM1FiTVNoTnprU0VSY0EyaFpWVmNHTzBxTjlfQlB0UzBBbFNiREhicGtubDR3djlBcUdWMEczc2Q4N1dqOFJQaW1iSTR4X1M2U2dqMVJGLVZvQUg4eXU3a2RGVV90ZXlZSEtKU3hGeUV1Z3RhTzdXQ2FJa1VUbkNBWlRkTHlnclRiODI2RG1OV2pLalphWnNSY1E?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "OneTrust",
+   "headline": "AI-Driven Governance Emphasis Underscores OneTrust’s Responsible Compliance Focus",
+   "date": "2026-10-02",
+   "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxQdERYX19qSjE4MXFCQ3dlaEFuRmZRZ19aTDhjbmhEcHVWLWRLZlpveVNoMk5vczdmVnotc1BwbFZlc3FMSW5vYTNQcHZ3Qm5hZjl1eHdpbExIbnRoRW5FYzNFeVZqOU9EVjdCblo1V1Fia21QVDdYR1hiZ0VsejJKcVJ2cXVvRE5VVWNleDVuT1BIWE9PRXEyZDViMzVPYUtSQWhWZDFfQm5zaGF3WWIxekhVWVE4LUQwSjdibDBDakhSMDhRc0VN?oc=5",
+   "source": "TipRanks",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Contentsquare",
+   "headline": "Contentsquare Highlights Analytics-Driven Audience Insights with Paramount Pictures",
+   "date": "2026-10-01",
+   "url": "https://news.google.com/rss/articles/CBMiywFBVV95cUxORFFlVmFRMUpKSGM0MmVDWkl5UXhDS0hMbzFIWW1vOEotekFTMEhNS0paLXRieWtERzV3cVhCQnVPelNnY01Bc3EtNzYtV0RBV2gwVHZJdU03YVdEMjBDN0RSbVNHN2ZCaENuN3czb0FzOG9Hb2FpcV9vM3RPcnpHWHY0ci1GeG1aRjdNeXBkZjdBVlo1S2NiMDE0N0I2djAwSW82bzNJeWVWdzUwclg3YUhIUlBIWjFLeUJHbUN2bGd0cG1iX3NFUVd1QQ?oc=5",
+   "source": "TipRanks",
    "summary": "",
    "relevance": "medium"
   }
