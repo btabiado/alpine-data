@@ -60,7 +60,9 @@ def write(rdir: Path) -> str:
 
     out = []
     has_ml = (L["comparison"] == "Stage 4").any()
-    out.append("# Stages 3–4: walk-forward evaluation of real-world (P) baselines" + (" and ML challengers" if has_ml else "") + "\n")
+    has_fm = (L["comparison"] == "Stage 5").any()
+    out.append("# Stages 3–" + ("5" if has_fm else "4" if has_ml else "3") + ": walk-forward evaluation of real-world (P) baselines"
+               + (", ML challengers" if has_ml else "") + (" and a time-series foundation model" if has_fm else "") + "\n")
     out.append(f"**Run:** `{man['run_id']}` · **Created:** {man['created_utc'][:16]} UTC · **Source revision:** "
                f"`{man['source_revision']}` · **Final holdout opened:** {'YES' if man['final_holdout_opened'] else 'no (sealed)'}\n")
     out.append("> **What this is.** Every forecast is a probability that the price on day t+h is above (or below) a "
@@ -68,9 +70,15 @@ def write(rdir: Path) -> str:
                "each is scored against the outcome that later happened. Probabilities are **P**, real-world "
                "estimates from price history, except **DVOL lognormal**, a **Q-proxy** built from Deribit's "
                "implied-volatility index. Where the Q-proxy and the outcomes disagree, that can reflect a risk "
-               "premium rather than an error. Scores cover the **development period only**. The final holdout ("
-               + ", ".join(f"{c} cohort from {d}" for c, d in seal.items()) +
-               ") is sealed and will be scored once, together with the Stage 4 models.\n")
+               "premium rather than an error. "
+               + ("The final holdout section comes first; all later sections cover the **development period only**.\n"
+                  if man.get("final_holdout_opened") else
+                  "Scores cover the **development period only**. The final holdout ("
+                  + ", ".join(f"{c} cohort from {d}" for c, d in seal.items()) +
+                  ") is sealed and will be scored once, together with every other model.\n"))
+
+    if man.get("final_holdout_opened") and (rdir / "promotion.csv").exists():
+        out.append(holdout_section(rdir, L, man, bt))
 
     # ---------------- bottom line (primary = P models, full history)
     out.append("## Bottom line\n")
@@ -110,7 +118,8 @@ def write(rdir: Path) -> str:
         lines.append(f"- **Caution:** {len(fragile)} of the reliably-better results rest on fewer than 20 approximately "
                      "independent outcomes (" + ", ".join(sorted({f'{r.cohort} {r.asset} {r.h}d' for r in fragile.itertuples()}))
                      + "). With that few outcomes, a block bootstrap can understate uncertainty. Treat them as "
-                     "exploratory until the holdout confirms or refutes them.")
+                     + ("exploratory; see the holdout section." if man.get("final_holdout_opened") else
+                        "exploratory until the holdout confirms or refutes them."))
     lines.append("- **Read this as:** with a few years of overlapping 30–90-day outcomes, history does not reliably "
                  "beat simply using past event frequency for these thresholds. Wide intervals are the finding, not a "
                  "defect. No model is promoted. Stage 4 has to beat the strongest of these on the same rows.")
@@ -252,13 +261,22 @@ def write(rdir: Path) -> str:
                f"- **Reproducibility:** seed {man['seed']}; the manifest records code hash "
                f"`{man['code_sha256'][:12]}`, the SHA-256 of every input series and every output.\n")
     st4 = stage4_section(rdir, dev, man, bt)
+    st5 = stage5_section(rdir, dev, man, bt)
     if st4:
         out.append(st4)
+    if st5:
+        out.append(st5)
+    if st5 and not man.get("final_holdout_opened"):
+        out.append("## Next: the one-time holdout evaluation\n")
+        out.append("Every model is scored once on the sealed holdout under the predeclared promotion rule. Nothing "
+                   "is revised after seeing it. The holdout is entirely after Chronos-Bolt's weights were frozen, so it "
+                   "is also the clean test of the foundation model.\n")
+    elif st4 and not st5:
         out.append("## Next (Stage 5)\n")
         out.append("A pinned time-series foundation model (Chronos), plus optional news-feature and ensemble "
                    "experiments. After that, the sealed holdout is opened once and every model is scored together "
                    "under the promotion rule above.\n")
-    else:
+    elif not st4 and not st5:
         out.append("## Next (Stage 4)\n")
         out.append("Logistic regression, XGBoost and random forest on lagged features, trained with nested "
                    "chronological validation inside the development period.\n")
@@ -388,4 +406,202 @@ def stage4_section(rdir: Path, dev: pd.DataFrame, man: dict, bt: dict) -> str:
     o.append("XGBoost quantile regression is deferred, because the data cannot support it. With 12–100 approximately "
              "independent outcomes per cell, far-tail quantiles would come from a handful of events, which the brief "
              "warns against. Ensembles wait until individual models have been evaluated on the holdout.\n")
+    return "\n".join(o)
+
+
+def stage5_section(rdir: Path, dev: pd.DataFrame, man: dict, bt: dict) -> str:
+    S5 = dev[dev["comparison"].str.startswith("Stage 5")]
+    if S5.empty:
+        return ""
+    fm = man.get("foundation_model") or {}
+    fcfg = bt.get("foundation", {})
+    o = ["## Stage 5: time-series foundation model (development period)\n"]
+    o.append(_md_table(pd.DataFrame([
+        {"Item": "Checkpoint", "Value": f"`{fm.get('model', fcfg.get('model'))}` @ `{str(fm.get('revision', fcfg.get('revision')))[:10]}` "
+                                         f"(weights dated {fm.get('weights_date', fcfg.get('weights_date'))}, {fm.get('license', 'apache-2.0')})"},
+        {"Item": "Input", "Value": f"univariate, no covariates, last {fm.get('context_length', 512)} daily values up to the origin: "
+                                  "log price (price representation) or log 30-day realized vol (volatility representation)"},
+        {"Item": "Output", "Value": "price: quantiles 10%…90% of the h-day log return; volatility: median realized-vol path → "
+                                   "h-day variance. Horizons " + ", ".join(f"{h}d" for h in fm.get('horizons', [30, 60]))
+                                   + " (90d not run: beyond the native 64-step horizon)"},
+        {"Item": "Event probability", "Value": "price: linear interpolation of the quantile function inside 10–90%, with a normal tail "
+                                              "fitted to the 10–90% spread outside it (disclosed; rows flagged). Volatility: zero-drift "
+                                              "lognormal, as for the baselines"},
+        {"Item": "Runtime / deps", "Value": f"CPU, {fm.get('threads', 4)} threads; torch {fm.get('versions', {}).get('torch', '')}, "
+                                           f"transformers {fm.get('versions', {}).get('transformers', '')}, numpy {fm.get('versions', {}).get('numpy', '')}; "
+                                           f"{sum(v['seconds'] for v in fm.get('timing', {}).values()):.0f} s for "
+                                           f"{sum(v['origins'] for v in fm.get('timing', {}).values()):,} origin forecasts"},
+        {"Item": "Contamination", "Value": "The pretraining corpus is not fully documented, so overlap with crypto prices before "
+                                          f"{fcfg.get('weights_date')} cannot be ruled out. The post-release table below uses only origins after "
+                                          "that date. The sealed holdout is entirely post-release, so it is the clean test."},
+    ])) + "\n")
+    fp = rdir / "forecasts.parquet"
+    if fp.exists():
+        f = pd.read_parquet(fp, columns=["cohort", "asset", "h", "target", "y", "climatology", "chronos_bolt", "chronos_in_band"])
+        f = f[f["y"].notna() & f["chronos_bolt"].notna()]
+        if len(f):
+            share = f["chronos_in_band"].mean()
+            g = f.groupby(["cohort", "asset", "h", "target"])
+            sd = g[["climatology", "chronos_bolt"]].std().median()
+            corr = g.apply(lambda d: d["chronos_bolt"].corr(d["y"]) if d["chronos_bolt"].std() > 0 else np.nan, include_groups=False).median()
+            o.append(f"Targets inside Chronos's own 10–90% band: {share:.0%} of scored rows; the rest rely on the tail assumption. "
+                     f"Median forecast spread: {sd['chronos_bolt']:.3f} vs {sd['climatology']:.3f} for past frequency; median "
+                     f"correlation with the outcome {corr:+.3f}.\n")
+    sections = (
+        ("Stage 5 in-band", "chronos_bolt", "Price representation, rows where the target lies inside Chronos's 10–90% band (no tail assumption)",
+         "Conditioned on Chronos's own forecast, which is known at the origin, so there is no leakage. These rows need no tail "
+         "assumption. They are a selected subset, so baseline skill here differs from the full-history tables."),
+        ("Stage 5", "chronos_bolt", "Price representation, all rows (tail rows use the normal-tail assumption)",
+         "Rows outside the 10–90% band rely on the disclosed tail rule, not on the model. For holdout promotion the price "
+         "representation must pass on all rows and on the in-band subset."),
+        ("Stage 5", "chronos_vol", "Volatility representation, all rows",
+         "Chronos forecasts the 30-day realized volatility path, which goes into the same zero-drift lognormal as the "
+         "baselines. No tail assumption and no drift, so it isolates whether Chronos forecasts volatility better than "
+         "EWMA, GARCH or realized-vol rules."),
+        ("Stage 5 post-release", "chronos_bolt", f"Origins on or after {fcfg.get('weights_date')} (no possible pretraining overlap)",
+         "Few independent outcomes; read as exploratory."))
+    for comp, model, title, note in sections:
+        x = S5[S5["comparison"] == comp]
+        ch = x[x["model"] == model] if len(x) else x
+        if ch.empty:
+            St = pd.read_csv(rdir / "scores_by_target.csv")
+            st = St[(St["comparison"] == comp) & (St["split"] == "dev") & (St["model"] == model)]
+            if len(st):
+                o.append(f"### {title}\n")
+                o.append(f"No testable targets. This window has only {int(st['n'].max())} development origins per cell at most, "
+                         f"and every target falls below the {bt['min_independent_events']}-independent-window minimum, so "
+                         "nothing is scored. The sealed holdout, entirely after the weights date, is where Chronos gets its "
+                         "contamination-free test.\n")
+            continue
+        o.append(f"### {title}\n")
+        o.append(note + "\n")
+        better = ch[(ch["dbrier_ci_hi"] < 0) & ch["verdict_seed_stable"]]
+        worse = ch[(ch["dbrier_ci_lo"] > 0) & ch["verdict_seed_stable"]]
+        bb = ch[(ch["dbest_ci_hi"] < 0) & ch.get("dbest_seed_stable", True)]
+        wb = ch[(ch["dbest_ci_lo"] > 0) & ch.get("dbest_seed_stable", True)]
+        o.append(f"Beats past frequency in {len(better)} of {len(ch)} cells; reliably worse in {len(worse)}; beats the "
+                 f"strongest history model in {len(bb)}; reliably worse than it in {len(wb)}"
+                 + (" (" + ", ".join(f"{r.cohort} {r.asset} {r.h}d" for r in wb.itertuples()) + ")" if len(wb) else "") + ".\n")
+        if len(better):
+            o.append(f"With {len(ch)} cells tested, about {0.025 * len(ch):.1f} interval-excludes-zero 'wins' are expected by chance "
+                     "alone, before any multiple-comparison correction. The win(s) above "
+                     + ("rest on few independent outcomes and " if (better["approx_independent_origins"] < 20).any() else "")
+                     + "are exploratory.\n")
+        if model == "chronos_vol" and (rdir / "vol_calibration.csv").exists():
+            vc = pd.read_csv(rdir / "vol_calibration.csv")
+            if len(vc):
+                o.append(f"Variance calibration: Chronos's h-day variance averages {vc['ratio'].min():.2f}–{vc['ratio'].max():.2f}× the "
+                         f"realized mean squared return ({int((vc['ratio'] < 1).sum())} of {len(vc)} cells below 1). Squaring a median "
+                         "path biases variance low.\n")
+        rows = [{"Cohort": r.cohort, "Asset": r.asset, "h": f"{r.h}d", "Skill vs past freq.": _f(r.bss_vs_climatology),
+                 "95% CI": _ci(r.bss_ci_lo, r.bss_ci_hi), "Verdict": verdict(r),
+                 "Strongest baseline": LABEL.get(r.best_baseline, r.best_baseline), "ΔBrier vs it": f"{r.dbrier_vs_best_baseline:+.4f}",
+                 "95% CI ": _ci(r.dbest_ci_lo, r.dbest_ci_hi), "≈ indep.": f"{r.approx_independent_origins:.0f}",
+                 "Period": f"{r.common_start} → {r.common_end}"} for r in ch.sort_values(["cohort", "asset", "h"]).itertuples()]
+        o.append(_md_table(pd.DataFrame(rows)) + "\n")
+    qp = rdir / "quantile_scores.csv"
+    if qp.exists():
+        q = pd.read_csv(qp)
+        q = q[q["split"] == "dev"]
+        if len(q):
+            o.append("### Quantile forecasts: pinball loss and 80% interval (price representation)\n")
+            o.append("Chronos's nine quantiles of the h-day log return are compared with those of a zero-drift lognormal "
+                     "using EWMA variance, on identical origins. A negative ΔPinball favours Chronos; the CI is a block "
+                     "bootstrap with block h. A positive median bias means Chronos's median sits above the realized return.\n")
+            better_q = int((q["dpinball_ci_hi"] < 0).sum())
+            worse_q = int((q["dpinball_ci_lo"] > 0).sum())
+            o.append(f"Chronos has lower pinball loss with a CI below zero in {better_q} of {len(q)} cells, higher in {worse_q}. "
+                     f"Its median sits above the outcome in {int((q['median_bias_chronos'] > 0).sum())} of {len(q)} cells (mean "
+                     f"bias {q['median_bias_chronos'].mean():+.3f} log points, with {int((q['median_bias_chronos'] < 0).sum())} cells negative). "
+                     "The comparison model has zero drift, so this measures Chronos's own drift relative to outcomes.\n")
+            o.append(_md_table(pd.DataFrame({
+                "Cohort": q["cohort"], "Asset": q["asset"], "h": q["h"].astype(str) + "d",
+                "Pinball Chronos": q["pinball_chronos"].map(lambda v: f"{v:.4f}"),
+                "Pinball lognormal": q["pinball_lognormal_ewma"].map(lambda v: f"{v:.4f}"),
+                "ΔPinball [95% CI]": [f"{a:+.4f} [{b:+.4f}, {c:+.4f}]" for a, b, c in zip(q["dpinball"], q["dpinball_ci_lo"], q["dpinball_ci_hi"])],
+                "80% coverage Chronos / lognormal": [f"{a:.0%} / {b:.0%}" for a, b in zip(q["cover80_chronos"], q["cover80_lognormal_ewma"])],
+                "80% width Chronos / lognormal": [f"{a:.3f} / {b:.3f}" for a, b in zip(q["width80_chronos"], q["width80_lognormal_ewma"])],
+                "Median bias": q["median_bias_chronos"].map(lambda v: f"{v:+.3f}")})) + "\n")
+    sk = fcfg.get("skipped", {})
+    if sk:
+        o.append("### Experiments not run, and why\n")
+        o.append("\n".join(f"- **{k.replace('_', ' ')}**: {v}" for k, v in sk.items()) + "\n")
+    return "\n".join(o)
+
+
+def holdout_section(rdir: Path, L: pd.DataFrame, man: dict, bt: dict) -> str:
+    """Final, one-time holdout results under the predeclared promotion rule."""
+    import json as _json
+    pp = rdir / "promotion.csv"
+    pr = pd.read_csv(pp) if pp.exists() and pp.stat().st_size > 0 else pd.DataFrame()
+    o = ["## Final holdout evaluation (scored once)\n"]
+    o.append("The holdout was sealed before any model was built and opened once, for every model together. Holdout "
+             f"periods: {', '.join(f'{c} from {d}' for c, d in man['holdout_seal'].items())}. No design choice, tuning step "
+             "or rule was made with these outcomes in view. Walk-forward models (ML, GARCH) do keep refitting through the "
+             "holdout, but only on labels that had matured by each refit date, as they would in live use. The promotion "
+             "rule was predeclared in `config.yaml`. The clarifications below were recorded before the opening, and "
+             "`promotion.py` applies the rule mechanically.\n")
+    o.append("> " + " ".join(bt["promotion"]["rule"].split()) + "\n")
+    if bt["promotion"].get("clarifications"):
+        o.append("> Clarifications: " + " ".join(bt["promotion"]["clarifications"].split()) + "\n")
+    from . import evaluate as _E
+    led = _E.LEDGER
+    if led.exists():
+        att = _json.loads(led.read_text())
+        o.append("Ledger of holdout attempts: " + "; ".join(
+            f"opened {a['opened_utc'][:16]} → {'completed ' + a['completed_utc'][:16] if a.get('completed_utc') else 'not completed'}"
+            f" (code {str(a.get('code_sha256', ''))[:8]})" for a in att) + ".\n")
+    if pr.empty:
+        o.append("**No holdout cell could be scored.** The holdout is too short for any target to meet the testability "
+                 "minimum. No model is promoted, and past event frequency is retained.\n")
+        return "\n".join(o)
+    untestable = pr[~pr["testable"].astype(bool)]
+    tested = pr[pr["testable"].astype(bool)]
+    cells_t = tested[["cohort", "asset", "h"]].drop_duplicates()
+    if len(untestable):
+        o.append(f"**Untestable on the holdout ({len(untestable)} cells):** "
+                 + ", ".join(f"{r.cohort} {r.asset} {r.h}d" for r in untestable.itertuples())
+                 + f". These have too few independent outcome windows (minimum {bt['min_independent_events']}) in the "
+                 "holdout period, so no model can be promoted or rejected there.\n")
+    promoted = tested[tested["promoted"].astype(bool)]
+    retained = []
+    for r in cells_t.itertuples():
+        g = tested[(tested["cohort"] == r.cohort) & (tested["asset"] == r.asset) & (tested["h"] == r.h)]
+        best = g["strongest_dev_baseline"].iat[0]
+        bp = g[(g["model"] == best) & g["promoted"].astype(bool)]
+        retained.append({"cell": f"{r.cohort} {r.asset} {r.h}d", "retained": best if len(bp) else "climatology"})
+    if promoted.empty:
+        o.append(f"**Result: no model is promoted in any of the {len(cells_t)} testable cells.** Past event frequency "
+                 "(climatology) is retained: no demonstrated improvement.\n")
+    else:
+        o.append(f"**Result: {len(promoted)} promotion(s) across {len(cells_t)} testable cells**: " + "; ".join(
+            f"{r.cohort} {r.asset} {r.h}d {LABEL.get(r.model, r.model)} (skill {r.bss_vs_climatology:+.1%}, "
+            f"CI [{r.bss_ci_lo:+.1%}, {r.bss_ci_hi:+.1%}], ≈{r.approx_independent_origins:.0f} indep.)" for r in promoted.itertuples())
+            + ". Retained model per testable cell: " + "; ".join(f"{x['cell']}: {LABEL.get(x['retained'], x['retained'])}" for x in retained) + ".\n")
+    cnt = tested.groupby("model")[["c1_beats_clim_and_baseline", "c2_ci_below_zero_seed_stable", "c3_reliability_ok",
+                                   "c4_coverage_ok", "promoted"]].sum().astype(int)
+    cnt["cells"] = tested.groupby("model").size()
+    cnt.index = [LABEL.get(m, m) for m in cnt.index]
+    o.append("Conditions met per model, counted over testable cells:\n")
+    o.append(_md_table(cnt.reset_index(names="Model").rename(columns={
+        "c1_beats_clim_and_baseline": "(1) beats past freq. and best dev baseline",
+        "c2_ci_below_zero_seed_stable": "(2) CI below 0", "c3_reliability_ok": "(3) reliability ok",
+        "c4_coverage_ok": "(4) coverage ok", "promoted": "Promoted", "cells": "Cells"})) + "\n")
+    rows = []
+    for (c, a, h), g in tested.groupby(["cohort", "asset", "h"]):
+        b = g.loc[g["bss_vs_climatology"].idxmax()]
+        rows.append({"Cohort": c, "Asset": a, "h": f"{h}d", "Best holdout model": LABEL.get(b["model"], b["model"]),
+                     "Its skill": _f(b["bss_vs_climatology"]), "95% CI": _ci(b["bss_ci_lo"], b["bss_ci_hi"]),
+                     "Strongest dev baseline": LABEL.get(b["strongest_dev_baseline"], b["strongest_dev_baseline"]),
+                     "≈ indep.": f"{b['approx_independent_origins']:.0f}", "Promoted": "yes" if g["promoted"].astype(bool).any() else "no"})
+    o.append(_md_table(pd.DataFrame(rows)) + "\n")
+    disc = rdir / "DISCLOSURES.md"
+    if disc.exists():
+        o.append("### Disclosures\n")
+        o.append(disc.read_text() + "\n")
+    H = L[L["split"] == "holdout"]
+    q = H[(H["comparison"] == "P + Q-proxy") & (H["model"] == "dvol_lognormal_Q")]
+    if len(q):
+        o.append("DVOL Q-proxy on the holdout (market-implied, not eligible for P promotion): Brier skill "
+                 + ", ".join(f"{r.cohort} {r.asset} {r.h}d {r.bss_vs_climatology:+.1%}" for r in q.itertuples()) + ".\n")
     return "\n".join(o)

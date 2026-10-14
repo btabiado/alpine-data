@@ -16,7 +16,8 @@ LABEL = {"climatology": "Past frequency (climatology)", "lognormal_rv90": "Logno
          "lognormal_ewma": "Lognormal, EWMA vol", "lognormal_ewma_drift": "Lognormal, EWMA vol + est. drift",
          "fhs_ewma": "Filtered historical simulation", "garch_t": "GARCH(1,1)-t",
          "dvol_lognormal_Q": "DVOL lognormal (Q-proxy)", "logit_A": "Logistic regression (ML)",
-         "rf_A": "Random forest (ML)", "xgb_A": "XGBoost (ML)", "xgb_AD": "XGBoost + DVOL features (ML)"}
+         "rf_A": "Random forest (ML)", "xgb_A": "XGBoost (ML)", "xgb_AD": "XGBoost + DVOL features (ML)",
+         "chronos_bolt": "Chronos-Bolt, price representation", "chronos_vol": "Chronos-Bolt, volatility representation"}
 ORDER = ["dvol_lognormal_Q", "garch_t", "fhs_ewma", "lognormal_ewma_drift", "lognormal_ewma", "lognormal_rv90"]
 ML_ORDER = ["xgb_AD", "xgb_A", "rf_A", "logit_A"]
 

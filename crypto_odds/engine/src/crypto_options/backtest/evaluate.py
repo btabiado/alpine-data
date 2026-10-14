@@ -53,14 +53,21 @@ def split(df: pd.DataFrame, start: pd.Timestamp) -> pd.Series:
     return pd.Series(out, index=df.index)
 
 
-def record_final_opening(note: str, allow_reopen: bool = False) -> int:
+def record_final_opening(note: str, allow_reopen: bool = False, meta: dict | None = None) -> int:
     """The holdout is scored once. Refused if a previous final evaluation completed (unless explicitly allowed,
     never from the CLI). An attempt that crashed before completing is logged but does not block a retry."""
     led = json.loads(LEDGER.read_text()) if LEDGER.exists() else []
     done = [e for e in led if e.get("completed_utc")]
     if done and not allow_reopen:
         raise RuntimeError(f"holdout already scored on {done[0]['completed_utc']}; refusing to score it again")
-    led.append({"opened_utc": datetime.now(timezone.utc).isoformat(), "note": note, "completed_utc": None})
+    meta = meta or {}
+    if led and not allow_reopen:   # a retry after a crash must use exactly the code and config of the first attempt
+        first = led[0]
+        for k in ("code_sha256", "config_sha256"):
+            if first.get(k) and meta.get(k) and first[k] != meta[k]:
+                raise RuntimeError(f"retry refused: {k} differs from the first holdout attempt "
+                                   f"({first[k][:12]} vs {meta[k][:12]}); holdout results may already have been seen")
+    led.append({"opened_utc": datetime.now(timezone.utc).isoformat(), "note": note, "completed_utc": None, **meta})
     LEDGER.write_text(json.dumps(led, indent=2))
     return len(led) - 1
 

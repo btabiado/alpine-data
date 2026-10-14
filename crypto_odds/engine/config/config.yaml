@@ -116,3 +116,22 @@ backtest:
       seed-stable, (3) its reliability (mean |observed - forecast| over bins, weighted by count) is no worse
       than climatology's by more than 0.02, and (4) its coverage is at least 90% of climatology's. Otherwise
       the simpler baseline is retained and the report says no demonstrated improvement.
+    clarifications: >-
+      Made 2026-10-14 BEFORE the holdout was opened, after an independent pre-flight review that saw no holdout
+      result: coverage (4) is measured on the cell's testable holdout targets; Chronos's price representation is
+      scored on all rows and must also pass on its in-band subset; the strongest development baseline itself is
+      judged against climatology only in (1); cells with no testable holdout targets are reported as untestable;
+      the retained model is the strongest development baseline if it passes against climatology, else climatology.
+  foundation:                   # Stage 5, predeclared before any Chronos result was seen
+    model: amazon/chronos-bolt-small
+    revision: 772f3d25d38aec6d914c8949dab4462e2d46f5d8
+    weights_date: "2024-11-13"  # origins on/after this date cannot overlap the model's pretraining data
+    context_length: 512
+    horizons: [30, 60]          # native prediction length 64; 90d would need autoregressive unrolling (not run)
+    tail_rule: normal tail beyond q10/q90, centred on q50, sigma from q10-q90 spread; rows flagged in_band=False
+    variants:                   # added after the Stage 5 audit (brief s.7: evaluate returns/volatility and price), predeclared
+      price: log-price context; quantiles of the h-day log return; in-band rows are the primary comparison
+      vol: log 30-day realized-vol context; median path -> h-day variance -> zero-drift lognormal (no tail assumption)
+    skipped:
+      news_llm_features: no archived point-in-time news; would need prospective collection (Quinn cluster deferred)
+      ensemble: brief allows blending only validated real-world forecasts; no model validated in Stages 3-4

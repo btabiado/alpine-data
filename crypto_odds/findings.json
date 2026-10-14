@@ -1,11 +1,11 @@
 {
- "run_id": "20261012T133252Z_4b3620f0",
- "engine_revision": "b03c7a53510fa9c8f18b9cd68edc0cae9c31629a",
+ "run_id": "20261014T215853Z_30b31f89",
+ "engine_revision": "6a096b0",
  "holdout_seal": {
   "settlement": "2025-08-30",
   "spot": "2025-04-02"
  },
- "holdout_opened": false,
+ "holdout_opened": true,
  "metric": "Brier skill vs past event frequency (climatology); 95% block-bootstrap interval; development period only",
  "cells": [
   {
@@ -31,7 +31,15 @@
    "dvol_q_ci": [
     -0.0474,
     0.175
-   ]
+   ],
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0641,
+   "best_fm_ci": [
+    -0.0621,
+    0.189
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
   },
   {
    "cohort": "settlement",
@@ -41,22 +49,30 @@
    "best_baseline": "garch_t",
    "best_baseline_bss": 0.0361,
    "best_baseline_ci": [
-    -0.1586,
-    0.2313
+    -0.1519,
+    0.2165
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "logit_A",
    "best_ml_bss": -0.0278,
    "best_ml_ci": [
-    -0.3148,
-    0.2331
+    -0.3081,
+    0.2258
    ],
    "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0398,
    "dvol_q_ci": [
-    -0.1676,
-    0.2159
-   ]
+    -0.1638,
+    0.2298
+   ],
+   "best_fm": "chronos_bolt",
+   "best_fm_bss": 0.0724,
+   "best_fm_ci": [
+    -0.0326,
+    0.1769
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5 in-band"
   },
   {
    "cohort": "settlement",
@@ -66,21 +82,21 @@
    "best_baseline": "garch_t",
    "best_baseline_bss": 0.0777,
    "best_baseline_ci": [
-    -0.2412,
-    0.3746
+    -0.2355,
+    0.3559
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.0523,
    "best_ml_ci": [
-    -0.3823,
-    0.2797
+    -0.4166,
+    0.2728
    ],
    "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0409,
    "dvol_q_ci": [
-    -0.2994,
-    0.3858
+    -0.2924,
+    0.3559
    ]
   },
   {
@@ -91,22 +107,30 @@
    "best_baseline": "lognormal_rv90",
    "best_baseline_bss": 0.1034,
    "best_baseline_ci": [
-    -0.0096,
-    0.2115
+    -0.009,
+    0.22
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "logit_A",
    "best_ml_bss": -0.0796,
    "best_ml_ci": [
-    -0.1855,
-    0.0222
+    -0.1881,
+    0.0181
    ],
    "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0976,
    "dvol_q_ci": [
-    -0.014,
-    0.2098
-   ]
+    -0.0119,
+    0.2063
+   ],
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.1029,
+   "best_fm_ci": [
+    -0.0066,
+    0.2086
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
   },
   {
    "cohort": "settlement",
@@ -116,22 +140,30 @@
    "best_baseline": "lognormal_rv90",
    "best_baseline_bss": 0.1089,
    "best_baseline_ci": [
-    -0.114,
-    0.3048
+    -0.1113,
+    0.2844
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.0922,
    "best_ml_ci": [
-    -0.3491,
-    0.1252
+    -0.3517,
+    0.1157
    ],
    "best_ml_reliably_better": false,
    "dvol_q_bss": 0.1079,
    "dvol_q_ci": [
-    -0.1042,
-    0.2941
-   ]
+    -0.1269,
+    0.2795
+   ],
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0986,
+   "best_fm_ci": [
+    -0.1453,
+    0.2889
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
   },
   {
    "cohort": "settlement",
@@ -141,21 +173,21 @@
    "best_baseline": "lognormal_rv90",
    "best_baseline_bss": 0.1424,
    "best_baseline_ci": [
-    -0.3035,
-    0.4355
+    -0.3204,
+    0.4254
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.0611,
    "best_ml_ci": [
-    -0.5073,
-    0.235
+    -0.4689,
+    0.2318
    ],
    "best_ml_reliably_better": false,
    "dvol_q_bss": 0.1465,
    "dvol_q_ci": [
-    -0.254,
-    0.4319
+    -0.3003,
+    0.4244
    ]
   },
   {
@@ -166,17 +198,25 @@
    "best_baseline": "lognormal_rv90",
    "best_baseline_bss": 0.005,
    "best_baseline_ci": [
-    -0.0392,
-    0.0587
+    -0.0406,
+    0.06
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.1522,
    "best_ml_ci": [
-    -0.3053,
-    -0.0067
+    -0.3108,
+    -0.0037
    ],
-   "best_ml_reliably_better": false
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0057,
+   "best_fm_ci": [
+    -0.0368,
+    0.0571
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
   },
   {
    "cohort": "settlement",
@@ -186,17 +226,25 @@
    "best_baseline": "lognormal_rv90",
    "best_baseline_bss": 0.0612,
    "best_baseline_ci": [
-    0.017,
-    0.0998
+    0.0188,
+    0.0993
    ],
    "best_baseline_reliably_better": true,
    "best_ml": "rf_A",
    "best_ml_bss": -0.5828,
    "best_ml_ci": [
-    -1.4402,
-    -0.0985
+    -1.4602,
+    -0.0993
    ],
-   "best_ml_reliably_better": false
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0616,
+   "best_fm_ci": [
+    0.0206,
+    0.098
+   ],
+   "best_fm_reliably_better": true,
+   "best_fm_comparison": "Stage 5"
   },
   {
    "cohort": "settlement",
@@ -206,17 +254,25 @@
    "best_baseline": "fhs_ewma",
    "best_baseline_bss": -0.0165,
    "best_baseline_ci": [
-    -0.0574,
-    0.0216
+    -0.0587,
+    0.0227
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.0915,
    "best_ml_ci": [
-    -0.2109,
-    0.0108
+    -0.2083,
+    0.0106
    ],
-   "best_ml_reliably_better": false
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": -0.0113,
+   "best_fm_ci": [
+    -0.046,
+    0.0302
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
   },
   {
    "cohort": "settlement",
@@ -226,17 +282,25 @@
    "best_baseline": "fhs_ewma",
    "best_baseline_bss": -0.0511,
    "best_baseline_ci": [
-    -0.0928,
-    -0.0039
+    -0.0999,
+    -0.0052
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": 0.0009,
    "best_ml_ci": [
-    -0.1714,
-    0.1897
+    -0.1903,
+    0.1804
    ],
-   "best_ml_reliably_better": false
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": -0.0396,
+   "best_fm_ci": [
+    -0.1657,
+    0.078
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
   },
   {
    "cohort": "spot",
@@ -246,22 +310,30 @@
    "best_baseline": "fhs_ewma",
    "best_baseline_bss": -0.0303,
    "best_baseline_ci": [
-    -0.073,
-    0.0085
+    -0.0737,
+    0.0116
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.1242,
    "best_ml_ci": [
-    -0.2223,
-    -0.0376
+    -0.2212,
+    -0.0319
    ],
    "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0295,
    "dvol_q_ci": [
-    -0.0741,
-    0.1259
-   ]
+    -0.0682,
+    0.1381
+   ],
+   "best_fm": "chronos_vol",
+   "best_fm_bss": -0.0493,
+   "best_fm_ci": [
+    -0.1197,
+    0.0204
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
   },
   {
    "cohort": "spot",
@@ -271,22 +343,30 @@
    "best_baseline": "fhs_ewma",
    "best_baseline_bss": -0.0472,
    "best_baseline_ci": [
-    -0.1132,
-    0.0223
+    -0.1165,
+    0.0225
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.2149,
    "best_ml_ci": [
-    -0.3946,
-    -0.0481
+    -0.3965,
+    -0.0515
    ],
    "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0324,
    "dvol_q_ci": [
-    -0.1942,
-    0.2352
-   ]
+    -0.1998,
+    0.2289
+   ],
+   "best_fm": "chronos_bolt",
+   "best_fm_bss": -0.0541,
+   "best_fm_ci": [
+    -0.1339,
+    0.0217
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5 in-band"
   },
   {
    "cohort": "spot",
@@ -296,21 +376,21 @@
    "best_baseline": "fhs_ewma",
    "best_baseline_bss": -0.0451,
    "best_baseline_ci": [
-    -0.1379,
-    0.0554
+    -0.1343,
+    0.0496
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.2787,
    "best_ml_ci": [
-    -0.5253,
-    -0.0501
+    -0.5361,
+    -0.0467
    ],
    "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0448,
    "dvol_q_ci": [
-    -0.2898,
-    0.2762
+    -0.3152,
+    0.2849
    ]
   },
   {
@@ -321,22 +401,30 @@
    "best_baseline": "lognormal_rv90",
    "best_baseline_bss": 0.0089,
    "best_baseline_ci": [
-    -0.0599,
-    0.077
+    -0.0619,
+    0.0794
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.1332,
    "best_ml_ci": [
-    -0.2148,
-    -0.0527
+    -0.2114,
+    -0.0499
    ],
    "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0514,
    "dvol_q_ci": [
-    -0.0339,
-    0.1325
-   ]
+    -0.0324,
+    0.1339
+   ],
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0036,
+   "best_fm_ci": [
+    -0.0681,
+    0.0753
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
   },
   {
    "cohort": "spot",
@@ -346,22 +434,30 @@
    "best_baseline": "lognormal_rv90",
    "best_baseline_bss": 0.0021,
    "best_baseline_ci": [
-    -0.1307,
-    0.1324
+    -0.1199,
+    0.1271
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.2104,
    "best_ml_ci": [
-    -0.3761,
-    -0.0616
+    -0.3848,
+    -0.0584
    ],
    "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0149,
    "dvol_q_ci": [
-    -0.1256,
-    0.1413
-   ]
+    -0.1529,
+    0.1536
+   ],
+   "best_fm": "chronos_bolt",
+   "best_fm_bss": 0.0268,
+   "best_fm_ci": [
+    -0.0602,
+    0.1079
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5 in-band"
   },
   {
    "cohort": "spot",
@@ -371,21 +467,21 @@
    "best_baseline": "lognormal_rv90",
    "best_baseline_bss": 0.0202,
    "best_baseline_ci": [
-    -0.1649,
-    0.2083
+    -0.1839,
+    0.1988
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.2189,
    "best_ml_ci": [
-    -0.4249,
-    -0.0357
+    -0.4195,
+    -0.0283
    ],
    "best_ml_reliably_better": false,
    "dvol_q_bss": 0.0136,
    "dvol_q_ci": [
-    -0.2207,
-    0.2296
+    -0.2327,
+    0.2482
    ]
   },
   {
@@ -396,17 +492,25 @@
    "best_baseline": "lognormal_ewma",
    "best_baseline_bss": 0.0427,
    "best_baseline_ci": [
-    -0.0428,
-    0.1283
+    -0.0427,
+    0.1273
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.0691,
    "best_ml_ci": [
-    -0.1426,
-    0.0045
+    -0.1401,
+    0.0073
    ],
-   "best_ml_reliably_better": false
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0422,
+   "best_fm_ci": [
+    -0.053,
+    0.1303
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
   },
   {
    "cohort": "spot",
@@ -416,17 +520,25 @@
    "best_baseline": "lognormal_rv90",
    "best_baseline_bss": 0.0245,
    "best_baseline_ci": [
-    -0.1548,
-    0.1932
+    -0.1448,
+    0.1826
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "logit_A",
-   "best_ml_bss": -0.0868,
+   "best_ml_bss": -0.0869,
    "best_ml_ci": [
-    -0.2597,
-    0.0879
+    -0.2416,
+    0.0803
    ],
-   "best_ml_reliably_better": false
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0231,
+   "best_fm_ci": [
+    -0.1485,
+    0.1838
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
   },
   {
    "cohort": "spot",
@@ -436,15 +548,15 @@
    "best_baseline": "lognormal_ewma",
    "best_baseline_bss": 0.0899,
    "best_baseline_ci": [
-    -0.2126,
-    0.2972
+    -0.2174,
+    0.3128
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.0695,
    "best_ml_ci": [
-    -0.3373,
-    0.163
+    -0.3618,
+    0.1833
    ],
    "best_ml_reliably_better": false
   },
@@ -456,17 +568,25 @@
    "best_baseline": "lognormal_rv90",
    "best_baseline_bss": 0.0377,
    "best_baseline_ci": [
-    -0.0071,
-    0.0877
+    -0.0067,
+    0.0955
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.0473,
    "best_ml_ci": [
-    -0.1141,
-    0.0244
+    -0.114,
+    0.0258
    ],
-   "best_ml_reliably_better": false
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.038,
+   "best_fm_ci": [
+    -0.0114,
+    0.0878
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
   },
   {
    "cohort": "spot",
@@ -476,17 +596,25 @@
    "best_baseline": "lognormal_ewma",
    "best_baseline_bss": 0.0494,
    "best_baseline_ci": [
-    -0.0271,
-    0.1345
+    -0.0311,
+    0.1307
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.1253,
    "best_ml_ci": [
-    -0.2295,
-    -0.0276
+    -0.2349,
+    -0.0117
    ],
-   "best_ml_reliably_better": false
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0555,
+   "best_fm_ci": [
+    -0.017,
+    0.1381
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
   },
   {
    "cohort": "spot",
@@ -496,18 +624,30 @@
    "best_baseline": "lognormal_ewma",
    "best_baseline_bss": 0.0569,
    "best_baseline_ci": [
-    -0.0492,
-    0.1687
+    -0.0658,
+    0.1755
    ],
    "best_baseline_reliably_better": false,
    "best_ml": "rf_A",
    "best_ml_bss": -0.2147,
    "best_ml_ci": [
-    -0.3728,
-    -0.07
+    -0.3852,
+    -0.0574
    ],
    "best_ml_reliably_better": false
   }
  ],
- "ml_note": "ML models (logistic regression, random forest, XGBoost) were trained walk-forward with past-only tuning and shrink-only calibration. None beat the base rate or the best history model in any test."
+ "ml_note": "ML models (logistic regression, random forest, XGBoost) were trained walk-forward with past-only tuning and shrink-only calibration. None beat the base rate or the best history model in any test.",
+ "fm_note": "Chronos-Bolt, a pretrained time-series foundation model (Amazon, weights frozen Nov 2024), forecast 30- and 60-day moves from price history alone; it did not beat the best history model in any test, and beat the base rate with confidence in only 1 of 16 (LINK settlement, 60 days, via its volatility forecast), where the best history model also did.",
+ "holdout_summary": {
+  "testable_cells": 4,
+  "untestable_cells": 20,
+  "promoted": 0,
+  "testable_list": [
+   "spot BTC 30d",
+   "spot ETH 30d",
+   "spot LINK 30d",
+   "spot XRP 30d"
+  ]
+ }
 }

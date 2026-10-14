@@ -78,6 +78,7 @@ footer{color:var(--faint);font-size:12px;margin-top:36px;border-top:1px solid va
   <div class="row" id="cohortTabs"></div>
   <div class="card scroll"><table id="findingsTable"></table></div>
   <p class="note" id="findingsNote" style="margin-top:10px"></p>
+  <p style="margin:12px 0 0"><a class="pill" href="../crypto-scorecard/" style="display:inline-block;text-decoration:none">Full model scorecard &rarr;</a></p>
 
   <footer id="footer"></footer>
 </main>
@@ -89,7 +90,8 @@ const pct = v => v == null ? null : (v < 0.01 ? "<1%" : v > 0.99 ? ">99%" : Math
 const money = (x, ref) => x == null ? "—" : (ref >= 100 ? "$" + Math.round(x).toLocaleString("en-US") : "$" + x.toFixed(2));
 const LABEL = {climatology:"Past frequency", lognormal_rv90:"Lognormal, 90-day vol", lognormal_ewma:"Lognormal, EWMA vol",
   lognormal_ewma_drift:"Lognormal + drift", fhs_ewma:"Filtered hist. simulation", garch_t:"GARCH(1,1)-t",
-  logit_A:"Logistic regression", rf_A:"Random forest", xgb_A:"XGBoost"};
+  logit_A:"Logistic regression", rf_A:"Random forest", xgb_A:"XGBoost",
+  chronos_vol:"Chronos (volatility)", chronos_bolt:"Chronos (price)"};
 let odds, findings, state = {asset:null, expiry:null, cohort:"settlement"};
 const tip = $("tip");
 
@@ -195,6 +197,8 @@ function renderFindings(){
   const blWins = cells.filter(c => c.best_baseline_reliably_better).length;
   const ml = cells.filter(c => c.best_ml_bss != null);
   const hasML = ml.length > 0;
+  const fm = cells.filter(c => c.best_fm != null);
+  const hasFM = fm.length > 0;
   let lede = `<b>Mostly no.</b> Across ${cells.length} asset × horizon tests scored against outcomes they never saw, ` +
     `models built from price history beat the simple base rate (how often the move happened before) with confidence in only ${blWins}.`;
   if (hasML) { const mlMax = Math.max(...ml.map(c => c.best_ml_bss)), mlMin = Math.min(...ml.map(c => c.best_ml_bss));
@@ -202,6 +206,8 @@ function renderFindings(){
       `${(mlMax*100).toFixed(0)}% Brier skill (negative = worse than the base rate): they were overconfident about ` +
     `patterns that later reversed.`; }
   else if (findings.ml_status) lede += ` ${findings.ml_status}`;
+  if (hasFM) lede += ` A pretrained foundation model (Chronos) did so in ${fm.filter(c => c.best_fm_reliably_better).length} of ` +
+    `the ${fm.length} tests it covered (30 and 60 days only).`;
   $("findingsLede").innerHTML = lede;
   pills($("cohortTabs"), [{label:"Settlement prices (Deribit)", k:"settlement"}, {label:"Spot closes (Coinbase/Bitstamp)", k:"spot"}],
         it => it.k === state.cohort, it => { state.cohort = it.k; renderFindings(); }, "small");
@@ -210,19 +216,30 @@ function renderFindings(){
     (ci && ci[1] < 0 ? ' <span class="chip bad">reliably worse</span>' : "");
   const rows = cells.filter(c => c.cohort === state.cohort).sort((a, b) => a.asset.localeCompare(b.asset) || a.h - b.h);
   $("findingsTable").innerHTML = `<thead><tr><th>Asset</th><th>Horizon</th><th>≈ independent outcomes</th><th>Best history model</th>
-    <th>Its skill</th><th>Implied-vol benchmark (DVOL)</th>${hasML ? "<th>Best ML model</th><th>Its skill</th>" : ""}</tr></thead><tbody>` +
+    <th>Its skill</th><th>Implied-vol benchmark (DVOL)</th>${hasML ? "<th>Best ML model</th><th>Its skill</th>" : ""}${hasFM ? "<th>Foundation model (Chronos)</th><th>Its skill</th>" : ""}</tr></thead><tbody>` +
     rows.map(c => `<tr><td>${c.asset}</td><td>${c.h} days</td><td>${c.indep_outcomes}</td><td>${LABEL[c.best_baseline] || c.best_baseline}</td>
       <td>${f(c.best_baseline_bss)}${chip(c.best_baseline_bss, c.best_baseline_ci, c.best_baseline_reliably_better)}</td>
       <td>${f(c.dvol_q_bss)}</td>${hasML ? `<td>${c.best_ml ? LABEL[c.best_ml] : "—"}</td>
-      <td>${f(c.best_ml_bss)}${chip(c.best_ml_bss, c.best_ml_ci, c.best_ml_reliably_better)}</td>` : ""}</tr>`).join("") + "</tbody>";
+      <td>${f(c.best_ml_bss)}${chip(c.best_ml_bss, c.best_ml_ci, c.best_ml_reliably_better)}</td>` : ""}${hasFM ? `<td>${c.best_fm ? LABEL[c.best_fm] || c.best_fm : "—"}</td>
+      <td>${f(c.best_fm_bss)}${chip(c.best_fm_bss, c.best_fm_ci, c.best_fm_reliably_better)}</td>` : ""}</tr>`).join("") + "</tbody>";
   $("findingsNote").innerHTML = `<b>Method.</b> Every forecast used only data available on its date and was scored against what happened ` +
-    `(${findings.metric}). Skill is relative to the base rate: 0% = no better, positive = better. The final ` +
-    `20% of history is sealed for one final test (settlement from ${findings.holdout_seal.settlement}, spot from ${findings.holdout_seal.spot}). ` +
+    `(${findings.metric}). Skill is relative to the base rate: 0% = no better, positive = better. ` +
+    (findings.holdout_summary
+      ? `<b>Final test:</b> the last 20% of history (settlement from ${findings.holdout_seal.settlement.slice(0,10)}, spot from ` +
+        `${findings.holdout_seal.spot.slice(0,10)}) was held back and scored once under a rule fixed in advance. ` +
+        `${findings.holdout_summary.promoted === 0 ? "No model was promoted" : findings.holdout_summary.promoted + " model(s) were promoted"}; ` +
+        `only ${findings.holdout_summary.testable_cells} tests (${findings.holdout_summary.testable_list.join(", ")}) had enough outcomes to judge, ` +
+        `so "no demonstrated improvement" is not proof of no skill. `
+      : `The final 20% of history is sealed for one final test (settlement from ${findings.holdout_seal.settlement}, spot from ${findings.holdout_seal.spot}). `) +
     `With only a few dozen non-overlapping outcomes per test, most differences are within noise.` +
-    (findings.ml_note ? ` ${findings.ml_note}` : "");
+    (findings.ml_note ? ` ${findings.ml_note}` : "") + (findings.fm_note ? ` ${findings.fm_note}` : "");
 }
 
-Promise.all([fetch("odds.json").then(r => r.json()), fetch("findings.json").then(r => r.json())]).then(([o, f]) => {
+function load(){
+  // no-store so an open tab picks up the daily refresh; state (asset, expiry, cohort) is kept across reloads
+  return Promise.all([fetch("odds.json", {cache: "no-store"}).then(r => r.json()),
+                      fetch("findings.json", {cache: "no-store"}).then(r => r.json())]).then(([o, f]) => {
+  if (odds && o.as_of_utc !== odds.as_of_utc) state.expiry = null;
   odds = o; findings = f;
   const t = new Date(o.as_of_utc);
   $("asof").innerHTML = `Market data as of ${t.toISOString().slice(0,16).replace("T", " ")} UTC<br>` +
@@ -231,8 +248,12 @@ Promise.all([fetch("odds.json").then(r => r.json()), fetch("findings.json").then
   $("footer").innerHTML = `Source: ${o.source}. Probabilities are risk-neutral (Q) and include any risk premium. ` +
     `They are not forecasts or investment advice. LINK has no listed options on any reachable venue. Engine revision ` +
     `<code>${o.engine_revision.slice(0, 7)}</code> · odds run <code>${o.run_id}</code> · findings run <code>${f.run_id}</code>.`;
-}).catch(err => { $("asof").textContent = "Data unavailable"; $("assetView").innerHTML =
+}).catch(err => { if (odds) return;   // keep showing the last good data if a background refresh fails
+  $("asof").textContent = "Data unavailable"; $("assetView").innerHTML =
   `<div class="card unavail">Could not load the latest odds (${err}).</div>`; });
+}
+load();
+setInterval(load, 30 * 60 * 1000);   // re-fetch every 30 minutes while the page is open
 })();
 </script>
 </body>
