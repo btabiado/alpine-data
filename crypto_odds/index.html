@@ -42,6 +42,14 @@ h2 + .sub{margin-bottom:12px}
 .pill.small{padding:4px 11px;font-size:12.5px}
 .pill:disabled{opacity:.45;cursor:not-allowed}
 .pill.primary{background:var(--s1);border-color:var(--s1);color:#fff}
+.dl{position:relative}
+.dl summary{list-style:none}
+.dl summary::-webkit-details-marker{display:none}
+.dl .menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:6px;min-width:230px;z-index:5;box-shadow:0 10px 28px rgba(0,0,0,.45)}
+.dl .menu a{display:block;padding:7px 10px;border-radius:6px;color:var(--text);text-decoration:none;font-size:13px}
+.dl .menu a:hover{background:rgba(255,255,255,.06)}
+.dl .menu a span{color:var(--muted);font-size:11.5px;display:block}
+.dl .menu .hd{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:4px 10px 2px}
 .card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px}
 .card h3{margin:0 0 2px;font-size:14.5px}
 .card .sub{margin-bottom:10px}
@@ -105,7 +113,7 @@ html.pm{color-scheme:light;--bg:#fff;--panel:#fff;--panel2:#f4f5f8;--border:#dde
   & main{max-width:none;padding:14px 34px 26px}
   & .lede{font-size:14px;max-width:none}
   & h2{font-size:16px;margin:22px 0 2px}
-  & .screen-only,& header .back,& header .actions .pill,& .tip,& #explore{display:none!important}
+  & .screen-only,& header .back,& header .actions .pill,& header .dl,& .tip,& #explore{display:none!important}
   & .print-only{display:block!important}
   & span.print-only{display:inline!important}
   & #printOdds{display:grid!important;grid-template-columns:1fr 1fr;gap:14px 16px;margin-top:10px}
@@ -142,10 +150,16 @@ html.pm{color-scheme:light;--bg:#fff;--panel:#fff;--panel2:#f4f5f8;--border:#dde
 <body>
 <header>
   <a class="back" href="../">&larr; BDT Dashboards</a>
-  <h1>Crypto Price Odds</h1>
+  <h1>Crypto Price Odds<span id="printTitle"></span></h1>
   <div class="actions">
     <a class="pill small" href="../crypto-scorecard/">Model Scorecard &rarr;</a>
-    <a class="pill small primary" href="crypto-odds.pdf" download title="One-page PDF: every asset and expiry, plus the findings">Download PDF</a>
+    <details class="dl" id="dlMenu"><summary class="pill small primary">Download PDF &#9662;</summary>
+      <div class="menu" role="menu"><div class="hd">One-page PDF</div>
+        <a href="crypto-odds-BTC.pdf" download role="menuitem">BTC<span>both expiries, BTC findings</span></a>
+        <a href="crypto-odds-ETH.pdf" download role="menuitem">ETH<span>both expiries, ETH findings</span></a>
+        <a href="crypto-odds-XRP.pdf" download role="menuitem">XRP<span>both expiries, XRP findings</span></a>
+        <a href="crypto-odds.pdf" download role="menuitem">All assets<span>everything on this page</span></a>
+      </div></details>
     <div class="asof" id="asof">Loading&hellip;</div>
   </div>
 </header>
@@ -197,6 +211,8 @@ const LABEL = {climatology:"Past frequency", lognormal_rv90:"Lognormal, 90-day v
   logit_A:"Logistic regression", rf_A:"Random forest", xgb_A:"XGBoost", xgb_AD:"XGBoost + DVOL",
   chronos_vol:"Chronos (volatility)", chronos_bolt:"Chronos (price)"};
 const COHORTS = [["settlement", "Settlement prices (Deribit, 08:00 UTC)"], ["spot", "Spot closes (Coinbase / Bitstamp)"]];
+const PRINT_ASSET = (new URLSearchParams(location.search).get("asset") || "").toUpperCase();
+const inScope = asset => !PRINT_ASSET || asset === PRINT_ASSET;
 let odds, findings, state = {asset:null, expiry:null, cohort:"settlement"};
 const tip = $("tip");
 
@@ -237,7 +253,7 @@ const horizonNote = e => { const h = e.horizon || "", out = [];
 /* ---- snapshot ---- */
 function renderSnapshot(){
   const rows = [];
-  odds.assets.forEach(a => {
+  odds.assets.filter(a => inScope(a.asset)).forEach(a => {
     if (a.status !== "ok"){ rows.push(`<tr><td><b>${esc(a.asset)}</b></td><td class="l" colspan="6"><span class="na">No listed options on any reachable venue, so there is no market-implied view.</span></td></tr>`); return; }
     a.expiries.forEach((e, i) => { const s = stats(a, e);
       rows.push(`<tr><td>${i ? "" : `<b>${esc(a.asset)}</b>`}</td><td class="l">${dateLong(e.expiry_utc)} <span class="muted">· ${Math.round(e.days)} days</span></td>
@@ -321,7 +337,7 @@ function assetBlock(a, e, chartId, compact){
 // Print / PDF: every asset and every listed expiry, independent of the on-screen selection.
 function renderPrint(){
   const el = $("printOdds"), draws = [];
-  el.innerHTML = odds.assets.map(a => {
+  el.innerHTML = odds.assets.filter(a => inScope(a.asset)).map(a => {
     if (a.status !== "ok") return `<div class="pblock na"><h3>${esc(a.asset)}</h3><div class="sub" style="margin:4px 0 0">No market-implied odds: ${esc(a.reason)}</div></div>`;
     return a.expiries.map((e, i) => { const id = `pchart_${a.asset}_${i}`; draws.push([a, e, id]);
       return `<div class="pblock">${assetBlock(a, e, id, true)}</div>`; }).join("");
@@ -389,7 +405,7 @@ function skillCell(name, v, ci, good, why){
   return `<td>${name ? `<span class="mname">${esc(LABEL[name] || name)}</span>` : ""}<b>${fmt(v)}</b>${chip(ci, good)}</td>`;
 }
 function findingsTable(cohort){
-  const cells = findings.cells.filter(c => c.cohort === cohort).sort((a, b) => a.asset.localeCompare(b.asset) || a.h - b.h);
+  const cells = findings.cells.filter(c => c.cohort === cohort && inScope(c.asset)).sort((a, b) => a.asset.localeCompare(b.asset) || a.h - b.h);
   const hasFM = findings.cells.some(c => c.best_fm != null);
   const rows = cells.map(c => `<tr><td><b>${esc(c.asset)}</b></td><td>${c.h} days</td><td>${Math.round(c.indep_outcomes)}</td>
     ${skillCell(c.best_baseline, c.best_baseline_bss, c.best_baseline_ci, c.best_baseline_reliably_better)}
@@ -397,7 +413,7 @@ function findingsTable(cohort){
     ${skillCell(c.best_ml, c.best_ml_bss, c.best_ml_ci, c.best_ml_reliably_better, "c")}
     ${hasFM ? skillCell(c.best_fm, c.best_fm_bss, c.best_fm_ci, c.best_fm_reliably_better, "b") : ""}</tr>`).join("");
   const have = new Set(cells.map(c => c.asset + "|" + c.h));
-  const missing = [...new Set(findings.cells.map(c => c.asset))].sort().flatMap(a => [30, 60, 90].filter(h => !have.has(a + "|" + h)).map(h => `${a} ${h} days`));
+  const missing = [...new Set(findings.cells.map(c => c.asset))].filter(inScope).sort().flatMap(a => [30, 60, 90].filter(h => !have.has(a + "|" + h)).map(h => `${a} ${h} days`));
   return `<thead><tr><th>Asset</th><th>Horizon</th><th title="Non-overlapping windows: how many truly separate outcomes were scored">Separate outcomes</th>
     <th>Best history model</th><th>Implied vol (DVOL)</th><th>Best machine learning</th>${hasFM ? "<th>Foundation model</th>" : ""}</tr></thead><tbody>${rows}</tbody>` +
     (missing.length ? `<tfoot><tr><td class="l" colspan="7" style="border:none;padding-top:10px"><span class="na">Not scored: ${missing.join(", ")}. This price history is too short for that horizon.</span></td></tr></tfoot>` : "");
@@ -444,6 +460,7 @@ function load(){
   $("asof").innerHTML = `Market data as of ${t.toISOString().slice(0,16).replace("T", " ")} UTC<br>` +
     t.toLocaleString("en-US", {timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short"}) + " New York · refreshed daily";
   renderSnapshot(); render(); renderFindings(); renderPrint();
+  if (PRINT_ASSET) $("printTitle").textContent = " · " + PRINT_ASSET;
   $("footer").innerHTML = `<b>Source:</b> ${esc(o.source)}. Probabilities are risk-neutral (market-implied) and include any risk premium; ` +
     `they are not forecasts or investment advice. LINK has no listed options on any reachable venue. ` +
     `<span class="print-only">btabiado.github.io/alpine-data/crypto-odds/ · </span>Engine <code>${esc(o.engine_revision.slice(0, 7))}</code> · odds run <code>${esc(o.run_id)}</code> · findings run <code>${esc(f.run_id)}</code>.`;
@@ -459,6 +476,7 @@ function enterPrint(){ document.documentElement.classList.add("pm");
   if (!st){ st = document.createElement("style"); st.id = "pageSize"; document.head.appendChild(st); }
   st.textContent = `@page{size:1100px ${h}px;margin:0}`; }
 function exitPrint(){ if (!/print/.test(location.search + location.hash)) document.documentElement.classList.remove("pm"); }
+document.addEventListener("click", e => { const m = $("dlMenu"); if (m && m.open && !m.contains(e.target)) m.open = false; });
 window.addEventListener("beforeprint", enterPrint); window.addEventListener("afterprint", exitPrint);
 load().then(() => { if (/print/.test(location.search + location.hash)) enterPrint(); });
 setInterval(load, 30 * 60 * 1000);   // re-fetch every 30 minutes while the page is open

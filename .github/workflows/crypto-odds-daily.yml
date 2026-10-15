@@ -38,10 +38,14 @@ jobs:
         timeout-minutes: 8
         run: python crypto_odds/build_odds.py
 
-      - name: Render the one-page PDF (Download PDF button)
+      - name: Render the one-page PDFs (Download PDF menu: all assets, BTC, ETH, XRP)
         # Chrome is preinstalled on ubuntu-24.04 runners. A render failure keeps yesterday's PDF.
         continue-on-error: true
-        run: .github/scripts/render_print_pdf.sh crypto_odds "$PWD/crypto_odds/crypto-odds.pdf"
+        run: |
+          .github/scripts/render_print_pdf.sh crypto_odds "$PWD/crypto_odds/crypto-odds.pdf"
+          for a in BTC ETH XRP; do
+            .github/scripts/render_print_pdf.sh crypto_odds "$PWD/crypto_odds/crypto-odds-$a.pdf" "asset=$a"
+          done
 
       - name: Commit odds snapshot via signed API commit
         env:
@@ -49,6 +53,6 @@ jobs:
           AUTHOR_NAME: crypto-odds-bot
           AUTHOR_EMAIL: crypto-odds-bot@users.noreply.github.com
         run: |
-          git add crypto_odds/odds.json crypto_odds/crypto-odds.pdf
+          git add crypto_odds/odds.json crypto_odds/crypto-odds*.pdf
           .github/scripts/api-commit.sh \
             "crypto-odds: option-implied odds snapshot $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"

@@ -815,7 +815,7 @@ jobs:
           if [ -f crypto_odds/index.html ]; then
             mkdir -p _site/crypto-odds
             cp crypto_odds/index.html crypto_odds/odds.json crypto_odds/findings.json _site/crypto-odds/
-            [ -f crypto_odds/crypto-odds.pdf ] && cp crypto_odds/crypto-odds.pdf _site/crypto-odds/
+            cp crypto_odds/crypto-odds*.pdf _site/crypto-odds/ 2>/dev/null || true
           fi
           # Stage the Model Scorecard under /crypto-scorecard/: static page plus scorecard.json, which is
           # exported from a Back_Test_Model backtest run (web_export.export_scorecard) and updated by hand.
