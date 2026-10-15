@@ -74,6 +74,51 @@ footer{color:var(--faint);font-size:12px;margin-top:36px;border-top:1px solid va
 footer code{color:var(--muted)}
 .unavail{color:var(--muted);padding:26px 10px;text-align:center}
 @media (max-width:600px){header,main{padding-left:16px;padding-right:16px}header .asof{margin-left:0;text-align:left}.kpi{flex:1 1 calc(50% - 6px);min-width:0}.kpi .v{font-size:16px}.row .lab{min-width:100%}}
+.print-only{display:none}
+.printbtn{font-size:12.5px;padding:4px 12px}
+@page{size:letter;margin:12mm 12mm 14mm;
+  @bottom-left{content:"Model Scorecard · btabiado.github.io/alpine-data/crypto-scorecard/";font:9px -apple-system,Helvetica,Arial,sans-serif;color:#6b7280}
+  @bottom-right{content:"Page " counter(page) " of " counter(pages);font:9px -apple-system,Helvetica,Arial,sans-serif;color:#6b7280}}
+/* Print / PDF: light paper, filters replaced by a one-line summary, every collapsed section opened. */
+@media print{
+  :root{color-scheme:light;--bg:#fff;--panel:#fff;--panel2:#f3f4f7;--border:#d6dae2;--text:#111827;--muted:#4b5563;--faint:#6b7280;--good:#15803d;--bad:#b91c1c;--warn:#b45309}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  html,body{overflow:visible}
+  body{font-size:11.5px;background:#fff}
+  header{padding:0 0 8px}
+  main{max-width:none;padding:10px 0 0}
+  .lede{font-size:12.5px;max-width:none}
+  .note{max-width:none;font-size:11px}
+  h2{font-size:14px;margin:18px 0 6px;break-after:avoid}
+  header .back,.printbtn,.tip,#splitTabs,#cohortTabs,#assetTabs,#hTabs,#famTabs,#calTabs,summary{display:none!important}
+  .print-only{display:block!important}
+  details{margin-top:12px}
+  details::details-content{content-visibility:visible;display:block}
+  .card{break-inside:avoid;padding:10px 12px}
+  #verdict .card{break-inside:auto}
+  .pair{grid-template-columns:1fr 1fr}
+  svg{width:100%!important;height:auto!important;max-width:100%}
+  .scroll{overflow:visible}
+  table{font-size:10.5px}
+  thead{display:table-header-group}
+  tr{break-inside:avoid}
+  th,td{padding:3px 5px;white-space:normal}
+  .pill{background:none;border:none;padding:0;color:var(--text);font-size:inherit}
+  .chip{white-space:nowrap;font-size:9.5px;padding:0 5px}
+  h2.pb{break-before:page}
+  .chip.good{border-color:#86c79c}.chip.bad{border-color:#e7a1a1;color:var(--bad)}.chip.warn{border-color:#e5c07b}
+  .ok{color:var(--good)} .no{color:var(--bad)}
+  .kpi{border:1px solid var(--border)}
+  a{color:var(--text);text-decoration:none}
+  footer{margin-top:18px}
+  svg [stroke="#252b3a"]{stroke:#dfe3ea}
+  svg [fill="#8a93a6"]{fill:#4b5563}
+  svg [stroke="#8a93a6"]{stroke:#6b7280}
+  svg [fill="#e6e8ee"]{fill:#111827}
+  svg [stroke="#141821"]{stroke:#fff}
+  svg [fill="#0b0d12"]{fill:#fff}
+  svg [stroke="#0b0d12"]{stroke:#fff}
+}
 </style>
 </head>
 <body>
@@ -81,6 +126,7 @@ footer code{color:var(--muted)}
   <a class="back" href="../">&larr; BDT Dashboards</a>
   <a class="back" href="../crypto-odds/">&larr; Crypto Price Odds</a>
   <h1>Model Scorecard</h1>
+  <button class="pill printbtn" type="button" onclick="window.print()" title="Print this page or save it as a PDF, with every collapsed section opened">Print / Save PDF</button>
   <div class="asof" id="asof">Loading&hellip;</div>
 </header>
 <main>
@@ -88,13 +134,14 @@ footer code{color:var(--muted)}
 
   <section id="verdict" aria-live="polite"></section>
 
-  <h2>Leaderboard</h2>
+  <h2 class="pb">Leaderboard</h2>
   <p class="lede" style="font-size:14px;color:var(--muted)">Brier skill compares each model's probabilities with the outcomes, relative to the past event frequency on the same forecasts. 0% means no better than the base rate; positive is better; negative is worse. Bars show the 95% interval.</p>
   <div class="row" id="splitTabs"><span class="lab">Period</span></div>
   <div class="row" id="cohortTabs"><span class="lab">Outcomes</span></div>
   <div class="row" id="assetTabs"><span class="lab">Asset</span></div>
   <div class="row" id="hTabs"><span class="lab">Horizon</span></div>
   <div class="row" id="famTabs"><span class="lab">Model family</span></div>
+  <p class="print-only note" id="printSel"></p>
   <div class="card" style="margin-top:10px">
     <h3 id="lbTitle"></h3>
     <div class="sub" id="lbSub"></div>
@@ -104,7 +151,7 @@ footer code{color:var(--muted)}
   <div class="card scroll" style="margin-top:12px"><table id="lbTable"></table></div>
   <p class="note" id="lbNote" style="margin-top:10px"></p>
 
-  <h2>Calibration</h2>
+  <h2 class="pb">Calibration</h2>
   <p class="lede" style="font-size:14px;color:var(--muted)">When a model says 20%, does the event happen about 20% of the time? Forecasts are grouped into bins; points on the dashed diagonal are perfectly calibrated. Uses the period, outcomes, asset and horizon selected above.</p>
   <div class="row" id="calTabs"><span class="lab">Model</span></div>
   <div class="pair" id="calPanels"></div>
@@ -418,7 +465,13 @@ function renderAll(){ hideTip();
     const cand = [...H.map(h => [st.cohort, st.asset, h]), ...A.flatMap(a => H.map(h => [st.cohort, a, h])),
                   ...["settlement", "spot"].flatMap(c => [st.asset, ...A].flatMap(a => H.map(h => [c, a, h])))].find(x => has(...x));
     if (cand) [st.cohort, st.asset, st.h] = cand; }
-  renderControls(); renderLeaderboard(); renderCalibration(); }
+  renderControls(); renderLeaderboard(); renderCalibration();
+  $("printSel").innerHTML = `<b>Selection printed:</b> ${esc(SPLIT[st.split])} period · ${esc(COHORT[st.cohort])} · ${esc(st.asset)} · ${st.h} days · ` +
+    `${FAM_ORDER.filter(f => st.fams.has(f)).map(f => esc(FAM[f].label)).join(", ")}${st.calModel ? ` · calibration: ${esc(M(st.calModel).label)}` : ""}. Change the filters on screen to print another cell.`; }
+// Collapsed sections print open (Safari and older Chrome ignore ::details-content); restored afterwards.
+let printOpened = [];
+window.addEventListener("beforeprint", () => { printOpened = [...document.querySelectorAll("details:not([open])")]; printOpened.forEach(d => d.open = true); });
+window.addEventListener("afterprint", () => { printOpened.forEach(d => d.open = false); printOpened = []; });
 
 fetch("scorecard.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then(d => {
   D = d;

@@ -57,6 +57,56 @@ td:first-child,th:first-child{text-align:left}
 footer{color:var(--faint);font-size:12px;margin-top:36px;border-top:1px solid var(--border);padding-top:12px}
 .unavail{color:var(--muted);padding:30px 10px;text-align:center}
 @media (max-width:600px){header,main{padding-left:16px;padding-right:16px}header .asof{margin-left:0;text-align:left}.kpi{flex:1 1 calc(50% - 6px);min-width:0}.kpi .v{font-size:16px}}
+.print-only{display:none}
+.printbtn{font-size:12.5px;padding:4px 12px}
+@page{size:letter;margin:12mm 12mm 14mm;
+  @bottom-left{content:"Crypto Price Odds · btabiado.github.io/alpine-data/crypto-odds/";font:9px -apple-system,Helvetica,Arial,sans-serif;color:#6b7280}
+  @bottom-right{content:"Page " counter(page) " of " counter(pages);font:9px -apple-system,Helvetica,Arial,sans-serif;color:#6b7280}}
+/* Print / PDF: light paper, no controls, every asset and expiry, both findings tables. */
+@media print{
+  :root{color-scheme:light;--bg:#fff;--panel:#fff;--panel2:#f3f4f7;--border:#d6dae2;--text:#111827;--muted:#4b5563;--faint:#6b7280;--good:#15803d;--bad:#b91c1c}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font-size:11.5px;background:#fff}
+  header{padding:0 0 8px}
+  main{max-width:none;padding:10px 0 0}
+  .lede{font-size:12.5px;max-width:none}
+  .note{max-width:none;font-size:11px}
+  h2{font-size:14px;margin:18px 0 6px}
+  .screen-only,header .back,.printbtn,.tip,#assetTabs,#expiryTabs,#assetView,#cohortTabs{display:none!important}
+  .print-only{display:block!important}
+  .grid{grid-template-columns:1fr;gap:10px}
+  .card{break-inside:avoid;padding:10px 12px}
+  .pblock{break-before:page}
+  .pblock:first-child{break-before:auto}
+  #findingsPrint table{font-size:9.5px}
+  #findingsPrint th,#findingsPrint td{white-space:normal;padding:3px 4px}
+  .chip{white-space:nowrap;font-size:9px;padding:0 5px}
+  .findings-h{break-before:auto;break-after:avoid}
+  .pblock .chart svg{max-width:400px;margin:0 auto}
+  .pblock td,.pblock th{padding:2px 6px}
+  .pblock h2{margin-top:6px}
+  .pblock .grid{gap:8px}
+  .pblock .card .sub{margin-bottom:4px}
+  .pblock .kpis{flex-wrap:nowrap}
+  .pblock .kpi{flex:1 1 0;min-width:0;padding:6px 10px}
+  .pblock .kpi .v{font-size:15px}
+  .pblock.na{break-before:page;break-inside:avoid}
+  .scroll{overflow:visible}
+  table{font-size:11px}
+  thead{display:table-header-group}
+  tr{break-inside:avoid}
+  th,td{padding:4px 6px}
+  .chip.good{border-color:#86c79c}.chip.bad{border-color:#e7a1a1;color:var(--bad)}
+  .kpi{border:1px solid var(--border)}
+  a{color:var(--text);text-decoration:none}
+  footer{margin-top:18px}
+  svg [stroke="#252b3a"]{stroke:#dfe3ea}
+  svg [fill="#8a93a6"]{fill:#4b5563}
+  svg [stroke="#5b6478"]{stroke:#9ca3af}
+  svg [stroke="#c9cfdb"]{stroke:#374151}
+  svg [fill="#0b0d12"]{fill:#fff}
+  .legend i[style*="#c9cfdb"]{border-color:#374151!important}
+}
 </style>
 </head>
 <body>
@@ -64,6 +114,7 @@ footer{color:var(--faint);font-size:12px;margin-top:36px;border-top:1px solid va
   <a class="back" href="../">&larr; BDT Dashboards</a>
   <a class="back" href="../crypto-scorecard/" style="margin-left:14px">Model Scorecard &rarr;</a>
   <h1>Crypto Price Odds</h1>
+  <button class="pill printbtn" type="button" onclick="window.print()" title="Print every asset and expiry, or save them as a PDF">Print / Save PDF</button>
   <div class="asof" id="asof">Loading&hellip;</div>
 </header>
 <main>
@@ -73,13 +124,15 @@ footer{color:var(--faint);font-size:12px;margin-top:36px;border-top:1px solid va
   <div class="row" id="assetTabs" role="tablist" aria-label="Asset"></div>
   <div class="row" id="expiryTabs" aria-label="Expiry"></div>
   <div id="assetView"></div>
+  <section class="print-only" id="printOdds" aria-hidden="true"></section>
 
-  <h2>Can history or machine learning beat the base rate?</h2>
+  <h2 class="findings-h">Can history or machine learning beat the base rate?</h2>
   <p class="lede" id="findingsLede"></p>
   <div class="row" id="cohortTabs"></div>
-  <div class="card scroll"><table id="findingsTable"></table></div>
+  <div class="card scroll screen-only"><table id="findingsTable"></table></div>
+  <div class="print-only" id="findingsPrint"></div>
   <p class="note" id="findingsNote" style="margin-top:10px"></p>
-  <p style="margin:12px 0 0"><a class="pill" href="../crypto-scorecard/" style="display:inline-block;text-decoration:none">Full model scorecard &rarr;</a></p>
+  <p class="screen-only" style="margin:12px 0 0"><a class="pill" href="../crypto-scorecard/" style="display:inline-block;text-decoration:none">Full model scorecard &rarr;</a></p>
 
   <footer id="footer"></footer>
 </main>
@@ -121,10 +174,18 @@ function render(){
   pills($("expiryTabs"), a.expiries.map(e => ({label: e.expiry_utc.slice(0,10) + " · " + Math.round(e.days) + "d"})),
         (it, i) => i === state.expiry, (it, i) => { state.expiry = i; render(); }, "small");
   const e = a.expiries[state.expiry];
+  view.innerHTML = assetBlock(a, e, "chart");
+  drawChart(a, e, upTargets(e), $("chart"), true);
+}
+
+function upTargets(e){
   let up = e.targets.filter(t => t.event === "S_T > K");
   if (up.some(t => t.label.startsWith("$"))) up = up.filter(t => t.label.startsWith("$"));  // chart one target family
-  const best = up.filter(t => t.q != null);
-  view.innerHTML = `
+  return up;
+}
+
+function assetBlock(a, e, chartId){
+  return `
     <div class="kpis">
       <div class="kpi"><div class="v">${money(a.spot, a.spot)}</div><div class="l">${a.asset} settlement-index spot</div></div>
       <div class="kpi"><div class="v">${e.expiry_utc.slice(0,10)}</div><div class="l">expiry, 08:00 UTC · ${Math.round(e.days)} days</div></div>
@@ -134,7 +195,7 @@ function render(){
     <div class="grid" style="margin-top:12px">
       <div class="card"><h3>Chance ${a.asset} settles above each price</h3>
         <div class="sub">${a.family} options · curve status: ${e.curve_status}${/nearest/.test(e.horizon) ? " · " + e.horizon : ""}</div>
-        <div class="chart" id="chart"></div>
+        <div class="chart" id="${chartId}"></div>
         <div class="legend"><span><i style="border-color:var(--s1)"></i>Market-implied (full option chain)</span>
           <span><i style="border-color:var(--s2);border-top-style:dashed"></i>Single-volatility benchmark (Black-76)</span>
           <span><i style="border-color:#c9cfdb;border-top-width:1px"></i>Target with quote-feasible range</span></div>
@@ -148,10 +209,20 @@ function render(){
         <div class="sub" style="margin-top:8px">† Benchmark extrapolated beyond quoted strikes; not supported by market quotes.</div>
       </div>
     </div>`;
-  drawChart(a, e, up);
 }
 
-function drawChart(a, e, targets){
+// Print / PDF: every asset and every listed expiry, independent of the on-screen selection.
+function renderPrint(){
+  const el = $("printOdds"), draws = [];
+  el.innerHTML = odds.assets.map(a => {
+    if (a.status !== "ok") return `<div class="pblock na"><h2>${a.asset}</h2><div class="card unavail"><b>${a.asset}: market-implied odds unavailable.</b><br>${a.reason}</div></div>`;
+    return a.expiries.map((e, i) => { const id = `pchart_${a.asset}_${i}`; draws.push([a, e, id]);
+      return `<div class="pblock"><h2>${a.asset} · expiry ${e.expiry_utc.slice(0,10)} (${Math.round(e.days)} days)</h2>${assetBlock(a, e, id)}</div>`; }).join("");
+  }).join("");
+  draws.forEach(([a, e, id]) => drawChart(a, e, upTargets(e), $(id), false));
+}
+
+function drawChart(a, e, targets, el, interactive){
   const W = 720, H = 360, m = {l:52, r:16, t:12, b:40};
   const xs = e.curve.map(p => p[0]); const x0 = Math.min(...xs), x1 = Math.max(...xs);
   const X = k => m.l + (k - x0) / (x1 - x0) * (W - m.l - m.r), Y = q => m.t + (1 - q) * (H - m.t - m.b);
@@ -174,7 +245,8 @@ function drawChart(a, e, targets){
       <circle cx="${X(t.K)}" cy="${Y(t.q)}" r="14" fill="transparent"/></g>`; });
   s += `<line id="xh" y1="${m.t}" y2="${H - m.b}" stroke="#8a93a6" stroke-width="1" visibility="hidden"/>
     <rect id="hit" x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent"/></svg>`;
-  const el = $("chart"); el.innerHTML = s;
+  el.innerHTML = s;
+  if (!interactive) return;
   const svg = el.querySelector("svg"), xh = svg.querySelector("#xh"), hit = svg.querySelector("#hit");
   const interp = (pts, k) => { for (let i = 1; i < pts.length; i++) if (pts[i][0] >= k) { const [a0, b0] = pts[i - 1], [a1, b1] = pts[i];
       return b0 + (b1 - b0) * (k - a0) / (a1 - a0); } return null; };
@@ -215,14 +287,17 @@ function renderFindings(){
   const f = v => v == null ? '<span class="na">—</span>' : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";
   const chip = (v, ci, good) => v == null ? "" : good ? ' <span class="chip good">reliably better</span>' :
     (ci && ci[1] < 0 ? ' <span class="chip bad">reliably worse</span>' : "");
-  const rows = cells.filter(c => c.cohort === state.cohort).sort((a, b) => a.asset.localeCompare(b.asset) || a.h - b.h);
-  $("findingsTable").innerHTML = `<thead><tr><th>Asset</th><th>Horizon</th><th>≈ independent outcomes</th><th>Best history model</th>
+  const table = cohort => { const rows = cells.filter(c => c.cohort === cohort).sort((a, b) => a.asset.localeCompare(b.asset) || a.h - b.h);
+  return `<thead><tr><th>Asset</th><th>Horizon</th><th>≈ independent outcomes</th><th>Best history model</th>
     <th>Its skill</th><th>Implied-vol benchmark (DVOL)</th>${hasML ? "<th>Best ML model</th><th>Its skill</th>" : ""}${hasFM ? "<th>Foundation model (Chronos)</th><th>Its skill</th>" : ""}</tr></thead><tbody>` +
     rows.map(c => `<tr><td>${c.asset}</td><td>${c.h} days</td><td>${c.indep_outcomes}</td><td>${LABEL[c.best_baseline] || c.best_baseline}</td>
       <td>${f(c.best_baseline_bss)}${chip(c.best_baseline_bss, c.best_baseline_ci, c.best_baseline_reliably_better)}</td>
       <td>${f(c.dvol_q_bss)}</td>${hasML ? `<td>${c.best_ml ? LABEL[c.best_ml] : "—"}</td>
       <td>${f(c.best_ml_bss)}${chip(c.best_ml_bss, c.best_ml_ci, c.best_ml_reliably_better)}</td>` : ""}${hasFM ? `<td>${c.best_fm ? LABEL[c.best_fm] || c.best_fm : "—"}</td>
-      <td>${f(c.best_fm_bss)}${chip(c.best_fm_bss, c.best_fm_ci, c.best_fm_reliably_better)}</td>` : ""}</tr>`).join("") + "</tbody>";
+      <td>${f(c.best_fm_bss)}${chip(c.best_fm_bss, c.best_fm_ci, c.best_fm_reliably_better)}</td>` : ""}</tr>`).join("") + "</tbody>"; };
+  $("findingsTable").innerHTML = table(state.cohort);
+  $("findingsPrint").innerHTML = [["settlement", "Settlement prices (Deribit)"], ["spot", "Spot closes (Coinbase/Bitstamp)"]]
+    .map(([k, l]) => `<div class="card" style="margin-top:10px"><h3>${l}</h3><table>${table(k)}</table></div>`).join("");
   $("findingsNote").innerHTML = `<b>Method.</b> Every forecast used only data available on its date and was scored against what happened ` +
     `(${findings.metric}). Skill is relative to the base rate: 0% = no better, positive = better. ` +
     (findings.holdout_summary
@@ -245,7 +320,7 @@ function load(){
   const t = new Date(o.as_of_utc);
   $("asof").innerHTML = `Market data as of ${t.toISOString().slice(0,16).replace("T", " ")} UTC<br>` +
     t.toLocaleString("en-US", {timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short"}) + " New York";
-  render(); renderFindings();
+  render(); renderFindings(); renderPrint();
   $("footer").innerHTML = `Source: ${o.source}. Probabilities are risk-neutral (Q) and include any risk premium. ` +
     `They are not forecasts or investment advice. LINK has no listed options on any reachable venue. Engine revision ` +
     `<code>${o.engine_revision.slice(0, 7)}</code> · odds run <code>${o.run_id}</code> · findings run <code>${f.run_id}</code>.`;

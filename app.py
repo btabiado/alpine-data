@@ -2685,8 +2685,6 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
             title="Send this page's current address to another app (system share sheet). Different from 🔗 New link, which mints a fresh read-only link with an expiry."
             aria-label="Send this page to another app using the system share sheet">↗<span class="hbl"> Send</span></button>
     <button class="btn" id="textBtn" type="button" hidden title="Text a link to this page" aria-label="Text a link to this page">💬<span class="hbl"> Text</span></button>
-    <a class="btn" href="crypto-odds/" title="Option-implied settlement odds for BTC, ETH and XRP" aria-label="Crypto price odds from option markets">◈<span class="hbl"> Crypto Odds</span></a>
-    <a class="btn" href="crypto-scorecard/" title="How each forecasting model scored on the sealed holdout" aria-label="Crypto forecasting model scorecard">▦<span class="hbl"> Model Scorecard</span></a>
     <a class="btn" href="health/apis.html" title="All data sources + live API status" aria-label="All data sources and live API status">◉<span class="hbl"> Data Sources</span></a>
     <a class="btn" href="https://btabiado.github.io/BDT_Codex_projects_2026/Sharktank/" title="Shark Tank Intelligence — investor, deal &amp; outcome analytics" aria-label="Shark Tank Intelligence dashboard">🦈<span class="hbl"> Shark Tank</span></a>
   </div>
@@ -2730,6 +2728,18 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
     <div class="tab" data-tab="mufon" role="tab" tabindex="0" aria-selected="false">UAP</div>
     <div class="tab" data-tab="city" role="tab" tabindex="0" aria-selected="false">City</div>
     <div class="tab" data-tab="aviation" role="tab" tabindex="0" aria-selected="false">Aviation</div>
+    </div>
+  </div>
+  <!-- Models: the crypto options research pages. Each is its own page, so the
+       items are real <a href> exits (no data-tab), like API Universe: they stay
+       out of the tab wiring and the tab-strip validator, and wear the ↗ exit mark. -->
+  <div class="tabgroup" data-group="models">
+    <button class="tabgroup-btn" type="button" aria-haspopup="true" aria-expanded="false">Models<span class="caret" aria-hidden="true">&#9662;</span></button>
+    <div class="tabgroup-menu" role="group" aria-label="Model pages">
+    <a class="tab tab--exit" href="crypto-odds/" title="Option-implied settlement odds for BTC, ETH and XRP"
+       aria-label="Crypto Odds — opens the option-implied price odds page">Crypto Odds<span class="exitmark" aria-hidden="true">&#8599;</span></a>
+    <a class="tab tab--exit" href="crypto-scorecard/" title="How each forecasting model scored on the sealed holdout"
+       aria-label="Model Scorecard — opens the crypto forecasting model scorecard">Model Scorecard<span class="exitmark" aria-hidden="true">&#8599;</span></a>
     </div>
   </div>
   <!-- P4: the four dropdown groups above and the three direct jumps below used
