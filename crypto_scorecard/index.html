@@ -75,66 +75,88 @@ footer code{color:var(--muted)}
 .unavail{color:var(--muted);padding:26px 10px;text-align:center}
 @media (max-width:600px){header,main{padding-left:16px;padding-right:16px}header .asof{margin-left:0;text-align:left}.kpi{flex:1 1 calc(50% - 6px);min-width:0}.kpi .v{font-size:16px}.row .lab{min-width:100%}}
 .print-only{display:none}
-.printbtn{font-size:12.5px;padding:4px 12px}
-@page{size:letter;margin:12mm 12mm 14mm;
-  @bottom-left{content:"Model Scorecard · btabiado.github.io/alpine-data/crypto-scorecard/";font:9px -apple-system,Helvetica,Arial,sans-serif;color:#6b7280}
-  @bottom-right{content:"Page " counter(page) " of " counter(pages);font:9px -apple-system,Helvetica,Arial,sans-serif;color:#6b7280}}
-/* Print / PDF: light paper, filters replaced by a one-line summary, every collapsed section opened. */
-@media print{
-  :root{color-scheme:light;--bg:#fff;--panel:#fff;--panel2:#f3f4f7;--border:#d6dae2;--text:#111827;--muted:#4b5563;--faint:#6b7280;--good:#15803d;--bad:#b91c1c;--warn:#b45309}
-  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  html,body{overflow:visible}
-  body{font-size:11.5px;background:#fff}
-  header{padding:0 0 8px}
-  main{max-width:none;padding:10px 0 0}
-  .lede{font-size:12.5px;max-width:none}
-  .note{max-width:none;font-size:11px}
-  h2{font-size:14px;margin:18px 0 6px;break-after:avoid}
-  header .back,.printbtn,.tip,#splitTabs,#cohortTabs,#assetTabs,#hTabs,#famTabs,#calTabs,summary{display:none!important}
-  .print-only{display:block!important}
-  details{margin-top:12px}
-  details::details-content{content-visibility:visible;display:block}
-  .card{break-inside:avoid;padding:10px 12px}
-  #verdict .card{break-inside:auto}
-  .pair{grid-template-columns:1fr 1fr}
-  svg{width:100%!important;height:auto!important;max-width:100%}
-  .scroll{overflow:visible}
-  table{font-size:10.5px}
-  thead{display:table-header-group}
-  tr{break-inside:avoid}
-  th,td{padding:3px 5px;white-space:normal}
-  .pill{background:none;border:none;padding:0;color:var(--text);font-size:inherit}
-  .chip{white-space:nowrap;font-size:9.5px;padding:0 5px}
-  h2.pb{break-before:page}
-  .chip.good{border-color:#86c79c}.chip.bad{border-color:#e7a1a1;color:var(--bad)}.chip.warn{border-color:#e5c07b}
-  .ok{color:var(--good)} .no{color:var(--bad)}
-  .kpi{border:1px solid var(--border)}
-  a{color:var(--text);text-decoration:none}
-  footer{margin-top:18px}
-  svg [stroke="#252b3a"]{stroke:#dfe3ea}
-  svg [fill="#8a93a6"]{fill:#4b5563}
-  svg [stroke="#8a93a6"]{stroke:#6b7280}
-  svg [fill="#e6e8ee"]{fill:#111827}
-  svg [stroke="#141821"]{stroke:#fff}
-  svg [fill="#0b0d12"]{fill:#fff}
-  svg [stroke="#0b0d12"]{stroke:#fff}
+.eyebrow{color:var(--muted);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 4px}
+header .actions{display:flex;gap:8px;margin-left:auto;align-items:center;flex-wrap:wrap}
+header .actions .asof{margin-left:0}
+.pill.primary{background:var(--s1);border-color:var(--s1);color:#fff;text-decoration:none}
+a.pill{text-decoration:none;display:inline-block}
+.bottom{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:4px 0 6px}
+.bottom .b{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--muted)}
+.bottom .b .n{font-size:22px;font-weight:700;color:var(--text);line-height:1.15}
+.bottom .b b{color:var(--text)}
+.concepts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:10px 0 4px}
+.concept{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 13px;font-size:12.5px;color:var(--muted)}
+.concept b{display:block;color:var(--text);font-size:13px;margin-bottom:2px}
+.mtype{display:block;color:var(--muted);font-size:11px;margin-left:15px}
+#calPanels .chart{max-width:420px;margin:0 auto}
+@media (max-width:900px){.bottom,.concepts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.bottom,.concepts{grid-template-columns:1fr}header .actions{margin-left:0}}
+/* One-page print layout (html.pm): set by ?print and by the browser's beforeprint; the page is sized to its content. */
+html.pm{color-scheme:light;--bg:#fff;--panel:#fff;--panel2:#f4f5f8;--border:#dde1e8;--text:#111827;--muted:#4b5563;--faint:#6b7280;--good:#15803d;--bad:#b91c1c;--warn:#b45309;
+  & *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  & .bottom,& .concepts{grid-template-columns:repeat(4,minmax(0,1fr))}
+  & .pair{grid-template-columns:1fr 1fr}
+  & body{width:1100px;margin:0;font-size:12.5px;background:#fff}
+  & html,& body{overflow:visible}
+  & header{padding:24px 34px 12px;border-bottom:2px solid #111827}
+  & header h1{font-size:22px}
+  & main{max-width:none;padding:14px 34px 26px}
+  & .lede{max-width:none}
+  & header .back,& header .actions .pill,& .tip,& #splitTabs,& #cohortTabs,& #assetTabs,& #hTabs,& #famTabs,& #calTabs,& summary{display:none!important}
+  & .print-only{display:block!important}
+  & span.print-only{display:inline!important}
+  & .card,& .kpi,& .note,& .b,& .concept{background:#fff}
+  & .scroll{overflow:visible}
+  & svg{width:100%!important;height:auto!important;max-width:100%}
+  & #calPanels .chart{max-width:380px}
+  & table{font-size:11px}
+  & th,& td{padding:3px 6px;white-space:normal}
+  & .pill{background:none;border:none;padding:0;color:var(--text);font-size:inherit}
+  & .chip{white-space:nowrap}
+  & .chip.good{border-color:#86c79c}
+  & .chip.bad{border-color:#e7a1a1;color:var(--bad)}
+  & .chip.warn{border-color:#e5c07b}
+  & .ok{color:var(--good)}
+  & .no{color:var(--bad)}
+  & a{color:var(--text);text-decoration:none}
+  & svg [stroke="#252b3a"]{stroke:#e5e8ee}
+  & svg [fill="#8a93a6"]{fill:#4b5563}
+  & svg [stroke="#8a93a6"]{stroke:#6b7280}
+  & svg [fill="#e6e8ee"]{fill:#111827}
+  & svg [stroke="#141821"]{stroke:#fff}
+  & svg [fill="#0b0d12"]{fill:#fff}
+  & svg [stroke="#0b0d12"]{stroke:#fff}
 }
+@media print{ .tip,header .actions .pill{display:none!important} }
 </style>
 </head>
 <body>
 <header>
   <a class="back" href="../">&larr; BDT Dashboards</a>
-  <a class="back" href="../crypto-odds/">&larr; Crypto Price Odds</a>
+  <a class="back" href="../crypto-odds/">Crypto Price Odds</a>
   <h1>Model Scorecard</h1>
-  <button class="pill printbtn" type="button" onclick="window.print()" title="Print this page or save it as a PDF, with every collapsed section opened">Print / Save PDF</button>
-  <div class="asof" id="asof">Loading&hellip;</div>
+  <div class="actions">
+    <a class="pill small primary" href="scorecard.pdf" download title="One-page PDF with every section opened">Download PDF</a>
+    <div class="asof" id="asof">Loading&hellip;</div>
+  </div>
 </header>
 <main>
+  <p class="eyebrow">Forecasting research · BTC · ETH · XRP · LINK</p>
   <p class="lede">How well each forecasting model predicted whether BTC, ETH, XRP and LINK would end above or below price targets 30 to 90 days out, scored against what actually happened and compared with the simple base rate.</p>
 
+  <h2 style="margin-top:18px">Bottom line</h2>
+  <div class="bottom" id="bottom"></div>
+  <div class="concepts">
+    <div class="concept"><b>Base rate</b>How often a move of that size happened in the past. The simplest possible forecast, and the bar every model must clear.</div>
+    <div class="concept"><b>Skill</b>Reduction in forecast error (Brier score) versus the base rate. 0% = no better, +10% = 10% less error, negative = worse.</div>
+    <div class="concept"><b>Sealed holdout</b>The most recent stretch of history, hidden while models were built and then scored once. The only fully fair test.</div>
+    <div class="concept"><b>P vs Q</b>P = real-world forecasts from history and ML. Q = implied by option prices, which include a risk premium, so shown for reference only.</div>
+  </div>
+
+  <h2>Final holdout verdict</h2>
   <section id="verdict" aria-live="polite"></section>
 
-  <h2 class="pb">Leaderboard</h2>
+  <h2>Leaderboard: every model on one asset and horizon</h2>
   <p class="lede" style="font-size:14px;color:var(--muted)">Brier skill compares each model's probabilities with the outcomes, relative to the past event frequency on the same forecasts. 0% means no better than the base rate; positive is better; negative is worse. Bars show the 95% interval.</p>
   <div class="row" id="splitTabs"><span class="lab">Period</span></div>
   <div class="row" id="cohortTabs"><span class="lab">Outcomes</span></div>
@@ -151,7 +173,7 @@ footer code{color:var(--muted)}
   <div class="card scroll" style="margin-top:12px"><table id="lbTable"></table></div>
   <p class="note" id="lbNote" style="margin-top:10px"></p>
 
-  <h2 class="pb">Calibration</h2>
+  <h2>Calibration: do the probabilities mean what they say?</h2>
   <p class="lede" style="font-size:14px;color:var(--muted)">When a model says 20%, does the event happen about 20% of the time? Forecasts are grouped into bins; points on the dashed diagonal are perfectly calibrated. Uses the period, outcomes, asset and horizon selected above.</p>
   <div class="row" id="calTabs"><span class="lab">Model</span></div>
   <div class="pair" id="calPanels"></div>
@@ -238,7 +260,7 @@ function renderVerdict(){
         <td>${sp(r.bss_vs_climatology)}</td><td>${r.bss_ci_lo == null ? "—" : sp(r.bss_ci_lo) + " to " + sp(r.bss_ci_hi)}</td>
         <td>${tick(r.c1_beats_clim_and_baseline)}</td><td>${tick(r.c2_ci_below_zero_seed_stable)}</td><td>${tick(r.c3_reliability_ok)}</td><td>${tick(r.c4_coverage_ok)}</td>
         <td>${r.promoted ? '<span class="chip good">promoted</span>' : '<span class="chip">not promoted</span>'}</td><td class="l" style="white-space:normal;min-width:160px">${esc(r.note || "")}</td></tr>`).join("");
-    el.innerHTML = `<div class="card"><h3>Final holdout verdict</h3>
+    el.innerHTML = `<div class="card"><h3>What the one-time test decided</h3>
       <div class="sub">The sealed holdout (${esc(sealTxt)}) was opened once and every model was judged by the rule fixed in advance.</div>
       <p style="margin:6px 0 4px;font-size:15px">${promoted.length ? `<b>${promoted.length} promotion${promoted.length > 1 ? "s" : ""}</b> across ${cells.length} testable asset × horizon cells.` :
         `<b>No model was promoted</b> in any of the ${cells.length} testable asset × horizon cells. Past event frequency stays the reference: no demonstrated improvement.`}</p>
@@ -282,7 +304,7 @@ function matrix(P){
     if (!P.some(r => r.cohort === c && r.asset === a)) return;
     const td = h => { const g = P.filter(r => r.cohort === c && r.asset === a && r.h === h);
       if (!g.length) return '<td class="l"><span class="na">not scored</span></td>';
-      if (!g.some(r => r.testable)) return '<td class="l"><span class="na">untestable</span></td>';
+      if (!g.some(r => r.testable)) return '<td class="l"><span class="na">· too few outcomes</span></td>';
       const pr = g.filter(r => r.promoted);
       return `<td class="l"><button class="pill small jump" data-c="${c}" data-a="${a}" data-h="${h}" title="Show in the leaderboard">${pr.length ? "promoted: " + esc(pr.map(r => M(r.model).label).join(", ")) : "tested"}</button></td>`; };
     out.push(`<tr><td>${esc(a)}</td>${td(30)}${td(60)}${td(90)}</tr>`); }); });
@@ -331,10 +353,10 @@ function renderLeaderboard(){
   else drawDots(el, shown, rows);
   // table
   $("lbTable").innerHTML = `<caption class="sub" style="text-align:left;caption-side:top;padding:0 0 6px">All models in this cell (table view of the chart)</caption>
-    <thead><tr><th>Model</th><th class="l">Type</th><th class="l">Scored on</th><th class="l">Forecast origins</th><th>≈ indep. outcomes</th><th>Brier</th><th>Base-rate Brier</th><th>Skill</th><th>95% interval</th><th class="l">vs base rate</th></tr></thead><tbody>` +
+    <thead><tr><th>Model</th><th>Separate outcomes</th><th>Brier</th><th>Base-rate Brier</th><th>Skill</th><th>95% interval</th><th class="l">Verdict</th></tr></thead><tbody>` +
     shown.map(r => { const c = climOn(rows, r.comparison);
-      return `<tr><td><i class="fam" style="background:${famColor(r.model)}"></i>${esc(M(r.model).label)}</td><td class="l">${esc(M(r.model).probability)}</td>
-      <td class="l">${esc(r.comparison)}</td><td class="l">${esc(period(r))}</td><td>${r.approx_independent_origins == null ? "—" : Math.round(r.approx_independent_origins)}</td>
+      return `<tr><td><i class="fam" style="background:${famColor(r.model)}"></i>${esc(M(r.model).label)}<span class="mtype">${esc(M(r.model).probability)} · scored on ${esc(r.comparison)}</span></td>
+      <td>${r.approx_independent_origins == null ? "—" : Math.round(r.approx_independent_origins)}</td>
       <td>${r.mean_brier == null ? "—" : r.mean_brier.toFixed(4)}</td><td>${c && c.mean_brier != null ? c.mean_brier.toFixed(4) : "—"}</td>
       <td><b>${sp(r.bss_vs_climatology)}</b></td><td>${sp(r.bss_ci_lo)} to ${sp(r.bss_ci_hi)}</td><td class="l">${verdictChip(r)}</td></tr>`; }).join("") + "</tbody>";
   const comps = [...new Set(shown.map(r => r.comparison))];
@@ -468,10 +490,34 @@ function renderAll(){ hideTip();
   renderControls(); renderLeaderboard(); renderCalibration();
   $("printSel").innerHTML = `<b>Selection printed:</b> ${esc(SPLIT[st.split])} period · ${esc(COHORT[st.cohort])} · ${esc(st.asset)} · ${st.h} days · ` +
     `${FAM_ORDER.filter(f => st.fams.has(f)).map(f => esc(FAM[f].label)).join(", ")}${st.calModel ? ` · calibration: ${esc(M(st.calModel).label)}` : ""}. Change the filters on screen to print another cell.`; }
-// Collapsed sections print open (Safari and older Chrome ignore ::details-content); restored afterwards.
+// One-page print mode: open every collapsed section and size the page to the content, so a PDF is a single page.
 let printOpened = [];
-window.addEventListener("beforeprint", () => { printOpened = [...document.querySelectorAll("details:not([open])")]; printOpened.forEach(d => d.open = true); });
-window.addEventListener("afterprint", () => { printOpened.forEach(d => d.open = false); printOpened = []; });
+const printParam = () => /print/.test(location.search + location.hash);
+function enterPrint(){ document.documentElement.classList.add("pm");
+  printOpened = [...document.querySelectorAll("details:not([open])")]; printOpened.forEach(d => d.open = true);
+  const h = Math.ceil(document.body.getBoundingClientRect().height) + 2;
+  let el = document.getElementById("pageSize");
+  if (!el){ el = document.createElement("style"); el.id = "pageSize"; document.head.appendChild(el); }
+  el.textContent = `@page{size:1100px ${h}px;margin:0}`; }
+function exitPrint(){ if (printParam()) return; document.documentElement.classList.remove("pm");
+  printOpened.forEach(d => d.open = false); printOpened = []; }
+window.addEventListener("beforeprint", enterPrint); window.addEventListener("afterprint", exitPrint);
+
+function renderBottom(){
+  const P = D.promotion ? D.promotion.rows.map(r => Object.fromEntries(D.promotion.columns.map((c, i) => [c, r[i]]))) : [];
+  const tested = P.filter(r => r.testable), cells = new Set(tested.map(r => `${r.cohort}|${r.asset}|${r.h}`));
+  const promoted = tested.filter(r => r.promoted).length;
+  const best = tested.reduce((x, y) => (y.bss_vs_climatology ?? -9) > (x?.bss_vs_climatology ?? -9) ? y : x, null);
+  const dev = LB.filter(r => r.split === "dev" && r.model !== "climatology");
+  const devNat = dev.filter(r => r.comparison === M(r.model).comparison);
+  const devBetter = devNat.filter(reliablyBetter).length;
+  $("bottom").innerHTML = D.promotion ? `
+    <div class="b"><div class="n">${promoted}</div><b>models promoted</b> on the sealed holdout. ${promoted ? "" : "The base rate stays the reference."}</div>
+    <div class="b"><div class="n">${cells.size} of ${P.length ? new Set(P.map(r => `${r.cohort}|${r.asset}|${r.h}`)).size : "—"}</div><b>asset × horizon tests</b> had enough holdout outcomes to judge (spot prices, 30 days). The rest were too short.</div>
+    <div class="b"><div class="n">${best ? sp(best.bss_vs_climatology) : "—"}</div><b>best holdout skill</b>${best ? `: ${esc(M(best.model).label)}, ${esc(best.asset)} ${best.h} days. Its 95% interval (${sp(best.bss_ci_lo)} to ${sp(best.bss_ci_hi)}) includes zero, so it is not reliable.` : ""}</div>
+    <div class="b"><div class="n">${devBetter} of ${devNat.length}</div><b>development tests</b> where a model was reliably better than the base rate. Most differences were within noise.</div>` :
+    `<div class="b" style="grid-column:1/-1">The sealed holdout has not been opened yet; development results only.</div>`;
+}
 
 fetch("scorecard.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then(d => {
   D = d;
@@ -479,7 +525,8 @@ fetch("scorecard.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.statu
   st.split = d.meta.splits.includes("holdout") ? "holdout" : "dev";
   const m = d.meta;
   $("asof").innerHTML = `${m.holdout_opened ? "Final run" : "Development run"} <code>${esc(m.run_id)}</code><br>${esc((m.created_utc || "").slice(0, 16))} UTC`;
-  renderVerdict(); renderAll(); renderHow();
+  renderBottom(); renderVerdict(); renderAll(); renderHow();
+  if (printParam()) setTimeout(enterPrint, 0);
   document.querySelectorAll("#verdict .jump").forEach(b => b.onclick = () => {
     Object.assign(st, {split:"holdout", cohort:b.dataset.c, asset:b.dataset.a, h:+b.dataset.h}); renderAll();
     $("lbTitle").scrollIntoView({behavior:"smooth", block:"start"}); });
