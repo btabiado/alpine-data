@@ -1,6 +1,6 @@
 {
   "as_of": "2026-10-15",
-  "generated_at": "2026-10-15T00:40:01Z",
+  "generated_at": "2026-10-15T00:56:30Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-15",
@@ -111,7 +111,7 @@
       "as_of": "2026-10-13",
       "label": "NEUTRAL",
       "note": null,
-      "score": 15,
+      "score": 11,
       "stale": false
     },
     "whale_sentiment_eth": {
