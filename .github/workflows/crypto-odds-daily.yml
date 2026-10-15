@@ -38,7 +38,7 @@ jobs:
         timeout-minutes: 8
         run: python crypto_odds/build_odds.py
 
-      - name: Render the one-page PDFs (Download PDF menu: all assets, BTC, ETH, XRP)
+      - name: Render the one-page PDFs for the Download PDF menu (all assets, BTC, ETH, XRP)
         # Chrome is preinstalled on ubuntu-24.04 runners. A render failure keeps yesterday's PDF.
         continue-on-error: true
         run: |
