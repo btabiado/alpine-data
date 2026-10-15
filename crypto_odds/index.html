@@ -96,6 +96,36 @@ footer b{color:var(--muted)}
 footer code{color:var(--muted)}
 .unavail{color:var(--muted);padding:26px 10px;text-align:center}
 .print-only{display:none}
+.outlook-h{margin-top:22px}
+.predict{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:10px 0 14px}
+.predict .pv{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--muted)}
+.predict .pv .t{font-size:15px;font-weight:650;color:var(--text);margin-bottom:2px}
+.predict .pv .t span{font-weight:500;color:var(--muted);font-size:13px}
+.ocards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.ocard{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:var(--muted)}
+.ocard .top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.ocard .asset{font-size:17px;font-weight:700;color:var(--text);line-height:1.1}
+.ocard .px{font-size:12px;color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:5px 10px;font-weight:750;font-size:14px;letter-spacing:.04em;white-space:nowrap}
+.badge.UP{background:rgba(25,158,112,.16);color:#3ddc97;border:1px solid rgba(25,158,112,.5)}
+.badge.DOWN{background:rgba(217,89,38,.16);color:#ff8a5c;border:1px solid rgba(217,89,38,.5)}
+.badge.FLAT{background:rgba(138,147,166,.14);color:var(--text);border:1px solid rgba(138,147,166,.45)}
+.ocard .say{color:var(--text);font-size:13px;line-height:1.45}
+.obar{display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;background:var(--panel)}
+.obar i{display:block;height:100%}
+.obar .d{background:#d95926}.obar .f{background:#5b6478}.obar .u{background:#199e70}
+.olegend{display:flex;justify-content:space-between;font-size:11.5px;font-variant-numeric:tabular-nums}
+.olegend b{color:var(--text)}
+.ocard .kv{display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--border);padding-top:7px}
+.ocard .kv b{color:var(--text);font-weight:600;text-align:right}
+.ocard .model{border-top:1px solid var(--border);padding-top:7px}
+.ocard .model b{color:var(--text)}
+.sig{display:flex;gap:10px;flex-wrap:wrap}
+.sig span{white-space:nowrap}
+.up-t{color:#3ddc97}.dn-t{color:#ff8a5c}
+.ofoot{font-size:12px;color:var(--faint);margin-top:10px}
+.ofoot b{color:var(--muted)}
+@media (max-width:1100px){.ocards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:760px){.concepts{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.keys{grid-template-columns:1fr}.verdict{flex-direction:column;gap:4px}}
 @media (max-width:600px){header,main{padding-left:16px;padding-right:16px}header .actions{margin-left:0}header .asof{text-align:left}.kpi .v{font-size:16px}h2{font-size:16.5px}}
 
@@ -116,6 +146,15 @@ html.pm{color-scheme:light;--bg:#fff;--panel:#fff;--panel2:#f4f5f8;--border:#dde
   & .screen-only,& header .back,& header .actions .pill,& header .dl,& .tip,& #explore{display:none!important}
   & .print-only{display:block!important}
   & span.print-only{display:inline!important}
+  & .ocards{grid-template-columns:repeat(4,minmax(0,1fr))}
+  & .ocards.single{grid-template-columns:minmax(0,560px)}
+  & .predict{grid-template-columns:repeat(2,minmax(0,1fr))}
+  & .ocard,& .pv{background:#fff}
+  & .badge.UP{color:#0f7a55}
+  & .badge.DOWN{color:#b4441a}
+  & .up-t{color:#0f7a55}
+  & .dn-t{color:#b4441a}
+  & .obar{background:#fff}
   & #printOdds{display:grid!important;grid-template-columns:1fr 1fr;gap:14px 16px;margin-top:10px}
   & .pblock{border:1px solid var(--border);border-radius:10px;padding:12px 14px}
   & .pblock h3{font-size:14px;margin:0}
@@ -164,8 +203,17 @@ html.pm{color-scheme:light;--bg:#fff;--panel:#fff;--panel2:#f4f5f8;--border:#dde
   </div>
 </header>
 <main>
-  <p class="eyebrow">Options-market research · BTC · ETH · XRP</p>
-  <p class="lede">Where do option traders think Bitcoin, Ether and XRP will settle on each listed expiry date? This page reads the answer out of live Deribit option prices, then asks a second question: can price history or machine learning predict these moves better than a simple base rate?</p>
+  <p class="eyebrow">Crypto forecasting research · BTC · ETH · XRP · LINK</p>
+  <p class="lede">Will Bitcoin, Ether, XRP and Chainlink move up, down or sideways over the next 30 days? Below: what our tested models expect for each coin, which model has the best record, and what live Deribit option prices imply for each listed expiry. The research behind it asks whether price history or machine learning can beat a simple base rate.</p>
+  <section id="outlook" hidden>
+    <h2 class="outlook-h">30-day outlook: what the models expect</h2>
+    <div class="sub" id="outlookSub"></div>
+    <div class="predict" id="predict"></div>
+    <div class="ocards" id="ocards"></div>
+    <div class="ofoot" id="ofoot"></div>
+  </section>
+
+  <h2>Reading the options market</h2>
   <div class="concepts">
     <div class="concept"><b>Market-implied, not a forecast</b>Probabilities come from option prices, which include a risk premium (traders pay up for protection). Read them as the market's pricing, not a prediction or advice.</div>
     <div class="concept"><b>Ranges show quote uncertainty</b>Options trade with a bid and an ask. The quote range is every probability consistent with those prices: wide when the market is thin, tight when it is liquid.</div>
@@ -213,7 +261,7 @@ const LABEL = {climatology:"Past frequency", lognormal_rv90:"Lognormal, 90-day v
 const COHORTS = [["settlement", "Settlement prices (Deribit, 08:00 UTC)"], ["spot", "Spot closes (Coinbase / Bitstamp)"]];
 const PRINT_ASSET = (new URLSearchParams(location.search).get("asset") || "").toUpperCase();
 const inScope = asset => !PRINT_ASSET || asset === PRINT_ASSET;
-let odds, findings, state = {asset:null, expiry:null, cohort:"settlement"};
+let odds, findings, outlook = null, state = {asset:null, expiry:null, cohort:"settlement"};
 const tip = $("tip");
 
 function showTip(html, ev){ tip.innerHTML = html; tip.style.display = "block";
@@ -249,6 +297,80 @@ const horizonNote = e => { const h = e.horizon || "", out = [];
   if (n.length) out.push(`closest listed expiry to ${n.join(" and ")} days`);
   if (/year-end/.test(h)) out.push("year-end expiry");
   return out.join(" · "); };
+
+/* ---- 30-day outlook ---- */
+const OUT_LABEL = {...LABEL, climatology:"Base rate (past frequency)"};
+const ARROW = {UP:"&#9650;", DOWN:"&#9660;", FLAT:"&#9654;"};
+const ptsTxt = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(0) + " pts";
+const leanSpan = v => v == null ? '<span class="na">—</span>' : Math.abs(v) < 5 ? `&#9654; flat ${ptsTxt(v)}` :
+  v > 0 ? `<span class="up-t">&#9650; up ${ptsTxt(v)}</span>` : `<span class="dn-t">&#9660; down ${ptsTxt(v)}</span>`;
+function optionsBuckets(asset){
+  const a = odds && odds.assets.find(x => x.asset === asset && x.status === "ok"); if (!a) return null;
+  const e = a.expiries[0], up = e.targets.find(t => t.label === "+10%"), dn = e.targets.find(t => t.label === "-10%");
+  if (!up || !dn || up.q == null || dn.q == null) return null;
+  return {up: up.q, down: dn.q, flat: Math.max(0, 1 - up.q - dn.q), when: dateLong(e.expiry_utc), days: Math.round(e.days)};
+}
+function renderPredict(){
+  const cells = findings.cells, hs = findings.holdout_summary;
+  const mlWorse = cells.filter(c => c.best_ml_ci && c.best_ml_ci[1] < 0).length, mlBetter = cells.filter(c => c.best_ml_reliably_better).length;
+  const volBest = cells.filter(c => c.best_baseline !== "climatology" && c.best_baseline_bss > 0);
+  const maxVol = Math.max(...volBest.map(c => c.best_baseline_bss));
+  const conflict = outlook.assets.filter(a => a.signals.history_lean_pts != null && a.signals.trend_lean_pts != null &&
+    Math.sign(a.signals.history_lean_pts) !== Math.sign(a.signals.trend_lean_pts) && Math.abs(a.signals.trend_lean_pts) >= 5).length;
+  $("predict").innerHTML = `
+    <div class="pv"><div class="t">Direction: not predictable <span>· no reliable edge found</span></div>
+      Machine-learning models built to read trend and momentum were reliably <b>worse</b> than the base rate in ${mlWorse} of ${cells.length} tests and reliably better in ${mlBetter}.
+      ${conflict ? `For ${conflict} of ${outlook.assets.length} coins, long-run history and the past year's trend point in opposite directions.` : ""}
+      So any UP or DOWN call below is a lean, not a forecast with a proven edge.</div>
+    <div class="pv"><div class="t">Size of moves: partly predictable <span>· the models' real edge</span></div>
+      Volatility models, which forecast how far prices swing rather than which way, had positive skill against the base rate in ${volBest.length} of ${cells.length} development tests (up to ${fmt(maxVol)}).
+      ${hs ? `On the one-time final test, ${hs.promoted === 0 ? "none passed every condition" : hs.promoted + " passed"}: the best, for BTC, was within noise.` : ""}
+      The ranges below are the most useful part of each outlook.</div>`;
+}
+function outlookCard(o){
+  const m = o.models[o.headline.model], c = o.call, ref = o.price, opt = optionsBuckets(o.asset);
+  const pc = v => Math.round(v * 100) + "%";
+  const lo = o.price * 0.9, hi = o.price * 1.1;
+  let say;
+  if (c.label !== "FLAT") say = `<b>Leans ${c.label === "UP" ? "up" : "down"}</b>: ${pc(c.label === "UP" ? m.up : m.down)} chance of ${c.label === "UP" ? "rising" : "falling"} more than 10%, vs ${pc(c.label === "UP" ? m.down : m.up)} for the opposite move.` +
+    (c.range_bound ? "" : ` Big moves are likely either way (${pc(c.big_move)} chance of more than ±10%).`);
+  else if (c.range_bound) say = `<b>No directional edge.</b> Most likely stays within ±10% (${money(lo, ref)}–${money(hi, ref)}): ${pc(c.within)} chance.`;
+  else say = `<b>No directional edge, but big swings are likely</b>: ${pc(c.big_move)} chance of moving more than 10% either way.`;
+  const hd = o.headline, b = hd.best;
+  const modelTxt = hd.model === "climatology"
+    ? `<b>Base rate (past frequency)</b>. ${b ? `No model beat it on the final test; the closest was ${esc(OUT_LABEL[b.model] || b.model)} (${fmt(b.skill)}).` : "This asset had no testable final-test cell."}`
+    : `<b>${esc(OUT_LABEL[hd.model] || hd.model)}</b>. Best on the final test: ${fmt(b.skill)} skill vs the base rate${b.reliable ? "" : `, within noise (95%: ${fmt(b.ci[0])} to ${fmt(b.ci[1])})`}.` +
+      (!c.directional_model ? " It forecasts the size of moves, not their direction." : "");
+  return `<div class="ocard">
+    <div class="top"><div><div class="asset">${esc(o.asset)}</div><div class="px">${money(o.price, ref)} · close of ${dateLong(o.price_date)}</div></div>
+      <span class="badge ${c.label}">${ARROW[c.label]} ${c.label}</span></div>
+    <div class="say">${say}</div>
+    <div><div class="obar" role="img" aria-label="Down more than 10%: ${pc(m.down)}; within 10%: ${pc(m.flat)}; up more than 10%: ${pc(m.up)}">
+      <i class="d" style="width:${m.down * 100}%"></i><i class="f" style="width:${m.flat * 100}%"></i><i class="u" style="width:${m.up * 100}%"></i></div>
+      <div class="olegend"><span>&#9660; down &gt;10% <b>${pc(m.down)}</b></span><span>within ±10% <b>${pc(m.flat)}</b></span><span>&#9650; up &gt;10% <b>${pc(m.up)}</b></span></div></div>
+    <div class="kv"><span>80% range in 30 days</span><b>${money(m.range[0], ref)} – ${money(m.range[1], ref)}</b></div>
+    <div class="model">Headline model: ${modelTxt}</div>
+    <div class="kv" style="display:block"><div style="margin-bottom:3px">Direction signals</div>
+      <div class="sig"><span>Long-run history ${leanSpan(o.signals.history_lean_pts)}</span><span>Past-year trend ${leanSpan(o.signals.trend_lean_pts)}</span></div></div>
+    <div class="kv"><span>Options market${opt ? ` (${opt.when}, ${opt.days}d)` : ""}</span><b>${opt ? `&#9660; ${pc(opt.down)} · &#9650; ${pc(opt.up)}` : '<span class="na">no listed options</span>'}</b></div>
+  </div>`;
+}
+function renderOutlook(){
+  if (!outlook){ $("outlook").hidden = true; return; }
+  $("outlook").hidden = false;
+  $("outlookSub").innerHTML = `For each coin: the call (UP, DOWN or FLAT), the chances of a move of more than 10% over the next ${outlook.horizon_days} days, and the model with the best record on the final test. ` +
+    `Recomputed daily from fresh prices; as of ${dateLong(outlook.as_of_utc)}.`;
+  renderPredict();
+  const shown = outlook.assets.filter(a => inScope(a.asset));
+  $("ocards").classList.toggle("single", shown.length === 1);
+  $("ocards").innerHTML = shown.map(outlookCard).join("");
+  const tr = outlook.track_record || {};
+  const first = tr.first_logged ? new Date(Date.parse(tr.first_logged) + outlook.horizon_days * 864e5).toISOString().slice(0, 10) : null;
+  $("ofoot").innerHTML = `<b>How the call is made.</b> ${esc(outlook.rule)} ` +
+    (tr.graded ? `<b>Track record:</b> ${tr.hits} of ${tr.graded} graded calls correct (${Math.round(tr.hits / tr.graded * 100)}%). ` :
+      tr.logged ? `<b>Track record:</b> ${tr.logged} calls logged since ${dateLong(tr.first_logged)}; the first are graded on ${dateLong(first)}. ` : "") +
+    `These are research outputs, not investment advice.`;
+}
 
 /* ---- snapshot ---- */
 function renderSnapshot(){
@@ -453,13 +575,14 @@ function renderFindings(){
 function load(){
   // no-store so an open tab picks up the daily refresh; state (asset, expiry, cohort) is kept across reloads
   return Promise.all([fetch("odds.json", {cache: "no-store"}).then(r => r.json()),
-                      fetch("findings.json", {cache: "no-store"}).then(r => r.json())]).then(([o, f]) => {
+                      fetch("findings.json", {cache: "no-store"}).then(r => r.json()),
+                      fetch("outlook.json", {cache: "no-store"}).then(r => r.ok ? r.json() : null).catch(() => null)]).then(([o, f, ol]) => {
   if (odds && o.as_of_utc !== odds.as_of_utc) state.expiry = null;
-  odds = o; findings = f;
+  odds = o; findings = f; outlook = ol;
   const t = new Date(o.as_of_utc);
   $("asof").innerHTML = `Market data as of ${t.toISOString().slice(0,16).replace("T", " ")} UTC<br>` +
     t.toLocaleString("en-US", {timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short"}) + " New York · refreshed daily";
-  renderSnapshot(); render(); renderFindings(); renderPrint();
+  renderOutlook(); renderSnapshot(); render(); renderFindings(); renderPrint();
   if (PRINT_ASSET) $("printTitle").textContent = " · " + PRINT_ASSET;
   $("footer").innerHTML = `<b>Source:</b> ${esc(o.source)}. Probabilities are risk-neutral (market-implied) and include any risk premium; ` +
     `they are not forecasts or investment advice. LINK has no listed options on any reachable venue. ` +

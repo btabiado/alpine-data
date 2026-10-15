@@ -5,6 +5,9 @@ name: crypto-odds-daily
 # curves with the vendored research engine (crypto_odds/engine), and rewrites crypto_odds/odds.json.
 # If no chain is usable it exits non-zero and the last-good odds.json stays in place.
 #
+# crypto_odds/build_outlook.py then runs the research models on fresh spot closes for the 30-day outlook
+# (outlook.json) and logs each day's calls for grading (outlook_history.json).
+#
 # 14:15 UTC, offset from the other data bots (06:00, 07:00, 08:30). [skip ci] keeps the push from
 # retriggering pages.yml; its hourly cron publishes the new odds.json.
 on:
@@ -38,6 +41,12 @@ jobs:
         timeout-minutes: 8
         run: python crypto_odds/build_odds.py
 
+      - name: Build the 30-day outlook from fresh spot prices
+        # A failure keeps the last-good outlook.json; the odds still publish.
+        continue-on-error: true
+        timeout-minutes: 6
+        run: python crypto_odds/build_outlook.py
+
       - name: Render the one-page PDFs for the Download PDF menu (all assets, BTC, ETH, XRP)
         # Chrome is preinstalled on ubuntu-24.04 runners. A render failure keeps yesterday's PDF.
         continue-on-error: true
@@ -53,6 +62,6 @@ jobs:
           AUTHOR_NAME: crypto-odds-bot
           AUTHOR_EMAIL: crypto-odds-bot@users.noreply.github.com
         run: |
-          git add crypto_odds/odds.json crypto_odds/crypto-odds*.pdf
+          git add crypto_odds/odds.json crypto_odds/outlook.json crypto_odds/outlook_history.json crypto_odds/crypto-odds*.pdf
           .github/scripts/api-commit.sh \
             "crypto-odds: option-implied odds snapshot $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
