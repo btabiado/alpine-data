@@ -21,6 +21,14 @@ name: etf-flows-daily
 # exits non-zero, so a Farside markup change turns this workflow red instead
 # of silently shredding history. That red is the point: the whole reason these
 # feeds rotted for three months is that every failure in this repo was silent.
+# A non-zero exit also emits a ::error annotation naming the asset, the check,
+# and the dates or HTTP status, so the run page is not only "exit code 1".
+#
+# A few settled rows where one fund is '-' are not that failure (daily audit
+# 2026-10-16, Top Issue 1: ETH had 6, BTC had 3, and a cap of 5 failed ETH).
+# Those rows keep the Total already committed, the step warns, and new rows
+# are still appended. '-' on more than 10% of settled rows is still a refused
+# write: that is the convention-change signal, not the absolute count.
 #
 # HTTP 403 is not that failure. Farside has been refusing GitHub runners since
 # 2026-10-06 (daily audit 2026-10-15: both CSVs stuck at 2026-10-05, this step

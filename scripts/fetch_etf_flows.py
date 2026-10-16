@@ -34,8 +34,9 @@ script REFUSES to write unless the parse clearly succeeded:
   * the parsed table must contain the fund columns we expect,
   * it must yield at least MIN_ROWS rows,
   * its newest date must be >= the newest date already on disk,
-  * and no more than MAX_HISTORICAL_WITHHELD settled rows may have their
-    Total withheld for a missing fund (see ABSENCE IS NOT ZERO).
+  * and '-' on more than MAX_SETTLED_DASH_FRACTION of settled rows is a
+    convention change, not a few unreported funds (see ABSENCE IS NOT ZERO).
+    Fewer than that keep the Total already committed for that date.
 
 If any check fails we leave the existing CSV untouched and exit non-zero, so
 the workflow goes red and the failure is visible — the same
@@ -88,8 +89,10 @@ number for one that does, and the two are never conflated:
     Farside prints a literal "0.0" for a fund that reported no creations or
     redemptions; that parses to 0.0 and stays "0". A dash means the fund has
     not reported (or did not exist yet), which is not the same statement.
-    (If Farside ever starts using "-" for a settled zero, the guard below
-    refuses the write rather than blanking the history.)
+    (If "-" spreads across more than MAX_SETTLED_DASH_FRACTION of settled
+    rows, the guard below refuses the write rather than blanking history.
+    A handful of settled "-" days — six on the ETH table as of the
+    2026-10-16 audit — keep the Total already committed and warn.)
   * Farside's Total column is a running SUM of whatever cells are filled in,
     so it prints a number even when the day is unreported or half reported.
     2026-10-06 was committed at 15:59Z, before the US close, as a row of
@@ -195,15 +198,24 @@ MIN_ROWS = 100  # both tables have 400+ rows of history; anything less is a bad 
 ACTIVE_LOOKBACK = 10
 
 # The newest SETTLING_ROWS rows are where Farside is still filling days in.
-# Withheld Totals are expected there and nowhere else. Older rows are settled:
-# a fund that never reports again has closed, and does not hold a Total back.
-# More than MAX_HISTORICAL_WITHHELD settled rows with a reporting fund on "-"
-# means the "'-' = not reported" assumption above has stopped holding (Farside
-# started using "-" for a settled zero, say). Then most historical Totals
-# would be withheld, so refuse the write: a red run beats quietly blanking
-# the history.
+# Withheld Totals are expected there. Older rows are settled: a fund that
+# never reports again has closed, and does not hold a Total back.
+#
+# A reporting fund on "-" in settled history used to fail the asset once more
+# than 5 dates were involved. That count is the wrong trigger. On 2026-10-16
+# (audit Top Issue 1, actions run 38953183213) Farside had "-" on 6 settled
+# ETH rows and 3 settled BTC rows — about one percent of each table, scattered
+# from 2024-11-20 through 2026-08-07, not a markup change. The cap of 5 failed
+# the whole ETH refresh, so no newer ETH row could be written. BTC, at 3, only
+# warned and withheld Total.
+#
+# The convention-change signal is the SHARE of settled rows. Above
+# MAX_SETTLED_DASH_FRACTION, refuse the write: a red run beats blanking most
+# of history. At or under it, keep the Total already committed on those dates
+# and any non-zero fund reading the dash would blank, warn, and still append
+# rows the parse got right. A stored 0 under a '-' becomes an empty cell.
 SETTLING_ROWS = 5
-MAX_HISTORICAL_WITHHELD = 5
+MAX_SETTLED_DASH_FRACTION = 0.10
 
 # Farside prints "Total" and occasionally an average row; those are not dates.
 _DATE_CELL = re.compile(r"^\s*(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})\s*$")
@@ -615,21 +627,40 @@ def emit_warning(title: str, message: str) -> None:
         print(f"::warning title={title}::{_gh_escape(message)}")
 
 
+def refuse(asset: str, check: str, detail: str) -> int:
+    """Log why this asset failed and return the process code. Does not write.
+
+    On Actions the same reason is a ``::error`` annotation. The daily audit
+    reads check-run annotations; without one, the status feed only has
+    "Process completed with exit code 1." ``check`` names the guard (fetch,
+    row count, date regression, settled-dash convention, manual entry, …)
+    and ``detail`` carries the dates or the HTTP status.
+    """
+    message = f"{check}: {detail}"
+    print(f"[{asset}] {message}", file=sys.stderr)
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        print(f"::error title=ETF flows failed ({asset})::{_gh_escape(message)}")
+    return 1
+
+
 def is_blocked(exc: BaseException) -> bool:
     return isinstance(exc, urllib.error.HTTPError) and exc.code == 403
 
 
 def explain_fetch_error(source: str, url: str, exc: BaseException) -> str:
-    """A 403 names the host and the refusal. Other failures stay generic."""
-    if is_blocked(exc):
+    """Name the HTTP status when the host answered. Other failures stay generic."""
+    if isinstance(exc, urllib.error.HTTPError):
         headers = getattr(exc, "headers", None)
         mitigated = ""
         if headers is not None and headers.get("cf-mitigated"):
             mitigated = f" Cloudflare cf-mitigated={headers.get('cf-mitigated')}."
-        reason = getattr(exc, "reason", None) or "Forbidden"
-        return (f"{source} returned HTTP 403 {reason} for {url}.{mitigated} "
-                f"The host is blocking this request. Not retrying with a "
-                f"different User-Agent, proxy, or browser.")
+        reason = getattr(exc, "reason", None) or ""
+        if is_blocked(exc):
+            return (f"{source} returned HTTP 403 {reason or 'Forbidden'} for {url}."
+                    f"{mitigated} The host is blocking this request. Not retrying "
+                    f"with a different User-Agent, proxy, or browser.")
+        label = f"HTTP {exc.code}" + (f" {reason}" if reason else "")
+        return f"{source} returned {label} for {url}.{mitigated}".rstrip()
     return f"{source} fetch failed ({type(exc).__name__}: {exc}) for {url}"
 
 
@@ -1125,9 +1156,8 @@ def _fallback(asset: str, cfg: dict, path: Path, old_header: list[str],
     if manual:
         merged, notes, err = overlay_manual(header, merged, manual, set(), cfg)
         if err:
-            print(f"[{asset}] {err} — leaving {path.name} untouched",
-                  file=sys.stderr)
-            return 1
+            return refuse(asset, "manual entry",
+                          f"{err}; leaving {path.name} untouched")
         _notes(asset, notes)
 
     if header:
@@ -1145,8 +1175,9 @@ def _fallback(asset: str, cfg: dict, path: Path, old_header: list[str],
                 print(f"[{asset}] no new rows. {path.name} is within the health "
                       f"limit; Farside remains blocked.", file=sys.stderr)
             return 0
-        print(f"[{asset}] leaving {path.name} untouched", file=sys.stderr)
-        return 1
+        detail = "; ".join(causes) if causes else "no new rows were merged"
+        return refuse(asset, "fetch",
+                      f"{detail}; leaving {path.name} untouched")
 
     for a, b in duplicate_value_rows(list(merged.values())):
         print(f"[{asset}] WARNING: {b} repeats {a}'s per-fund flows exactly — "
@@ -1158,6 +1189,74 @@ def _fallback(asset: str, cfg: dict, path: Path, old_header: list[str],
     return 0
 
 
+def settled_dashes_are_a_convention_change(n_historical: int, n_settled: int) -> bool:
+    """True when '-' on settled rows is too common to be unreported funds.
+
+    A fixed count of 5 was the wrong trigger: six sparse ETH dates already
+    exceed it, and the tables are hundreds of rows. The signal that Farside
+    stopped using '-' for "not reported" is a large share of settled history.
+    """
+    if n_historical <= 0 or n_settled <= 0:
+        return False
+    return n_historical > MAX_SETTLED_DASH_FRACTION * n_settled
+
+
+def preserve_committed_settled_dashes(
+    header: list[str],
+    rows: list[list[str]],
+    dates: list[str],
+    old_header: list[str],
+    old_rows: dict[str, list[str]],
+) -> tuple[list[str], list[str]]:
+    """Keep committed readings a settled '-' would blank. Mutates ``rows``.
+
+    Fresh numeric cells still win, so a real revision is written. Where the
+    fresh cell is empty:
+
+    * Total is copied back whenever the CSV already has one, including an
+      explicit ``0``. A markup change must not blank or zero that history.
+    * A fund cell is copied back only when the CSV value is non-zero. A
+      stored ``0`` that Farside now prints as '-' is absence, not a flow,
+      and becomes an empty cell like every other unreported fund.
+
+    A date with no committed Total stays withheld. Returns
+    ``(totals_kept, totals_still_blank)``, both in ``dates`` order.
+    """
+    by_date = {r[0]: r for r in rows}
+    old_idx = {c: i for i, c in enumerate(old_header)}
+    kept: list[str] = []
+    blank: list[str] = []
+    for d in dates:
+        fresh = by_date.get(d)
+        old = old_rows.get(d) if old_header else None
+        if fresh is None or not old:
+            blank.append(d)
+            continue
+        kept_total = False
+        for i, col in enumerate(header):
+            oi = old_idx.get(col)
+            if oi is None or oi >= len(old):
+                continue
+            stored = old[oi]
+            if stored is None or str(stored).strip() == "":
+                continue
+            while len(fresh) <= i:
+                fresh.append("")
+            if str(fresh[i]).strip() != "":
+                continue
+            is_total = col.lower() == "total"
+            if not is_total and _num(stored) in (None, 0.0):
+                continue
+            fresh[i] = stored
+            if is_total:
+                kept_total = True
+        if kept_total:
+            kept.append(d)
+        else:
+            blank.append(d)
+    return kept, blank
+
+
 def refresh(asset: str) -> int:
     cfg = SOURCES[asset]
     path: Path = cfg["csv"]
@@ -1166,8 +1265,8 @@ def refresh(asset: str) -> int:
 
     manual, err = load_manual(asset)
     if err:
-        print(f"[{asset}] {err} — leaving {path.name} untouched", file=sys.stderr)
-        return 1
+        return refuse(asset, "manual entry",
+                      f"{err}; leaving {path.name} untouched")
 
     try:
         html = fetch_html(cfg["url"])
@@ -1178,13 +1277,13 @@ def refresh(asset: str) -> int:
     withheld: list[str] = []
     header, rows = parse_flow_table(html, cfg["require"], unsettled, withheld)
     if not rows:
-        print(f"[{asset}] could not locate the flow table (markup changed?) — "
-              f"leaving {path.name} untouched", file=sys.stderr)
-        return 1
+        return refuse(asset, "flow table",
+                      f"could not locate the flow table (markup changed?); "
+                      f"leaving {path.name} untouched")
     if len(rows) < MIN_ROWS:
-        print(f"[{asset}] only {len(rows)} rows parsed (< {MIN_ROWS}) — refusing to "
-              f"overwrite {path.name} with a partial table", file=sys.stderr)
-        return 1
+        return refuse(asset, "row count",
+                      f"only {len(rows)} rows parsed (< {MIN_ROWS}); refusing to "
+                      f"overwrite {path.name} with a partial table")
 
     new_newest = newest([r[0] for r in rows])
 
@@ -1194,27 +1293,44 @@ def refresh(asset: str) -> int:
               f"{', '.join(unsettled)}", file=sys.stderr)
 
     # A withheld Total belongs at the newest edge, where Farside is still
-    # filling the day in. Many of them further back mean the "-" convention
-    # this parser relies on has changed; see MAX_HISTORICAL_WITHHELD. The edge
-    # is the newest SETTLING_ROWS rows of the TABLE (written or not), the same
-    # window withhold_incomplete_totals uses.
+    # filling the day in. The edge is the newest SETTLING_ROWS rows of the
+    # TABLE (written or not), the same window withhold_incomplete_totals uses.
+    # Further back, a large SHARE of settled rows is a convention change and
+    # the write is refused. A handful keeps the Total already on disk.
     settling = set(sorted([r[0] for r in rows] + unsettled)[-SETTLING_ROWS:])
     pending = [d for d in withheld if d in settling]
     historical = [d for d in withheld if d not in settling]
+    n_settled = sum(1 for r in rows if r[0] not in settling)
     if pending:
         print(f"[{asset}] {len(pending)} partly published day(s) written with "
               f"an empty Total (funds still missing): {', '.join(pending)}",
               file=sys.stderr)
-    if len(historical) > MAX_HISTORICAL_WITHHELD:
-        print(f"[{asset}] {len(historical)} settled rows have a fund showing '-' "
-              f"(first: {', '.join(historical[:8])}) — Farside no longer seems to "
-              f"use '-' only for 'not reported'; refusing to blank their Totals "
-              f"in {path.name}", file=sys.stderr)
-        return 1
+    if settled_dashes_are_a_convention_change(len(historical), n_settled):
+        shown = ", ".join(historical[:8])
+        extra = len(historical) - 8
+        if extra > 0:
+            shown += f", +{extra} more"
+        share = len(historical) / n_settled
+        return refuse(
+            asset, "settled-dash convention",
+            f"{len(historical)} of {n_settled} settled rows ({share:.0%}) have a "
+            f"fund showing '-' (first: {shown}); Farside no longer seems to use "
+            f"'-' only for 'not reported'; refusing to blank their Totals in "
+            f"{path.name}")
     if historical:
-        print(f"[{asset}] WARNING: Total withheld on {len(historical)} settled "
-              f"row(s) where a reporting fund shows '-': {', '.join(historical)}",
-              file=sys.stderr)
+        kept, blank = preserve_committed_settled_dashes(
+            header, rows, historical, old_header, old_rows)
+        if kept:
+            print(f"[{asset}] WARNING: {len(kept)} settled row(s) have a fund "
+                  f"showing '-'; kept the committed Total and any non-zero fund "
+                  f"reading the dash would have blanked: {', '.join(kept)}",
+                  file=sys.stderr)
+        if blank:
+            print(f"[{asset}] WARNING: Total withheld on {len(blank)} settled "
+                  f"row(s) where a reporting fund shows '-' and the CSV has no "
+                  f"Total to keep (stored fund readings were not blanked): "
+                  f"{', '.join(blank)}",
+                  file=sys.stderr)
 
     # Drop rows a pre-fix run left on disk that carry no information (every
     # cell zero or empty) and that the source does not back with a reading:
@@ -1240,9 +1356,9 @@ def refresh(asset: str) -> int:
         old_newest = newest(list(old_rows))
 
     if old_newest and new_newest < old_newest:
-        print(f"[{asset}] fetched data ends {new_newest}, older than the {old_newest} "
-              f"already on disk — refusing to regress {path.name}", file=sys.stderr)
-        return 1
+        return refuse(asset, "date regression",
+                      f"fetched data ends {new_newest}, older than the {old_newest} "
+                      f"already on disk; refusing to regress {path.name}")
 
     # Merge: keep every historical date we already have, let fresh rows win.
     # Never truncate — a short upstream table must not delete our history.
@@ -1261,9 +1377,8 @@ def refresh(asset: str) -> int:
         merged, notes, err = overlay_manual(
             header, merged, manual, {r[0] for r in rows}, cfg)
         if err:
-            print(f"[{asset}] {err} — leaving {path.name} untouched",
-                  file=sys.stderr)
-            return 1
+            return refuse(asset, "manual entry",
+                          f"{err}; leaving {path.name} untouched")
         _notes(asset, notes)
 
     dropped = drop_pre_launch(merged, cfg.get("first_trading_day"))
