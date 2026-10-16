@@ -256,9 +256,11 @@ jobs:
         # continues. Do not swallow that code with `|| true` or `|| echo`.
         #
         # The pull_request guard matters only if this workflow grows a
-        # pull_request trigger. push, schedule, workflow_dispatch, and
-        # workflow_run (daily-audit) all archive. There is no separate
-        # pull_request event today.
+        # pull_request trigger. push, the hourly schedule, a manual dispatch,
+        # and the daily-audit completion trigger all archive. There is no
+        # pull_request event today. The word for that completion trigger is
+        # kept out of this job on purpose: the checkout above must stay on
+        # main, not the triggering run's head.
         if: github.event_name != 'pull_request'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
