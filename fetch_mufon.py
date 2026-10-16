@@ -1,6 +1,16 @@
 """
 UAP / NUFORC sightings fetcher.
 
+AUTOMATED COLLECTION IS DISABLED. Do not fetch nuforc.org or any mirror of
+its report pages. The dashboard reads aggregated counts in data-mufon.json.
+New counts are added by hand, with no network request::
+
+    python3 scripts/update_ufo_counts.py
+
+See README.md, "Updating UAP counts". ``python fetch_mufon.py`` does not
+download anything. ``_http_fetch`` refuses nuforc.org and the old report
+mirrors before it opens a socket.
+
 The MUFON / UAP tab on the dashboard has three sections:
   1. Latest Updates  — curated static cards, baked into HTML_TEMPLATE.
   2. Document Library — curated static external links, baked into HTML_TEMPLATE.
@@ -306,6 +316,24 @@ def _is_cloudflare_challenge(status: int | None, headers: Any,
     return "<title>just a moment" in (body_head or "").lower()
 
 
+# Returned by _http_fetch for any URL that would download NUFORC reports.
+# Kept as one string so the CLI, the guard, and the tests agree.
+NUFORC_FETCH_DISABLED = (
+    "automated NUFORC fetch disabled; add counts with "
+    "python3 scripts/update_ufo_counts.py"
+)
+
+
+def _blocked_nuforc_url(url: str) -> bool:
+    """True for nuforc.org and for the old per-report CSV mirrors."""
+    host = (urllib.parse.urlsplit(url).hostname or "").lower()
+    if host == "nuforc.org" or host.endswith(".nuforc.org"):
+        return True
+    low = url.lower()
+    return ("ufo-reports" in low or "nuforc_sightings" in low
+            or "nuforc_reports" in low)
+
+
 def _http_fetch(url: str, *, data: bytes | None = None,
                 headers: dict[str, str] | None = None,
                 timeout: int = 60,
@@ -318,7 +346,12 @@ def _http_fetch(url: str, *, data: bytes | None = None,
     ``"HTTP 404"``, ``"network error (...)"``. Never raises for HTTP/network
     trouble. ``encoding`` forces one codec (errors replaced) instead of the
     utf-8 -> latin-1 sniff, for JSON bodies.
+
+    nuforc.org and the old report mirrors are refused before any socket is
+    opened. Counts are updated from a saved page instead.
     """
+    if _blocked_nuforc_url(url):
+        return None, NUFORC_FETCH_DISABLED
     hdrs = {"User-Agent": UA}
     hdrs.update(headers or {})
     req = urllib.request.Request(url, data=data, headers=hdrs,
@@ -1608,99 +1641,28 @@ def _self_test() -> int:
 # ----- CLI -------------------------------------------------------------------
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="Fetch NUFORC UAP sightings.")
+    ap = argparse.ArgumentParser(
+        description="NUFORC fetching is disabled. Update counts from a saved page.")
     ap.add_argument("--out", default=str(DEFAULT_OUT),
-                    help=f"Output JSON path (default: {DEFAULT_OUT})")
+                    help=argparse.SUPPRESS)
     ap.add_argument("--no-network", action="store_true",
-                    help="Run offline parser self-test and exit (no HTTP).")
+                    help="Run the offline parser self-test and exit (no HTTP).")
     ap.add_argument("--months-back", type=int, default=None,
-                    help="How many months of NUFORC data to scrape. Default is "
-                         f"floor-anchored: every month back to "
-                         f"{NUFORC_LIVE_FLOOR_YM} (where the planetsig mirror "
-                         "ends), so the window grows instead of sliding and no "
-                         "month can drop out of the payload. Pass an integer "
-                         "for the legacy relative window — useful only for a "
-                         "first cold run with no committed month cache.")
+                    help=argparse.SUPPRESS)
     ap.add_argument("--no-live", action="store_true",
-                    help="Skip the NUFORC live scrape (planetsig only).")
+                    help=argparse.SUPPRESS)
     args = ap.parse_args(argv)
 
     if args.no_network:
         return _self_test()
 
-    out_path = Path(args.out)
-    prior: dict | None = None
-    if out_path.exists():
-        try:
-            prior = json.loads(out_path.read_text())
-        except Exception:
-            prior = None
-
-    fetch_error: str | None = None
-    try:
-        payload = fetch_all(months_back=args.months_back,
-                            live_scrape=not args.no_live)
-    except Exception as e:
-        print(f"  [mufon] unexpected fetch error: {e}", file=sys.stderr)
-        fetch_error = f"fetch crashed ({type(e).__name__}: {e})"
-        payload = None
-
-    if payload is None:
-        cause = fetch_error or ("every source failed (historical mirror and "
-                                "NUFORC month cache both empty)")
-        if prior and prior.get("total_records", 0) > 1000:
-            print("  [mufon] every probe failed; preserving prior file.",
-                  file=sys.stderr)
-            # Mark stale so the renderer can show a "data not refreshed" chip.
-            prior["_stale"] = True
-            through = (prior.get("date_range") or [None, None])[-1]
-            prior["data_through"] = through
-            prior["live_refresh"] = {"ok": False, "months_refreshed": 0,
-                                     "cause": cause, "blocked_by": None,
-                                     "attempted_at": _now_iso()}
-            out_path.write_text(json.dumps(prior))
-            _report_nuforc_refresh({"months_refreshed": 0,
-                                    "failure_cause": cause}, through)
-            return 1
-        _report_nuforc_refresh({"months_refreshed": 0, "failure_cause": cause},
-                               None)
-        # No prior, no fresh data — write a minimal placeholder so the
-        # client gets a clean empty-state instead of a 404.
-        empty = {
-            "generated_at": _now_iso(),
-            "source": "unavailable",
-            "source_url": None,
-            "total_records": 0,
-            "date_range": [None, None],
-            "by_state_year": {},
-            "top_cities_by_state": {},
-            "recent_buckets": {},
-            "totals_by_year": {},
-            "shape_totals": [],
-            "shape_by_year": {},
-            "totals_by_month": {},
-            "shape_by_month": {},
-            "_error": "all CSV probes failed",
-        }
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(json.dumps(empty))
-        return 1
-
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(payload))
-    print(f"  Wrote {out_path} ({out_path.stat().st_size:,} bytes, "
-          f"{payload['total_records']:,} records, "
-          f"range {payload['date_range'][0]}..{payload['date_range'][1]})")
-    if "_nuforc_live_meta" in payload:
-        m = payload["_nuforc_live_meta"]
-        print(f"  NUFORC live: {m['months_pulled']} months fetched "
-              f"({m.get('months_refreshed', 0)} with rows), "
-              f"{m['months_cached']} cached, {m['months_404']} failed, "
-              f"{m['months_skipped_offline']} skipped-offline, "
-              f"{m['wall_clock_sec']}s ({m['stopped_reason']})")
-        if not args.no_live:
-            _report_nuforc_refresh(m, payload["date_range"][1])
-        _emit_nuforc_health_marker(m)
+    print(
+        "Automated NUFORC collection is disabled. The UAP tab reads aggregated\n"
+        "counts in data-mufon.json. New data should be added by manually copying\n"
+        "https://nuforc.org/subndx/?id=all, with no automated scraping:\n"
+        "\n"
+        "    python3 scripts/update_ufo_counts.py\n",
+        file=sys.stderr)
     return 0
 
 

@@ -41,7 +41,7 @@ What the main tabs show:
   - A top-50 US metro housing snapshot from Zillow, Redfin and FRED.
 - **Travel Advisories, UAP, City, Aviation**:
   - U.S. State Department advisories.
-  - A NUFORC sightings map.
+  - A NUFORC sightings map (counts only; see [Updating UAP counts](#updating-uap-counts)).
   - City Pulse scores for six US cities.
   - FAA registry data, OpenSky live traffic and TSA checkpoint throughput.
 - **LTHCS**: a summary of the Long-Term Hold Confidence Score. The full pages are at `/lthcs/` (see [`README_LTHCS.md`](README_LTHCS.md)).
@@ -62,6 +62,21 @@ Also on the dashboard:
 All data sources are **free, no key required** for the core dashboard. Optional keys unlock additional depth (chat, macro overlay, true whale cohorts, Reddit subscriber counts, ETH whale series) — see [Environment variables](#environment-variables) and [`docs/SETUP.md`](docs/SETUP.md).
 
 For a stable public share-link host (your own subdomain over a named Cloudflare Tunnel), use the helper scripts in [`scripts/`](scripts/): `tunnel-status.sh` to diagnose, `tunnel-config.sh` to set up, `tunnel-up.sh` to run. Details in [`docs/SETUP.md`](docs/SETUP.md) §4.
+
+## Updating UAP counts
+
+The UAP tab shows aggregated totals only (counts by month, state, and shape) from `data-mufon.json`. New data should be added by manually copying https://nuforc.org/subndx/?id=all, with no automated scraping.
+
+1. Open https://nuforc.org/subndx/?id=all in your browser and wait until the table is visible.
+2. Save the page as HTML, or copy the table into a text or CSV file.
+3. Put that file in `incoming/nuforc/`.
+4. From the repository folder, run:
+
+```bash
+python3 scripts/update_ufo_counts.py
+```
+
+That command updates `data-mufon.json` and deletes the saved file. Do not commit the saved page. If the file is somewhere else, the same command takes its path (`python3 scripts/update_ufo_counts.py "/path/to/saved page.html"`) and deletes it after a successful update.
 
 ## Data sources
 
