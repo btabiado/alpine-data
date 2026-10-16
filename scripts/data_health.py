@@ -390,6 +390,15 @@ MANIFEST: dict[str, Feed] = {
         "python scripts/fetch_etf_flows.py",
         history=(History("data/eth_flows.csv", TRADING, "csv",
                          label="daily flow rows"),)),
+    # Operator input, not a feed. Empty arrays are the steady state; staleness
+    # is judged on the two CSVs above. Classified so the file cannot trip the
+    # unwatched check the day it is committed.
+    "data/etf_flows_manual.json": Feed(
+        STATIC, "etf-flows-daily.yml (manual_entry) and scripts/fetch_etf_flows.py",
+        justification="Hand-entered spot-ETF flows merged when Farside returns "
+                      "HTTP 403. The file is an override, not a publication: it "
+                      "has no refresh clock, and an empty list is correct. "
+                      "Freshness is data/btc_flows.csv and data/eth_flows.csv."),
     # --- daily history of deploy-time sidecars (scripts/snapshot_history.py,
     #     committed by pages.yml) ------------------------------------------
     # The two sidecars below are rebuilt every deploy and never committed, and
