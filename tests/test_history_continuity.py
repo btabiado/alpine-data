@@ -315,6 +315,110 @@ def test_r2_report_that_is_empty_is_an_error(hc, tmp_path):
     assert f.error
 
 
+# The nine v2/ keys the 2026-10-15 audit counted as 81 missing daily copies
+# (each one absent 2026-10-07..15). V2 was retired on 2026-10-06; the root
+# key of each file is present every one of those days.
+_RETIRED_V2 = (
+    "v2/data-cpi.json",
+    "v2/data-defi.json",
+    "v2/data-metals.json",
+    "v2/data-mufon.json",
+    "v2/data-stock-prices.json",
+    "v2/data-supplies.json",
+    "v2/data-travel-fetch-status.json",
+    "v2/data-travel.json",
+    "v2/data-whale.json",
+)
+_AUDIT_DAY = date(2026, 10, 15)
+
+
+def _retired_v2_coverage():
+    """The live bucket's shape on the day of the 81-copy finding.
+
+    Every v2 key stops on 2026-10-06. Every root key runs through the audit
+    day, except data-stock-prices.json, which only started at the root on
+    2026-10-06 (it lived under v2/ before that).
+    """
+    window = _days("2026-09-10", "2026-10-15")  # the 35-day window ending that day
+    through_retirement = [d for d in window if d <= "2026-10-06"]
+    files = {}
+    for key in _RETIRED_V2:
+        files[key] = through_retirement
+        root = key[len("v2/"):]
+        if root == "data-stock-prices.json":
+            files[root] = [d for d in window if d >= "2026-10-06"]
+        else:
+            files[root] = window
+    return _coverage(files)
+
+
+def test_retired_v2_keys_are_the_audit_81_without_the_handoff(hc, tmp_path):
+    """Pins the finding: 9 files × 2026-10-07..15 = 81, and nothing else."""
+    spec = hc.History("health/r2-coverage.json", hc.DAILY, "r2")
+    f = hc.check("R2 archive", spec, tmp_path, _AUDIT_DAY,
+                 r2_coverage=_retired_v2_coverage())
+    assert len(f.missing) == 81
+    assert {m.split(": ")[0] for m in f.missing} == set(_RETIRED_V2)
+    assert all(m.rsplit(": ", 1)[1] >= "2026-10-07" for m in f.missing)
+
+
+def test_retired_v2_prefix_is_not_a_gap_once_the_root_key_continues(hc, tmp_path):
+    spec = hc.History("health/r2-coverage.json", hc.DAILY, "r2",
+                      retired_prefixes=(("v2/", "2026-10-07"),))
+    f = hc.check("R2 archive", spec, tmp_path, _AUDIT_DAY,
+                 r2_coverage=_retired_v2_coverage())
+    assert f.missing == []
+    assert f.ok
+
+
+def test_a_hole_before_the_v2_handoff_still_fails(hc, tmp_path):
+    cov = _retired_v2_coverage()
+    present = cov["categories"]["x"]
+    row = next(r for r in present if r["file"] == "v2/data-cpi.json")
+    del row["present"]["2026-09-20"]
+    spec = hc.History("health/r2-coverage.json", hc.DAILY, "r2",
+                      retired_prefixes=(("v2/", "2026-10-07"),))
+    f = hc.check("R2 archive", spec, tmp_path, _AUDIT_DAY, r2_coverage=cov)
+    assert f.missing == ["v2/data-cpi.json: 2026-09-20"]
+
+
+def test_a_late_successor_does_not_hide_the_days_before_it_lands(hc, tmp_path):
+    """Root data-cpi.json absent until 2026-10-10: 10-07..09 are still gaps."""
+    days = _days("2026-09-10", "2026-10-15")
+    cov = _coverage({
+        "v2/data-cpi.json": [d for d in days if d <= "2026-10-06"],
+        "data-cpi.json": [d for d in days if d >= "2026-10-10"],
+    })
+    spec = hc.History("health/r2-coverage.json", hc.DAILY, "r2",
+                      retired_prefixes=(("v2/", "2026-10-07"),))
+    f = hc.check("R2 archive", spec, tmp_path, _AUDIT_DAY, r2_coverage=cov)
+    assert [m for m in f.missing if m.startswith("v2/")] == [
+        "v2/data-cpi.json: 2026-10-07",
+        "v2/data-cpi.json: 2026-10-08",
+        "v2/data-cpi.json: 2026-10-09",
+    ]
+    assert not any(m.startswith("data-cpi.json") for m in f.missing)
+
+
+def test_a_retired_prefix_with_no_successor_is_still_a_stopped_upload(hc, tmp_path):
+    days = _days("2026-09-25", "2026-10-15")
+    cov = _coverage({
+        "v2/data-only.json": [d for d in days if d <= "2026-10-06"],
+        "data-other.json": days,
+    })
+    spec = hc.History("health/r2-coverage.json", hc.DAILY, "r2",
+                      retired_prefixes=(("v2/", "2026-10-07"),))
+    f = hc.check("R2 archive", spec, tmp_path, _AUDIT_DAY, r2_coverage=cov)
+    assert "v2/data-only.json: 2026-10-07" in f.missing
+    assert "v2/data-only.json: 2026-10-15" in f.missing
+
+
+def test_the_r2_archive_spec_retires_the_v2_prefix_on_the_handoff_day(dh):
+    h = dh.ARCHIVES["R2 archive"]
+    assert h.retired_prefixes == (("v2/", "2026-10-07"),)
+    assert dh.verify_manifest() == []
+
+
 # ==========================================================================
 # known gaps: disclosed, never failed; but they must justify themselves
 # ==========================================================================
@@ -382,6 +486,13 @@ def test_composites_require_the_indexes_the_cards_chart(dh):
     for key in ("whale_sentiment_btc", "whale_sentiment_eth", "poc_signal_breadth",
                 "money_flow_index", "etf_flow_sentiment_btc"):
         assert any(r.split("@")[0] == f"indexes.{key}" for r in req), key
+
+
+def test_retired_prefix_on_a_non_r2_history_is_a_manifest_problem(dh, monkeypatch):
+    bad = dh.Feed(dh.COMMITTED, "someone", history=(
+        dh.History("data/x/", dh.DAILY, retired_prefixes=(("v2/", "2026-10-07"),)),))
+    monkeypatch.setitem(dh.MANIFEST, "data/x/", bad)
+    assert any("retired_prefixes" in p for p in dh.verify_manifest())
 
 
 def test_bad_history_spec_is_a_manifest_problem(dh, monkeypatch):

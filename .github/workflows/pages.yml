@@ -230,6 +230,45 @@ jobs:
           exit 0
         continue-on-error: true
 
+      - name: Upload daily snapshot to ADW R2 archive
+        # Archives all data-*.json sidecars to ADW R2 warehouse for future
+        # ClickHouse ingestion (Phase 2.5). Key pattern:
+        #   raw/alpine-data/{YYYY-MM-DD}/{rel_path}
+        #
+        # This used to run after the site was staged, near the end of a 30
+        # minute job. pages.yml's hourly cron only fires on about 18% of its
+        # ticks, and concurrency cancels an in-progress run when a newer one
+        # starts (group pages-deploy, cancel-in-progress). The payloads above
+        # are already final here — nothing later in this job rewrites a
+        # data-*.json — so the archive happens before the long staging tail.
+        # A run that is cancelled while staging still leaves today's copy in
+        # R2. The coverage heatmap is rebuilt after staging, because that is
+        # when _site/health/ exists to receive it.
+        #
+        # NON-BLOCKING, AND HERE IS WHY. An R2 outage must not withhold the
+        # dashboard. continue-on-error keeps the deploy going.
+        #
+        # LOUD, AND HERE IS WHY. upload_to_r2.py used to exit 0 on a missing
+        # bucket, a bad date, and every failed PUT, so this step stayed green
+        # while the day's copy was never stored. It now exits 1, prints a
+        # ::error:: annotation, and appends $GITHUB_STEP_SUMMARY. With
+        # continue-on-error the step shows as a failed step and the job
+        # continues. Do not swallow that code with `|| true` or `|| echo`.
+        #
+        # The pull_request guard matters only if this workflow grows a
+        # pull_request trigger. push, schedule, workflow_dispatch, and
+        # workflow_run (daily-audit) all archive. There is no separate
+        # pull_request event today.
+        if: github.event_name != 'pull_request'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          pip install -q -c requirements-jobs.txt boto3
+          python upload_to_r2.py
+        continue-on-error: true
+
       - name: Validate V1 dashboard JS structure
         # Structural lint of the freshly-built dashboard.html inline <script>,
         # including the SIDECARS↔SIDECAR_FOR_TAB coverage check that caught
@@ -977,26 +1016,14 @@ jobs:
           || echo "::warning title=GitHub status not published::publish_github_status.py failed; /health/github_status.json is missing from this deploy"
         continue-on-error: true
 
-      - name: Upload daily snapshot to ADW R2 archive
-        # Archives all data-*.json sidecars to ADW R2 warehouse for future
-        # ClickHouse ingestion (Phase 2.5). Key pattern:
-        #   raw/alpine-data/{YYYY-MM-DD}/{rel_path}
-        # Runs AFTER data-*.json files are final, BEFORE gh-pages deploy.
-        # continue-on-error: true — R2 outages must NEVER break the dashboard.
-        if: github.event_name != 'pull_request'
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
-        run: |
-          pip install -q -c requirements-jobs.txt boto3
-          python upload_to_r2.py
-        continue-on-error: true
-
       - name: Build R2 coverage dashboard
         # Scans R2 bucket, generates health/r2-coverage.json for the heatmap
-        # at /health/r2-coverage.html. Runs RIGHT AFTER the upload so today's
-        # snapshot is reflected. continue-on-error: true — never breaks build.
+        # at /health/r2-coverage.html. The upload itself ran earlier, as soon
+        # as the sidecars were final, so a cancellation during staging cannot
+        # skip the archive. This step stays after `cp -R health/*` so the
+        # fresh JSON is what _site actually ships. continue-on-error: true —
+        # never breaks the build. A failed scan must not look like success:
+        # the script's non-zero status fails the step.
         # CRITICAL: must mirror into _site/health/ because the earlier
         # `cp -R health/* _site/health/` step happened BEFORE this script ran.
         # Otherwise the FRESH JSON lives in health/ but the SHIPPED JSON in
@@ -1010,15 +1037,25 @@ jobs:
           # build_backfill_jobs.py queries the r2-backfill workflow run history.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set +e
           python3 health/build_r2_coverage.py
+          cov_rc=$?
+          set -e
           python3 health/build_backfill_jobs.py
           mkdir -p _site/health
           # Mirror BOTH generated JSONs into the deploy artifact — the earlier
           # `cp -R health/*` step ran before these scripts, so the fresh output
           # must be copied again or the live site serves stale/empty data.
+          # Copy even when the scan failed: the file then carries empty_reason,
+          # which the audit reports as UNKNOWN. Leaving the committed
+          # placeholder in place would blame a missing R2_BUCKET_NAME instead.
           [ -f health/r2-coverage.json ] && cp health/r2-coverage.json _site/health/r2-coverage.json
           [ -f health/r2-backfill-jobs.json ] && cp health/r2-backfill-jobs.json _site/health/r2-backfill-jobs.json
           echo "[coverage] mirrored coverage + jobs JSON → _site/health/"
+          if [ "$cov_rc" -ne 0 ]; then
+            echo "::error title=R2 coverage scan failed::build_r2_coverage.py exited ${cov_rc}. The heatmap was not refreshed from the bucket. The archive upload is an earlier step and is unaffected."
+            exit "$cov_rc"
+          fi
         continue-on-error: true
 
       - name: Upload Pages artifact
