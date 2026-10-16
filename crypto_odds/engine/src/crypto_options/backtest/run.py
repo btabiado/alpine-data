@@ -196,13 +196,17 @@ def run_backtest(cfg, final: bool = False, make_charts: bool = True, ml_on: bool
                              "first_forecast": str(g.loc[g[m].notna(), "origin_date"].min().date()) if g[m].notna().any() else ""})
 
     scope = ["dev", "holdout"] if final else ["dev"]
-    if final:   # holdout coverage per model (promotion condition 4), on matured holdout rows
+    # Holdout coverage is promotion condition 4 and exists only once the sealed holdout is opened.
+    # Development runs leave it unset so coverage_holdout.csv is not written.
+    if final:
         cov_h = []
         for (a, c, h, t), g in data[(data["split"] == "holdout") & data["y"].notna()].groupby(["asset", "cohort", "h", "target"]):
             for m in models_all:
                 cov_h.append({"asset": a, "cohort": c, "h": int(h), "target": t, "model": m, "rows": len(g),
                               "covered": float(g[m].notna().mean()) if m in g else 0.0})
         coverage_holdout = pd.DataFrame(cov_h)
+    else:
+        coverage_holdout = None
     per_target, leader, relia, stab = [], [], [], []
     for (a, c, h), g in data[data["split"].isin(scope) & data["y"].notna()].groupby(["asset", "cohort", "h"]):
         for split_name in scope:

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
-from ..reporting.charts import GRID, INK, INK2, S1, S2, S3, SURFACE  # noqa: E402,F401  (shared rcParams/palette)
+from ..reporting.charts import INK, INK2, S1, S2, S3, SURFACE  # noqa: E402  (shared rcParams/palette)
 
 LABEL = {"climatology": "Past frequency (climatology)", "lognormal_rv90": "Lognormal, 90-day realized vol",
          "lognormal_ewma": "Lognormal, EWMA vol", "lognormal_ewma_drift": "Lognormal, EWMA vol + est. drift",

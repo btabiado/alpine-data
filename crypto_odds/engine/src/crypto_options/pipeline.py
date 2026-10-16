@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import platform
 import subprocess
 import time
@@ -17,6 +18,8 @@ from .adapters import deribit
 from .adapters.http import RawArchive
 from .config import PROJECT_ROOT
 from .quality.normalize import apply_quality, normalize_chain, parity_check, utc_now
+
+_log = logging.getLogger(__name__)
 
 
 def _git_rev():
@@ -61,7 +64,7 @@ def _versions():
         try:
             out[p] = metadata.version(p)
         except metadata.PackageNotFoundError:
-            pass
+            _log.warning("package %s is not installed; omitting it from package_versions", p)
     return out
 
 
