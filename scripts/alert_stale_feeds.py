@@ -31,6 +31,7 @@ ALERT_ON = {
     "whale.json",
     "ai_curated.json",
     "real_estate.json",
+    "real_estate_check.json",
     "insights_history.json",
     "btc_flows.csv",
     "eth_flows.csv",
