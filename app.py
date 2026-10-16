@@ -21583,10 +21583,10 @@ function travelFmtDate(iso){
 // challenge) every row carries risks:[] because the data is MISSING, not
 // because a country has none. Treat that as "unavailable" so a Level 4
 // country never reads "No specific risk indicators" and the terrorism count
-// is never a fabricated 0. Older payloads without the flag are recognised by
-// their source tag.
+// is never a fabricated 0. `fallback === true` is the status flag for that
+// mode; older payloads are recognised by source / risks_available.
 function travelRisksAvailable(t){
-  return !!t && t.risks_available !== false && t.source !== 'rss-fallback';
+  return !!t && t.fallback !== true && t.risks_available !== false && t.source !== 'rss-fallback';
 }
 const TRAVEL_RISKS_UNAVAILABLE = 'Risk indicators unavailable (source blocked)';
 
