@@ -914,6 +914,32 @@ def test_backup_403_after_farside_403_warns(btc_cfg, monkeypatch, capsys, tmp_pa
     assert err.count("HTTP 403") >= 2
 
 
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
+def test_usd_to_millions_rejects_non_finite(bad):
+    """TFTC dollars must be a real number. NaN and +/-inf are not a flow."""
+    with pytest.raises(ValueError, match="not a number"):
+        fef.usd_to_millions(bad)
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
+def test_manual_cell_rejects_non_finite(bad):
+    """A manual override cell rejects NaN and +/-inf the same way."""
+    with pytest.raises(ValueError, match="unsupported value"):
+        fef._manual_cell(bad)
+
+
+def test_finite_flows_still_convert():
+    """The non-finite guard must not reject a real zero or a finite reading."""
+    assert fef.usd_to_millions(None) is None
+    assert fef.usd_to_millions(0) == "0"
+    assert fef.usd_to_millions(1_500_000) == "1.5"
+    assert fef.usd_to_millions(-2_000_000) == "-2"
+    assert fef._manual_cell(None) is None
+    assert fef._manual_cell(0) == "0"
+    assert fef._manual_cell(0.0) == "0"
+    assert fef._manual_cell(-3.5) == "-3.5"
+
+
 def test_committed_manual_override_parses_and_workflow_wires_the_input():
     text = (REPO_ROOT / "data" / "etf_flows_manual.json").read_text(encoding="utf-8")
     parsed, err = fef.parse_manual_document(text, "data/etf_flows_manual.json")

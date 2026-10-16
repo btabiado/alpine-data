@@ -228,10 +228,9 @@ def run_analyze(cfg, snapshot_id=None, make_charts=True) -> str:
     if sens is not None:
         sens.to_csv(rdir / "sensitivity_spread_threshold.csv", index=False)
 
-    chart_files = []
     if make_charts:
         from .reporting import charts
-        chart_files = charts.make_all(all_fits, results, rdir, cfg)
+        charts.make_all(all_fits, results, rdir, cfg)
 
     raw_hashes = {Path(r["path"]).name: r["sha256"] for r in smani["raw_files"]}
     from .reporting import report

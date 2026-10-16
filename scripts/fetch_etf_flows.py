@@ -127,6 +127,7 @@ import argparse
 import csv
 import io
 import json
+import math
 import os
 import re
 import sys
@@ -650,7 +651,7 @@ def usd_to_millions(value) -> str | None:
         return None
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"flow is not a number: {value!r}")
-    if isinstance(value, float) and (value != value or abs(value) == float("inf")):
+    if isinstance(value, float) and not math.isfinite(value):
         raise ValueError(f"flow is not a number: {value!r}")
     return f"{round(float(value) / 1_000_000.0, 1):g}"
 
@@ -662,7 +663,7 @@ def _manual_cell(value) -> str | None:
     if isinstance(value, bool) or not isinstance(value, (int, float, str)):
         raise ValueError(f"unsupported value {value!r}")
     if isinstance(value, (int, float)):
-        if isinstance(value, float) and (value != value or abs(value) == float("inf")):
+        if isinstance(value, float) and not math.isfinite(value):
             raise ValueError(f"unsupported value {value!r}")
         return f"{float(value):g}"
     parsed = _parse_value(value)
