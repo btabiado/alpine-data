@@ -14,6 +14,7 @@ dead fetcher is visible in the Actions UI rather than silently stale.
 """
 import json
 import sys
+import time
 import urllib.parse
 import urllib.request
 import urllib.error
@@ -24,18 +25,59 @@ BASE = ("https://www.consumerfinance.gov/data-research/consumer-complaints/"
 UA = "AlpineDataWorks-feed/1.0 (+https://alpinedataworks.com)"
 
 
+# One read of the complaint search API. The 2026-10-12 run (38277091475)
+# died on the first request: urllib raised TimeoutError while reading the
+# status line, and that is not a URLError (urlopen only wraps an OSError
+# raised from the request write). Nothing was written, so the commit step
+# never ran and the day's snapshot is gone. A short stall has to be retried
+# inside this process; the cron does not come back the same day.
+ATTEMPTS = 4
+TIMEOUT_S = 90
+
+
+def _backoff(attempt: int) -> None:
+    """Pause before another try. `attempt` is 0-based and already failed."""
+    time.sleep(min(8.0, 0.8 * (attempt + 1)))
+
+
 def cfpb_count(product: str, min_d: str, max_d: str) -> int:
-    """Total complaint count for a product in [min_d, max_d] (no aggs, fast)."""
+    """Total complaint count for a product in [min_d, max_d] (no aggs).
+
+    Retries a stalled or 5xx/429 response. A 4xx other than 429 is raised
+    immediately: repeating a bad query will not make the product name valid.
+    The last error is re-raised when every attempt fails, so the caller can
+    still fail the workflow instead of publishing a hole.
+    """
     q = (f"{BASE}?product={urllib.parse.quote(product)}&size=0&no_aggs=true"
          f"&date_received_min={min_d}&date_received_max={max_d}")
-    req = urllib.request.Request(q, headers={"User-Agent": UA,
-                                             "Accept": "application/json"})
-    with urllib.request.urlopen(req, timeout=45) as r:
-        j = json.loads(r.read().decode("utf-8"))
-    total = j.get("hits", {}).get("total")
-    if isinstance(total, dict):
-        return int(total.get("value", 0))
-    return int(total or 0)
+    last: BaseException | None = None
+    for attempt in range(ATTEMPTS):
+        req = urllib.request.Request(q, headers={"User-Agent": UA,
+                                                 "Accept": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=TIMEOUT_S) as r:
+                j = json.loads(r.read().decode("utf-8"))
+            total = j.get("hits", {}).get("total")
+            if isinstance(total, dict):
+                return int(total.get("value", 0))
+            return int(total or 0)
+        except urllib.error.HTTPError as e:
+            last = e
+            retry = e.code == 429 or e.code >= 500
+        except (urllib.error.URLError, TimeoutError, OSError, ValueError) as e:
+            # TimeoutError while getresponse() reads the status line is the
+            # 2026-10-12 failure. It is an OSError, not a URLError.
+            last = e
+            retry = True
+        if not retry:
+            raise last
+        print(f"warn: {product!r} attempt {attempt + 1}/{ATTEMPTS} failed: {last}",
+              file=sys.stderr)
+        if attempt + 1 < ATTEMPTS:
+            _backoff(attempt)
+    if last is None:
+        raise RuntimeError(f"CFPB count for {product!r} produced no result")
+    raise last
 
 
 # (payload key, CFPB product name). The names must match the CFPB product
@@ -85,7 +127,8 @@ def main() -> int:
                 "window_recent": [iso(d90), iso(now)],
                 "window_baseline": [iso(d365), iso(now)],
             }
-        except (urllib.error.URLError, urllib.error.HTTPError, ValueError) as e:
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError,
+                OSError, ValueError) as e:
             # Student loan is required (ADW-397); others are best-effort.
             if key == "student_loan":
                 print(f"FATAL: student_loan fetch failed: {e}", file=sys.stderr)

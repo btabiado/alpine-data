@@ -467,6 +467,28 @@ def test_the_committed_known_gaps_file_is_valid(dh, hc):
     assert hc.verify_known_gaps(gaps, dh.history_specs()) == []
 
 
+def test_cfpb_2026_10_12_timeout_is_disclosed_not_excused_as_a_holiday(dh, hc):
+    """data-health run 38971776049: daily commits gap on 2026-10-12.
+
+    The run that day failed (38277091475, TimeoutError) rather than skipping
+    an unchanged holiday. The feed stays on a daily cadence; only this
+    unfillable day is disclosed. A later miss still fails.
+    """
+    gaps = hc.load_known_gaps(REPO_ROOT)
+    match = [g for g in gaps if g.get("feed") == "data-cfpb.json"
+             and g.get("start") == "2026-10-12" and g.get("end") == "2026-10-12"]
+    assert len(match) == 1
+    assert match[0]["fillable"] is False
+    assert "38277091475" in match[0]["reason"]
+    assert hc._disclosed(gaps, "data-cfpb.json",
+                         dh.MANIFEST["data-cfpb.json"].history[0], "2026-10-12")
+    assert not hc._disclosed(gaps, "data-cfpb.json",
+                             dh.MANIFEST["data-cfpb.json"].history[0], "2026-10-13")
+    # Columbus Day is not a blanket exemption. Labor Day 2026-09-07 committed.
+    assert not hc._disclosed(gaps, "data-cfpb.json",
+                             dh.MANIFEST["data-cfpb.json"].history[0], "2026-09-07")
+
+
 # ==========================================================================
 # wiring into data_health.py
 # ==========================================================================
