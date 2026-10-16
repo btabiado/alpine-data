@@ -1102,7 +1102,7 @@ MUFON_LIVE = {"generated_at": "2026-10-04T15:17:50Z", "_stale": True,
 def test_mufon_freeze_is_suppressed_with_a_reason_and_an_expiry(dh):
     sup = dh.SUPPRESSIONS["data-mufon.json"]
     assert sup.until == date(2027, 1, 4)
-    for needle in ("NUFORC", "Cloudflare", "consent", "2026-06-09"):
+    for needle in ("NUFORC", "aggregated", "2026-06-09", "update_ufo_counts.py"):
         assert needle in sup.reason, needle
 
 

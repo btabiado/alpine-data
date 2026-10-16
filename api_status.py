@@ -268,9 +268,8 @@ TARGETS: list[dict] = [
     # the current year, whose page may not exist yet early in a new year.
     {"label": "Port of Los Angeles",  "category": "Supplies",      "url": "https://portoflosangeles.org/business/statistics/container-statistics/historical-teu-statistics-2024", "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
     {"label": "NY Fed GSCPI",         "category": "Supplies",      "url": "https://www.newyorkfed.org/medialibrary/research/interactives/data/gscpi/gscpi_interactive_data.csv", "key_env": None},
-    # ---- UAP / MUFON: NUFORC sightings scrape. The historical mirror lives on
-    # raw.githubusercontent.com, already covered via the ETF-mirror host above.
-    {"label": "NUFORC",               "category": "UAP",           "url": "https://nuforc.org/subndx/",                                                                     "key_env": None},
+    # UAP counts are a committed aggregate (data-mufon.json). Nothing probes
+    # nuforc.org; a person updates the file with scripts/update_ufo_counts.py.
     # ---- travel: State Dept advisories — probe the RSS feed (lighter than the
     # HTML table). Akamai-fronted, so send a browser UA to avoid a bot 403.
     {"label": "State Dept advisories","category": "Travel",        "url": "https://travel.state.gov/_res/rss/TAsTWs.xml",                                                   "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},

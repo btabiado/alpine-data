@@ -4,12 +4,12 @@
   "ci": true,
   "unwired_key_envs": [],
   "summary": {
-    "total": 55,
+    "total": 54,
     "up": 49,
     "auth_required": 2,
     "rate_limited": 1,
     "degraded": 1,
-    "blocked": 2,
+    "blocked": 1,
     "down": 0,
     "reachable": 52,
     "keyed": 15,
@@ -769,22 +769,6 @@
       "retries": 0,
       "key_sent": false,
       "note": ""
-    },
-    {
-      "label": "NUFORC",
-      "category": "UAP",
-      "host": "nuforc.org",
-      "status": 403,
-      "latency_ms": 301,
-      "verdict": "blocked",
-      "reachable": false,
-      "needs_key": false,
-      "key_present": null,
-      "key_state": null,
-      "key_env": null,
-      "retries": 0,
-      "key_sent": false,
-      "note": "Forbidden"
     },
     {
       "label": "Blockchair",

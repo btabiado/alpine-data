@@ -429,14 +429,11 @@ MANIFEST: dict[str, Feed] = {
     # coincidence — they froze *because* nothing was watching, so the V2 build
     # timeout that starved them produced no signal for eight weeks.
     "data-mufon.json": Feed(
-        # The committed NUFORC month cache, frozen at 2026-06-09 and published
-        # as is: nothing refreshes it (see the suppression below). Until V2 was
-        # retired (2026-10) the V2 build rebuilt v2/data-mufon.json hourly and
-        # the deploy served that; the repo file is now exactly what the site
-        # serves, so REPO is the right source. No refresher: running
-        # fetch_mufon.py would scrape nuforc.org, which is what is not allowed.
-        COMMITTED, "committed frozen NUFORC cache (no fetcher runs: nuforc.org "
-                   "blocks automated access and its terms forbid harvesting)"),
+        # Aggregated counts only. Raw month copies were removed. No refresher:
+        # a fetcher would download nuforc.org, which is not allowed. A person
+        # updates the file with scripts/update_ufo_counts.py.
+        COMMITTED, "committed NUFORC aggregate counts (no fetcher runs; "
+                   "update with scripts/update_ufo_counts.py)"),
     "data-stock-money-flow.json": Feed(
         # Corrected owner: the standalone daily cron referenced by .gitignore
         # (stock-money-flow-daily.yml) does not exist. pages.yml line ~113
@@ -596,11 +593,11 @@ MANIFEST: dict[str, Feed] = {
                       "committed outputs already report."),
     "data/.stale/": Feed(
         DELEGATED, "the individual fetchers' stale-keep caches",
-        justification="Last-known-good caches for flaky upstreams, plus the "
-                      "committed NUFORC subndx backfill. Their age is reported "
-                      "on /health/ by build_health_status.collect_stale(); "
-                      "alarming on a fallback cache being old says nothing "
-                      "about whether the live feed is working."),
+        justification="Last-known-good caches for flaky upstreams. Their age "
+                      "is reported on /health/ by "
+                      "build_health_status.collect_stale(); alarming on a "
+                      "fallback cache being old says nothing about whether "
+                      "the live feed is working."),
 }
 
 
@@ -619,23 +616,17 @@ NESTED_DATE_PATHS = _NESTED_DATE_PATHS
 # been renewed three times is telling you the fix is never coming, and should
 # either be fixed properly or the feed retired from the dashboard.
 SUPPRESSIONS: dict[str, Suppression] = {
-    # Frozen on purpose, not broken. Since 2026-06-10 nuforc.org answers every
-    # non-browser request with a Cloudflare managed challenge, and NUFORC's
-    # terms forbid automated collection without written consent, so
-    # fetch_mufon.py serves the committed month cache and the dashboard labels
-    # the tab "data through June 9". No code change may route around that
-    # gate (see fetch_mufon.py's docstring). The owner emailed NUFORC for
-    # permission on 2026-10-04. Three months is time for an answer; on expiry,
-    # either wire the sanctioned feed or retire/relabel the map, rather than
-    # extending this by reflex.
+    # Counts only, updated by hand. Automated collection stays off. The file
+    # stays at whatever date the last saved index contained (2026-06-09 until
+    # someone runs scripts/update_ufo_counts.py), so age alone is not a failure.
     "data-mufon.json": Suppression(
-        reason="NUFORC blocks automated access (Cloudflare challenge) and its "
-               "terms forbid automated collection without written consent, so "
-               "the UAP map is deliberately frozen at 2026-06-09 and labelled "
-               "that way on the dashboard. Permission requested by email "
-               "2026-10-04; revisit on expiry.",
+        reason="NUFORC permitted aggregated totals only. Raw copies were "
+               "removed and automated collection is disabled, so the UAP tab "
+               "shows counts through 2026-06-09 until someone updates them "
+               "with scripts/update_ufo_counts.py from a saved copy of "
+               "https://nuforc.org/subndx/?id=all.",
         until=date(2027, 1, 4),
-        tracked_in="NUFORC permission request emailed 2026-10-04"),
+        tracked_in="NUFORC aggregates only; manual update via update_ufo_counts.py"),
     # NOTE: the crypto-flow suppressions that used to live here were REMOVED,
     # not renewed. Their stated blocker ("needs COINGLASS_API_KEY; free mirror
     # is dead") stopped being true when scripts/fetch_etf_flows.py landed with

@@ -1232,12 +1232,10 @@ def main() -> int:
     # the same reason.
     for ext_key in ("cpi", "supplies", "metals", "travel"):
         manifest[ext_key] = f"data-{ext_key}.json"
-    # UAP/MUFON sidecar (data-mufon.json at repo root): the committed NUFORC
-    # month cache, frozen at 2026-06-09. nuforc.org answers automated requests
-    # with a Cloudflare challenge and its terms forbid harvesting, so nothing
-    # refreshes it (see fetch_mufon.py). The file says so itself (`_stale`,
-    # `data_through`, `live_refresh`), and the tab shows "not refreshed · data
-    # through ...". Published as is by the stage step's data-*.json glob.
+    # UAP sidecar (data-mufon.json at repo root): aggregated counts only.
+    # Nothing fetches nuforc.org. A person updates the file with
+    # scripts/update_ufo_counts.py from a page they saved by hand.
+    # Published as is by the stage step's data-*.json glob.
     manifest["mufon"] = "data-mufon.json"
 
     # City Pulse sidecar (data-city.json at repo root): written out-of-band by
@@ -4758,6 +4756,9 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
       <!-- Freshness strip: OLDEST real observation date feeding this tab.
            Written by renderTabFreshness(); hidden while empty. -->
       <div id="tabFresh-mufon" class="v2-freshstrip"></div>
+      <p id="mufonAttribution" style="margin:0 0 14px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--panel);font-size:13px;line-height:1.5;color:var(--text)">
+        Data used on this dashboard was provided by the National UFO Reporting Center (nuforc.org) and is used with NUFORC's special permission.
+      </p>
 
     <!-- Lead section: Recent sighting activity — moved to the top of the UAP
          tab per request. Short-horizon velocity KPIs derived client-side from
@@ -4838,9 +4839,8 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
             <div id="mufonMapSidePanel" style="background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);border-radius:8px;padding:12px;font-size:12px"></div>
           </div>
           <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">
-            Data: NUFORC via community archive — sighting <strong>reports</strong>, not verified phenomena.
-            Filed shapes and durations are eyewitness claims. Browse the live database at
-            <a href="https://nuforc.org/" target="_blank" rel="noopener noreferrer" style="color:#60a5fa">nuforc.org</a>.
+            Data used on this dashboard was provided by the National UFO Reporting Center (nuforc.org) and is used with NUFORC's special permission.
+            Figures are report counts, not verified phenomena.
           </div>
         </div>
       </div>
@@ -6621,11 +6621,14 @@ function mufonFreshness(){
   const through = fDay(mu.data_through) || fDay(range[1]);
   if (!through) return null;
   const refresh = mu.live_refresh || {};
-  const notRefreshed = !!mu._stale || refresh.ok === false;
+  const manual = refresh.manual === true;
+  const notRefreshed = !manual && (!!mu._stale || refresh.ok === false);
   return {
     date: through, stale: 0, total: 1,
     label: notRefreshed ? 'not refreshed · data through' : 'data through',
-    title: notRefreshed
+    title: manual
+      ? 'Newest report date in the manually saved NUFORC copy.'
+      : notRefreshed
       ? 'NUFORC was not refreshed on the last build'
         + (refresh.cause ? ' (' + refresh.cause + ')' : '')
         + ', so this tab shows the sightings already on file.'
@@ -19451,7 +19454,7 @@ function renderMufonTrend(){
     + '</div>'
     + '<div style="margin-top:12px;padding:10px 12px;background:var(--bg2,#0f1419);border-left:3px solid var(--v2-warn,#fbbf24);border-radius:4px;font-size:11px;color:var(--muted);line-height:1.5">'
     +   '<strong style="color:var(--v2-warn,#fbbf24)">Note:</strong> '
-    +   'Combines the planetsig community mirror (1906-2014) with a direct scrape of NUFORC\'s monthly subndx pages (2014+). '
+    +   'Counts only, from the saved NUFORC index. '
     +   (m._stale
           ? 'NUFORC was <strong>not refreshed</strong> on the last build'
             + ((m.live_refresh && m.live_refresh.cause) ? ' (' + escapeHtml(m.live_refresh.cause) + ')' : '')
@@ -19533,7 +19536,9 @@ function renderMufonMap(){
       note.textContent = (dr[0] && dr[1]) ? ('All records ' + dr[0] + ' to ' + dr[1] + '.') : '';
     } else if (m._stale) {
       const anchor = m.recent_buckets_anchor || (m.date_range && m.date_range[1]) || '—';
-      note.textContent = 'NUFORC not refreshed — window ends at the newest sighting on file (' + anchor + '), not today.';
+      note.textContent = (m.live_refresh && m.live_refresh.manual)
+        ? 'Window ends at the newest report in the saved file (' + anchor + '), not today.'
+        : 'NUFORC not refreshed — window ends at the newest sighting on file (' + anchor + '), not today.';
     } else {
       note.textContent = 'Window anchored to today (UTC).';
     }
@@ -20099,10 +20104,8 @@ function renderMufonShapes(){
     + '<div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">'
     +   'Aggregated by NUFORC-reported shape (lowercased; blanks bucketed as "unknown"). '
     +   'Top 15 shapes shown; rarer ones collapse into "other". '
-    +   'Series runs ' + (dr[0] || '?') + ' through ' + (dr[1] || '?') + ', '
-    +   'combining the planetsig historical mirror with a direct NUFORC subndx scrape'
-    +   (m._stale ? ' <strong>(NUFORC not refreshed this run)</strong>' : '')
-    +   '. Range toggle re-slices the stacked area only; the legend totals stay all-time.'
+    +   'Series runs ' + (dr[0] || '?') + ' through ' + (dr[1] || '?') + '. '
+    +   'Range toggle re-slices the stacked area only; the legend totals stay all-time.'
     + '</div>';
 
   body.innerHTML = ''

@@ -70,7 +70,9 @@ and the health scripts.
    `model_version` and record a `methodology_breaks` entry instead of editing
    old files.
 7. **Respect sources.** Don't scrape a source that forbids it or blocks
-   automation (see the NUFORC note in `fetch_mufon.py`). Keys live in GitHub
+   automation. NUFORC counts are updated only by `scripts/update_ufo_counts.py`
+   from a page a person saved; do not fetch nuforc.org, and do not commit raw
+   NUFORC pages (see README, "Updating UAP counts"). Keys live in GitHub
    secrets or `.env`, never in page JS. An unset key turns a feature off with a
    stated reason.
 
