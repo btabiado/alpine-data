@@ -163,17 +163,56 @@ First paint dropped from ~3.2MB → ~2.4MB by splitting the two heaviest sub-pay
 
 ## Getting ETF flow data
 
-The committed CSVs are kept current automatically; you can also paste a table by hand. Two options:
+The committed CSVs are kept current by the daily job. When that job cannot reach Farside, you can enter the missing days yourself. Three paths:
 
-**1. Paste from Farside** (manual)
+**1. Paste from Farside** (manual, into the dashboard)
 - Visit [farside.co.uk/bitcoin-etf-flow-all-data/](https://farside.co.uk/bitcoin-etf-flow-all-data/) (Cloudflare lets your real browser through; it blocks scripts).
 - Select the table, copy.
 - Click **"Paste CSV…"** in the dashboard, paste, choose BTC or ETH, Import.
 - Tab-separated also works (browser table copy-paste defaults to tabs).
+- That updates the page you are looking at. It does not update the committed CSVs the next build will use. For that, use the override below.
 
-**2. Automatic (CI)** — this is what actually keeps the committed CSVs current
-- [`scripts/fetch_etf_flows.py`](scripts/fetch_etf_flows.py) scrapes Farside from a GitHub Actions runner on its own cron ([`etf-flows-daily.yml`](.github/workflows/etf-flows-daily.yml)) and commits `data/btc_flows.csv` + `data/eth_flows.csv`. Keyless.
+**2. Automatic (CI)** — this is what keeps the committed CSVs current when Farside answers
+- [`scripts/fetch_etf_flows.py`](scripts/fetch_etf_flows.py) reads Farside from a GitHub Actions runner on its own cron ([`etf-flows-daily.yml`](.github/workflows/etf-flows-daily.yml)) and commits `data/btc_flows.csv` + `data/eth_flows.csv`. Keyless. The User-Agent is `AlpineDataWorks-feed/1.0`; the job does not spoof a browser, use a proxy, or otherwise try to get around a block.
+- Since 2026-10-06 Farside has answered that runner with **HTTP 403**. The 2026-10-15 daily audit had both CSVs stuck at 2026-10-05 and the fetch step red. On a 403 the log names the URL and the status, then the job tries the fallbacks below. If every one of them is blocked and there is nothing new to merge, the step **warns and exits 0** instead of failing. The CSVs are left as they are, so data health keeps reporting them stale (limit about 2 days / 56 weekday hours). That stale alarm is the one that stays red. A bad parse, a regressing table, or a malformed override still fails the step and does not write.
 - There is no paid-API option any more, and the old one-click "Seed BTC" button (the abandoned canadiancode/btc-etf-flows mirror, last row 2025-05-02) and `fetch_live.py` were removed in 2026-10. The CoinGlass and SoSoValue integrations in `fetch_live.py` had been removed on 2026-08-03: nothing ever invoked them (`app.py --fetch` was their only caller and no workflow passes `--fetch`), and `api.sosovalue.com` no longer resolves. `COINGLASS_API_KEY` and `SOSOVALUE_API_KEY` are retired and reach no code.
+
+**3. Manual entry when Farside is blocked** — this is how a missing day gets into the committed CSV
+
+The job merges two operator inputs, then commits the CSVs if they changed.
+
+- **Committed override:** [`data/etf_flows_manual.json`](data/etf_flows_manual.json). Add a row and commit it to `main` (or open a PR). The next scheduled run merges it. Empty arrays are the normal contents; delete a date once you no longer want it reapplied.
+- **One run, no commit of the override:** Actions → *etf-flows-daily* → Run workflow → `manual_entry`. Same JSON, or a CSV. This wins over the file when both name the same date. The merged rows land in `data/btc_flows.csv` / `data/eth_flows.csv`; the input itself is not stored. The form box is a single line, so use compact JSON there. A multi-line CSV or more than a few days belongs in the committed file (or `python scripts/fetch_etf_flows.py --manual-entry day.csv` locally).
+
+While Farside actually returned a date, that row wins and the override is ignored for it. While Farside is blocked, an override date **replaces** the stored row. BTC only, and only for dates that have no real row yet, the job also reads [TFTC's public series](https://www.tftc.io/bitcoin-etf-flows/data.json) (CC BY 4.0, no API key; attribute "TFTC — tftc.io/bitcoin-etf-flows"). Dollars are stored as US$ millions, one decimal. ETH has no such series, so ETH days have to be entered by hand. A TFTC file whose license is not CC BY 4.0 is refused.
+
+Rules, same as the scraper (PR #97): a blank, `null`, or `-` is **not reported**, and is stored as an empty cell. A literal `0` stays `0`. Do not type `0` for a fund that has not reported. The Total is kept only when every fund that was reporting on recent days has a number; a partial sum is stored with an empty Total. A row with no numbers, and a weekend or NYSE holiday of zeros, is not written.
+
+JSON (both assets, units US$ millions):
+
+```json
+{
+  "btc": [
+    {"date": "2026-10-06", "IBIT": "122", "FBTC": "0", "BITB": "0", "ARKB": "0",
+     "BTCO": "0", "EZBC": "0", "BRRR": "0", "HODL": "0", "BTCW": "0", "MSBT": "7.8",
+     "GBTC": "0", "BTC": "-11", "Total": "118.9"}
+  ],
+  "eth": [
+    {"date": "2026-10-06", "ETHA": "-31.9", "FETH": "0", "ETHE": "-18.9", "Total": "-50.8"}
+  ]
+}
+```
+
+Leave out a fund that has not reported, or set it to `null`. Do not set it to `0` unless the issuer reported zero.
+
+CSV for the `manual_entry` box (or `python scripts/fetch_etf_flows.py --manual-entry day.csv`):
+
+```csv
+asset,date,IBIT,FBTC,GBTC,Total
+btc,2026-10-06,122,0,0,118.9
+```
+
+An empty CSV field is unreported. `0` is a reported zero. Dates are `YYYY-MM-DD`. Columns you don't name are unreported, not zero. A column that is not already in the asset's CSV is rejected and nothing is written.
 
 ## Reality check on history
 

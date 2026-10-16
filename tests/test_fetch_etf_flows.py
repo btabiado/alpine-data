@@ -652,3 +652,278 @@ def test_committed_csv_has_no_rows_on_market_closed_days(name):
     rows = [l.split(",") for l in proc.stdout.strip().splitlines()[1:]]
     closed = [r[0] for r in rows if fef.market_closed(r[0])]
     assert closed == [], f"rows dated on weekends / NYSE holidays: {closed}"
+
+
+# ---------- Farside HTTP 403: log it, fall back, do not evade ----------
+#
+# Daily audit 2026-10-15: etf-flows-daily had been failing on
+# "Fetch BTC + ETH spot-ETF flows" and both CSVs ended 2026-10-05 because
+# Farside answers GitHub runners with HTTP 403. The response is a warning
+# and an untouched CSV when nothing else can fill the gap — not a crash,
+# and not a second request with a different client.
+
+import io
+import json
+from email.message import Message
+
+
+def _http_error(url: str, code: int, reason: str = "Forbidden",
+                headers: dict | None = None) -> "fef.urllib.error.HTTPError":
+    msg = Message()
+    for k, v in (headers or {}).items():
+        msg[k] = v
+    return fef.urllib.error.HTTPError(url, code, reason, msg, io.BytesIO(b""))
+
+
+def _silence_manual(monkeypatch, tmp_path: Path) -> None:
+    """Keep the committed override and the dispatch env out of a test."""
+    monkeypatch.setattr(fef, "MANUAL_PATH", tmp_path / "no-manual.json")
+    monkeypatch.setattr(fef, "MANUAL_EXTRA_TEXT", "")
+    monkeypatch.delenv(fef.MANUAL_ENV, raising=False)
+
+
+def test_http_403_logs_the_block_and_warns_instead_of_crashing(btc_cfg, monkeypatch, capsys, tmp_path):
+    """The audit failure: 403 must not exit 1, must not write zeros, must say why."""
+    _silence_manual(monkeypatch, tmp_path)
+    before = btc_cfg.read_text()
+    url = fef.SOURCES["btc"]["url"]
+
+    def blocked(_url):
+        raise _http_error(url, 403, headers={"cf-mitigated": "challenge"})
+    monkeypatch.setattr(fef, "fetch_html", blocked)
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    assert fef.refresh("btc") == 0
+    assert btc_cfg.read_text() == before
+
+    err = capsys.readouterr()
+    assert "HTTP 403" in err.err
+    assert url in err.err
+    assert "Not retrying" in err.err
+    assert "cf-mitigated=challenge" in err.err
+    assert "2026-05-12" in err.err          # the seeded CSV's newest day
+    assert "etf_flows_manual.json" in err.err
+    warning = next(ln for ln in err.out.splitlines() if ln.startswith("::warning "))
+    assert warning.startswith("::warning title=ETF flows not refreshed (btc)::")
+    assert "HTTP 403" in warning
+    assert "2026-05-12" in warning
+    assert "User-Agent" not in warning or "Not retrying" in warning
+
+
+def test_non_403_fetch_error_still_fails_when_nothing_else_fills(btc_cfg, monkeypatch, tmp_path):
+    """A timeout is not a block. With no backup and no override, the job stays red."""
+    _silence_manual(monkeypatch, tmp_path)
+    before = btc_cfg.read_text()
+
+    def boom(_url):
+        raise OSError("connection reset")
+    monkeypatch.setattr(fef, "fetch_html", boom)
+
+    assert fef.refresh("btc") == 1
+    assert btc_cfg.read_text() == before
+
+
+def test_manual_json_fills_a_blocked_day_and_keeps_blanks_empty(btc_cfg, monkeypatch, tmp_path):
+    """Override merges on a 403. '-' and a missing fund stay empty; 0 stays 0."""
+    manual = tmp_path / "manual.json"
+    manual.write_text(json.dumps({
+        "btc": [
+            {"date": "2026-05-13", "IBIT": "10", "FBTC": "0", "GBTC": "-", "Total": "10"},
+            {"date": "2026-05-14", "IBIT": "-", "FBTC": "-", "GBTC": "-", "Total": "-"},
+        ],
+        "eth": [],
+    }), encoding="utf-8")
+    monkeypatch.setattr(fef, "MANUAL_PATH", manual)
+    monkeypatch.setattr(fef, "MANUAL_EXTRA_TEXT", "")
+    monkeypatch.delenv(fef.MANUAL_ENV, raising=False)
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: (_ for _ in ()).throw(_http_error("https://farside.example/btc", 403)))
+
+    assert fef.refresh("btc") == 0
+    text = btc_cfg.read_text()
+    assert "2026-05-13,10,0,," in text          # GBTC blank, Total withheld (IBIT was reporting)
+    assert "2026-05-14" not in text             # no reading at all: not a row of zeros
+    assert "2024-01-11,111.7,227.0,-95.1,243.6" in text
+
+
+def test_manual_partial_day_does_not_publish_farsides_running_total(btc_cfg, monkeypatch, tmp_path):
+    manual = tmp_path / "manual.json"
+    manual.write_text(json.dumps({
+        "btc": [{"date": "2026-05-13", "FBTC": "29.3", "Total": "31.7"}],
+    }), encoding="utf-8")
+    monkeypatch.setattr(fef, "MANUAL_PATH", manual)
+    monkeypatch.setattr(fef, "MANUAL_EXTRA_TEXT", "")
+    monkeypatch.delenv(fef.MANUAL_ENV, raising=False)
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: (_ for _ in ()).throw(_http_error("https://farside.example/btc", 403)))
+
+    assert fef.refresh("btc") == 0
+    line = next(l for l in btc_cfg.read_text().splitlines() if l.startswith("2026-05-13"))
+    cells = line.split(",")
+    # date, IBIT, FBTC, GBTC, Total
+    assert cells[1] == ""          # IBIT not reported, not 0
+    assert cells[2] == "29.3"
+    assert cells[4] == ""          # 31.7 was a partial sum
+
+
+def test_dispatch_input_wins_over_the_committed_file(btc_cfg, monkeypatch, tmp_path):
+    manual = tmp_path / "manual.json"
+    manual.write_text(json.dumps({
+        "btc": [{"date": "2026-05-13", "IBIT": "1", "FBTC": "1", "GBTC": "1", "Total": "3"}],
+    }), encoding="utf-8")
+    monkeypatch.setattr(fef, "MANUAL_PATH", manual)
+    monkeypatch.setattr(fef, "MANUAL_EXTRA_TEXT", "")
+    monkeypatch.setenv(fef.MANUAL_ENV, json.dumps({
+        "btc": [{"date": "2026-05-13", "IBIT": "9", "FBTC": "9", "GBTC": "9", "Total": "27"}],
+    }))
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: (_ for _ in ()).throw(_http_error("https://farside.example/btc", 403)))
+
+    assert fef.refresh("btc") == 0
+    assert "2026-05-13,9,9,9,27" in btc_cfg.read_text()
+
+
+def test_manual_csv_and_unknown_column_refuses_the_write(btc_cfg, monkeypatch, tmp_path):
+    before = btc_cfg.read_text()
+    monkeypatch.setattr(fef, "MANUAL_PATH", tmp_path / "absent.json")
+    monkeypatch.setattr(fef, "MANUAL_EXTRA_TEXT", "")
+    monkeypatch.setenv(fef.MANUAL_ENV,
+                       "asset,date,IBIT,FBTC,GBTC,NOT_A_FUND,Total\n"
+                       "btc,2026-05-13,1,2,3,4,10\n")
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: (_ for _ in ()).throw(_http_error("https://farside.example/btc", 403)))
+
+    assert fef.refresh("btc") == 1
+    assert btc_cfg.read_text() == before
+
+
+def test_farside_row_wins_over_a_manual_row_for_the_same_date(btc_cfg, monkeypatch, tmp_path):
+    manual = tmp_path / "manual.json"
+    manual.write_text(json.dumps({
+        "btc": [
+            {"date": "2026-06-15", "IBIT": "1", "FBTC": "1", "GBTC": "1", "Total": "3"},
+            {"date": "2026-07-01", "IBIT": "4", "FBTC": "5", "GBTC": "6", "Total": "15"},
+        ],
+    }), encoding="utf-8")
+    monkeypatch.setattr(fef, "MANUAL_PATH", manual)
+    monkeypatch.setattr(fef, "MANUAL_EXTRA_TEXT", "")
+    monkeypatch.delenv(fef.MANUAL_ENV, raising=False)
+    rows = "".join(
+        _row(f"{(d % 28) + 1:02d} Jun 2026", "10", "20", "30", "60")
+        for d in range(fef.MIN_ROWS + 5)
+    )
+    monkeypatch.setattr(fef, "fetch_html", lambda _u: _farside_html(rows))
+
+    assert fef.refresh("btc") == 0
+    text = btc_cfg.read_text()
+    assert "2026-06-15,10,20,30,60" in text     # the fetch, not the override
+    assert "2026-07-01,4,5,6,15" in text        # a date the fetch did not have
+
+
+def _tftc_days(n: int, start: date, tweak: dict | None = None) -> list[dict]:
+    tweak = tweak or {}
+    out, d = [], start
+    while len(out) < n:
+        if not fef.market_closed(d.isoformat()):
+            per = {"IBIT": 1_000_000, "FBTC": 2_000_000, "GBTC": 3_000_000}
+            net = 6_000_000
+            if d.isoformat() in tweak:
+                per, net = tweak[d.isoformat()]
+            out.append({"date": d.isoformat(), "netFlowUsd": net, "perEtfUsd": per})
+        d += timedelta(days=1)
+    return out
+
+
+def test_tftc_backup_gap_fills_and_does_not_rewrite_history(btc_cfg, monkeypatch, tmp_path):
+    """CC BY backup fills holes after a 403. A stored reading is not replaced."""
+    _silence_manual(monkeypatch, tmp_path)
+    monkeypatch.setitem(fef.SOURCES["btc"], "backup", {
+        "name": "TFTC",
+        "url": "https://tftc.example/data.json",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attribution": "TFTC — tftc.io/bitcoin-etf-flows",
+    })
+    # 2024-01-11 is in the seed with real numbers. The backup must not replace it.
+    # One later day reports IBIT as a literal zero and omits FBTC.
+    days = _tftc_days(fef.MIN_ROWS + 5, date(2024, 1, 11))
+    zero_day = days[10]["date"]
+    days[10] = {"date": zero_day, "netFlowUsd": 3_000_000,
+                "perEtfUsd": {"IBIT": 0, "GBTC": 3_000_000}}
+    payload = {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "units": "USD",
+        "days": days,
+    }
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: (_ for _ in ()).throw(_http_error("https://farside.example/btc", 403)))
+    monkeypatch.setattr(fef, "fetch_json", lambda _u: payload)
+
+    assert fef.refresh("btc") == 0
+    text = btc_cfg.read_text()
+    assert "2024-01-11,111.7,227.0,-95.1,243.6" in text
+    assert f"{zero_day},0,,3,3" in text or f"{zero_day},0,,3," in text
+    # 1e6 + 3e6 = 4e6, but FBTC was reporting and is missing, so Total is withheld.
+    zero_line = next(l for l in text.splitlines() if l.startswith(zero_day))
+    assert zero_line.split(",")[1] == "0"       # a reported zero, not a blank
+    assert zero_line.split(",")[2] == ""        # FBTC omitted by the source
+    assert zero_line.endswith(",") or zero_line.split(",")[-1] == ""
+
+
+def test_tftc_license_change_is_refused(btc_cfg, monkeypatch, tmp_path):
+    _silence_manual(monkeypatch, tmp_path)
+    before = btc_cfg.read_text()
+    monkeypatch.setitem(fef.SOURCES["btc"], "backup", {
+        "name": "TFTC",
+        "url": "https://tftc.example/data.json",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attribution": "TFTC — tftc.io/bitcoin-etf-flows",
+    })
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: (_ for _ in ()).throw(_http_error("https://farside.example/btc", 403)))
+    monkeypatch.setattr(fef, "fetch_json", lambda _u: {
+        "license": "https://example.invalid/all-rights-reserved",
+        "units": "USD",
+        "days": _tftc_days(fef.MIN_ROWS + 1, date(2024, 1, 11)),
+    })
+
+    assert fef.refresh("btc") == 1
+    assert btc_cfg.read_text() == before
+
+
+def test_backup_403_after_farside_403_warns(btc_cfg, monkeypatch, capsys, tmp_path):
+    _silence_manual(monkeypatch, tmp_path)
+    before = btc_cfg.read_text()
+    monkeypatch.setitem(fef.SOURCES["btc"], "backup", {
+        "name": "TFTC",
+        "url": "https://tftc.example/data.json",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attribution": "TFTC — tftc.io/bitcoin-etf-flows",
+    })
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: (_ for _ in ()).throw(_http_error("https://farside.example/btc", 403)))
+    monkeypatch.setattr(fef, "fetch_json",
+                        lambda _u: (_ for _ in ()).throw(
+                            _http_error("https://tftc.example/data.json", 403)))
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    assert fef.refresh("btc") == 0
+    assert btc_cfg.read_text() == before
+    err = capsys.readouterr().err
+    assert "https://farside.example/btc" in err or "HTTP 403" in err
+    assert "https://tftc.example/data.json" in err
+    assert err.count("HTTP 403") >= 2
+
+
+def test_committed_manual_override_parses_and_workflow_wires_the_input():
+    text = (REPO_ROOT / "data" / "etf_flows_manual.json").read_text(encoding="utf-8")
+    parsed, err = fef.parse_manual_document(text, "data/etf_flows_manual.json")
+    assert err is None
+    assert parsed["btc"] == [] and parsed["eth"] == []
+    workflow = (REPO_ROOT / ".github/workflows/etf-flows-daily.yml").read_text(encoding="utf-8")
+    assert "manual_entry:" in workflow
+    assert "ETF_FLOWS_MANUAL:" in workflow
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    assert "data/etf_flows_manual.json" in readme
+    assert "manual_entry" in readme
+    assert "HTTP 403" in readme
+    assert "never 0" in readme or "never `0`" in readme or "not a zero" in readme or "not reported" in readme

@@ -100,6 +100,10 @@ api_universe/data.json
 
 # Local cached fetches stay on your machine (regenerated every run)
 data/*.json
+# Operator override for the crypto spot-ETF job, not a generated cache.
+# scripts/fetch_etf_flows.py merges it when Farside returns HTTP 403.
+# Empty arrays are the steady state. Freshness is judged on the CSVs.
+!data/etf_flows_manual.json
 data/*.bak
 data/*.farside-vertical.bak
 # Stale-fallback cache for flaky third-party APIs (FRED/Glassnode/mempool/Etherscan)
