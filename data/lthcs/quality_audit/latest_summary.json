@@ -1,54 +1,59 @@
 {
-  "asof": "2026-10-01",
-  "snapshot_date": "2026-10-01",
-  "generated_at_utc": "2026-10-01T15:54:03+00:00",
+  "asof": "2026-10-16",
+  "snapshot_date": "2026-10-16",
+  "generated_at_utc": "2026-10-16T21:49:18+00:00",
   "overall_verdict": "CRITICAL",
   "pillars": {
     "adoption_momentum": {
-      "coverage_pct": 31.2,
-      "mean": 50.02,
-      "stdev": 4.97,
-      "verdict": "DEGRADED",
-      "n": 215
+      "coverage_pct": 97.9,
+      "mean": 54.8,
+      "stdev": 21.76,
+      "verdict": "HEALTHY",
+      "n": 515
     },
     "institutional_confidence": {
-      "coverage_pct": 100.0,
-      "mean": 48.53,
-      "stdev": 28.95,
+      "coverage_pct": 93.0,
+      "mean": 49.31,
+      "stdev": 26.24,
       "verdict": "HEALTHY",
-      "n": 215
+      "n": 515
     },
     "financial_evolution": {
-      "coverage_pct": 0.0,
-      "mean": 50.0,
-      "stdev": 0.0,
-      "verdict": "STUB",
-      "n": 215
+      "coverage_pct": 98.3,
+      "mean": 54.62,
+      "stdev": 17.32,
+      "verdict": "HEALTHY",
+      "n": 515
     },
     "thesis_integrity": {
-      "coverage_pct": 79.1,
-      "mean": 54.63,
-      "stdev": 4.31,
-      "verdict": "HEALTHY",
-      "n": 215
+      "coverage_pct": 0.0,
+      "mean": null,
+      "stdev": null,
+      "verdict": "STUB",
+      "n": 0
     },
     "des": {
       "coverage_pct": 100.0,
-      "mean": 45.78,
-      "stdev": 12.95,
+      "mean": 46.55,
+      "stdev": 12.29,
       "verdict": "HEALTHY",
-      "n": 215
+      "n": 515
     }
   },
   "distribution": {
-    "n": 215,
-    "mean": 46.29,
-    "stdev": 8.25,
-    "elite_count": 0,
-    "high_conf_count": 0,
-    "review_count": 131,
-    "review_pct": 60.9,
-    "critical": true
+    "n": 515,
+    "band_cutoffs": {
+      "elite_min": 70,
+      "high_confidence_min": 63,
+      "review_max": 32
+    },
+    "mean": 51.15,
+    "stdev": 11.89,
+    "elite_count": 25,
+    "high_conf_count": 69,
+    "review_count": 37,
+    "review_pct": 7.2,
+    "critical": false
   },
   "weights": {
     "verdict": "UNKNOWN",
@@ -56,40 +61,37 @@
     "n_cohorts": 0
   },
   "bands": {
-    "verdict": "MISALIGNED",
+    "verdict": "BALANCED",
     "counts": {
-      "elite": 0,
-      "high_confidence": 0,
-      "constructive": 0,
-      "monitor": 4,
-      "weakening": 80,
-      "review": 131
+      "elite": 25,
+      "high_confidence": 69,
+      "constructive": 145,
+      "monitor": 167,
+      "weakening": 72,
+      "review": 37
     },
-    "starved": [
-      "elite",
-      "high_confidence"
-    ],
-    "review_pct": 60.9
+    "starved": [],
+    "review_pct": 7.2
   },
   "alerts": [],
   "sub_audits": {
     "pillar_quality": {
-      "ok": true,
-      "path": "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-10-01_pillar_quality.md",
-      "snapshot_date": "2026-10-01"
+      "ok": false,
+      "error": "KeyError: 'mean'",
+      "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/alpine-data/alpine-data/scripts/lthcs_quality_audit_runner.py\", line 341, in _run_pillar_audit\n    report = mod.build_report(snap_date, SNAPSHOT_DIR)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/alpine-data/alpine-data/scripts/lthcs_pillar_quality_audit.py\", line 200, in build_report\n    f\"- Mean **{s['mean']}** | stdev {s['stdev']} | \"\n                ~^^^^^^^^\nKeyError: 'mean'\n"
     },
     "score_distribution": {
       "ok": true,
       "paths": [
-        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-10-01_composite_distribution.md",
-        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-10-01_pillar_correlation.md"
+        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-10-16_composite_distribution.md",
+        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-10-16_pillar_correlation.md"
       ]
     },
     "weights_thresholds": {
       "ok": true,
       "paths": [
-        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-10-01_weights_vs_ic.md",
-        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-10-01_band_distribution.md"
+        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-10-16_weights_vs_ic.md",
+        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-10-16_band_distribution.md"
       ]
     }
   }
