@@ -85,6 +85,34 @@
     },
     "tool": "scripts/lthcs_calibrate_bands.py"
   },
+  "score_bands_history": [
+    {
+      "effective_from": null,
+      "effective_until": "2026-05-18",
+      "reason": "Hand-set cutoffs through 2026-05-17 (elite min 90), the weights.json bands before fcff80747.",
+      "score_bands": {
+        "elite":           {"min": 90, "max": 100, "color": "#1F3A5F", "label": "Elite Confidence Hold"},
+        "high_confidence": {"min": 80, "max": 89,  "color": "#4A8F5F", "label": "High Confidence Hold"},
+        "constructive":    {"min": 70, "max": 79,  "color": "#C9A227", "label": "Constructive Hold"},
+        "monitor":         {"min": 60, "max": 69,  "color": "#D89148", "label": "Monitor Closely"},
+        "weakening":       {"min": 50, "max": 59,  "color": "#B85A3E", "label": "Confidence Weakening"},
+        "review":          {"min": 0,  "max": 49,  "color": "#7A2E1F", "label": "Structural Review Required"}
+      }
+    },
+    {
+      "effective_from": "2026-05-18",
+      "effective_until": "2026-10-06",
+      "reason": "Elite min lowered from 90 to 85 on 2026-05-18 (fcff80747). These cutoffs are score_bands_calibration.previous_cutoffs and were in effect through the 2026-10-05 snapshot.",
+      "score_bands": {
+        "elite":           {"min": 85, "max": 100, "color": "#1F3A5F", "label": "Elite Confidence Hold"},
+        "high_confidence": {"min": 80, "max": 84,  "color": "#4A8F5F", "label": "High Confidence Hold"},
+        "constructive":    {"min": 70, "max": 79,  "color": "#C9A227", "label": "Constructive Hold"},
+        "monitor":         {"min": 60, "max": 69,  "color": "#D89148", "label": "Monitor Closely"},
+        "weakening":       {"min": 50, "max": 59,  "color": "#B85A3E", "label": "Confidence Weakening"},
+        "review":          {"min": 0,  "max": 49,  "color": "#7A2E1F", "label": "Structural Review Required"}
+      }
+    }
+  ],
   "modifiers": {
     "macro_adjustment": {
       "trigger": "10y_yield_30d_change_abs_bp > 25",

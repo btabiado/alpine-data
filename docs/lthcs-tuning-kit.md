@@ -345,11 +345,20 @@ python3 scripts/lthcs_calibrate_bands.py --write         # apply + provenance
 - Bands stay contiguous over 0-100, at least `--min-width` (3) points wide,
   keys/labels/colors untouched; the result is schema-validated.
 - `--write` adds a `score_bands_calibration` block to weights.json
-  (snapshot dates, ticker count, method, targets, previous cutoffs, date).
-- Every consumer reads the cutoffs from weights.json (`lthcs/bands.py` in
-  Python, `lthcs_tab/lthcs-bands.js` in the front-end), so one `--write`
-  moves narratives, the LLM prompt, audits, legends and chart guides
-  together. Crypto shares the same bands.
+  (snapshot dates, ticker count, method, targets, previous cutoffs, date)
+  and appends the outgoing cutoffs to `score_bands_history`.
+- Historical snapshots are not relabeled. A band-threshold change is a
+  minor bump (see the version playbook above): old files keep the labels
+  produced under the cutoffs then in effect. The weekly validator compares
+  each snapshot to that regime via `lthcs.bands.score_bands_for_date`.
+  Live scoring, narratives, and the front end keep using current
+  `score_bands`.
+- Every consumer of the *live* cutoffs reads them from weights.json
+  (`lthcs/bands.py` in Python, `lthcs_tab/lthcs-bands.js` in the front-end),
+  so one `--write` moves narratives, the LLM prompt, audits, legends and
+  chart guides together. Crypto shares the same live bands. The score-to-band
+  mapping itself is `lthcs.bands.assign_band` (floored integer lookup),
+  shared by the scorer and the validator.
 - This is a relative calibration: it fixes *how many* names sit in each
   band, so band membership becomes a rank signal. Recalibrate deliberately
   (e.g. after a universe change), not daily.

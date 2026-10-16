@@ -41,7 +41,7 @@ Method (``quantile-share-v1``)
 4. For each band boundary, pick the integer cutoff ``m`` whose cumulative
    share ``P(floor(score) >= m)`` is closest to the cumulative target
    (ties go to the higher, stricter cutoff). Flooring matches
-   ``lthcs.score.assign_band``.
+   ``lthcs.bands.assign_band``.
 5. Enforce structure: cutoffs strictly descending, every band at least
    ``--min-width`` points wide (default 3), elite ends at 100, review
    starts at 0, bands contiguous. Keys, labels and colors are never
@@ -51,11 +51,14 @@ Output
 ------
 A human-readable report (current vs proposed cutoffs, ticker count per band
 before/after, plus the audit-facing checks). Read-only by default.
-``--write`` updates ``weights.json`` in place: only the ``min``/``max``
-numbers of each band, ``last_updated``, and a top-level
+``--write`` updates ``weights.json`` in place: the ``min``/``max``
+numbers of each band, ``last_updated``, a top-level
 ``score_bands_calibration`` provenance block (snapshot dates, ticker count,
-method, targets, min width, previous cutoffs, date). Note that crypto
-(``scripts/lthcs_crypto_daily.py``) shares these bands.
+method, targets, min width, previous cutoffs, date), and an appended
+``score_bands_history`` regime holding the cutoffs just replaced.
+Historical snapshots keep the labels they were published with; the
+validator reads that history instead of restating them. Note that crypto
+(``scripts/lthcs_crypto_daily.py``) shares the live bands.
 
 Usage
 -----
@@ -385,8 +388,22 @@ def apply_ranges(
     provenance: Dict[str, Any],
     today: str,
 ) -> Dict[str, Any]:
-    """Return a new config with updated band min/max, last_updated, provenance."""
+    """Return a new config with updated band min/max, last_updated, provenance.
+
+    The outgoing live cutoffs are appended to ``score_bands_history`` as a
+    closed regime ending on ``today`` (exclusive). Older regimes are left
+    as they were, so snapshots scored under them stay checkable.
+    """
     cfg = json.loads(json.dumps(weights_cfg))
+    history = list(cfg.get("score_bands_history") or [])
+    start = history[-1].get("effective_until") if history else None
+    history.append({
+        "effective_from": start,
+        "effective_until": today,
+        "reason": "Superseded by scripts/lthcs_calibrate_bands.py --write.",
+        "score_bands": json.loads(json.dumps(cfg["score_bands"])),
+    })
+    cfg["score_bands_history"] = history
     for b, (lo, hi) in proposed.items():
         cfg["score_bands"][b]["min"] = lo
         cfg["score_bands"][b]["max"] = hi
@@ -395,11 +412,39 @@ def apply_ranges(
     return cfg
 
 
+def _indented_json(value: Any) -> str:
+    block = json.dumps(value, indent=2, ensure_ascii=False)
+    return block.replace("\n", "\n  ")
+
+
+def _splice_json_value(text: str, key: str, value: Any, *, insert_after: str) -> Optional[str]:
+    """Replace ``key``'s value, or insert it immediately after ``insert_after``."""
+    block = _indented_json(value)
+    token = '"' + key + '"'
+    idx = text.find(token)
+    if idx >= 0:
+        colon = text.index(":", idx + len(token))
+        start = colon + 1
+        while text[start] in " \t\r\n":
+            start += 1
+        _, end = json.JSONDecoder().raw_decode(text, start)
+        return text[:start] + block + text[end:]
+    anchor = text.find('"' + insert_after + '"')
+    if anchor < 0:
+        return None
+    start = text.index("{", anchor)
+    _, end = json.JSONDecoder().raw_decode(text, start)
+    return text[:end] + ",\n  " + token + ": " + block + text[end:]
+
+
 def _render_preserving_layout(original_text: str, new_cfg: Dict[str, Any]) -> Optional[str]:
     """Patch numbers in place so the hand-aligned layout of weights.json survives.
 
     Returns None if the patched text does not round-trip to ``new_cfg``
-    (caller then falls back to a plain ``json.dumps``).
+    (caller then falls back to a plain ``json.dumps``). The band-number
+    substitution touches only the first occurrence of each band, which is
+    the live ``score_bands`` object; closed regimes live later in
+    ``score_bands_history`` and are rewritten as a whole block.
     """
     text = original_text
     for b in BAND_ORDER_HIGH_TO_LOW:
@@ -416,25 +461,18 @@ def _render_preserving_layout(original_text: str, new_cfg: Dict[str, Any]) -> Op
     if n != 1:
         return None
 
-    block = json.dumps(new_cfg["score_bands_calibration"], indent=2, ensure_ascii=False)
-    block = block.replace("\n", "\n  ")
-    key = '"score_bands_calibration"'
-    idx = text.find(key)
-    if idx >= 0:
-        colon = text.index(":", idx + len(key))
-        start = colon + 1
-        while text[start] in " \t\r\n":
-            start += 1
-        _, end = json.JSONDecoder().raw_decode(text, start)
-        text = text[:start] + block + text[end:]
-    else:
-        # Insert right after the score_bands object.
-        sb = text.find('"score_bands"')
-        if sb < 0:
-            return None
-        start = text.index("{", sb)
-        _, end = json.JSONDecoder().raw_decode(text, start)
-        text = text[:end] + ",\n  " + key + ": " + block + text[end:]
+    text = _splice_json_value(
+        text, "score_bands_calibration", new_cfg["score_bands_calibration"],
+        insert_after="score_bands",
+    )
+    if text is None:
+        return None
+    text = _splice_json_value(
+        text, "score_bands_history", new_cfg["score_bands_history"],
+        insert_after="score_bands_calibration",
+    )
+    if text is None:
+        return None
     try:
         if json.loads(text) != new_cfg:
             return None
@@ -535,11 +573,21 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if not args.write:
             print("read-only: weights.json not modified (pass --write to apply).")
             return 0
+
+        today = args.today or _date.today().isoformat()
+        history = weights_cfg.get("score_bands_history") or []
+        if history and isinstance(history[-1], dict) and history[-1].get("effective_until"):
+            last_until = str(history[-1]["effective_until"])[:10]
+            if today <= last_until:
+                raise CalibrationError(
+                    f"--today {today} must be after the last closed band regime "
+                    f"({last_until}); otherwise the outgoing cutoffs would not form "
+                    f"a non-empty regime"
+                )
         if proposed == current:
             print("--write: proposed cutoffs equal current ones; nothing to do.")
             return 0
 
-        today = args.today or _date.today().isoformat()
         provenance = {
             "calibrated_at": today,
             "calibrated_from": [d for d, _ in snaps],
@@ -554,7 +602,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         }
         new_cfg = apply_ranges(weights_cfg, proposed, provenance, today)
         write_weights(args.weights, weights_text, new_cfg)
-        print(f"--write: updated {args.weights} (score_bands + score_bands_calibration).")
+        print(
+            f"--write: updated {args.weights} "
+            f"(score_bands + score_bands_calibration + score_bands_history)."
+        )
         return 0
     except CalibrationError as exc:
         print(f"error: {exc}", file=sys.stderr)
