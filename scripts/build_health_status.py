@@ -157,8 +157,21 @@ THRESHOLDS: dict[str, Threshold] = {
     # snapshot: one per pages build. 48h tolerates a quiet weekend without
     # tolerating a genuinely dead snapshotter.
     "data/composites/": Threshold(24, 48),
-    # real_estate.json is a once-a-day cron; 12h old is normal, not "stale".
-    "real_estate.json": Threshold(30, 48),
+    # real_estate.json's age is the newest housing month (month-end), not
+    # generated_at. Zillow/Redfin/FRED publish monthly; the daily job
+    # re-checks and commits the snapshot only when that substance moves
+    # (real-estate-daily.yml + json_content_changed.py). Dating the file
+    # from generated_at made audit 2026-10-15 call a successfully checked
+    # snapshot "STALE (9d old, limit 2d)" — the stamp was still 2026-10-06
+    # because nothing but the clocks had changed. On 2026-10-15 the newest
+    # month was still 2026-08 (45d after Aug 31); September landed the next
+    # morning. 55d stays green through that lag. 75d goes red if a month
+    # never arrives. "Did the job actually check?" is real_estate_check.json.
+    "real_estate.json": Threshold(55 * 24, 75 * 24),
+    # Written on every successful real-estate-daily run, including the days
+    # the snapshot itself is not recommitted. 30h/48h matches a daily cron
+    # that sometimes starts hours late: one quiet day is normal, two is not.
+    "real_estate_check.json": Threshold(30, 48),
     # metro_coords.json is STATIC reference data — Census CBSA gazetteer
     # centroids, refreshed manually when Census publishes a new annual file.
     # It is supposed to be months old.
@@ -238,7 +251,7 @@ TAB_INPUTS: dict[str, list[str]] = {
     "Money Flow": ["data-mmf.json", "data-mf-flows.json",
                    "data-equity-etf-flows.json", "equity_etf_flows.csv"],
     "Stock Flow": ["data-stock-money-flow.json"],
-    "Real Estate": ["real_estate.json"],
+    "Real Estate": ["real_estate.json", "real_estate_check.json"],
 }
 
 # Feeds whose observations only exist on US trading days; their CSV last-row
@@ -526,6 +539,52 @@ def _row_content_age_h(name: str, data: dict, now_ts: float) -> "float | None":
     return _newest_row_age_h(rows, now_ts)
 
 
+_YYYY_MM = re.compile(r"^\d{4}-\d{2}$")
+
+
+def newest_housing_month(data: object) -> "str | None":
+    """Newest ``YYYY-MM`` label under ``metros[].history_5y_monthly.labels``.
+
+    The series is five years of monthly history. Freshness is the latest
+    month the vendors have published, not the oldest month still in the file
+    and not the fetch clock stamped on the container.
+    """
+    if not isinstance(data, dict):
+        return None
+    metros = data.get("metros")
+    if not isinstance(metros, list):
+        return None
+    newest: str | None = None
+    for metro in metros:
+        if not isinstance(metro, dict):
+            continue
+        hist = metro.get("history_5y_monthly")
+        if not isinstance(hist, dict):
+            continue
+        labels = hist.get("labels")
+        if not isinstance(labels, list):
+            continue
+        for lab in labels:
+            if isinstance(lab, str) and _YYYY_MM.match(lab) and (newest is None or lab > newest):
+                newest = lab
+    return newest
+
+
+def housing_month_end_iso(ym: str) -> str:
+    """Last calendar day of a ``YYYY-MM`` bucket, as ``YYYY-MM-DD``.
+
+    A monthly observation describes the whole month. Dating it to the 1st
+    makes a just-published month look ~30 days older than it is; the
+    conservative instant that is still the month itself is the month-end.
+    """
+    year, month = int(ym[:4]), int(ym[5:7])
+    if month == 12:
+        nxt = date(year + 1, 1, 1)
+    else:
+        nxt = date(year, month + 1, 1)
+    return (nxt - timedelta(days=1)).isoformat()
+
+
 def _content_age_probe(path: Path, now_ts: float) -> AgeProbe:
     """Age (hours) from a file's INTERNAL freshness signal — the last data row's
     date for CSVs, or a generated_at/compiled_at/asOf/... field for JSON.
@@ -581,6 +640,26 @@ def _content_age_probe(path: Path, now_ts: float) -> AgeProbe:
         if row_age is not None:
             return AgeProbe(age_h=row_age, key="newest row `as_of`",
                             unavailable_reason=unavailable)
+
+        # The snapshot's generated_at is a fetch clock, and real-estate-daily
+        # commits it only when the housing substance moves. A file whose
+        # clocks are nine days old can still be the current monthly vintage.
+        # Fixtures with no metros keep the generic date-key scan below.
+        if path.name == "real_estate.json":
+            ym = newest_housing_month(data)
+            if ym:
+                end = housing_month_end_iso(ym)
+                dt = _parse_date_value(end)
+                if dt is not None:
+                    return AgeProbe(
+                        age_h=_value_age_h(end, dt, now_ts),
+                        key=f"newest housing month {ym}",
+                        unavailable_reason=unavailable)
+            metros = data.get("metros")
+            if isinstance(metros, list) and metros:
+                return AgeProbe(
+                    note="real_estate.json has metros but no YYYY-MM housing month",
+                    unavailable_reason=unavailable)
 
         # One pass to build the normalised lookup, so camelCase and snake_case
         # spellings of the same key resolve identically.

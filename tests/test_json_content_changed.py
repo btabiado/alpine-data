@@ -93,3 +93,11 @@ def test_real_estate_workflow_skips_clock_only_commits():
     assert "--ignore-key generated_at" in runs and "--ignore-key fetched_at" in runs
     # The guard runs before anything is staged or committed.
     assert guard < runs.index("git add data/real_estate.json") < runs.index("api-commit.sh")
+    # An unchanged upstream still records a check. Skipping used to `exit 0`
+    # with no commit, which is why a green job looked 9 days stale.
+    assert "data/real_estate_check.json" in runs
+    assert "--verify-check" in runs
+    restore = runs.index("git restore --source=HEAD --worktree -- data/real_estate.json")
+    stage_check = runs.index("git add -f data/real_estate_check.json")
+    assert guard < restore < stage_check < runs.index("api-commit.sh")
+    assert "Real estate check not staged" in runs

@@ -339,14 +339,38 @@ MANIFEST: dict[str, Feed] = {
         # why (an annual FAA roll dates this composite) and what it costs.
         cadence="annual"),
     "data/real_estate.json": Feed(
+        # Age: newest housing month (month-end), THRESHOLDS["real_estate.json"]
+        # (55d fresh / 75d red). generated_at is a fetch clock committed only
+        # when the snapshot's substance changes, so a 48h limit on it reported
+        # the file STALE for nine days (audit 2026-10-15) while the daily job
+        # was succeeding and correctly skipping timestamp-only commits.
+        # "Did today's check run?" is data/real_estate_check.json.
+        #
+        # No daily git history. A day without a payload commit is a successful
+        # unchanged check, not a missing snapshot. With the spec in place,
+        # data-health.yml (full history) would have called 2026-10-07..15 a
+        # gap the morning the October 16 content commit landed. The daily
+        # audit never saw that gap: its checkout is shallow and the git
+        # history check skips those.
         COMMITTED, "real-estate-daily.yml (daily)",
         "python scripts/fetch_real_estate.py",
+        cadence="monthly",
         history=(
             History("data/real_estate.json", MONTHLY, "json",
                     label="metro 5y monthly history",
                     rows="metros[].history_5y_monthly", series_key="labels",
                     date_field=""),
-            History("data/real_estate.json", DAILY, "git", label="daily commits"),
+        )),
+    "data/real_estate_check.json": Feed(
+        # Limit: 48h, THRESHOLDS["real_estate_check.json"]. generated_at here
+        # is the time the fetch succeeded, written even when the snapshot was
+        # not recommitted. A missed run ages this file; it does not age the
+        # housing month.
+        COMMITTED, "real-estate-daily.yml (daily)",
+        "python scripts/fetch_real_estate.py",
+        history=(
+            History("data/real_estate_check.json", DAILY, "git",
+                    label="daily check commits"),
         )),
     "data/ai_curated.json": Feed(
         # Corrected owner. Nothing regenerates this file: it is a hand-curated

@@ -3744,7 +3744,8 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
   <!-- ============ REAL ESTATE TAB ============ -->
   <!-- Gateway for the standalone US Real Estate Markets dashboard. Shows
        headline freshness + a small stat strip computed at tab-activate time
-       from /data/real_estate.json (committed daily by real-estate-daily.yml).
+       from /data/real_estate.json (refreshed by real-estate-daily.yml;
+       recommitted when the monthly housing substance changes).
        Big CTA opens the full /real-estate/ page with all 10 KPIs, 5Y chart,
        and sortable 50-metro table. -->
   <div id="tab-real_estate" class="hidden">

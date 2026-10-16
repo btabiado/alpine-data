@@ -149,9 +149,15 @@ data/health/*
 # Hand-curated AI-funding seed list, read by fetch_market.load_ai_curated()
 # (the Wikipedia-enriched copy, data/ai_curated_wiki.json, stays ignored).
 !data/ai_curated.json
-# US real-estate snapshot — committed back by real-estate-daily.yml and read
-# by the /real-estate/ page. Updates daily; tracked so the public page works.
+# US real-estate snapshot — committed by real-estate-daily.yml when the
+# housing substance changes (monthly) and read by the /real-estate/ page.
 !data/real_estate.json
+# Last successful check of that snapshot. Committed on every successful
+# daily run, including the days the snapshot itself is left untouched, so
+# data-health can tell "we checked and the month did not move" from "the
+# job stopped". Tiny on purpose: folding this stamp back into
+# real_estate.json is what produced the timestamp-only commits.
+!data/real_estate_check.json
 # Metro centroid coords from Census CBSA gazetteer — built by
 # scripts/fetch_metro_coords.py, read by the /real-estate/ heat map.
 # Rarely changes (annual Census release); tracked so the page works.
