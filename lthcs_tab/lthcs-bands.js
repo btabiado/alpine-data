@@ -71,8 +71,10 @@ export function bandList() {
 }
 
 /**
- * Snapshot band key for a composite score. Matches lthcs.score.assign_band:
+ * Snapshot band key for a composite score. Matches lthcs.bands.assign_band:
  * the score is floored and looked up against inclusive integer ranges.
+ * Uses the live cutoffs. Published snapshot rows already carry the band
+ * assigned under the thresholds then in effect.
  */
 export function bandKeyForScore(score) {
   if (typeof score !== 'number' || !Number.isFinite(score)) return null;

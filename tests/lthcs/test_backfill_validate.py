@@ -232,6 +232,98 @@ def test_band_inconsistency_detected(tmp_path, lbv):
     assert report.exit_code() == 2
 
 
+def test_fractional_score_uses_the_scorer_floor(tmp_path, lbv):
+    """59.4 is weakening (floor 59), not a gap the check skips.
+
+    SCORE_BANDS has weakening 50-59 and monitor 60-69. A raw ``min <= score
+    <= max`` comparison matches neither, which is how the old validator
+    let fractional scores pass without being checked.
+    """
+    tickers = ("AAPL",)
+    root = _build_root(tmp_path, tickers)
+    _write_day(root, "2026-01-01", tickers, composite_override=59.4, band_override="weakening")
+    _write_history(root, "AAPL", ["2026-01-01"])
+    report, _, _, _ = lbv.run_validation(
+        root, start=date(2026, 1, 1), end=date(2026, 1, 1),
+        sample_tickers=list(tickers),
+    )
+    assert [f for f in report.failures if f.check == "band_consistency"] == []
+
+    _write_day(root, "2026-01-01", tickers, composite_override=59.4, band_override="monitor")
+    report, _, _, _ = lbv.run_validation(
+        root, start=date(2026, 1, 1), end=date(2026, 1, 1),
+        sample_tickers=list(tickers),
+    )
+    band_fails = [f for f in report.failures if f.check == "band_consistency"]
+    assert len(band_fails) == 1
+    assert "weakening" in band_fails[0].message
+    assert report.exit_code() == 2
+
+
+def _weights_with_closed_regime(root: Path) -> None:
+    """Live bands are the 2026-10-06 cutoffs; before that day, SCORE_BANDS."""
+    live = {
+        "elite": {"min": 70, "max": 100},
+        "high_confidence": {"min": 63, "max": 69},
+        "constructive": {"min": 52, "max": 62},
+        "monitor": {"min": 42, "max": 51},
+        "weakening": {"min": 33, "max": 41},
+        "review": {"min": 0, "max": 32},
+    }
+    weights = {
+        "version": "test",
+        "score_bands": live,
+        "score_bands_history": [{
+            "effective_from": None,
+            "effective_until": "2026-10-06",
+            "reason": "test regime",
+            "score_bands": SCORE_BANDS,
+        }],
+    }
+    (root / "weights.json").write_text(json.dumps(weights))
+
+
+def test_historical_band_judged_against_the_regime_in_effect(tmp_path, lbv):
+    """2026-02-17 AAPL 57.7 / weakening matches the closed regime.
+
+    The same score labeled weakening on 2026-10-06 does not: live bands
+    call 57.7 constructive. A wrong label inside the closed regime still
+    fails, so the check is not relaxed.
+    """
+    tickers = ("AAPL",)
+    root = _build_root(tmp_path, tickers)
+    _weights_with_closed_regime(root)
+    _write_day(root, "2026-02-17", tickers, composite_override=57.7, band_override="weakening")
+    _write_day(root, "2026-10-06", tickers, composite_override=57.7, band_override="weakening")
+    _write_history(root, "AAPL", ["2026-02-17", "2026-10-06"])
+
+    early, _, _, _ = lbv.run_validation(
+        root, start=date(2026, 2, 17), end=date(2026, 2, 17),
+        sample_tickers=list(tickers),
+    )
+    assert [f for f in early.failures if f.check == "band_consistency"] == []
+    assert early.exit_code() == 0
+
+    later, _, _, _ = lbv.run_validation(
+        root, start=date(2026, 10, 6), end=date(2026, 10, 6),
+        sample_tickers=list(tickers),
+    )
+    band_fails = [f for f in later.failures if f.check == "band_consistency"]
+    assert len(band_fails) == 1
+    assert "2026-10-06" in band_fails[0].message
+    assert "constructive" in band_fails[0].message
+
+    _write_day(root, "2026-02-17", tickers, composite_override=57.7, band_override="constructive")
+    report, _, _, _ = lbv.run_validation(
+        root, start=date(2026, 2, 17), end=date(2026, 2, 17),
+        sample_tickers=list(tickers),
+    )
+    band_fails = [f for f in report.failures if f.check == "band_consistency"]
+    assert len(band_fails) == 1
+    assert "weakening" in band_fails[0].message
+    assert report.exit_code() == 2
+
+
 def test_variable_detail_rowcount_off_reports_warning(tmp_path, lbv):
     tickers = ("AAPL", "MSFT", "NVDA")  # expects 15 rows (3 * 5)
     root = _build_root(tmp_path, tickers)

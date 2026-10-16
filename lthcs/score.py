@@ -27,7 +27,8 @@ maturity stage of the focal ticker. Modifiers:
   universe distribution, subtract 3.0.
 
 The composite is capped to ``[0, 100]`` and rounded to 1 decimal.
-The corresponding band is looked up from ``weights_config["score_bands"]``.
+The corresponding band is ``lthcs.bands.assign_band`` applied to
+``weights_config["score_bands"]`` (re-exported here as ``assign_band``).
 
 All functions are pure (no I/O).
 """
@@ -37,6 +38,8 @@ from __future__ import annotations
 import logging
 import math
 from typing import Any, Dict, List, Optional, Tuple
+
+from lthcs.bands import assign_band
 
 _LOG = logging.getLogger(__name__)
 
@@ -320,54 +323,8 @@ def compute_volatility_modifier(
 
 
 # --- Banding ----------------------------------------------------------------
-
-def assign_band(score: float, score_bands: Dict[str, Dict[str, Any]]) -> str:
-    """Return the band key covering ``score``.
-
-    Bands in weights.json are INTEGER-bounded (e.g. constructive=70..79,
-    high_confidence=80..84 — the live numbers are whatever weights.json
-    says; see scripts/lthcs_calibrate_bands.py) but composite scores carry
-    one decimal place, so fractional scores like 79.4 sit in a gap between
-    bands and would otherwise be wrongly assigned. We treat each band as
-    covering the half-open interval ``[min, max+1)`` so a score of 79.4
-    lands in constructive (since 70 ≤ 79.4 < 80), 84.99 lands in
-    high_confidence, 100.0 lands in elite. Equivalent to flooring ``score``
-    to its integer part before doing the inclusive lookup.
-
-    Out-of-range inputs are clamped to [0, 100] before lookup.
-    """
-    try:
-        s = float(score)
-    except (TypeError, ValueError):
-        s = 0.0
-    if math.isnan(s):  # NaN
-        s = 0.0
-    s = max(0.0, min(100.0, s))
-    floored = int(math.floor(s))
-    # Special-case the top: a perfect 100.0 floors to 100, which fits
-    # elite's max=100 inclusive check below — no extra handling needed.
-    for name, spec in (score_bands or {}).items():
-        try:
-            lo = int(float(spec["min"]))
-            hi = int(float(spec["max"]))
-        except (KeyError, TypeError, ValueError):
-            continue
-        if lo <= floored <= hi:
-            return name
-    # Fallback: return the band whose min is closest below the score.
-    # (Defensive — the standard config tiles [0,100] without gaps.)
-    best_name: Optional[str] = None
-    best_lo = float("-inf")
-    for name, spec in (score_bands or {}).items():
-        try:
-            lo = float(spec["min"])
-        except (KeyError, TypeError, ValueError):
-            continue
-        if lo <= s and lo > best_lo:
-            best_lo = lo
-            best_name = name
-    return best_name or "review"
-
+# ``assign_band`` is imported from ``lthcs.bands`` (the single definition
+# shared with the backfill validator) and re-exported for existing callers.
 
 # --- Drift ------------------------------------------------------------------
 
