@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-16",
-  "generated_at": "2026-10-16T14:03:15Z",
+  "generated_at": "2026-10-16T16:43:32Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-16",
       "label": null,
-      "note": "40 coins; 5 buy+, 12 sell+",
-      "score": -18,
+      "note": "40 coins; 4 buy+, 8 sell+",
+      "score": -10,
       "stale": false
     },
     "defi_sentiment": {
@@ -38,35 +38,35 @@
       "stale": false
     },
     "futures_sentiment": {
-      "as_of": "2026-10-15",
-      "label": "CROWDED LONGS",
+      "as_of": "2026-10-16",
+      "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 48,
+      "score": 18,
       "stale": false
     },
     "futures_sentiment_btc": {
-      "as_of": "2026-10-15",
-      "label": "CROWDED LONGS",
+      "as_of": "2026-10-16",
+      "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 48,
+      "score": 18,
       "stale": false
     },
     "futures_sentiment_eth": {
-      "as_of": "2026-10-15",
+      "as_of": "2026-10-16",
       "label": "CROWDED LONGS",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 39,
+      "score": 27,
       "stale": false
     },
     "futures_sentiment_link": {
-      "as_of": "2026-10-15",
+      "as_of": "2026-10-16",
       "label": "CROWDED LONGS",
       "note": "LINK; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 41,
+      "score": 27,
       "stale": false
     },
     "futures_sentiment_ltc": {
-      "as_of": "2026-10-15",
+      "as_of": "2026-10-16",
       "label": "BALANCED",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
       "score": -10,
@@ -83,7 +83,7 @@
       "as_of": "2026-10-16",
       "label": "Neutral",
       "note": null,
-      "score": -13.41,
+      "score": -15.39,
       "stale": false
     },
     "overview_sentiment": {
@@ -102,9 +102,9 @@
     },
     "stocks_signal_breadth": {
       "as_of": "2026-10-16",
-      "label": "STRONG DISTRIBUTION",
-      "note": "29 stocks; 2 buy+, 17 sell+",
-      "score": -52,
+      "label": "DISTRIBUTION",
+      "note": "50 stocks; 5 buy+, 29 sell+",
+      "score": -48,
       "stale": false
     },
     "whale_sentiment_btc": {
