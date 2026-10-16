@@ -76884,9 +76884,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": false,
-        "sec_8k_score": -0.049999999999999996,
+        "sec_8k_score": -0.04615384615384615,
         "yahoo_earnings_score": null,
-        "events_score_raw": 47.5,
+        "events_score_raw": 47.69,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
