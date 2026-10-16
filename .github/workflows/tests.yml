@@ -37,6 +37,15 @@ jobs:
           pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Build the static dashboard.html (before pytest)
+        env:
+          # The State Dept advisory page answers this runner with HTTP 403
+          # (Cloudflare "Just a moment..."). Daily audit 2026-10-15 counted
+          # tests.yml run 38662092966, where both Python jobs hit that page
+          # live and the scraper rebuilt 216 advisories from RSS. This build
+          # must not open a socket to travel.state.gov: the env var serves
+          # the offline fixtures (HTML 403, RSS sample) so the fallback path
+          # runs as a warning. pages.yml does not set it and still fetches live.
+          ALPINE_ADVISORIES_MOCK: "1"
         run: |
           # Aggregator should produce a working dashboard.html from a
           # minimal one-row CSV (proves the full read -> aggregate -> render
