@@ -26,8 +26,21 @@ import hashlib
 import glob
 from datetime import datetime, timezone
 
-import boto3
-from botocore.exceptions import BotoCoreError, ClientError
+# boto3 is installed by pages.yml / r2-backfill.yml (requirements-jobs.txt).
+# The unit-test job installs requirements.txt only, so this import must not
+# fail collection when boto3 is absent. The stubs let the except clauses below
+# stay the same; main() reports the missing library instead of crashing.
+try:
+    import boto3
+    from botocore.exceptions import BotoCoreError, ClientError
+except ImportError:
+    boto3 = None
+
+    class BotoCoreError(Exception):
+        pass
+
+    class ClientError(BotoCoreError):
+        pass
 
 ACCOUNT_ID = "d486b561a8eacd568dd8edf9c749ee47"
 R2_ENDPOINT_URL = f"https://{ACCOUNT_ID}.r2.cloudflarestorage.com"
@@ -69,6 +82,8 @@ def main():
     bucket_name = os.environ.get("R2_BUCKET_NAME")
     if not bucket_name:
         return _fail("R2_BUCKET_NAME is unset; no daily payload was archived.")
+    if boto3 is None:
+        return _fail("boto3 is not installed; no daily payload was archived.")
 
     # boto3 picks up AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY automatically
     try:

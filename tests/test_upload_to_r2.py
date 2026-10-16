@@ -11,11 +11,19 @@ import json
 from pathlib import Path
 
 import pytest
-from botocore.exceptions import ClientError
 
 import upload_to_r2 as u
 
 ROOT = Path(__file__).resolve().parent.parent
+
+
+class _R2Error(Exception):
+    """Stand-in for botocore.exceptions.ClientError.
+
+    The test job does not install boto3. upload_to_r2 catches whatever
+    ClientError name is bound on the module, and the fixture below points
+    that name here.
+    """
 
 
 class FakeS3:
@@ -40,24 +48,27 @@ class FakeS3:
     def upload_fileobj(self, fh, bucket, key):
         fh.read()
         if key in self.fail_uploads:
-            raise ClientError(
-                {"Error": {"Code": "SlowDown", "Message": "no"}}, "PutObject")
+            raise _R2Error(f"upload failed: {key}")
         self.uploaded.append(key)
         self.keys.add(key)
 
     def put_object(self, **kwargs):
         key = kwargs["Key"]
         if key in self.fail_uploads:
-            raise ClientError(
-                {"Error": {"Code": "SlowDown", "Message": "no"}}, "PutObject")
+            raise _R2Error(f"put failed: {key}")
         self.puts.append(key)
         self.bodies[key] = kwargs["Body"]
         self.keys.add(key)
 
 
 def _client_error():
-    return ClientError(
-        {"Error": {"Code": "AccessDenied", "Message": "no"}}, "ListObjectsV2")
+    return _R2Error("list failed")
+
+
+@pytest.fixture(autouse=True)
+def _stub_sdk_errors(monkeypatch):
+    monkeypatch.setattr(u, "ClientError", _R2Error)
+    monkeypatch.setattr(u, "BotoCoreError", _R2Error)
 
 
 @pytest.fixture
@@ -71,7 +82,10 @@ def workspace(tmp_path, monkeypatch):
 
 
 def _patch_client(monkeypatch, fake):
-    monkeypatch.setattr(u.boto3, "client", lambda *a, **k: fake)
+    monkeypatch.setattr(
+        u, "boto3",
+        type("Boto3", (), {"client": staticmethod(lambda *a, **k: fake)})(),
+    )
     return fake
 
 
