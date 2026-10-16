@@ -1,15 +1,11 @@
 {
- "generated": "2026-10-15T18:12:17Z",
+ "generated": "2026-10-16T17:57:26Z",
  "latest": {
-  "date": "10/14/2026",
-  "vol": 2419474
+  "date": "10/15/2026",
+  "vol": 2820142
  },
- "avg7": 2645804,
+ "avg7": 2634173,
  "series": [
-  {
-   "d": "9/15/2026",
-   "v": 1948803
-  },
   {
    "d": "9/16/2026",
    "v": 2176546
@@ -125,11 +121,15 @@
   {
    "d": "10/14/2026",
    "v": 2419474
+  },
+  {
+   "d": "10/15/2026",
+   "v": 2820142
   }
  ],
  "src": "TSA checkpoint travel numbers \u2014 tsa.gov/travel/passenger-volumes",
  "source": "tsa.gov",
- "as_of": "2026-10-14",
+ "as_of": "2026-10-15",
  "snapshot_url": null,
  "snapshot_timestamp": null
 }
