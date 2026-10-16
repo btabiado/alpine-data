@@ -650,9 +650,20 @@ SUPPRESSIONS: dict[str, Suppression] = {
 # which is the ONLY record of feeds the deploy regenerates and never commits.
 # Its per-file daily presence is published by the pages build as
 # health/r2-coverage.json, so the committed-mode run reads the deployed copy.
+#
+# V2 was retired on 2026-10-06 (PR #94). Through that day pages.yml built
+# v2/data-*.json and uploaded them beside the repo-root copies. From
+# 2026-10-07 the same payloads are archived only at the unprefixed key
+# (data-cpi.json, not v2/data-cpi.json). The coverage report still lists the
+# old keys, and without retired_prefixes the continuity check extends every
+# key to the bucket's newest day, so each retired file looks like another
+# missing day forever. That is the "missing 81" P0 in the 2026-10-15 audit
+# (9 v2 files × 2026-10-07..15). The bytes are at the root keys. A hole in a
+# root key, or a v2 key whose root successor never shows up, still fails.
 ARCHIVES: dict[str, History] = {
     "R2 archive": History("health/r2-coverage.json", DAILY, "r2",
-                          label="daily payload copies"),
+                          label="daily payload copies",
+                          retired_prefixes=(("v2/", "2026-10-07"),)),
 }
 
 
@@ -796,6 +807,15 @@ def _verify_history(h: History) -> list[str]:
                    f"histories only")
     if h.source == "json" and not h.series_key:
         out.append(f"history {h.name!r}: a json history needs series_key")
+    if h.retired_prefixes and h.source != "r2":
+        out.append(f"history {h.name!r}: retired_prefixes applies to r2 "
+                   f"histories only")
+    for prefix, cutoff in h.retired_prefixes:
+        if not isinstance(prefix, str) or not prefix or prefix == "/":
+            out.append(f"history {h.name!r}: retired prefix {prefix!r} is empty")
+        if hc.parse_period(cutoff, hc.DAILY) != cutoff:
+            out.append(f"history {h.name!r}: retired cutoff {cutoff!r} "
+                       f"must be YYYY-MM-DD")
     return out
 
 

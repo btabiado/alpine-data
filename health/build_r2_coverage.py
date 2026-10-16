@@ -24,8 +24,10 @@ Output schema:
   "totals": {"sources": 18, "dates": 173, "cells_present": 1240, "coverage_pct": 39.8}
 }
 
-If R2 creds are missing / bucket empty, writes an empty-but-valid coverage
-file with totals.sources=0 so the dashboard renders an empty-state.
+If R2 creds are missing or the scan errors, writes an empty-but-valid
+coverage file (so a caller that ignores the status still has JSON) and exits
+1. An empty bucket is a successful scan of nothing and exits 0. pages.yml
+marks the step failed on exit 1 and does not treat it as a green archive.
 """
 
 import os
@@ -104,11 +106,13 @@ def main():
     if not bucket or not boto3:
         reason = "R2_BUCKET_NAME unset" if not bucket else "boto3 not installed"
         print(f"[coverage] skipping scan — {reason}; writing empty payload.")
+        print(f"::error title=R2 coverage scan skipped::{reason}. "
+              f"health/r2-coverage.json was not refreshed from the bucket.")
         payload = empty_payload(reason)
         os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
         with open(OUT_PATH, "w") as f:
             json.dump(payload, f, indent=2)
-        sys.exit(0)
+        sys.exit(1)
 
     client = boto3.client(
         "s3",
@@ -149,11 +153,13 @@ def main():
                 seen += 1
     except (BotoCoreError, ClientError) as e:
         print(f"[coverage] R2 scan failed: {e}; writing empty payload.")
+        print(f"::error title=R2 coverage scan failed::{type(e).__name__}: {e}. "
+              f"The heatmap was not refreshed; the archive upload is a separate step.")
         payload = empty_payload(f"R2 scan error: {type(e).__name__}")
         os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
         with open(OUT_PATH, "w") as f:
             json.dump(payload, f, indent=2)
-        sys.exit(0)
+        sys.exit(1)
 
     print(f"[coverage] scanned {seen} keys across {len(file_dates)} sources, {len(all_dates)} dates")
 

@@ -6,10 +6,17 @@ uploads them to s3://adw-warehouse/raw/alpine-data/{YYYY-MM-DD}/
 (preserving the v2/ subfolder in the key), then uploads a MANIFEST.json
 listing each file's path, size, and sha256.
 
-Run by the pages.yml CI step immediately after data-*.json files are
-final (post-build, pre-deploy). Never called locally — requires R2 creds.
+Run by the pages.yml CI step as soon as data-*.json files are final, and by
+r2-backfill.yml with R2_OVERRIDE_DATE set. Requires R2 creds.
 
-Exit 0 always (partial failures are logged; CI uses continue-on-error).
+Exit 0 only when every selected object was uploaded or (delta mode) was
+already present. Missing creds, a bad override date, an empty file list, a
+failed delta listing, or any failed PUT exits 1 and prints a ::error::
+annotation. pages.yml keeps the step continue-on-error so an R2 outage still
+cannot block the deploy, but the step itself goes red. Delta mode
+(R2_SKIP_IF_PRESENT) never overwrites an existing object, including
+MANIFEST.json; a listing failure refuses to upload rather than falling
+through to a full overwrite.
 """
 
 import os
@@ -19,8 +26,21 @@ import hashlib
 import glob
 from datetime import datetime, timezone
 
-import boto3
-from botocore.exceptions import BotoCoreError, ClientError
+# boto3 is installed by pages.yml / r2-backfill.yml (requirements-jobs.txt).
+# The unit-test job installs requirements.txt only, so this import must not
+# fail collection when boto3 is absent. The stubs let the except clauses below
+# stay the same; main() reports the missing library instead of crashing.
+try:
+    import boto3
+    from botocore.exceptions import BotoCoreError, ClientError
+except ImportError:
+    boto3 = None
+
+    class BotoCoreError(Exception):
+        pass
+
+    class ClientError(BotoCoreError):
+        pass
 
 ACCOUNT_ID = "d486b561a8eacd568dd8edf9c749ee47"
 R2_ENDPOINT_URL = f"https://{ACCOUNT_ID}.r2.cloudflarestorage.com"
@@ -34,18 +54,46 @@ def sha256_of(filepath):
     return h.hexdigest()
 
 
+def _fail(message):
+    """Print a log line and a ::error:: annotation. Returns the process code.
+
+    pages.yml and r2-backfill.yml both surface this. The step summary is
+    written when Actions provides one, so the failure is visible without
+    opening the raw log.
+    """
+    print(f"[r2] ERROR: {message}")
+    print(f"::error title=R2 archive failed::{message}")
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a", encoding="utf-8") as fh:
+            fh.write(
+                "\n## R2 daily archive failed\n\n"
+                f"{message}\n\n"
+                "The site deploy is non-blocking on purpose: an R2 outage must "
+                "not withhold the dashboard. This step is red because the "
+                "archive did not complete. Re-run pages, or run r2-backfill in "
+                "delta mode for the missing UTC date (delta does not overwrite "
+                "objects that are already there).\n"
+            )
+    return 1
+
+
 def main():
     bucket_name = os.environ.get("R2_BUCKET_NAME")
     if not bucket_name:
-        print("[r2] ERROR: R2_BUCKET_NAME env var not set — skipping upload.")
-        sys.exit(0)  # exit 0 so CI never blocks on missing env
+        return _fail("R2_BUCKET_NAME is unset; no daily payload was archived.")
+    if boto3 is None:
+        return _fail("boto3 is not installed; no daily payload was archived.")
 
     # boto3 picks up AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY automatically
-    s3 = boto3.client(
-        "s3",
-        endpoint_url=R2_ENDPOINT_URL,
-        region_name="auto",
-    )
+    try:
+        s3 = boto3.client(
+            "s3",
+            endpoint_url=R2_ENDPOINT_URL,
+            region_name="auto",
+        )
+    except (BotoCoreError, ClientError) as exc:
+        return _fail(f"could not create the R2 client: {exc}")
 
     # Backfill support: r2-backfill.yml workflow sets R2_OVERRIDE_DATE per historical
     # commit so the same script can be reused to walk git history and stash each
@@ -54,8 +102,9 @@ def main():
     if override_date:
         # Basic shape check — workflow guarantees YYYY-MM-DD
         if len(override_date) != 10 or override_date[4] != "-" or override_date[7] != "-":
-            print(f"[r2] ERROR: invalid R2_OVERRIDE_DATE '{override_date}' — must be YYYY-MM-DD.")
-            sys.exit(0)
+            return _fail(
+                f"invalid R2_OVERRIDE_DATE '{override_date}' — must be YYYY-MM-DD."
+            )
         today = override_date
         print(f"[r2] backfill mode: using override date {today}")
     else:
@@ -73,8 +122,10 @@ def main():
     files_to_upload = sorted(set(candidates))
 
     if not files_to_upload:
-        print("[r2] No data-*.json files found — nothing to upload.")
-        return
+        return _fail(
+            "No data-*.json files found; nothing was archived. "
+            "pages.yml should always have the committed sidecars on disk."
+        )
 
     # Delta mode: skip files already present in R2 for this date.
     # r2-backfill.yml sets R2_SKIP_IF_PRESENT=true when mode=delta (default).
@@ -91,14 +142,20 @@ def main():
                     existing_keys.add(obj["Key"])
             print(f"[r2] delta mode: {len(existing_keys)} keys already present under {date_prefix}/ — will skip those")
         except (BotoCoreError, ClientError) as exc:
-            print(f"[r2] WARN: delta-mode listing failed ({exc}) — falling back to full upload")
-            existing_keys = set()  # safest fallback: upload everything
+            # Falling through to a full PUT would overwrite every object under
+            # this date. Delta mode is the backfill's "do not clobber" path,
+            # so a listing failure is a hard stop.
+            return _fail(
+                f"delta-mode listing failed ({exc}); refusing to upload so "
+                f"existing objects under {date_prefix}/ are left untouched."
+            )
 
     total = len(files_to_upload)
     uploaded = 0
     skipped = 0
     total_bytes = 0
     manifest_entries = []
+    failed_files = []
 
     for rel_path in files_to_upload:
         r2_key = f"{date_prefix}/{rel_path}"
@@ -121,12 +178,18 @@ def main():
             uploaded += 1
             total_bytes += size
         except (BotoCoreError, ClientError, OSError) as exc:
-            print(f"[r2] WARN: failed to upload {r2_key}: {exc}")
+            failed_files.append(rel_path)
+            print(f"[r2] ERROR: failed to upload {r2_key}: {exc}")
 
-    # Upload MANIFEST.json (skip if delta mode AND nothing was uploaded this run —
-    # the existing per-day MANIFEST stays authoritative).
-    if uploaded > 0 or not skip_if_present:
-        manifest_key = f"{date_prefix}/MANIFEST.json"
+    # MANIFEST.json. Daily pages runs (no skip flag) replace today's manifest
+    # with this run's file list. Delta mode must not overwrite an existing
+    # manifest: a partial rewrite would drop every file this run skipped.
+    manifest_key = f"{date_prefix}/MANIFEST.json"
+    write_manifest = uploaded > 0 or not skip_if_present
+    if skip_if_present and manifest_key in existing_keys:
+        print(f"[r2] delta mode: {manifest_key} already present — leaving it untouched")
+        write_manifest = False
+    if write_manifest:
         manifest_payload = {
             "date": today,
             "generated_utc": datetime.now(timezone.utc).isoformat(),
@@ -145,12 +208,23 @@ def main():
             )
             print(f"[r2] uploaded {manifest_key}")
         except (BotoCoreError, ClientError) as exc:
-            print(f"[r2] WARN: failed to upload manifest: {exc}")
+            failed_files.append("MANIFEST.json")
+            print(f"[r2] ERROR: failed to upload manifest: {exc}")
 
     total_kb = total_bytes / 1024.0
     mode_str = "delta" if skip_if_present else "refresh"
+    # Backfill parses this exact shape. Print it even when the run failed so
+    # a partial day still counts the objects that did land.
     print(f"[r2] {mode_str} mode: uploaded {uploaded}/{total} files, skipped {skipped} ({total_kb:.0f} KB written)")
+    if failed_files:
+        shown = ", ".join(failed_files[:8])
+        extra = f" (+{len(failed_files) - 8} more)" if len(failed_files) > 8 else ""
+        return _fail(
+            f"{mode_str} mode archived {uploaded}/{total} files for {today}; "
+            f"{len(failed_files)} failed: {shown}{extra}."
+        )
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
