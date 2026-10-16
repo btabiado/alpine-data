@@ -37,10 +37,16 @@ this module in a process without the key doesn't blow up. If
 Error policy:
 
 * Missing API key -> ``FinnhubAPIKeyMissing`` at first call
-* HTTP 429 -> ``FinnhubRateLimit`` (caller should stop & retry later)
+* HTTP 429 -> retry with backoff (free tier is 60 requests/minute), then
+  ``FinnhubRateLimit``. Callers score that ticker as null and continue;
+  one limited ticker must not fail the daily run.
 * Other non-200 / network error / invalid JSON -> log and return the
   function's documented "empty" shape (``[]`` / ``{}``). The pipeline
   should keep running on the other sources rather than crash.
+
+A ~515-name universe is paced by the shared bucket at 1 request/second.
+Recommendation trends are one call per name; news-sentiment is a second
+call only for names without a usable analyst consensus.
 """
 
 from __future__ import annotations
@@ -49,6 +55,7 @@ import datetime as _dt
 import json
 import logging
 import os
+import time
 from typing import Any, Dict, List, Optional
 
 import requests
@@ -84,6 +91,15 @@ _CACHE_TTL_RECO_SECONDS = 7 * 24 * 60 * 60
 # 60 req/min => 1 req/sec; capacity 10 lets a small burst through.
 _BUCKET_CAPACITY = 10
 _BUCKET_REFILL_PER_SECOND = 1.0
+# Wait out a full free-tier minute before declaring the local bucket
+# exhausted. A sequential 515-name scan refills one token per second, so
+# a 2s give-up is unnecessary; 65s covers a bucket that was just emptied.
+_ACQUIRE_TIMEOUT_SECONDS = 65.0
+
+# HTTP 429: first try plus three retries. Backoff rides out a one-minute
+# window (5s, 15s, 30s) before the caller leaves that ticker unscored.
+_HTTP_429_ATTEMPTS = 4
+_HTTP_429_BACKOFF_SECONDS = (5.0, 15.0, 30.0)
 
 # HTTP timeout — Finnhub typically responds in <1s; 30s is a generous
 # upper bound that still won't hang the daily pipeline forever.
@@ -123,10 +139,11 @@ class FinnhubAPIKeyMissing(FinnhubError):
 
 
 class FinnhubRateLimit(FinnhubError):
-    """Raised when Finnhub returns HTTP 429.
+    """Raised when Finnhub keeps returning HTTP 429 after retries.
 
-    The caller should treat this as a hard stop for the remainder of the
-    minute and either fall back to cached data or skip the source.
+    The caller should leave this ticker unscored (thesis null) and
+    continue the run. A sustained streak is the caller's signal to stop
+    issuing more Finnhub calls this pass; it is not a failed job.
     """
 
 
@@ -150,23 +167,53 @@ def _api_key() -> str:
     return key
 
 
-def _acquire_token() -> None:
-    """Take one token from the shared bucket, blocking up to ~2s if needed.
+def _sleep(seconds: float) -> None:
+    """Sleep helper so tests can skip real backoff."""
+    time.sleep(seconds)
 
-    Finnhub's free tier is 60 req/min, so a single token never takes more
-    than ~1s to refill. We use a short blocking ``acquire`` here (rather
-    than ``try_acquire``) because the binding constraint on this client
-    is per-minute, not per-day — briefly waiting is the correct behaviour
-    rather than failing fast.
+
+def _acquire_token() -> None:
+    """Take one token from the shared bucket, blocking until it refills.
+
+    Finnhub's free tier is 60 req/min. The bucket refills at 1 token/sec,
+    so a sequential scan of the ~515-name universe paces itself instead of
+    bursting past the cap. ``acquire`` waits up to one full minute; a
+    bucket that cannot refill (rate 0) still fails immediately.
     """
-    # Block up to 2s for a token. If the bucket is empty for longer than
-    # that we surface a rate-limit error to the caller; that means the
-    # process is sustainedly above the budget and should back off.
-    if not _BUCKET.acquire(1.0, timeout=2.0):
+    if not _BUCKET.acquire(1.0, timeout=_ACQUIRE_TIMEOUT_SECONDS):
         raise FinnhubRateLimit(
             "Finnhub local rate-limit bucket exhausted (60 req/min). "
             "Back off and retry."
         )
+
+
+def _backoff_seconds(resp: Any, attempt: int) -> float:
+    """Seconds to wait before retrying a 429.
+
+    Honors a numeric ``Retry-After`` up to 60s. Otherwise uses
+    ``_HTTP_429_BACKOFF_SECONDS``. ``attempt`` is the zero-based index of
+    the call that just failed.
+    """
+    header = None
+    headers = getattr(resp, "headers", None)
+    if isinstance(headers, dict):
+        header = headers.get("Retry-After")
+    elif headers is not None and hasattr(headers, "get"):
+        try:
+            raw = headers.get("Retry-After")
+        except Exception:
+            raw = None
+        if isinstance(raw, (int, float, str)):
+            header = raw
+    if isinstance(header, (int, float, str)):
+        try:
+            parsed = float(header)
+        except (TypeError, ValueError):
+            parsed = -1.0
+        if 0 < parsed <= 60:
+            return parsed
+    idx = min(max(attempt, 0), len(_HTTP_429_BACKOFF_SECONDS) - 1)
+    return _HTTP_429_BACKOFF_SECONDS[idx]
 
 
 def _http_get(path: str, params: Dict[str, str]) -> Optional[Any]:
@@ -178,7 +225,7 @@ def _http_get(path: str, params: Dict[str, str]) -> Optional[Any]:
     endpoint.
 
     Raises:
-        FinnhubRateLimit: on HTTP 429.
+        FinnhubRateLimit: HTTP 429 persists after ``_HTTP_429_ATTEMPTS``.
     """
     # Always send the API key as a query param (Finnhub accepts both
     # ``token=`` and header auth; query is simpler to cache-key on).
@@ -186,20 +233,34 @@ def _http_get(path: str, params: Dict[str, str]) -> Optional[Any]:
     full["token"] = _api_key()
 
     url = f"{_FINNHUB_BASE}{path}"
-    try:
-        resp = requests.get(url, params=full, timeout=_HTTP_TIMEOUT)
-    except Exception as exc:  # network / DNS / TLS
-        _api_counter.bump("finnhub", "error")
-        _logger.warning("Finnhub network error for %s: %s", path, exc)
+    for attempt in range(_HTTP_429_ATTEMPTS):
+        _acquire_token()
+        try:
+            resp = requests.get(url, params=full, timeout=_HTTP_TIMEOUT)
+        except Exception as exc:  # network / DNS / TLS
+            _api_counter.bump("finnhub", "error")
+            _logger.warning("Finnhub network error for %s: %s", path, exc)
+            return None
+
+        status = getattr(resp, "status_code", 0)
+        if status == 429:
+            _api_counter.bump("finnhub", "rate_limit")
+            if attempt + 1 >= _HTTP_429_ATTEMPTS:
+                raise FinnhubRateLimit(
+                    f"Finnhub returned HTTP 429 for {path!r} after "
+                    f"{_HTTP_429_ATTEMPTS} attempts. This ticker is unscored."
+                )
+            delay = _backoff_seconds(resp, attempt)
+            _logger.warning(
+                "Finnhub HTTP 429 for %s; retry %d/%d in %.0fs",
+                path, attempt + 1, _HTTP_429_ATTEMPTS - 1, delay,
+            )
+            _sleep(delay)
+            continue
+        break
+    else:  # pragma: no cover - the 429 branch raises or continues
         return None
 
-    status = getattr(resp, "status_code", 0)
-    if status == 429:
-        # Surface rate-limit so the caller can stop scheduling more work.
-        _api_counter.bump("finnhub", "rate_limit")
-        raise FinnhubRateLimit(
-            f"Finnhub returned HTTP 429 for {path!r}. Hourly/minute quota hit."
-        )
     if status != 200:
         _api_counter.bump("finnhub", "error")
         body = ""
@@ -289,8 +350,6 @@ def get_company_news(
     if hit is not None:
         return list(hit.value or [])
 
-    _acquire_token()
-
     params = {
         "symbol": str(ticker).upper(),
         "from": _days_ago_iso(days),
@@ -346,8 +405,6 @@ def get_news_sentiment(ticker: Optional[str]) -> Dict[str, Any]:
     hit = _SENTIMENT_CACHE.get(key)
     if hit is not None:
         return dict(hit.value or {})
-
-    _acquire_token()
 
     payload = _http_get(
         "/news-sentiment", {"symbol": str(ticker).upper()}
@@ -450,8 +507,6 @@ def get_recommendation_trends(
     hit = _RECO_CACHE.get(key)
     if hit is not None:
         return list(hit.value or [])
-
-    _acquire_token()
 
     payload = _http_get(
         "/stock/recommendation", {"symbol": str(ticker).upper()}

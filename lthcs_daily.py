@@ -143,7 +143,8 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p.add_argument(
         "--skip-thesis",
         action="store_true",
-        help="Skip Alpha Vantage call entirely (Thesis falls back to neutral 50).",
+        help="Skip the Alpha Vantage rotation. Thesis still scores from "
+             "Finnhub when FINNHUB_API_KEY is set; otherwise the pillar is dropped.",
     )
     p.add_argument(
         "--sector-etf",
@@ -737,6 +738,51 @@ def _report_sec_errors(errors: dict, n: int) -> None:
         print("::warning title=SEC EDGAR unavailable::" + body)
 
 
+class _FinnhubPass:
+    """One Finnhub scan of the universe.
+
+    A missing key stops the pass (every later call would raise the same
+    way). A rate limit, after the client has retried, leaves this ticker
+    empty and continues. Three rate limits in a row mean the free-tier
+    window is not recovering; stop calling so the daily job can finish,
+    and those names stay unscored (thesis null) instead of failing the run.
+    """
+
+    STREAK_LIMIT = 3
+
+    def __init__(self) -> None:
+        self.keyless = False
+        self.stopped = False
+        self.rate_limited = 0
+        self._streak = 0
+
+    def call(self, fn, *args, **kwargs):
+        if self.keyless or self.stopped:
+            return None
+        try:
+            value = fn(*args, **kwargs)
+        except finnhub.FinnhubAPIKeyMissing:
+            self.keyless = True
+            return None
+        except finnhub.FinnhubRateLimit as exc:
+            self.rate_limited += 1
+            self._streak += 1
+            if self._streak >= self.STREAK_LIMIT:
+                self.stopped = True
+                print(
+                    "  WARNING: Finnhub rate limit persisted after retries "
+                    "(%s). Leaving the rest of this Finnhub pass unscored "
+                    "so the run can finish; those tickers keep a null thesis."
+                    % exc
+                )
+            return None
+        except Exception:
+            self._streak = 0
+            return None
+        self._streak = 0
+        return value
+
+
 def stage_2_fetch_data(state: PipelineState) -> bool:
     """Per-ticker source fan-out.
 
@@ -1122,31 +1168,33 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     # (which always passes --skip-thesis to avoid burning the AV token on
     # snapshots AV can't reconstruct anyway) still produces a real Thesis
     # signal. The fetch is cache-warm-friendly: get_recommendation_trends
-    # uses a 7d FileCache so post-prewarm there's no network cost; misses
-    # gracefully degrade (FinnhubAPIKeyMissing => break; rate-limit => break;
-    # any other error => continue with next ticker).
+    # uses a 7d FileCache so post-prewarm there's no network cost. A missing
+    # key stops the pass. A rate limit, after client retries, leaves that
+    # ticker empty; a streak stops further Finnhub calls. Either way the
+    # run continues and unscored names publish thesis as null.
     #
     # Output is parked on state.recommendation_by_ticker for Stage 4 to
     # consume as the BASE Thesis signal. The supplement-cascade Step 1
     # below is now a side-effect that only matters when --skip-thesis is
     # off (live mode) and the rotation file isn't already fresh from AV.
-    finnhub_keyless = False
+    #
+    # The 3-day Alpha Vantage staleness gate does NOT apply to a usable
+    # Finnhub signal. It only decides whether a stored rotation file can
+    # fill a ticker Finnhub did not cover (see stage_3_quality_checks).
+    finnhub_pass = _FinnhubPass()
     if state.active_tickers:
         for sym in state.active_tickers:
-            try:
-                reco_history = finnhub.get_recommendation_trends(sym, **as_of_kw)
-            except finnhub.FinnhubAPIKeyMissing:
-                finnhub_keyless = True
-                break
-            except finnhub.FinnhubRateLimit:
-                break
-            except Exception:
-                continue
+            reco_history = finnhub_pass.call(
+                finnhub.get_recommendation_trends, sym, **as_of_kw
+            )
             if not reco_history:
                 continue
-            reco_signal = finnhub.parse_recommendation_signal(
-                reco_history, **as_of_kw
-            )
+            try:
+                reco_signal = finnhub.parse_recommendation_signal(
+                    reco_history, **as_of_kw
+                )
+            except Exception:
+                continue
             state.recommendation_by_ticker[sym] = reco_signal
 
     # --- Finnhub /news-sentiment (SECONDARY Thesis base, gap-filler) -------
@@ -1161,7 +1209,12 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     # --as-of (backfill) mode: /news-sentiment has no historical archive
     # so a 2026-04-15 backfill would otherwise be polluted with
     # 2026-05-19's news.
-    if state.active_tickers and not as_of and not finnhub_keyless:
+    if (
+        state.active_tickers
+        and not as_of
+        and not finnhub_pass.keyless
+        and not finnhub_pass.stopped
+    ):
         for sym in state.active_tickers:
             # Skip when /stock/recommendation already produced a usable
             # primary signal (>=3 analysts with a real consensus).
@@ -1172,14 +1225,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
                 tot = 0
             if reco.get("consensus_score") is not None and tot >= 3:
                 continue
-            try:
-                raw = finnhub.get_news_sentiment(sym)
-            except finnhub.FinnhubAPIKeyMissing:
-                break
-            except finnhub.FinnhubRateLimit:
-                break
-            except Exception:
-                continue
+            raw = finnhub_pass.call(finnhub.get_news_sentiment, sym)
             if not raw:
                 continue
             sig = finnhub.parse_thesis_signal(raw)
@@ -1193,6 +1239,22 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
                 state.news_sentiment_by_ticker[sym] = sig
         counts["finnhub_news_sentiment_covered"] = len(
             state.news_sentiment_by_ticker
+        )
+    counts["finnhub_recommendations"] = len(state.recommendation_by_ticker)
+    counts["finnhub_rate_limited"] = finnhub_pass.rate_limited
+    if finnhub_pass.keyless:
+        print("  finnhub: API key missing; thesis stays unscored")
+    else:
+        print(
+            "  finnhub: recommendations %d/%d, news-sentiment %d, "
+            "rate-limited tickers %d%s"
+            % (
+                len(state.recommendation_by_ticker),
+                len(state.active_tickers),
+                len(state.news_sentiment_by_ticker),
+                finnhub_pass.rate_limited,
+                " (pass stopped early)" if finnhub_pass.stopped else "",
+            )
         )
 
     # --- Event-driven Thesis refinement collection (universe-wide) ---
@@ -1632,6 +1694,10 @@ def stage_3_quality_checks(state: PipelineState) -> bool:
                 nc = int(news_sig.get("article_count") or 0)
                 if nm is not None and nc > 0:
                     thesis_available = True
+        # AV rotation is only a fallback. The 3-day staleness gate applies
+        # to that file alone: a usable Finnhub signal above already set
+        # thesis_available, and a stale May-2026 rotation file must not
+        # clear it or, on its own, count as coverage.
         if not thesis_available and state.rotation is not None and not state.args.skip_thesis:
             sentiment = state.rotation.read_sentiment(sym)
             if sentiment is not None and not state.rotation.is_stale(
@@ -2644,33 +2710,23 @@ def run_news_only(args: argparse.Namespace) -> int:
     # No Alpha Vantage either (we want hourly cadence but stay under the
     # 25/day quota; the daily pipeline owns AV rotation).
     state.persist = persist
-    finnhub_keyless = False
+    finnhub_pass = _FinnhubPass()
     n = len(state.scored_tickers)
     n_finnhub = 0
     n_sec_8k = 0
     n_yahoo = 0
     for sym in state.scored_tickers:
-        # Finnhub recommendations (PRIMARY Thesis input).
-        if not finnhub_keyless:
+        # Finnhub recommendations (PRIMARY Thesis input). A missing key or
+        # a sustained rate-limit streak leaves later tickers unscored; one
+        # limited ticker does not blank the rest or fail the refresh.
+        reco_history = finnhub_pass.call(finnhub.get_recommendation_trends, sym)
+        if reco_history:
             try:
-                reco_history = finnhub.get_recommendation_trends(sym)
-            except finnhub.FinnhubAPIKeyMissing:
-                finnhub_keyless = True
-                reco_history = None
-            except finnhub.FinnhubRateLimit:
-                # Stop hammering Finnhub for the rest of this run; reuse
-                # nothing rather than risk a per-ticker stutter.
-                finnhub_keyless = True
-                reco_history = None
-            except Exception:
-                reco_history = None
-            if reco_history:
-                try:
-                    reco_signal = finnhub.parse_recommendation_signal(reco_history)
-                    state.recommendation_by_ticker[sym] = reco_signal
-                    n_finnhub += 1
-                except Exception as e:
-                    print(f"  [lthcs_daily] finnhub.parse_recommendation_signal({sym}) suppressed: {type(e).__name__}", file=sys.stderr)
+                reco_signal = finnhub.parse_recommendation_signal(reco_history)
+                state.recommendation_by_ticker[sym] = reco_signal
+                n_finnhub += 1
+            except Exception as e:
+                print(f"  [lthcs_daily] finnhub.parse_recommendation_signal({sym}) suppressed: {type(e).__name__}", file=sys.stderr)
         # SEC 8-K material events.
         try:
             sig = sec_8k.event_signal_for_ticker(sym, days=90)

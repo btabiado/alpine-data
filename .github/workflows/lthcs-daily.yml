@@ -35,8 +35,11 @@ jobs:
     # 37171345131, SEC working) -> ~75 min at 515, plus ~8 min for the
     # throttled api-commit blob uploads (~540 files at 0.8 s). 180 leaves
     # >2x headroom for a cold cache / SEC slowdowns while staying well under
-    # GitHub's 360-minute job ceiling. Finnhub is not on the critical path:
-    # FINNHUB_API_KEY is unset in this repo, so those calls short-circuit.
+    # GitHub's 360-minute job ceiling. When FINNHUB_API_KEY is set, Finnhub
+    # adds roughly 10–20 minutes: ~515 recommendation calls paced at
+    # 1 request/second, plus news-sentiment only for names without a usable
+    # analyst consensus. The key is optional; until it exists the run passes
+    # --skip-thesis and Thesis stays dropped.
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -82,9 +85,10 @@ jobs:
           # LLM shadow runs (Tier 5 #23 narratives + #28 sentiment).
           # Narratives cost ~$0.0071/ticker as measured in May-June 2026,
           # ~$3.65/day at 515 tickers; default cap $6.17/day
-          # (LTHCS_LLM_NARRATIVES_MAX_USD_PER_DAY). Sentiment does not run
-          # here: --skip-thesis below skips the stage that calls it (cap
-          # $3.08/day, LTHCS_LLM_SENTIMENT_MAX_USD_PER_DAY). Both caps were
+          # (LTHCS_LLM_NARRATIVES_MAX_USD_PER_DAY). Sentiment runs only when
+          # this step does not pass --skip-thesis (FINNHUB_API_KEY is set)
+          # and ANTHROPIC_API_KEY is set (cap $3.08/day,
+          # LTHCS_LLM_SENTIMENT_MAX_USD_PER_DAY). Both caps were
           # scaled by 515/167 and are checked after the calls, so they gate
           # persistence, not spend.
           #
@@ -107,14 +111,29 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           LTHCS_LLM_SENTIMENT_ENABLED: "1"
           LTHCS_LLM_NARRATIVES_ENABLED: "1"
-        # --skip-thesis: do not burn the ~5-25/day Alpha Vantage quota in
-        # CI; the rotation file is curated locally and Thesis falls back
-        # to neutral 50 in CI runs (V1 daily pipeline behavior).
+        # Thesis scoring follows the Finnhub secret Bryan adds himself.
+        # Present: do not pass --skip-thesis, so Finnhub recommendations
+        # and news-sentiment score thesis_integrity and the Alpha Vantage
+        # rotation (25 names/day) runs as the fallback. The 3-day AV
+        # staleness gate applies only to that fallback; it does not drop
+        # a ticker Finnhub already scored. A missing ALPHA_VANTAGE_API_KEY
+        # fails those rotation calls per ticker and does not fail the run.
+        # Absent: pass --skip-thesis and warn. Finnhub calls no-op on the
+        # missing key, AV is not spent, and Thesis stays dropped.
         # --catch-up: forward-fill any missed days since the last snapshot.
         # --force: re-running on a date that already has a snapshot is OK.
         # --sector-etf: keep the sector ETF strength file (yfinance, no
-        # Alpha Vantage quota) that --skip-thesis would otherwise skip.
-        run: python lthcs_daily.py --force --catch-up --skip-thesis --sector-etf
+        # Alpha Vantage quota) when --skip-thesis is on.
+        run: |
+          set -euo pipefail
+          args=(--force --catch-up --sector-etf)
+          if [ -z "${FINNHUB_API_KEY:-}" ]; then
+            echo "::warning::FINNHUB_API_KEY repo secret is not set. Passing --skip-thesis so Alpha Vantage is not called and Thesis stays dropped. Add the secret at Settings → Secrets and variables → Actions; the next daily run then scores thesis_integrity from Finnhub."
+            args+=(--skip-thesis)
+          else
+            echo "FINNHUB_API_KEY is set. Thesis scoring is on. Finnhub is paced at 60 requests/minute; a per-ticker failure becomes a null thesis instead of failing the run."
+          fi
+          python lthcs_daily.py "${args[@]}"
 
       - name: Commit data changes via signed API commit
         # Switched from plain `git push` to API-based commit so the

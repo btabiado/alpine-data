@@ -52,6 +52,12 @@ def api_key(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("FINNHUB_API_KEY", "test-key")
 
 
+@pytest.fixture(autouse=True)
+def no_real_backoff(monkeypatch: pytest.MonkeyPatch) -> None:
+    """429 retries must not sleep for real in the suite."""
+    monkeypatch.setattr(fh, "_sleep", lambda _seconds: None)
+
+
 def _mock_response(
     payload: Any, status_code: int = 200, text: Optional[str] = None
 ) -> MagicMock:
@@ -831,13 +837,78 @@ def test_missing_api_key_raises_at_first_call(
     assert mock_get.call_count == 0
 
 
-def test_http_429_raises_rate_limit_error() -> None:
+def test_http_429_retries_then_raises(monkeypatch: pytest.MonkeyPatch) -> None:
+    sleeps: list[float] = []
+    monkeypatch.setattr(fh, "_sleep", lambda seconds: sleeps.append(seconds))
     resp = _mock_response({}, status_code=429, text="too many requests")
     mock_get = MagicMock(return_value=resp)
 
     with patch("lthcs.sources.finnhub.requests.get", mock_get):
         with pytest.raises(fh.FinnhubRateLimit):
             fh.get_company_news("AAPL")
+
+    assert mock_get.call_count == fh._HTTP_429_ATTEMPTS
+    assert sleeps == list(fh._HTTP_429_BACKOFF_SECONDS)
+
+
+def test_http_429_then_200_returns_the_payload() -> None:
+    payload = _company_news_payload()
+    mock_get = MagicMock(side_effect=[
+        _mock_response({}, status_code=429, text="too many requests"),
+        _mock_response(payload),
+    ])
+
+    with patch("lthcs.sources.finnhub.requests.get", mock_get):
+        out = fh.get_company_news("AAPL")
+
+    assert mock_get.call_count == 2
+    assert out[0]["headline"] == "Apple unveils new iPhone"
+
+
+def test_retry_after_header_overrides_the_backoff_schedule(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    sleeps: list[float] = []
+    monkeypatch.setattr(fh, "_sleep", lambda seconds: sleeps.append(seconds))
+    limited = _mock_response({}, status_code=429, text="too many requests")
+    limited.headers = {"Retry-After": "7"}
+    mock_get = MagicMock(side_effect=[
+        limited,
+        _mock_response(_company_news_payload()),
+    ])
+
+    with patch("lthcs.sources.finnhub.requests.get", mock_get):
+        out = fh.get_company_news("AAPL")
+
+    assert out[0]["headline"] == "Apple unveils new iPhone"
+    assert sleeps == [7.0]
+
+
+def test_bucket_waits_out_a_refill_for_the_next_ticker(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A 515-name scan must pace at 60/min, not fail when the burst is spent."""
+    now = [0.0]
+
+    def clock() -> float:
+        return now[0]
+
+    def sleep(dt: float) -> None:
+        now[0] += dt
+
+    bucket = TokenBucket(capacity=1, refill_rate=1.0)
+    bucket._clock = clock
+    bucket._last = 0.0
+    bucket._sleep = sleep
+    monkeypatch.setattr(fh, "_BUCKET", bucket)
+    mock_get = MagicMock(return_value=_mock_response(_company_news_payload()))
+
+    with patch("lthcs.sources.finnhub.requests.get", mock_get):
+        fh.get_company_news("AAPL", days=30)
+        fh.get_company_news("MSFT", days=30)
+
+    assert mock_get.call_count == 2
+    assert now[0] >= 1.0
 
 
 def test_local_bucket_exhaustion_raises_rate_limit(
@@ -853,7 +924,8 @@ def test_local_bucket_exhaustion_raises_rate_limit(
     with patch("lthcs.sources.finnhub.requests.get", mock_get):
         # First request consumes the single token (with a unique cache key).
         fh.get_company_news("AAPL", days=30)
-        # Second unique request can't get a token in 2s and must raise.
+        # Refill rate 0 cannot recover, so the next ticker raises immediately
+        # instead of waiting out the 65s acquire timeout.
         with pytest.raises(fh.FinnhubRateLimit):
             fh.get_company_news("MSFT", days=30)
 

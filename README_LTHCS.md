@@ -9,7 +9,7 @@
 - **Universe:** the S&P 500 and Dow 30, plus NASDAQ-100 names and Index Exiles (names that left every tracked index but are still scored): 519 tickers, 515 active. The file is the source of truth; pages read the count from it.
 - **Bands:** `data/lthcs/weights.json` → `score_bands`, recalibrated 2026-10-06: elite 70–100, high_confidence 63–69, constructive 52–62, monitor 42–51, weakening 33–41, review 0–32. Crypto scores use the same bands.
 - **Runs:** in GitHub Actions; see [Automation schedule](#automation-schedule-github-actions). Nobody runs the pipeline by hand for production.
-- **Thesis pillar:** dropped for every name today. The daily job passes `--skip-thesis` and no `FINNHUB_API_KEY` secret is set, so its weight is spread over the other four pillars. The About modal on `/lthcs/` shows live per-pillar coverage.
+- **Thesis pillar:** scored from Finnhub when the `FINNHUB_API_KEY` repo secret is set. Until that secret exists, `lthcs-daily.yml` passes `--skip-thesis`, emits a `::warning`, and the pillar stays dropped (its weight is spread over the other four). A usable Finnhub recommendation (≥3 analysts) or news-sentiment signal is the base score. The Alpha Vantage rotation is only a fallback: its 3-day staleness gate does not drop a ticker Finnhub already scored. The on-disk rotation files last scored in May 2026 are stale and are not used as a live score. The About modal on `/lthcs/` shows live per-pillar coverage.
 
 This README covers setup and operation. Repo-wide conventions for agents are in [`SKILL.md`](SKILL.md). [`PHASE_1_BUILD_SPEC.md`](PHASE_1_BUILD_SPEC.md) is the original May 2026 plan and is kept for history; its universe, bands and layout are out of date.
 
@@ -182,7 +182,7 @@ CLI flags (see `python lthcs_daily.py --help` for the full list):
 | `--tickers AAPL,NVDA` | Restrict to a subset (default: all active in `universe.json`). |
 | `--force` | Overwrite today's snapshot/narratives/variable_detail if present. |
 | `--catch-up` | Forward-fill days the cron missed (no snapshot file) between each active ticker's last history entry and today, as `synthetic: true` copies of its last score. Never past a run that did not score the ticker, nor from a score older than its universe `added_on`. |
-| `--skip-thesis` | Bypass Alpha Vantage (Thesis falls back to Finnhub or neutral 50). |
+| `--skip-thesis` | Bypass Alpha Vantage. Thesis still scores from Finnhub when `FINNHUB_API_KEY` is set; otherwise it stays dropped (null) and its weight is renormalized. The daily workflow passes this flag only when that secret is absent. |
 | `--news-only` | Hourly path: refresh news-derived inputs only (Finnhub recommendations, SEC 8-K, Yahoo earnings, sector RSS). Re-emits today's snapshot with a refreshed Thesis sub-score and recomputed composite. Requires today's snapshot to already exist. Used by the `lthcs-news-hourly.yml` workflow. |
 | `--as-of YYYY-MM-DD` | Backfill mode: compute the pipeline as if it were the given date. |
 | `--dry-run` | Compute everything but skip persistence. |
@@ -195,7 +195,7 @@ In production, the dashboard refreshes itself without you running anything local
 
 | Workflow | Cadence | What it does | Sources touched |
 |---|---|---|---|
-| `lthcs-daily.yml` | Daily, 23:00 UTC | Full pipeline (`lthcs_daily.py --catch-up --skip-thesis`). Computes every pillar, writes the canonical daily snapshot, appends each ticker's history entry, refreshes the macro / breadth / index files. `LTHCS_LLM_SENTIMENT_ENABLED=1` + `LTHCS_LLM_NARRATIVES_ENABLED=1` shadows run when `ANTHROPIC_API_KEY` is set (`c8b74c1`). | All sources (Yahoo, SEC EDGAR XBRL, FRED, EIA, SEC 13F, SEC Form 4, Finnhub `/news-sentiment`, sector RSS, Google Trends cache). |
+| `lthcs-daily.yml` | Daily, 23:00 UTC | Full pipeline (`lthcs_daily.py --force --catch-up --sector-etf`, plus `--skip-thesis` only when `FINNHUB_API_KEY` is unset). Computes every pillar, writes the canonical daily snapshot, appends each ticker's history entry, refreshes the macro / breadth / index files. With the Finnhub secret set, thesis_integrity is scored from Finnhub (60 req/min, retry/backoff; a failed ticker stays null and the run continues). `LTHCS_LLM_SENTIMENT_ENABLED=1` + `LTHCS_LLM_NARRATIVES_ENABLED=1` shadows run when thesis is not skipped and `ANTHROPIC_API_KEY` is set (`c8b74c1`). | All sources (Yahoo, SEC EDGAR XBRL, FRED, EIA, SEC 13F, SEC Form 4, Finnhub recommendations + `/news-sentiment`, sector RSS, Google Trends cache, Alpha Vantage rotation when thesis is not skipped). |
 | `lthcs-news-hourly.yml` | Hourly | News-only refresh (`lthcs_daily.py --news-only --force`). Recomputes Thesis + composite for every ticker using fresh news inputs; reuses the morning's Adoption / Institutional / Financial / DES sub-scores untouched. Does NOT append to history (the daily run owns that). | Finnhub recommendations, SEC 8-K, Yahoo earnings, sector RSS only. |
 | `lthcs-crypto-daily.yml` | Daily, 11:47 UTC (was 22:00 until 2026-10-04, then 12:00) | Crypto pillar snapshot — 10-asset universe (BTC, ETH, SOL, ADA, AVAX, DOT, LINK, POL, XRP, DOGE) into `data/lthcs/snapshots_crypto/`. 8-day initial backfill seeded; race-safe push retry. Surfaced at `/lthcs/crypto/`. Workflow `8af023b` + `88912bb`. | Coingecko / on-chain proxies; see `docs/lthcs-crypto-pillar-adapter-spec.md`. |
 | `lthcs-backtest-daily.yml` | Daily, 23:30 UTC | Runs the backtest engine (`scripts/lthcs_backtest.py`) — non-overlapping P&L + per-pillar attribution + strategy variants + Sharpe CIs → `data/lthcs/backtest/`. Race-safe push retry. Workflow `580d341`. | (read-only over snapshots) |
@@ -269,8 +269,9 @@ The original score remains in git history for auditability — same principle as
 
 | Missing key / state | Behavior | Notes |
 |---|---|---|
-| `ALPHA_VANTAGE_API_KEY` empty | Thesis pillar drops to Finnhub + neutral 50 fallback (V1 daily CI behavior with `--skip-thesis`). | Documented in §V1 status. |
-| `FINNHUB_API_KEY` empty | Thesis base falls back to AV sentiment cache; 8-K + Yahoo refinement still run. | Cache-warm-friendly. |
+| `ALPHA_VANTAGE_API_KEY` empty | The 25-name/day rotation calls fail per ticker and are skipped. A Finnhub score is kept. The 3-day staleness gate applies only to stored AV files, and only for tickers Finnhub did not cover. | Does not blank Finnhub-scored names, and does not fail the run. |
+| `FINNHUB_API_KEY` empty | The daily workflow passes `--skip-thesis` and emits a `::warning`. Thesis stays dropped (null) and its weight is renormalized across the other four pillars. | Add the repo secret to turn scoring on. The run still succeeds. |
+| `FINNHUB_API_KEY` set | The daily workflow does not pass `--skip-thesis`. Finnhub `/stock/recommendation` (and `/news-sentiment` where fewer than 3 analysts cover the name) scores thesis. Paced at 60 requests/minute, with retries and backoff. A ticker that still fails is null; three rate-limit failures in a row stop further Finnhub calls for that pass so the job can finish. | Free tier. See below. |
 | `FRED_API_KEY` / `EIA_API_KEY` empty | Macro overlay falls back to neutral; DES pillar drops to sector-relative. | Daily DES still computes. |
 | `SEC_USER_AGENT` empty | 8-K + 13F + Form 4 fetches degrade to "no events"; pillars still score. | SEC requires a real email. |
 | `ANTHROPIC_API_KEY` missing | **LLM sentiment shadow disabled; production Thesis byte-unaffected.** Shadow files in `data/lthcs/llm_sentiment/` simply aren't written. | Shadow path only; never read by Stage 4 (Tier 5 #28, spec `docs/lthcs-llm-sentiment-shadow-spec.md`). |
@@ -281,7 +282,19 @@ The original score remains in git history for auditability — same principle as
 
 1. Add `ANTHROPIC_API_KEY` as a repo secret (Settings → Secrets and variables → Actions).
 2. `lthcs-daily.yml` already sets `LTHCS_LLM_SENTIMENT_ENABLED: "1"`.
-3. The sentiment shadow sits in the Thesis cascade, which the daily job skips (`--skip-thesis`). Dropping that flag also spends the Alpha Vantage quota, so decide that first.
+3. The sentiment shadow sits inside the thesis cascade. The daily job enters that cascade only when `FINNHUB_API_KEY` is set (it then omits `--skip-thesis`). Without the Anthropic key the shadow still no-ops. That same mode also runs the Alpha Vantage rotation, 25 names per day; a missing `ALPHA_VANTAGE_API_KEY` does not fail the run.
+
+### Thesis scoring (Finnhub)
+
+Add `FINNHUB_API_KEY` as a repo secret (Settings → Secrets and variables → Actions). Do not commit the key. The next `lthcs-daily` run (23:00 UTC, or a manual dispatch) then:
+
+- logs `FINNHUB_API_KEY is set. Thesis scoring is on` and does **not** pass `--skip-thesis`;
+- logs a `finnhub: recommendations N/515, news-sentiment M, rate-limited tickers 0` line (N is names with a recommendation payload, not all of them usable);
+- writes `thesis_integrity` as a number, and omits `thesis_unavailable`, for names with at least 3 analysts or a Finnhub news-sentiment article count above zero.
+
+Names Finnhub does not cover stay null. That is a missing measurement, not a neutral 50. The Alpha Vantage files under `data/lthcs/sentiment/` (last scored 2026-05-17..20) are past the 3-day staleness gate, so they do not fill those names and they do not override a Finnhub score.
+
+Until the secret exists, the same workflow logs `::warning::FINNHUB_API_KEY repo secret is not set`, passes `--skip-thesis`, and leaves the pillar dropped. The job still goes green.
 
 ---
 

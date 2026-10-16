@@ -937,9 +937,10 @@ class TestInsiderHoldingsFallback:
 def test_sector_etf_flag_parses_and_defaults_off():
     """--sector-etf re-enables the yfinance sector fetch under --skip-thesis.
 
-    The daily workflow runs with --skip-thesis (Alpha Vantage quota), which
-    used to silently skip the sector ETF fetch too: the last
-    sector_strength file was 2026-05-18.
+    The daily workflow passes --skip-thesis only when FINNHUB_API_KEY is
+    unset (Alpha Vantage quota). With the flag on, sector ETF strength
+    still has to be requested explicitly: it used to be skipped with
+    thesis, and the last sector_strength file was 2026-05-18.
     """
     import lthcs_daily
 
@@ -954,3 +955,175 @@ def test_daily_workflow_keeps_sector_etf_on():
 
     wf = (Path(__file__).resolve().parents[2] / ".github/workflows/lthcs-daily.yml").read_text()
     assert "--sector-etf" in wf
+
+
+def test_daily_workflow_skips_thesis_only_without_finnhub_key():
+    """Bryan adds FINNHUB_API_KEY himself. The workflow must pass the secret
+    through, omit --skip-thesis when it is set, and warn when it is not."""
+    from pathlib import Path
+
+    wf = (Path(__file__).resolve().parents[2] / ".github/workflows/lthcs-daily.yml").read_text()
+    assert "FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}" in wf
+    assert "::warning::FINNHUB_API_KEY repo secret is not set" in wf
+    assert "args+=(--skip-thesis)" in wf
+    assert "FINNHUB_API_KEY is set. Thesis scoring is on" in wf
+    # The old unconditional invocation would score nothing even after the
+    # secret lands.
+    assert "python lthcs_daily.py --force --catch-up --skip-thesis --sector-etf" not in wf
+    assert 'echo "$FINNHUB_API_KEY"' not in wf
+    assert "echo ${FINNHUB_API_KEY}" not in wf
+
+
+def test_finnhub_pass_rate_limit_leaves_one_ticker_and_continues():
+    calls = []
+
+    def boom_then_ok(sym):
+        calls.append(sym)
+        if sym == "AAPL":
+            raise lthcs_daily.finnhub.FinnhubRateLimit("429")
+        return [{"period": "2026-05-01"}]
+
+    passed = lthcs_daily._FinnhubPass()
+    assert passed.call(boom_then_ok, "AAPL") is None
+    assert passed.call(boom_then_ok, "LCID") == [{"period": "2026-05-01"}]
+    assert calls == ["AAPL", "LCID"]
+    assert passed.stopped is False
+    assert passed.rate_limited == 1
+
+
+def test_finnhub_pass_streak_stops_the_pass_without_failing():
+    def always(*_args, **_kwargs):
+        raise lthcs_daily.finnhub.FinnhubRateLimit("429")
+
+    passed = lthcs_daily._FinnhubPass()
+    for i in range(5):
+        assert passed.call(always, "T%d" % i) is None
+    assert passed.stopped is True
+    assert passed.rate_limited == lthcs_daily._FinnhubPass.STREAK_LIMIT
+    sentinel = MagicMock(side_effect=AssertionError("should not call"))
+    assert passed.call(sentinel, "ZZZ") is None
+    sentinel.assert_not_called()
+
+
+def test_finnhub_pass_missing_key_stops_without_calling_the_rest():
+    def missing(_sym):
+        raise lthcs_daily.finnhub.FinnhubAPIKeyMissing("no key")
+
+    passed = lthcs_daily._FinnhubPass()
+    assert passed.call(missing, "AAPL") is None
+    assert passed.keyless is True
+    sentinel = MagicMock()
+    assert passed.call(sentinel, "LCID") is None
+    sentinel.assert_not_called()
+
+
+_BULLISH_RECO = [
+    {"period": "2026-05-01", "strong_buy": 10, "buy": 15,
+     "hold": 5, "sell": 0, "strong_sell": 0},
+    {"period": "2026-04-01", "strong_buy": 8, "buy": 14,
+     "hold": 7, "sell": 1, "strong_sell": 0},
+]
+
+
+def _plant_stale_av(data_root: Path, ticker: str = "AAPL") -> None:
+    """A May-2026-style rotation file: real-looking sentiment, far past 3 days."""
+    from lthcs.sources.thesis_rotation import ThesisRotation
+
+    ThesisRotation(data_root=data_root).write_sentiment(
+        ticker, 12, -0.9, 1.0,
+        {"Bearish": 12, "Somewhat-Bearish": 0, "Neutral": 0,
+         "Somewhat-Bullish": 0, "Bullish": 0},
+        today="2020-01-01",
+    )
+
+
+def test_stale_av_file_does_not_drop_a_finnhub_score(
+    patched_configs, patched_persist_class, patched_sources, monkeypatch,
+):
+    """The 3-day staleness gate applies only to the AV fallback.
+
+    A usable Finnhub recommendation must keep thesis_integrity measured
+    even when data/lthcs/sentiment/<TICKER>.json is years old, and even
+    when --skip-thesis is off (so the rotation file is eligible).
+    """
+    _plant_stale_av(patched_persist_class.data_root)
+    monkeypatch.setattr(
+        lthcs_daily.alpha_vantage, "get_news_sentiment",
+        MagicMock(side_effect=RuntimeError("no AV key")),
+    )
+    monkeypatch.setattr(
+        lthcs_daily.finnhub, "get_recommendation_trends",
+        MagicMock(return_value=_BULLISH_RECO),
+    )
+    monkeypatch.setattr(
+        lthcs_daily.finnhub, "get_news_sentiment",
+        MagicMock(return_value={}),
+    )
+    args = lthcs_daily.parse_args(["--tickers", "AAPL"])
+    state = lthcs_daily.PipelineState(args=args)
+    assert lthcs_daily.stage_1_load_config(state)
+    assert lthcs_daily.stage_2_fetch_data(state)
+    assert lthcs_daily.stage_3_quality_checks(state)
+    assert lthcs_daily.stage_4_compute_subscores(state)
+    assert lthcs_daily.stage_5_apply_modifiers(state)
+    assert lthcs_daily.stage_6_compute_final_scores(state)
+
+    assert "thesis_unavailable" not in state.data_quality_flags["AAPL"]
+    row = next(r for r in state.snapshot_rows if r["ticker"] == "AAPL")
+    assert "thesis_integrity" not in row["dropped_pillars"]
+    assert row["subscores"]["thesis_integrity"] is not None
+    assert row["subscores"]["thesis_integrity"] > 70.0
+
+
+def test_stale_av_file_still_drops_thesis_when_finnhub_has_no_signal(
+    patched_configs, patched_persist_class, patched_sources, monkeypatch,
+):
+    """Without a Finnhub base, a stale rotation file is not coverage."""
+    _plant_stale_av(patched_persist_class.data_root)
+    monkeypatch.setattr(
+        lthcs_daily.alpha_vantage, "get_news_sentiment",
+        MagicMock(side_effect=RuntimeError("no AV key")),
+    )
+    monkeypatch.setattr(
+        lthcs_daily.finnhub, "get_recommendation_trends",
+        MagicMock(return_value=[]),
+    )
+    monkeypatch.setattr(
+        lthcs_daily.finnhub, "get_news_sentiment",
+        MagicMock(return_value={}),
+    )
+    args = lthcs_daily.parse_args(["--tickers", "AAPL"])
+    state = lthcs_daily.PipelineState(args=args)
+    assert lthcs_daily.stage_1_load_config(state)
+    assert lthcs_daily.stage_2_fetch_data(state)
+    assert lthcs_daily.stage_3_quality_checks(state)
+    assert lthcs_daily.stage_4_compute_subscores(state)
+    assert lthcs_daily.stage_5_apply_modifiers(state)
+    assert lthcs_daily.stage_6_compute_final_scores(state)
+
+    assert "thesis_unavailable" in state.data_quality_flags["AAPL"]
+    row = next(r for r in state.snapshot_rows if r["ticker"] == "AAPL")
+    assert row["dropped_pillars"] == ["thesis_integrity"]
+    assert row["subscores"]["thesis_integrity"] is None
+
+
+def test_stage2_keeps_going_after_one_finnhub_rate_limit(
+    patched_configs, patched_sources, monkeypatch,
+):
+    def reco(sym, **_kwargs):
+        if sym == "AAPL":
+            raise lthcs_daily.finnhub.FinnhubRateLimit("429 after retries")
+        return _BULLISH_RECO
+
+    monkeypatch.setattr(lthcs_daily.finnhub, "get_recommendation_trends", reco)
+    monkeypatch.setattr(
+        lthcs_daily.finnhub, "get_news_sentiment",
+        MagicMock(return_value={}),
+    )
+    args = lthcs_daily.parse_args(["--tickers", "AAPL,LCID", "--skip-thesis"])
+    state = lthcs_daily.PipelineState(args=args)
+    assert lthcs_daily.stage_1_load_config(state)
+    assert lthcs_daily.stage_2_fetch_data(state) is True
+    assert "AAPL" not in state.recommendation_by_ticker
+    assert state.recommendation_by_ticker["LCID"]["total_analysts"] >= 3
+    assert state.fetch_counts["finnhub_rate_limited"] == 1
