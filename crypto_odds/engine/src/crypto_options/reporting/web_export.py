@@ -12,10 +12,9 @@ import pandas as pd
 
 from ..pricing import black76
 
-UNAVAILABLE = None  # JSON null: the page renders "unavailable", never 0%
-
 
 def _num(v, nd=6):
+    """Missing or non-finite values become JSON null. The page renders that as unavailable, never 0%."""
     return None if v is None or not np.isfinite(v) else round(float(v), nd)
 
 
