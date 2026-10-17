@@ -213,15 +213,24 @@ def test_check_record_must_name_the_snapshot_month(fre):
 
 
 def test_committed_check_file_matches_the_snapshot(bhs, fre):
-    """The seed record describes the snapshot already in git, not a new fetch."""
+    """The check record describes the snapshot already in git, not a new fetch.
+
+    real-estate-daily commits a check even when the vendors did not publish.
+    That record keeps ``snapshot_generated_at`` on the October 16 fetch
+    (14a7513) and sets outcome to ``unchanged``, with ``generated_at`` as
+    the later check time. An ``updated`` record is the fetch itself.
+    """
     payload = json.loads((REPO_ROOT / "data" / "real_estate.json").read_text())
     check = json.loads((REPO_ROOT / "data" / "real_estate_check.json").read_text())
     assert check["housing_month"] == bhs.newest_housing_month(payload)
-    assert check["outcome"] == "updated"
     assert check["snapshot_generated_at"] == payload["generated_at"]
-    assert check["generated_at"] == payload["generated_at"]
-    # Written from the October 16 fetch (14a7513), not from "now".
-    assert check["generated_at"] == "2026-10-16T11:02:08Z"
+    # The snapshot stamp is the October 16 fetch, not "now".
+    assert payload["generated_at"] == "2026-10-16T11:02:08Z"
+    assert check["outcome"] in ("updated", "unchanged")
+    if check["outcome"] == "updated":
+        assert check["generated_at"] == payload["generated_at"]
+    else:
+        assert check["generated_at"] > payload["generated_at"]
 
 
 def test_check_file_is_not_gitignored():
