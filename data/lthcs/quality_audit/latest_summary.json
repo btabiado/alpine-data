@@ -1,21 +1,36 @@
 {
-  "asof": "2026-10-16",
-  "snapshot_date": "2026-10-16",
-  "generated_at_utc": "2026-10-16T21:49:18+00:00",
-  "overall_verdict": "CRITICAL",
+  "asof": "2026-10-17",
+  "snapshot_date": "2026-10-17",
+  "generated_at_utc": "2026-10-17T11:36:21+00:00",
+  "overall_verdict": "DEGRADED",
+  "known_stubs_error": null,
+  "known_gaps": [
+    {
+      "pillar": "thesis_integrity",
+      "verdict": "KNOWN GAP (accepted)",
+      "raw_verdict": "STUB",
+      "coverage_pct": 0.0,
+      "decided": "2026-10-17",
+      "review_by": "2027-04-17",
+      "reason": "Bryan decided on 2026-10-17 not to add a FINNHUB_API_KEY. The daily job runs with --skip-thesis, so thesis_integrity is dropped for every name and its weight is already redistributed across the other four pillars (README_LTHCS.md). This is a disclosed gap, not a pipeline failure.",
+      "accepted": true,
+      "mismatch": false,
+      "counts_toward_critical": false
+    }
+  ],
   "pillars": {
     "adoption_momentum": {
       "coverage_pct": 97.9,
-      "mean": 54.8,
-      "stdev": 21.76,
+      "mean": 54.77,
+      "stdev": 21.69,
       "verdict": "HEALTHY",
       "n": 515
     },
     "institutional_confidence": {
-      "coverage_pct": 93.0,
+      "coverage_pct": 62.7,
       "mean": 49.31,
-      "stdev": 26.24,
-      "verdict": "HEALTHY",
+      "stdev": 3.14,
+      "verdict": "DEGRADED",
       "n": 515
     },
     "financial_evolution": {
@@ -29,13 +44,21 @@
       "coverage_pct": 0.0,
       "mean": null,
       "stdev": null,
-      "verdict": "STUB",
-      "n": 0
+      "verdict": "KNOWN GAP (accepted)",
+      "n": 0,
+      "raw_verdict": "STUB",
+      "known_gap": {
+        "decided": "2026-10-17",
+        "review_by": "2027-04-17",
+        "reason": "Bryan decided on 2026-10-17 not to add a FINNHUB_API_KEY. The daily job runs with --skip-thesis, so thesis_integrity is dropped for every name and its weight is already redistributed across the other four pillars (README_LTHCS.md). This is a disclosed gap, not a pipeline failure."
+      },
+      "accepted_stub": true,
+      "counts_toward_critical": false
     },
     "des": {
       "coverage_pct": 100.0,
-      "mean": 46.55,
-      "stdev": 12.29,
+      "mean": 47.86,
+      "stdev": 11.15,
       "verdict": "HEALTHY",
       "n": 515
     }
@@ -47,12 +70,12 @@
       "high_confidence_min": 63,
       "review_max": 32
     },
-    "mean": 51.15,
-    "stdev": 11.89,
-    "elite_count": 25,
-    "high_conf_count": 69,
-    "review_count": 37,
-    "review_pct": 7.2,
+    "mean": 51.71,
+    "stdev": 9.38,
+    "elite_count": 11,
+    "high_conf_count": 57,
+    "review_count": 3,
+    "review_pct": 0.6,
     "critical": false
   },
   "weights": {
@@ -63,35 +86,35 @@
   "bands": {
     "verdict": "BALANCED",
     "counts": {
-      "elite": 25,
-      "high_confidence": 69,
-      "constructive": 145,
-      "monitor": 167,
-      "weakening": 72,
-      "review": 37
+      "elite": 11,
+      "high_confidence": 57,
+      "constructive": 188,
+      "monitor": 171,
+      "weakening": 85,
+      "review": 3
     },
     "starved": [],
-    "review_pct": 7.2
+    "review_pct": 0.6
   },
   "alerts": [],
   "sub_audits": {
     "pillar_quality": {
-      "ok": false,
-      "error": "KeyError: 'mean'",
-      "trace": "Traceback (most recent call last):\n  File \"/home/runner/work/alpine-data/alpine-data/scripts/lthcs_quality_audit_runner.py\", line 341, in _run_pillar_audit\n    report = mod.build_report(snap_date, SNAPSHOT_DIR)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/alpine-data/alpine-data/scripts/lthcs_pillar_quality_audit.py\", line 200, in build_report\n    f\"- Mean **{s['mean']}** | stdev {s['stdev']} | \"\n                ~^^^^^^^^\nKeyError: 'mean'\n"
+      "ok": true,
+      "path": "data/lthcs/quality_audit/2026-10-17_pillar_quality.md",
+      "snapshot_date": "2026-10-17"
     },
     "score_distribution": {
       "ok": true,
       "paths": [
-        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-10-16_composite_distribution.md",
-        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-10-16_pillar_correlation.md"
+        "data/lthcs/quality_audit/2026-10-17_composite_distribution.md",
+        "data/lthcs/quality_audit/2026-10-17_pillar_correlation.md"
       ]
     },
     "weights_thresholds": {
       "ok": true,
       "paths": [
-        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-10-16_weights_vs_ic.md",
-        "/home/runner/work/alpine-data/alpine-data/data/lthcs/quality_audit/2026-10-16_band_distribution.md"
+        "data/lthcs/quality_audit/2026-10-17_weights_vs_ic.md",
+        "data/lthcs/quality_audit/2026-10-17_band_distribution.md"
       ]
     }
   }

@@ -22,6 +22,8 @@ function showError(msg) {
 function badgeClassFor(verdict) {
   if (verdict === 'HEALTHY' || verdict === 'ALIGNED' || verdict === 'BALANCED') return 'green';
   if (verdict === 'DEGRADED' || verdict === 'MISALIGNED' || verdict === 'SKEWED' || verdict === 'UNKNOWN') return 'yellow';
+  // Disclosed and still visible. Not the red error used for STUB / CRITICAL.
+  if (verdict === 'KNOWN GAP (accepted)') return 'accepted';
   if (verdict === 'STUB' || verdict === 'CRITICAL') return 'red';
   return 'grey';
 }
@@ -30,6 +32,45 @@ function freshnessDays(asof) {
   const d = new Date(asof + 'T00:00:00Z');
   const now = new Date();
   return Math.floor((now - d) / (1000 * 60 * 60 * 24));
+}
+
+function knownGapEntries(data) {
+  const fromPayload = Array.isArray(data.known_gaps) ? data.known_gaps : [];
+  if (fromPayload.length) return fromPayload;
+  // Older summaries only carry the pillar verdict string.
+  const out = [];
+  for (const [pillar, info] of Object.entries(data.pillars || {})) {
+    if (!info) continue;
+    if (info.verdict === 'KNOWN GAP (accepted)' || info.known_gap || info.known_gap_mismatch) {
+      out.push({ pillar, ...info, ...(info.known_gap || {}) });
+    }
+  }
+  return out;
+}
+
+function renderKnownGaps(data) {
+  const section = document.getElementById('lq-known-gaps');
+  const body = document.getElementById('lq-known-gaps-body');
+  if (!section || !body) return;
+  const gaps = knownGapEntries(data);
+  body.replaceChildren();
+  if (!gaps.length) {
+    section.classList.add('hidden');
+    return;
+  }
+  section.classList.remove('hidden');
+  for (const g of gaps) {
+    const verdict = g.verdict || 'KNOWN GAP (accepted)';
+    const counts = Boolean(g.mismatch || g.known_gap_mismatch || g.counts_toward_critical || verdict === 'STUB');
+    const div = document.createElement('div');
+    div.className = counts ? 'lq-alert' : 'lq-known-gap';
+    const decided = g.decided ? ` Decided ${g.decided}.` : '';
+    const review = g.review_by ? ` Review by ${g.review_by}.` : '';
+    const effect = counts ? ' Counts toward CRITICAL.' : ' Does not count toward CRITICAL.';
+    const reason = g.reason ? ` ${g.reason}` : '';
+    div.textContent = `${g.pillar || '?'}: ${verdict}.${decided}${review}${effect}${reason}`;
+    body.appendChild(div);
+  }
 }
 
 function renderPayload(data) {
@@ -68,6 +109,8 @@ function renderPayload(data) {
   document.getElementById('lq-overall-badge').className = `lq-badge ${badgeClassFor(overall)}`;
   document.getElementById('lq-snapshot-line').textContent =
     `Snapshot: ${data.snapshot_date || '?'} · Generated: ${data.generated_at_utc || '?'}`;
+
+  renderKnownGaps(data);
 
   // Pillars
   const pillarsEl = document.getElementById('lq-pillars');

@@ -1,0 +1,11 @@
+{
+  "_doc": "Accepted pillar stubs for scripts/lthcs_quality_audit_runner.py. A listed pillar whose measured verdict is still STUB (coverage under 30%) is reported as \"KNOWN GAP (accepted)\" and does not make the overall verdict CRITICAL or fail the monthly workflow. The daily audit and data-health follow that same verdict, so an accepted gap is not an error there either. The entry stops applying if that pillar's measured verdict is anything other than STUB (partial or restored coverage); that mismatch counts toward CRITICAL. Any pillar not listed here still fails the run when it is STUB. review_by is optional. After that date the summary keeps a reminder; the acceptance still holds until this file is edited. decided is the date the gap was accepted.",
+  "stubs": [
+    {
+      "pillar": "thesis_integrity",
+      "decided": "2026-10-17",
+      "review_by": "2027-04-17",
+      "reason": "Bryan decided on 2026-10-17 not to add a FINNHUB_API_KEY. The daily job runs with --skip-thesis, so thesis_integrity is dropped for every name and its weight is already redistributed across the other four pillars (README_LTHCS.md). This is a disclosed gap, not a pipeline failure."
+    }
+  ]
+}

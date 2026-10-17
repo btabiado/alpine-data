@@ -85,6 +85,25 @@ TABBED_PAGES = ("v1",)
 
 DATED_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.(json|md)$")
 
+def _quality_acceptance(data: dict | None) -> tuple[str, bool]:
+    """(workflow name, whether the recorded verdict explicitly does not fail).
+
+    Suppression is opt-in and uses only the ``quality_audit`` section that
+    ``daily_audit_data.section_quality_audit`` wrote into this day's JSON.
+    ``verdict_fails is False`` means the committed LTHCS verdict — including
+    an accepted known gap — is not an error, so a stale red Actions run for
+    that workflow is not paged. A missing section, a missing flag, or any
+    other value keeps the old behavior: the red run still pages. Historical
+    fixtures that predate the section therefore stay stable, and a summary
+    that could not be read cannot clear the alarm.
+    """
+    sec = data.get("quality_audit") if isinstance(data, dict) else None
+    if not isinstance(sec, dict):
+        return "lthcs-quality-audit-monthly", False
+    name = str(sec.get("workflow") or "lthcs-quality-audit-monthly")
+    return name, sec.get("verdict_fails") is False
+
+
 # Problem-id prefix -> the section whose failure means "not re-checked today".
 SECTION_OF_PREFIX = {
     "feed:": "data_health",
@@ -188,6 +207,17 @@ def data_problems(data: dict | None) -> list[dict]:
                 r.get("detail") or r.get("message") or ""))
 
     # -- workflows -------------------------------------------------------------
+    # The quality verdict was recorded when the data JSON was collected.
+    # An accepted known gap is not an error, even if Actions still shows
+    # an older red run. No section in the JSON means do not suppress.
+    quality_name, quality_ok = _quality_acceptance(data)
+    quality_verdict_fails = not quality_ok
+
+    def _actions_failure_is_error(name: str | None) -> bool:
+        if name != quality_name:
+            return True
+        return quality_verdict_fails
+
     wf = data.get("workflows")
     flagged_workflows: set[str] = set()
     if wf is not None and not _section_ok(wf):
@@ -196,6 +226,8 @@ def data_problems(data: dict | None) -> list[dict]:
     elif wf:
         for w in wf.get("workflows") or []:
             name = w.get("name")
+            if (w.get("failing_2_days") or w.get("failed_24h")) and not _actions_failure_is_error(name):
+                continue
             latest = w.get("latest_24h") or {}
             why = _best_annotation(w.get("failed_jobs") or [])
             if w.get("failing_2_days"):
@@ -227,7 +259,8 @@ def data_problems(data: dict | None) -> list[dict]:
                     f"Scheduled workflow {name} missed {len(s['missed_days'])} day(s) in the last week",
                     f"cron {crons}; no scheduled run on: {', '.join(s['missed_days'])}"))
             last = s.get("last_run") or {}
-            if s.get("last_failed") and name not in flagged_workflows:
+            if (s.get("last_failed") and name not in flagged_workflows
+                    and _actions_failure_is_error(name)):
                 out.append(problem(
                     f"schedule:{name}:failing", P1, "schedule",
                     f"Scheduled workflow {name}: last scheduled run failed ({(last.get('created_at') or '?')[:10]})",
@@ -582,7 +615,24 @@ def render_md(report: dict) -> str:
     L += render_problem_lines(reg["fixed"]) or ["- none"]
 
     # ---- compact snapshot ---------------------------------------------------
+    # Accepted quality-audit gaps follow the verdict recorded in this day's
+    # data JSON, not a live re-read and not a stale Actions failure.
+    quality_name, quality_ok = _quality_acceptance(data)
     L += ["", "## Snapshot", ""]
+    qa = data.get("quality_audit") if isinstance(data, dict) else None
+    if isinstance(qa, dict) and (qa.get("overall_verdict") or qa.get("known_gaps")):
+        bits = []
+        for g in qa.get("known_gaps") or []:
+            if not isinstance(g, dict) or not g.get("pillar"):
+                continue
+            label = g.get("verdict") or "KNOWN GAP (accepted)"
+            when = g.get("decided") or "?"
+            review = f", review by {g['review_by']}" if g.get("review_by") else ""
+            bits.append(f"{g['pillar']} is {label} (decided {when}{review})")
+        line = f"- **LTHCS quality audit** ({qa.get('summary') or 'latest_summary.json'}): {qa.get('overall_verdict') or '?'}"
+        if bits:
+            line += ". " + "; ".join(bits)
+        L.append(line)
     dh = data.get("data_health") or {}
     if _section_ok(dh) and dh:
         counts = ", ".join(f"{v} {k}" for k, v in sorted((dh.get("counts") or {}).items()))
@@ -593,7 +643,8 @@ def render_md(report: dict) -> str:
     wf = data.get("workflows") or {}
     if _section_ok(wf) and wf:
         ran = [w for w in wf.get("workflows") or [] if w.get("latest_24h")]
-        bad = [w["name"] for w in ran if w.get("failed_24h")]
+        bad = [w["name"] for w in ran if w.get("failed_24h")
+               and not (w.get("name") == quality_name and quality_ok)]
         L.append(f"- **Workflows** (last 24h, main): {len(ran)} ran, {len(bad)} ended failed"
                  + (f" ({', '.join(bad)})" if bad else ""))
     api = data.get("api_status") or {}
@@ -653,7 +704,7 @@ def render_md(report: dict) -> str:
             flags = []
             if x.get("missed_days"):
                 flags.append(f"MISSED {len(x['missed_days'])}d")
-            if x.get("last_failed"):
+            if x.get("last_failed") and not (x.get("name") == quality_name and quality_ok):
                 flags.append("FAILING")
             if x.get("state") and x.get("state") != "active":
                 flags.append(str(x["state"]).upper())

@@ -10,8 +10,17 @@ Usage:
     python scripts/lthcs_quality_audit_runner.py [--asof YYYY-MM-DD] [--out DIR]
 
 Exit codes:
-    0 — all pillars HEALTHY (or DEGRADED) and distribution acceptable
-    1 — at least one pillar STUB or distribution critically broken
+    0 — no unaccepted STUB, distribution acceptable, known-stub config valid
+    1 — an unaccepted pillar is STUB, an accepted pillar is no longer a stub,
+        the distribution is critically broken, or known_pillar_stubs.json
+        is invalid
+
+A pillar listed in ``data/lthcs/known_pillar_stubs.json`` whose measured
+verdict is still STUB is reported as ``KNOWN GAP (accepted)``. That label
+stays in the summary and does not count toward CRITICAL. The daily audit
+and data-health read this same verdict (via ``audit_failed``); they do not
+treat an accepted gap as an error. Any other pillar going STUB, or an
+accepted pillar gaining coverage past the stub threshold, still fails.
 
 The runner imports the three audit modules rather than shelling out:
 
@@ -31,6 +40,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
+import re
 import statistics
 import sys
 import traceback
@@ -60,6 +70,19 @@ PILLARS = [
     "thesis_integrity",
     "des",
 ]
+
+# Reported instead of STUB when a pillar is listed in known_pillar_stubs.json
+# and its measured verdict is still STUB. Not an error. Kept visible.
+KNOWN_GAP_VERDICT = "KNOWN GAP (accepted)"
+
+# Workflow name the daily audit uses when it decides whether a red
+# lthcs-quality-audit-monthly run is still an error. Same string as
+# .github/workflows/lthcs-quality-audit-monthly.yml `name:`.
+QUALITY_AUDIT_WORKFLOW = "lthcs-quality-audit-monthly"
+
+KNOWN_STUBS_FILENAME = "known_pillar_stubs.json"
+_ISO_DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_MIN_REASON_LEN = 40
 
 
 # ---------------------------------------------------------------------------
@@ -112,6 +135,207 @@ def _pillar_verdict(
     if coverage_pct < DEGRADED_COVERAGE or stdev < DEGRADED_STDEV:
         return "DEGRADED"
     return "HEALTHY"
+
+
+def load_known_stubs(path: Optional[Path] = None) -> List[Dict[str, Any]]:
+    """Accepted pillar stubs. A missing file means nothing is accepted.
+
+    A present but unreadable or incomplete file raises ``ValueError``.
+    Callers must not swallow that into "accept the stubs": a broken
+    disclosure has to fail the run, or a typo would mute a real STUB.
+    """
+    path = path or (DATA / KNOWN_STUBS_FILENAME)
+    if not path.exists():
+        return []
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ValueError(f"{path.name} is not valid JSON ({exc})") from exc
+    if not isinstance(doc, dict) or not isinstance(doc.get("stubs"), list):
+        raise ValueError(f"{path.name} must be an object with a stubs list")
+    out: List[Dict[str, Any]] = []
+    seen: set = set()
+    for i, raw in enumerate(doc["stubs"]):
+        where = f"{path.name} stubs[{i}]"
+        if not isinstance(raw, dict):
+            raise ValueError(f"{where} must be an object")
+        pillar = raw.get("pillar")
+        if pillar not in PILLARS:
+            raise ValueError(f"{where}.pillar must be one of {', '.join(PILLARS)}")
+        if pillar in seen:
+            raise ValueError(f"{where} duplicates pillar {pillar}")
+        seen.add(pillar)
+        decided = raw.get("decided")
+        if not isinstance(decided, str) or not _ISO_DAY.match(decided):
+            raise ValueError(f"{where}.decided must be YYYY-MM-DD")
+        review_by = raw.get("review_by", None)
+        if review_by is not None and (not isinstance(review_by, str) or not _ISO_DAY.match(review_by)):
+            raise ValueError(f"{where}.review_by must be YYYY-MM-DD when set")
+        if isinstance(review_by, str) and review_by < decided:
+            raise ValueError(f"{where}.review_by is before decided")
+        reason = str(raw.get("reason") or "").strip()
+        if len(reason) < _MIN_REASON_LEN:
+            raise ValueError(
+                f"{where}.reason must explain the decision "
+                f"(at least {_MIN_REASON_LEN} characters)"
+            )
+        out.append({
+            "pillar": pillar,
+            "decided": decided,
+            "review_by": review_by,
+            "reason": reason,
+        })
+    return out
+
+
+def apply_known_stubs(
+    pillars: Dict[str, Dict[str, Any]],
+    known: List[Dict[str, Any]],
+    asof: str,
+) -> List[str]:
+    """Relabel an accepted STUB as ``KNOWN GAP (accepted)``.
+
+    Returns alerts. A listed pillar that is no longer STUB is left on its
+    measured verdict, marked ``known_gap_mismatch``, and alerted — that
+    counts toward CRITICAL. A review-by date that has passed adds a
+    reminder and does not by itself restore CRITICAL.
+    """
+    alerts: List[str] = []
+    for entry in known:
+        pillar = entry["pillar"]
+        info = pillars.get(pillar)
+        if not isinstance(info, dict):
+            continue
+        raw = info.get("verdict")
+        info["raw_verdict"] = raw
+        info["known_gap"] = {
+            "decided": entry["decided"],
+            "review_by": entry.get("review_by"),
+            "reason": entry["reason"],
+        }
+        if raw == "STUB":
+            info["verdict"] = KNOWN_GAP_VERDICT
+            info["accepted_stub"] = True
+            info["counts_toward_critical"] = False
+            review_by = entry.get("review_by")
+            if review_by and asof > review_by:
+                alerts.append(
+                    f"{pillar} known gap is past its review-by date {review_by} "
+                    f"(decided {entry['decided']}). The acceptance still holds and "
+                    f"does not count toward CRITICAL; reconfirm or remove "
+                    f"data/lthcs/{KNOWN_STUBS_FILENAME}."
+                )
+            continue
+        info["known_gap_mismatch"] = True
+        info["counts_toward_critical"] = True
+        alerts.append(
+            f"{pillar} was accepted as a stub on {entry['decided']} but measured "
+            f"{raw} at {info.get('coverage_pct')}% coverage. Coverage past the "
+            f"stub threshold ({STUB_COVERAGE:g}%) is not covered by the acceptance "
+            f"and counts toward CRITICAL. Update data/lthcs/{KNOWN_STUBS_FILENAME}."
+        )
+    return alerts
+
+
+def known_gap_records(pillars: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """One record per pillar that has a known-stub entry, in pillar order."""
+    out: List[Dict[str, Any]] = []
+    for pillar in PILLARS:
+        info = pillars.get(pillar) or {}
+        if not info.get("known_gap"):
+            continue
+        gap = info.get("known_gap") or {}
+        mismatch = bool(info.get("known_gap_mismatch"))
+        out.append({
+            "pillar": pillar,
+            "verdict": info.get("verdict"),
+            "raw_verdict": info.get("raw_verdict"),
+            "coverage_pct": info.get("coverage_pct"),
+            "decided": gap.get("decided"),
+            "review_by": gap.get("review_by"),
+            "reason": gap.get("reason"),
+            "accepted": bool(info.get("accepted_stub")),
+            "mismatch": mismatch,
+            "counts_toward_critical": bool(mismatch or info.get("verdict") == "STUB"),
+        })
+    return out
+
+
+def _overall_verdict(
+    pillars: Dict[str, Dict[str, Any]],
+    distribution: Dict[str, Any],
+    weights: Dict[str, Any],
+    bands: Dict[str, Any],
+    *,
+    stubs_error: bool,
+) -> str:
+    """CRITICAL only for a real failure. An accepted known gap is neither."""
+    unaccepted_stub = any(
+        isinstance(p, dict) and p.get("verdict") == "STUB" for p in pillars.values()
+    )
+    mismatch = any(
+        isinstance(p, dict) and p.get("known_gap_mismatch") for p in pillars.values()
+    )
+    if stubs_error or unaccepted_stub or mismatch or distribution.get("critical"):
+        return "CRITICAL"
+    degraded = (
+        any(isinstance(p, dict) and p.get("verdict") == "DEGRADED" for p in pillars.values())
+        or weights.get("verdict") == "MISALIGNED"
+        or bands.get("verdict") in ("SKEWED", "MISALIGNED")
+    )
+    return "DEGRADED" if degraded else "HEALTHY"
+
+
+def _portable_path(value: str) -> str:
+    """Repo-relative path when ``value`` points inside the checkout.
+
+    The summary JSON is committed. Absolute runner paths (``/home/runner``
+    or a local workspace) do not survive that.
+    """
+    try:
+        return Path(value).resolve().relative_to(REPO).as_posix()
+    except (ValueError, OSError):
+        return value
+
+
+def _portable_sub_audit(info: Dict[str, Any]) -> Dict[str, Any]:
+    out: Dict[str, Any] = {}
+    for key, value in info.items():
+        if key == "cohort_ic":
+            continue
+        if key == "path" and isinstance(value, str):
+            out[key] = _portable_path(value)
+        elif key == "paths" and isinstance(value, list):
+            out[key] = [_portable_path(p) if isinstance(p, str) else p for p in value]
+        else:
+            out[key] = value
+    return out
+
+
+def audit_failed(payload: Dict[str, Any]) -> bool:
+    """Whether this verdict is an error for the workflow, daily audit, and data-health.
+
+    ``KNOWN GAP (accepted)`` is not a failure. A missing or unreadable payload
+    is a failure: silence must not clear an error. ``overall_verdict`` of
+    CRITICAL is a failure even if a caller rebuilt the pillar map.
+    """
+    if not isinstance(payload, dict):
+        return True
+    if payload.get("known_stubs_error"):
+        return True
+    if payload.get("overall_verdict") == "CRITICAL":
+        return True
+    pillars = payload.get("pillars") or {}
+    if isinstance(pillars, dict):
+        for info in pillars.values():
+            if not isinstance(info, dict):
+                continue
+            if info.get("verdict") == "STUB" or info.get("known_gap_mismatch"):
+                return True
+    dist = payload.get("distribution") or {}
+    if isinstance(dist, dict) and dist.get("critical"):
+        return True
+    return False
 
 
 def _compute_pillar_verdicts(snapshot: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
@@ -423,7 +647,12 @@ def _run_weights_audit(asof: str, out_dir: Path) -> Dict[str, Any]:
 # Combined-summary rendering
 # ---------------------------------------------------------------------------
 
-_PILLAR_BADGE = {"HEALTHY": "🟢", "DEGRADED": "🟡", "STUB": "🔴"}
+_PILLAR_BADGE = {
+    "HEALTHY": "🟢",
+    "DEGRADED": "🟡",
+    "STUB": "🔴",
+    KNOWN_GAP_VERDICT: "🔵",
+}
 
 
 def _badge(verdict: str) -> str:
@@ -444,6 +673,11 @@ def render_summary_md(payload: Dict[str, Any]) -> str:
     lines.append("")
     lines.append(f"## Overall verdict: **{payload['overall_verdict']}**")
     lines.append("")
+    if payload.get("known_stubs_error"):
+        lines.append(
+            f"Known-stub config error (acceptance not applied): {payload['known_stubs_error']}"
+        )
+        lines.append("")
 
     # Per-pillar
     lines.append("## Per-pillar signal quality")
@@ -456,10 +690,41 @@ def render_summary_md(payload: Dict[str, Any]) -> str:
         cov = info.get("coverage_pct", 0)
         mean = info.get("mean")
         sd = info.get("stdev")
+        note = " (accepted stub no longer matches)" if info.get("known_gap_mismatch") else ""
         lines.append(
-            f"| {pillar} | {_badge(v)} {v} | {cov}% | "
+            f"| {pillar} | {_badge(v)} {v}{note} | {cov}% | "
             f"{'-' if mean is None else mean} | {'-' if sd is None else sd} |"
         )
+    lines.append("")
+
+    # Accepted gaps stay in the table above and are repeated here with the
+    # reason, decision date, and review-by date. Never omitted.
+    lines.append("## Known gaps (accepted)")
+    lines.append("")
+    lines.append(
+        "A pillar listed in `data/lthcs/known_pillar_stubs.json` whose measured "
+        "verdict is still STUB is reported as **KNOWN GAP (accepted)**. It stays "
+        "in the table above and does not count toward CRITICAL. Any other pillar "
+        "that is STUB, or an accepted pillar that gains coverage past the stub "
+        f"threshold ({STUB_COVERAGE:g}%), still counts toward CRITICAL."
+    )
+    lines.append("")
+    gaps = payload.get("known_gaps") or []
+    if not gaps:
+        lines.append("- (none)")
+    else:
+        for g in gaps:
+            review = g.get("review_by") or "not set"
+            counts = g.get("mismatch") or g.get("verdict") == "STUB"
+            effect = "Counts toward CRITICAL" if counts else "Does not count toward CRITICAL"
+            lines.append(
+                f"- **{g.get('pillar')}** — {g.get('verdict')} "
+                f"(raw {g.get('raw_verdict')}, coverage {g.get('coverage_pct')}%). "
+                f"Decided {g.get('decided')}. Review by {review}. {effect}."
+            )
+            reason = str(g.get("reason") or "").strip()
+            if reason:
+                lines.append(f"  - {reason}")
     lines.append("")
 
     # Distribution
@@ -571,6 +836,22 @@ def run(
     bands = _band_verdict(snapshot or {})
     alerts = _cross_cutting_alerts(snapshot or {})
 
+    # Accepted stubs are relabeled before the overall verdict. A broken
+    # config does not relabel anything: every STUB still counts.
+    stubs_error: Optional[str] = None
+    try:
+        known = load_known_stubs(DATA / KNOWN_STUBS_FILENAME)
+    except ValueError as exc:
+        known = []
+        stubs_error = str(exc)
+    if stubs_error:
+        alerts.append(
+            "known pillar stubs config is invalid and was not applied: "
+            + stubs_error
+        )
+    else:
+        alerts.extend(apply_known_stubs(pillars, known, asof))
+
     # Run all three sub-audits with failure isolation
     sub_audits: Dict[str, Any] = {}
     sub_audits["pillar_quality"] = _run_pillar_audit(asof, out_dir)
@@ -582,13 +863,9 @@ def run(
                  if sub_audits["weights_thresholds"].get("ok") else None)
     weights = _weights_verdict(DATA / "weights.json", cohort_ic)
 
-    # Overall verdict
-    any_stub = any(p.get("verdict") == "STUB" for p in pillars.values())
-    overall_verdict = "CRITICAL" if (any_stub or distribution.get("critical")) else (
-        "DEGRADED" if any(p.get("verdict") == "DEGRADED" for p in pillars.values())
-                  or weights["verdict"] == "MISALIGNED"
-                  or bands["verdict"] in ("SKEWED", "MISALIGNED")
-                  else "HEALTHY"
+    # Overall verdict. An accepted known gap is not CRITICAL.
+    overall_verdict = _overall_verdict(
+        pillars, distribution, weights, bands, stubs_error=bool(stubs_error),
     )
 
     payload: Dict[str, Any] = {
@@ -596,15 +873,14 @@ def run(
         "snapshot_date": snapshot_date,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "overall_verdict": overall_verdict,
+        "known_stubs_error": stubs_error,
+        "known_gaps": known_gap_records(pillars),
         "pillars": pillars,
         "distribution": distribution,
         "weights": weights,
         "bands": bands,
         "alerts": alerts,
-        "sub_audits": {
-            k: {kk: vv for kk, vv in v.items() if kk != "cohort_ic"}
-            for k, v in sub_audits.items()
-        },
+        "sub_audits": {k: _portable_sub_audit(v) for k, v in sub_audits.items()},
     }
 
     summary_md = render_summary_md(payload)
@@ -634,10 +910,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(f"summary -> {summary_path}")
     print(f"overall verdict: {payload['overall_verdict']}")
 
-    # Exit non-zero if any pillar is STUB or distribution is critically broken
-    any_stub = any(p.get("verdict") == "STUB" for p in payload["pillars"].values())
-    crit_dist = payload["distribution"].get("critical")
-    if any_stub or crit_dist:
+    # Same rule the daily audit and data-health use. An accepted known gap
+    # (KNOWN GAP (accepted)) does not fail the run.
+    if audit_failed(payload):
         return 1
     return 0
 

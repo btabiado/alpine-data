@@ -34,6 +34,7 @@
       .lq-badge.yellow { background: #e6b800; }
       .lq-badge.red { background: #d04848; }
       .lq-badge.grey { background: #7a8493; }
+      .lq-badge.accepted { background: #3d8bfd; }
 
       .lq-overall {
         font-size: 1.6rem;
@@ -76,6 +77,15 @@
       .lq-alert {
         background: rgba(208, 72, 72, 0.12);
         border-left: 3px solid #d04848;
+        padding: 0.6rem 0.8rem;
+        margin: 0.4rem 0;
+        border-radius: 4px;
+        font-size: 0.9rem;
+      }
+
+      .lq-known-gap {
+        background: rgba(61, 139, 253, 0.12);
+        border-left: 3px solid #3d8bfd;
         padding: 0.6rem 0.8rem;
         margin: 0.4rem 0;
         border-radius: 4px;
@@ -167,6 +177,12 @@
         <section class="lthcs-section lhealth-section" aria-label="Per-pillar verdicts">
           <h2 class="lhealth-h2">Per-pillar verdicts</h2>
           <ul id="lq-pillars" class="lq-pillars"></ul>
+        </section>
+
+        <section id="lq-known-gaps" class="lthcs-section lhealth-section hidden" aria-label="Accepted known gaps">
+          <h2 class="lhealth-h2">Known gaps (accepted)</h2>
+          <p class="lq-card-sub">Disclosed stubs stay listed. They do not count toward CRITICAL. A pillar that leaves the stub, or any other pillar that goes STUB, still does.</p>
+          <div id="lq-known-gaps-body"></div>
         </section>
 
         <section class="lthcs-section lhealth-section" aria-label="Headline metrics">
