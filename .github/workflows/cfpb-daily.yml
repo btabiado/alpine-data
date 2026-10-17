@@ -10,8 +10,10 @@ name: cfpb-daily
 # pages.yml's own hourly cron picks up the new data-*.json on its next tick.
 on:
   schedule:
-    # 07:00 UTC = 02:00 ET — CFPB updates complaints on a rolling daily basis.
-    - cron: "0 7 * * *"
+    # 07:17 UTC = 02:17 ET — CFPB updates complaints on a rolling daily basis.
+    # Minute 17 is off the top of the hour and clear of city-daily (07:29)
+    # and usaspending-daily (07:47).
+    - cron: "17 7 * * *"
   workflow_dispatch:
 
 permissions:

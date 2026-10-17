@@ -53,10 +53,12 @@ name: data-health
 
 on:
   schedule:
-    # 15:00 UTC — after the daily fetch crons (06:00 city, 08:30 money-flow,
-    # 09:15 etf-flows, 14:10 tsa) have all had their chance to run and commit.
-    # Checking before them would alarm on yesterday's data every morning.
-    - cron: "0 15 * * *"
+    # 15:11 UTC — after the daily fetch crons (real-estate 06:13, city 07:29,
+    # money-flow 08:30, etf-flows 09:15, tsa 14:10) have all had their chance
+    # to run and commit. Checking before them would alarm on yesterday's data
+    # every morning. Minute 11 avoids the top of the hour. secrets-check
+    # follows at 15:23 on Mondays.
+    - cron: "11 15 * * *"
   workflow_dispatch:
     inputs:
       mode:

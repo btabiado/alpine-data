@@ -11,9 +11,10 @@ name: usaspending-daily
 # pages.yml's own hourly cron picks up the new data-*.json on its next tick.
 on:
   schedule:
-    # 07:30 UTC = 02:30 ET — offset from cfpb-daily (07:00) so the two feed jobs
-    # don't collide. USAspending obligations post on a rolling daily basis.
-    - cron: "30 7 * * *"
+    # 07:47 UTC = 02:47 ET — offset from cfpb-daily (07:17) and city-daily
+    # (07:29) so the feed jobs don't collide. USAspending obligations post on
+    # a rolling daily basis.
+    - cron: "47 7 * * *"
   workflow_dispatch:
 
 permissions:

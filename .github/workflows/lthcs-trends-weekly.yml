@@ -3,7 +3,7 @@ name: lthcs-trends-weekly
 # Weekly Google Trends batch for the LTHCS Adoption pillar. pytrends is
 # keyless but heavily rate-limited; running on Monday 02:47 UTC
 # (= Sunday 22:47 ET) gives Google's limiter the weekend to cool down
-# and avoids fighting the daily 23:00 UTC cron. It used to start at 04:00,
+# and avoids fighting the daily 23:11 UTC cron. It used to start at 04:00,
 # the same minute as lthcs-trends-daily.yml; that job now starts at 04:13
 # and shares this concurrency group, so the two never scrape at once.
 #

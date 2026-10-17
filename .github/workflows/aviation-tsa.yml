@@ -12,7 +12,7 @@ name: aviation-tsa
 #   often would just produce wasted commits between TSA's daily updates.
 #
 # Runs at 14:10 UTC (~10:10am ET) to land after TSA's morning table update, and
-# is offset from pages.yml's top-of-hour build and the hourly OpenSky run (:25)
+# is offset from pages.yml (minute 7) and the hourly OpenSky run (:25)
 # to avoid simultaneous pushes to main. [skip ci] keeps the push from
 # retriggering pages.yml — its own hourly cron picks up the new file next tick.
 on:

@@ -88,7 +88,7 @@ class TestCron:
     def test_workflow_crons_reads_every_scheduled_workflow(self, dad):
         crons = dad.workflow_crons(REPO_ROOT / ".github" / "workflows")
         assert crons[".github/workflows/daily-audit.yml"] == ["17 9 * * *"]
-        assert crons[".github/workflows/data-health.yml"] == ["0 15 * * *"]
+        assert crons[".github/workflows/data-health.yml"] == ["11 15 * * *"]
         assert ".github/workflows/tests.yml" not in crons
 
 

@@ -15,8 +15,9 @@ name: catalog-health
 # badly; its weekly commits were 11% of repo history.) The landscape PDF
 # (health/api-catalog.pdf) is NOT touched.
 #
-# Runs at 08:00 UTC every Monday (weekly) — offset from the daily data
-# bots (real-estate 06:00, city 07:00) so they don't race the same commit.
+# Runs at 08:23 UTC every Monday (weekly) — offset from the daily data
+# bots (real-estate 06:13, city 07:29) so they don't race the same commit.
+# Minute 23 stays off the top of the hour.
 # Weekly cadence (was monthly `0 8 1 * *`, 2026-07-13): keeps catalog_health.json
 # fresh for the ADW discovery agent, which grounds its metric hunt on the
 # status=OK (reachable, free/keyless) sources. API availability rarely changes
@@ -27,7 +28,7 @@ name: catalog-health
 # retriggering pages.yml — its hourly cron deploys the refreshed files.
 on:
   schedule:
-    - cron: "0 8 * * 1"
+    - cron: "23 8 * * 1"
   workflow_dispatch:
 
 permissions:

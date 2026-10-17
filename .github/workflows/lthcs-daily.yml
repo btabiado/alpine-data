@@ -5,11 +5,13 @@ name: lthcs-daily
 # pages.yml picks them up on its next hourly build. Distinct concurrency
 # group from pages.yml so the two workflows don't block each other.
 #
-# Schedule rationale: 23:00 UTC = ~18:00 ET (after US market close, after
+# Schedule rationale: 23:11 UTC = ~18:11 ET (after US market close, after
 # Yahoo end-of-day prints have settled, before next-day pre-market churn).
+# Minute 11 keeps this off the top of the hour, which GitHub documents as
+# the most congested scheduler minute.
 on:
   schedule:
-    - cron: "0 23 * * *"
+    - cron: "11 23 * * *"
   workflow_dispatch: {}
 
 # Push back to main requires contents:write. Pages deployment lives in

@@ -13,13 +13,13 @@ name: city-daily
 # the adapters degrade gracefully (null pillars labeled "N of 3") when a
 # key is unset, so they are referenced here but need not exist yet.
 #
-# Runs at 07:00 UTC (offset from real-estate-daily's 06:00 so the two
-# data-refresh bots don't race the same commit). [skip ci] keeps the push
+# Runs at 07:29 UTC (offset from real-estate-daily's 06:13 and cfpb-daily's
+# 07:17 so the data-refresh bots don't race the same commit). [skip ci] keeps the push
 # from retriggering pages.yml — its own hourly cron picks up the new
 # data-city.json on the next tick.
 on:
   schedule:
-    - cron: "0 7 * * *"
+    - cron: "29 7 * * *"
   workflow_dispatch:
 
 permissions:

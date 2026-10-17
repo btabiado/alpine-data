@@ -1,7 +1,7 @@
 name: lthcs-backtest-monthly
 
-# Monthly LTHCS backtest re-run. On the 1st of each month at 06:00 UTC,
-# replay the last 90 days of snapshots through scripts/lthcs_backtest.py
+# Monthly LTHCS backtest re-run. On the 1st of each month at 06:19 UTC
+# (off minute 0), replay the last 90 days of snapshots through scripts/lthcs_backtest.py
 # at the standard 21-trading-day horizon. Output lives under
 # data/lthcs/backtest/<YYYY-MM>_monthly/ and is committed back to main.
 #
@@ -9,7 +9,7 @@ name: lthcs-backtest-monthly
 # with too little history just produces noise.
 on:
   schedule:
-    - cron: "0 6 1 * *"
+    - cron: "19 6 1 * *"
   workflow_dispatch: {}
 
 permissions:
@@ -61,7 +61,7 @@ jobs:
         id: window
         # Resolve start/end in shell so the job is self-contained.
         # End = yesterday (today's snapshot isn't guaranteed yet at
-        # 06:00 UTC if the daily 23:00 UTC run was slow). Start = 90
+        # 06:19 UTC if the daily 23:11 UTC run was slow). Start = 90
         # days before that. `month_tag` becomes the run subdir, so
         # multiple runs in the same month overwrite cleanly.
         run: |

@@ -1,7 +1,7 @@
 name: lthcs-beta-verdict-monthly
 
-# Adoption β-fix verdict cron. Runs on the 1st of each month at 08:00
-# UTC, computes post-β IC over the past 30 days, compares to the
+# Adoption β-fix verdict cron. Runs on the 1st of each month at 08:37
+# UTC (off minute 0), computes post-β IC over the past 30 days, compares to the
 # frozen baseline, and posts the verdict markdown to the Job Summary.
 #
 # Gated to dates >= 2026-06-01 (the fix landed 2026-05-18; we need ~30
@@ -13,7 +13,7 @@ name: lthcs-beta-verdict-monthly
 # report lives in the run artifacts and the Job Summary only.
 on:
   schedule:
-    - cron: "0 8 1 * *"
+    - cron: "37 8 1 * *"
   workflow_dispatch: {}
 
 permissions:

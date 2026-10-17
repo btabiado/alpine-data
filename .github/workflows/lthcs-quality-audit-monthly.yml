@@ -5,9 +5,10 @@ name: lthcs-quality-audit-monthly
 # invokes the three Phase 3 audit scripts (pillar quality, score
 # distribution, weight + band thresholds) and emits a combined summary.
 #
-# Runs at 09:00 UTC on the 1st of each month — staggered after
-# lthcs-backtest-monthly.yml (06:00) and lthcs-tune-weights-monthly.yml
-# (07:00) so the three monthly jobs don't fight for the same runner pool.
+# Runs at 09:43 UTC on the 1st of each month — staggered after
+# lthcs-backtest-monthly.yml (06:19) and lthcs-tune-weights-monthly.yml
+# (07:41) so the three monthly jobs don't fight for the same runner pool.
+# Minute 43 stays off the top of the hour.
 #
 # The runner exits non-zero if an unaccepted pillar is STUB, if an
 # accepted pillar is no longer a stub, or if the composite distribution
@@ -19,7 +20,7 @@ name: lthcs-quality-audit-monthly
 # Job Summary so red runs are surfaced without needing to dig into logs.
 on:
   schedule:
-    - cron: "0 9 1 * *"
+    - cron: "43 9 1 * *"
   workflow_dispatch: {}
 
 permissions:
