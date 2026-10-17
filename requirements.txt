@@ -22,7 +22,7 @@ requests==2.34.2
 xlrd==2.0.2
 
 # LTHCS Phase 1 (Week 1: schemas + validate)
-pydantic==2.14.0
+pydantic==2.14.1
 # python-dotenv: the set_key symlink code path (GHSA-mf9w-mj56-hr94) is
 # UNUSED in this repo (read-only).
 python-dotenv==1.2.4
