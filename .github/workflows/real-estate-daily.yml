@@ -7,7 +7,7 @@ name: real-estate-daily
 # publish day of the month varies — a daily cron catches every refresh
 # within ~24h without hammering the sources.
 #
-# Runs at 06:00 UTC = 23:00 PT prev day / 02:00 ET — well after
+# Runs at 06:13 UTC = 23:13 PT prev day / 02:13 ET — well after
 # Redfin/Zillow's typical update windows, so we capture any
 # late-evening US-Pacific publishes the same calendar day.
 #
@@ -23,8 +23,9 @@ name: real-estate-daily
 # picks up a new data file naturally on its next tick.
 on:
   schedule:
-    # 06:00 UTC = 23:00 PT prev day / 02:00 ET — runs after Redfin/Zillow's typical update windows
-    - cron: "0 6 * * *"
+    # 06:13 UTC = 23:13 PT prev day / 02:13 ET — after Redfin/Zillow's typical
+    # update windows, and off minute 0 (GitHub's most congested scheduler minute).
+    - cron: "13 6 * * *"
   workflow_dispatch:
 
 permissions:

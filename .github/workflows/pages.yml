@@ -4,12 +4,15 @@ on:
   push:
     branches: [main]
   schedule:
-    # Hourly live-data refresh. GitHub cron is best-effort and can drift
-    # 5–15 min under fleet load. Frequent enough to feel fresh, conservative
-    # on free-tier rate limits (CoinGecko Demo: 30/min and ~10k/month — the
-    # top-50 daily series are cached per UTC day so only the first run of a
-    # day spends those calls; see fetch_market.fetch_top_daily_series).
-    - cron: "0 * * * *"
+    # Hourly live-data refresh. GitHub cron is best-effort, and the start of
+    # the hour is the minute it documents as most congested — this repo's
+    # top-of-hour hourly crons were landing about 20% of ticks (daily audit
+    # 2026-10-17). Minute 7 steps off that pile-up. Frequent enough to feel
+    # fresh, conservative on free-tier rate limits (CoinGecko Demo: 30/min
+    # and ~10k/month — the top-50 daily series are cached per UTC day so only
+    # the first run of a day spends those calls; see
+    # fetch_market.fetch_top_daily_series).
+    - cron: "7 * * * *"
   workflow_dispatch: {}
   # Publish the daily audit report as soon as it is committed. daily-audit.yml
   # commits audit/daily/latest.{md,json} through api-commit.sh with the

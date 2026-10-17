@@ -30,8 +30,9 @@ name: daily-audit
 
 on:
   schedule:
-    # 09:17 UTC: after the overnight crons (lthcs 22:00-23:30, trends 04:00,
-    # real-estate 06:00, city/cfpb 07:00, usaspending 07:30, money-flow 08:30).
+    # 09:17 UTC: after the overnight crons (lthcs 23:11-23:30, trends 04:13,
+    # real-estate 06:13, cfpb 07:17 / city 07:29, usaspending 07:47,
+    # money-flow 08:30).
     # Off the top of the hour, where GitHub's scheduler is most congested.
     # (On this repo scheduled runs start hours late — the report's schedules
     # table measures each cron's median delay, this one included.)

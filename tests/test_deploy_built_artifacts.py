@@ -71,7 +71,7 @@ def test_catalog_workflow_no_longer_builds_or_commits_the_workbook():
     assert "git add health/catalog_health.json health/catalog_health.md" in runs
     # The schedule is weekly; the commit message and header say so.
     on = wf.get("on", wf.get(True))
-    assert on["schedule"] == [{"cron": "0 8 * * 1"}]
+    assert on["schedule"] == [{"cron": "23 8 * * 1"}]
     assert "weekly link re-check" in runs
     assert "monthly link" not in text.lower()
 

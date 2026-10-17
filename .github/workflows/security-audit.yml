@@ -9,7 +9,7 @@ name: security-audit
 
 on:
   schedule:
-    - cron: "0 9 * * 1"  # Monday 09:00 UTC
+    - cron: "31 9 * * 1"  # Monday 09:31 UTC, off minute 0 and clear of daily-audit at 09:17
   workflow_dispatch: {}
 
 # Read-only. We never need to write anything back to the repo.

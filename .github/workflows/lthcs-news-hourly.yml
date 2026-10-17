@@ -1,8 +1,10 @@
 name: lthcs-news-hourly
 
 # Hourly news-only LTHCS refresh. Runs lthcs_daily.py --news-only --force
-# every hour at minute 0 and commits the refreshed snapshot /
-# variable_detail / narratives back to main. The 23:00 UTC `lthcs-daily`
+# every hour at minute 19 (off :00, where GitHub's scheduler is most
+# congested; pages.yml is minute 7 and OpenSky is minute 25) and commits
+# the refreshed snapshot /
+# variable_detail / narratives back to main. The 23:11 UTC `lthcs-daily`
 # workflow still owns the full pipeline (FRED, EIA, SEC EDGAR XBRL,
 # 13F, Form 4, Google Trends weekly batch); this workflow is intentionally
 # narrower so it can run on a tight cadence without blowing through API
@@ -32,19 +34,19 @@ name: lthcs-news-hourly
 #
 # Failure modes:
 #   * If today's snapshot doesn't exist yet (e.g. 00:00 UTC, before the
-#     23:00 daily cron has caught up to the new UTC date), the script
+#     23:11 daily cron has caught up to the new UTC date), the script
 #     exits 2 with a clear message. The workflow's `Commit and push`
 #     step then sees no diff and exits cleanly.
 #
 # Differs from lthcs-daily.yml:
-#   * Schedule: every hour vs. once at 23:00 UTC.
+#   * Schedule: every hour vs. once at 23:11 UTC.
 #   * Concurrency: cancel-in-progress=true (newer news wins) vs. queued.
 #   * Pipeline flag: --news-only vs. --catch-up.
 #   * Commit message includes the UTC hour so the audit trail shows when
 #     each hourly refresh ran.
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "19 * * * *"
   workflow_dispatch: {}
 
 # Push back to main requires contents:write. We intentionally do NOT

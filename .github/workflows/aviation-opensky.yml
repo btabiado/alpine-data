@@ -13,8 +13,9 @@ name: aviation-opensky
 #   never sees until its own next tick — so an hourly cadence is the
 #   practical ceiling.
 #
-# Minute 25 offsets this run from pages.yml's top-of-hour build and the
-# other daily data bots, avoiding simultaneous pushes to main.
+# Minute 25 offsets this run from pages.yml (minute 7), the hourly news
+# refresh (minute 19), and the other daily data bots, avoiding simultaneous
+# pushes to main.
 # [skip ci] on the commit message keeps the push from retriggering
 # pages.yml — its own hourly cron picks up the new data-opensky.json on
 # the next tick.

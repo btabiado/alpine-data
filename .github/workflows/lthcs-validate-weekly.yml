@@ -10,7 +10,8 @@ name: lthcs-validate-weekly
 # fight for runner pool or git refs.
 on:
   schedule:
-    - cron: "0 5 * * 1"
+    # 05:11 UTC, still after the Monday 02:47 trends run, and off minute 0.
+    - cron: "11 5 * * 1"
   workflow_dispatch: {}
 
 # Read-only: no push back to main, so we explicitly request `contents: read`

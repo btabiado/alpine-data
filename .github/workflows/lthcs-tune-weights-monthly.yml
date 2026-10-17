@@ -1,7 +1,7 @@
 name: lthcs-tune-weights-monthly
 
 # Monthly adaptive-weights walk-forward CV. On the 1st of each month
-# at 07:00 UTC (1 hour after the backtest run so they don't fight for
+# at 07:41 UTC (about an hour after the 06:19 backtest run so they don't fight for
 # git refs), run scripts/lthcs_tune_weights.py --walk-forward and
 # commit the resulting timestamped JSON to data/lthcs/adaptive_weights/.
 #
@@ -12,7 +12,7 @@ name: lthcs-tune-weights-monthly
 # composite score).
 on:
   schedule:
-    - cron: "0 7 1 * *"
+    - cron: "41 7 1 * *"
   workflow_dispatch: {}
 
 permissions:

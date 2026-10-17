@@ -8,7 +8,7 @@ name: crypto-odds-daily
 # crypto_odds/build_outlook.py then runs the research models on fresh spot closes for the 30-day outlook
 # (outlook.json) and logs each day's calls for grading (outlook_history.json).
 #
-# 14:15 UTC, offset from the other data bots (06:00, 07:00, 08:30). [skip ci] keeps the push from
+# 14:15 UTC, offset from the other data bots (06:13, 07:29, 08:30). [skip ci] keeps the push from
 # retriggering pages.yml; its hourly cron publishes the new odds.json.
 on:
   schedule:

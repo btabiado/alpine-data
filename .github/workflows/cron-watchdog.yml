@@ -1,0 +1,76 @@
+name: cron-watchdog
+
+# Catch up scheduled workflows that GitHub dropped or started hours late.
+#
+# Alpine Data daily audit 2026-10-17, TOP ISSUES #3: aviation-opensky,
+# lthcs-news-hourly and pages each ran about 20% of their hourly ticks, and
+# most daily crons started 4–10 hours late. Data still updated, with gaps.
+#
+# GitHub's rule (triggering a workflow from a workflow): events caused by
+# GITHUB_TOKEN do not create new workflow runs, EXCEPT workflow_dispatch and
+# repository_dispatch, which always do. This job uses that exception. It
+# needs no PAT, no cron-job.org, and no new secret — only the built-in
+# GITHUB_TOKEN with actions: write, which is the permission the workflow
+# dispatch API requires.
+#
+# The schedule is a few daily-style ticks at staggered minutes off :00 (the
+# minute GitHub documents as the most congested). Hourly crons on this repo
+# are the ones that get dropped, so an hourly watchdog would miss the same
+# way. Each tick that does land dispatches every overdue target, up to a cap.
+#
+# Disable without editing the file: set the repository variable
+# CRON_WATCHDOG_DISABLED to true (Settings → Secrets and variables → Actions
+# → Variables). The job still runs, writes "disabled" to the step summary,
+# and does not call the API. A manual run can set dry_run to log the
+# decisions without dispatching.
+#
+# Targets and thresholds live in scripts/cron_watchdog.py. Hourly jobs are
+# overdue 3 hours after a missed fire. Daily jobs use the same grace, so a
+# 07:29 UTC cron is not eligible until 10:29 UTC. Anything queued or in
+# progress is left alone; target concurrency groups keep a catch-up from
+# stacking on the scheduled run if GitHub delivers that late tick too.
+
+on:
+  schedule:
+    # Off :00. Spread across the day so one delayed tick does not cover it.
+    - cron: "17 1 * * *"
+    - cron: "23 7 * * *"
+    - cron: "41 13 * * *"
+    - cron: "53 19 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Log overdue workflows and do not dispatch"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read    # checkout the script
+  actions: write    # list runs and create workflow_dispatch events
+
+concurrency:
+  group: cron-watchdog
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest becomes 26.04 on 2026-10-19 and setup-python needs a toolcache build for the image
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Catch up overdue workflows
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Always the default branch. A manual run from another branch must
+          # not dispatch that branch's copy of a data workflow.
+          CRON_WATCHDOG_REF: ${{ github.event.repository.default_branch }}
+          CRON_WATCHDOG_DISABLED: ${{ vars.CRON_WATCHDOG_DISABLED || 'false' }}
+          CRON_WATCHDOG_DRY_RUN: ${{ inputs.dry_run && 'true' || 'false' }}
+        run: python scripts/cron_watchdog.py

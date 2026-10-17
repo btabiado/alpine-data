@@ -2,7 +2,7 @@ name: trufflehog-weekly
 
 on:
   schedule:
-    - cron: "0 3 * * 0"   # Sunday 03:00 UTC
+    - cron: "37 3 * * 0"   # Sunday 03:37 UTC, off minute 0
   workflow_dispatch: {}
 
 permissions:

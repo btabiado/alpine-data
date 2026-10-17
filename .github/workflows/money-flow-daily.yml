@@ -15,7 +15,7 @@ name: money-flow-daily
 # The composite itself is recomputed at deploy time inside fetch_market.fetch_all()
 # (python app.py --fetch-market in pages.yml), reading these committed files.
 #
-# 08:30 UTC — offset from real-estate-daily (06:00) and city-daily (07:00) so
+# 08:30 UTC — offset from real-estate-daily (06:13) and city-daily (07:29) so
 # the data-refresh bots don't race the same commit. [skip ci] keeps the push
 # from retriggering pages.yml; its own hourly cron picks up the new data.
 on:

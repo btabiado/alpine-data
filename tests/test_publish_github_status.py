@@ -630,7 +630,7 @@ def test_pages_deploys_when_the_daily_audit_finishes(pages):
     assert wr["workflows"] == [audit["name"]] == ["daily-audit"]
     assert wr["types"] == ["completed"] and wr["branches"] == ["main"]
     # Existing triggers untouched.
-    assert on["push"] == {"branches": ["main"]} and on["schedule"] == [{"cron": "0 * * * *"}]
+    assert on["push"] == {"branches": ["main"]} and on["schedule"] == [{"cron": "7 * * * *"}]
     assert "workflow_dispatch" in on
     # workflow_run must build main as checked out, never the triggering run's head.
     checkout = next(s for s in _steps(pages) if "actions/checkout" in (s.get("uses") or ""))
