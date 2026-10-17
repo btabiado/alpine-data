@@ -954,3 +954,69 @@ def test_daily_workflow_keeps_sector_etf_on():
 
     wf = (Path(__file__).resolve().parents[2] / ".github/workflows/lthcs-daily.yml").read_text()
     assert "--sector-etf" in wf
+
+
+class TestMomentumCarryForward:
+    """When today's Yahoo momentum is missing, reuse the newest finite
+    90-day return from variable_detail inside the 7-day window. Never
+    invent a value, and never overwrite a live finite return."""
+
+    def _write_vd(self, root: Path, datestr: str, momentums: dict) -> None:
+        d = root / "variable_detail"
+        d.mkdir(parents=True, exist_ok=True)
+        variables = [
+            {
+                "ticker": ticker,
+                "pillar": "institutional_confidence",
+                "components": {"momentum_pct_90d": mom},
+            }
+            for ticker, mom in momentums.items()
+        ]
+        (d / ("%s.json" % datestr)).write_text(json.dumps({
+            "calc_date": datestr,
+            "variables": variables,
+        }))
+
+    def _state(self, root: Path, momentums: dict):
+        args = lthcs_daily.parse_args([])
+        state = lthcs_daily.PipelineState(args=args)
+        state.calc_date = "2026-10-17"
+        state.persist = lthcs_daily.LthcsPersist(data_root=root)
+        state.active_tickers = list(momentums.keys())
+        state.momentum_by_ticker = dict(momentums)
+        return state
+
+    def test_uses_newest_finite_value_within_seven_days(self, tmp_path: Path) -> None:
+        self._write_vd(tmp_path, "2026-10-10", {"AAPL": 0.11, "MSFT": 0.33})
+        self._write_vd(tmp_path, "2026-10-16", {"AAPL": 0.22, "MSFT": None})
+        # Today's file must not be a source — the live fetch already failed.
+        self._write_vd(tmp_path, "2026-10-17", {"AAPL": 0.99, "MSFT": 0.99})
+        # Older than the window.
+        self._write_vd(tmp_path, "2026-10-09", {"GONE": 0.44})
+
+        state = self._state(tmp_path, {
+            "AAPL": None,
+            "MSFT": float("nan"),
+            "LIVE": 0.50,
+            "GONE": None,
+        })
+        counts = {"yahoo_momentum_ok": 1}
+        lthcs_daily._carry_forward_momentum(state, counts)
+
+        assert state.momentum_by_ticker["AAPL"] == pytest.approx(0.22)
+        # 10/16 is null and 10/10 is inside the window, so the older finite
+        # return is used. 10/09 would be age 8 and is not consulted for GONE.
+        assert state.momentum_by_ticker["MSFT"] == pytest.approx(0.33)
+        assert state.momentum_by_ticker["LIVE"] == pytest.approx(0.50)
+        assert state.momentum_by_ticker["GONE"] is None
+        assert counts["yahoo_momentum_carried"] == 2
+        assert counts["yahoo_momentum_ok"] == 3
+
+    def test_does_not_carry_nan_placeholder(self, tmp_path: Path) -> None:
+        self._write_vd(tmp_path, "2026-10-16", {"AAPL": float("nan")})
+        state = self._state(tmp_path, {"AAPL": None})
+        counts = {"yahoo_momentum_ok": 0}
+        lthcs_daily._carry_forward_momentum(state, counts)
+        assert state.momentum_by_ticker["AAPL"] is None
+        assert counts["yahoo_momentum_carried"] == 0
+        assert counts["yahoo_momentum_ok"] == 0

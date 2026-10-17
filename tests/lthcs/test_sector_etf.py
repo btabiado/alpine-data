@@ -516,3 +516,14 @@ def test_fetch_sector_strength_as_of_distinct_cache_from_today(tmp_path: Path) -
     files = list((isolated / "sector_etf").glob("*.json"))
     assert any("2026-04-15" in p.name for p in files)
     assert snap_hist["as_of"] == "2026-04-15"
+
+
+def test_adj_closes_skip_nonfinite_and_fall_back_to_close() -> None:
+    closes = sector_etf._adj_closes([
+        {"adj_close": float("nan"), "close": 10.0},
+        {"adj_close": None, "close": float("nan")},
+        {"close": 12.0},
+    ])
+    assert closes == [10.0, 12.0]
+    assert sector_etf._trailing_return([10.0, float("nan")], 1) is None
+    assert sector_etf._trailing_return([10.0, 12.0], 1) == pytest.approx(0.2)

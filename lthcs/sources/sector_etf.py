@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import logging
+import math
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -122,22 +123,30 @@ def _normalize_as_of(as_of: Optional[str]) -> Optional[str]:
         return None
 
 
+def _finite_price(value: Any) -> Optional[float]:
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(f) or math.isinf(f):
+        return None
+    return f
+
+
 def _adj_closes(prices: List[Dict[str, Any]]) -> List[float]:
     """Pull the adjusted-close series out of yahoo's row dicts.
 
     Falls back to ``close`` if ``adj_close`` is missing for any row.
+    Non-finite prices are dropped so a null bar cannot publish NaN returns.
     """
     out: List[float] = []
     for r in prices or []:
-        v = r.get("adj_close")
-        if v is None:
-            v = r.get("close")
-        if v is None:
+        f = _finite_price(r.get("adj_close"))
+        if f is None:
+            f = _finite_price(r.get("close"))
+        if f is None:
             continue
-        try:
-            out.append(float(v))
-        except (TypeError, ValueError):
-            continue
+        out.append(f)
     return out
 
 
@@ -145,15 +154,16 @@ def _trailing_return(closes: List[float], n: int) -> Optional[float]:
     """Total return over the trailing ``n`` trading-day bars.
 
     Requires ``n + 1`` closes (n returns from n+1 prices); returns ``None``
-    if there aren't enough bars or the lookback close is zero.
+    if there aren't enough bars, the lookback close is zero, or either
+    endpoint is non-finite.
     """
     if n <= 0:
         return None
     if len(closes) < n + 1:
         return None
-    last = closes[-1]
-    past = closes[-(n + 1)]
-    if past == 0:
+    last = _finite_price(closes[-1])
+    past = _finite_price(closes[-(n + 1)])
+    if last is None or past is None or past == 0:
         return None
     return last / past - 1.0
 

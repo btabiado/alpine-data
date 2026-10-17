@@ -561,3 +561,102 @@ def test_dot_ticker_falls_back_to_dot_variant() -> None:
     # Hyphen tried first (empty), then the dot fallback supplied data.
     called_symbols = [call.args[0] for call in mock_ticker.call_args_list]
     assert called_symbols == ["BRK-B", "BRK.B"]
+
+
+# ---------------------------------------------------------------------------
+# Null adjusted closes and transient fetch failures
+# ---------------------------------------------------------------------------
+
+
+def _nan_price_frame(closes: List[float]) -> pd.DataFrame:
+    """OHLCV frame whose Adj Close is null but raw Close is finite."""
+    n = len(closes)
+    idx = pd.bdate_range(start="2026-10-01", periods=n)
+    return pd.DataFrame(
+        {
+            "Open": list(closes),
+            "High": [c + 1.0 for c in closes],
+            "Low": [c - 1.0 for c in closes],
+            "Close": list(closes),
+            "Adj Close": [float("nan")] * n,
+            "Volume": [1_000] * n,
+        },
+        index=idx,
+    )
+
+
+def test_null_adj_close_falls_back_to_unadjusted_close() -> None:
+    """A null adjclose must not become a NaN momentum.
+
+    yfinance's default auto-adjust writes Adj Close over Close, so a
+    chart whose adjclose is null turns every close into NaN. We request
+    the unadjusted series and score the raw close when the adjusted one
+    is missing.
+    """
+    df = _nan_price_frame([100.0, 110.0, 121.0])
+    mock_ticker = _patch_ticker(df)
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
+        # Default period matches get_momentum_pct's cache key.
+        rows = yahoo.get_daily_prices("AAPL")
+        m = yahoo.get_momentum_pct("AAPL", days=2)
+    assert [r["close"] for r in rows] == [100.0, 110.0, 121.0]
+    assert all(math.isfinite(r["adj_close"]) for r in rows)
+    assert m == pytest.approx(0.21)
+    assert mock_ticker.return_value.history.call_args.kwargs["auto_adjust"] is False
+    # Recovered from the same response — no retry.
+    assert mock_ticker.return_value.history.call_count == 1
+
+
+def test_all_nonfinite_frame_is_retried(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(yahoo, "_PRICE_FETCH_BACKOFF_S", (0.0, 0.0))
+    bad = pd.DataFrame(
+        {
+            "Open": [float("nan")],
+            "High": [float("nan")],
+            "Low": [float("nan")],
+            "Close": [float("nan")],
+            "Adj Close": [float("nan")],
+            "Volume": [0],
+        },
+        index=pd.to_datetime(["2026-10-16"]),
+    )
+    good = _make_df([100.0, 130.0])
+    instance = MagicMock()
+    instance.history.side_effect = [bad, good]
+    mock_ticker = MagicMock(return_value=instance)
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
+        m = yahoo.get_momentum_pct("AAPL", days=1)
+    assert m == pytest.approx(0.30)
+    assert instance.history.call_count == 2
+
+
+def test_price_fetch_retries_exceptions_then_raises(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(yahoo, "_PRICE_FETCH_BACKOFF_S", (0.0, 0.0))
+    instance = MagicMock()
+    instance.history.side_effect = RuntimeError("429")
+    mock_ticker = MagicMock(return_value=instance)
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
+        with pytest.raises(RuntimeError, match="429"):
+            yahoo.get_daily_prices("AAPL", period="5d")
+    assert instance.history.call_count == yahoo._PRICE_FETCH_ATTEMPTS
+
+
+def test_clean_empty_frame_is_not_retried() -> None:
+    empty = pd.DataFrame(
+        columns=["Open", "High", "Low", "Close", "Adj Close", "Volume"]
+    )
+    mock_ticker = _patch_ticker(empty)
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
+        assert yahoo.get_daily_prices("ZZZZ", period="5d") == []
+    assert mock_ticker.return_value.history.call_count == 1
+
+
+def test_momentum_skips_trailing_nonfinite_bar() -> None:
+    """A placeholder last bar is dropped; the return ends on the prior close."""
+    df = _make_df([100.0, 80.0, float("nan")])
+    # _make_df copies NaN into Adj Close as well.
+    with patch(_TICKER_PATCH_TARGET, _patch_ticker(df)):
+        m = yahoo.get_momentum_pct("AAPL", days=1)
+    assert m == pytest.approx(-0.20)
