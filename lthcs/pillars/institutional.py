@@ -338,6 +338,24 @@ def _resolve_momentum_cohort(
 
 # --- Public API: momentum sub-score ----------------------------------------
 
+def _finite_momentum(value: Any) -> Optional[float]:
+    """Return a finite momentum decimal, or ``None`` for missing / NaN / inf.
+
+    A NaN return is not a signal. Treating it as present collapses the
+    peer rank to the neutral 50 and the quality audit counts that as
+    real coverage failing to clear the default.
+    """
+    if value is None:
+        return None
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(f) or math.isinf(f):
+        return None
+    return f
+
+
 def compute_momentum_subscore(
     ticker: str,
     momentum_pct: Optional[float],
@@ -366,20 +384,15 @@ def compute_momentum_subscore(
     except (TypeError, ValueError):
         return _NEUTRAL
     # NaN check.
-    if math.isnan(focal):
+    if math.isnan(focal) or math.isinf(focal):
         return _NEUTRAL
 
     peer_values: List[float] = []
     for sym, m in (peer_momentums or {}).items():
         if sym == ticker:
             continue
-        if m is None:
-            continue
-        try:
-            f = float(m)
-        except (TypeError, ValueError):
-            continue
-        if math.isnan(f):  # NaN
+        f = _finite_momentum(m)
+        if f is None:
             continue
         peer_values.append(f)
 
@@ -755,6 +768,7 @@ def compute_institutional(
         ``momentum_strategy="compound"``. If the focal ticker isn't in
         any sector_group, falls back to ``"sector_relative"``.
     """
+    momentum_pct = _finite_momentum(momentum_pct)
     has_momentum = momentum_pct is not None
     has_inst = inst_holdings_change_qoq is not None
     has_insider = bool(insider_data)
@@ -777,11 +791,11 @@ def compute_institutional(
         sector_assignments=sector_assignments,
         peer_groups_config=peer_groups_config,
     )
-    # Cohort size = peers (excluding focal, excluding None).
+    # Cohort size = peers (excluding focal, excluding missing / non-finite).
     momentum_cohort_size = sum(
         1
         for sym, m in cohort_momentums.items()
-        if sym != ticker and m is not None
+        if sym != ticker and _finite_momentum(m) is not None
     )
 
     momentum_subscore = compute_momentum_subscore(

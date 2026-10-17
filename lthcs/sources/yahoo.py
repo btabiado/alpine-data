@@ -18,6 +18,10 @@ All upstream calls go through:
     * a 24h ``FileCache("yahoo")`` for response bodies, and
     * a ``TokenBucket(capacity=10, refill_rate=1.0)`` (1 req/sec burst 10).
 
+History is requested with ``auto_adjust=False``. A null adjusted close
+falls back to the unadjusted close from the same bar. Exceptions and
+all-non-finite frames are retried with backoff; a clean empty frame is not.
+
 The cache stores price history as a list of JSON-friendly dicts so the
 derived metrics (volatility, momentum) can be computed from cached data
 without re-hitting Yahoo.
@@ -27,6 +31,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import math
+import time
 from typing import Any, Dict, List, Optional
 
 import yfinance as yf
@@ -50,6 +55,13 @@ _AS_OF_FETCH_PERIOD = "2y"
 # Module-level singletons. One cache + one rate limiter per source.
 _cache = FileCache("yahoo")
 _bucket = TokenBucket(capacity=10, refill_rate=1.0)
+
+# Transient Yahoo / yfinance failures (HTTP 429, 5xx, or a chart body whose
+# prices are all non-finite — the 2026-10-17 failure mode, where a null
+# ``adjclose`` made every Close NaN under yfinance's default auto-adjust).
+# A clean empty frame (unknown or delisted symbol) is not retried.
+_PRICE_FETCH_ATTEMPTS = 3
+_PRICE_FETCH_BACKOFF_S = (1.0, 2.0)
 
 
 def _cache_key(ticker: str, period: str, as_of: Optional[str] = None) -> str:
@@ -80,28 +92,64 @@ def _slice_to_as_of(rows: List[Dict[str, Any]], as_of: str) -> List[Dict[str, An
     return [r for r in rows if str(r.get("date", "")) <= as_of]
 
 
-def _row_to_dict(date_str: str, row: Any) -> Dict[str, Any]:
-    """Coerce a yfinance row into a JSON-serialisable dict."""
-    def _f(name: str) -> float:
-        # yfinance occasionally returns NaN; coerce to float and let the
-        # caller decide. We don't drop rows here.
-        return float(row[name])
+def _finite_float(value: Any) -> Optional[float]:
+    """Return ``value`` as a finite float, or ``None`` for missing / NaN / inf."""
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(f) or math.isinf(f):
+        return None
+    return f
 
-    # ``Adj Close`` is only emitted by yfinance when ``auto_adjust=False``
-    # (the historical default). If it's missing, fall back to ``Close``.
+
+def _sleep_backoff(failed_attempt: int) -> None:
+    """Sleep before retry ``failed_attempt`` (0-based). Tests zero the delays."""
+    if failed_attempt < 0 or failed_attempt >= len(_PRICE_FETCH_BACKOFF_S):
+        return
+    delay = _PRICE_FETCH_BACKOFF_S[failed_attempt]
+    if delay:
+        time.sleep(delay)
+
+
+def _row_to_dict(date_str: str, row: Any) -> Optional[Dict[str, Any]]:
+    """Coerce a yfinance row into a JSON-serialisable dict.
+
+    Returns ``None`` when neither the adjusted nor the unadjusted close
+    is a finite price, so a placeholder bar cannot poison momentum.
+    A null adjusted close falls back to the unadjusted close from the
+    same bar (a real Yahoo price, not a fill). Non-finite OHLC legs
+    fall back to that chosen close; a non-finite volume becomes 0.
+    """
+    raw_close = _finite_float(row["Close"]) if "Close" in row.index else None
     if "Adj Close" in row.index:
-        adj_close = float(row["Adj Close"])
+        adj = _finite_float(row["Adj Close"])
     else:
-        adj_close = float(row["Close"])
+        adj = None
+    # The series the pipeline scores has historically been the adjusted
+    # close (yfinance's default auto-adjust wrote it into ``Close``).
+    # Prefer a finite adjusted close; otherwise keep the finite raw close.
+    chosen = adj if adj is not None else raw_close
+    if chosen is None:
+        return None
+    close_out = raw_close if raw_close is not None else chosen
+    adj_out = adj if adj is not None else chosen
 
+    def _px(name: str) -> float:
+        if name not in row.index:
+            return chosen
+        f = _finite_float(row[name])
+        return chosen if f is None else f
+
+    vol = _finite_float(row["Volume"]) if "Volume" in row.index else None
     return {
         "date": date_str,
-        "open": _f("Open"),
-        "high": _f("High"),
-        "low": _f("Low"),
-        "close": _f("Close"),
-        "adj_close": adj_close,
-        "volume": int(row["Volume"]),
+        "open": _px("Open"),
+        "high": _px("High"),
+        "low": _px("Low"),
+        "close": close_out,
+        "adj_close": adj_out,
+        "volume": int(vol) if vol is not None else 0,
     }
 
 
@@ -123,6 +171,67 @@ def _yahoo_symbol_variants(ticker: str) -> List[str]:
     return [ticker.replace(".", "-"), ticker]
 
 
+def _frame_to_rows(df: Any) -> Optional[List[Dict[str, Any]]]:
+    """Normalize a yfinance frame.
+
+    Returns ``[]`` for an empty frame, a list of finite bars when at
+    least one close is usable, or ``None`` when the frame had bars but
+    every close was non-finite (worth a retry). A null adjusted close
+    with a finite raw close is usable and is not a retry.
+    """
+    if df is None or len(df) == 0:
+        return []
+    rows: List[Dict[str, Any]] = []
+    for ts, row in df.iterrows():
+        # ``ts`` may be a pandas Timestamp; strftime gives a stable
+        # YYYY-MM-DD regardless of timezone metadata.
+        try:
+            date_str = ts.strftime("%Y-%m-%d")
+        except AttributeError:
+            date_str = str(ts)[:10]
+        parsed = _row_to_dict(date_str, row)
+        if parsed is not None:
+            rows.append(parsed)
+    if not rows:
+        return None
+    return rows
+
+
+def _fetch_prices_once(ticker: str, period: str) -> Optional[List[Dict[str, Any]]]:
+    """One pass over symbol variants.
+
+    ``None`` means every non-empty frame had only non-finite closes.
+    ``[]`` means Yahoo had no bars. A non-empty list is success.
+    Exceptions propagate so the caller can retry them.
+    """
+    saw_nonfinite = False
+    for variant in _yahoo_symbol_variants(ticker):
+        _bucket.acquire()
+        t = yf.Ticker(variant)
+        try:
+            # auto_adjust=False keeps the raw Close when Adj Close is
+            # null. yfinance's default auto-adjust replaces Close with
+            # Adj Close, so a null adjclose turns the whole series into
+            # NaN and the 90-day return collapses.
+            df = t.history(period=period, auto_adjust=False)
+        except Exception:
+            _api_counter.bump("yahoo", "error")
+            raise
+        parsed = _frame_to_rows(df)
+        if parsed is None:
+            _api_counter.bump("yahoo", "error")
+            saw_nonfinite = True
+            continue
+        if not parsed:
+            _api_counter.bump("yahoo", "error")
+            continue
+        _api_counter.bump("yahoo", "ok")
+        return parsed
+    if saw_nonfinite:
+        return None
+    return []
+
+
 def _fetch_prices_from_yahoo(ticker: str, period: str) -> List[Dict[str, Any]]:
     """Hit yfinance (subject to the rate limiter) and normalize the result.
 
@@ -130,31 +239,27 @@ def _fetch_prices_from_yahoo(ticker: str, period: str) -> List[Dict[str, Any]]:
     variant (``BRK-B``) first — Yahoo's symbol convention uses hyphens
     for class shares — and fall back to the dot form if it returns no
     rows.
-    """
-    for variant in _yahoo_symbol_variants(ticker):
-        _bucket.acquire()
-        t = yf.Ticker(variant)
-        try:
-            df = t.history(period=period)
-        except Exception:
-            _api_counter.bump("yahoo", "error")
-            raise
-        if df is None or len(df) == 0:
-            _api_counter.bump("yahoo", "error")
-            continue
-        _api_counter.bump("yahoo", "ok")
 
-        rows: List[Dict[str, Any]] = []
-        for ts, row in df.iterrows():
-            # ``ts`` may be a pandas Timestamp; strftime gives a stable
-            # YYYY-MM-DD regardless of timezone metadata.
-            try:
-                date_str = ts.strftime("%Y-%m-%d")
-            except AttributeError:
-                date_str = str(ts)[:10]
-            rows.append(_row_to_dict(date_str, row))
-        if rows:
-            return rows
+    Exceptions and all-non-finite frames are retried with backoff.
+    A clean empty response is returned immediately.
+    """
+    last_exc: Optional[BaseException] = None
+    for attempt in range(_PRICE_FETCH_ATTEMPTS):
+        try:
+            parsed = _fetch_prices_once(ticker, period)
+        except Exception as exc:
+            last_exc = exc
+            parsed = None
+        else:
+            last_exc = None
+        if parsed:
+            return parsed
+        if parsed == []:
+            return []
+        if attempt + 1 < _PRICE_FETCH_ATTEMPTS:
+            _sleep_backoff(attempt)
+    if last_exc is not None:
+        raise last_exc
     return []
 
 
@@ -203,8 +308,22 @@ def get_daily_prices(
     return rows
 
 
+def _bar_close(bar: Dict[str, Any]) -> Optional[float]:
+    """Finite price for return math: adjusted close, else raw close."""
+    for key in ("adj_close", "close"):
+        f = _finite_float(bar.get(key))
+        if f is not None:
+            return f
+    return None
+
+
 def _closes(prices: List[Dict[str, Any]]) -> List[float]:
-    return [float(p["close"]) for p in prices]
+    out: List[float] = []
+    for bar in prices:
+        f = _bar_close(bar)
+        if f is not None:
+            out.append(f)
+    return out
 
 
 def get_volatility(
@@ -238,7 +357,10 @@ def get_volatility(
     # Sample stdev (ddof=1) — standard for return volatility.
     variance = sum((r - mean) ** 2 for r in returns) / (n - 1)
     daily_std = math.sqrt(variance)
-    return daily_std * math.sqrt(_TRADING_DAYS)
+    annualized = daily_std * math.sqrt(_TRADING_DAYS)
+    if not math.isfinite(annualized):
+        return None
+    return annualized
 
 
 def get_momentum_pct(
@@ -266,4 +388,7 @@ def get_momentum_pct(
     past = closes[-(days + 1)]
     if past == 0:
         return None
-    return last / past - 1.0
+    result = last / past - 1.0
+    if not math.isfinite(result):
+        return None
+    return result

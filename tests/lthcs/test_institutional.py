@@ -1277,3 +1277,20 @@ def test_momentum_cohort_size_correct_with_none_peers() -> None:
     assert result_with_lower_min["components"]["momentum_cohort_size"] == 3
     # Default 5-min path fell back to universe.
     assert result["components"]["momentum_strategy_used"] == "universe"
+
+
+def test_nan_momentum_is_missing_not_a_scored_signal() -> None:
+    """NaN is not a return. The pillar must record momentum as absent
+    so a null Yahoo close cannot masquerade as the neutral 50 with
+    ``has_momentum=True`` (the 2026-10-17 coverage collapse)."""
+    peers = {
+        "AAPL": float("nan"),
+        "MSFT": float("nan"),
+        "GOOG": 0.05,
+    }
+    result = institutional.compute_institutional("AAPL", float("nan"), peers)
+    assert result["data_quality"]["has_momentum"] is False
+    assert result["components"]["momentum_pct_90d"] is None
+    assert result["components"]["momentum_subscore"] == 50.0
+    # The NaN peer is not part of the cohort; GOOG is.
+    assert result["components"]["momentum_cohort_size"] == 1

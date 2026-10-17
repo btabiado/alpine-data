@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import re
 import sys
@@ -599,6 +600,120 @@ def _load_recent_dated_json(
     }
 
 
+def _finite_optional(value: Any) -> Optional[float]:
+    """Finite float or ``None``. NaN momentum must not count as a fetch hit."""
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return None
+    if math.isnan(f) or math.isinf(f):
+        return None
+    return f
+
+
+# Same window the Form 4 / 13F fallbacks already use. A 90-day return
+# observed within the last week is still that return, not a fabricated one.
+_MOMENTUM_STALENESS_DAYS = 7
+
+
+def _load_json_lenient(path: Path) -> Optional[Any]:
+    """Load JSON, accepting the non-standard NaN / Infinity tokens some
+    variable_detail files contain. Non-finite values are filtered by the
+    caller; this only keeps the file readable.
+    """
+    try:
+        return json.loads(path.read_text(), parse_constant=lambda token: float(token))
+    except (OSError, json.JSONDecodeError, ValueError):
+        return None
+
+
+def _recent_variable_detail_files(
+    state: "PipelineState",
+    *,
+    max_age_days: int,
+) -> List[tuple]:
+    """``(date, age_days, path)`` for variable_detail files strictly before
+    ``calc_date``, newest first, inside the staleness window.
+    """
+    if state.persist is None:
+        return []
+    base = state.persist.data_root / "variable_detail"
+    if not base.is_dir():
+        return []
+    try:
+        anchor = date.fromisoformat(state.calc_date)
+    except (TypeError, ValueError):
+        return []
+    found: List[tuple] = []
+    for entry in base.iterdir():
+        if not entry.is_file() or entry.suffix != ".json":
+            continue
+        try:
+            d = date.fromisoformat(entry.stem)
+        except ValueError:
+            continue
+        if d >= anchor:
+            continue
+        age = (anchor - d).days
+        if age > max_age_days or age < 0:
+            continue
+        found.append((d, age, entry))
+    found.sort(key=lambda item: item[0], reverse=True)
+    return found
+
+
+def _carry_forward_momentum(state: "PipelineState", counts: Dict[str, int]) -> None:
+    """Fill tickers whose live 90-day momentum is missing from the newest
+    finite ``momentum_pct_90d`` in variable_detail within 7 days.
+
+    Used when Yahoo returns an empty or all-non-finite price window.
+    Values outside the window, NaN placeholders, and today's own file
+    are ignored. A live finite momentum is never overwritten.
+    """
+    missing = [
+        sym for sym in state.active_tickers
+        if _finite_optional(state.momentum_by_ticker.get(sym)) is None
+    ]
+    # Drop any NaN that slipped into state so Stage 3 sees a real miss.
+    for sym in missing:
+        state.momentum_by_ticker[sym] = None
+    carried: Dict[str, float] = {}
+    if missing:
+        for _d, _age, path in _recent_variable_detail_files(
+            state, max_age_days=_MOMENTUM_STALENESS_DAYS
+        ):
+            payload = _load_json_lenient(path)
+            if not isinstance(payload, dict):
+                continue
+            for row in payload.get("variables") or []:
+                if not isinstance(row, dict):
+                    continue
+                if row.get("pillar") != "institutional_confidence":
+                    continue
+                sym = row.get("ticker")
+                if sym not in missing or sym in carried:
+                    continue
+                mom = _finite_optional(
+                    (row.get("components") or {}).get("momentum_pct_90d")
+                )
+                if mom is None:
+                    continue
+                carried[sym] = mom
+            if len(carried) == len(missing):
+                break
+    for sym, mom in carried.items():
+        state.momentum_by_ticker[sym] = mom
+    counts["yahoo_momentum_carried"] = len(carried)
+    counts["yahoo_momentum_ok"] = counts.get("yahoo_momentum_ok", 0) + len(carried)
+    if carried:
+        print(
+            "  [lthcs_daily] yahoo momentum missing for %d ticker(s); "
+            "carried %d forward from variable_detail within %d days"
+            % (len(missing), len(carried), _MOMENTUM_STALENESS_DAYS),
+            file=sys.stderr,
+        )
+
+
 # ---------------------------------------------------------------------------
 # Stages
 # ---------------------------------------------------------------------------
@@ -772,14 +887,14 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         except Exception as e:
             print(f"  [lthcs_daily] yahoo.get_daily_prices({sym}) suppressed: {type(e).__name__}", file=sys.stderr)
         try:
-            mom = yahoo.get_momentum_pct(sym, days=90, **as_of_kw)
+            mom = _finite_optional(yahoo.get_momentum_pct(sym, days=90, **as_of_kw))
             state.momentum_by_ticker[sym] = mom
             if mom is not None:
                 counts["yahoo_momentum_ok"] += 1
         except Exception:
             state.momentum_by_ticker[sym] = None
         try:
-            vol = yahoo.get_volatility(sym, window=30, **as_of_kw)
+            vol = _finite_optional(yahoo.get_volatility(sym, window=30, **as_of_kw))
             state.volatility_by_ticker[sym] = vol
             if vol is not None:
                 counts["yahoo_vol_ok"] += 1
@@ -1579,12 +1694,19 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         % (coverage["fresh"], coverage["stale"], coverage["never_scored"], coverage["scored_today"])
     )
 
+    _carry_forward_momentum(state, counts)
     _report_sec_errors(sec_errors, n)
+    carried = int(counts.get("yahoo_momentum_carried") or 0)
+    yahoo_suffix = (
+        " [%d carried <=%dd]" % (carried, _MOMENTUM_STALENESS_DAYS)
+        if carried else ""
+    )
     print(
-        "✓ Stage 2: Fetched %d/%d Yahoo, %d/%d SEC EDGAR, %d/1 FRED, %d/1 EIA, AV=%s%s"
+        "✓ Stage 2: Fetched %d/%d Yahoo%s, %d/%d SEC EDGAR, %d/1 FRED, %d/1 EIA, AV=%s%s"
         % (
             counts["yahoo_momentum_ok"],
             n,
+            yahoo_suffix,
             counts["sec_rev_ok"],
             n,
             counts["fred_ok"],
