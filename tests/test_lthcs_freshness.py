@@ -11,10 +11,11 @@ Three layers, all executed rather than inspected:
 1. **The shipped JavaScript.** ``lthcs_tab/lthcs-freshness.js`` is executed in
    V8 with a pinned clock, so the assertions run against the code that ships.
 
-2. **Dialect parity.** The same corpus is pushed through ``v2/app.py``'s
+2. **Dialect parity.** The same corpus is pushed through ``app.py``'s (V1)
    ``freshness()`` and the two outputs must match byte for byte. This is the
-   guard that matters most: three frontends now stamp dates and they must not
-   drift into three different dialects.
+   guard that matters most: the frontends that stamp dates must not drift
+   into different dialects. (It was held against ``v2/app.py`` until V2 was
+   retired in 2026-10; V1 carries the same port.)
 
 3. **Wiring.** Every LTHCS page must own a stamp element, route it through the
    shared helper, and keep clock reads out of it.
@@ -29,7 +30,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 FRESH_JS = ROOT / "lthcs_tab" / "lthcs-freshness.js"
-V2_APP = ROOT / "v2" / "app.py"
+V1_APP = ROOT / "app.py"
 
 NOW = "2026-08-02T12:00:00Z"
 
@@ -59,7 +60,7 @@ def _ctx_with(bodies: str, entry: str):
     ctx = py_mini_racer.MiniRacer()
     # RealDate arrives as a parameter: `const Date = D` puts the name Date in
     # TDZ for the whole factory body, so the real constructor must be captured
-    # before the body starts. Same shape as tests/test_v2_freshness.py.
+    # before the body starts. Same shape as tests/test_v1_freshness.py.
     ctx.eval("""
     function __make(RealDate, fixedNowMs){
       class D extends RealDate {
@@ -110,10 +111,8 @@ def lthcs_composite(fresh_src):
 
 
 @pytest.fixture(scope="module")
-def v2_freshness():
-    if not V2_APP.exists():  # pragma: no cover - repo layout guard
-        pytest.skip("v2/app.py not present")
-    src = V2_APP.read_text(encoding="utf-8")
+def v1_freshness():
+    src = V1_APP.read_text(encoding="utf-8")
     bodies = "\n".join(
         extract_function(src, n)
         for n in ("freshness", "freshnessDayUTC", "freshnessYmd")
@@ -264,20 +263,20 @@ OPTS = [
 ]
 
 
-def test_lthcs_freshness_is_byte_identical_to_v2(lthcs_freshness, v2_freshness):
+def test_lthcs_freshness_is_byte_identical_to_v1(lthcs_freshness, v1_freshness):
     """The whole point of porting rather than reinventing.
 
-    Any divergence here means the LTHCS pages and the V2 dashboard are telling
+    Any divergence here means the LTHCS pages and the main dashboard are telling
     the user two different stories about the same rules.
     """
     mismatches = []
     for iso in _corpus():
         for opts in OPTS:
-            a = json.dumps(v2_freshness(iso, opts), sort_keys=True)
+            a = json.dumps(v1_freshness(iso, opts), sort_keys=True)
             b = json.dumps(lthcs_freshness(iso, opts), sort_keys=True)
             if a != b:
                 mismatches.append((iso, opts, a, b))
-    assert not mismatches, f"dialect drift vs v2/app.py: {mismatches[:5]}"
+    assert not mismatches, f"dialect drift vs app.py: {mismatches[:5]}"
 
 
 @pytest.fixture(scope="module")
@@ -294,13 +293,13 @@ def realestate_freshness():
     return _ctx_with(bodies, "reFreshness")
 
 
-def test_realestate_inline_copy_is_byte_identical_to_v2(realestate_freshness, v2_freshness):
+def test_realestate_inline_copy_is_byte_identical_to_v1(realestate_freshness, v1_freshness):
     mismatches = []
     for iso in _corpus():
         # The inline copy carries no stale-suffix support (the page has no
         # per-entry stale flags), so only the shared options are compared.
         for opts in ({}, {"warnDays": 3, "badDays": 10}, {"label": "updated"}):
-            a = json.dumps(v2_freshness(iso, opts), sort_keys=True)
+            a = json.dumps(v1_freshness(iso, opts), sort_keys=True)
             b = json.dumps(realestate_freshness(iso, opts), sort_keys=True)
             if a != b:
                 mismatches.append((iso, opts, a, b))
@@ -330,7 +329,6 @@ PAGES = [
     ("lthcs_tab/index.html", "lthcs-last-updated", "lthcs_tab/lthcs-tab.js"),
     ("lthcs_tab/heatmap/index.html", "hm-last-updated", "lthcs_tab/heatmap/lthcs-heatmap.js"),
     ("lthcs_table/index.html", "lthcs-table-last-updated", "lthcs_table/lthcs-table.js"),
-    ("lthcs_tab_v2/index.html", "lthcs-v2-generated", "lthcs_tab_v2/lthcs-v2.js"),
     ("lthcs_crypto/index.html", "lcry-generated", "lthcs_crypto/lthcs-crypto.js"),
     ("lthcs_health/index.html", "health-generated", "lthcs_health/lthcs-health.js"),
     ("lthcs_health/pipeline.html", "freshness-data-asof", "lthcs_health/lthcs-pipeline.js"),
@@ -410,10 +408,10 @@ def test_no_lthcs_page_still_prints_a_bare_localised_date(lthcs_freshness):
 def test_tint_classes_exist_in_both_stylesheets():
     """Rule 5 needs the tints to actually resolve.
 
-    Every LTHCS page loads lthcs_tab/lthcs.css except the V2 experiment, which
-    ships its own stylesheet -- so the classes must be defined in both.
+    Every LTHCS page loads lthcs_tab/lthcs.css (the V2 experiment, which shipped
+    its own stylesheet, was retired in 2026-10).
     """
-    for css in ("lthcs_tab/lthcs.css", "lthcs_tab_v2/lthcs-v2.css"):
+    for css in ("lthcs_tab/lthcs.css",):
         text = (ROOT / css).read_text(encoding="utf-8")
         for tone in ("ok", "warn", "bad", "none"):
             assert f".lthcs-fresh--{tone}" in text, f"{css} missing --{tone} tint"

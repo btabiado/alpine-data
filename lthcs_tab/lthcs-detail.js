@@ -223,10 +223,6 @@ function humanCase(s) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function metaJoin(parts) {
-  return parts.filter((p) => p != null && p !== '').join(' · ');
-}
-
 function formatNumberish(v) {
   if (v == null) return '—';
   if (typeof v === 'number') {

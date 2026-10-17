@@ -28,7 +28,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
@@ -37,8 +36,12 @@ jobs:
           python-version: "3.11"
 
       - name: Fetch CFPB complaint counts
-        # Pure-stdlib fetcher — no pip install. Non-zero exit fails the workflow
-        # on purpose so a dead fetcher is visible in the Actions UI.
+        # Pure-stdlib fetcher — no pip install. It retries a read timeout
+        # inside the process: urllib raises TimeoutError from getresponse(),
+        # which is not a URLError, and one uncaught 45s stall on 2026-10-12
+        # (run 38277091475) exited before any snapshot was written. The cron
+        # does not re-run that day. Non-zero exit after the retries fails the
+        # workflow on purpose so a dead fetcher is visible in the Actions UI.
         run: python scripts/fetch_cfpb.py
 
       - name: Commit data changes via signed API commit

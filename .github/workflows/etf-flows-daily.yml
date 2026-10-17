@@ -21,6 +21,23 @@ name: etf-flows-daily
 # exits non-zero, so a Farside markup change turns this workflow red instead
 # of silently shredding history. That red is the point: the whole reason these
 # feeds rotted for three months is that every failure in this repo was silent.
+# A non-zero exit also emits a ::error annotation naming the asset, the check,
+# and the dates or HTTP status, so the run page is not only "exit code 1".
+#
+# A few settled rows where one fund is '-' are not that failure (daily audit
+# 2026-10-16, Top Issue 1: ETH had 6, BTC had 3, and a cap of 5 failed ETH).
+# Those rows keep the Total already committed, the step warns, and new rows
+# are still appended. '-' on more than 10% of settled rows is still a refused
+# write: that is the convention-change signal, not the absolute count.
+#
+# HTTP 403 is not that failure. Farside has been refusing GitHub runners since
+# 2026-10-06 (daily audit 2026-10-15: both CSVs stuck at 2026-10-05, this step
+# red). The job does not try to get around the block. It logs the 403, then
+# merges, in order, TFTC's public CC BY 4.0 bitcoin series (no key; ETH has no
+# equivalent) and data/etf_flows_manual.json plus the manual_entry input below.
+# When every source is blocked and nothing new was merged, the step warns and
+# exits 0. The CSVs stay where they are, so data health keeps reporting them
+# stale — that is the alarm. A bad parse or a malformed override still fails.
 #
 # Commit carries [skip ci] so the push doesn't retrigger pages.yml's push
 # build; pages.yml's own hourly cron picks up the new CSVs on its next tick.
@@ -31,7 +48,13 @@ on:
     # this also lands after money-flow-daily (08:30 UTC) so the two ETF-flow
     # jobs don't race each other's commits.
     - cron: "15 9 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      manual_entry:
+        description: "Optional flows to merge (JSON {btc,eth} or CSV with an asset column). Blank cells are unreported, never 0. See README."
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: write
@@ -47,7 +70,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
@@ -56,8 +78,11 @@ jobs:
           python-version: "3.11"
 
       - name: Fetch BTC + ETH spot-ETF flows
-        # Pure-stdlib fetcher — no pip install. Non-zero exit fails the
-        # workflow on purpose: a dead scraper must be visible, not absorbed.
+        # Pure-stdlib fetcher — no pip install. A refused parse or a malformed
+        # override fails the step. HTTP 403 from every source warns and exits 0;
+        # staleness stays visible on the CSVs themselves.
+        env:
+          ETF_FLOWS_MANUAL: ${{ inputs.manual_entry }}
         run: python scripts/fetch_etf_flows.py
 
       - name: Commit data changes via signed API commit

@@ -29,7 +29,7 @@ Design goals (mirrors ``lthcs.sources.llm_sentiment``)
   the ~1.4k system tokens are reused across all 167 tickers in one
   run. Haiku 4.5 + caching is ~$0.31/day for the universe (cost model
   in spec §5).
-* Capped. ``LTHCS_LLM_NARRATIVES_MAX_USD_PER_DAY`` (default ``2.00``)
+* Capped. ``LTHCS_LLM_NARRATIVES_MAX_USD_PER_DAY`` (default ``6.17``)
   aborts shadow persistence cleanly if a run exceeds the budget.
   Production templated path is unaffected -- the shadow file simply
   isn't written.
@@ -64,7 +64,6 @@ from __future__ import annotations
 
 import concurrent.futures
 import datetime as _dt
-import hashlib
 import json
 import logging
 import os
@@ -97,9 +96,21 @@ ENV_MODEL = "LTHCS_LLM_NARRATIVES_MODEL"
 ENV_MODEL_LEGACY = "LTHCS_NARRATIVES_LLM_MODEL"
 ENV_MAX_USD_PER_DAY = "LTHCS_LLM_NARRATIVES_MAX_USD_PER_DAY"
 
-# Default daily-run cost cap in USD. Spec §5 estimates ~$0.31/day for a
-# 167-ticker Haiku run with caching; cap is ~6x to leave headroom.
-DEFAULT_MAX_USD_PER_DAY = 2.0
+# Default daily-run cost cap in USD. Spec §5 estimated ~$0.31/day for a
+# 167-ticker Haiku run with caching and set the cap at $2.00 (~6x). The
+# universe is now 515 tickers, so the cap is scaled by 515/167:
+# 2.00 * 515 / 167 = 6.17. It is NOT raised beyond that proportion.
+#
+# Measured, not estimated: the May-June 2026 runs that had a key recorded
+# ~4.3k input + ~550 output tokens per narrative and no cached tokens, i.e.
+# ~$0.0071 per ticker, so a full 515-ticker run costs ~$3.65 (1.7x under
+# this cap). Under the old $2.00 such a run would hit the cap.
+#
+# The check runs AFTER the calls (run_shadow compares the run's total with
+# the cap), so the cap decides whether the output is persisted, not how much
+# is spent: spend is set by the ticker count. A cap below the real cost
+# throws away output that has already been paid for.
+DEFAULT_MAX_USD_PER_DAY = 6.17
 
 # Default retry parameters for 429 / 5xx errors. Spec §7.
 DEFAULT_RETRY_ATTEMPTS = 3
@@ -295,21 +306,6 @@ def _now_iso() -> str:
 # ---------------------------------------------------------------------------
 # Prompt construction
 # ---------------------------------------------------------------------------
-
-
-def _format_subscores(subs: Dict[str, float]) -> str:
-    """Render the 5 pillar sub-scores in a compact, prompt-friendly form."""
-    order = _templated.PILLAR_ORDER
-    parts = []
-    for p in order:
-        name = _templated.HUMAN_PILLAR_NAMES.get(p, p)
-        if p in subs and subs.get(p) is None:
-            # Dropped pillar (not measured): say so instead of inventing 50.
-            parts.append(f"{name}=n/a (dropped, no data)")
-            continue
-        val = float(subs.get(p, 50.0))
-        parts.append(f"{name}={val:.1f}")
-    return ", ".join(parts)
 
 
 def _binding_and_supporting(subs: Dict[str, float]) -> Dict[str, Any]:
@@ -617,15 +613,6 @@ def _ensure_no_injection_in_payload(ticker: str, payload: Dict[str, Any]) -> Non
             raise _InjectionInPayload(
                 f"injection_trigger in narrative payload: {trig[:60]}"
             )
-
-
-def _prompt_hash(user_message: str, model: str) -> str:
-    """SHA-256 the (model, user_message) tuple for idempotency checks."""
-    h = hashlib.sha256()
-    h.update(model.encode("utf-8"))
-    h.update(b"\x1f")
-    h.update(user_message.encode("utf-8"))
-    return h.hexdigest()
 
 
 # ---------------------------------------------------------------------------
@@ -988,7 +975,7 @@ def generate_llm_narrative(
             holdings_data=holdings_data,
             prior_snapshot_row=prior_snapshot_row,
         )
-    except _InjectionInPayload as exc:
+    except _InjectionInPayload:
         # Injection trigger surfaced from a sanitized string in the
         # payload (e.g. an insider name was tampered with). Skip the
         # LLM call entirely and use the templated fallback.
@@ -1316,7 +1303,7 @@ def score_universe(
     1. Run :func:`generate_universe_narratives` across the snapshot.
     2. Estimate cost from the response usage objects.
     3. If cost exceeds ``LTHCS_LLM_NARRATIVES_MAX_USD_PER_DAY`` (default
-       $2.00), log and SKIP persistence -- the prior day's shadow file
+       $6.17), log and SKIP persistence -- the prior day's shadow file
        is the last good record.
     4. Else (when ``persist=True``) write
        ``data/lthcs/narratives_llm/<calc_date>.json`` and append

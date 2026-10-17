@@ -13,6 +13,13 @@ Convert into a wide CSV:
     date,IBIT,FBTC,...,Total
     YYYY-MM-DD,...
 
+A "-" (or blank / n/a) cell is NOT a zero: it is a fund that has not reported
+yet, or did not exist yet. It is written as an empty CSV cell, a real "0.0"
+stays 0, and the same rules as the daily scraper apply (they share the code in
+scripts/fetch_etf_flows.py): the Total is left empty while a reporting fund is
+still missing, and a row with no reading at all (today before Farside
+publishes, a market holiday) is not written.
+
 Usable as:
     python parse_farside.py < input.txt > output.csv
 or imported: parse_farside_vertical(text: str) -> str (wide CSV)
@@ -24,6 +31,8 @@ import re
 import sys
 from datetime import datetime
 from io import StringIO
+
+from scripts.fetch_etf_flows import market_closed, withhold_incomplete_totals
 
 
 _DATE_RE = re.compile(r"^\s*(\d{1,2})\s+([A-Za-z]+)\s+(\d{4}),?\s*$")
@@ -44,16 +53,21 @@ def _parse_date(line: str) -> str:
     return dt.strftime("%Y-%m-%d")
 
 
-def _parse_value(token: str) -> float:
+def _parse_value(token: str) -> float | None:
+    """A Farside cell as a float, or None when it carries no reading.
+
+    "-", "–", "—", blank and "n/a" mean "not reported", which is not 0. Only a
+    printed number (including "0.0") is a reading.
+    """
     t = token.strip().replace(",", "").replace("$", "")
-    if t in ("", "-", "—", "n/a", "N/A"):
-        return 0.0
+    if t in ("", "-", "–", "—", "n/a", "N/A"):
+        return None
     if t.startswith("(") and t.endswith(")"):
         t = "-" + t[1:-1]
     try:
         return float(t)
     except ValueError:
-        return 0.0
+        return None
 
 
 def looks_like_vertical_farside(text: str) -> bool:
@@ -156,14 +170,27 @@ def parse_farside_vertical(text: str, asset_hint: str | None = None) -> str:
         rows.append([date_iso] + parsed)
         i += block_size
 
+    rows.sort(key=lambda r: r[0])
+    total_idx = next((j for j, f in enumerate(funds, start=1)
+                      if f.lower() == "total"), None)
+    if total_idx:
+        withhold_incomplete_totals(rows, total_idx)
+
     out = StringIO()
     out.write("date," + ",".join(funds) + "\n")
     for r in rows:
-        out.write(",".join([r[0]] + [_fmt_num(v) for v in r[1:]]) + "\n")
+        vals = r[1:]
+        if all(v is None for v in vals):
+            continue  # nothing reported: not a day of zero flow
+        if market_closed(r[0]) and not any(vals):
+            continue  # weekend / NYSE holiday: no session, no flow
+        out.write(",".join([r[0]] + [_fmt_num(v) for v in vals]) + "\n")
     return out.getvalue()
 
 
-def _fmt_num(v: float) -> str:
+def _fmt_num(v: float | None) -> str:
+    if v is None:
+        return ""  # no reading: an empty cell, never "0"
     if v == 0:
         return "0"
     # v == 0 already short-circuited above; only the magnitude test matters.

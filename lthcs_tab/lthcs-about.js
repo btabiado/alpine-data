@@ -2,11 +2,17 @@
  * lthcs-about.js — "About LTHCS" info modal.
  *
  * Opens a small read-only modal explaining the framework, scoring inputs,
- * data sources, and known V1 limitations. Wired to the #lthcs-about-btn
+ * data sources, and known limitations. Wired to the #lthcs-about-btn
  * button in the header.
+ *
+ * Nothing here hard-codes a ticker count or a coverage figure: the universe
+ * size and the per-pillar "has data today" column are filled on open from
+ * universe.json and the latest snapshot (see lthcs-coverage.js), and the band
+ * ranges from weights.json (see lthcs-bands.js).
  */
 
 import { bandList, bandRangeText, bandsReady } from "./lthcs-bands.js";
+import { activeCount, pageData, snapshotCoverage } from "./lthcs-coverage.js";
 
 // Score-band rows come from the live weights.json score_bands (via
 // lthcs-bands.js) so the legend tracks any band recalibration.
@@ -17,12 +23,13 @@ function bandRowsHtml() {
   ).join("");
 }
 
+// [snapshot sub-score key, name, default weight, inputs]
 const PILLAR_LIST = [
-  ["Adoption Momentum", "25%", "Revenue growth & QoQ vs peers + Google Trends search-interest (weekly batch)."],
-  ["Institutional Confidence", "20%", "Form 4 insider conviction + 13F top-10 holdings change + 90d price momentum."],
-  ["Financial Evolution", "15%", "Revenue growth + gross margin trend + operating cash flow + bank-cohort NII/PCL/noninterest."],
-  ["Thesis Integrity", "20%", "Finnhub analyst recommendations (primary) + SEC 8-K material events + Yahoo earnings refinement."],
-  ["Demand Environment Score", "20%", "Sector-tilted macro: FRED tier-1 (CPI/Fed Funds/10Y/Δ10Y/unemployment/real 10Y/VIX/M2) + WTI, plus tier-2 (Brent/gasoline/ISM/housing/sentiment/U6)."],
+  ["adoption_momentum", "Adoption Momentum", "25%", "Revenue growth & QoQ vs peers + Google Trends search interest (small daily batches)."],
+  ["institutional_confidence", "Institutional Confidence", "20%", "Form 4 insider conviction + 13F top-10 holdings change + 90d price momentum."],
+  ["financial_evolution", "Financial Evolution", "15%", "Revenue growth + gross margin trend + operating cash flow + bank-cohort NII/PCL/noninterest."],
+  ["thesis_integrity", "Thesis Integrity", "20%", "Finnhub analyst recommendations (primary) + SEC 8-K material events + Yahoo earnings refinement."],
+  ["des", "Demand Environment Score", "20%", "Sector-tilted macro: FRED tier-1 (CPI/Fed Funds/10Y/Δ10Y/unemployment/real 10Y/VIX/M2) + WTI, plus tier-2 (Brent/gasoline/ISM/housing/sentiment/U6)."],
 ];
 
 const SOURCE_LIST = [
@@ -31,45 +38,19 @@ const SOURCE_LIST = [
   ["SEC Form 4 (insider conviction)", "90-day rolling window of insider open-market buys vs sells, with cluster-buying and CEO/CFO flags. Feeds Institutional pillar and per-ticker detail."],
   ["SEC 13F (institutional holdings)", "Quarterly top-10 manager holdings change. Feeds Institutional pillar."],
   ["SEC 8-K (material events)", "Real-time material-event filter. Feeds Thesis pillar."],
-  ["Finnhub", "Analyst recommendation distributions; primary Thesis input across 167 tickers."],
-  ["Google Trends (pytrends)", "Search-interest acceleration on 11 representative tickers; weekly batch (rate-limit constrained)."],
+  ["Finnhub", "Analyst recommendation distributions; the primary Thesis input. Needs an API key."],
+  ["Google Trends (pytrends)", "Search-interest acceleration, fetched in small daily batches because Google rate-limits hard."],
   ["FRED", "Tier-1 macros (CPI, Fed Funds, 10Y, Δ10Y, unemployment, real 10Y, VIX, M2) + tier-2 (Brent, gasoline, ISM, housing, sentiment, U6). Free API key."],
   ["EIA", "WTI crude oil prices feeding DES energy tilt. Free API key."],
   ["SPDR sector ETFs", "11 sector ETFs (XLK / XLF / XLE / etc.) ranked vs SPY on 1m and 3m total return. Drives the Market Regime strip."],
 ];
 
-const V1_LIMITATIONS = [
-  "Google Trends drives only 11 representative tickers via a weekly batch (Google rate-limits aggressively). Remaining names get a peer-group fallback rather than a per-ticker series.",
-  "Margin (XBRL GrossProfit) is missing on roughly 45% of the universe — disproportionately Financials, Comm Services, and services-heavy Consumer Discretionary. A fallback concept chain partially closes the gap; full sector-aware margin is Phase 6.",
-  "Bank cohort (NII / PCL / noninterest) covers 11 tickers — enough to break the GrossProfit blind spot for universal & regional banks but still a small cross-sectional pool.",
-  "Thesis has < 30 days of live history. Finnhub recommendations only began firing 2026-05-18; SEC 8-K and Yahoo earnings refinement are wired but unvalidated until enough sample accrues.",
-  "WBA is marked inactive in the universe (Walgreens taken private late 2025; no longer files with SEC).",
-];
-
-/**
- * Data Feeds lineage (Phase 5, as of 2026-05-18).
- * Source-of-truth: docs/lthcs-data-audit-2026-05-18.md
- *   - Today's coverage matrix (n=167 active scored)
- *   - Recommended data sources to add
- *
- * Columns: Pillar, Component, Source, Coverage today, Notes.
- */
-const FEED_LINEAGE = [
-  ["Adoption", "Revenue / QoQ growth", "SEC EDGAR XBRL", "161 / 167 (96%)", "Wired; ~6 tickers w/ XBRL parse gaps."],
-  ["Adoption", "Search-interest acceleration", "Google Trends (pytrends)", "11 / 167 batch", "Weekly batch, rate-limited; peer fallback on remainder."],
-  ["Institutional", "Insider conviction (90d)", "SEC Form 4 (EDGAR)", "165 / 167 (99%)", "Wired Phase 5; cluster-buy & CEO/CFO flags."],
-  ["Institutional", "Top-10 13F holdings change", "SEC 13F (EDGAR)", "167 / 167 (100%)", "Quarterly cadence; wired Phase 5."],
-  ["Institutional", "90d price momentum", "Yahoo Finance (yfinance)", "166 / 167 (99%)", "BRK.B (.B suffix) is the lone miss."],
-  ["Financial", "Revenue growth %", "SEC EDGAR XBRL", "162 / 167 (97%)", "Wired."],
-  ["Financial", "Gross margin trend", "SEC EDGAR XBRL", "93 / 167 (56%)", "GrossProfit concept missing on services / banks; fallback chain partial."],
-  ["Financial", "Operating cash flow", "SEC EDGAR XBRL", "158 / 167 (95%)", "9 missing across 6 sectors; XBRL parse-quality."],
-  ["Financial", "Bank NII / PCL / noninterest", "SEC EDGAR XBRL (bank cohort)", "11 / 167 cohort", "Cohort-relative percentiles; only 11 banks in pool."],
-  ["Thesis", "Analyst recommendations", "Finnhub", "167 / 167 (100%)", "Primary Thesis driver; live since 2026-05-18."],
-  ["Thesis", "Material events", "SEC 8-K (EDGAR)", "167 / 167 (event-day)", "Real-time event filter; refines Thesis."],
-  ["Thesis", "Earnings beat / miss", "Yahoo Finance (yfinance)", "167 / 167", "Refinement layer on top of Finnhub."],
-  ["DES", "Tier-1 macros (9 signals)", "FRED + EIA", "9 / 9 daily", "WTI, CPI, Fed Funds, 10Y, Δ10Y, unemployment, real 10Y, VIX, M2."],
-  ["DES", "Tier-2 macros (6 signals)", "FRED", "6 / 6 daily", "Brent, gasoline, ISM, housing, sentiment, U6."],
-  ["DES", "Sector tilt weights", "sector_des_weights.json (static)", "167 / 167 (100%)", "Maps each ticker's sector to a macro-sensitivity vector."],
+const LIMITATIONS = [
+  "Google Trends is fetched a small batch at a time, so each name's series refreshes only every few weeks. Names without a recent series are scored on their revenue signals alone.",
+  "Gross margin (XBRL GrossProfit) is missing for many Financials, Communication Services and services-heavy names. A fallback concept chain closes part of the gap.",
+  "The bank cohort (NII / PCL / noninterest income, a fixed allowlist) is a small cross-sectional pool, so its percentiles are coarse.",
+  "A pillar with no data for a name is dropped and its weight is spread over the other pillars. The \"Has data today\" column above shows how often that happened in the latest snapshot.",
+  "Delisted or taken-private names (for example WBA and EA) stay in universe.json marked inactive and are no longer scored.",
 ];
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -95,8 +76,9 @@ function buildModal() {
   const bandRows = bandRowsHtml();
 
   const pillarRows = PILLAR_LIST.map(
-    ([name, weight, desc]) =>
-      `<tr><td><strong>${escapeHtml(name)}</strong></td><td><code>${escapeHtml(weight)}</code></td><td>${escapeHtml(desc)}</td></tr>`
+    ([key, name, weight, desc]) =>
+      `<tr><td><strong>${escapeHtml(name)}</strong></td><td><code>${escapeHtml(weight)}</code></td><td>${escapeHtml(desc)}</td>` +
+      `<td class="lthcs-about-cov"><code data-about-coverage="${key}">&hellip;</code></td></tr>`
   ).join("");
 
   const sourceList = SOURCE_LIST.map(
@@ -104,19 +86,8 @@ function buildModal() {
       `<li><strong>${escapeHtml(name)}</strong> — ${escapeHtml(desc)}</li>`
   ).join("");
 
-  const limitList = V1_LIMITATIONS.map(
+  const limitList = LIMITATIONS.map(
     (text) => `<li>${escapeHtml(text)}</li>`
-  ).join("");
-
-  const feedRows = FEED_LINEAGE.map(
-    ([pillar, component, source, coverage, notes]) =>
-      `<tr>` +
-      `<td><strong>${escapeHtml(pillar)}</strong></td>` +
-      `<td>${escapeHtml(component)}</td>` +
-      `<td>${escapeHtml(source)}</td>` +
-      `<td><code>${escapeHtml(coverage)}</code></td>` +
-      `<td class="lthcs-about-notes">${escapeHtml(notes)}</td>` +
-      `</tr>`
   ).join("");
 
   root.innerHTML = `
@@ -128,8 +99,9 @@ function buildModal() {
       </header>
       <div class="lthcs-about-body">
         <p class="lthcs-about-lead">
-          The Long-Term Hold Confidence Score (LTHCS) is a daily 0–100 score for 74 US-listed names
-          across the S&amp;P 500, Nasdaq-100, and Dow Jones Industrial Average. It blends fundamental,
+          The Long-Term Hold Confidence Score (LTHCS) is a daily 0–100 score for
+          <span data-about-count>US-listed names</span> (the S&amp;P 500 and Dow 30, plus NASDAQ-100
+          names and Index Exiles, which left every tracked index but are still scored). It blends fundamental,
           flow, sentiment, and macro signals into a single conviction score with a stage-aware weighting
           system (so a pre-profit growth name is judged differently than a mature compounder).
         </p>
@@ -141,56 +113,40 @@ function buildModal() {
         </table>
 
         <h3>Five pillars (default weights for standard compounder)</h3>
-        <table class="lthcs-about-table">
-          <thead><tr><th>Pillar</th><th>Weight</th><th>Inputs</th></tr></thead>
-          <tbody>${pillarRows}</tbody>
-        </table>
+        <div class="lthcs-about-table-wrap">
+          <table class="lthcs-about-table lthcs-about-wide-table">
+            <thead><tr><th>Pillar</th><th>Weight</th><th>Inputs</th><th>Has data today</th></tr></thead>
+            <tbody>${pillarRows}</tbody>
+          </table>
+        </div>
+        <p class="lthcs-about-note" data-about-coverage-note>
+          &ldquo;Has data today&rdquo; counts the names in the latest snapshot with a value for each pillar.
+        </p>
         <p class="lthcs-about-note">
           Weights vary by <code>maturity_stage</code>. E.g. <code>pre_profit_growth</code> tilts to
           Adoption (30%); <code>recovery_stabilization</code> tilts to Financial Evolution (35%).
         </p>
 
-        <h3>Data sources (all free tier in V1)</h3>
+        <h3>Data sources (all free tier)</h3>
         <ul class="lthcs-about-list">${sourceList}</ul>
 
-        <h3>Data feeds — pillar lineage (Phase 5, 2026-05-18)</h3>
-        <p class="lthcs-about-note">
-          Which feed actually drives which pillar component today, and the live
-          coverage across the 167 active-scored universe. Source-of-truth:
-          <code>docs/lthcs-data-audit-2026-05-18.md</code>.
-        </p>
-        <div class="lthcs-about-table-wrap">
-          <table class="lthcs-about-table lthcs-about-feed-table">
-            <thead>
-              <tr>
-                <th>Pillar</th>
-                <th>Component</th>
-                <th>Source</th>
-                <th>Coverage today</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>${feedRows}</tbody>
-          </table>
-        </div>
-
-        <h3>V1 limitations (honestly disclosed)</h3>
+        <h3>Known limitations</h3>
         <ul class="lthcs-about-list">${limitList}</ul>
 
         <h3>How daily updates work</h3>
         <p>
-          A single command <code>python lthcs_daily.py</code> runs the full 8-stage pipeline on Bryan's
-          laptop, computes today's snapshot, and writes JSON files under <code>data/lthcs/</code>.
-          A subsequent <code>git push</code> deploys the new snapshot to this page in about a minute
-          via GitHub Pages. No server. No database. No cloud bill. The append-only daily snapshots in
-          git history are the audit log.
+          A GitHub Actions workflow (<code>lthcs-daily.yml</code>) runs <code>python lthcs_daily.py</code>
+          every day at 23:00 UTC, after the US close. It scores the universe, writes JSON files under
+          <code>data/lthcs/</code> and commits them to the repository; the next site build publishes them
+          on GitHub Pages. No server and no database: the dated snapshots in git history are the audit log.
         </p>
 
         <h3>Methodology source</h3>
         <p>
-          Implementation specifications live in the repo:
-          <a href="https://github.com/btabiado/alpine-data/blob/main/PHASE_1_BUILD_SPEC.md" target="_blank" rel="noopener">PHASE_1_BUILD_SPEC.md</a>
-          and <a href="https://github.com/btabiado/alpine-data/blob/main/README_LTHCS.md" target="_blank" rel="noopener">README_LTHCS.md</a>.
+          The methodology is described in
+          <a href="https://github.com/btabiado/alpine-data/blob/main/README_LTHCS.md" target="_blank" rel="noopener">README_LTHCS.md</a>;
+          the scoring code lives in
+          <a href="https://github.com/btabiado/alpine-data/tree/main/lthcs" target="_blank" rel="noopener"><code>lthcs/</code></a>.
         </p>
 
         <p class="lthcs-about-disclaimer">
@@ -251,6 +207,33 @@ export function openAbout() {
     const tbody = root.querySelector("[data-about-bands]");
     if (tbody) tbody.innerHTML = bandRowsHtml();
   });
+  pageData().then(({ universe, snapshot }) => paintLiveFacts(root, universe, snapshot));
+}
+
+// Universe size + per-pillar coverage from the files the page loads. Left as
+// the neutral fallback text (no count, "…") when a file is unavailable.
+function paintLiveFacts(root, universe, snapshot) {
+  const n = activeCount(universe);
+  const countEl = root.querySelector("[data-about-count]");
+  if (countEl && n) countEl.textContent = `${n} US-listed names`;
+
+  const cov = snapshotCoverage(snapshot);
+  if (!cov) return;
+  for (const [key] of PILLAR_LIST) {
+    const el = root.querySelector(`[data-about-coverage="${key}"]`);
+    if (!el) continue;
+    const have = cov.pillars[key] || 0;
+    el.textContent = `${have} / ${cov.scored} (${Math.round((100 * have) / cov.scored)}%)`;
+  }
+  const note = root.querySelector("[data-about-coverage-note]");
+  if (note) {
+    const flags = cov.flags.length
+      ? cov.flags.map(([f, c]) => `${f} ${c}`).join(" · ")
+      : "none";
+    note.textContent =
+      `“Has data today” counts the ${cov.scored} names scored in the ${cov.calcDate || "latest"} snapshot ` +
+      `that have a value for each pillar. Data-quality flags in that snapshot: ${flags}.`;
+  }
 }
 
 export function closeAbout() {

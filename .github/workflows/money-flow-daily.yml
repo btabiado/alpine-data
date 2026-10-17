@@ -37,7 +37,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
@@ -47,7 +46,8 @@ jobs:
 
       - name: Install deps
         # equity-etf flows' only third-party import is requests (stdlib otherwise).
-        run: pip install requests
+        # The pin comes from requirements.txt.
+        run: pip install -c requirements.txt requests
 
       - name: Fetch equity ETF flows (delta-SO x NAV; accumulates history)
         # The one file that must persist ACROSS builds: data/equity_etf_flows.csv.

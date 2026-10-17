@@ -17,8 +17,8 @@ Exit codes
 
 Design notes
 ------------
-* Pure stdlib (``json``, ``pathlib``, ``datetime``, ``argparse``,
-  ``random``, ``math``). No new deps.
+* Pure stdlib plus ``lthcs.bands`` for the shared score-to-band mapping.
+  No new deps.
 * Each check accumulates ``Finding`` records into a single ``Report``;
   rendering and exit-code determination both flow from that list, so
   tests can build a ``Report`` directly and assert on findings without
@@ -41,6 +41,8 @@ from dataclasses import dataclass, field, asdict
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable, List, Optional
+
+from lthcs.bands import assign_band, score_bands_for_date
 
 
 # ---------------------------------------------------------------------------
@@ -147,18 +149,6 @@ def _is_finite_number(x: Any) -> bool:
     if not isinstance(x, (int, float)):
         return False
     return math.isfinite(float(x))
-
-
-def _band_for_score(score: float, score_bands: dict) -> Optional[str]:
-    """Return the band whose ``[min, max]`` range contains ``score``."""
-    for name, spec in score_bands.items():
-        lo = spec.get("min")
-        hi = spec.get("max")
-        if lo is None or hi is None:
-            continue
-        if lo <= score <= hi:
-            return name
-    return None
 
 
 def _load_json(path: Path) -> Any:
@@ -269,11 +259,12 @@ def _ticker_first_seen(snap_dir: Path) -> dict:
     return first
 
 
-def _load_score_bands(data_root: Path) -> dict:
+def _load_weights(data_root: Path) -> dict:
     weights_path = data_root / "weights.json"
     if not weights_path.exists():
         return {}
-    return _load_json(weights_path).get("score_bands", {})
+    data = _load_json(weights_path)
+    return data if isinstance(data, dict) else {}
 
 
 # ---------------------------------------------------------------------------
@@ -323,7 +314,7 @@ def _check_one_date(
     d: date,
     data_root: Path,
     active_universe: set,
-    score_bands: dict,
+    weights: dict,
     report: Report,
     history_sample: List[str],
     expected_since: Optional[dict] = None,
@@ -386,7 +377,12 @@ def _check_one_date(
     scores_rows = snapshot.get("scores", []) if isinstance(snapshot, dict) else []
     stats["ticker_count"] = len(scores_rows)
 
-    # 2 + 3. Score sanity + ticker coverage
+    # 2 + 3. Score sanity + ticker coverage.
+    # Band consistency uses the same assign_band as the scorer, against the
+    # cutoffs in effect on this date (score_bands_history), not whatever the
+    # live score_bands say today. A threshold change is not restated into
+    # older snapshots.
+    bands = score_bands_for_date(weights, date_str)
     seen_tickers: set = set()
     for row in scores_rows:
         ticker = row.get("ticker")
@@ -411,17 +407,20 @@ def _check_one_date(
                 detail={"date": date_str, "ticker": ticker, "value": score},
             ))
             continue
-        # 4. Band consistency
-        expected_band = _band_for_score(float(score), score_bands)
+        # 4. Band consistency.
+        if not bands:
+            continue
+        expected_band = assign_band(float(score), bands)
         actual_band = row.get("band")
-        if expected_band and actual_band and expected_band != actual_band:
+        if actual_band and expected_band != actual_band:
             stats["band_mismatches"] += 1
             report.add(Finding(
                 check="band_consistency",
                 severity=SEVERITY_FAIL,
                 message=(
                     f"{date_str} {ticker}: band={actual_band!r} but score {score} "
-                    f"belongs to band {expected_band!r}"
+                    f"belongs to band {expected_band!r} under the thresholds "
+                    f"in effect on {date_str}"
                 ),
                 detail={
                     "date": date_str,
@@ -727,7 +726,10 @@ def render_report(report: Report, per_date_stats: List[dict], history_stats: dic
 
     # Band
     lines.append("Band consistency")
-    lines.extend(_summarize_block(report, "band_consistency", "all band assignments match score_bands"))
+    lines.extend(_summarize_block(
+        report, "band_consistency",
+        "all band assignments match the thresholds in effect for that snapshot",
+    ))
     lines.append("")
 
     # Variable detail
@@ -968,7 +970,7 @@ def run_validation(
         start, end = end, start
 
     universe = _load_active_universe(data_root)
-    score_bands = _load_score_bands(data_root)
+    weights = _load_weights(data_root)
     active_set = set(universe)
     first_seen = _ticker_first_seen(snap_dir)
     added_on = _universe_added_on(data_root)
@@ -1001,7 +1003,7 @@ def run_validation(
 
     per_date_stats: List[dict] = []
     for d in _daterange(start, end):
-        stats = _check_one_date(d, data_root, active_set, score_bands, report, sample_tickers,
+        stats = _check_one_date(d, data_root, active_set, weights, report, sample_tickers,
                                 expected_since=expected_since, known_gap_days=known_gap_days)
         per_date_stats.append(stats)
 

@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%278%27 cy=%278%27 r=%277%27 fill=%27%233987e5%27/%3E%3C/svg%3E">
+<title>Model Scorecard</title>
+<meta name="description" content="How well history, market-implied, machine-learning and foundation models forecast crypto price targets, scored walk-forward against what happened.">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0b0d12; --panel:#141821; --panel2:#1b2030; --border:#252b3a;
+  --text:#e6e8ee; --muted:#8a93a6; --faint:#5b6478;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --f-history:#3987e5; --f-market:#d95926; --f-ML:#199e70; --f-foundation:#9085e9; --f-baseline:#8a93a6;
+  --good:#22c55e; --bad:#ef4444; --warn:#f59e0b;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+a{color:var(--s1)}
+header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:17px;margin:0;font-weight:600}
+header .back{color:var(--muted);text-decoration:none;font-size:13px}
+header .back:hover{color:var(--text)}
+header .asof{margin-left:auto;color:var(--muted);font-size:12px;text-align:right}
+main{max-width:1180px;margin:0 auto;padding:20px 24px 48px}
+.lede{font-size:15px;color:var(--text);max-width:820px;margin:4px 0 14px}
+.note{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--muted);font-size:13px;max-width:900px}
+.note b{color:var(--text)}
+h2{font-size:16px;margin:30px 0 8px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0 6px}
+.row .lab{color:var(--muted);font-size:12px;min-width:64px}
+.pill{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:999px;padding:6px 14px;font:inherit;cursor:pointer}
+.pill[aria-pressed="true"]{background:var(--panel2);border-color:var(--s1);color:#fff}
+.pill.small{padding:4px 10px;font-size:12.5px}
+.pill:disabled{opacity:.45;cursor:not-allowed}
+.pill .sw{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}
+.card h3{margin:0 0 4px;font-size:14px}
+.card .sub{color:var(--muted);font-size:12.5px;margin-bottom:8px}
+.chart{position:relative;min-height:60px}
+svg{display:block;width:100%;height:auto}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legend .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.legend .sw.hollow{background:transparent!important;border:2px solid var(--muted)}
+.tip{position:absolute;pointer-events:none;background:#0f1320;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;color:var(--text);display:none;z-index:2;max-width:min(340px,calc(100vw - 16px));line-height:1.45}
+.tip .m{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+th{color:var(--muted);font-weight:500;font-size:12px}
+td:first-child,th:first-child,td.l,th.l{text-align:left}
+.na{color:var(--faint)}
+.chip{display:inline-block;border-radius:999px;padding:1px 8px;font-size:11.5px;border:1px solid var(--border);color:var(--muted)}
+.chip.good{border-color:#1f6f3f;color:var(--good)}
+.chip.bad{border-color:#7a2a2a;color:#f39a9a}
+.chip.warn{border-color:#7a5a1a;color:var(--warn)}
+.scroll{overflow-x:auto}
+.kpis{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0 4px}
+.kpi{background:var(--panel2);border-radius:8px;padding:8px 12px;min-width:140px}
+.kpi .v{font-size:18px;font-weight:600}
+.kpi .l{color:var(--muted);font-size:12px}
+.fam{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.pair{grid-template-columns:1fr}}
+details{margin-top:10px}
+summary{cursor:pointer;color:var(--muted);font-size:13px}
+summary:hover{color:var(--text)}
+.ok{color:var(--good)} .no{color:#f39a9a}
+ul.how{max-width:860px;padding-left:20px;margin:6px 0}
+ul.how li{margin:6px 0;color:var(--text)}
+ul.how li span{color:var(--muted)}
+footer{color:var(--faint);font-size:12px;margin-top:36px;border-top:1px solid var(--border);padding-top:12px}
+footer code{color:var(--muted)}
+.unavail{color:var(--muted);padding:26px 10px;text-align:center}
+@media (max-width:600px){header,main{padding-left:16px;padding-right:16px}header .asof{margin-left:0;text-align:left}.kpi{flex:1 1 calc(50% - 6px);min-width:0}.kpi .v{font-size:16px}.row .lab{min-width:100%}}
+.print-only{display:none}
+.eyebrow{color:var(--muted);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 4px}
+header .actions{display:flex;gap:8px;margin-left:auto;align-items:center;flex-wrap:wrap}
+header .actions .asof{margin-left:0}
+.pill.primary{background:var(--s1);border-color:var(--s1);color:#fff;text-decoration:none}
+a.pill{text-decoration:none;display:inline-block}
+.bottom{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:4px 0 6px}
+.bottom .b{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--muted)}
+.bottom .b .n{font-size:22px;font-weight:700;color:var(--text);line-height:1.15}
+.bottom .b b{color:var(--text)}
+.concepts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:10px 0 4px}
+.concept{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 13px;font-size:12.5px;color:var(--muted)}
+.concept b{display:block;color:var(--text);font-size:13px;margin-bottom:2px}
+.mtype{display:block;color:var(--muted);font-size:11px;margin-left:15px}
+#calPanels .chart{max-width:420px;margin:0 auto}
+@media (max-width:900px){.bottom,.concepts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.bottom,.concepts{grid-template-columns:1fr}header .actions{margin-left:0}}
+/* One-page print layout (html.pm): set by ?print and by the browser's beforeprint; the page is sized to its content. */
+html.pm{color-scheme:light;--bg:#fff;--panel:#fff;--panel2:#f4f5f8;--border:#dde1e8;--text:#111827;--muted:#4b5563;--faint:#6b7280;--good:#15803d;--bad:#b91c1c;--warn:#b45309;
+  & *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  & .bottom,& .concepts{grid-template-columns:repeat(4,minmax(0,1fr))}
+  & .pair{grid-template-columns:1fr 1fr}
+  & body{width:1100px;margin:0;font-size:12.5px;background:#fff}
+  & html,& body{overflow:visible}
+  & header{padding:24px 34px 12px;border-bottom:2px solid #111827}
+  & header h1{font-size:22px}
+  & main{max-width:none;padding:14px 34px 26px}
+  & .lede{max-width:none}
+  & header .back,& header .actions .pill,& .tip,& #splitTabs,& #cohortTabs,& #assetTabs,& #hTabs,& #famTabs,& #calTabs,& summary{display:none!important}
+  & .print-only{display:block!important}
+  & span.print-only{display:inline!important}
+  & .card,& .kpi,& .note,& .b,& .concept{background:#fff}
+  & .scroll{overflow:visible}
+  & svg{width:100%!important;height:auto!important;max-width:100%}
+  & #calPanels .chart{max-width:380px}
+  & table{font-size:11px}
+  & th,& td{padding:3px 6px;white-space:normal}
+  & .pill{background:none;border:none;padding:0;color:var(--text);font-size:inherit}
+  & .chip{white-space:nowrap}
+  & .chip.good{border-color:#86c79c}
+  & .chip.bad{border-color:#e7a1a1;color:var(--bad)}
+  & .chip.warn{border-color:#e5c07b}
+  & .ok{color:var(--good)}
+  & .no{color:var(--bad)}
+  & a{color:var(--text);text-decoration:none}
+  & svg [stroke="#252b3a"]{stroke:#e5e8ee}
+  & svg [fill="#8a93a6"]{fill:#4b5563}
+  & svg [stroke="#8a93a6"]{stroke:#6b7280}
+  & svg [fill="#e6e8ee"]{fill:#111827}
+  & svg [stroke="#141821"]{stroke:#fff}
+  & svg [fill="#0b0d12"]{fill:#fff}
+  & svg [stroke="#0b0d12"]{stroke:#fff}
+}
+@media print{ .tip,header .actions .pill{display:none!important} }
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="../">&larr; BDT Dashboards</a>
+  <a class="back" href="../crypto-odds/">Crypto Price Odds</a>
+  <h1>Model Scorecard</h1>
+  <div class="actions">
+    <a class="pill small primary" href="scorecard.pdf" download title="One-page PDF with every section opened">Download PDF</a>
+    <div class="asof" id="asof">Loading&hellip;</div>
+  </div>
+</header>
+<main>
+  <p class="eyebrow">Forecasting research · BTC · ETH · XRP · LINK</p>
+  <p class="lede">How well each forecasting model predicted whether BTC, ETH, XRP and LINK would end above or below price targets 30 to 90 days out, scored against what actually happened and compared with the simple base rate.</p>
+
+  <h2 style="margin-top:18px">Bottom line</h2>
+  <div class="bottom" id="bottom"></div>
+  <p class="sub" style="margin:2px 0 0">Today's 30-day call for each coin (UP, DOWN or FLAT), from the model with the best record here, is on the <a href="../crypto-odds/#outlook">Crypto Price Odds</a> page.</p>
+  <div class="concepts">
+    <div class="concept"><b>Base rate</b>How often a move of that size happened in the past. The simplest possible forecast, and the bar every model must clear.</div>
+    <div class="concept"><b>Skill</b>Reduction in forecast error (Brier score) versus the base rate. 0% = no better, +10% = 10% less error, negative = worse.</div>
+    <div class="concept"><b>Sealed holdout</b>The most recent stretch of history, hidden while models were built and then scored once. The only fully fair test.</div>
+    <div class="concept"><b>P vs Q</b>P = real-world forecasts from history and ML. Q = implied by option prices, which include a risk premium, so shown for reference only.</div>
+  </div>
+
+  <h2>Final holdout verdict</h2>
+  <section id="verdict" aria-live="polite"></section>
+
+  <h2>Leaderboard: every model on one asset and horizon</h2>
+  <p class="lede" style="font-size:14px;color:var(--muted)">Brier skill compares each model's probabilities with the outcomes, relative to the past event frequency on the same forecasts. 0% means no better than the base rate; positive is better; negative is worse. Bars show the 95% interval.</p>
+  <div class="row" id="splitTabs"><span class="lab">Period</span></div>
+  <div class="row" id="cohortTabs"><span class="lab">Outcomes</span></div>
+  <div class="row" id="assetTabs"><span class="lab">Asset</span></div>
+  <div class="row" id="hTabs"><span class="lab">Horizon</span></div>
+  <div class="row" id="famTabs"><span class="lab">Model family</span></div>
+  <p class="print-only note" id="printSel"></p>
+  <div class="card" style="margin-top:10px">
+    <h3 id="lbTitle"></h3>
+    <div class="sub" id="lbSub"></div>
+    <div class="chart" id="lbChart"></div>
+    <div class="legend" id="lbLegend"></div>
+  </div>
+  <div class="card scroll" style="margin-top:12px"><table id="lbTable"></table></div>
+  <p class="note" id="lbNote" style="margin-top:10px"></p>
+
+  <h2>Calibration: do the probabilities mean what they say?</h2>
+  <p class="lede" style="font-size:14px;color:var(--muted)">When a model says 20%, does the event happen about 20% of the time? Forecasts are grouped into bins; points on the dashed diagonal are perfectly calibrated. Uses the period, outcomes, asset and horizon selected above.</p>
+  <div class="row" id="calTabs"><span class="lab">Model</span></div>
+  <div class="pair" id="calPanels"></div>
+  <div class="legend"><span><i class="sw" style="background:var(--muted)"></i>Dot area: number of forecasts in the bin (overlapping windows, not independent)</span><span>Vertical bar: 95% interval for the observed frequency</span></div>
+  <details><summary>Show calibration as a table</summary><div class="scroll"><table id="calTable"></table></div></details>
+
+  <h2>How this was tested</h2>
+  <ul class="how" id="how"></ul>
+
+  <footer id="footer"></footer>
+</main>
+<div class="tip" id="tip" role="tooltip"></div>
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sp = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v * 100).toFixed(1) + "%";
+const pc = (v, d) => v == null ? "—" : (v * 100).toFixed(d == null ? 0 : d) + "%";
+const FAM = {history:{label:"History", c:"#3987e5"}, market:{label:"Market-implied (Q-proxy)", c:"#d95926"},
+  ML:{label:"Machine learning", c:"#199e70"}, foundation:{label:"Foundation model", c:"#9085e9"}, baseline:{label:"Base rate", c:"#8a93a6"}};
+const FAM_ORDER = ["history", "market", "ML", "foundation"];
+const SPLIT = {dev:"Development", holdout:"Holdout"};
+const COHORT = {settlement:"Settlement prices (Deribit 08:00 UTC)", spot:"Spot closes (exchanges)"};
+const COHORT_SHORT = {settlement:"settlement", spot:"spot"};
+let D, LB = [], st = {split:null, cohort:"settlement", asset:"BTC", h:30, fams:new Set(FAM_ORDER), calModel:null};
+const tip = $("tip");
+
+function showTip(html, ev){ tip.innerHTML = html; tip.style.display = "block";
+  const x = ev.clientX + 14, y = ev.clientY + 14;
+  tip.style.left = Math.max(8, Math.min(x, document.documentElement.clientWidth - tip.offsetWidth - 8)) + "px";
+  tip.style.top = (y + window.scrollY) + "px"; }
+function hideTip(){ tip.style.display = "none"; }
+document.addEventListener("touchstart", e => { if (!e.target.closest("svg")) hideTip(); }, {passive:true});
+
+function pills(el, items, isOn, onPick, cls){
+  el.querySelectorAll("button").forEach(b => b.remove());
+  items.forEach(it => { const b = document.createElement("button");
+    b.className = "pill small" + (cls ? " " + cls : ""); b.innerHTML = it.html || esc(it.label); b.disabled = !!it.disabled;
+    if (it.title) b.title = it.title;
+    b.setAttribute("aria-pressed", isOn(it) ? "true" : "false"); b.onclick = () => onPick(it); el.appendChild(b); });
+}
+const M = m => D.models[m] || {label:m, family:"other", probability:"P", comparison:"P models"};
+const famColor = m => (FAM[M(m).family] || FAM.baseline).c;
+const reliablyBetter = r => r.dbrier_ci_hi != null && r.dbrier_ci_hi < 0 && r.verdict_seed_stable;
+const reliablyWorse = r => r.dbrier_ci_lo != null && r.dbrier_ci_lo > 0 && r.verdict_seed_stable;
+const verdictChip = r => reliablyBetter(r) ? '<span class="chip good">reliably better</span>' :
+  reliablyWorse(r) ? '<span class="chip bad">reliably worse</span>' :
+  ((r.dbrier_ci_hi < 0 || r.dbrier_ci_lo > 0) && !r.verdict_seed_stable ? '<span class="chip warn">not seed-stable</span>' : '<span class="chip">within noise</span>');
+const period = r => r.common_start && r.common_end ? `${r.common_start} to ${r.common_end}` : "—";
+
+// natural row per model for the current cell
+function cellRows(split, cohort, asset, h){
+  return LB.filter(r => r.split === split && r.cohort === cohort && r.asset === asset && r.h === h);
+}
+function natural(rows){
+  return Object.keys(D.models).map(m => rows.find(r => r.model === m && r.comparison === M(m).comparison)).filter(Boolean);
+}
+function climOn(rows, comp){ return rows.find(r => r.model === "climatology" && r.comparison === comp); }
+
+/* ---------------- verdict ---------------- */
+function renderVerdict(){
+  const el = $("verdict"), meta = D.meta, seal = meta.holdout_seal || {};
+  const sealTxt = Object.entries(seal).map(([c, d]) => `${COHORT_SHORT[c] || c} outcomes from ${d}`).join(", ");
+  if (D.promotion){
+    const P = D.promotion.rows.map(r => Object.fromEntries(D.promotion.columns.map((c, i) => [c, r[i]])));
+    const tested = P.filter(r => r.testable), untest = P.filter(r => !r.testable);
+    const cells = [...new Map(tested.map(r => [`${r.cohort}|${r.asset}|${r.h}`, r])).keys()].map(k => k.split("|"));
+    const promoted = tested.filter(r => r.promoted);
+    const ord = (a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]) || (+a[2]) - (+b[2]);
+    cells.sort(ord);
+    const tick = v => v == null ? '<span class="na">—</span>' : v ? '<span class="ok" aria-label="met">✓</span>' : '<span class="no" aria-label="not met">✗</span>';
+    const rowsHtml = cells.map(([c, a, h]) => {
+      const g = tested.filter(r => r.cohort === c && r.asset === a && String(r.h) === h);
+      const best = g.reduce((x, y) => (y.bss_vs_climatology ?? -9) > (x.bss_vs_climatology ?? -9) ? y : x, g[0]);
+      const pr = g.filter(r => r.promoted);
+      return `<tr><td>${esc(COHORT_SHORT[c] || c)}</td><td class="l">${esc(a)}</td><td>${h}d</td>
+        <td class="l">${esc(M(g[0].strongest_dev_baseline).label)}</td>
+        <td class="l">${pr.length ? pr.map(r => `<span class="chip good">${esc(M(r.model).label)}</span>`).join(" ") : '<span class="na">none: past frequency kept</span>'}</td>
+        <td class="l">${esc(M(best.model).label)}</td><td>${sp(best.bss_vs_climatology)}</td>
+        <td>${best.bss_ci_lo == null ? "—" : sp(best.bss_ci_lo) + " to " + sp(best.bss_ci_hi)}</td>
+        <td>${best.approx_independent_origins == null ? "—" : Math.round(best.approx_independent_origins)}</td></tr>`; }).join("");
+    const allRows = [...tested].sort((x, y) => ord([x.cohort, x.asset, String(x.h)], [y.cohort, y.asset, String(y.h)]) || M(x.model).label.localeCompare(M(y.model).label))
+      .map(r => `<tr><td>${esc(COHORT_SHORT[r.cohort])}</td><td class="l">${esc(r.asset)}</td><td>${r.h}d</td><td class="l"><i class="fam" style="background:${famColor(r.model)}"></i>${esc(M(r.model).label)}</td>
+        <td>${sp(r.bss_vs_climatology)}</td><td>${r.bss_ci_lo == null ? "—" : sp(r.bss_ci_lo) + " to " + sp(r.bss_ci_hi)}</td>
+        <td>${tick(r.c1_beats_clim_and_baseline)}</td><td>${tick(r.c2_ci_below_zero_seed_stable)}</td><td>${tick(r.c3_reliability_ok)}</td><td>${tick(r.c4_coverage_ok)}</td>
+        <td>${r.promoted ? '<span class="chip good">promoted</span>' : '<span class="chip">not promoted</span>'}</td><td class="l" style="white-space:normal;min-width:160px">${esc(r.note || "")}</td></tr>`).join("");
+    el.innerHTML = `<div class="card"><h3>What the one-time test decided</h3>
+      <div class="sub">The sealed holdout (${esc(sealTxt)}) was opened once and every model was judged by the rule fixed in advance.</div>
+      <p style="margin:6px 0 4px;font-size:15px">${promoted.length ? `<b>${promoted.length} promotion${promoted.length > 1 ? "s" : ""}</b> across ${cells.length} testable asset × horizon cells.` :
+        `<b>No model was promoted</b> in any of the ${cells.length} testable asset × horizon cells. Past event frequency stays the reference: no demonstrated improvement.`}</p>
+      <div class="kpis"><div class="kpi"><div class="v">${promoted.length}</div><div class="l">promotions</div></div>
+        <div class="kpi"><div class="v">${cells.length}</div><div class="l">testable cells</div></div>
+        <div class="kpi"><div class="v">${untest.length}</div><div class="l">untestable cells</div></div>
+        <div class="kpi"><div class="v">${tested.length}</div><div class="l">model × cell tests</div></div></div>
+      <div class="scroll" style="margin-top:8px"><table><thead><tr><th>Outcomes</th><th class="l">Asset</th><th>Horizon</th><th class="l">Strongest dev. baseline</th>
+        <th class="l">Promoted</th><th class="l">Best holdout model</th><th>Its skill</th><th>95% interval</th><th>≈ indep. outcomes</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>
+      <h3 style="margin-top:16px">Every asset × horizon cell</h3>
+      <div class="sub">A cell is testable only if the holdout has at least ${meta.min_independent_events ?? "the minimum number of"} independent event and non-event windows. ${untest.length} of ${untest.length + cells.length} cells fall short: the holdout covers only the most recent stretch (${esc(sealTxt)}), too short for enough non-overlapping windows at most horizons. No model can be promoted or rejected there. Select a tested cell to see it in the leaderboard.</div>
+      <div class="scroll"><table style="max-width:720px"><thead><tr><th>Asset</th><th class="l">30d</th><th class="l">60d</th><th class="l">90d</th></tr></thead><tbody>${matrix(P)}</tbody></table></div>
+      <p class="sub" style="margin-top:6px">${promoted.length ? "Tested cells name any promoted model; elsewhere past frequency is kept." : "In every tested cell, no model passed all four conditions, so past event frequency is kept."}</p>
+      <details><summary>Every model tested, condition by condition</summary><div class="scroll"><table><thead><tr><th>Outcomes</th><th class="l">Asset</th><th>h</th><th class="l">Model</th><th>Skill</th><th>95% interval</th>
+        <th title="Lower Brier than past frequency and the strongest development baseline">(1)</th><th title="95% interval of the Brier difference entirely below 0, stable across bootstrap seeds">(2)</th>
+        <th title="Calibration no worse than past frequency by more than 0.02">(3)</th><th title="Coverage at least 90% of past frequency's">(4)</th><th>Result</th><th class="l">Note</th></tr></thead><tbody>${allRows}</tbody></table></div></details>
+      ${ruleDetails()}</div>`;
+  } else {
+    const dev = LB.filter(r => r.split === "dev");
+    const byCell = {};
+    dev.forEach(r => { (byCell[`${r.cohort}|${r.asset}|${r.h}`] ||= []).push(r); });
+    const nat = Object.values(byCell).flatMap(natural).filter(r => r.model !== "climatology");
+    const counts = FAM_ORDER.map(f => { const g = nat.filter(r => M(r.model).family === f);
+      return {f, n:g.length, b:g.filter(reliablyBetter).length, w:g.filter(reliablyWorse).length}; }).filter(x => x.n);
+    const nb = nat.filter(reliablyBetter).length, nw = nat.filter(reliablyWorse).length;
+    el.innerHTML = `<div class="card"><h3>Final holdout pending <span class="chip warn" style="margin-left:6px">sealed</span></h3>
+      <div class="sub">The most recent part of each price history (${esc(sealTxt)}) is sealed. It will be opened once, for every model together, and judged by a promotion rule fixed in advance. Until then this page shows development-period results only.</div>
+      <p style="margin:6px 0 4px">In development, <b>${nb}</b> of ${nat.length} model × asset × horizon tests were reliably better than past event frequency and <b>${nw}</b> were reliably worse; the rest were within noise.</p>
+      <div class="scroll"><table style="max-width:640px"><thead><tr><th class="l">Model family</th><th>Tests</th><th>Reliably better</th><th>Within noise</th><th>Reliably worse</th></tr></thead><tbody>
+      ${counts.map(x => `<tr><td class="l"><i class="fam" style="background:${FAM[x.f].c}"></i>${esc(FAM[x.f].label)}</td><td>${x.n}</td><td>${x.b}</td><td>${x.n - x.b - x.w}</td><td>${x.w}</td></tr>`).join("")}
+      </tbody></table></div>
+      <p class="sub" style="margin-top:8px">Development results guided which models go to the holdout; they are not the final test. A model that looks better here still has to pass on data nobody has seen.</p>
+      ${ruleDetails()}</div>`;
+  }
+}
+function matrix(P){
+  const out = [];
+  ["settlement", "spot"].forEach(c => { if (P.some(r => r.cohort === c))
+    out.push(`<tr><td colspan="4" style="color:var(--muted);font-size:12px;padding-top:12px">${esc(COHORT[c])}</td></tr>`);
+    ["BTC", "ETH", "XRP", "LINK"].forEach(a => {
+    if (!P.some(r => r.cohort === c && r.asset === a)) return;
+    const td = h => { const g = P.filter(r => r.cohort === c && r.asset === a && r.h === h);
+      if (!g.length) return '<td class="l"><span class="na">not scored</span></td>';
+      if (!g.some(r => r.testable)) return '<td class="l"><span class="na">· too few outcomes</span></td>';
+      const pr = g.filter(r => r.promoted);
+      return `<td class="l"><button class="pill small jump" data-c="${c}" data-a="${a}" data-h="${h}" title="Show in the leaderboard">${pr.length ? "promoted: " + esc(pr.map(r => M(r.model).label).join(", ")) : "tested"}</button></td>`; };
+    out.push(`<tr><td>${esc(a)}</td>${td(30)}${td(60)}${td(90)}</tr>`); }); });
+  return out.join("");
+}
+function ruleDetails(){
+  const m = D.meta; if (!m.promotion_rule) return "";
+  return `<details><summary>The promotion rule (fixed before the holdout was opened)</summary><p class="note" style="margin-top:8px">${esc(m.promotion_rule)}${m.promotion_clarifications ? `<br><br><b>Clarifications recorded before opening:</b> ${esc(m.promotion_clarifications)}` : ""}</p></details>`;
+}
+
+/* ---------------- leaderboard ---------------- */
+function renderControls(){
+  const splits = ["dev", "holdout"];
+  pills($("splitTabs"), splits.map(s => ({k:s, label:SPLIT[s], disabled:!D.meta.splits.includes(s),
+      title: !D.meta.splits.includes(s) ? "Sealed until the final run" : ""})),
+    it => it.k === st.split, it => { st.split = it.k; renderAll(); });
+  const cohorts = [...new Set(LB.map(r => r.cohort))];
+  pills($("cohortTabs"), ["settlement", "spot"].filter(c => cohorts.includes(c)).map(c => ({k:c, label:COHORT[c], disabled:!LB.some(r => r.split === st.split && r.cohort === c),
+      title: LB.some(r => r.split === st.split && r.cohort === c) ? "" : "No testable cells in this period"})),
+    it => it.k === st.cohort, it => { st.cohort = it.k; renderAll(); });
+  const assets = ["BTC", "ETH", "XRP", "LINK"].filter(a => LB.some(r => r.asset === a));
+  pills($("assetTabs"), assets.map(a => ({k:a, label:a, disabled:!LB.some(r => r.split === st.split && r.cohort === st.cohort && r.asset === a)})), it => it.k === st.asset, it => { st.asset = it.k; renderAll(); });
+  const hs = [...new Set(LB.map(r => r.h))].sort((a, b) => a - b);
+  pills($("hTabs"), hs.map(h => ({k:h, label:h + " days", disabled:!cellRows(st.split, st.cohort, st.asset, h).length,
+      title: !cellRows(st.split, st.cohort, st.asset, h).length ? "Not scored for this asset and outcome type" : ""})),
+    it => it.k === st.h, it => { st.h = it.k; renderAll(); });
+  pills($("famTabs"), FAM_ORDER.map(f => ({k:f, html:`<i class="sw" style="background:${FAM[f].c}"></i>${esc(FAM[f].label)}`})),
+    it => st.fams.has(it.k), it => { st.fams.has(it.k) ? st.fams.delete(it.k) : st.fams.add(it.k); renderAll(); });
+}
+
+function niceStep(span){ for (const s of [0.02, 0.05, 0.1, 0.2, 0.25, 0.5, 1]) if (span / s <= 6) return s; return 1; }
+
+function renderLeaderboard(){
+  const rows = cellRows(st.split, st.cohort, st.asset, st.h);
+  const nat = natural(rows).filter(r => r.model !== "climatology");
+  const shown = nat.filter(r => st.fams.has(M(r.model).family));
+  $("lbTitle").textContent = `${st.asset} · ${st.h} days · ${COHORT[st.cohort]} · ${SPLIT[st.split]}`;
+  const anyRow = rows[0];
+  $("lbSub").innerHTML = anyRow ? `Each model is scored on its natural comparison set, so the base rate it is measured against uses exactly the same forecasts. Filled dot: the 95% interval for the Brier difference excludes zero and the verdict holds across ${D.meta.verdict_seeds || "several"} bootstrap seeds.` : "";
+  const fams = [...new Set(shown.map(r => M(r.model).family))];
+  $("lbLegend").innerHTML = FAM_ORDER.filter(f => fams.includes(f)).map(f => `<span><i class="sw" style="background:${FAM[f].c}"></i>${esc(FAM[f].label)}</span>`).join("") +
+    (shown.length ? `<span><i class="sw" style="background:var(--muted)"></i>Reliably different from the base rate</span><span><i class="sw hollow"></i>Within noise</span>` : "");
+  const el = $("lbChart");
+  if (!rows.length){ el.innerHTML = `<div class="unavail">No scored forecasts for ${esc(st.asset)} ${st.h}-day ${esc(COHORT_SHORT[st.cohort])} outcomes in this period.</div>`; $("lbTable").innerHTML = ""; $("lbNote").innerHTML = ""; return; }
+  if (!shown.length){ el.innerHTML = `<div class="unavail">No models in the selected families for this cell.</div>`; }
+  else drawDots(el, shown, rows);
+  // table
+  $("lbTable").innerHTML = `<caption class="sub" style="text-align:left;caption-side:top;padding:0 0 6px">All models in this cell (table view of the chart)</caption>
+    <thead><tr><th>Model</th><th>Separate outcomes</th><th>Brier</th><th>Base-rate Brier</th><th>Skill</th><th>95% interval</th><th class="l">Verdict</th></tr></thead><tbody>` +
+    shown.map(r => { const c = climOn(rows, r.comparison);
+      return `<tr><td><i class="fam" style="background:${famColor(r.model)}"></i>${esc(M(r.model).label)}<span class="mtype">${esc(M(r.model).probability)} · scored on ${esc(r.comparison)}</span></td>
+      <td>${r.approx_independent_origins == null ? "—" : Math.round(r.approx_independent_origins)}</td>
+      <td>${r.mean_brier == null ? "—" : r.mean_brier.toFixed(4)}</td><td>${c && c.mean_brier != null ? c.mean_brier.toFixed(4) : "—"}</td>
+      <td><b>${sp(r.bss_vs_climatology)}</b></td><td>${sp(r.bss_ci_lo)} to ${sp(r.bss_ci_hi)}</td><td class="l">${verdictChip(r)}</td></tr>`; }).join("") + "</tbody>";
+  const comps = [...new Set(shown.map(r => r.comparison))];
+  const sig = r => `${r.origins ?? "—"} forecast dates from ${esc(period(r))}, ${r.targets_scored ?? "—"} price targets, ≈${r.approx_independent_origins == null ? "—" : Math.round(r.approx_independent_origins)} independent outcomes`;
+  const sigs = new Set(comps.map(c => sig(shown.find(x => x.comparison === c))));
+  $("lbNote").innerHTML = `<b>Scored on.</b> ` + (sigs.size === 1 && comps.length > 1
+      ? `${comps.length === 2 ? "Both" : "All " + comps.length} comparison sets shown (${comps.map(esc).join(", ")}) cover the same ${[...sigs][0]}`
+      : comps.map(c => `<b>${esc(c)}</b> (${esc(shown.filter(x => x.comparison === c).map(x => M(x.model).label).join(", "))}): ${sig(shown.find(x => x.comparison === c))}`).join("; ")) +
+    `. Within a comparison every model is scored on the same forecasts. ≈ independent outcomes counts non-overlapping ${st.h}-day windows: daily forecasts overlap, so this, not the number of forecast dates, sets how much the result can be trusted.`;
+}
+
+function drawDots(el, shown, rows){
+  const W = Math.max(300, el.clientWidth || 700), narrow = W < 560;
+  const labW = narrow ? 0 : 200, rowH = narrow ? 46 : 32, top = 6, axisH = 38;
+  const x0p = narrow ? 22 : labW, x1p = W - (narrow ? 22 : 22);
+  let lo = Math.min(0, ...shown.map(r => r.bss_ci_lo ?? r.bss_vs_climatology ?? 0), ...shown.map(r => r.bss_vs_climatology ?? 0));
+  let hi = Math.max(0, ...shown.map(r => r.bss_ci_hi ?? r.bss_vs_climatology ?? 0), ...shown.map(r => r.bss_vs_climatology ?? 0));
+  const step = niceStep((hi - lo) || 0.1); lo = Math.floor(lo / step - 1e-9) * step; hi = Math.ceil(hi / step + 1e-9) * step;
+  if (hi === lo) hi = lo + step;
+  const X = v => x0p + (v - lo) / (hi - lo) * (x1p - x0p);
+  const H = top + shown.length * rowH + axisH;
+  const ordered = FAM_ORDER.flatMap(f => shown.filter(r => M(r.model).family === f));
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Brier skill versus past frequency with 95% intervals, one row per model">`;
+  for (let v = lo; v <= hi + 1e-9; v += step){ const xv = X(v), z = Math.abs(v) < 1e-9;
+    s += `<line x1="${xv}" x2="${xv}" y1="${top}" y2="${H - axisH}" stroke="${z ? "#8a93a6" : "#252b3a"}" stroke-width="${z ? 1.4 : 1}"/>
+      <text x="${xv}" y="${H - axisH + 16}" fill="#8a93a6" font-size="11" text-anchor="middle">${z ? "0" : sp(v).replace(".0%", "%")}</text>`; }
+  s += `<text x="${(x0p + x1p) / 2}" y="${H - 4}" fill="#8a93a6" font-size="11" text-anchor="middle">Brier skill vs past frequency (← worse · better →)</text>`;
+  ordered.forEach((r, i) => {
+    const y0 = top + i * rowH, yc = narrow ? y0 + 30 : y0 + rowH / 2, col = famColor(r.model);
+    const filled = reliablyBetter(r) || reliablyWorse(r);
+    s += narrow ? `<text x="4" y="${y0 + 13}" fill="#e6e8ee" font-size="12" stroke="#141821" stroke-width="5" paint-order="stroke" stroke-linejoin="round">${esc(M(r.model).label)}</text>`
+                : `<text x="${labW - 12}" y="${yc + 4}" fill="#e6e8ee" font-size="12" text-anchor="end">${esc(M(r.model).label)}</text>`;
+    if (r.bss_ci_lo != null && r.bss_ci_hi != null)
+      s += `<line x1="${X(r.bss_ci_lo)}" x2="${X(r.bss_ci_hi)}" y1="${yc}" y2="${yc}" stroke="${col}" stroke-width="2" stroke-linecap="round"/>
+        <line x1="${X(r.bss_ci_lo)}" x2="${X(r.bss_ci_lo)}" y1="${yc - 5}" y2="${yc + 5}" stroke="${col}" stroke-width="2" stroke-linecap="round"/>
+        <line x1="${X(r.bss_ci_hi)}" x2="${X(r.bss_ci_hi)}" y1="${yc - 5}" y2="${yc + 5}" stroke="${col}" stroke-width="2" stroke-linecap="round"/>`;
+    if (r.bss_vs_climatology != null)
+      s += `<circle cx="${X(r.bss_vs_climatology)}" cy="${yc}" r="5.5" fill="${filled ? col : "#0b0d12"}" stroke="${filled ? "#0b0d12" : col}" stroke-width="2"/>`;
+    s += `<rect class="hit" data-i="${i}" x="0" y="${y0}" width="${W}" height="${rowH}" fill="transparent"/>`;
+  });
+  s += "</svg>";
+  el.innerHTML = s;
+  el.querySelectorAll(".hit").forEach(h => {
+    const r = ordered[+h.dataset.i];
+    const show = ev => { const c = climOn(rows, r.comparison);
+      const inb = r.model === "chronos_bolt" ? rows.find(x => x.model === "chronos_bolt" && x.comparison === "Stage 5 in-band") : null;
+      showTip(`<b>${esc(M(r.model).label)}</b> <span class="m">· ${esc(FAM[M(r.model).family]?.label || "")} · ${esc(M(r.model).probability)}</span><br>
+        Skill <b>${sp(r.bss_vs_climatology)}</b> <span class="m">95% interval</span> ${sp(r.bss_ci_lo)} to ${sp(r.bss_ci_hi)}<br>
+        Brier ${r.mean_brier?.toFixed(4) ?? "—"} <span class="m">vs base rate</span> ${c?.mean_brier?.toFixed(4) ?? "—"}<br>
+        ${verdictChip(r)}${r.verdict_seed_stable ? "" : ' <span class="m">(verdict varies by bootstrap seed)</span>'}<br>
+        <span class="m">Scored on</span> ${esc(r.comparison)} · ${r.origins ?? "—"} dates · ${r.targets_scored ?? "—"} targets<br>
+        <span class="m">≈ independent outcomes</span> ${Math.round(r.approx_independent_origins)}<br>
+        <span class="m">Period</span> ${esc(period(r))}` +
+        (r.mean_logloss != null ? `<br><span class="m">Log loss</span> ${r.mean_logloss.toFixed(3)}` : "") +
+        (inb ? `<br><span class="m">In-band rows only:</span> ${sp(inb.bss_vs_climatology)} (${sp(inb.bss_ci_lo)} to ${sp(inb.bss_ci_hi)})` : ""), ev); };
+    h.addEventListener("mousemove", show); h.addEventListener("click", show); h.addEventListener("mouseleave", hideTip);
+  });
+}
+
+/* ---------------- calibration ---------------- */
+function relKey(m, comp){ return [st.split, st.cohort, st.asset, st.h, comp, m].join("|"); }
+function renderCalibration(){
+  const rows = cellRows(st.split, st.cohort, st.asset, st.h);
+  const nat = natural(rows);
+  const models = nat.map(r => r.model);
+  if (!models.includes(st.calModel)) st.calModel = models.includes("garch_t") ? "garch_t" : models.find(m => m !== "climatology") || models[0];
+  pills($("calTabs"), models.map(m => ({k:m, html:`<i class="sw" style="background:${famColor(m)}"></i>${esc(M(m).label)}`})),
+    it => it.k === st.calModel, it => { st.calModel = it.k; renderCalibration(); });
+  const box = $("calPanels");
+  if (!models.length){ box.innerHTML = `<div class="card unavail" style="grid-column:1/-1">No calibration data for this cell.</div>`; $("calTable").innerHTML = ""; return; }
+  const comp = M(st.calModel).comparison;
+  const panels = [{m:st.calModel, comp}];
+  if (st.calModel !== "climatology") panels.push({m:"climatology", comp});
+  const data = panels.map(p => ({...p, pts:(D.reliability[relKey(p.m, p.comp)] || []).map(a => ({bin:a[0], f:a[1], o:a[2], n:a[3], lo:a[4], hi:a[5]}))}));
+  const all = data.flatMap(d => d.pts);
+  const mx = Math.min(1, Math.max(0.2, Math.ceil(Math.max(...all.map(p => Math.max(p.f ?? 0, p.hi ?? p.o ?? 0)), 0.1) * 10) / 10));
+  const maxN = Math.max(1, ...all.map(p => p.n));
+  box.innerHTML = data.map((d, i) => `<div class="card"><h3><i class="fam" style="background:${famColor(d.m)}"></i>${esc(M(d.m).label)}</h3>
+    <div class="sub">${i ? "Base rate on the same forecasts, for reference" : "Scored on " + esc(d.comp)}</div><div class="chart" id="cal${i}"></div></div>`).join("");
+  data.forEach((d, i) => drawCal($("cal" + i), d, mx, maxN));
+  const lbl = D.meta.reliability_bin_labels || [];
+  const binTxt = b => { const e = D.meta.reliability_bins; return e ? `${pc(e[b])}–${pc(e[b + 1])}` : (lbl[b] || b); };
+  $("calTable").innerHTML = `<thead><tr><th>Model</th><th>Forecast bin</th><th>Mean forecast</th><th>Observed</th><th>95% interval</th><th>Forecasts</th></tr></thead><tbody>` +
+    data.flatMap(d => d.pts.map(p => `<tr><td>${esc(M(d.m).label)}</td><td>${binTxt(p.bin)}</td><td>${pc(p.f, 1)}</td><td>${pc(p.o, 1)}</td><td>${pc(p.lo, 1)} to ${pc(p.hi, 1)}</td><td>${p.n.toLocaleString("en-US")}</td></tr>`)).join("") + "</tbody>";
+}
+function drawCal(el, d, mx, maxN){
+  const W = Math.max(260, el.clientWidth || 340), m = {l:54, r:12, t:10, b:40}, H = Math.round(W * 0.8);
+  const X = v => m.l + v / mx * (W - m.l - m.r), Y = v => m.t + (1 - v / mx) * (H - m.t - m.b);
+  const col = famColor(d.m);
+  if (!d.pts.length){ el.innerHTML = `<div class="unavail">No calibration bins.</div>`; return; }
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Calibration of ${esc(M(d.m).label)}: observed frequency against forecast probability">`;
+  const step = mx <= 0.3 ? 0.1 : mx <= 0.6 ? 0.2 : 0.25;
+  for (let v = 0; v <= mx + 1e-9; v += step){
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="#252b3a"/><text x="${m.l - 6}" y="${Y(v) + 4}" fill="#8a93a6" font-size="11" text-anchor="end">${pc(v)}</text>
+      ${v > 1e-9 ? `<text x="${X(v)}" y="${H - m.b + 16}" fill="#8a93a6" font-size="11" text-anchor="middle">${pc(v)}</text>` : ""}`; }
+  s += `<line x1="${X(0)}" y1="${Y(0)}" x2="${X(mx)}" y2="${Y(mx)}" stroke="#8a93a6" stroke-dasharray="4 4"/>
+    <text x="${(m.l + W - m.r) / 2}" y="${H - 4}" fill="#8a93a6" font-size="11" text-anchor="middle">forecast probability</text>
+    <text transform="translate(11 ${(m.t + H - m.b) / 2}) rotate(-90)" fill="#8a93a6" font-size="11" text-anchor="middle">observed frequency</text>`;
+  d.pts.forEach((p, i) => { if (p.f == null || p.o == null) return;
+    const r = 3 + 7 * Math.sqrt(p.n / maxN), cx = X(Math.min(p.f, mx));
+    if (p.lo != null && p.hi != null) s += `<line x1="${cx}" x2="${cx}" y1="${Y(Math.min(p.lo, mx))}" y2="${Y(Math.min(p.hi, mx))}" stroke="${col}" stroke-width="2" stroke-linecap="round" opacity=".75"/>`;
+    s += `<circle cx="${cx}" cy="${Y(Math.min(p.o, mx))}" r="${r.toFixed(1)}" fill="${col}" fill-opacity=".85" stroke="#0b0d12" stroke-width="2"/>
+      <circle class="hit" data-i="${i}" cx="${cx}" cy="${Y(Math.min(p.o, mx))}" r="${Math.max(12, r + 4)}" fill="transparent"/>`; });
+  s += "</svg>"; el.innerHTML = s;
+  el.querySelectorAll(".hit").forEach(h => { const p = d.pts[+h.dataset.i];
+    const show = ev => showTip(`<b>${esc(M(d.m).label)}</b><br><span class="m">Mean forecast</span> ${pc(p.f, 1)}<br><span class="m">Observed</span> <b>${pc(p.o, 1)}</b> <span class="m">(95%: ${pc(p.lo, 1)} to ${pc(p.hi, 1)})</span><br><span class="m">Forecasts in bin</span> ${p.n.toLocaleString("en-US")}`, ev);
+    h.addEventListener("mousemove", show); h.addEventListener("click", show); h.addEventListener("mouseleave", hideTip); });
+}
+
+/* ---------------- static sections ---------------- */
+function renderHow(){
+  const m = D.meta, seal = m.holdout_seal || {};
+  const items = [
+    ["Walk-forward, no future data.", "Each forecast was made using only prices (and, where used, option-implied volatility) available on its date. Models that learn from outcomes were refitted only on outcomes that had already happened by the refit date."],
+    ["Same forecasts for every model in a comparison.", "Skill is measured against the past event frequency on exactly the same dates and price targets, so differences are not caused by one model covering easier periods."],
+    ["Honest uncertainty.", `Daily forecasts over 30- to 90-day windows overlap heavily, so intervals come from a block bootstrap (${m.bootstrap_reps || "many"} resamples) and the count that matters is the number of non-overlapping windows, usually a few dozen. A verdict counts only if it holds across ${m.verdict_seeds || "several"} bootstrap seeds.`],
+    ["A sealed final test, opened once.", `The most recent stretch of history (${Object.entries(seal).map(([c, d]) => `${COHORT_SHORT[c] || c} outcomes from ${d}`).join(", ")}) was set aside before any model was built. ${m.holdout_opened ? "It has been opened once, for all models together, and is logged." : "It has not been opened yet; it will be opened once, for all models together, and the opening is logged."}`],
+    ["Promotion rule fixed in advance.", "A model replaces the simpler baseline only if, on the holdout, it beats both the base rate and the strongest development baseline, the 95% interval for its improvement excludes zero, its calibration is no worse, and it forecasts nearly as many cases as the base rate. Otherwise the baseline stays."],
+    ["Independent reviews at every stage.", "Each stage was reviewed by a separate reviewer before moving on. The reviews caught real bugs, which were fixed and re-run before any holdout result was seen."],
+    ["Market-implied is not a forecast.", "The DVOL model uses option-implied volatility. Option prices include a risk premium, so it is shown as a Q-proxy reference, not as a real-world (P) forecast, and it is not eligible for promotion."],
+  ];
+  $("how").innerHTML = items.map(([b, t]) => `<li><b>${esc(b)}</b> <span>${esc(t)}</span></li>`).join("");
+}
+
+function renderAll(){ hideTip();
+  if (!cellRows(st.split, st.cohort, st.asset, st.h).length){   // nearest cell that has rows in this period
+    const has = (c, a, h) => cellRows(st.split, c, a, h).length > 0, H = [30, 60, 90], A = ["BTC", "ETH", "XRP", "LINK"];
+    const cand = [...H.map(h => [st.cohort, st.asset, h]), ...A.flatMap(a => H.map(h => [st.cohort, a, h])),
+                  ...["settlement", "spot"].flatMap(c => [st.asset, ...A].flatMap(a => H.map(h => [c, a, h])))].find(x => has(...x));
+    if (cand) [st.cohort, st.asset, st.h] = cand; }
+  renderControls(); renderLeaderboard(); renderCalibration();
+  $("printSel").innerHTML = `<b>Selection printed:</b> ${esc(SPLIT[st.split])} period · ${esc(COHORT[st.cohort])} · ${esc(st.asset)} · ${st.h} days · ` +
+    `${FAM_ORDER.filter(f => st.fams.has(f)).map(f => esc(FAM[f].label)).join(", ")}${st.calModel ? ` · calibration: ${esc(M(st.calModel).label)}` : ""}. Change the filters on screen to print another cell.`; }
+// One-page print mode: open every collapsed section and size the page to the content, so a PDF is a single page.
+let printOpened = [];
+const printParam = () => /print/.test(location.search + location.hash);
+function enterPrint(){ document.documentElement.classList.add("pm");
+  printOpened = [...document.querySelectorAll("details:not([open])")]; printOpened.forEach(d => d.open = true);
+  const h = Math.ceil(document.body.getBoundingClientRect().height) + 2;
+  let el = document.getElementById("pageSize");
+  if (!el){ el = document.createElement("style"); el.id = "pageSize"; document.head.appendChild(el); }
+  el.textContent = `@page{size:1100px ${h}px;margin:0}`; }
+function exitPrint(){ if (printParam()) return; document.documentElement.classList.remove("pm");
+  printOpened.forEach(d => d.open = false); printOpened = []; }
+window.addEventListener("beforeprint", enterPrint); window.addEventListener("afterprint", exitPrint);
+
+function renderBottom(){
+  const P = D.promotion ? D.promotion.rows.map(r => Object.fromEntries(D.promotion.columns.map((c, i) => [c, r[i]]))) : [];
+  const tested = P.filter(r => r.testable), cells = new Set(tested.map(r => `${r.cohort}|${r.asset}|${r.h}`));
+  const promoted = tested.filter(r => r.promoted).length;
+  const best = tested.reduce((x, y) => (y.bss_vs_climatology ?? -9) > (x?.bss_vs_climatology ?? -9) ? y : x, null);
+  const dev = LB.filter(r => r.split === "dev" && r.model !== "climatology");
+  const devNat = dev.filter(r => r.comparison === M(r.model).comparison);
+  const devBetter = devNat.filter(reliablyBetter).length;
+  $("bottom").innerHTML = D.promotion ? `
+    <div class="b"><div class="n">${promoted}</div><b>models promoted</b> on the sealed holdout. ${promoted ? "" : "The base rate stays the reference."}</div>
+    <div class="b"><div class="n">${cells.size} of ${P.length ? new Set(P.map(r => `${r.cohort}|${r.asset}|${r.h}`)).size : "—"}</div><b>asset × horizon tests</b> had enough holdout outcomes to judge (spot prices, 30 days). The rest were too short.</div>
+    <div class="b"><div class="n">${best ? sp(best.bss_vs_climatology) : "—"}</div><b>best holdout skill</b>${best ? `: ${esc(M(best.model).label)}, ${esc(best.asset)} ${best.h} days. Its 95% interval (${sp(best.bss_ci_lo)} to ${sp(best.bss_ci_hi)}) includes zero, so it is not reliable.` : ""}</div>
+    <div class="b"><div class="n">${devBetter} of ${devNat.length}</div><b>development tests</b> where a model was reliably better than the base rate. Most differences were within noise.</div>` :
+    `<div class="b" style="grid-column:1/-1">The sealed holdout has not been opened yet; development results only.</div>`;
+}
+
+fetch("scorecard.json").then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }).then(d => {
+  D = d;
+  LB = d.leaderboard.rows.map(r => Object.fromEntries(d.leaderboard.columns.map((c, i) => [c, r[i]])));
+  st.split = d.meta.splits.includes("holdout") ? "holdout" : "dev";
+  const m = d.meta;
+  $("asof").innerHTML = `${m.holdout_opened ? "Final run" : "Development run"} <code>${esc(m.run_id)}</code><br>${esc((m.created_utc || "").slice(0, 16))} UTC`;
+  renderBottom(); renderVerdict(); renderAll(); renderHow();
+  if (printParam()) setTimeout(enterPrint, 0);
+  document.querySelectorAll("#verdict .jump").forEach(b => b.onclick = () => {
+    Object.assign(st, {split:"holdout", cohort:b.dataset.c, asset:b.dataset.a, h:+b.dataset.h}); renderAll();
+    $("lbTitle").scrollIntoView({behavior:"smooth", block:"start"}); });
+  $("footer").innerHTML = `Not investment advice. These are research results about forecasting accuracy, not trading signals. ` +
+    `<b>P</b> probabilities are real-world forecasts; <b>Q</b> probabilities are implied by option prices (risk-neutral) and include any risk premium, so they are not forecasts. ` +
+    `Skill metric: ${esc(m.metric)}. Engine revision <code>${esc((m.engine_revision || "").slice(0, 7) + ((m.engine_revision || "").includes("+") ? (m.engine_revision || "").slice((m.engine_revision || "").indexOf("+")) : ""))}</code> · run <code>${esc(m.run_id)}</code>. ` +
+    `Market-implied odds for live expiries are on the <a href="../crypto-odds/">Crypto Price Odds</a> page.`;
+  let t; window.addEventListener("resize", () => { clearTimeout(t); t = setTimeout(() => { renderLeaderboard(); renderCalibration(); }, 120); });
+}).catch(err => { $("asof").textContent = "Data unavailable";
+  $("verdict").innerHTML = `<div class="card unavail">Could not load the scorecard (${esc(err)}).</div>`; });
+})();
+</script>
+</body>
+</html>

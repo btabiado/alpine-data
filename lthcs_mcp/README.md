@@ -57,9 +57,9 @@ Add this entry to `~/.claude/mcp.json` (Claude Code) or
 {
   "mcpServers": {
     "lthcs": {
-      "command": "/Users/bryantabiadon/Documents/alpine-data/.venv/bin/python",
+      "command": "/path/to/alpine-data/.venv/bin/python",
       "args": ["-m", "lthcs_mcp.server"],
-      "cwd": "/Users/bryantabiadon/Documents/alpine-data"
+      "cwd": "/path/to/alpine-data"
     }
   }
 }

@@ -346,7 +346,6 @@ PAGES = {
     # page html: (script, marker proving the exile control exists)
     "lthcs_tab/index.html": ("lthcs_tab/lthcs-tab.js", 'data-index="exiles"'),
     "lthcs_table/index.html": ("lthcs_table/lthcs-table.js", '<option value="exiles"'),
-    "lthcs_tab_v2/index.html": ("lthcs_tab_v2/lthcs-v2.js", 'data-filter-value="exiles"'),
     "lthcs_tab/heatmap/index.html": ("lthcs_tab/heatmap/lthcs-heatmap.js", 'data-value="exiles"'),
     "lthcs_leaderboards/index.html": ("lthcs_leaderboards/lthcs-leaderboards.js", 'data-scope="exiles"'),
 }
@@ -364,8 +363,7 @@ def test_every_index_filter_has_an_index_exiles_option(html: str) -> None:
     assert "EXILE_FILTER_KEY" in js
 
 
-@pytest.mark.parametrize("script", ["lthcs_tab/lthcs-tab.js", "lthcs_table/lthcs-table.js",
-                                    "lthcs_tab_v2/lthcs-v2.js"])
+@pytest.mark.parametrize("script", ["lthcs_tab/lthcs-tab.js", "lthcs_table/lthcs-table.js"])
 def test_cards_and_rows_carry_the_exile_badge(script: str) -> None:
     js = (REPO_ROOT / script).read_text(encoding="utf-8")
     assert "exileBadgeHTML(row.exile" in js
@@ -373,7 +371,7 @@ def test_cards_and_rows_carry_the_exile_badge(script: str) -> None:
 
 
 def test_exile_badge_styles_ship_on_every_page() -> None:
-    for css in ("lthcs_tab/lthcs.css", "lthcs_tab_v2/lthcs-v2.css"):
+    for css in ("lthcs_tab/lthcs.css",):
         assert ".lthcs-exile-badge" in (REPO_ROOT / css).read_text(encoding="utf-8"), css
 
 

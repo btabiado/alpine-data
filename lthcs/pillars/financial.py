@@ -675,16 +675,6 @@ def _margin_trend_slope(
 
 # --- Bank sub-component helpers --------------------------------------------
 
-def _ttm_quarterly_sum(rows: List[Dict[str, Any]]) -> Optional[float]:
-    """Sum the most recent 4 quarterly rows. Returns None on bad data.
-
-    Exposed separately from :func:`_trailing_quarterly_sum` only so
-    bank-path call sites read clearly at the use site; the body is the
-    same.
-    """
-    return _trailing_quarterly_sum(rows)
-
-
 def compute_bank_pcl_ratio_subscore(
     nii_rows: List[Dict[str, Any]],
     noninterest_rows: List[Dict[str, Any]],

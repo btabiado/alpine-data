@@ -37,7 +37,7 @@ def _extract(js: str, name: str) -> str:
     raise AssertionError("unbalanced")  # pragma: no cover
 
 
-@pytest.fixture(scope="module", params=["app.py", "v2/app.py"])
+@pytest.fixture(scope="module", params=["app.py"])
 def dash_js(request) -> str:
     return _template_js(ROOT / request.param)
 
@@ -53,14 +53,6 @@ def test_tab_changes_push_history_and_popstate_routes_back(dash_js):
     assert re.search(r"^var _tabHistReplace = true;", dash_js, re.M)
     assert "window.addEventListener('popstate', () => {" in dash_js
     assert "location.hash ? _tabFromHash() : 'overview'" in dash_js
-
-
-def test_v2_tabs_support_arrow_keys():
-    js = _template_js(ROOT / "v2" / "app.py")
-    i = js.index("document.querySelectorAll('.tab').forEach(b => {")
-    block = js[i:i + 2500]
-    for key in ("ArrowRight", "ArrowLeft", "Home", "End"):
-        assert key in block
 
 
 def test_health_tabs_support_arrow_keys_and_skip_api_on_mirror():
@@ -162,8 +154,8 @@ def test_strong_sell_text_is_not_the_low_contrast_red(dash_js):
 
 
 def test_dark_only_pages_declare_color_scheme():
-    for p in ("app.py", "v2/app.py", "health/index.html", "real_estate/index.html",
-              "lthcs_tab/lthcs.css", "lthcs_tab_v2/lthcs-v2.css",
+    for p in ("app.py", "health/index.html", "real_estate/index.html",
+              "lthcs_tab/lthcs.css",
               "snowflake_summit/build.py", "landscape/build.py"):
         assert re.search(r"color-scheme:\s*dark", (ROOT / p).read_text(encoding="utf-8")), p
 
@@ -175,7 +167,7 @@ def test_meta_csp_no_longer_carries_frame_ancestors():
 
 # ------------------------------------------- stale sentiment (V8, V1+V2) ---
 
-@pytest.fixture(scope="module", params=["app.py", "v2/app.py"])
+@pytest.fixture(scope="module", params=["app.py"])
 def paint(request):
     mr = pytest.importorskip("py_mini_racer", reason="V8 needed")
     js = _template_js(ROOT / request.param)

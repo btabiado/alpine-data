@@ -420,8 +420,7 @@ class PipelineState:
 
 
 # ---------------------------------------------------------------------------
-# Macro input helpers (copied from scripts/lthcs_check_week5_distribution.py
-# because we can't import from scripts/)
+# Macro input helpers
 # ---------------------------------------------------------------------------
 
 def _yoy_change_pct(series: List[Dict[str, Any]], _days=(350, 380)) -> Optional[float]:
@@ -537,11 +536,6 @@ def build_macro_inputs(as_of: Optional[str] = None) -> Dict[str, Optional[float]
         ),
         "m2_yoy_pct": _yoy_change_pct(m2_series),
     }
-
-
-def _empty_av_response() -> Dict[str, Any]:
-    """A minimal AV-shaped payload that parse_ticker_sentiment handles."""
-    return {"items": "0", "feed": []}
 
 
 def _load_recent_dated_json(

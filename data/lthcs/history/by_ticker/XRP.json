@@ -1,7 +1,62 @@
 {
   "ticker": "XRP",
-  "model_version": "v1.1.0",
+  "model_version": "v1.1.1",
   "history": [
+    {
+      "date": "2026-10-16",
+      "score": 65.7,
+      "band": "high_confidence"
+    },
+    {
+      "date": "2026-10-15",
+      "score": 51.6,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-10-14",
+      "score": 53.9,
+      "band": "constructive"
+    },
+    {
+      "date": "2026-10-13",
+      "score": 61.3,
+      "band": "constructive"
+    },
+    {
+      "date": "2026-10-12",
+      "score": 60.2,
+      "band": "constructive"
+    },
+    {
+      "date": "2026-10-11",
+      "score": 62.7,
+      "band": "constructive"
+    },
+    {
+      "date": "2026-10-10",
+      "score": 64.6,
+      "band": "high_confidence"
+    },
+    {
+      "date": "2026-10-09",
+      "score": 56.8,
+      "band": "constructive"
+    },
+    {
+      "date": "2026-10-08",
+      "score": 49.5,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-10-07",
+      "score": 64.3,
+      "band": "high_confidence"
+    },
+    {
+      "date": "2026-10-06",
+      "score": 68.6,
+      "band": "high_confidence"
+    },
     {
       "date": "2026-10-05",
       "score": 67.8,

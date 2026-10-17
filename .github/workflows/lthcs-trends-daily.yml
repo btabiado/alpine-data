@@ -2,11 +2,19 @@ name: lthcs-trends-daily
 
 # Daily Google Trends nudge for the LTHCS Adoption pillar — Phase 2 of
 # Tier 2 #14. The weekly batch (lthcs-trends-weekly.yml) only reaches
-# ~11/167 tickers before pytrends 429s us; this daily cron spreads work
-# across the week (~30 tickers/day) so the full universe refreshes
-# every 5-6 days.
+# ~11 tickers before pytrends 429s us; this daily cron spreads the work
+# out (~30 tickers/day). At the 515-ticker universe a full pass takes
+# about 17 days, not the 5-6 days it took at 167.
 #
-# Runs at 04:00 UTC — same hour as the weekly Monday batch, but daily.
+# Runs at 04:13 UTC. It used to fire at 04:00, the same minute as the weekly
+# Monday batch, so on Mondays two jobs scraped Google Trends at once and
+# rewrote the same data/lthcs/trends/<ISO-week>.json. The weekly batch now
+# starts at 02:47 on Mondays and both jobs share one concurrency group, so
+# they never overlap: whichever starts second waits, then checks out the
+# other's commit. (Off-minute times also dodge the top-of-hour cron rush.)
+#
+# pytrends is an unofficial scraper with no release since 2023-04; when
+# Google changes the endpoint this job fails until it is replaced.
 # pytrends has no API key; the script's AdaptiveSleeper handles backoff
 # (12s base, 2x on 429 capped at 300s, reset on success) and a
 # 5-consecutive-429 circuit breaker ships partial progress for tomorrow.
@@ -16,7 +24,7 @@ name: lthcs-trends-daily
 # pages.yml deploy picks the new data up.
 on:
   schedule:
-    - cron: "0 4 * * *"
+    - cron: "13 4 * * *"
   workflow_dispatch:
     inputs:
       batch_size:
@@ -31,12 +39,13 @@ on:
 permissions:
   contents: write
 
-# Distinct concurrency group from lthcs-daily AND lthcs-trends-weekly
-# so a Monday morning triple-cron (daily + weekly + manual) doesn't
-# trip over itself. cancel-in-progress: false lets the manual dispatch
-# queue behind the scheduled run instead of stomping it.
+# Same concurrency group as lthcs-trends-weekly.yml: both rewrite the same
+# ISO-week file, and each commits the copy it checked out plus its own
+# additions, so overlapping runs would drop each other's rows.
+# cancel-in-progress: false lets a run queue behind the other instead of
+# stomping it.
 concurrency:
-  group: lthcs-trends-daily-${{ github.ref }}
+  group: lthcs-trends-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -46,7 +55,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python

@@ -96,13 +96,18 @@ def patched_configs(monkeypatch, tmp_path):
 
 
 @pytest.fixture
-def fake_persist():
+def fake_persist(tmp_path):
     """A MagicMock standing in for an :class:`LthcsPersist` instance.
 
     ``snapshot_exists`` defaults to False so the happy-path test doesn't
     trip the collision guard.
+
+    ``data_root`` is a real tmp directory. Stages 2 and 8 build paths from it
+    (the rotation manager, macro/, public/), and left as a mock attribute it
+    turned into a ``MagicMock/LthcsPersist.data_root/<id>/`` tree in the cwd.
     """
     persist = MagicMock(name="LthcsPersist")
+    persist.data_root = tmp_path / "persist_root"
     persist.snapshot_exists.return_value = False
     persist.write_snapshot.return_value = Path("/tmp/snapshot.json")
     persist.write_variable_detail.return_value = Path("/tmp/var.json")

@@ -1,23 +1,28 @@
 name: lthcs-trends-weekly
 
 # Weekly Google Trends batch for the LTHCS Adoption pillar. pytrends is
-# keyless but heavily rate-limited; running on Monday 04:00 UTC
-# (= Sunday 23:00 ET) gives Google's limiter overnight to cool down
-# after weekday traffic and avoids fighting the daily 23:00 UTC cron.
+# keyless but heavily rate-limited; running on Monday 02:47 UTC
+# (= Sunday 22:47 ET) gives Google's limiter the weekend to cool down
+# and avoids fighting the daily 23:00 UTC cron. It used to start at 04:00,
+# the same minute as lthcs-trends-daily.yml; that job now starts at 04:13
+# and shares this concurrency group, so the two never scrape at once.
+#
+# pytrends is an unofficial scraper with no release since 2023-04; when
+# Google changes the endpoint this job fails until it is replaced.
 #
 # Writes weekly snapshots to data/lthcs/trends/<ISO-week>.json and
 # commits them back to main so the next daily/pages build picks them up.
 on:
   schedule:
-    - cron: "0 4 * * 1"
+    - cron: "47 2 * * 1"
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
-# Distinct concurrency group from lthcs-daily so a Monday cron collision
-# doesn't kill either run; cancel-in-progress: false lets a manual
-# dispatch queue behind the scheduled run instead of stomping it.
+# Shared with lthcs-trends-daily.yml (both rewrite the same ISO-week file)
+# and distinct from lthcs-daily; cancel-in-progress: false lets a queued
+# run wait instead of stomping the running one.
 concurrency:
   group: lthcs-trends-${{ github.ref }}
   cancel-in-progress: false
@@ -29,7 +34,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python

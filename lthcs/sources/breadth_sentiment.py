@@ -49,10 +49,8 @@ Live URL drift notes (2026-05-17 audit):
 
 from __future__ import annotations
 
-import csv
 import datetime as _dt
 import html
-import io
 import re
 import sys
 from pathlib import Path
@@ -242,68 +240,6 @@ def _putcall_regime(ratio: float) -> str:
     if ratio <= _PUTCALL_ELEVATED_MAX:
         return "elevated_hedging"
     return "panic"
-
-
-# Backward-compat CSV parser. The live CSV endpoint is dead but tests and
-# callers may still feed CSV text (e.g. a manual download) through this
-# helper, so we keep it intact.
-def _parse_cboe_csv(text: str) -> List[Tuple[str, float]]:
-    """Parse a CBOE daily-volume CSV into (date, p/c ratio) rows.
-
-    The CBOE CSV uses a small preamble before the actual header row, so
-    we sniff for a row that contains a ``P/C Ratio``-like column. Any
-    rows that fail to parse a float are skipped, not raised.
-    """
-    if not text:
-        return []
-
-    reader = csv.reader(io.StringIO(text))
-    header_idx: Optional[int] = None
-    date_idx: Optional[int] = None
-    header_row: Optional[List[str]] = None
-
-    rows: List[List[str]] = list(reader)
-    for i, row in enumerate(rows):
-        joined = " ".join(c.strip().lower() for c in row)
-        if "p/c ratio" in joined or "p/c" in joined and "ratio" in joined:
-            header_row = row
-            for j, cell in enumerate(row):
-                if cell.strip().lower() == "total p/c ratio":
-                    header_idx = j
-                    break
-            if header_idx is None:
-                for j, cell in enumerate(row):
-                    if "p/c ratio" in cell.strip().lower():
-                        header_idx = j
-                        break
-            for j, cell in enumerate(row):
-                if cell.strip().lower() in {"date", "trade date"}:
-                    date_idx = j
-                    break
-            data_start = i + 1
-            break
-    else:
-        return []
-
-    if header_idx is None or header_row is None:
-        return []
-
-    out: List[Tuple[str, float]] = []
-    for row in rows[data_start:]:
-        if not row or len(row) <= header_idx:
-            continue
-        raw = row[header_idx].strip()
-        if not raw:
-            continue
-        try:
-            val = float(raw)
-        except ValueError:
-            continue
-        date_str = ""
-        if date_idx is not None and len(row) > date_idx:
-            date_str = row[date_idx].strip()
-        out.append((date_str, val))
-    return out
 
 
 # CBOE HTML parsing — the page embeds optionsData as a streaming JSON

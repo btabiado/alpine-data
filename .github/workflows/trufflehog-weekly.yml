@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   scan:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned: ubuntu-latest becomes 26.04 on 2026-10-19; keep the scan off the image switch
     # A full-history scan grows with the repo, and this job had no bound at all,
     # so a hung scan would have held a runner for GitHub's 6-hour default.
     timeout-minutes: 30
@@ -26,7 +26,7 @@ jobs:
         id: scan
         # SHA-pinned for supply-chain safety. The action wrapper embeds the
         # scanner binary version, so this freezes both. Refresh quarterly.
-        uses: trufflesecurity/trufflehog@4dd8831c5f12599465d4d45c3c447b4018a34c85 # v3.97.9
+        uses: trufflesecurity/trufflehog@e76dff8a7e57d6df0c60ad8cbf5d5cba505a8fc9 # v3.99.2
         with:
           # NO --since-commit here. The action supplies its own, so passing one
           # in extra_args made trufflehog abort before scanning anything:

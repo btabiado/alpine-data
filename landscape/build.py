@@ -20,7 +20,7 @@ Data sources (all read-only except this dashboard's own output):
 from __future__ import annotations
 
 import json
-from collections import Counter, OrderedDict
+from collections import Counter
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent

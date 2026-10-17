@@ -17,9 +17,9 @@
                                     backtest/<date>_*.json/summary.json candidates
                                     until one hits (uses Last-Modified header
                                     via HEAD request as the freshness signal)
-   - Daily trends (0 4 * * *)     → trends/<current-ISO-week>.json — also
+   - Daily trends (13 4 * * *)    → trends/<current-ISO-week>.json — also
                                     inspect its `as_of` field for sub-week age
-   - Weekly trends (0 4 * * 1)    → falls out of the same trends/<week>.json
+   - Weekly trends (47 2 * * 1)   → falls out of the same trends/<week>.json
    - Weekly validate (0 5 * * 1)  → backfill_validation_<ts>.json under data/lthcs/
                                     (latest mtime via HEAD)
    - Monthly backtest (0 6 1 * *) → check backtest/ recent dirs (same probe
@@ -368,7 +368,7 @@ async function probeDailyTrends() {
   let ageSec = lastDate ? ageSecFromDate(lastDate) : null;
   return {
     name: 'Daily Trends Fetch',
-    schedule: '0 4 * * * (04:00 UTC)',
+    schedule: '13 4 * * * (04:13 UTC)',
     cadence: 'daily',
     workflowFile: 'lthcs-trends-daily.yml',
     lastDate,
@@ -392,7 +392,7 @@ async function probeWeeklyTrendsRotate() {
   }
   return {
     name: 'Weekly Trends Rotate',
-    schedule: '0 4 * * 1 (Mon 04:00 UTC)',
+    schedule: '47 2 * * 1 (Mon 02:47 UTC)',
     cadence: 'weekly',
     workflowFile: 'lthcs-trends-weekly.yml',
     lastDate,

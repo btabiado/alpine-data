@@ -137,24 +137,24 @@ TARGETS: list[dict] = [
     {"label": "Yahoo Finance",        "category": "Stocks",        "url": "https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD?range=1d&interval=1d",                 "key_env": None},
     {"label": "FRED",                 "category": "Macro",         "url": "https://api.stlouisfed.org/fred/releases",                                                       "key_env": "FRED_API_KEY", "key_auth": {"param": "api_key", "extra": {"file_type": "json", "limit": "1"}}},
     # ---- ETF flows ----
-    # Farside blocks automated requests (Cloudflare 403); the dashboard
-    # actually sources BTC ETF flows from a keyless GitHub mirror CSV (see
-    # fetch_live.MIRROR_BTC_CSV), so probe that real data path instead.
-    {"label": "Farside (ETF mirror)", "category": "ETF Flows",     "url": "https://raw.githubusercontent.com/canadiancode/btc-etf-flows/main/Bitcoin-ETF-Flow-Data/data/BTC_ETF_INFLOWS_OUTFLOWS.csv", "key_env": None},
-    # SoSoValue dropped: api.sosovalue.com no longer resolves (DNS NXDOMAIN — the
-    # API subdomain was decommissioned).
-    #
-    # CoinGlass dropped one step later, for a related reason. Its branch in
-    # fetch_live.fetch_all() is only reached when COINGLASS_API_KEY is set, and
-    # no workflow passes that variable to anything, so fetch_all always takes
-    # the keyless GitHub-mirror path — the one probed directly above. Keeping a
-    # probe (and a key_env) for a branch that never executes reported on a
-    # source the dashboard does not use, and made COINGLASS_API_KEY look like
-    # live plumbing on /health/apis.html.
-    #
-    # Both keys stay named in scripts/check_secrets_present.py, annotated
-    # "(retired…)", deliberately: a user who has them set should be told they
-    # do nothing, rather than told nothing at all.
+    # Farside is the real upstream: scripts/fetch_etf_flows.py
+    # (etf-flows-daily.yml) scrapes its all-data pages into data/btc_flows.csv
+    # and data/eth_flows.csv, which the ETF Flows tab reads. Probed with the
+    # exact headers that fetcher sends. Farside's Cloudflare edge can refuse
+    # automated requests from some networks; a 403 here reads "blocked", which
+    # is then about this probe's egress, not necessarily the daily fetch.
+    # (Until 2026-10 this row probed the canadiancode/btc-etf-flows GitHub
+    # mirror behind the retired "Seed BTC" button. That mirror stopped at
+    # 2025-05-02 and fed nothing, so the row could read "up" while the source
+    # that feeds the tab was down.)
+    {"label": "Farside (ETF flows)",  "category": "ETF Flows",     "url": "https://farside.co.uk/bitcoin-etf-flow-all-data/",                                              "key_env": None, "headers": {"User-Agent": "AlpineDataWorks-feed/1.0 (+https://alpinedataworks.com)", "Accept": "text/html,application/xhtml+xml", "Accept-Language": "en-US,en;q=0.9"}},
+    # SoSoValue and CoinGlass were dropped earlier: api.sosovalue.com no longer
+    # resolves, and CoinGlass was only reachable through fetch_live.fetch_all()
+    # with COINGLASS_API_KEY set, which no workflow ever passed (fetch_live.py
+    # itself was removed in 2026-10). Both keys stay named in
+    # scripts/check_secrets_present.py, annotated "(retired…)", deliberately: a
+    # user who has them set should be told they do nothing, rather than told
+    # nothing at all.
     # ---- news / social / research ----
     # Reddit hard-blocks datacenter IPs on the keyless public API; the dashboard
     # reaches it via OAuth (REDDIT_CLIENT_ID/SECRET), so a 403 here means
@@ -268,9 +268,8 @@ TARGETS: list[dict] = [
     # the current year, whose page may not exist yet early in a new year.
     {"label": "Port of Los Angeles",  "category": "Supplies",      "url": "https://portoflosangeles.org/business/statistics/container-statistics/historical-teu-statistics-2024", "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
     {"label": "NY Fed GSCPI",         "category": "Supplies",      "url": "https://www.newyorkfed.org/medialibrary/research/interactives/data/gscpi/gscpi_interactive_data.csv", "key_env": None},
-    # ---- UAP / MUFON: NUFORC sightings scrape. The historical mirror lives on
-    # raw.githubusercontent.com, already covered via the ETF-mirror host above.
-    {"label": "NUFORC",               "category": "UAP",           "url": "https://nuforc.org/subndx/",                                                                     "key_env": None},
+    # UAP counts are a committed aggregate (data-mufon.json). Nothing probes
+    # nuforc.org; a person updates the file with scripts/update_ufo_counts.py.
     # ---- travel: State Dept advisories — probe the RSS feed (lighter than the
     # HTML table). Akamai-fronted, so send a browser UA to avoid a bot 403.
     {"label": "State Dept advisories","category": "Travel",        "url": "https://travel.state.gov/_res/rss/TAsTWs.xml",                                                   "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},

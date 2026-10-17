@@ -50,8 +50,9 @@ import sys
 from pathlib import Path
 
 # Allow override for the synthetic-regression test or callers that want to
-# point at a non-default path. Default matches the location v2/app.py writes.
-DEFAULT_PATH = Path(__file__).resolve().parent.parent / "v2" / "dashboard.html"
+# point at a non-default path. Default is the dashboard app.py writes (V2 and its
+# v2/dashboard.html were retired in 2026-10; the checks apply to V1 unchanged).
+DEFAULT_PATH = Path(__file__).resolve().parent.parent / "dashboard.html"
 
 
 def _log(ok: bool, name: str, detail: str = "") -> None:

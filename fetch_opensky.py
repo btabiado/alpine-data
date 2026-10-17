@@ -14,7 +14,8 @@ USAGE:
 
 OUTPUT:
   data-opensky.json           (the Live Traffic tile reads this — summary/snapshot)
-  data-opensky-positions.json (trimmed airborne positions for the Live Flight Map sub-view)
+  data-opensky-positions.json (trimmed airborne positions for the Live Flight Map sub-view;
+                               pages.yml fetches it at deploy time, it is never committed)
 
 LICENSE NOTE: OpenSky data is free for research / non-commercial use only.
 

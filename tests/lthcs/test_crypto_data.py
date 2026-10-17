@@ -18,7 +18,6 @@ from lthcs.sources import crypto_data
 from lthcs.sources.crypto_data import (
     CryptoDataAdapter,
     compute_etf_flow_30d,
-    compute_etf_flow_pace,
     load_etf_flows,
     load_whale_payload,
     mean,
@@ -70,21 +69,6 @@ def test_compute_etf_flow_30d_sums_tail() -> None:
 def test_compute_etf_flow_30d_short_returns_none() -> None:
     rows = [{"date": "d%d" % i, "total": 100.0} for i in range(5)]
     assert compute_etf_flow_30d(rows) is None
-
-
-def test_compute_etf_flow_pace_positive() -> None:
-    # Prior 30 days: +30 USD each. Recent 30 days: +60 USD each.
-    rows = (
-        [{"date": "p%d" % i, "total": 30.0} for i in range(30)]
-        + [{"date": "r%d" % i, "total": 60.0} for i in range(30)]
-    )
-    # (1800 - 900) / |900| = 1.0
-    assert compute_etf_flow_pace(rows) == pytest.approx(1.0)
-
-
-def test_compute_etf_flow_pace_short() -> None:
-    rows = [{"date": "p%d" % i, "total": 30.0} for i in range(30)]
-    assert compute_etf_flow_pace(rows) is None
 
 
 # ---------------------------------------------------------------------------

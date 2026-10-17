@@ -1,7 +1,62 @@
 {
   "ticker": "POL",
-  "model_version": "v1.1.0",
+  "model_version": "v1.1.1",
   "history": [
+    {
+      "date": "2026-10-16",
+      "score": 23.3,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-15",
+      "score": 23.3,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-14",
+      "score": 23.3,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-13",
+      "score": 23.3,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-12",
+      "score": 23.3,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-11",
+      "score": 23.3,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-10",
+      "score": 23.3,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-09",
+      "score": 23.3,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-08",
+      "score": 23.3,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-07",
+      "score": 23.3,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-06",
+      "score": 23.3,
+      "band": "review"
+    },
     {
       "date": "2026-10-05",
       "score": 23.3,

@@ -64,22 +64,58 @@ def test_parse_farside_vertical_handles_negatives_in_parens():
     assert float(parts[3]) == pytest.approx(-484.1)
 
 
-def test_parse_farside_vertical_handles_dashes_as_zero():
+def test_parse_farside_vertical_does_not_write_an_all_dash_row():
+    """15 Jan 2024 is all '-' (it was MLK Day): nothing was reported, so no
+    row. It used to be written as a row of zeros, i.e. a day of zero flow."""
     out = pf.parse_farside_vertical(VERTICAL_SAMPLE)
-    rows = [ln for ln in out.strip().splitlines()[1:]]
-    row = next(r for r in rows if r.startswith("2024-01-15"))
-    parts = row.split(",")
-    # all cells were "-" → 0
-    assert all(float(p) == 0.0 for p in parts[1:])
+    dates = [ln.split(",")[0] for ln in out.strip().splitlines()[1:]]
+    assert dates == ["2024-01-11", "2024-01-12"]
+
+
+PARTIAL_SAMPLE = textwrap.dedent("""\
+Date,
+IBIT
+FBTC
+BITB
+Total
+01 Oct 2026,
+195.6
+(60.7)
+0.0
+134.9
+02 Oct 2026,
+-
+29.3
+0.0
+29.3
+05 Oct 2026,
+-
+-
+-
+0.0
+""")
+
+
+def test_parse_farside_vertical_keeps_dashes_empty_and_withholds_partial_total():
+    out = pf.parse_farside_vertical(PARTIAL_SAMPLE)
+    lines = out.strip().splitlines()
+    assert lines[0] == "date,IBIT,FBTC,BITB,Total"
+    assert lines[1] == "2026-10-01,195.6,-60.7,0,134.9"   # a printed 0.0 stays 0
+    # IBIT not in yet: empty, and Farside's 29.3 is not the day's total.
+    assert lines[2] == "2026-10-02,,29.3,0,"
+    # Nothing reported (Total is the formula's 0.0): no row at all.
+    assert len(lines) == 3
 
 
 def test_parse_value_rules():
-    assert pf._parse_value("-") == 0.0
-    assert pf._parse_value("") == 0.0
+    assert pf._parse_value("-") is None
+    assert pf._parse_value("") is None
+    assert pf._parse_value("n/a") is None
+    assert pf._parse_value("0.0") == 0.0
     assert pf._parse_value("(123.4)") == pytest.approx(-123.4)
     assert pf._parse_value("1,234.5") == pytest.approx(1234.5)
     assert pf._parse_value("$50") == pytest.approx(50.0)
-    assert pf._parse_value("garbage") == 0.0
+    assert pf._parse_value("garbage") is None
 
 
 def test_parse_date_iso():

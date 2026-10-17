@@ -1,0 +1,137 @@
+# crypto_options configuration. Every threshold here is a configurable starting rule
+# (brief s.4), not a market truth. Record any change before evaluating a final test set.
+
+assets: [BTC, ETH, XRP, LINK]
+
+venues:
+  deribit:
+    base_url: https://www.deribit.com/api/v2
+    min_interval_s: 0.35        # rate limit between public calls
+    max_retries: 3
+    backoff_s: 2.0
+    timeout_s: 20
+    # Option chains per asset. family: inverse (coin-settled) | linear (USDC-settled).
+    # role: primary feeds the headline table; cross_check is reported alongside.
+    chains:
+      BTC:
+        - {currency: BTC,  base: BTC, family: inverse, role: primary}
+        - {currency: USDC, base: BTC, family: linear,  role: cross_check}
+      ETH:
+        - {currency: ETH,  base: ETH, family: inverse, role: primary}
+        - {currency: USDC, base: ETH, family: linear,  role: cross_check}
+      XRP:
+        - {currency: USDC, base: XRP, family: linear,  role: primary}
+      LINK: []                  # Stage 1: no listed LINK options on any reachable venue
+    # USD vs USDC index pairs checked for depeg (brief s.3: USD and USDC are not silently identical)
+    depeg_pairs:
+      BTC: [btc_usd, btc_usdc]
+      ETH: [eth_usd, eth_usdc]
+      XRP: [xrp_usd, xrp_usdc]
+    depeg_flag_threshold: 0.005
+
+unavailable_reasons:
+  LINK: >-
+    No listed LINK options on Deribit, OKX, Gate, Derive, Delta, Aevo, Thalex or Coinbase
+    Derivatives (verified live 2026-10-11); CME lists LINK futures only. Perpetuals and ETF
+    (GLNK) options are not substitutes (brief s.3). See research/STAGE1_COVERAGE.md.
+
+quality:
+  max_relative_spread: 0.30     # (ask-bid)/mid
+  sensitivity_max_relative_spread: 0.50   # re-run at this looser threshold and report what changes
+  tiny_premium_max_ticks: 2     # wider relative spreads accepted (flagged) if ask-bid <= this many ticks
+  max_quote_age_s: 300          # only applied when a genuine quote timestamp exists
+  max_time_skew_s: 60
+  min_strikes: 8
+  min_strikes_each_side: 3
+  min_strikes_each_side_of_target: 2
+  max_target_gap_frac: 0.15     # bracketing accepted strikes may be at most this far apart (fraction of F)
+
+fit:
+  grid_points: 80
+  lambda_grid: [1.0e-4, 1.0e-3, 1.0e-2, 1.0e-1, 1.0, 1.0e+1, 1.0e+2, 1.0e+3]
+  quote_tolerance: 0.02         # fit counts as "through every quote" if every error <= 1.02 half-spreads
+  target_rms_spread_units: 1.0  # fallback: smoothest fit whose RMS error <= this many half-spreads
+  sensitivity_lambda_factor: 4.0
+
+horizons:
+  days: [30, 60, 90]
+  tolerance_days: 7             # strict rule for scoring; nearest listed expiry is also shown
+  include_year_end: true
+
+targets:
+  absolute:
+    XRP: [1.50, 1.75, 2.00, 2.25, 2.50, 3.00]
+  proportional_up: [0.10, 0.25, 0.50, 0.75, 1.00]
+  proportional_down: [-0.10, -0.25, -0.50]
+
+paths:
+  raw: data/raw
+  normalized: data/normalized
+  history: data/history
+  runs: runs
+
+display_timezone: America/New_York
+
+backtest:
+  cohorts: [settlement, spot]   # never mixed; settlement = Deribit 08:00 UTC delivery prices (true outcomes)
+  horizons: [30, 60, 90]        # calendar days; outcome must exist on exactly t + h
+  targets_up: [0.10, 0.25, 0.50, 0.75, 1.00]
+  targets_down: [-0.10, -0.25, -0.50]
+  settlement_daily_from: {BTC: "2020-02-04", ETH: "2020-02-18"}   # weekly-only era before these dates is dropped
+  methodology_breaks:           # outcomes on/after these dates are excluded from the strict cohort
+    settlement:
+      LINK: "2026-08-01"        # Deribit moved option-less assets to a "Coinbase Index" around Aug 2026
+  min_history_days: 365         # a model forecasts only after this many days of past data/matured labels
+  ewma_lambda: 0.94
+  rv_window: 90
+  drift_window: 365
+  garch_refit_days: 30
+  holdout_fraction: 0.20        # last 20% of the shortest asset's eligible timeline, sealed until final evaluation
+  bootstrap_reps: 1000
+  seed: 20261012
+  logloss_clip: 1.0e-4
+  reliability_bins: [0.0, 0.02, 0.05, 0.10, 0.20, 0.30, 0.50, 0.70, 0.90, 1.0]
+  min_independent_events: 10    # fewer event-containing non-overlapping windows -> target flagged untestable
+  verdict_seeds: 5              # better/worse verdicts must agree across this many bootstrap seeds
+  ml:                           # Stage 4. v1 predeclared before any ML result; v2 changes (below) predeclared after
+                                #   the Stage 4 audit and before the holdout is opened: shrink-only calibration for all
+                                #   models, wider logistic C grid, per-target class gate, fallback params retuned.
+                                #   Tuning budget: <= 12 trials per tuning event per (asset, cohort, h, side, model),
+                                #   retuned yearly; this exceeds a literal "20 per model/cohort" reading (disclosed).
+    version: v2
+    models: [logit_A, rf_A, xgb_A, xgb_AD]
+    refit_days: 30              # walk-forward evaluation blocks
+    retune_days: 365
+    tuning_trials: 12           # brief cap: <= 20 per model/cohort tuning event
+    inner_val_fraction: 0.25
+    min_distinct_outcome_dates: 50   # brief s.8 screening gate
+    min_class_dates: 20
+    cal_min_class_dates: 10      # calibration slice must hold this many distinct event and non-event dates
+    workers: 12
+  promotion:                    # predeclared; applied once, on the sealed holdout
+    rule: >-
+      A challenger is promoted for an (asset, cohort, horizon) only if, on the holdout, (1) its mean Brier is
+      lower than both climatology and the strongest development-period baseline for that cell, (2) the
+      block-bootstrap 95% CI of its Brier difference vs climatology lies entirely below 0 and the verdict is
+      seed-stable, (3) its reliability (mean |observed - forecast| over bins, weighted by count) is no worse
+      than climatology's by more than 0.02, and (4) its coverage is at least 90% of climatology's. Otherwise
+      the simpler baseline is retained and the report says no demonstrated improvement.
+    clarifications: >-
+      Made 2026-10-14 BEFORE the holdout was opened, after an independent pre-flight review that saw no holdout
+      result: coverage (4) is measured on the cell's testable holdout targets; Chronos's price representation is
+      scored on all rows and must also pass on its in-band subset; the strongest development baseline itself is
+      judged against climatology only in (1); cells with no testable holdout targets are reported as untestable;
+      the retained model is the strongest development baseline if it passes against climatology, else climatology.
+  foundation:                   # Stage 5, predeclared before any Chronos result was seen
+    model: amazon/chronos-bolt-small
+    revision: 772f3d25d38aec6d914c8949dab4462e2d46f5d8
+    weights_date: "2024-11-13"  # origins on/after this date cannot overlap the model's pretraining data
+    context_length: 512
+    horizons: [30, 60]          # native prediction length 64; 90d would need autoregressive unrolling (not run)
+    tail_rule: normal tail beyond q10/q90, centred on q50, sigma from q10-q90 spread; rows flagged in_band=False
+    variants:                   # added after the Stage 5 audit (brief s.7: evaluate returns/volatility and price), predeclared
+      price: log-price context; quantiles of the h-day log return; in-band rows are the primary comparison
+      vol: log 30-day realized-vol context; median path -> h-day variance -> zero-drift lognormal (no tail assumption)
+    skipped:
+      news_llm_features: no archived point-in-time news; would need prospective collection (Quinn cluster deferred)
+      ensemble: brief allows blending only validated real-world forecasts; no model validated in Stages 3-4

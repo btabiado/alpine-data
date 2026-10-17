@@ -1,14 +1,24 @@
 """
 UAP / NUFORC sightings fetcher.
 
-The MUFON / UAP tab on the V2 dashboard has three sections:
+AUTOMATED COLLECTION IS DISABLED. Do not fetch nuforc.org or any mirror of
+its report pages. The dashboard reads aggregated counts in data-mufon.json.
+New counts are added by hand, with no network request::
+
+    python3 scripts/update_ufo_counts.py
+
+See README.md, "Updating UAP counts". ``python fetch_mufon.py`` does not
+download anything. ``_http_fetch`` refuses nuforc.org and the old report
+mirrors before it opens a socket.
+
+The MUFON / UAP tab on the dashboard has three sections:
   1. Latest Updates  — curated static cards, baked into HTML_TEMPLATE.
   2. Document Library — curated static external links, baked into HTML_TEMPLATE.
   3. US Sightings Map — driven by THIS fetcher's output.
 
 This module only powers section 3 (the state heat-map). Sections 1 and 2 do
 not change often enough to warrant a fetcher; the operator updates them by
-editing v2/app.py directly.
+editing app.py directly.
 
 Data sources — historical mirror PLUS live NUFORC scrape
 --------------------------------------------------------
@@ -54,7 +64,7 @@ committed month cache (data frozen at 2026-06-09) and says so loudly: a
 ``_stale`` / ``data_through`` / ``live_refresh`` in the payload so the
 dashboard can show the real data date instead of the build clock.
 
-Output schema (sidecar v2/data-mufon.json) ::
+Output schema (sidecar data-mufon.json) ::
 
     {
       "generated_at": "2026-05-25T19:30:00Z",
@@ -126,7 +136,7 @@ shapes are kept as named entries — everything else collapses into "other".
 
 CLI ::
 
-    python fetch_mufon.py                       # default --out v2/data-mufon.json
+    python fetch_mufon.py                       # default --out data-mufon.json
     python fetch_mufon.py --out PATH
     python fetch_mufon.py --no-network          # offline parser self-test
     python fetch_mufon.py --months-back N       # legacy relative window; default is
@@ -157,7 +167,10 @@ from typing import Any
 UA = ("Mozilla/5.0 (compatible; alpine-data/1.0 "
       "+https://btabiado.github.io/alpine-data/)")
 ROOT = Path(__file__).parent
-DEFAULT_OUT = ROOT / "v2" / "data-mufon.json"
+# Nothing runs this in CI any more: the V2 build that did was retired in
+# 2026-10, and the committed data-mufon.json (frozen at 2026-06-09) is
+# published as is. See the "Status since 2026-06-10" note above.
+DEFAULT_OUT = ROOT / "data-mufon.json"
 
 # NUFORC scrape configuration. The wdtNonce lives in a hidden input on any
 # /subndx/?id=e<YYYYMM> page (the /ndx/?id=event index renders the
@@ -167,11 +180,10 @@ NUFORC_BASE = "https://nuforc.org"
 NUFORC_MONTH_PAGE = f"{NUFORC_BASE}/subndx/?id=e"  # + YYYYMM
 NUFORC_AJAX_URL = f"{NUFORC_BASE}/wp-admin/admin-ajax.php"
 NUFORC_REQUEST_DELAY_SEC = 2.0      # polite floor between requests
-# Must stay UNDER the `timeout-minutes` of the V2 build step in
-# .github/workflows/pages.yml (currently 6 min = 360s), otherwise this graceful
-# cap can never fire: GitHub SIGKILLs the step first and we lose the partial
-# payload AND the stopped_reason diagnostic. 240s leaves ~2 min of headroom for
-# the rest of v2/app.py (notably fetch_stock_prices, ~10s for 50 tickers).
+# Sized for the retired V2 build step in pages.yml (6 min = 360s), which ran
+# this fetcher until 2026-10: under a step timeout this graceful cap must fire
+# first, or GitHub SIGKILLs the step and the partial payload AND the
+# stopped_reason diagnostic are lost. Keep it under any step that runs it.
 #
 # Was 900s, justified by a ~9min cold start with no cache. That justification
 # is obsolete: data/.stale/nuforc_subndx_*.json is committed to the repo (see
@@ -304,6 +316,24 @@ def _is_cloudflare_challenge(status: int | None, headers: Any,
     return "<title>just a moment" in (body_head or "").lower()
 
 
+# Returned by _http_fetch for any URL that would download NUFORC reports.
+# Kept as one string so the CLI, the guard, and the tests agree.
+NUFORC_FETCH_DISABLED = (
+    "automated NUFORC fetch disabled; add counts with "
+    "python3 scripts/update_ufo_counts.py"
+)
+
+
+def _blocked_nuforc_url(url: str) -> bool:
+    """True for nuforc.org and for the old per-report CSV mirrors."""
+    host = (urllib.parse.urlsplit(url).hostname or "").lower()
+    if host == "nuforc.org" or host.endswith(".nuforc.org"):
+        return True
+    low = url.lower()
+    return ("ufo-reports" in low or "nuforc_sightings" in low
+            or "nuforc_reports" in low)
+
+
 def _http_fetch(url: str, *, data: bytes | None = None,
                 headers: dict[str, str] | None = None,
                 timeout: int = 60,
@@ -316,7 +346,12 @@ def _http_fetch(url: str, *, data: bytes | None = None,
     ``"HTTP 404"``, ``"network error (...)"``. Never raises for HTTP/network
     trouble. ``encoding`` forces one codec (errors replaced) instead of the
     utf-8 -> latin-1 sniff, for JSON bodies.
+
+    nuforc.org and the old report mirrors are refused before any socket is
+    opened. Counts are updated from a saved page instead.
     """
+    if _blocked_nuforc_url(url):
+        return None, NUFORC_FETCH_DISABLED
     hdrs = {"User-Agent": UA}
     hdrs.update(headers or {})
     req = urllib.request.Request(url, data=data, headers=hdrs,
@@ -806,21 +841,15 @@ def _nuforc_extract_nonce(html_text: str) -> str | None:
     return None
 
 
-def _nuforc_fetch_month(yyyymm: str, nonce: str,
-                        timeout: int = 60) -> dict | None:
-    """POST the AJAX request that returns one month's sightings. Returns the
-    raw JSON dict (with keys recordsTotal, recordsFiltered, data:[...rows...])
-    or None if the HTTP layer fails. A successful 200 with ``data == []`` IS
-    returned as the dict — the caller decides whether that means 404 or
-    "month exists but empty".
-    """
-    return _nuforc_fetch_month_ex(yyyymm, nonce, timeout=timeout)[0]
-
-
 def _nuforc_fetch_month_ex(yyyymm: str, nonce: str,
                            timeout: int = 60) -> tuple[dict | None, str | None]:
-    """``_nuforc_fetch_month`` plus the failure cause: ``(payload, None)`` on
-    success, ``(None, cause)`` otherwise (cause as in ``_http_fetch``)."""
+    """POST the AJAX request that returns one month's sightings.
+
+    ``(payload, None)`` on success, where payload is the raw JSON dict
+    (recordsTotal, recordsFiltered, data:[...rows...]); a 200 with
+    ``data == []`` is returned as-is and the caller decides whether that
+    means 404 or "month exists but empty". ``(None, cause)`` otherwise
+    (cause as in ``_http_fetch``)."""
     body = urllib.parse.urlencode({
         "draw": "1",
         "start": "0",
@@ -1612,99 +1641,28 @@ def _self_test() -> int:
 # ----- CLI -------------------------------------------------------------------
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="Fetch NUFORC UAP sightings.")
+    ap = argparse.ArgumentParser(
+        description="NUFORC fetching is disabled. Update counts from a saved page.")
     ap.add_argument("--out", default=str(DEFAULT_OUT),
-                    help=f"Output JSON path (default: {DEFAULT_OUT})")
+                    help=argparse.SUPPRESS)
     ap.add_argument("--no-network", action="store_true",
-                    help="Run offline parser self-test and exit (no HTTP).")
+                    help="Run the offline parser self-test and exit (no HTTP).")
     ap.add_argument("--months-back", type=int, default=None,
-                    help="How many months of NUFORC data to scrape. Default is "
-                         f"floor-anchored: every month back to "
-                         f"{NUFORC_LIVE_FLOOR_YM} (where the planetsig mirror "
-                         "ends), so the window grows instead of sliding and no "
-                         "month can drop out of the payload. Pass an integer "
-                         "for the legacy relative window — useful only for a "
-                         "first cold run with no committed month cache.")
+                    help=argparse.SUPPRESS)
     ap.add_argument("--no-live", action="store_true",
-                    help="Skip the NUFORC live scrape (planetsig only).")
+                    help=argparse.SUPPRESS)
     args = ap.parse_args(argv)
 
     if args.no_network:
         return _self_test()
 
-    out_path = Path(args.out)
-    prior: dict | None = None
-    if out_path.exists():
-        try:
-            prior = json.loads(out_path.read_text())
-        except Exception:
-            prior = None
-
-    fetch_error: str | None = None
-    try:
-        payload = fetch_all(months_back=args.months_back,
-                            live_scrape=not args.no_live)
-    except Exception as e:
-        print(f"  [mufon] unexpected fetch error: {e}", file=sys.stderr)
-        fetch_error = f"fetch crashed ({type(e).__name__}: {e})"
-        payload = None
-
-    if payload is None:
-        cause = fetch_error or ("every source failed (historical mirror and "
-                                "NUFORC month cache both empty)")
-        if prior and prior.get("total_records", 0) > 1000:
-            print("  [mufon] every probe failed; preserving prior file.",
-                  file=sys.stderr)
-            # Mark stale so the renderer can show a "data not refreshed" chip.
-            prior["_stale"] = True
-            through = (prior.get("date_range") or [None, None])[-1]
-            prior["data_through"] = through
-            prior["live_refresh"] = {"ok": False, "months_refreshed": 0,
-                                     "cause": cause, "blocked_by": None,
-                                     "attempted_at": _now_iso()}
-            out_path.write_text(json.dumps(prior))
-            _report_nuforc_refresh({"months_refreshed": 0,
-                                    "failure_cause": cause}, through)
-            return 1
-        _report_nuforc_refresh({"months_refreshed": 0, "failure_cause": cause},
-                               None)
-        # No prior, no fresh data — write a minimal placeholder so the
-        # client gets a clean empty-state instead of a 404.
-        empty = {
-            "generated_at": _now_iso(),
-            "source": "unavailable",
-            "source_url": None,
-            "total_records": 0,
-            "date_range": [None, None],
-            "by_state_year": {},
-            "top_cities_by_state": {},
-            "recent_buckets": {},
-            "totals_by_year": {},
-            "shape_totals": [],
-            "shape_by_year": {},
-            "totals_by_month": {},
-            "shape_by_month": {},
-            "_error": "all CSV probes failed",
-        }
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        out_path.write_text(json.dumps(empty))
-        return 1
-
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(payload))
-    print(f"  Wrote {out_path} ({out_path.stat().st_size:,} bytes, "
-          f"{payload['total_records']:,} records, "
-          f"range {payload['date_range'][0]}..{payload['date_range'][1]})")
-    if "_nuforc_live_meta" in payload:
-        m = payload["_nuforc_live_meta"]
-        print(f"  NUFORC live: {m['months_pulled']} months fetched "
-              f"({m.get('months_refreshed', 0)} with rows), "
-              f"{m['months_cached']} cached, {m['months_404']} failed, "
-              f"{m['months_skipped_offline']} skipped-offline, "
-              f"{m['wall_clock_sec']}s ({m['stopped_reason']})")
-        if not args.no_live:
-            _report_nuforc_refresh(m, payload["date_range"][1])
-        _emit_nuforc_health_marker(m)
+    print(
+        "Automated NUFORC collection is disabled. The UAP tab reads aggregated\n"
+        "counts in data-mufon.json. New data should be added by manually copying\n"
+        "https://nuforc.org/subndx/?id=all, with no automated scraping:\n"
+        "\n"
+        "    python3 scripts/update_ufo_counts.py\n",
+        file=sys.stderr)
     return 0
 
 

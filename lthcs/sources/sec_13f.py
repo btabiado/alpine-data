@@ -965,7 +965,6 @@ def _iter_info_table_rows(xml_text: str) -> Iterable[Dict[str, Any]]:
     except Exception:  # noqa: BLE001
         return
 
-    current: Optional[Dict[str, Any]] = None
     try:
         for event, elem in ctx:
             tag = _strip_ns(elem.tag)

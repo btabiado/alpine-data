@@ -1,14 +1,12 @@
 """Contract tests for the V1 (PRODUCTION) dashboard's data-freshness stamps.
 
 `app.py` builds the root `dashboard.html` that `.github/workflows/pages.yml`
-deploys — this is the page the user actually looks at. `v2/app.py` is the
-preview and carries a banner saying so. The stamps landed there first; this
-file guards the production port.
+deploys — this is the page the user actually looks at. The stamps landed in
+the V2 preview first (retired 2026-10); this file guards the production port.
 
 Three layers:
 
-1. **Python builder** — ``app.py``'s DeFi provenance backfill, byte-equivalent
-   to v2/app.py's.
+1. **Python builder** — ``app.py``'s DeFi provenance backfill.
 
 2. **The shipped JavaScript** — ``freshness()`` is the single implementation
    behind every stamp on the page (header, tab strips, composite cards,
@@ -17,9 +15,9 @@ Three layers:
    clock, so these assertions run against the code that actually ships rather
    than a reimplementation of it.
 
-3. **Cross-frontend parity** — the helper family must stay byte-identical to
-   v2/app.py's. Two frontends with two dialects of "how old is this?" is how
-   the divergence being fixed here started.
+3. (Cross-frontend parity with v2/app.py lived here until V2 was retired in
+   2026-10; tests/test_lthcs_freshness.py holds the LTHCS pages to this
+   dialect.)
 
 Why this file exists: the failure mode being guarded is a stamp that reports
 BUILD or FETCH time instead of DATA time. That reads as "just now" on a page
@@ -40,7 +38,6 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 V1_APP = ROOT / "app.py"
 V1_HTML = ROOT / "dashboard.html"
-V2_APP = ROOT / "v2" / "app.py"
 
 
 # ---------------------------------------------------------------- helpers ---
@@ -251,37 +248,6 @@ def test_freshness_discloses_cached_count(freshness_ctx):
 
 def test_freshness_omits_cached_suffix_when_nothing_cached(freshness_ctx):
     assert "cached" not in freshness_ctx("2026-08-02", {"stale": 0, "total": 50})["text"]
-
-
-# ------------------------------- 3. Cross-frontend parity with V2 ------------
-
-
-HELPER_FAMILY = ("freshness", "freshnessDayUTC", "freshnessYmd",
-                 "paintFreshness", "freshnessHtml",
-                 "fDay", "fLast", "fMin", "fMax")
-
-
-@pytest.mark.parametrize("name", HELPER_FAMILY)
-def test_helper_is_byte_identical_to_v2(v1_js, name):
-    """One dialect, two frontends.
-
-    V1 and V2 render the same payloads; if their age arithmetic, thresholds
-    or wording drift, the same data reads as two different ages depending on
-    which URL you opened. Comments are allowed to differ (they explain
-    V1-specific context); the CODE may not.
-    """
-    if not V2_APP.exists():  # pragma: no cover - repo layout guard
-        pytest.skip("v2/app.py not present")
-    v2_js = _template_js(V2_APP)
-
-    def code_only(src: str) -> str:
-        keep = [l.rstrip() for l in src.splitlines()
-                if not l.strip().startswith("//")]
-        return "\n".join(l for l in keep if l.strip())
-
-    assert code_only(extract_function(v1_js, name)) == \
-        code_only(extract_function(v2_js, name)), \
-        f"{name}() has drifted between V1 and V2"
 
 
 # ------------------------------- 4. Source-level honesty guards --------------

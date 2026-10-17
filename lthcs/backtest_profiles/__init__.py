@@ -25,7 +25,7 @@ later by registering a loader.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List
 
 from lthcs.backtest_engine import EngineParams
 

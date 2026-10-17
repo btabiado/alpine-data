@@ -371,6 +371,26 @@ def _series_last_day(rows, key: str = "date") -> str | None:
 
 # ----- per-domain insight generators -----
 
+def _fund_flows_on(by_fund_daily: dict, day: str) -> list[tuple[str, float]]:
+    """(fund, flow) for every fund that REPORTED a flow on ``day``.
+
+    Looked up by date, not by position: by_fund_daily can run past the last
+    complete day (a partly published one), so the newest entry is not always
+    ``day``. A fund whose flow is None has not reported and is left out; it is
+    not a fund with zero flow.
+    """
+    out: list[tuple[str, float]] = []
+    for fund, series in by_fund_daily.items():
+        for r in reversed(series or []):
+            if r.get("date") == day:
+                if isinstance(r.get("flow"), (int, float)):
+                    out.append((fund, float(r["flow"])))
+                break
+            if (r.get("date") or "") < day:
+                break
+    return out
+
+
 def _etf_insights(payload: dict, asset: str) -> list[dict]:
     out: list[dict] = []
     a = payload.get(asset) or {}
@@ -466,10 +486,7 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
     # 7. Top-fund driver for the day (if per-fund data exists)
     by_fund_daily = a.get("by_fund_daily") or {}
     if fresh and by_fund_daily:
-        last_per_fund = []
-        for fund, series in by_fund_daily.items():
-            if series and series[-1].get("date") == last_date:
-                last_per_fund.append((fund, series[-1].get("flow") or 0))
+        last_per_fund = _fund_flows_on(by_fund_daily, last_date)
         if last_per_fund:
             last_per_fund.sort(key=lambda x: abs(x[1]), reverse=True)
             top = last_per_fund[0]
@@ -503,10 +520,7 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
     # 9. Top-fund concentration: when a single fund drives ≥60% of today's
     # net flow and the net flow is meaningful (≥$100M abs).
     if fresh and by_fund_daily and abs(last_flow) >= 100:
-        last_per_fund_signed = []
-        for fund, series in by_fund_daily.items():
-            if series and series[-1].get("date") == last_date:
-                last_per_fund_signed.append((fund, series[-1].get("flow") or 0))
+        last_per_fund_signed = _fund_flows_on(by_fund_daily, last_date)
         if last_per_fund_signed:
             # Find fund with largest |flow|.
             top_abs = max(last_per_fund_signed, key=lambda x: abs(x[1]))
@@ -523,10 +537,7 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
     # Skip the not-noteworthy case where net flow is positive AND the worst
     # fund is only mildly negative (between -25 and 0).
     if fresh and by_fund_daily:
-        last_per_fund_signed = []
-        for fund, series in by_fund_daily.items():
-            if series and series[-1].get("date") == last_date:
-                last_per_fund_signed.append((fund, series[-1].get("flow") or 0))
+        last_per_fund_signed = _fund_flows_on(by_fund_daily, last_date)
         if last_per_fund_signed:
             worst = min(last_per_fund_signed, key=lambda x: x[1])
             worst_flow = worst[1]

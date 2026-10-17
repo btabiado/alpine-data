@@ -76,9 +76,13 @@ def test_parses_farside_shape_into_wide_csv():
     assert rows[0][0] == "2024-01-11"
     # '(95.1)' is Farside's negative notation
     assert rows[0][header.index("GBTC")] == "-95.1"
-    # '-' means no flow, and thousands separators must survive
-    assert rows[1][header.index("IBIT")] == "0"
+    # '-' means IBIT has not reported: an empty cell, not 0 ...
+    assert rows[1][header.index("IBIT")] == ""
+    # ... thousands separators must survive ...
     assert rows[1][header.index("FBTC")] == "1234.5"
+    # ... and Farside's Total (a sum of whatever is filled in) is not the
+    # day's total while a fund that reported the day before is missing.
+    assert rows[1][header.index("Total")] == ""
 
 
 def test_skips_non_date_footer_rows():
@@ -258,8 +262,13 @@ def test_genuine_all_zero_trading_day_is_kept():
     assert unsettled == []
 
 
-def test_row_with_one_reading_survives_and_its_dashes_are_zero():
-    """A settled row's per-fund '-' means that fund saw no flow: a zero."""
+def test_row_with_one_reading_survives_and_its_dashes_stay_empty():
+    """A row with one reading is written, but its '-' cells are NOT zeros.
+
+    This test used to pin the opposite ('-' on a written row means 0). That
+    is how 2026-10-02 shipped as IBIT 0 / Total 31.7 while IBIT simply had
+    not reported yet; it later came in at 158.2 and the day at 189.9.
+    """
     n = len(_real_columns("btc_flows.csv")) - 1
     cells = ["-"] * n
     cells[0] = "250.0"                                   # IBIT reported
@@ -268,7 +277,8 @@ def test_row_with_one_reading_survives_and_its_dashes_are_zero():
 
     assert len(rows) == 1
     assert rows[0][header.index("IBIT")] == "250"
-    assert rows[0][header.index("FBTC")] == "0"
+    assert rows[0][header.index("FBTC")] == ""
+    assert rows[0][header.index("Total")] == ""
 
 
 def test_date_only_row_is_treated_as_no_reading():
@@ -440,3 +450,741 @@ def test_committed_csv_has_no_pre_launch_or_duplicate_rows(name, first_day):
     assert not [d for d in dates if d < first_day], "rows before first ETF trading day"
     assert len(dates) == len(set(dates)), "duplicate dates"
     assert fef.duplicate_value_rows(rows) == [], "copy-pasted multi-fund rows"
+
+
+# ---------- unreported cells and Farside's running Total ----------
+#
+# Farside's Total column is a SUM over whatever cells are filled in, so it
+# prints a number on a day nobody has reported (0.0) and a partial sum on a
+# day still being published. Both reached data/btc_flows.csv as real flows:
+#   2026-10-06,0,0,0,0,0,0,0,0,0,0,0,0,0     (committed 15:59Z, before the close)
+#   2026-10-02,0,29.3,...,2.4,0,0,31.7       (IBIT not in yet; final day 189.9)
+# These pin the shapes that produced them.
+
+from datetime import date, timedelta  # noqa: E402
+
+
+def _cells(header: list[str], **vals: str) -> list[str]:
+    """Value cells in `header` order: every fund '-' unless given."""
+    return [vals.get(c, "-") for c in header[1:]]
+
+
+def _real_header() -> list[str]:
+    return _real_columns("btc_flows.csv")
+
+
+def test_todays_row_with_farside_formula_total_is_not_written():
+    """Every fund '-', Total '0.0' (the formula over empty cells): no row."""
+    hdr = _real_header()
+    settled = _cells(hdr, **{c: "1.5" for c in hdr[1:]})
+    today = _cells(hdr, Total="0.0")
+    html = _real_shape_html(_row("05 Oct 2026", *settled),
+                            _row("06 Oct 2026", *today))
+    unsettled: list[str] = []
+    withheld: list[str] = []
+    _h, rows = fef.parse_flow_table(html, BTC_REQUIRE, unsettled, withheld)
+
+    assert [r[0] for r in rows] == ["2026-10-05"]
+    assert unsettled == ["2026-10-06"]
+    assert withheld == []          # not written at all, so nothing to withhold
+
+
+def test_partly_published_day_keeps_its_readings_and_withholds_the_total():
+    """The 2026-10-02 shape: FBTC and MSBT in, IBIT and the rest still '-'."""
+    hdr = _real_header()
+    quiet = {c: "0.0" for c in hdr[1:]}
+    settled = _cells(hdr, **{**quiet, "IBIT": "195.6", "FBTC": "(60.7)",
+                             "Total": "134.9"})
+    partial = _cells(hdr, FBTC="29.3", MSBT="2.4", Total="31.7")
+    html = _real_shape_html(_row("01 Oct 2026", *settled),
+                            _row("02 Oct 2026", *partial))
+    withheld: list[str] = []
+    header, rows = fef.parse_flow_table(html, BTC_REQUIRE, withheld=withheld)
+
+    day = dict(zip(header, rows[1]))
+    assert day["date"] == "2026-10-02"
+    assert day["FBTC"] == "29.3" and day["MSBT"] == "2.4"   # real readings stay
+    assert day["IBIT"] == "" and day["GBTC"] == ""          # not reported != 0
+    assert day["Total"] == "", "a partial sum must not be published as the day"
+    assert withheld == ["2026-10-02"]
+    # The complete day before keeps Farside's Total and its literal zeros.
+    prev = dict(zip(header, rows[0]))
+    assert prev["Total"] == "134.9" and prev["GBTC"] == "0"
+
+
+def test_dash_for_a_fund_not_launched_yet_does_not_withhold_the_total():
+    """MSBT shows '-' until its first session; that is not a missing report."""
+    hdr = _real_header()
+    base = {c: "1.0" for c in hdr[1:] if c not in ("MSBT", "Total")}
+    rows_html = [
+        _row(f"{d:02d} Apr 2026", *_cells(hdr, **base, Total="11.0"))
+        for d in (6, 7)
+    ]
+    html = _real_shape_html(*rows_html)
+    withheld: list[str] = []
+    header, rows = fef.parse_flow_table(html, BTC_REQUIRE, withheld=withheld)
+
+    assert withheld == []
+    assert [dict(zip(header, r))["Total"] for r in rows] == ["11", "11"]
+    assert dict(zip(header, rows[1]))["MSBT"] == ""
+
+
+def test_market_holiday_row_is_not_written_even_when_farside_prints_zeros():
+    """2025-02-17 was Presidents' Day: no session, so no flow, not a 0 flow."""
+    html = _farside_html(
+        _row("14 Feb 2025", "10.0", "0.0", "(5.0)", "5.0")
+        + _row("17 Feb 2025", "0.0", "0.0", "0.0", "0.0")      # NYSE closed
+        + _row("15 Feb 2025", "-", "-", "-", "0.0")            # a Saturday
+        + _row("18 Feb 2025", "1.0", "2.0", "3.0", "6.0")
+    )
+    unsettled: list[str] = []
+    _h, rows = fef.parse_flow_table(html, BTC_REQUIRE, unsettled)
+
+    assert [r[0] for r in rows] == ["2025-02-14", "2025-02-18"]
+    assert sorted(unsettled) == ["2025-02-15", "2025-02-17"]
+
+
+def test_withhold_incomplete_totals_does_not_let_a_closed_fund_blank_history():
+    """A fund that closes and shows '-' for good is not a gap in every later
+    day. On settled rows it never holds a Total back; near the newest edge it
+    still does (there it looks exactly like a fund that has not reported), but
+    only while it reported within the lookback."""
+    rows = [[f"d{i:02d}", "1", "2", "3"] for i in range(3)]
+    rows += [[f"d{i:02d}", "1", None, "1"] for i in range(3, 15)]
+    withheld = fef.withhold_incomplete_totals(rows, 3, lookback=10, settling=5)
+
+    assert withheld == ["d10", "d11", "d12"]      # edge rows within lookback
+    assert all(r[3] == "1" for r in rows[3:10])   # settled history untouched
+
+
+def test_withhold_incomplete_totals_blanks_a_settled_gap_in_a_live_fund():
+    """A fund that reports before AND after a '-' day did not close; that day's
+    Total is a sum without it, so it is withheld even deep in history."""
+    rows = [[f"d{i:02d}", "1", "2", "3"] for i in range(12)]
+    rows[4][2] = None
+    withheld = fef.withhold_incomplete_totals(rows, 3, lookback=10, settling=5)
+    assert withheld == ["d04"] and rows[4][3] is None
+
+
+def _trading_days(start: date, n: int) -> list[date]:
+    out, d = [], start
+    while len(out) < n:
+        if not fef.market_closed(d.isoformat()):
+            out.append(d)
+        d += timedelta(days=1)
+    return out
+
+
+def _source_rows(days: list[date], override: dict | None = None) -> str:
+    override = override or {}
+    return "".join(
+        _row(d.strftime("%d %b %Y"), *override.get(d.isoformat(), ("10", "20", "30", "60")))
+        for d in days
+    )
+
+
+def test_refresh_drops_stored_zero_rows_the_source_does_not_back(tmp_path, monkeypatch):
+    """History written by the old parser heals on the next run.
+
+    * a stored all-zero row on a NYSE holiday goes (no session, no flow);
+    * a stored all-zero row for a day the source lists with no reading goes;
+    * a stored partial row is replaced by the source's complete one;
+    * a real stored row the source no longer lists is kept.
+    """
+    days = _trading_days(date(2026, 1, 5), fef.MIN_ROWS + 10)
+    unreported = days[20].isoformat()
+    partial = days[-1].isoformat()
+    csv_path = tmp_path / "btc_flows.csv"
+    csv_path.write_text(
+        "date,IBIT,FBTC,GBTC,Total\n"
+        "2025-02-17,0,0,0,0\n"                 # Presidents' Day, as filed
+        "2025-03-03,5,0,0,5\n"                 # real, no longer on the page
+        f"{unreported},0,0,0,0\n"              # '-' row the old parser zeroed
+        f"{partial},,20,,\n",                  # half published last run
+        encoding="utf-8",
+    )
+    monkeypatch.setitem(fef.SOURCES, "btc", {
+        "url": "https://example.invalid/btc", "csv": csv_path,
+        "require": BTC_REQUIRE,
+    })
+    html = _farside_html(_source_rows(days, {unreported: ("-", "-", "-", "0.0")}))
+    monkeypatch.setattr(fef, "fetch_html", lambda _u: html)
+
+    assert fef.refresh("btc") == 0
+    text = csv_path.read_text()
+    assert "2025-02-17" not in text
+    assert f"{unreported}," not in text
+    assert "2025-03-03,5,0,0,5" in text
+    assert f"{partial},10,20,30,60" in text
+
+
+def test_refresh_refuses_when_settled_history_is_full_of_dashes(tmp_path, monkeypatch, capsys):
+    """If Farside starts printing '-' for a settled zero, most historical
+    Totals would be withheld. That is a convention change: go red, keep the
+    file, do not blank the history. The annotation names the check and dates
+    so the audit status feed is not only 'exit code 1'."""
+    days = _trading_days(date(2026, 1, 5), fef.MIN_ROWS + 10)
+    flaky = {d.isoformat(): ("10", "-", "30", "40")
+             for i, d in enumerate(days) if i % 2}
+    csv_path = _seed(tmp_path, "btc_flows.csv", "2026-01-02")
+    before = csv_path.read_text()
+    monkeypatch.setitem(fef.SOURCES, "btc", {
+        "url": "https://example.invalid/btc", "csv": csv_path,
+        "require": BTC_REQUIRE,
+    })
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: _farside_html(_source_rows(days, flaky)))
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    assert fef.refresh("btc") == 1
+    assert csv_path.read_text() == before
+    line = next(ln for ln in capsys.readouterr().out.splitlines()
+                if ln.startswith("::error "))
+    assert line.startswith("::error title=ETF flows failed (btc)::")
+    assert "settled-dash convention:" in line
+    assert "showing '-'" in line
+    # The first withheld date is in the message; a generic exit line is not.
+    assert "2026-" in line
+    assert "exit code" not in line
+
+
+# Dates from the 2026-10-16 audit log (actions run 38953183213). Farside showed
+# '-' on these settled rows; a cap of 5 then failed ETH and blocked new rows.
+ETH_SETTLED_DASHES = (
+    "2024-11-20", "2026-01-21", "2026-01-28",
+    "2026-03-24", "2026-06-05", "2026-07-27",
+)
+BTC_SETTLED_DASHES = ("2024-11-20", "2026-07-27", "2026-08-07")
+_MON = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split()
+
+
+def _fs_date(iso: str) -> str:
+    """Farside's date cell. Not strftime: %b follows the process locale."""
+    y, m, d = iso.split("-")
+    return f"{int(d)} {_MON[int(m) - 1]} {y}"
+
+
+def test_six_settled_eth_dashes_keep_committed_totals_and_still_append(
+        tmp_path, monkeypatch, capsys):
+    """Six settled '-' rows are a warning, not a failed asset.
+
+    Totals already on disk stay. A settled '-' day that is not on disk yet is
+    appended with an empty Total. A newer complete day is appended too. The
+    run stays green: no ::error annotation.
+    """
+    days = _trading_days(date(2026, 1, 5), fef.MIN_ROWS + 10)
+    kept_days = [days[i] for i in (10, 20, 30, 40, 50, 60)]
+    new_dash = days[70]
+    assert len(kept_days) == 6
+    edge = set(days[-fef.SETTLING_ROWS:])
+    assert edge.isdisjoint(kept_days) and new_dash not in edge
+
+    csv_path = tmp_path / "eth_flows.csv"
+    zero_fund_day = kept_days[0]
+    seeded = ["date,ETHA,FETH,ETHE,Total"]
+    for d in days:
+        if d == new_dash:
+            continue
+        # One settled dash day stored FETH as 0. '-' there is absence, not a
+        # flow, so that cell may become empty. The Total must not.
+        if d == zero_fund_day:
+            seeded.append(f"{d.isoformat()},10,0,30,60")
+        else:
+            seeded.append(f"{d.isoformat()},10,20,30,60")
+    csv_path.write_text("\n".join(seeded) + "\n", encoding="utf-8")
+
+    newer = _trading_days(days[-1] + timedelta(days=1), 1)[0]
+    parts = []
+    for d in days:
+        if d == zero_fund_day:
+            cells = ("-", "-", "30", "50")   # ETHA real, FETH was a stored 0
+        elif d in kept_days or d == new_dash:
+            cells = ("-", "20", "30", "50")
+        else:
+            cells = ("10", "20", "30", "60")
+        parts.append(_row(_fs_date(d.isoformat()), *cells))
+    parts.append(_row(_fs_date(newer.isoformat()), "10", "20", "30", "60"))
+    monkeypatch.setitem(fef.SOURCES, "eth", {
+        "url": "https://example.invalid/eth", "csv": csv_path,
+        "require": ("ETHA", "FETH", "ETHE"),
+        "first_trading_day": "2024-07-23",
+    })
+    _silence_manual(monkeypatch, tmp_path)
+    monkeypatch.setattr(fef, "fetch_html", lambda _u: _farside_html(
+        "".join(parts), funds="ETHA</th><th>FETH</th><th>ETHE"))
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    assert fef.refresh("eth") == 0
+    text = csv_path.read_text()
+    # Non-zero ETHA restored, stored FETH 0 becomes empty, Total unchanged.
+    assert f"{zero_fund_day.isoformat()},10,,30,60" in text
+    for d in kept_days[1:]:
+        assert f"{d.isoformat()},10,20,30,60" in text
+    # Not on disk before this run: appended, Total withheld, ETHA left blank.
+    assert f"{new_dash.isoformat()},,20,30," in text
+    assert f"{newer.isoformat()},10,20,30,60" in text
+    captured = capsys.readouterr()
+    assert "::error" not in captured.out
+    assert "kept the committed Total" in captured.err
+    assert "no Total to keep" in captured.err
+    for d in kept_days:
+        assert d.isoformat() in captured.err
+    assert new_dash.isoformat() in captured.err
+
+
+def test_october_2026_dash_counts_are_not_a_convention_change():
+    """The cap of 5 was wrong for these tables. A large share still is."""
+    cases = (("eth_flows.csv", 6), ("btc_flows.csv", 3))
+    for name, n_dash in cases:
+        proc = subprocess.run(["git", "show", f"HEAD:data/{name}"],
+                              cwd=REPO_ROOT, capture_output=True, text=True)
+        if proc.returncode != 0:
+            pytest.skip(f"git blob for data/{name} unavailable")
+        n = len(proc.stdout.splitlines()) - 1
+        n_settled = n - fef.SETTLING_ROWS
+        assert n_settled > 400
+        assert not fef.settled_dashes_are_a_convention_change(n_dash, n_settled)
+        assert fef.settled_dashes_are_a_convention_change(n_settled // 2, n_settled)
+
+
+def _git_csv(name: str) -> str:
+    proc = subprocess.run(["git", "show", f"HEAD:data/{name}"],
+                          cwd=REPO_ROOT, capture_output=True, text=True)
+    if proc.returncode != 0:
+        pytest.skip(f"git blob for data/{name} unavailable")
+    return proc.stdout
+
+
+def _html_replaying_csv(text: str, dash_dates: set[str], dash_col: str,
+                        extra: list[str]) -> str:
+    """The committed table as a Farside page, with '-' forced on dash_dates."""
+    import csv
+    parsed = list(csv.reader(text.splitlines()))
+    header = parsed[0]
+    dash_i = header.index(dash_col) - 1
+    body = []
+    for r in parsed[1:]:
+        cells = list(r[1:])
+        while len(cells) < len(header) - 1:
+            cells.append("")
+        if r[0] in dash_dates:
+            cells[dash_i] = "-"
+            # Farside still prints a numeric Total on a partial day. An empty
+            # Total in the CSV would otherwise skip the withhold path.
+            if cells[-1].strip() == "":
+                cells[-1] = "1"
+        shown = ["-" if c.strip() == "" else c for c in cells]
+        body.append(_row(_fs_date(r[0]), *shown))
+    body.append(_row(_fs_date(extra[0]), *extra[1:]))
+    funds = "</th><th>".join(header[1:-1])
+    return _farside_html("".join(body), funds=funds)
+
+
+def test_committed_csvs_keep_totals_when_the_audit_dates_show_dashes(
+        tmp_path, monkeypatch, capsys):
+    """Dry run against the committed ETH and BTC tables.
+
+    Replays the 2026-10-16 failure: those settled rows show '-', and one new
+    session is available. Existing rows, including their Totals, stay. The
+    new session is appended. ETH does not fail.
+    """
+    import csv
+    _silence_manual(monkeypatch, tmp_path)
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setattr(fef, "fetch_json",
+                        lambda _u: (_ for _ in ()).throw(AssertionError("no network")))
+
+    def replay(asset: str, filename: str, dashes: tuple[str, ...], dash_col: str):
+        original = _git_csv(filename)
+        parsed = list(csv.reader(original.splitlines()))
+        header, rows = parsed[0], {r[0]: r for r in parsed[1:] if r}
+        for d in dashes:
+            assert d in rows, d
+        newest_iso = max(rows)
+        nxt = date.fromisoformat(newest_iso) + timedelta(days=1)
+        while fef.market_closed(nxt.isoformat()):
+            nxt += timedelta(days=1)
+        n_funds = len(header) - 2
+        extra = [nxt.isoformat()] + ["1"] * n_funds + [str(n_funds)]
+        csv_path = tmp_path / filename
+        csv_path.write_text(original, encoding="utf-8")
+        cfg = dict(fef.SOURCES[asset])
+        cfg["csv"] = csv_path
+        cfg["url"] = f"https://example.invalid/{asset}"
+        monkeypatch.setitem(fef.SOURCES, asset, cfg)
+        html = _html_replaying_csv(original, set(dashes), dash_col, extra)
+        monkeypatch.setattr(fef, "fetch_html", lambda _u, html=html: html)
+        assert fef.refresh(asset) == 0, asset
+        after = {r[0]: r for r in csv.reader(csv_path.read_text().splitlines())
+                 if r and r[0] != "date"}
+        for d, row in rows.items():
+            assert after[d] == row, (asset, d, after.get(d), row)
+        assert extra[0] not in rows and after[extra[0]] == extra
+        return newest_iso, extra[0]
+
+    eth_newest, eth_new = replay("eth", "eth_flows.csv", ETH_SETTLED_DASHES, "ETHA")
+    btc_newest, btc_new = replay("btc", "btc_flows.csv", BTC_SETTLED_DASHES, "IBIT")
+    captured = capsys.readouterr()
+    assert "::error" not in captured.out
+    assert "kept the committed Total" in captured.err
+    for d in ETH_SETTLED_DASHES:
+        assert d in captured.err
+    assert "no Total to keep" in captured.err
+    for d in BTC_SETTLED_DASHES:
+        assert d in captured.err
+    assert eth_new not in ETH_SETTLED_DASHES
+    assert btc_new not in BTC_SETTLED_DASHES
+    assert eth_newest < eth_new and btc_newest < btc_new
+
+
+@pytest.mark.parametrize("name", ["btc_flows.csv", "eth_flows.csv"])
+def test_committed_csv_has_no_rows_on_market_closed_days(name):
+    """The history fix: no zero-flow rows for days with no US session.
+
+    2025-02-17, 2025-04-18, 2025-05-26, 2025-06-19 and twelve more NYSE
+    holidays sat in btc_flows.csv as rows of zeros. Read the COMMITTED blob
+    (CI stubs the working-tree CSVs)."""
+    proc = subprocess.run(["git", "show", f"HEAD:data/{name}"],
+                          cwd=REPO_ROOT, capture_output=True, text=True)
+    if proc.returncode != 0:
+        pytest.skip(f"git blob for data/{name} unavailable")
+    rows = [l.split(",") for l in proc.stdout.strip().splitlines()[1:]]
+    closed = [r[0] for r in rows if fef.market_closed(r[0])]
+    assert closed == [], f"rows dated on weekends / NYSE holidays: {closed}"
+
+
+# ---------- Farside HTTP 403: log it, fall back, do not evade ----------
+#
+# Daily audit 2026-10-15: etf-flows-daily had been failing on
+# "Fetch BTC + ETH spot-ETF flows" and both CSVs ended 2026-10-05 because
+# Farside answers GitHub runners with HTTP 403. The response is a warning
+# and an untouched CSV when nothing else can fill the gap — not a crash,
+# and not a second request with a different client.
+
+import io
+import json
+from email.message import Message
+
+
+def _http_error(url: str, code: int, reason: str = "Forbidden",
+                headers: dict | None = None) -> "fef.urllib.error.HTTPError":
+    msg = Message()
+    for k, v in (headers or {}).items():
+        msg[k] = v
+    return fef.urllib.error.HTTPError(url, code, reason, msg, io.BytesIO(b""))
+
+
+def _silence_manual(monkeypatch, tmp_path: Path) -> None:
+    """Keep the committed override and the dispatch env out of a test."""
+    monkeypatch.setattr(fef, "MANUAL_PATH", tmp_path / "no-manual.json")
+    monkeypatch.setattr(fef, "MANUAL_EXTRA_TEXT", "")
+    monkeypatch.delenv(fef.MANUAL_ENV, raising=False)
+
+
+def test_http_403_logs_the_block_and_warns_instead_of_crashing(btc_cfg, monkeypatch, capsys, tmp_path):
+    """The audit failure: 403 must not exit 1, must not write zeros, must say why."""
+    _silence_manual(monkeypatch, tmp_path)
+    before = btc_cfg.read_text()
+    url = fef.SOURCES["btc"]["url"]
+
+    def blocked(_url):
+        raise _http_error(url, 403, headers={"cf-mitigated": "challenge"})
+    monkeypatch.setattr(fef, "fetch_html", blocked)
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    assert fef.refresh("btc") == 0
+    assert btc_cfg.read_text() == before
+
+    err = capsys.readouterr()
+    assert "HTTP 403" in err.err
+    assert url in err.err
+    assert "Not retrying" in err.err
+    assert "cf-mitigated=challenge" in err.err
+    assert "2026-05-12" in err.err          # the seeded CSV's newest day
+    assert "etf_flows_manual.json" in err.err
+    warning = next(ln for ln in err.out.splitlines() if ln.startswith("::warning "))
+    assert warning.startswith("::warning title=ETF flows not refreshed (btc)::")
+    assert "HTTP 403" in warning
+    assert "2026-05-12" in warning
+    assert "User-Agent" not in warning or "Not retrying" in warning
+    assert "::error" not in err.out
+
+
+def test_non_403_fetch_error_still_fails_when_nothing_else_fills(btc_cfg, monkeypatch, tmp_path):
+    """A timeout is not a block. With no backup and no override, the job stays red."""
+    _silence_manual(monkeypatch, tmp_path)
+    before = btc_cfg.read_text()
+
+    def boom(_url):
+        raise OSError("connection reset")
+    monkeypatch.setattr(fef, "fetch_html", boom)
+
+    assert fef.refresh("btc") == 1
+    assert btc_cfg.read_text() == before
+
+
+def test_http_error_annotation_names_asset_check_and_status(btc_cfg, monkeypatch, capsys, tmp_path):
+    """A non-zero fetch must say which asset, which check, and the HTTP status."""
+    _silence_manual(monkeypatch, tmp_path)
+    before = btc_cfg.read_text()
+    url = fef.SOURCES["btc"]["url"]
+    monkeypatch.setattr(
+        fef, "fetch_html",
+        lambda _u: (_ for _ in ()).throw(_http_error(url, 500, "Internal Server Error")))
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    assert fef.refresh("btc") == 1
+    assert btc_cfg.read_text() == before
+    line = next(ln for ln in capsys.readouterr().out.splitlines()
+                if ln.startswith("::error "))
+    assert line.startswith("::error title=ETF flows failed (btc)::")
+    assert "fetch:" in line
+    assert "HTTP 500" in line
+    assert url in line
+    assert "exit code" not in line
+
+
+def test_error_annotation_is_omitted_outside_actions(btc_cfg, monkeypatch, capsys, tmp_path):
+    """Local runs keep the reason on stderr and do not emit a workflow command."""
+    _silence_manual(monkeypatch, tmp_path)
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    monkeypatch.setattr(fef, "fetch_html", lambda _u: (_ for _ in ()).throw(OSError("connection reset")))
+
+    assert fef.refresh("btc") == 1
+    captured = capsys.readouterr()
+    assert "::error" not in captured.out
+    assert "fetch:" in captured.err
+    assert "OSError" in captured.err
+    assert "connection reset" in captured.err
+
+
+def test_manual_json_fills_a_blocked_day_and_keeps_blanks_empty(btc_cfg, monkeypatch, tmp_path):
+    """Override merges on a 403. '-' and a missing fund stay empty; 0 stays 0."""
+    manual = tmp_path / "manual.json"
+    manual.write_text(json.dumps({
+        "btc": [
+            {"date": "2026-05-13", "IBIT": "10", "FBTC": "0", "GBTC": "-", "Total": "10"},
+            {"date": "2026-05-14", "IBIT": "-", "FBTC": "-", "GBTC": "-", "Total": "-"},
+        ],
+        "eth": [],
+    }), encoding="utf-8")
+    monkeypatch.setattr(fef, "MANUAL_PATH", manual)
+    monkeypatch.setattr(fef, "MANUAL_EXTRA_TEXT", "")
+    monkeypatch.delenv(fef.MANUAL_ENV, raising=False)
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: (_ for _ in ()).throw(_http_error("https://farside.example/btc", 403)))
+
+    assert fef.refresh("btc") == 0
+    text = btc_cfg.read_text()
+    assert "2026-05-13,10,0,," in text          # GBTC blank, Total withheld (IBIT was reporting)
+    assert "2026-05-14" not in text             # no reading at all: not a row of zeros
+    assert "2024-01-11,111.7,227.0,-95.1,243.6" in text
+
+
+def test_manual_partial_day_does_not_publish_farsides_running_total(btc_cfg, monkeypatch, tmp_path):
+    manual = tmp_path / "manual.json"
+    manual.write_text(json.dumps({
+        "btc": [{"date": "2026-05-13", "FBTC": "29.3", "Total": "31.7"}],
+    }), encoding="utf-8")
+    monkeypatch.setattr(fef, "MANUAL_PATH", manual)
+    monkeypatch.setattr(fef, "MANUAL_EXTRA_TEXT", "")
+    monkeypatch.delenv(fef.MANUAL_ENV, raising=False)
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: (_ for _ in ()).throw(_http_error("https://farside.example/btc", 403)))
+
+    assert fef.refresh("btc") == 0
+    line = next(l for l in btc_cfg.read_text().splitlines() if l.startswith("2026-05-13"))
+    cells = line.split(",")
+    # date, IBIT, FBTC, GBTC, Total
+    assert cells[1] == ""          # IBIT not reported, not 0
+    assert cells[2] == "29.3"
+    assert cells[4] == ""          # 31.7 was a partial sum
+
+
+def test_dispatch_input_wins_over_the_committed_file(btc_cfg, monkeypatch, tmp_path):
+    manual = tmp_path / "manual.json"
+    manual.write_text(json.dumps({
+        "btc": [{"date": "2026-05-13", "IBIT": "1", "FBTC": "1", "GBTC": "1", "Total": "3"}],
+    }), encoding="utf-8")
+    monkeypatch.setattr(fef, "MANUAL_PATH", manual)
+    monkeypatch.setattr(fef, "MANUAL_EXTRA_TEXT", "")
+    monkeypatch.setenv(fef.MANUAL_ENV, json.dumps({
+        "btc": [{"date": "2026-05-13", "IBIT": "9", "FBTC": "9", "GBTC": "9", "Total": "27"}],
+    }))
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: (_ for _ in ()).throw(_http_error("https://farside.example/btc", 403)))
+
+    assert fef.refresh("btc") == 0
+    assert "2026-05-13,9,9,9,27" in btc_cfg.read_text()
+
+
+def test_manual_csv_and_unknown_column_refuses_the_write(btc_cfg, monkeypatch, tmp_path):
+    before = btc_cfg.read_text()
+    monkeypatch.setattr(fef, "MANUAL_PATH", tmp_path / "absent.json")
+    monkeypatch.setattr(fef, "MANUAL_EXTRA_TEXT", "")
+    monkeypatch.setenv(fef.MANUAL_ENV,
+                       "asset,date,IBIT,FBTC,GBTC,NOT_A_FUND,Total\n"
+                       "btc,2026-05-13,1,2,3,4,10\n")
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: (_ for _ in ()).throw(_http_error("https://farside.example/btc", 403)))
+
+    assert fef.refresh("btc") == 1
+    assert btc_cfg.read_text() == before
+
+
+def test_farside_row_wins_over_a_manual_row_for_the_same_date(btc_cfg, monkeypatch, tmp_path):
+    manual = tmp_path / "manual.json"
+    manual.write_text(json.dumps({
+        "btc": [
+            {"date": "2026-06-15", "IBIT": "1", "FBTC": "1", "GBTC": "1", "Total": "3"},
+            {"date": "2026-07-01", "IBIT": "4", "FBTC": "5", "GBTC": "6", "Total": "15"},
+        ],
+    }), encoding="utf-8")
+    monkeypatch.setattr(fef, "MANUAL_PATH", manual)
+    monkeypatch.setattr(fef, "MANUAL_EXTRA_TEXT", "")
+    monkeypatch.delenv(fef.MANUAL_ENV, raising=False)
+    rows = "".join(
+        _row(f"{(d % 28) + 1:02d} Jun 2026", "10", "20", "30", "60")
+        for d in range(fef.MIN_ROWS + 5)
+    )
+    monkeypatch.setattr(fef, "fetch_html", lambda _u: _farside_html(rows))
+
+    assert fef.refresh("btc") == 0
+    text = btc_cfg.read_text()
+    assert "2026-06-15,10,20,30,60" in text     # the fetch, not the override
+    assert "2026-07-01,4,5,6,15" in text        # a date the fetch did not have
+
+
+def _tftc_days(n: int, start: date, tweak: dict | None = None) -> list[dict]:
+    tweak = tweak or {}
+    out, d = [], start
+    while len(out) < n:
+        if not fef.market_closed(d.isoformat()):
+            per = {"IBIT": 1_000_000, "FBTC": 2_000_000, "GBTC": 3_000_000}
+            net = 6_000_000
+            if d.isoformat() in tweak:
+                per, net = tweak[d.isoformat()]
+            out.append({"date": d.isoformat(), "netFlowUsd": net, "perEtfUsd": per})
+        d += timedelta(days=1)
+    return out
+
+
+def test_tftc_backup_gap_fills_and_does_not_rewrite_history(btc_cfg, monkeypatch, tmp_path):
+    """CC BY backup fills holes after a 403. A stored reading is not replaced."""
+    _silence_manual(monkeypatch, tmp_path)
+    monkeypatch.setitem(fef.SOURCES["btc"], "backup", {
+        "name": "TFTC",
+        "url": "https://tftc.example/data.json",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attribution": "TFTC — tftc.io/bitcoin-etf-flows",
+    })
+    # 2024-01-11 is in the seed with real numbers. The backup must not replace it.
+    # One later day reports IBIT as a literal zero and omits FBTC.
+    days = _tftc_days(fef.MIN_ROWS + 5, date(2024, 1, 11))
+    zero_day = days[10]["date"]
+    days[10] = {"date": zero_day, "netFlowUsd": 3_000_000,
+                "perEtfUsd": {"IBIT": 0, "GBTC": 3_000_000}}
+    payload = {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "units": "USD",
+        "days": days,
+    }
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: (_ for _ in ()).throw(_http_error("https://farside.example/btc", 403)))
+    monkeypatch.setattr(fef, "fetch_json", lambda _u: payload)
+
+    assert fef.refresh("btc") == 0
+    text = btc_cfg.read_text()
+    assert "2024-01-11,111.7,227.0,-95.1,243.6" in text
+    assert f"{zero_day},0,,3,3" in text or f"{zero_day},0,,3," in text
+    # 1e6 + 3e6 = 4e6, but FBTC was reporting and is missing, so Total is withheld.
+    zero_line = next(l for l in text.splitlines() if l.startswith(zero_day))
+    assert zero_line.split(",")[1] == "0"       # a reported zero, not a blank
+    assert zero_line.split(",")[2] == ""        # FBTC omitted by the source
+    assert zero_line.endswith(",") or zero_line.split(",")[-1] == ""
+
+
+def test_tftc_license_change_is_refused(btc_cfg, monkeypatch, tmp_path):
+    _silence_manual(monkeypatch, tmp_path)
+    before = btc_cfg.read_text()
+    monkeypatch.setitem(fef.SOURCES["btc"], "backup", {
+        "name": "TFTC",
+        "url": "https://tftc.example/data.json",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attribution": "TFTC — tftc.io/bitcoin-etf-flows",
+    })
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: (_ for _ in ()).throw(_http_error("https://farside.example/btc", 403)))
+    monkeypatch.setattr(fef, "fetch_json", lambda _u: {
+        "license": "https://example.invalid/all-rights-reserved",
+        "units": "USD",
+        "days": _tftc_days(fef.MIN_ROWS + 1, date(2024, 1, 11)),
+    })
+
+    assert fef.refresh("btc") == 1
+    assert btc_cfg.read_text() == before
+
+
+def test_backup_403_after_farside_403_warns(btc_cfg, monkeypatch, capsys, tmp_path):
+    _silence_manual(monkeypatch, tmp_path)
+    before = btc_cfg.read_text()
+    monkeypatch.setitem(fef.SOURCES["btc"], "backup", {
+        "name": "TFTC",
+        "url": "https://tftc.example/data.json",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attribution": "TFTC — tftc.io/bitcoin-etf-flows",
+    })
+    monkeypatch.setattr(fef, "fetch_html",
+                        lambda _u: (_ for _ in ()).throw(_http_error("https://farside.example/btc", 403)))
+    monkeypatch.setattr(fef, "fetch_json",
+                        lambda _u: (_ for _ in ()).throw(
+                            _http_error("https://tftc.example/data.json", 403)))
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    assert fef.refresh("btc") == 0
+    assert btc_cfg.read_text() == before
+    err = capsys.readouterr().err
+    assert "https://farside.example/btc" in err or "HTTP 403" in err
+    assert "https://tftc.example/data.json" in err
+    assert err.count("HTTP 403") >= 2
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
+def test_usd_to_millions_rejects_non_finite(bad):
+    """TFTC dollars must be a real number. NaN and +/-inf are not a flow."""
+    with pytest.raises(ValueError, match="not a number"):
+        fef.usd_to_millions(bad)
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
+def test_manual_cell_rejects_non_finite(bad):
+    """A manual override cell rejects NaN and +/-inf the same way."""
+    with pytest.raises(ValueError, match="unsupported value"):
+        fef._manual_cell(bad)
+
+
+def test_finite_flows_still_convert():
+    """The non-finite guard must not reject a real zero or a finite reading."""
+    assert fef.usd_to_millions(None) is None
+    assert fef.usd_to_millions(0) == "0"
+    assert fef.usd_to_millions(1_500_000) == "1.5"
+    assert fef.usd_to_millions(-2_000_000) == "-2"
+    assert fef._manual_cell(None) is None
+    assert fef._manual_cell(0) == "0"
+    assert fef._manual_cell(0.0) == "0"
+    assert fef._manual_cell(-3.5) == "-3.5"
+
+
+def test_committed_manual_override_parses_and_workflow_wires_the_input():
+    text = (REPO_ROOT / "data" / "etf_flows_manual.json").read_text(encoding="utf-8")
+    parsed, err = fef.parse_manual_document(text, "data/etf_flows_manual.json")
+    assert err is None
+    assert parsed["btc"] == [] and parsed["eth"] == []
+    workflow = (REPO_ROOT / ".github/workflows/etf-flows-daily.yml").read_text(encoding="utf-8")
+    assert "manual_entry:" in workflow
+    assert "ETF_FLOWS_MANUAL:" in workflow
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    assert "data/etf_flows_manual.json" in readme
+    assert "manual_entry" in readme
+    assert "HTTP 403" in readme
+    assert "never 0" in readme or "never `0`" in readme or "not a zero" in readme or "not reported" in readme

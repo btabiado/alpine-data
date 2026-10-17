@@ -11,9 +11,16 @@ name: real-estate-daily
 # Redfin/Zillow's typical update windows, so we capture any
 # late-evening US-Pacific publishes the same calendar day.
 #
+# The snapshot is committed only when its substance changes. Upstream
+# publishes monthly, so most days generated_at / fetched_at are the only
+# difference and committing them made data-health call the file stale
+# (audit 2026-10-15: 9d old, limit 2d, source generated_at) while this
+# job was green. Those days commit data/real_estate_check.json instead —
+# a few hundred bytes recording that the check succeeded.
+#
 # Commit message carries [skip ci] so the push doesn't retrigger
 # pages.yml's push-driven build. pages.yml's own scheduled hourly cron
-# picks up the new data file naturally on its next tick.
+# picks up a new data file naturally on its next tick.
 on:
   schedule:
     # 06:00 UTC = 23:00 PT prev day / 02:00 ET — runs after Redfin/Zillow's typical update windows
@@ -36,7 +43,6 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
@@ -59,11 +65,48 @@ jobs:
         # resulting commit is auto-signed by GitHub (Verified badge).
         # See .github/scripts/api-commit.sh — its retry loop mirrors the
         # rebase-on-conflict behaviour the old shell loop provided.
+        #
+        # The fetcher restamps generated_at / fetched_at on every run, and
+        # the upstreams publish monthly, so on most days those stamps are the
+        # only change in the snapshot (27 of 30 commits in September 2026).
+        # Leave the snapshot unstaged then, and restore it so a later add
+        # cannot pick the clocks up. The check record is staged either way:
+        # its generated_at is the "successfully checked" signal, and a run
+        # that did not refresh it fails here instead of exiting 0.
+        # json_content_changed.py exits 1 only for "nothing but the ignored
+        # keys changed"; anything it cannot judge counts as changed.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AUTHOR_NAME: real-estate-bot
           AUTHOR_EMAIL: real-estate-bot@users.noreply.github.com
         run: |
-          git add data/real_estate.json
-          .github/scripts/api-commit.sh \
-            "real-estate: daily refresh $(date -u +%Y-%m-%d) [skip ci]"
+          set -euo pipefail
+          # The fetcher already refused to write a collapsed snapshot. This
+          # confirms the check record it did write belongs to this run.
+          python scripts/fetch_real_estate.py --verify-check
+          rc=0
+          python .github/scripts/json_content_changed.py data/real_estate.json \
+            --ignore-key generated_at --ignore-key fetched_at || rc=$?
+          if [ "$rc" -eq 1 ]; then
+            echo "real-estate: upstream substance unchanged. Recording the successful check in data/real_estate_check.json and leaving data/real_estate.json as committed."
+            git restore --source=HEAD --worktree -- data/real_estate.json
+          elif [ "$rc" -ne 0 ]; then
+            echo "::error title=Real estate diff unreadable::json_content_changed.py exited $rc"
+            exit "$rc"
+          else
+            git add data/real_estate.json
+          fi
+          # -f: the file lives under data/*.json, which is gitignored except
+          # for an explicit carve-out. -f means a future gitignore edit
+          # still commits the record instead of silently dropping it.
+          git add -f data/real_estate_check.json
+          if ! git diff --cached --name-only -- data/real_estate_check.json | grep -q .; then
+            echo "::error title=Real estate check not staged::data/real_estate_check.json was not staged. A successful run must record a new checked_at; exiting 0 here is how a missed day looks like a green job."
+            exit 1
+          fi
+          if git diff --cached --name-only -- data/real_estate.json | grep -q .; then
+            msg="real-estate: daily refresh $(date -u +%Y-%m-%d) [skip ci]"
+          else
+            msg="real-estate: checked $(date -u +%Y-%m-%d) (upstream unchanged) [skip ci]"
+          fi
+          .github/scripts/api-commit.sh "$msg"

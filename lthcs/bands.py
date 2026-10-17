@@ -1,4 +1,4 @@
-"""Single source of truth for LTHCS score-band cutoffs at runtime.
+"""Single source of truth for LTHCS score-band cutoffs and assignment.
 
 The live cutoffs live in ``data/lthcs/weights.json`` -> ``score_bands``
 (integer, inclusive ``min``/``max`` per band; see
@@ -7,6 +7,16 @@ Elite start" — narratives, the LLM system prompt, the audit scripts —
 should go through this module instead of hard-coding 85/80/70/60/50, so a
 recalibration (``scripts/lthcs_calibrate_bands.py --write``) changes every
 consumer consistently.
+
+``assign_band`` is the only score-to-band mapping. The scorer
+(``lthcs.score``) re-exports it, and the backfill validator calls it.
+Do not reimplement the floor-and-inclusive-range lookup.
+
+A band-threshold change is a minor config bump and is not restated into
+older snapshots (``docs/lthcs-tuning-kit.md``). Closed regimes are kept in
+``score_bands_history``; ``score_bands_for_date`` returns the cutoffs that
+were in effect on a snapshot's calc date. The daily scorer always uses the
+live cutoffs. The validator uses the historical ones.
 
 ``DEFAULT_SCORE_BANDS`` is only a fallback for when weights.json is missing
 or unreadable (unit tests with a tmp data root, a partial checkout); it is
@@ -19,6 +29,7 @@ so update it together with a recalibration.
 from __future__ import annotations
 
 import json
+import math
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Tuple
@@ -111,13 +122,94 @@ def ordered_bands(
     return sorted(((k, lo, hi) for k, (lo, hi) in rng.items()), key=lambda t: -t[1])
 
 
-def band_min(
-    band: str,
-    score_bands: Optional[Mapping[str, Mapping[str, Any]]] = None,
-) -> Optional[int]:
-    rng = band_ranges(score_bands)
-    return rng[band][0] if band in rng else None
+def assign_band(score: float, score_bands: Optional[Mapping[str, Mapping[str, Any]]]) -> str:
+    """Return the band key covering ``score``.
+
+    Bands in weights.json are INTEGER-bounded (e.g. constructive=70..79,
+    high_confidence=80..84 — the live numbers are whatever weights.json
+    says; see scripts/lthcs_calibrate_bands.py) but composite scores carry
+    one decimal place, so fractional scores like 79.4 sit in a gap between
+    bands and would otherwise be wrongly assigned. We treat each band as
+    covering the half-open interval ``[min, max+1)`` so a score of 79.4
+    lands in constructive (since 70 ≤ 79.4 < 80), 84.99 lands in
+    high_confidence, 100.0 lands in elite. Equivalent to flooring ``score``
+    to its integer part before doing the inclusive lookup.
+
+    Out-of-range inputs are clamped to [0, 100] before lookup.
+
+    This is the single definition shared by the scorer and the validator.
+    """
+    try:
+        s = float(score)
+    except (TypeError, ValueError):
+        s = 0.0
+    if math.isnan(s):  # NaN
+        s = 0.0
+    s = max(0.0, min(100.0, s))
+    floored = int(math.floor(s))
+    # Special-case the top: a perfect 100.0 floors to 100, which fits
+    # elite's max=100 inclusive check below — no extra handling needed.
+    for name, spec in (score_bands or {}).items():
+        try:
+            lo = int(float(spec["min"]))
+            hi = int(float(spec["max"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+        if lo <= floored <= hi:
+            return name
+    # Fallback: return the band whose min is closest below the score.
+    # (Defensive — the standard config tiles [0,100] without gaps.)
+    best_name: Optional[str] = None
+    best_lo = float("-inf")
+    for name, spec in (score_bands or {}).items():
+        try:
+            lo = float(spec["min"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if lo <= s and lo > best_lo:
+            best_lo = lo
+            best_name = name
+    return best_name or "review"
 
 
-def format_range(lo: int, hi: int, *, dash: str = "-") -> str:
-    return f"{lo}{dash}{hi}"
+def _regime_day(value: Any) -> Optional[str]:
+    if value is None:
+        return None
+    text = str(value)[:10]
+    return text or None
+
+
+def score_bands_for_date(
+    weights: Mapping[str, Any],
+    on: str,
+) -> Dict[str, Dict[str, Any]]:
+    """Return the cutoffs in effect on ``on`` (``YYYY-MM-DD``).
+
+    ``score_bands_history`` entries cover ``[effective_from, effective_until)``.
+    ``effective_from`` null means the beginning of the record. A date on or
+    after every regime's ``effective_until``, and any weights file with no
+    history, uses the live ``score_bands``. The first matching regime wins.
+    """
+    if not isinstance(weights, Mapping):
+        return {}
+    live = weights.get("score_bands")
+    history = weights.get("score_bands_history")
+    day = str(on)[:10]
+    if isinstance(history, list):
+        for regime in history:
+            if not isinstance(regime, dict):
+                continue
+            start = _regime_day(regime.get("effective_from"))
+            until = _regime_day(regime.get("effective_until"))
+            if start is not None and day < start:
+                continue
+            if until is not None and day >= until:
+                continue
+            bands = regime.get("score_bands")
+            if isinstance(bands, dict) and bands:
+                return _copy(bands)
+    if isinstance(live, dict) and live:
+        return _copy(live)
+    return {}
+
+

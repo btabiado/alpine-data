@@ -346,18 +346,9 @@ def test_history_button_meets_the_touch_target_floor(v1_tpl):
 # header fixes while v2/app.py got the y-axis, the focus trap and the sub-tab
 # sizing — and each was separately told to do the "shared" items. The result
 # was a gate full of "V2 fixed this, V1 did not". These guards exist so the
-# two frontends cannot drift apart again silently.
+# two frontends cannot drift apart again silently. (V2 was retired in
+# 2026-10; the V1 halves of these guards remain.)
 # ===========================================================================
-
-
-V2_APP = ROOT / "v2" / "app.py"
-
-
-@pytest.fixture(scope="module")
-def v2_tpl() -> str:
-    if not V2_APP.exists():  # pragma: no cover - repo layout guard
-        pytest.skip("v2/app.py not present")
-    return _template(V2_APP)
 
 
 # ------------------------------------------------- B2: history focus trap
@@ -386,14 +377,6 @@ def test_history_dialog_moves_focus_in_and_gives_it_back(v1_tpl):
     assert "_compositeHistoryReturnFocus" in op and "closeBtn.focus()" in op
     cl = v1_tpl.split("function closeCompositeHistory(){", 1)[1].split("\n}", 1)[0]
     assert "back.focus()" in cl
-
-
-def test_focus_trap_matches_v2(v1_tpl, v2_tpl):
-    def trap(src: str) -> str:
-        block = src.split("// FOCUS TRAP", 1)[1].split("})();", 1)[0]
-        return "\n".join(l.strip() for l in block.splitlines()
-                         if l.strip() and not l.strip().startswith("//"))
-    assert trap(v1_tpl) == trap(v2_tpl), "the focus trap has drifted from V2"
 
 
 # ------------------------------------------------- B3: travel sub-tabs

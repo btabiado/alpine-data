@@ -202,7 +202,7 @@ def test_cache_hit_avoids_second_http_call() -> None:
 
 
 # ---------------------------------------------------------------------------
-# get_wti / get_brent / get_gasoline — delegate with hardcoded params
+# get_wti — delegates with hardcoded params
 # ---------------------------------------------------------------------------
 
 
@@ -219,32 +219,6 @@ def test_get_wti_uses_hardcoded_params() -> None:
     assert "EPCWTI" in facets["product"]
     assert "RWTC" in facets.get("series", [])
     assert out == [{"date": "2026-05-14", "value": 78.42}]
-
-
-def test_get_brent_uses_hardcoded_params() -> None:
-    with patch("lthcs.sources.eia.get_series") as mock_series:
-        mock_series.return_value = [{"date": "2026-05-14", "value": 82.10}]
-        eia.get_brent()
-
-    _, kwargs = mock_series.call_args
-    assert kwargs["route"] == "petroleum/pri/spt"
-    assert kwargs["frequency"] == "daily"
-    facets = kwargs["facets"]
-    assert "EPCBRENT" in facets["product"]
-    assert "RBRTE" in facets.get("series", [])
-
-
-def test_get_gasoline_uses_hardcoded_params() -> None:
-    with patch("lthcs.sources.eia.get_series") as mock_series:
-        mock_series.return_value = [{"date": "2026-05-12", "value": 3.45}]
-        eia.get_gasoline()
-
-    _, kwargs = mock_series.call_args
-    assert kwargs["route"] == "petroleum/pri/gnd"
-    assert kwargs["frequency"] == "weekly"
-    facets = kwargs["facets"]
-    assert "NUS" in facets["duoarea"]
-    assert "EPMR" in facets["product"]
 
 
 # ---------------------------------------------------------------------------

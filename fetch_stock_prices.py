@@ -1,5 +1,5 @@
 """
-Per-ticker hourly price fetcher for the V2 dashboard's Stocks tab.
+Per-ticker hourly price fetcher (7-day, 1h closes for the top-50 stocks).
 
 Source (free, no auth required):
   Yahoo Finance   /v8/finance/chart/<TICKER>?range=7d&interval=1h
@@ -7,8 +7,9 @@ Source (free, no auth required):
                   GC=F / SI=F. Returns up to ~168 hourly points (fewer
                   during partial weeks / off-market hours).
 
-Output: v2/data-stock-prices.json (sidecar consumed by the V2 dashboard's
-stock ticker modal via the existing SIDECARS lazy-load mechanism).
+Output: data-stock-prices.json, written by pages.yml's "Fetch dashboard
+sidecars" step and published at the site root. Its consumer was the retired
+V2 dashboard's stock ticker modal; no V1 tab reads it today.
 
 The fetcher pulls the list of tickers from the existing data/market.json
 (``stocks_signals[].symbol``) so we automatically follow whatever the
@@ -40,7 +41,7 @@ Resilience:
     avoid trip rate limits.
 
 CLI:
-    python fetch_stock_prices.py                 # default --out v2/data-stock-prices.json
+    python fetch_stock_prices.py                 # default --out data-stock-prices.json
     python fetch_stock_prices.py --out PATH      # custom output path
     python fetch_stock_prices.py --no-network    # offline self-test (mock ticker)
     python fetch_stock_prices.py --limit N       # cap ticker count (default 50)
@@ -62,7 +63,7 @@ import requests
 UA = "Mozilla/5.0 (compatible; etf-flow-dashboard/1.0; +stock-price-fetcher)"
 H = {"User-Agent": UA}
 ROOT = Path(__file__).parent
-DEFAULT_OUT = ROOT / "v2" / "data-stock-prices.json"
+DEFAULT_OUT = ROOT / "data-stock-prices.json"
 DEFAULT_MARKET_JSON = ROOT / "data" / "market.json"
 
 # Yahoo's public chart endpoint. Same shape fetch_metals._yahoo_daily uses

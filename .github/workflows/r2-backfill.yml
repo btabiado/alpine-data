@@ -8,9 +8,11 @@ name: r2-backfill
 # Companion to .github/workflows/pages.yml (forward-only). This walks BACKWARD.
 #
 # Usage: GitHub UI → Actions → "r2-backfill" → "Run workflow"
-#   start_date: earliest day to backfill (YYYY-MM-DD), default 30 days ago
-#   end_date:   latest day to backfill (YYYY-MM-DD), default yesterday
-#   max_days:   safety cap — won't process more than this many days, default 200
+#   mode:       delta (default; skips keys already present) or refresh (overwrites)
+#   preset:     a trailing window, or "custom" to use start_date
+#   start_date: earliest day (YYYY-MM-DD). Used only when preset = custom.
+#   end_date:   latest day (YYYY-MM-DD). Default = yesterday UTC. Inclusive.
+#   max_days:   safety cap — won't process more than this many days, default 2000
 #
 # For each calendar day in [start_date, end_date]:
 #   1. Find latest commit on/before 23:59:59 UTC of that day
@@ -18,8 +20,33 @@ name: r2-backfill
 #   3. Run upload_to_r2.py with R2_OVERRIDE_DATE={that day} env
 #   4. Restore main HEAD
 #
-# Idempotent: R2 PUT overwrites — re-running just overwrites the same keys.
-# Safe to abort: each day is independent.
+# Idempotent in delta mode (the default): an object that is already under
+# raw/alpine-data/<day>/ is left untouched, including MANIFEST.json. A failed
+# listing aborts that day instead of falling through to a full overwrite.
+# refresh mode DOES overwrite every key in the range; do not use it to fill
+# the 2026-10-07 gap below.
+# Safe to abort: each day is independent. A day whose upload exits non-zero
+# fails this job (the annotation is ::error::, not a warning buried in the log).
+#
+# The 2026-10-15 audit's "missing 81 daily payload copies" are the retired
+# v2/data-*.json keys for 2026-10-07..15 (9 files × 9 days). V2 was retired
+# on 2026-10-06 (PR #94). Those payloads were not dropped: the same days are
+# already stored at the unprefixed keys (data-cpi.json and the rest), and the
+# continuity check now treats that move as a handoff rather than a gap. This
+# workflow cannot rebuild the v2/ keys — they were deploy-time outputs and
+# are not in git after the retirement. Running it for that range, in delta
+# mode, uploads any committed data-*.json that a missed pages run never
+# archived and does not overwrite what is already there.
+#
+# Dispatch inputs for 2026-10-07 through the present (Actions → r2-backfill →
+# Run workflow). Use the UTC date you run it as end_date; omitting end_date
+# stops at yesterday, which leaves today out.
+#   mode:       delta (only upload missing files — fast on re-runs)
+#   preset:     custom (use start_date/end_date below)
+#   start_date: 2026-10-07
+#   end_date:   2026-10-16
+#   max_days:   2000
+# Do not select refresh for this range.
 
 on:
   workflow_dispatch:
@@ -81,7 +108,8 @@ jobs:
           python-version: "3.x"
 
       - name: Install boto3
-        run: pip install -q boto3
+        # The pin comes from requirements-jobs.txt.
+        run: pip install -q -c requirements-jobs.txt boto3
 
       - name: Run backfill
         env:
@@ -216,7 +244,7 @@ jobs:
                   subprocess.run(["git", "checkout", "-f", "--quiet", sha], check=True)
                   subprocess.run(["git", "clean", "-fdq"], check=False)
               except subprocess.CalledProcessError as e:
-                  print(f"::warning::{cur} — git checkout failed: {e}")
+                  print(f"::error title=R2 backfill checkout failed::{cur} — git checkout failed: {e}")
                   failed += 1
                   cur += timedelta(days=1)
                   continue
@@ -258,7 +286,13 @@ jobs:
                   files_uploaded += int(mm.group(1))
                   files_present += int(mm.group(1)) + int(mm.group(2))
               if r.returncode != 0:
-                  print(f"::warning::{cur} — upload_to_r2.py exited {r.returncode}")
+                  # stderr too: upload_to_r2.py prints ::error:: on stdout, but
+                  # a traceback lands on stderr and used to be swallowed by
+                  # capture_output.
+                  err_tail = (r.stderr or "").strip().splitlines()[-4:]
+                  for line in err_tail:
+                      print(f"  ! {line}")
+                  print(f"::error title=R2 backfill upload failed::{cur} — upload_to_r2.py exited {r.returncode}")
                   failed += 1
               else:
                   processed += 1
@@ -273,6 +307,10 @@ jobs:
           subprocess.run(["git", "clean", "-fdq"], check=False)
           print(f"[backfill] restored HEAD to {orig_ref[:10]}")
           print(f"[backfill] DONE — processed={processed} skipped={skipped} failed={failed} of {total_days} days, files_uploaded={files_uploaded}")
+          if failed:
+              print(f"::error title=R2 backfill incomplete::failed={failed} of {total_days} days ({start} → {end}). Delta mode does not overwrite existing objects. Re-run the same dispatch; it fills only what is still missing.")
+              # Exit after the optional run-summary write below. A green job
+              # here used to mean "we logged the failures and moved on".
 
           # Write a per-run summary to R2 so the dashboard's job-history table can
           # show records-pulled per run (GH API only gives runtime/conclusion).
@@ -301,11 +339,15 @@ jobs:
                   print(f"[backfill] wrote run summary to _backfill_meta/{run_id}.json")
               except Exception as e:
                   print(f"[backfill] WARN: could not write run summary: {e}")
+          if failed:
+              sys.exit(1)
           PYEOF
 
       - name: Regenerate coverage dashboard JSON
         # Rescan R2 after backfill so /health/r2-coverage.html reflects new
-        # historical cells. Skipped only on hard failure of backfill loop.
+        # historical cells. `if: always()` so a partial backfill still refreshes
+        # the heatmap. A failed scan exits non-zero (the step goes red) and
+        # continue-on-error keeps that from hiding the upload step's result.
         if: always()
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}

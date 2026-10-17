@@ -1,0 +1,653 @@
+{
+ "run_id": "20261014T215853Z_30b31f89",
+ "engine_revision": "6a096b0",
+ "holdout_seal": {
+  "settlement": "2025-08-30",
+  "spot": "2025-04-02"
+ },
+ "holdout_opened": true,
+ "metric": "Brier skill vs past event frequency (climatology); 95% block-bootstrap interval; development period only",
+ "cells": [
+  {
+   "cohort": "settlement",
+   "asset": "BTC",
+   "h": 30,
+   "indep_outcomes": 53.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.0704,
+   "best_baseline_ci": [
+    -0.0401,
+    0.1928
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "logit_A",
+   "best_ml_bss": -0.1001,
+   "best_ml_ci": [
+    -0.2953,
+    0.0728
+   ],
+   "best_ml_reliably_better": false,
+   "dvol_q_bss": 0.0637,
+   "dvol_q_ci": [
+    -0.0474,
+    0.175
+   ],
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0641,
+   "best_fm_ci": [
+    -0.0621,
+    0.189
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
+  },
+  {
+   "cohort": "settlement",
+   "asset": "BTC",
+   "h": 60,
+   "indep_outcomes": 25.0,
+   "best_baseline": "garch_t",
+   "best_baseline_bss": 0.0361,
+   "best_baseline_ci": [
+    -0.1519,
+    0.2165
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "logit_A",
+   "best_ml_bss": -0.0278,
+   "best_ml_ci": [
+    -0.3081,
+    0.2258
+   ],
+   "best_ml_reliably_better": false,
+   "dvol_q_bss": 0.0398,
+   "dvol_q_ci": [
+    -0.1638,
+    0.2298
+   ],
+   "best_fm": "chronos_bolt",
+   "best_fm_bss": 0.0724,
+   "best_fm_ci": [
+    -0.0326,
+    0.1769
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5 in-band"
+  },
+  {
+   "cohort": "settlement",
+   "asset": "BTC",
+   "h": 90,
+   "indep_outcomes": 16.0,
+   "best_baseline": "garch_t",
+   "best_baseline_bss": 0.0777,
+   "best_baseline_ci": [
+    -0.2355,
+    0.3559
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.0523,
+   "best_ml_ci": [
+    -0.4166,
+    0.2728
+   ],
+   "best_ml_reliably_better": false,
+   "dvol_q_bss": 0.0409,
+   "dvol_q_ci": [
+    -0.2924,
+    0.3559
+   ]
+  },
+  {
+   "cohort": "settlement",
+   "asset": "ETH",
+   "h": 30,
+   "indep_outcomes": 52.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.1034,
+   "best_baseline_ci": [
+    -0.009,
+    0.22
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "logit_A",
+   "best_ml_bss": -0.0796,
+   "best_ml_ci": [
+    -0.1881,
+    0.0181
+   ],
+   "best_ml_reliably_better": false,
+   "dvol_q_bss": 0.0976,
+   "dvol_q_ci": [
+    -0.0119,
+    0.2063
+   ],
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.1029,
+   "best_fm_ci": [
+    -0.0066,
+    0.2086
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
+  },
+  {
+   "cohort": "settlement",
+   "asset": "ETH",
+   "h": 60,
+   "indep_outcomes": 25.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.1089,
+   "best_baseline_ci": [
+    -0.1113,
+    0.2844
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.0922,
+   "best_ml_ci": [
+    -0.3517,
+    0.1157
+   ],
+   "best_ml_reliably_better": false,
+   "dvol_q_bss": 0.1079,
+   "dvol_q_ci": [
+    -0.1269,
+    0.2795
+   ],
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0986,
+   "best_fm_ci": [
+    -0.1453,
+    0.2889
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
+  },
+  {
+   "cohort": "settlement",
+   "asset": "ETH",
+   "h": 90,
+   "indep_outcomes": 16.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.1424,
+   "best_baseline_ci": [
+    -0.3204,
+    0.4254
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.0611,
+   "best_ml_ci": [
+    -0.4689,
+    0.2318
+   ],
+   "best_ml_reliably_better": false,
+   "dvol_q_bss": 0.1465,
+   "dvol_q_ci": [
+    -0.3003,
+    0.4244
+   ]
+  },
+  {
+   "cohort": "settlement",
+   "asset": "LINK",
+   "h": 30,
+   "indep_outcomes": 26.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.005,
+   "best_baseline_ci": [
+    -0.0406,
+    0.06
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.1522,
+   "best_ml_ci": [
+    -0.3108,
+    -0.0037
+   ],
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0057,
+   "best_fm_ci": [
+    -0.0368,
+    0.0571
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
+  },
+  {
+   "cohort": "settlement",
+   "asset": "LINK",
+   "h": 60,
+   "indep_outcomes": 12.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.0612,
+   "best_baseline_ci": [
+    0.0188,
+    0.0993
+   ],
+   "best_baseline_reliably_better": true,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.5828,
+   "best_ml_ci": [
+    -1.4602,
+    -0.0993
+   ],
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0616,
+   "best_fm_ci": [
+    0.0206,
+    0.098
+   ],
+   "best_fm_reliably_better": true,
+   "best_fm_comparison": "Stage 5"
+  },
+  {
+   "cohort": "settlement",
+   "asset": "XRP",
+   "h": 30,
+   "indep_outcomes": 27.0,
+   "best_baseline": "fhs_ewma",
+   "best_baseline_bss": -0.0165,
+   "best_baseline_ci": [
+    -0.0587,
+    0.0227
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.0915,
+   "best_ml_ci": [
+    -0.2083,
+    0.0106
+   ],
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": -0.0113,
+   "best_fm_ci": [
+    -0.046,
+    0.0302
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
+  },
+  {
+   "cohort": "settlement",
+   "asset": "XRP",
+   "h": 60,
+   "indep_outcomes": 12.0,
+   "best_baseline": "fhs_ewma",
+   "best_baseline_bss": -0.0511,
+   "best_baseline_ci": [
+    -0.0999,
+    -0.0052
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": 0.0009,
+   "best_ml_ci": [
+    -0.1903,
+    0.1804
+   ],
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": -0.0396,
+   "best_fm_ci": [
+    -0.1657,
+    0.078
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
+  },
+  {
+   "cohort": "spot",
+   "asset": "BTC",
+   "h": 30,
+   "indep_outcomes": 103.0,
+   "best_baseline": "fhs_ewma",
+   "best_baseline_bss": -0.0303,
+   "best_baseline_ci": [
+    -0.0737,
+    0.0116
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.1242,
+   "best_ml_ci": [
+    -0.2212,
+    -0.0319
+   ],
+   "best_ml_reliably_better": false,
+   "dvol_q_bss": 0.0295,
+   "dvol_q_ci": [
+    -0.0682,
+    0.1381
+   ],
+   "best_fm": "chronos_vol",
+   "best_fm_bss": -0.0493,
+   "best_fm_ci": [
+    -0.1197,
+    0.0204
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
+  },
+  {
+   "cohort": "spot",
+   "asset": "BTC",
+   "h": 60,
+   "indep_outcomes": 50.0,
+   "best_baseline": "fhs_ewma",
+   "best_baseline_bss": -0.0472,
+   "best_baseline_ci": [
+    -0.1165,
+    0.0225
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.2149,
+   "best_ml_ci": [
+    -0.3965,
+    -0.0515
+   ],
+   "best_ml_reliably_better": false,
+   "dvol_q_bss": 0.0324,
+   "dvol_q_ci": [
+    -0.1998,
+    0.2289
+   ],
+   "best_fm": "chronos_bolt",
+   "best_fm_bss": -0.0541,
+   "best_fm_ci": [
+    -0.1339,
+    0.0217
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5 in-band"
+  },
+  {
+   "cohort": "spot",
+   "asset": "BTC",
+   "h": 90,
+   "indep_outcomes": 33.0,
+   "best_baseline": "fhs_ewma",
+   "best_baseline_bss": -0.0451,
+   "best_baseline_ci": [
+    -0.1343,
+    0.0496
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.2787,
+   "best_ml_ci": [
+    -0.5361,
+    -0.0467
+   ],
+   "best_ml_reliably_better": false,
+   "dvol_q_bss": 0.0448,
+   "dvol_q_ci": [
+    -0.3152,
+    0.2849
+   ]
+  },
+  {
+   "cohort": "spot",
+   "asset": "ETH",
+   "h": 30,
+   "indep_outcomes": 93.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.0089,
+   "best_baseline_ci": [
+    -0.0619,
+    0.0794
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.1332,
+   "best_ml_ci": [
+    -0.2114,
+    -0.0499
+   ],
+   "best_ml_reliably_better": false,
+   "dvol_q_bss": 0.0514,
+   "dvol_q_ci": [
+    -0.0324,
+    0.1339
+   ],
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0036,
+   "best_fm_ci": [
+    -0.0681,
+    0.0753
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
+  },
+  {
+   "cohort": "spot",
+   "asset": "ETH",
+   "h": 60,
+   "indep_outcomes": 45.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.0021,
+   "best_baseline_ci": [
+    -0.1199,
+    0.1271
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.2104,
+   "best_ml_ci": [
+    -0.3848,
+    -0.0584
+   ],
+   "best_ml_reliably_better": false,
+   "dvol_q_bss": 0.0149,
+   "dvol_q_ci": [
+    -0.1529,
+    0.1536
+   ],
+   "best_fm": "chronos_bolt",
+   "best_fm_bss": 0.0268,
+   "best_fm_ci": [
+    -0.0602,
+    0.1079
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5 in-band"
+  },
+  {
+   "cohort": "spot",
+   "asset": "ETH",
+   "h": 90,
+   "indep_outcomes": 30.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.0202,
+   "best_baseline_ci": [
+    -0.1839,
+    0.1988
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.2189,
+   "best_ml_ci": [
+    -0.4195,
+    -0.0283
+   ],
+   "best_ml_reliably_better": false,
+   "dvol_q_bss": 0.0136,
+   "dvol_q_ci": [
+    -0.2327,
+    0.2482
+   ]
+  },
+  {
+   "cohort": "spot",
+   "asset": "LINK",
+   "h": 30,
+   "indep_outcomes": 55.0,
+   "best_baseline": "lognormal_ewma",
+   "best_baseline_bss": 0.0427,
+   "best_baseline_ci": [
+    -0.0427,
+    0.1273
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.0691,
+   "best_ml_ci": [
+    -0.1401,
+    0.0073
+   ],
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0422,
+   "best_fm_ci": [
+    -0.053,
+    0.1303
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
+  },
+  {
+   "cohort": "spot",
+   "asset": "LINK",
+   "h": 60,
+   "indep_outcomes": 26.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.0245,
+   "best_baseline_ci": [
+    -0.1448,
+    0.1826
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "logit_A",
+   "best_ml_bss": -0.0869,
+   "best_ml_ci": [
+    -0.2416,
+    0.0803
+   ],
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0231,
+   "best_fm_ci": [
+    -0.1485,
+    0.1838
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
+  },
+  {
+   "cohort": "spot",
+   "asset": "LINK",
+   "h": 90,
+   "indep_outcomes": 17.0,
+   "best_baseline": "lognormal_ewma",
+   "best_baseline_bss": 0.0899,
+   "best_baseline_ci": [
+    -0.2174,
+    0.3128
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.0695,
+   "best_ml_ci": [
+    -0.3618,
+    0.1833
+   ],
+   "best_ml_reliably_better": false
+  },
+  {
+   "cohort": "spot",
+   "asset": "XRP",
+   "h": 30,
+   "indep_outcomes": 86.0,
+   "best_baseline": "lognormal_rv90",
+   "best_baseline_bss": 0.0377,
+   "best_baseline_ci": [
+    -0.0067,
+    0.0955
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.0473,
+   "best_ml_ci": [
+    -0.114,
+    0.0258
+   ],
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.038,
+   "best_fm_ci": [
+    -0.0114,
+    0.0878
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
+  },
+  {
+   "cohort": "spot",
+   "asset": "XRP",
+   "h": 60,
+   "indep_outcomes": 42.0,
+   "best_baseline": "lognormal_ewma",
+   "best_baseline_bss": 0.0494,
+   "best_baseline_ci": [
+    -0.0311,
+    0.1307
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.1253,
+   "best_ml_ci": [
+    -0.2349,
+    -0.0117
+   ],
+   "best_ml_reliably_better": false,
+   "best_fm": "chronos_vol",
+   "best_fm_bss": 0.0555,
+   "best_fm_ci": [
+    -0.017,
+    0.1381
+   ],
+   "best_fm_reliably_better": false,
+   "best_fm_comparison": "Stage 5"
+  },
+  {
+   "cohort": "spot",
+   "asset": "XRP",
+   "h": 90,
+   "indep_outcomes": 27.0,
+   "best_baseline": "lognormal_ewma",
+   "best_baseline_bss": 0.0569,
+   "best_baseline_ci": [
+    -0.0658,
+    0.1755
+   ],
+   "best_baseline_reliably_better": false,
+   "best_ml": "rf_A",
+   "best_ml_bss": -0.2147,
+   "best_ml_ci": [
+    -0.3852,
+    -0.0574
+   ],
+   "best_ml_reliably_better": false
+  }
+ ],
+ "ml_note": "ML models (logistic regression, random forest, XGBoost) were trained walk-forward with past-only tuning and shrink-only calibration. None beat the base rate or the best history model in any test.",
+ "fm_note": "Chronos-Bolt, a pretrained time-series foundation model (Amazon, weights frozen Nov 2024), forecast 30- and 60-day moves from price history alone; it did not beat the best history model in any test, and beat the base rate with confidence in only 1 of 16 (LINK settlement, 60 days, via its volatility forecast), where the best history model also did.",
+ "holdout_summary": {
+  "testable_cells": 4,
+  "untestable_cells": 20,
+  "promoted": 0,
+  "testable_list": [
+   "spot BTC 30d",
+   "spot ETH 30d",
+   "spot LINK 30d",
+   "spot XRP 30d"
+  ]
+ }
+}

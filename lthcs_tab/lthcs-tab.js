@@ -35,6 +35,9 @@ const activeIsEmpty = effectiveIsEmpty;
 // --- Index Exiles (left every tracked index, still scored daily) ---
 import { EXILE_FILTER_KEY, EXILE_LABEL, exileInfo, exileBadgeHTML } from './lthcs-exile.js';
 
+// --- Universe size + coverage (header subtitle, About modal) ---
+import { activeCount, setPageData } from './lthcs-coverage.js';
+
 // --- Phase 5 #2 (what's new) hookup ---
 import { initWhatsNew, updateWhatsNew } from './lthcs-whatsnew.js';
 // --- end Phase 5 #2 hookup ---
@@ -296,13 +299,6 @@ function formatScore(n) {
   return Number.isFinite(v) ? v.toFixed(1) : '—';
 }
 
-function formatDrift(n) {
-  const v = Number(n);
-  if (!Number.isFinite(v)) return '0.0';
-  const sign = v > 0 ? '+' : '';
-  return `${sign}${v.toFixed(1)}`;
-}
-
 // ---------------------------------------------------------------------------
 // Task 1: 30-day score-trend helpers
 // ---------------------------------------------------------------------------
@@ -347,13 +343,6 @@ function pickAnchorWithFallback(history, currentDateISO) {
     }
   }
   return null;
-}
-
-// Back-compat alias used elsewhere in the file. Prefers 30 days when
-// possible but uses the fallback chain otherwise.
-function pickThirtyDayAnchor(history, currentDateISO) {
-  const result = pickAnchorWithFallback(history, currentDateISO);
-  return result ? result.anchor : null;
 }
 
 // Compute the score trend for a single ticker. Returns
@@ -1625,6 +1614,11 @@ async function refresh() {
     state.universeByTicker = buildUniverseIndex(universe);
     state.enriched = enrichScores(snapshot, state.universeByTicker);
     renderMeta(snapshot);
+    // Header count and the About modal read the files we just loaded.
+    setPageData({ universe, snapshot });
+    const universeCount = activeCount(universe);
+    const countEl = $('#lthcs-universe-count');
+    if (countEl && universeCount) countEl.textContent = `${universeCount} US-listed names`;
     // Composite freshness stamp. Side-loaded so the probes for the sibling
     // input dates never block the cards, but it repaints the header the
     // moment they settle (or time out). Its own failure path already renders

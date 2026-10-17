@@ -1,0 +1,19 @@
+{
+  "generated_at": "2026-10-17T10:22:53Z",
+  "outcome": "unchanged",
+  "housing_month": "2026-09",
+  "snapshot_generated_at": "2026-10-16T11:02:08Z",
+  "sources": {
+    "zillow": {
+      "rows": 894,
+      "last_modified": "Fri, 16 Oct 2026 01:56:11 GMT"
+    },
+    "redfin": {
+      "rows": 878,
+      "last_modified": "Tue, 02 Jun 2026 18:16:11 GMT"
+    },
+    "fred": {
+      "national_permits_yoy_pct": 4.16
+    }
+  }
+}

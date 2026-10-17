@@ -14,7 +14,11 @@
 // Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
 import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
 
-const MANIFEST_URL = '../data/lthcs/public/manifest.json';
+// Relative to this page. pages.yml stages the page one level deeper than the
+// repo and adds the extra '../' (scripts/stage_lthcs_site.py), so build every
+// data URL from this literal rather than from string math on '..'.
+const DATA_ROOT = '../data/lthcs';
+const MANIFEST_URL = `${DATA_ROOT}/public/manifest.json`;
 
 function $(id) {
   return document.getElementById(id);
@@ -52,7 +56,10 @@ function renderEndpoints(rows) {
     // as code so consumers can copy + substitute.
     if (endpoint.indexOf('<') === -1 && endpoint.startsWith('/')) {
       const a = document.createElement('a');
-      a.href = '..' + endpoint; // /data/lthcs/... -> ../data/lthcs/...
+      // /data/lthcs/x -> <DATA_ROOT>/x, the site's one copy of the data.
+      a.href = endpoint.startsWith('/data/lthcs/')
+        ? DATA_ROOT + endpoint.slice('/data/lthcs'.length)
+        : '..' + endpoint;
       a.textContent = endpoint;
       endpointTd.appendChild(a);
     } else {

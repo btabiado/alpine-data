@@ -75,7 +75,7 @@ jobs:
 
       - name: Restore fetched data cache (markets_top stale-keep, etc.)
         # CI runs are stateless — every fetch starts cold. fetch_market.py's
-        # stale-keep fallback (markets_top, lunarcrush) reads from prior
+        # stale-keep fallback (markets_top) reads from prior
         # data/market.json, which doesn't exist on a fresh runner. This
         # cache lets the stale-keep actually work in CI by persisting the
         # most recent successful fetch between runs. Primary key uses
@@ -88,6 +88,7 @@ jobs:
             data/whale.json
             data/.stale/
             snowflake_summit/.enrich_cache.json
+            data-opensky-positions.json
           key: fetched-data-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             fetched-data-
@@ -168,13 +169,115 @@ jobs:
       # throttled (0/219); both removed. The data-*.json copy step below deploys
       # the sidecar.
 
+      - name: Fetch OpenSky flight positions (deploy-time, never committed)
+        # The Aviation tab's Flight Map reads data-opensky-positions.json. It used
+        # to be committed by aviation-opensky.yml on every run: 978 versions of a
+        # 200 KB single-line file were 46% of all repo history, for data whose only
+        # value is the latest snapshot (R2 archives each deploy's copy via
+        # upload_to_r2.py). It is now fetched here and staged with the other
+        # data-*.json sidecars. One OpenSky /states/all call per deploy.
+        #
+        # fetch_opensky.py also rewrites data-opensky.json from the same response,
+        # so the Live Traffic tile and the map agree. aviation-opensky.yml still
+        # commits data-opensky.json (511 B) as the cold-checkout floor.
+        #
+        # On a failed fetch the previous deploy's file, restored by the cache step
+        # above, is staged instead. The map labels it with its own snapshot time,
+        # and data_health --mode built flags it if it ages past its limit.
+        # Non-fatal: the rest of the site must deploy regardless.
+        timeout-minutes: 3
+        env:
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+        run: >-
+          python fetch_opensky.py
+          || echo "::warning title=OpenSky positions not refreshed::fetch_opensky.py failed; the Flight Map serves the previous deploy's snapshot if one was cached, otherwise its empty state"
+        continue-on-error: true
+
+      - name: Fetch dashboard sidecars (CPI, supplies, metals, stock prices)
+        # The CPI, Supplies and Metals tabs lazy-load data-cpi.json,
+        # data-supplies.json and data-metals.json, and data-stock-prices.json
+        # (7-day hourly closes for the top-50 stocks) is published beside them.
+        # They used to be written only as a side effect of the V2 build, so
+        # the V1 dashboard depended on V2 building. V2 is retired (2026-10);
+        # the fetchers run here, write to the repo root, and the stage
+        # step's data-*.json glob publishes them. (data-mufon.json is the
+        # committed frozen NUFORC cache and is published as is: nothing scrapes
+        # NUFORC any more. data-travel.json comes from app.py itself.)
+        #
+        # FRED_API_KEY is the only secret any of them reads. Each fetcher keeps
+        # its own per-source fallbacks; `timeout` bounds a hung upstream so the
+        # deploy never waits on one, and every failure gets its own warning.
+        # fetch_stock_prices takes its ticker list from data/market.json, which
+        # the fetch-market step above writes.
+        timeout-minutes: 12
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: |
+          set +e
+          fetch() {
+            name="$1"; shift
+            timeout 150 python "$@"
+            rc=$?
+            if [ "$rc" -ne 0 ]; then
+              echo "::warning title=Sidecar not refreshed: ${name}::python $* exited ${rc} (124 = timed out); this deploy serves data-${name}.json as the fetcher left it (its fallback, or absent)"
+            fi
+          }
+          fetch cpi fetch_cpi.py --out data-cpi.json
+          fetch supplies fetch_supplies.py --out data-supplies.json
+          fetch metals fetch_metals.py --out data-metals.json
+          fetch stock-prices fetch_stock_prices.py --out data-stock-prices.json --market-json data/market.json
+          exit 0
+        continue-on-error: true
+
+      - name: Upload daily snapshot to ADW R2 archive
+        # Archives all data-*.json sidecars to ADW R2 warehouse for future
+        # ClickHouse ingestion (Phase 2.5). Key pattern:
+        #   raw/alpine-data/{YYYY-MM-DD}/{rel_path}
+        #
+        # This used to run after the site was staged, near the end of a 30
+        # minute job. pages.yml's hourly cron only fires on about 18% of its
+        # ticks, and concurrency cancels an in-progress run when a newer one
+        # starts (group pages-deploy, cancel-in-progress). The payloads above
+        # are already final here — nothing later in this job rewrites a
+        # data-*.json — so the archive happens before the long staging tail.
+        # A run that is cancelled while staging still leaves today's copy in
+        # R2. The coverage heatmap is rebuilt after staging, because that is
+        # when _site/health/ exists to receive it.
+        #
+        # NON-BLOCKING, AND HERE IS WHY. An R2 outage must not withhold the
+        # dashboard. continue-on-error keeps the deploy going.
+        #
+        # LOUD, AND HERE IS WHY. upload_to_r2.py used to exit 0 on a missing
+        # bucket, a bad date, and every failed PUT, so this step stayed green
+        # while the day's copy was never stored. It now exits 1, prints a
+        # ::error:: annotation, and appends $GITHUB_STEP_SUMMARY. With
+        # continue-on-error the step shows as a failed step and the job
+        # continues. Do not swallow that code with `|| true` or `|| echo`.
+        #
+        # The pull_request guard matters only if this workflow grows a
+        # pull_request trigger. push, the hourly schedule, a manual dispatch,
+        # and the daily-audit completion trigger all archive. There is no
+        # pull_request event today. The word for that completion trigger is
+        # kept out of this job on purpose: the checkout above must stay on
+        # main, not the triggering run's head.
+        if: github.event_name != 'pull_request'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          pip install -q -c requirements-jobs.txt boto3
+          python upload_to_r2.py
+        continue-on-error: true
+
       - name: Validate V1 dashboard JS structure
         # Structural lint of the freshly-built dashboard.html inline <script>,
         # including the SIDECARS↔SIDECAR_FOR_TAB coverage check that caught
         # the V1 regression on 2026-05-27 (new tabs ported into V1 added
         # entries to SIDECAR_FOR_TAB without corresponding SIDECARS keys, so
         # the lazy loader returned null and tabs sat in their empty state
-        # forever). Mirrors the V2 validation step below. Pure-stdlib Python
+        # forever). Pure-stdlib Python
         # — no new deps. FAILS THE BUILD on regression: production at `/` is
         # the source of truth and we'd rather block a deploy than ship dead
         # tabs.
@@ -554,138 +657,6 @@ jobs:
           python landscape/build.py || echo "[landscape] rebuild failed; using committed dashboard.html"
         continue-on-error: true
 
-      - name: Generate V2 dashboard (parallel build, reads same data/)
-        # V2 is a UX-cleanup spin of the same payload — reuses the cached
-        # market.json / whale.json / ETF CSVs already fetched above so no
-        # extra API calls. Failure here must NOT fail the deploy: production
-        # at `/` is the source of truth; V2 at `/v2/` is additive.
-        #
-        # Env mirrors the V1 fetch step so V2-side fetchers (fetch_cpi.py,
-        # fetch_supplies.py for inventory ratio, fetch_metals.py for FRED
-        # gold price, future EIA-keyed sources) see the same secrets V1 does.
-        # Without this block fetch_cpi sees FRED_API_KEY="" and ships an
-        # empty-state payload even when the repo secret is configured —
-        # which was exactly the bug on 2026-05-25.
-        if: hashFiles('v2/app.py') != ''
-        env:
-          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
-          GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
-          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
-          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
-          COINMETRICS_API_KEY: ${{ secrets.COINMETRICS_API_KEY }}
-          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
-          EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
-          ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
-          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
-        id: v2build
-        # NOTE: deliberately NO `|| echo` here any more. `continue-on-error: true`
-        # below already guarantees the deploy proceeds, so the `|| echo` bought
-        # nothing — it only forced exit 0, which erased the step's `outcome` and
-        # made a broken V2 build indistinguishable from a healthy one. Letting the
-        # real exit code through lets the "Report V2 build outcome" step below see
-        # `steps.v2build.outcome == 'failure'` and shout about it.
-        run: python v2/app.py --no-open
-        continue-on-error: true
-        # A step timeout catches the HANG case: a V2-side fetcher (FRED/EIA/metals)
-        # with no socket timeout can hang on a slow/down API and, with no step cap,
-        # stall the ENTIRE Pages deploy (V1 at / and /summit/ included) indefinitely.
-        # Bound it so a hung V2 build fails fast and the V1 + Summit publish proceeds
-        # (V2 keeps last-good). A kill also registers as outcome == 'failure'.
-        timeout-minutes: 6
-
-      - name: Fallback generate V2 if dashboard.html missing
-        # Mirror of V1's "Fallback generate if dashboard.html missing" step.
-        # If the Generate V2 step above crashed (or was killed mid-fetch) before
-        # writing v2/dashboard.html, the staging branch gated on
-        # `[ -f v2/dashboard.html ]` would skip V2 entirely and /v2/ would 404
-        # for this deploy. Re-run the generator once more — now fast and safe
-        # because the committed NUFORC subndx caches mean fetch_mufon only
-        # refreshes 2 months, so the heavy backfill no longer dominates the run.
-        if: hashFiles('v2/app.py') != '' && hashFiles('v2/dashboard.html') == ''
-        id: v2fallback
-        run: python v2/app.py --no-open
-        continue-on-error: true
-        timeout-minutes: 6
-
-      - name: Report V2 build outcome
-        # THE ALARM. Both V2 build steps are continue-on-error, which is correct
-        # (production at `/` must ship regardless) but means a 6-minute timeout
-        # kill or an outright crash both render as a green run. That is precisely
-        # how the NUFORC full-backfill regression sat unnoticed while it ate the
-        # step budget and starved fetch_stock_prices of its turn.
-        #
-        # `continue-on-error` sets conclusion=success but leaves outcome=failure,
-        # so outcome is the honest signal. This step never fails the job — it only
-        # emits a ::warning annotation (visible on the run summary even for
-        # soft-failed steps) plus a greppable marker line.
-        if: always() && hashFiles('v2/app.py') != ''
-        env:
-          V2_OUTCOME: ${{ steps.v2build.outcome }}
-          V2_FALLBACK_OUTCOME: ${{ steps.v2fallback.outcome }}
-        run: |
-          set -u
-          if [ "${V2_OUTCOME}" = "failure" ] || [ "${V2_FALLBACK_OUTCOME}" = "failure" ]; then
-            DETAIL="V2 build did not complete cleanly (build=${V2_OUTCOME}, fallback=${V2_FALLBACK_OUTCOME:-skipped})."
-            if [ ! -f v2/dashboard.html ]; then
-              DETAIL="${DETAIL} v2/dashboard.html is MISSING — /v2/ will serve the last deployed copy or 404."
-            else
-              DETAIL="${DETAIL} v2/dashboard.html exists, but sidecars written after the failure point are stale."
-            fi
-            DETAIL="${DETAIL} Most likely a 6-min timeout kill; check whether fetch_mufon did a full backfill (grep the log for MUFON-DEGRADED)."
-            echo "::warning title=V2 build degraded::${DETAIL}"
-            echo "[V2-DEGRADED] ${DETAIL}"
-            if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
-              echo "" >> "$GITHUB_STEP_SUMMARY"
-              echo "**V2 build degraded** — ${DETAIL}" >> "$GITHUB_STEP_SUMMARY"
-            fi
-          else
-            echo "[v2] build completed cleanly (outcome=${V2_OUTCOME})"
-          fi
-        continue-on-error: true
-
-      - name: Commit NUFORC month cache
-        # R1 — the cache must be committed BACK, not just committed once.
-        #
-        # fetch_mufon walks a ROLLING 144-month window anchored to today, but the
-        # tracked data/.stale/nuforc_subndx_*.json snapshot is fixed. Every calendar
-        # month, one more in-window month has no cached file and becomes a permanent
-        # extra network fetch — silently re-growing the exact backfill that blew this
-        # step's timeout, at roughly +1 month/month. Committing the cache back keeps
-        # the uncached-in-window set pinned at {today, prior}.
-        #
-        # api-commit.sh reads the staged index, so newly-cached months round-trip.
-        # fetch_mufon deliberately never DELETES an out-of-window month (see the
-        # long comment where a prune would otherwise live in fetch_mufon.py):
-        # nothing can ever refetch one, so this step should only add files.
-        if: github.event_name != 'pull_request'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Quoted so git (not the shell) expands the pathspec, which is what
-          # makes it match newly-written untracked months.
-          # `|| true` covers the no-match case, which git treats as an error.
-          git add -A -- 'data/.stale/nuforc_subndx_*.json' 2>/dev/null || true
-          if [ -n "$(git diff --cached --name-only -- data/.stale)" ]; then
-            echo "[nuforc-cache] staging $(git diff --cached --name-only -- data/.stale | wc -l) changed month file(s)"
-            .github/scripts/api-commit.sh \
-              "nuforc: refresh month cache $(date -u +%Y-%m-%d) [skip ci]" \
-              || echo "[nuforc-cache] commit failed; continuing"
-          else
-            echo "[nuforc-cache] no change to commit"
-          fi
-        continue-on-error: true
-
-      - name: Validate V2 dashboard JS structure
-        # Structural lint of the freshly-built v2/dashboard.html inline
-        # <script>. Catches the class of bug that bricked V2 in prod on
-        # 2026-05-24 (duplicate `const SIDECAR_FOR_TAB`, plus an `if
-        # (state.tab ...)` block accidentally nested inside a `V2.empty({...})`
-        # call literal from a take-both conflict resolution). Pure-stdlib
-        # Python — no new deps. FAILS THE BUILD on regression: the whole
-        # point is to block bad deploys before they ship to /v2/.
-        if: hashFiles('v2/dashboard.html') != ''
-        run: python tools/validate_v2_dashboard.py
-
       - name: Judge the built artifacts (data_health --mode built)
         # THE OTHER HALF OF THE WATCHDOG, finally wired.
         #
@@ -814,10 +785,46 @@ jobs:
         run: python scripts/build_lthcs_site_index.py --root data/lthcs || echo "[lthcs-index] build failed; pages fall back to probing"
         continue-on-error: true
 
+      - name: Build the API catalog workbook (deploy-time, never committed)
+        # /health/'s "Excel (.xlsx)" download. It is derived entirely from the
+        # committed health/api_catalog.json and health/catalog_health.json, and it
+        # used to be committed weekly by catalog-health.yml. An .xlsx is a zip, so
+        # git stored every version whole: 19 versions of ~885 KB were 11% of all
+        # repo history. Built here before staging so `cp -R health/*` publishes it.
+        # Non-fatal: /health/ deploys regardless, and a failure is annotated.
+        run: |
+          pip install -q -c requirements-jobs.txt openpyxl
+          python scripts/build_catalog_xlsx.py \
+            || echo "::warning title=API catalog workbook not built::build_catalog_xlsx.py failed; /health/api-catalog.xlsx is missing from this deploy"
+        continue-on-error: true
+
+      - name: Build the API Universe data (deploy-time, never committed)
+        # /api-universe/ draws every catalog entry on one radial map. Its data,
+        # api_universe/data.json, is a pure transform of the committed
+        # health/api_catalog.json and health/catalog_health.json (no network),
+        # rebuilt here on every deploy so the page always matches the catalog.
+        # The script groups the catalog's categories into domains by name
+        # prefix and refuses to guess: a category that matches no domain (or
+        # two) fails it with the category named. That is an error annotation and
+        # a soft-failed step, not a blocked deploy: the rest of the site ships,
+        # and /api-universe/ says on the page that its data did not load.
+        # tests/test_api_universe.py runs the same mapping over the committed
+        # catalog, so the PR that adds such a category is the one that goes red.
+        run: |
+          python scripts/build_api_universe.py && exit 0
+          echo "::error title=API Universe data not built::scripts/build_api_universe.py failed (see the log above); /api-universe/ is published without data.json and shows a load error. A new catalog category needs a domain prefix in DOMAINS."
+          exit 1
+        continue-on-error: true
+
       - name: Stage site directory
         run: |
           mkdir -p _site
           cp dashboard.html _site/index.html
+          # KWG is a self-contained dashboard snapshot under /kwg/.
+          if [ -f kwg/dashboard.html ]; then
+            mkdir -p _site/kwg
+            cp kwg/dashboard.html _site/kwg/index.html
+          fi
           # Sidecar payloads (data-<key>.json) are lazy-loaded by the page on
           # tab-select to keep the initial HTML under ~3.5MB. They're written
           # to the repo root by app.py alongside dashboard.html; copy whatever
@@ -827,258 +834,43 @@ jobs:
           for f in data-*.json; do
             cp "$f" "_site/$f"
           done
-          # Stage the V2 build under /v2/ when present. Missing v2/dashboard.html
-          # means the V2 step skipped or failed — production at `/` is unaffected.
-          if [ -f v2/dashboard.html ]; then
-            mkdir -p _site/v2
-            cp v2/dashboard.html _site/v2/index.html
-            for f in v2/data-*.json; do
-              cp "$f" "_site/v2/$(basename "$f")"
-            done
+          # Stage LTHCS: the card view at /lthcs/, the subpages at /lthcs/<page>/
+          # and the data they read, published ONCE at /data/lthcs/. This used to
+          # copy all of data/lthcs (540+ MB) to /data/lthcs/ AND /lthcs/data/lthcs/,
+          # which put the site over GitHub Pages' 1 GB limit. The script holds the
+          # page list, the data allow-list traced from the page sources (dated
+          # directories the pages read only for the newest day are published for
+          # the newest 7 days), and the one-extra-'../' rewrite the subpages need
+          # because they sit a level deeper here than in the repo. Every file
+          # stays in the repository; this only decides what the site publishes.
+          python scripts/stage_lthcs_site.py --repo . --site _site
+          # V2 (/v2/ and the /lthcs/v2/ experiment) was retired in 2026-10. A
+          # tiny page at each old address forwards visitors to the live
+          # dashboard one level up (/ and /lthcs/ respectively).
+          for d in _site/v2 _site/lthcs/v2; do
+            mkdir -p "$d"
+            cp site_static/v2-redirect.html "$d/index.html"
+          done
+          # Stage the Crypto Price Odds page under /crypto-odds/: the static page plus its two JSON files.
+          # odds.json is refreshed by crypto-odds-daily.yml; the vendored engine is not published.
+          if [ -f crypto_odds/index.html ]; then
+            mkdir -p _site/crypto-odds
+            cp crypto_odds/index.html crypto_odds/odds.json crypto_odds/findings.json _site/crypto-odds/
+            cp crypto_odds/crypto-odds*.pdf _site/crypto-odds/ 2>/dev/null || true
+            cp crypto_odds/outlook.json crypto_odds/outlook_history.json _site/crypto-odds/ 2>/dev/null || true
           fi
-          # UAP/MUFON sidecar is generated only under v2/ (v2/app.py owns the
-          # network fetch). Serve it at the V1 root as well so the V1 UAP tab
-          # doesn't 404 if the V2 *page* build fails — this runs independently
-          # of the v2/dashboard.html gate above and only needs the JSON to
-          # exist. V1's manifest points at the root "data-mufon.json".
-          if [ -f v2/data-mufon.json ]; then
-            cp v2/data-mufon.json _site/data-mufon.json
-          fi
-          # Stock-prices sparkline sidecar is written by fetch_stock_prices to
-          # v2/data-stock-prices.json (ROOT = the v2/ dir in v2/app.py). The
-          # V2 page fetches it relative to its own URL, so _site/v2/... is
-          # already produced by the `for f in v2/data-*.json` glob inside the
-          # v2/dashboard.html gate above. Also serve a root copy here — like
-          # data-mufon.json — so it's published independently of whether the V2
-          # *page* HTML built, mirroring the mufon resilience pattern.
-          if [ -f v2/data-stock-prices.json ]; then
-            cp v2/data-stock-prices.json _site/data-stock-prices.json
-          fi
-          # Stage the LTHCS standalone tab under /lthcs/ when present.
-          # The page is committed under lthcs_tab/ and reads its data from
-          # data/lthcs/ (also committed). CI doesn't run lthcs_daily.py —
-          # snapshots are produced locally on Bryan's laptop and pushed.
-          # Missing lthcs_tab/index.html means LTHCS hasn't shipped yet;
-          # the rest of the site is unaffected.
-          if [ -f lthcs_tab/index.html ]; then
-            mkdir -p _site/lthcs
-            cp -R lthcs_tab/* _site/lthcs/
-            # JS fetches "../data/lthcs/..." from _site/lthcs/index.html,
-            # which resolves to _site/data/lthcs/. Stage the committed JSON
-            # snapshot tree there.
-            if [ -d data/lthcs ]; then
-              mkdir -p _site/data
-              cp -R data/lthcs _site/data/
-            fi
-          fi
-          # Stage the LTHCS table view under /lthcs/table/. The committed
-          # page lives at lthcs_table/index.html and uses "../lthcs_tab/..."
-          # and "../data/..." relative paths so the same source works under
-          # the dev server (where the page lives at /lthcs_table/, sibling
-          # to /lthcs_tab/ and /data/).
-          #
-          # In production the page lives one directory deeper, at
-          # /lthcs/table/index.html, so we mirror "lthcs_tab" and "data"
-          # one level above it inside _site/lthcs/. That way:
-          #   /lthcs/table/index.html  →  ../lthcs_tab/...  =  /lthcs/lthcs_tab/...
-          #   /lthcs/table/index.html  →  ../data/lthcs/... =  /lthcs/data/lthcs/...
-          # both resolve to real files. The existing card-view stage at
-          # /lthcs/ (without /table) is untouched.
-          if [ -f lthcs_table/index.html ]; then
-            mkdir -p _site/lthcs/table
-            cp -R lthcs_table/* _site/lthcs/table/
-            # Sibling lthcs_tab/ copy for the table page's relative
-            # references. The card view at _site/lthcs/ is unaffected.
-            mkdir -p _site/lthcs/lthcs_tab
-            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
-            # Sibling data/lthcs copy so "../data/lthcs/..." resolves from
-            # /lthcs/table/. The card-view's /lthcs/ stage already gets
-            # /data/lthcs/ via the earlier branch.
-            if [ -d data/lthcs ]; then
-              mkdir -p _site/lthcs/data
-              cp -R data/lthcs _site/lthcs/data/
-            fi
-          fi
-          # Stage the LTHCS V2 visual-only experiment under /lthcs/v2/.
-          # Source lives at lthcs_tab_v2/ and reuses three things from the
-          # classic /lthcs/ page via relative paths:
-          #   ../lthcs_tab/lthcs-detail.js   (ticker detail modal)
-          #   ../lthcs_tab/lthcs-detail.css
-          #   ../lthcs_tab/lthcs-about.{js,css}
-          # In production the V2 page lives at /lthcs/v2/index.html, so we
-          # mirror lthcs_tab/ next to it as /lthcs/v2/../lthcs_tab/ →
-          # /lthcs/lthcs_tab/ — which is already produced by the table-view
-          # staging branch above, so the import resolves with no extra copy.
-          # We still need a sibling /lthcs/v2/../data/ for "../data/lthcs/..."
-          # data fetches — that's also produced by earlier branches. The only
-          # work this branch does is drop the V2 page payload itself.
-          # V1 (`/`), V2 (`/v2/`), and classic /lthcs/ are all untouched.
-          if [ -f lthcs_tab_v2/index.html ]; then
-            mkdir -p _site/lthcs/v2
-            cp -R lthcs_tab_v2/* _site/lthcs/v2/
-            # Defensive: re-mirror lthcs_tab/ and data/lthcs/ in case the
-            # table-view branch above didn't run (e.g. lthcs_table/ deleted
-            # but V2 still wanted). Idempotent — `cp -R` overwrites existing.
-            mkdir -p _site/lthcs/lthcs_tab
-            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
-            if [ -d data/lthcs ]; then
-              mkdir -p _site/lthcs/data
-              cp -R data/lthcs _site/lthcs/data/
-            fi
-          fi
-          # Stage the LTHCS pipeline health observability page under
-          # /lthcs/health/. Source lives at lthcs_health/ and reuses
-          # ../lthcs_tab/lthcs.css for design tokens + reads its data via
-          # "../data/lthcs/..." — both resolve cleanly once we mirror
-          # lthcs_tab/ and data/lthcs/ one level above /lthcs/health/.
-          # V1 (`/`), V2 (`/v2/`), classic /lthcs/, /lthcs/table/, and
-          # /lthcs/v2/ are all untouched.
-          if [ -f lthcs_health/index.html ]; then
-            mkdir -p _site/lthcs/health
-            cp -R lthcs_health/* _site/lthcs/health/
-            # Same defensive mirroring as the V2/table branches above:
-            # idempotent re-copies of lthcs_tab and data/lthcs so the
-            # page works even if earlier branches didn't run.
-            mkdir -p _site/lthcs/lthcs_tab
-            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
-            if [ -d data/lthcs ]; then
-              mkdir -p _site/lthcs/data
-              cp -R data/lthcs _site/lthcs/data/
-            fi
-          fi
-          # Stage the LTHCS backtest validation page under /lthcs/backtest/.
-          # Source lives at lthcs_backtest/ and reuses ../lthcs_tab/lthcs.css
-          # for design tokens + reads its data via "../data/lthcs/backtest/..."
-          # and "../data/lthcs/adaptive_weights/...". Both resolve cleanly
-          # once we mirror lthcs_tab/ and data/lthcs/ one level above
-          # /lthcs/backtest/. V1 (`/`), V2 (`/v2/`), classic /lthcs/,
-          # /lthcs/table/, /lthcs/v2/, and /lthcs/health/ are all untouched.
-          if [ -f lthcs_backtest/index.html ]; then
-            mkdir -p _site/lthcs/backtest
-            cp -R lthcs_backtest/* _site/lthcs/backtest/
-            # Defensive idempotent re-mirror of lthcs_tab and data/lthcs in
-            # case earlier branches didn't run (e.g. lthcs_health/ deleted
-            # but backtest still wanted). `cp -R` overwrites existing.
-            mkdir -p _site/lthcs/lthcs_tab
-            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
-            if [ -d data/lthcs ]; then
-              mkdir -p _site/lthcs/data
-              cp -R data/lthcs _site/lthcs/data/
-            fi
-          fi
-          # Stage the LTHCS crypto extension page under /lthcs/crypto/.
-          # Source lives at lthcs_crypto/ and reuses ../lthcs_tab/lthcs.css
-          # for design tokens + reads its data via
-          # "../data/lthcs/snapshots_crypto/<date>.json" and
-          # "../data/lthcs/crypto_universe.json". Both resolve cleanly once
-          # we mirror lthcs_tab/ and data/lthcs/ one level above
-          # /lthcs/crypto/ (idempotent with the health/backtest re-copies
-          # above). V1-only — does NOT stage under /v2/.
-          if [ -f lthcs_crypto/index.html ]; then
-            mkdir -p _site/lthcs/crypto
-            cp -R lthcs_crypto/* _site/lthcs/crypto/
-            mkdir -p _site/lthcs/lthcs_tab
-            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
-            if [ -d data/lthcs ]; then
-              mkdir -p _site/lthcs/data
-              cp -R data/lthcs _site/lthcs/data/
-            fi
-          fi
-          # Stage the LTHCS position-sizing helper under /lthcs/position/.
-          # Source lives at lthcs_position/ and reuses ../lthcs_tab/lthcs.css
-          # for design tokens + reads ../data/lthcs/snapshots/<date>.json
-          # for composite scores. Both resolve once we mirror lthcs_tab/ and
-          # data/lthcs/ one level above /lthcs/position/ (idempotent with the
-          # health/backtest/crypto branches above). Paper-money calculator —
-          # V1-only — does NOT stage under /v2/.
-          if [ -f lthcs_position/index.html ]; then
-            mkdir -p _site/lthcs/position
-            cp -R lthcs_position/* _site/lthcs/position/
-            mkdir -p _site/lthcs/lthcs_tab
-            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
-            if [ -d data/lthcs ]; then
-              mkdir -p _site/lthcs/data
-              cp -R data/lthcs _site/lthcs/data/
-            fi
-          fi
-          # Stage the LTHCS public read-only data index under /lthcs/public/.
-          # Source lives at lthcs_public/ and reuses ../lthcs_tab/lthcs.css
-          # for design tokens + reads ../data/lthcs/public/manifest.json
-          # (built by scripts/lthcs_build_public_manifest.py as the final
-          # daily-pipeline stage). Both resolve once we mirror lthcs_tab/ and
-          # data/lthcs/ one level above /lthcs/public/ (idempotent with the
-          # health/backtest/crypto/position branches above). Phase 4
-          # follow-on — V1-only — does NOT stage under /v2/.
-          if [ -f lthcs_public/index.html ]; then
-            mkdir -p _site/lthcs/public
-            cp -R lthcs_public/* _site/lthcs/public/
-            mkdir -p _site/lthcs/lthcs_tab
-            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
-            if [ -d data/lthcs ]; then
-              mkdir -p _site/lthcs/data
-              cp -R data/lthcs _site/lthcs/data/
-            fi
-          fi
-          # Stage the LTHCS "how to read" help page under /lthcs/help/.
-          # Source lives at lthcs_help/ and reuses ../lthcs_tab/lthcs.css
-          # for design tokens. It has no data dependency — it's a pure
-          # static explainer — but we still mirror lthcs_tab/ one level
-          # above /lthcs/help/ so the ../lthcs_tab/lthcs.css reference
-          # resolves (idempotent with the health/backtest/crypto/position/
-          # public branches above). V1-only — does NOT stage under /v2/.
-          if [ -f lthcs_help/index.html ]; then
-            mkdir -p _site/lthcs/help
-            cp -R lthcs_help/* _site/lthcs/help/
-            mkdir -p _site/lthcs/lthcs_tab
-            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
-          fi
-          # Stage the LTHCS snapshot-diff page under /lthcs/diff/. Source
-          # at lthcs_diff/; reuses ../lthcs_tab/lthcs.css for tokens + reads
-          # ../data/lthcs/snapshots/<date>.json for the per-day deltas.
-          # Phase 5 BETA route.
-          if [ -f lthcs_diff/index.html ]; then
-            mkdir -p _site/lthcs/diff
-            cp -R lthcs_diff/* _site/lthcs/diff/
-            mkdir -p _site/lthcs/lthcs_tab
-            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
-            if [ -d data/lthcs ]; then
-              mkdir -p _site/lthcs/data
-              cp -R data/lthcs _site/lthcs/data/
-            fi
-          fi
-          # Stage the LTHCS history search page under /lthcs/history/. Source
-          # at lthcs_history/; reuses ../lthcs_tab/lthcs.css for tokens +
-          # reads ../data/lthcs/history/by_ticker/<TKR>.json client-side.
-          # Phase 5 ZETA route.
-          if [ -f lthcs_history/index.html ]; then
-            mkdir -p _site/lthcs/history
-            cp -R lthcs_history/* _site/lthcs/history/
-            mkdir -p _site/lthcs/lthcs_tab
-            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
-            if [ -d data/lthcs ]; then
-              mkdir -p _site/lthcs/data
-              cp -R data/lthcs _site/lthcs/data/
-            fi
-          fi
-          # Stage the LTHCS per-pillar leaderboards under /lthcs/leaderboards/.
-          # Source at lthcs_leaderboards/; reuses ../lthcs_tab/lthcs.css + the
-          # sparkline helper from ../lthcs_tab/lthcs-sparkline.js + reads
-          # ../data/lthcs/public/latest_snapshot.json. Phase 5 EPSILON route.
-          if [ -f lthcs_leaderboards/index.html ]; then
-            mkdir -p _site/lthcs/leaderboards
-            cp -R lthcs_leaderboards/* _site/lthcs/leaderboards/
-            mkdir -p _site/lthcs/lthcs_tab
-            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
-            if [ -d data/lthcs ]; then
-              mkdir -p _site/lthcs/data
-              cp -R data/lthcs _site/lthcs/data/
-            fi
+          # Stage the Model Scorecard under /crypto-scorecard/: static page plus scorecard.json, which is
+          # exported from a Back_Test_Model backtest run (web_export.export_scorecard) and updated by hand.
+          if [ -f crypto_scorecard/index.html ]; then
+            mkdir -p _site/crypto-scorecard
+            cp crypto_scorecard/index.html crypto_scorecard/scorecard.json _site/crypto-scorecard/
+            [ -f crypto_scorecard/scorecard.pdf ] && cp crypto_scorecard/scorecard.pdf _site/crypto-scorecard/
           fi
           # Stage the US Real Estate Markets page under /real-estate/. Source
           # at real_estate/index.html (self-contained — inline CSS/JS, Chart.js
           # via CDN with SRI). Reads data from /data/real_estate.json built by
           # the daily real-estate-daily.yml workflow and committed back to the
-          # repo. V1 (`/`), V2 (`/v2/`), /health/, and all /lthcs/* paths are
+          # repo. V1 (`/`), /health/, and all /lthcs/* paths are
           # untouched. Missing real_estate/index.html or the data JSON makes
           # this branch a no-op; the rest of the site is unaffected.
           if [ -f real_estate/index.html ]; then
@@ -1100,7 +892,7 @@ jobs:
           # Source lives at health/index.html (self-contained — no external CSS
           # or JS) and reads its data from /data/health/status.json. Both are
           # produced by the "Build dashboard health status JSON" step above.
-          # V1 (`/`), V2 (`/v2/`), and all /lthcs/* paths are untouched —
+          # V1 (`/`) and all /lthcs/* paths are untouched —
           # /health/ is a sibling route. Missing health/index.html or the
           # status JSON makes this branch a no-op; the rest of the site is
           # unaffected.
@@ -1124,7 +916,7 @@ jobs:
           # (Chart.js is vendored inline, data is baked in at build time), so it
           # needs no sidecar JSON or network at view time. We also serve the
           # source workbook next to it for the in-page download button. V1 (`/`),
-          # V2 (`/v2/`), /lthcs/*, and /health/ are all untouched — /summit/ is a
+          # /lthcs/*, and /health/ are all untouched — /summit/ is a
           # sibling route. Missing dashboard.html makes this a no-op.
           if [ -f snowflake_summit/dashboard.html ]; then
             mkdir -p _site/summit
@@ -1148,7 +940,7 @@ jobs:
           # Stage the Competitive Landscape dashboard under /landscape/. Like
           # /summit/, the page is fully self-contained (Chart.js inline, data baked
           # in at build time). It reads the committed Summit vendors.json read-only,
-          # so Summit's files are unchanged. V1 (`/`), V2 (`/v2/`), /summit/,
+          # so Summit's files are unchanged. V1 (`/`), /summit/,
           # /lthcs/*, and /health/ are all untouched — /landscape/ is a sibling route.
           if [ -f landscape/dashboard.html ]; then
             mkdir -p _site/landscape
@@ -1160,6 +952,22 @@ jobs:
             fi
             if [ -d landscape/icons ]; then
               cp -R landscape/icons _site/landscape/
+            fi
+          fi
+          # Stage the API Universe page under /api-universe/: the page from
+          # api_universe/index.html and its data.json, which the "Build the API
+          # Universe data" step above wrote from the committed catalog. Named
+          # files, not a copy of the directory, so only these two publish. A
+          # missing data.json still stages the page (it says the data did not
+          # load, and links to the catalog on /health/) rather than leaving the
+          # dashboard's nav link pointing at a 404.
+          if [ -f api_universe/index.html ]; then
+            mkdir -p _site/api-universe
+            cp api_universe/index.html _site/api-universe/index.html
+            if [ -f api_universe/data.json ]; then
+              cp api_universe/data.json _site/api-universe/data.json
+            else
+              echo "::warning title=API Universe published without data::api_universe/data.json is missing; /api-universe/ will show its load error"
             fi
           fi
           # Publish the newest daily audit report at /audit/latest.md and
@@ -1210,26 +1018,14 @@ jobs:
           || echo "::warning title=GitHub status not published::publish_github_status.py failed; /health/github_status.json is missing from this deploy"
         continue-on-error: true
 
-      - name: Upload daily snapshot to ADW R2 archive
-        # Archives all data-*.json sidecars to ADW R2 warehouse for future
-        # ClickHouse ingestion (Phase 2.5). Key pattern:
-        #   raw/alpine-data/{YYYY-MM-DD}/{rel_path}
-        # Runs AFTER data-*.json files are final, BEFORE gh-pages deploy.
-        # continue-on-error: true — R2 outages must NEVER break the dashboard.
-        if: github.event_name != 'pull_request'
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
-        run: |
-          pip install -q boto3
-          python upload_to_r2.py
-        continue-on-error: true
-
       - name: Build R2 coverage dashboard
         # Scans R2 bucket, generates health/r2-coverage.json for the heatmap
-        # at /health/r2-coverage.html. Runs RIGHT AFTER the upload so today's
-        # snapshot is reflected. continue-on-error: true — never breaks build.
+        # at /health/r2-coverage.html. The upload itself ran earlier, as soon
+        # as the sidecars were final, so a cancellation during staging cannot
+        # skip the archive. This step stays after `cp -R health/*` so the
+        # fresh JSON is what _site actually ships. continue-on-error: true —
+        # never breaks the build. A failed scan must not look like success:
+        # the script's non-zero status fails the step.
         # CRITICAL: must mirror into _site/health/ because the earlier
         # `cp -R health/* _site/health/` step happened BEFORE this script ran.
         # Otherwise the FRESH JSON lives in health/ but the SHIPPED JSON in
@@ -1243,15 +1039,25 @@ jobs:
           # build_backfill_jobs.py queries the r2-backfill workflow run history.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set +e
           python3 health/build_r2_coverage.py
+          cov_rc=$?
+          set -e
           python3 health/build_backfill_jobs.py
           mkdir -p _site/health
           # Mirror BOTH generated JSONs into the deploy artifact — the earlier
           # `cp -R health/*` step ran before these scripts, so the fresh output
           # must be copied again or the live site serves stale/empty data.
+          # Copy even when the scan failed: the file then carries empty_reason,
+          # which the audit reports as UNKNOWN. Leaving the committed
+          # placeholder in place would blame a missing R2_BUCKET_NAME instead.
           [ -f health/r2-coverage.json ] && cp health/r2-coverage.json _site/health/r2-coverage.json
           [ -f health/r2-backfill-jobs.json ] && cp health/r2-backfill-jobs.json _site/health/r2-backfill-jobs.json
           echo "[coverage] mirrored coverage + jobs JSON → _site/health/"
+          if [ "$cov_rc" -ne 0 ]; then
+            echo "::error title=R2 coverage scan failed::build_r2_coverage.py exited ${cov_rc}. The heatmap was not refreshed from the bucket. The archive upload is an earlier step and is unaffected."
+            exit "$cov_rc"
+          fi
         continue-on-error: true
 
       - name: Upload Pages artifact
@@ -1261,7 +1067,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # pinned like every other job: ubuntu-latest becomes 26.04 on 2026-10-19; this job only runs deploy-pages, but no job floats
     timeout-minutes: 10
     environment:
       name: github-pages

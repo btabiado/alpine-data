@@ -5,7 +5,7 @@ Combines two signals into a 0-100 sub-score per ticker:
 * **Revenue growth YoY** (from SEC EDGAR XBRL company facts via
   :mod:`lthcs.sources.sec_edgar`) -- scored as the peer-relative
   percentile of the focal ticker's growth within the universe.
-* **Search interest acceleration** (Google Trends via :mod:`pytrends`) --
+* **Search interest acceleration** (Google Trends) --
   the regression slope of the trailing 90 days of daily interest values
   mapped onto 0-100.
 
@@ -15,17 +15,15 @@ missing (e.g. SEC has no usable revenue history, or Google Trends is
 empty / blocked), the missing component falls back to the neutral 50.0
 midpoint so the other component still contributes.
 
-The live Google Trends fetcher is module-private wrt the test suite
-(tests always mock it). It uses a polite token bucket (1 req / 10 s,
-burst of 5) and a 24-hour file cache, since Google rate-limits
-aggressively and trend signals don't move meaningfully intra-day.
+This module makes no network calls. Trends inputs are fetched by
+scripts/lthcs_trends_daily.py / lthcs_trends_weekly.py into
+data/lthcs/trends/ and read by :mod:`lthcs.sources.google_trends`; the
+caller passes them in.
 """
 
 from __future__ import annotations
 
 import math
-import os
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from lthcs.normalize import (
@@ -37,8 +35,6 @@ from lthcs.peer_groups import (
     STRATEGY_MATURITY_ONLY,
     get_peer_cohort_with_strategy,
 )
-from lthcs.sources._cache import FileCache
-from lthcs.sources._ratelimit import TokenBucket
 
 # Bank tickers reuse Financial pillar's allowlist — Adoption skips the
 # sector-relative revenue re-rank for them so the existing bank cohort
@@ -128,15 +124,6 @@ _QOQ_SCORE_HIGH = 0.15
 _SECTOR_RANK_FLOOR = 10.0
 _SECTOR_RANK_CEILING = 90.0
 
-# ``pytrends`` is only needed by the live fetcher; tests patch
-# ``adoption.TrendReq`` directly, so the import is at module top so the
-# patch target exists even when the lib raises at runtime.
-try:  # pragma: no cover - trivial import shim
-    from pytrends.request import TrendReq
-except Exception:  # pragma: no cover
-    TrendReq = None  # type: ignore[assignment,misc]
-
-
 # --- Constants ---------------------------------------------------------------
 
 # Spec: V1 combines revenue and trends 60/40.
@@ -156,15 +143,6 @@ _GROWTH_MAX = 10.0
 # a very large swing. These bounds are V1 heuristics.
 _TRENDS_SLOPE_LOW = -0.5
 _TRENDS_SLOPE_HIGH = 0.5
-
-# Google Trends has no published rate limit, but Google blocks
-# aggressively. Be polite: 1 req / 10s with a burst of 5.
-_TRENDS_BUCKET_CAPACITY = 5
-_TRENDS_BUCKET_REFILL = 0.1
-
-# Cache trend pulls for 24h -- daily granularity doesn't justify hitting
-# Google more often than that.
-_TRENDS_CACHE_TTL_SECONDS = 24 * 60 * 60
 
 
 def _is_valid_growth(value: Any) -> bool:
@@ -203,19 +181,6 @@ def _soften_rank_extremes(score: float) -> float:
     if s >= 100.0:
         return _SECTOR_RANK_CEILING
     return s
-
-
-# --- Module state -----------------------------------------------------------
-
-def _cache_root() -> Path:
-    return Path(os.environ.get("LTHCS_CACHE_DIR", ".cache/lthcs"))
-
-
-_cache = FileCache("google_trends", root=_cache_root())
-_bucket = TokenBucket(
-    capacity=_TRENDS_BUCKET_CAPACITY,
-    refill_rate=_TRENDS_BUCKET_REFILL,
-)
 
 
 # --- Revenue helpers --------------------------------------------------------
@@ -455,75 +420,6 @@ def compute_search_interest_slope(interest_series: List[float]) -> Optional[floa
     if not interest_series:
         return None
     return slope(interest_series)
-
-
-# --- Public API: live fetcher (mocked in tests) ----------------------------
-
-def fetch_google_trends_interest(ticker: str, days: int = 90) -> List[float]:
-    """Pull daily Google Trends interest-over-time for ``ticker``.
-
-    Returns the daily interest series (oldest first, most recent last)
-    over the trailing ``days`` window. Any error -- network, rate-limit,
-    empty payload, missing column -- yields an empty list rather than
-    propagating, so callers can treat the absence of trends data as a
-    soft signal.
-
-    Cached per ``(ticker, days)`` for 24h; gated by a polite token
-    bucket of 1 request / 10s, burst 5.
-
-    .. note::
-       This function is not exercised by the test suite. The pillar's
-       compute path takes ``interest_series`` as a parameter, so tests
-       mock at the call-site boundary.
-    """
-    if not ticker:
-        return []
-    norm = ticker.strip().upper()
-    if not norm:
-        return []
-
-    cache_key = "{}/{}d".format(norm, int(days))
-    hit = _cache.get(cache_key)
-    if hit is not None and isinstance(hit.value, list):
-        return [float(x) for x in hit.value]
-
-    if TrendReq is None:  # pragma: no cover - import shim
-        return []
-
-    # Be polite. If we can't get a token within 30s, skip rather than
-    # blocking the whole pipeline.
-    if not _bucket.acquire(timeout=30.0):
-        return []
-
-    try:
-        pytrends = TrendReq(hl="en-US", tz=0)
-        timeframe = "today {}-d".format(int(days))
-        pytrends.build_payload([norm], timeframe=timeframe)
-        df = pytrends.interest_over_time()
-    except Exception:
-        return []
-
-    if df is None:
-        return []
-    # ``df`` is a pandas DataFrame keyed by date with a column per
-    # keyword plus an ``isPartial`` flag. Guard against the column
-    # missing (Google sometimes returns an empty frame for low-volume
-    # queries).
-    try:
-        if df.empty:
-            return []
-    except Exception:
-        return []
-    if norm not in df.columns:
-        return []
-
-    try:
-        series = [float(v) for v in df[norm].tolist()]
-    except (TypeError, ValueError):
-        return []
-
-    _cache.set(cache_key, series, ttl_seconds=_TRENDS_CACHE_TTL_SECONDS)
-    return series
 
 
 # --- Public API: pillar entry point ----------------------------------------

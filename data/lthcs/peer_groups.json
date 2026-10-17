@@ -624,46 +624,5 @@
       "description": "Fallback for tickers not curated into a sector_group. Currently empty \u2014 every universe ticker is curated.",
       "rationale": "Defined for completeness so new universe additions land somewhere; safety valve fallback chain still applies."
     }
-  },
-  "pillar_strategies": {
-    "adoption_momentum": {
-      "strategy": "compound",
-      "primary_axis": "sector_group",
-      "fallback_chain": [
-        "sector_group_only",
-        "maturity_only",
-        "universe"
-      ],
-      "min_cohort_size": 6,
-      "comment": "Revenue growth varies wildly across sectors; cohort-relative is essential."
-    },
-    "institutional_confidence": {
-      "strategy": "universe",
-      "comment": "Audit (peer-group-audit \u00a73.4) said KEEP universe-relative for momentum. Sector-relative would over-correct for sector-rotation cycles."
-    },
-    "financial_evolution": {
-      "strategy": "compound",
-      "primary_axis": "sector_group",
-      "fallback_chain": [
-        "sector_group_only",
-        "maturity_only",
-        "universe"
-      ],
-      "bank_override": "bank_cohort",
-      "min_cohort_size": 6,
-      "comment": "Banks have their own cohort (commit e456582). Non-banks use compound key."
-    },
-    "thesis_integrity": {
-      "strategy": "universe",
-      "comment": "Sentiment + analyst consensus + 8-K events are absolute signals, not relative."
-    },
-    "des": {
-      "strategy": "sector_group_only",
-      "comment": "DES already maps sector -> DES weight; the sector_group provides the right cohort lens."
-    }
-  },
-  "active_overrides": {
-    "enabled": false,
-    "comment": "When true, lthcs_daily.py routes peer-cohort lookups through the declarative config. When false, current hard-coded logic in pillars runs unchanged. Default OFF so V1 production behavior is preserved."
   }
 }

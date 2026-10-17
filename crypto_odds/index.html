@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%278%27 cy=%278%27 r=%277%27 fill=%27%233987e5%27/%3E%3C/svg%3E">
+<title>Crypto Price Odds</title>
+<meta name="description" content="What option markets imply about where BTC, ETH and XRP will settle, and whether history or machine learning beats the base rate.">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0b0d12; --panel:#131720; --panel2:#1a1f2c; --border:#252b3a;
+  --text:#e6e8ee; --muted:#8a93a6; --faint:#5b6478;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --band:rgba(57,135,229,.10);
+  --good:#22c55e; --bad:#ef4444; --warn:#f59e0b;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+a{color:var(--s1)}
+header{padding:14px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;font-weight:650;letter-spacing:-.01em}
+header .back{color:var(--muted);text-decoration:none;font-size:13px}
+header .back:hover{color:var(--text)}
+header .actions{display:flex;gap:8px;margin-left:auto;align-items:center;flex-wrap:wrap}
+header .asof{color:var(--muted);font-size:12px;text-align:right;line-height:1.4}
+main{max-width:1200px;margin:0 auto;padding:22px 28px 56px}
+.eyebrow{color:var(--muted);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 4px}
+.lede{font-size:15.5px;max-width:860px;margin:0 0 16px}
+.muted{color:var(--muted)}
+h2{font-size:18px;margin:38px 0 4px;letter-spacing:-.01em}
+h2 + .sub{margin-bottom:12px}
+.sub{color:var(--muted);font-size:13px}
+.concepts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:6px 0 4px}
+.concept{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--muted)}
+.concept b{display:block;color:var(--text);font-size:13.5px;margin-bottom:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:12px 0 8px}
+.row .lab{color:var(--muted);font-size:12px;min-width:56px}
+.pill{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:999px;padding:6px 14px;font:inherit;font-size:13px;cursor:pointer;text-decoration:none;display:inline-block;line-height:1.3}
+.pill:hover{border-color:#3a4258}
+.pill[aria-pressed="true"]{background:var(--panel2);border-color:var(--s1);color:#fff}
+.pill.small{padding:4px 11px;font-size:12.5px}
+.pill:disabled{opacity:.45;cursor:not-allowed}
+.pill.primary{background:var(--s1);border-color:var(--s1);color:#fff}
+.dl{position:relative}
+.dl summary{list-style:none}
+.dl summary::-webkit-details-marker{display:none}
+.dl .menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:6px;min-width:230px;z-index:5;box-shadow:0 10px 28px rgba(0,0,0,.45)}
+.dl .menu a{display:block;padding:7px 10px;border-radius:6px;color:var(--text);text-decoration:none;font-size:13px}
+.dl .menu a:hover{background:rgba(255,255,255,.06)}
+.dl .menu a span{color:var(--muted);font-size:11.5px;display:block}
+.dl .menu .hd{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding:4px 10px 2px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px}
+.card h3{margin:0 0 2px;font-size:14.5px}
+.card .sub{margin-bottom:10px}
+.headline{font-size:16px;margin:4px 0 12px;max-width:940px}
+.headline b{color:var(--text)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 14px}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 14px}
+.kpi .v{font-size:19px;font-weight:650;letter-spacing:-.01em}
+.kpi .l{color:var(--muted);font-size:12px}
+.grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:1050px){.grid{grid-template-columns:1fr}}
+.chart{position:relative}
+svg{display:block;width:100%;height:auto}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:18px;height:0;border-top:2px solid;vertical-align:middle;margin-right:6px}
+.legend i.box{height:10px;border:none;background:var(--band);outline:1px solid rgba(57,135,229,.35)}
+.tip{position:absolute;pointer-events:none;background:#0f1320;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;color:var(--text);white-space:nowrap;display:none;z-index:2;line-height:1.45}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 8px;border-bottom:1px solid var(--border);text-align:right;vertical-align:top}
+th{color:var(--muted);font-weight:500;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;vertical-align:bottom}
+td:first-child,th:first-child,td.l,th.l{text-align:left}
+tbody tr:last-child td{border-bottom:none}
+.tblock + .tblock{margin-top:16px}
+.tblock h4{margin:0 0 2px;font-size:13px}
+.tblock .sub{font-size:12px;margin-bottom:4px}
+.na{color:var(--faint)}
+.mname{display:block;color:var(--muted);font-size:12px}
+.chip{display:inline-block;border-radius:999px;padding:0 8px;font-size:11px;border:1px solid var(--border);color:var(--muted);white-space:nowrap;margin-top:2px}
+.chip.good{border-color:#1f6f3f;color:var(--good)}
+.chip.bad{border-color:#7a2a2a;color:#f39a9a}
+.scroll{overflow-x:auto}
+.note{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--muted);font-size:13px}
+.note b{color:var(--text)}
+.keys{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 24px;font-size:12.5px;color:var(--muted);margin:12px 0 0;padding-top:10px;border-top:1px solid var(--border)}
+.keys b{color:var(--text)}
+details{margin-top:12px}
+summary{cursor:pointer;color:var(--muted);font-size:13px}
+summary:hover{color:var(--text)}
+details .note{margin-top:8px}
+.verdict{display:flex;gap:16px;align-items:flex-start;background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:10px;padding:12px 16px;margin:6px 0 14px}
+.verdict .big{font-size:20px;font-weight:700;line-height:1.2;white-space:nowrap}
+footer{color:var(--faint);font-size:12px;margin-top:40px;border-top:1px solid var(--border);padding-top:14px}
+footer b{color:var(--muted)}
+footer code{color:var(--muted)}
+.unavail{color:var(--muted);padding:26px 10px;text-align:center}
+.print-only{display:none}
+.outlook-h{margin-top:22px}
+.predict{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:10px 0 14px}
+.predict .pv{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--muted)}
+.predict .pv .t{font-size:15px;font-weight:650;color:var(--text);margin-bottom:2px}
+.predict .pv .t span{font-weight:500;color:var(--muted);font-size:13px}
+.ocards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.ocard{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:var(--muted)}
+.ocard .top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.ocard .asset{font-size:17px;font-weight:700;color:var(--text);line-height:1.1}
+.ocard .px{font-size:12px;color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:5px 10px;font-weight:750;font-size:14px;letter-spacing:.04em;white-space:nowrap}
+.badge.UP{background:rgba(25,158,112,.16);color:#3ddc97;border:1px solid rgba(25,158,112,.5)}
+.badge.DOWN{background:rgba(217,89,38,.16);color:#ff8a5c;border:1px solid rgba(217,89,38,.5)}
+.badge.FLAT{background:rgba(138,147,166,.14);color:var(--text);border:1px solid rgba(138,147,166,.45)}
+.ocard .say{color:var(--text);font-size:13px;line-height:1.45}
+.obar{display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;background:var(--panel)}
+.obar i{display:block;height:100%}
+.obar .d{background:#d95926}.obar .f{background:#5b6478}.obar .u{background:#199e70}
+.olegend{display:flex;justify-content:space-between;font-size:11.5px;font-variant-numeric:tabular-nums}
+.olegend b{color:var(--text)}
+.ocard .kv{display:flex;justify-content:space-between;gap:8px;border-top:1px solid var(--border);padding-top:7px}
+.ocard .kv b{color:var(--text);font-weight:600;text-align:right}
+.ocard .model{border-top:1px solid var(--border);padding-top:7px}
+.ocard .model b{color:var(--text)}
+.sig{display:flex;gap:10px;flex-wrap:wrap}
+.sig span{white-space:nowrap}
+.up-t{color:#3ddc97}.dn-t{color:#ff8a5c}
+.ofoot{font-size:12px;color:var(--faint);margin-top:10px}
+.ofoot b{color:var(--muted)}
+@media (max-width:1100px){.ocards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.concepts{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.keys{grid-template-columns:1fr}.verdict{flex-direction:column;gap:4px}}
+@media (max-width:600px){header,main{padding-left:16px;padding-right:16px}header .actions{margin-left:0}header .asof{text-align:left}.kpi .v{font-size:16px}h2{font-size:16.5px}}
+
+/* One-page print layout (html.pm): set by ?print and by the browser's beforeprint. The page is sized to its
+   content, so the PDF is a single page. The Download PDF button serves a copy rendered this way. */
+html.pm{color-scheme:light;--bg:#fff;--panel:#fff;--panel2:#f4f5f8;--border:#dde1e8;--text:#111827;--muted:#4b5563;--faint:#6b7280;--good:#15803d;--bad:#b91c1c;--band:rgba(57,135,229,.12);
+  & *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  & .concepts{grid-template-columns:repeat(3,minmax(0,1fr))}
+  & .kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+  & .keys{grid-template-columns:repeat(2,minmax(0,1fr))}
+  & .verdict{flex-direction:row}
+  & body{width:1100px;margin:0;font-size:12.5px;background:#fff}
+  & header{padding:24px 34px 12px;border-bottom:2px solid #111827}
+  & header h1{font-size:22px}
+  & main{max-width:none;padding:14px 34px 26px}
+  & .lede{font-size:14px;max-width:none}
+  & h2{font-size:16px;margin:22px 0 2px}
+  & .screen-only,& header .back,& header .actions .pill,& header .dl,& .tip,& #explore{display:none!important}
+  & .print-only{display:block!important}
+  & span.print-only{display:inline!important}
+  & .ocards{grid-template-columns:repeat(4,minmax(0,1fr))}
+  & .ocards.single{grid-template-columns:minmax(0,560px)}
+  & .predict{grid-template-columns:repeat(2,minmax(0,1fr))}
+  & .ocard,& .pv{background:#fff}
+  & .badge.UP{color:#0f7a55}
+  & .badge.DOWN{color:#b4441a}
+  & .up-t{color:#0f7a55}
+  & .dn-t{color:#b4441a}
+  & .obar{background:#fff}
+  & #printOdds{display:grid!important;grid-template-columns:1fr 1fr;gap:14px 16px;margin-top:10px}
+  & .pblock{border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+  & .pblock h3{font-size:14px;margin:0}
+  & .pblock .headline{font-size:12.5px;margin:2px 0 8px}
+  & .pblock .kpis{gap:6px;margin-bottom:8px}
+  & .pblock .kpi{padding:5px 8px}
+  & .pblock .kpi .v{font-size:13.5px}
+  & .pblock .kpi .l{font-size:10px}
+  & .pblock .grid{grid-template-columns:1fr;gap:8px}
+  & .pblock .card{border:none;padding:0}
+  & .pblock .card h3{font-size:12.5px}
+  & .pblock .legend{font-size:10px;gap:10px;margin-top:4px}
+  & .pblock table{font-size:11px}
+  & .pblock th{font-size:9.5px}
+  & .pblock td,& .pblock th{padding:2px 6px}
+  & .pblock .tblock + .tblock{margin-top:8px}
+  & .pblock.na{grid-column:1/-1}
+  & #findingsPrint{display:grid!important;grid-template-columns:1fr;gap:12px}
+  & .scroll{overflow:visible}
+  & th,& td{padding:4px 6px}
+  & a{color:var(--text);text-decoration:none}
+  & svg [stroke="#252b3a"]{stroke:#e5e8ee}
+  & svg [fill="#8a93a6"]{fill:#4b5563}
+  & svg [stroke="#5b6478"]{stroke:#9ca3af}
+  & svg [stroke="#c9cfdb"]{stroke:#374151}
+  & svg [fill="#0b0d12"]{fill:#fff}
+  & .legend i[style*="#c9cfdb"]{border-color:#374151!important}
+}
+@media print{ .tip,header .actions .pill{display:none!important} }
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="../">&larr; BDT Dashboards</a>
+  <h1>Crypto Price Odds<span id="printTitle"></span></h1>
+  <div class="actions">
+    <a class="pill small" href="../crypto-scorecard/">Model Scorecard &rarr;</a>
+    <details class="dl" id="dlMenu"><summary class="pill small primary">Download PDF &#9662;</summary>
+      <div class="menu" role="menu"><div class="hd">One-page PDF</div>
+        <a href="crypto-odds-BTC.pdf" download role="menuitem">BTC<span>both expiries, BTC findings</span></a>
+        <a href="crypto-odds-ETH.pdf" download role="menuitem">ETH<span>both expiries, ETH findings</span></a>
+        <a href="crypto-odds-XRP.pdf" download role="menuitem">XRP<span>both expiries, XRP findings</span></a>
+        <a href="crypto-odds.pdf" download role="menuitem">All assets<span>everything on this page</span></a>
+      </div></details>
+    <div class="asof" id="asof">Loading&hellip;</div>
+  </div>
+</header>
+<main>
+  <p class="eyebrow">Crypto forecasting research · BTC · ETH · XRP · LINK</p>
+  <p class="lede">Will Bitcoin, Ether, XRP and Chainlink move up, down or sideways over the next 30 days? Below: what our tested models expect for each coin, which model has the best record, and what live Deribit option prices imply for each listed expiry. The research behind it asks whether price history or machine learning can beat a simple base rate.</p>
+  <section id="outlook" hidden>
+    <h2 class="outlook-h">30-day outlook: what the models expect</h2>
+    <div class="sub" id="outlookSub"></div>
+    <div class="predict" id="predict"></div>
+    <div class="ocards" id="ocards"></div>
+    <div class="ofoot" id="ofoot"></div>
+  </section>
+
+  <h2>Reading the options market</h2>
+  <div class="concepts">
+    <div class="concept"><b>Market-implied, not a forecast</b>Probabilities come from option prices, which include a risk premium (traders pay up for protection). Read them as the market's pricing, not a prediction or advice.</div>
+    <div class="concept"><b>Ranges show quote uncertainty</b>Options trade with a bid and an ask. The quote range is every probability consistent with those prices: wide when the market is thin, tight when it is liquid.</div>
+    <div class="concept"><b>&ldquo;Not quoted&rdquo; is not 0%</b>Far from today's price no options are quoted, so the market says nothing there. Those targets are marked rather than guessed.</div>
+  </div>
+
+  <h2>Market snapshot</h2>
+  <div class="sub">Every listed expiry at a glance. The median and the 80% range are read off the market-implied curve: 10% of the probability sits below the range and 10% above it.</div>
+  <div class="card scroll"><table id="snapTable"></table></div>
+
+  <section id="explore">
+    <h2>Explore an asset</h2>
+    <div class="sub">Choose an asset and an expiry. Hover the chart for the probability at any price.</div>
+    <div class="row" id="assetTabs" role="tablist" aria-label="Asset"><span class="lab">Asset</span></div>
+    <div class="row" id="expiryTabs" aria-label="Expiry"><span class="lab">Expiry</span></div>
+    <div id="assetView"></div>
+  </section>
+  <section class="print-only" id="printOdds" aria-hidden="true"></section>
+
+  <h2>Can history or machine learning beat the base rate?</h2>
+  <div class="sub" id="findingsSub"></div>
+  <div class="verdict" id="findingsVerdict"></div>
+  <div class="row screen-only" id="cohortTabs"><span class="lab">Outcomes</span></div>
+  <div class="card scroll screen-only"><table id="findingsTable"></table>
+    <div class="keys" id="findingsKeys"></div></div>
+  <div class="print-only" id="findingsPrint"></div>
+  <details class="screen-only" id="methodBox"><summary>Method and caveats</summary><div class="note" id="findingsNote"></div></details>
+  <div class="print-only note" id="findingsNotePrint" style="margin-top:12px"></div>
+
+  <footer id="footer"></footer>
+</main>
+<div class="tip" id="tip"></div>
+<script>
+(function(){
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pct = v => v == null ? null : (v < 0.01 ? "<1%" : v > 0.99 ? ">99%" : Math.round(v*100) + "%");
+const money = (x, ref) => x == null ? "—" : (ref >= 100 ? "$" + Math.round(x).toLocaleString("en-US") : "$" + x.toFixed(2));
+const moneyShort = (x, ref) => x == null ? "—" : ref >= 1000 ? "$" + (x >= 1e5 ? Math.round(x / 1000) : +(x / 1000).toFixed(1)) + "k" : money(x, ref);
+const dateLong = s => new Date(s).toLocaleDateString("en-US", {month:"short", day:"numeric", year:"numeric", timeZone:"UTC"});
+const LABEL = {climatology:"Past frequency", lognormal_rv90:"Lognormal, 90-day vol", lognormal_ewma:"Lognormal, EWMA vol",
+  lognormal_ewma_drift:"Lognormal + drift", fhs_ewma:"Filtered hist. simulation", garch_t:"GARCH(1,1)-t",
+  logit_A:"Logistic regression", rf_A:"Random forest", xgb_A:"XGBoost", xgb_AD:"XGBoost + DVOL",
+  chronos_vol:"Chronos (volatility)", chronos_bolt:"Chronos (price)"};
+const COHORTS = [["settlement", "Settlement prices (Deribit, 08:00 UTC)"], ["spot", "Spot closes (Coinbase / Bitstamp)"]];
+const PRINT_ASSET = (new URLSearchParams(location.search).get("asset") || "").toUpperCase();
+const inScope = asset => !PRINT_ASSET || asset === PRINT_ASSET;
+let odds, findings, outlook = null, state = {asset:null, expiry:null, cohort:"settlement"};
+const tip = $("tip");
+
+function showTip(html, ev){ tip.innerHTML = html; tip.style.display = "block";
+  const x = ev.clientX + 14, y = ev.clientY + 14;
+  tip.style.left = Math.min(x, window.innerWidth - tip.offsetWidth - 8) + "px"; tip.style.top = (y + window.scrollY) + "px"; }
+function hideTip(){ tip.style.display = "none"; }
+
+function pills(el, items, isOn, onPick, cls){
+  el.querySelectorAll("button").forEach(b => b.remove());
+  items.forEach((it, i) => { const b = document.createElement("button");
+    b.className = "pill" + (cls ? " " + cls : ""); b.textContent = it.label; b.disabled = !!it.disabled;
+    b.setAttribute("aria-pressed", isOn(it, i) ? "true" : "false"); b.onclick = () => onPick(it, i); el.appendChild(b); });
+}
+
+/* ---- reading the market-implied curve: points [price, P(settle above price)], price ascending ---- */
+function probAbove(curve, k){
+  if (!curve.length || k < curve[0][0] || k > curve[curve.length - 1][0]) return null;
+  for (let i = 1; i < curve.length; i++) if (curve[i][0] >= k){ const [a0, b0] = curve[i - 1], [a1, b1] = curve[i];
+    return a1 === a0 ? b1 : b0 + (b1 - b0) * (k - a0) / (a1 - a0); }
+  return null;
+}
+function priceAt(curve, p){   // price where P(above) falls to p
+  for (let i = 1; i < curve.length; i++){ const [a0, b0] = curve[i - 1], [a1, b1] = curve[i];
+    if (b0 >= p && b1 <= p) return b0 === b1 ? a0 : a0 + (a1 - a0) * (b0 - p) / (b0 - b1); }
+  return null;
+}
+function stats(a, e){
+  const c = e.curve;
+  return {median: priceAt(c, 0.5), lo: priceAt(c, 0.9), hi: priceAt(c, 0.1), up: probAbove(c, a.spot)};
+}
+const horizonNote = e => { const h = e.horizon || "", out = [];
+  const n = [...h.matchAll(/nearest to (\d+)d/g)].map(m => m[1]);
+  if (n.length) out.push(`closest listed expiry to ${n.join(" and ")} days`);
+  if (/year-end/.test(h)) out.push("year-end expiry");
+  return out.join(" · "); };
+
+/* ---- 30-day outlook ---- */
+const OUT_LABEL = {...LABEL, climatology:"Base rate (past frequency)"};
+const ARROW = {UP:"&#9650;", DOWN:"&#9660;", FLAT:"&#9654;"};
+const ptsTxt = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(0) + " pts";
+const leanSpan = v => v == null ? '<span class="na">—</span>' : Math.abs(v) < 5 ? `&#9654; flat ${ptsTxt(v)}` :
+  v > 0 ? `<span class="up-t">&#9650; up ${ptsTxt(v)}</span>` : `<span class="dn-t">&#9660; down ${ptsTxt(v)}</span>`;
+function optionsBuckets(asset){
+  const a = odds && odds.assets.find(x => x.asset === asset && x.status === "ok"); if (!a) return null;
+  const e = a.expiries[0], up = e.targets.find(t => t.label === "+10%"), dn = e.targets.find(t => t.label === "-10%");
+  if (!up || !dn || up.q == null || dn.q == null) return null;
+  return {up: up.q, down: dn.q, flat: Math.max(0, 1 - up.q - dn.q), when: dateLong(e.expiry_utc), days: Math.round(e.days)};
+}
+function renderPredict(){
+  const cells = findings.cells, hs = findings.holdout_summary;
+  const mlWorse = cells.filter(c => c.best_ml_ci && c.best_ml_ci[1] < 0).length, mlBetter = cells.filter(c => c.best_ml_reliably_better).length;
+  const volBest = cells.filter(c => c.best_baseline !== "climatology" && c.best_baseline_bss > 0);
+  const maxVol = Math.max(...volBest.map(c => c.best_baseline_bss));
+  const conflict = outlook.assets.filter(a => a.signals.history_lean_pts != null && a.signals.trend_lean_pts != null &&
+    Math.sign(a.signals.history_lean_pts) !== Math.sign(a.signals.trend_lean_pts) && Math.abs(a.signals.trend_lean_pts) >= 5).length;
+  $("predict").innerHTML = `
+    <div class="pv"><div class="t">Direction: not predictable <span>· no reliable edge found</span></div>
+      Machine-learning models built to read trend and momentum were reliably <b>worse</b> than the base rate in ${mlWorse} of ${cells.length} tests and reliably better in ${mlBetter}.
+      ${conflict ? `For ${conflict} of ${outlook.assets.length} coins, long-run history and the past year's trend point in opposite directions.` : ""}
+      So any UP or DOWN call below is a lean, not a forecast with a proven edge.</div>
+    <div class="pv"><div class="t">Size of moves: partly predictable <span>· the models' real edge</span></div>
+      Volatility models, which forecast how far prices swing rather than which way, had positive skill against the base rate in ${volBest.length} of ${cells.length} development tests (up to ${fmt(maxVol)}).
+      ${hs ? `On the one-time final test, ${hs.promoted === 0 ? "none passed every condition" : hs.promoted + " passed"}: the best, for BTC, was within noise.` : ""}
+      The ranges below are the most useful part of each outlook.</div>`;
+}
+function outlookCard(o){
+  const m = o.models[o.headline.model], c = o.call, ref = o.price, opt = optionsBuckets(o.asset);
+  const pc = v => Math.round(v * 100) + "%";
+  const lo = o.price * 0.9, hi = o.price * 1.1;
+  let say;
+  if (c.label !== "FLAT") say = `<b>Leans ${c.label === "UP" ? "up" : "down"}</b>: ${pc(c.label === "UP" ? m.up : m.down)} chance of ${c.label === "UP" ? "rising" : "falling"} more than 10%, vs ${pc(c.label === "UP" ? m.down : m.up)} for the opposite move.` +
+    (c.range_bound ? "" : ` Big moves are likely either way (${pc(c.big_move)} chance of more than ±10%).`);
+  else if (c.range_bound) say = `<b>No directional edge.</b> Most likely stays within ±10% (${money(lo, ref)}–${money(hi, ref)}): ${pc(c.within)} chance.`;
+  else say = `<b>No directional edge, but big swings are likely</b>: ${pc(c.big_move)} chance of moving more than 10% either way.`;
+  const hd = o.headline, b = hd.best;
+  const modelTxt = hd.model === "climatology"
+    ? `<b>Base rate (past frequency)</b>. ${b ? `No model beat it on the final test; the closest was ${esc(OUT_LABEL[b.model] || b.model)} (${fmt(b.skill)}).` : "This asset had no testable final-test cell."}`
+    : `<b>${esc(OUT_LABEL[hd.model] || hd.model)}</b>. Best on the final test: ${fmt(b.skill)} skill vs the base rate${b.reliable ? "" : `, within noise (95%: ${fmt(b.ci[0])} to ${fmt(b.ci[1])})`}.` +
+      (!c.directional_model ? " It forecasts the size of moves, not their direction." : "");
+  return `<div class="ocard">
+    <div class="top"><div><div class="asset">${esc(o.asset)}</div><div class="px">${money(o.price, ref)} · close of ${dateLong(o.price_date)}</div></div>
+      <span class="badge ${c.label}">${ARROW[c.label]} ${c.label}</span></div>
+    <div class="say">${say}</div>
+    <div><div class="obar" role="img" aria-label="Down more than 10%: ${pc(m.down)}; within 10%: ${pc(m.flat)}; up more than 10%: ${pc(m.up)}">
+      <i class="d" style="width:${m.down * 100}%"></i><i class="f" style="width:${m.flat * 100}%"></i><i class="u" style="width:${m.up * 100}%"></i></div>
+      <div class="olegend"><span>&#9660; down &gt;10% <b>${pc(m.down)}</b></span><span>within ±10% <b>${pc(m.flat)}</b></span><span>&#9650; up &gt;10% <b>${pc(m.up)}</b></span></div></div>
+    <div class="kv"><span>80% range in 30 days</span><b>${money(m.range[0], ref)} – ${money(m.range[1], ref)}</b></div>
+    <div class="model">Headline model: ${modelTxt}</div>
+    <div class="kv" style="display:block"><div style="margin-bottom:3px">Direction signals</div>
+      <div class="sig"><span>Long-run history ${leanSpan(o.signals.history_lean_pts)}</span><span>Past-year trend ${leanSpan(o.signals.trend_lean_pts)}</span></div></div>
+    <div class="kv"><span>Options market${opt ? ` (${opt.when}, ${opt.days}d)` : ""}</span><b>${opt ? `&#9660; ${pc(opt.down)} · &#9650; ${pc(opt.up)}` : '<span class="na">no listed options</span>'}</b></div>
+  </div>`;
+}
+function renderOutlook(){
+  if (!outlook){ $("outlook").hidden = true; return; }
+  $("outlook").hidden = false;
+  $("outlookSub").innerHTML = `For each coin: the call (UP, DOWN or FLAT), the chances of a move of more than 10% over the next ${outlook.horizon_days} days, and the model with the best record on the final test. ` +
+    `Recomputed daily from fresh prices; as of ${dateLong(outlook.as_of_utc)}.`;
+  renderPredict();
+  const shown = outlook.assets.filter(a => inScope(a.asset));
+  $("ocards").classList.toggle("single", shown.length === 1);
+  $("ocards").innerHTML = shown.map(outlookCard).join("");
+  const tr = outlook.track_record || {};
+  const first = tr.first_logged ? new Date(Date.parse(tr.first_logged) + outlook.horizon_days * 864e5).toISOString().slice(0, 10) : null;
+  $("ofoot").innerHTML = `<b>How the call is made.</b> ${esc(outlook.rule)} ` +
+    (tr.graded ? `<b>Track record:</b> ${tr.hits} of ${tr.graded} graded calls correct (${Math.round(tr.hits / tr.graded * 100)}%). ` :
+      tr.logged ? `<b>Track record:</b> ${tr.logged} calls logged since ${dateLong(tr.first_logged)}; the first are graded on ${dateLong(first)}. ` : "") +
+    `These are research outputs, not investment advice.`;
+}
+
+/* ---- snapshot ---- */
+function renderSnapshot(){
+  const rows = [];
+  odds.assets.filter(a => inScope(a.asset)).forEach(a => {
+    if (a.status !== "ok"){ rows.push(`<tr><td><b>${esc(a.asset)}</b></td><td class="l" colspan="6"><span class="na">No listed options on any reachable venue, so there is no market-implied view.</span></td></tr>`); return; }
+    a.expiries.forEach((e, i) => { const s = stats(a, e);
+      rows.push(`<tr><td>${i ? "" : `<b>${esc(a.asset)}</b>`}</td><td class="l">${dateLong(e.expiry_utc)} <span class="muted">· ${Math.round(e.days)} days</span></td>
+        <td>${i ? "" : money(a.spot, a.spot)}</td><td><b>${money(s.median, a.spot)}</b></td>
+        <td>${s.lo != null && s.hi != null ? money(s.lo, a.spot) + " – " + money(s.hi, a.spot) : '<span class="na">—</span>'}</td>
+        <td><b>${s.up == null ? "—" : Math.round(s.up * 100) + "%"}</b></td><td>${(e.atm_iv * 100).toFixed(0)}%</td></tr>`); });
+  });
+  $("snapTable").innerHTML = `<thead><tr><th>Asset</th><th class="l">Expiry</th><th>Price today</th><th>Market median</th><th>80% market range</th><th>Chance above today</th><th>Implied vol</th></tr></thead><tbody>${rows.join("")}</tbody>`;
+}
+
+/* ---- one asset and expiry ---- */
+function render(){
+  const assets = odds.assets;
+  if (!state.asset) state.asset = assets.find(a => a.status === "ok").asset;
+  pills($("assetTabs"), assets.map(a => ({label: a.asset + (a.status === "ok" ? "" : " · no options"), key: a.asset})),
+        it => it.key === state.asset, it => { state.asset = it.key; state.expiry = null; render(); });
+  const a = assets.find(x => x.asset === state.asset);
+  const view = $("assetView");
+  if (a.status !== "ok"){ $("expiryTabs").querySelectorAll("button").forEach(b => b.remove());
+    view.innerHTML = `<div class="card unavail"><b>${esc(a.asset)}: no market-implied odds.</b><br>${esc(a.reason)}</div>`; return; }
+  if (state.expiry == null){ const ye = a.expiries.findIndex(e => /year-end/.test(e.horizon)); state.expiry = ye >= 0 ? ye : a.expiries.length - 1; }
+  pills($("expiryTabs"), a.expiries.map(e => ({label: dateLong(e.expiry_utc) + " · " + Math.round(e.days) + " days"})),
+        (it, i) => i === state.expiry, (it, i) => { state.expiry = i; render(); }, "small");
+  const e = a.expiries[state.expiry];
+  view.innerHTML = assetBlock(a, e, "chart");
+  drawChart(a, e, upTargets(e), $("chart"), true);
+}
+
+function upTargets(e){
+  let up = e.targets.filter(t => t.event === "S_T > K");
+  if (up.some(t => t.label.startsWith("$"))) up = up.filter(t => t.label.startsWith("$"));  // chart one target family
+  return up;
+}
+
+function targetTable(a, rows, title, sub){
+  if (!rows.length) return "";
+  const lab = t => /^[+-]\d/.test(t.label) ? t.label.replace("-", "−") : esc(t.label);
+  return `<div class="tblock"><h4>${title}</h4><div class="sub">${sub}</div><table><thead><tr><th>Move vs today</th><th>Price</th><th>Market</th><th>Quote range</th><th>Benchmark</th></tr></thead><tbody>` +
+    rows.map(t => `<tr><td>${lab(t)}</td><td>${money(t.K, a.spot)}</td>
+      <td>${t.q == null ? '<span class="na">not quoted</span>' : "<b>" + pct(t.q) + "</b>"}</td>
+      <td>${t.lo == null ? '<span class="na">—</span>' : pct(t.lo) + "–" + pct(t.hi)}</td>
+      <td class="${t.q == null ? 'na' : ''}">${t.black76 == null ? "—" : pct(t.black76)}${t.q == null && t.black76 != null ? " †" : ""}</td></tr>`).join("") + "</tbody></table></div>";
+}
+
+function assetBlock(a, e, chartId, compact){
+  const s = stats(a, e), when = dateLong(e.expiry_utc);
+  const up = e.targets.filter(t => t.event === "S_T > K").sort((x, y) => x.K - y.K);
+  const dn = e.targets.filter(t => t.event !== "S_T > K").sort((x, y) => y.K - x.K);
+  const notQuoted = e.targets.some(t => t.q == null);
+  const headline = s.median != null
+    ? `Options price a <b>50% chance ${esc(a.asset)} settles above ${money(s.median, a.spot)}</b> on ${when}` +
+      (s.lo != null && s.hi != null ? `, and an <b>80% chance it lands between ${money(s.lo, a.spot)} and ${money(s.hi, a.spot)}</b>` : "") +
+      (s.up != null ? `. The market gives ${Math.round(s.up * 100)}% odds it finishes above today's ${money(a.spot, a.spot)}.` : ".")
+    : `Market-implied odds for ${esc(a.asset)} on ${when}.`;
+  return `
+    ${compact ? `<h3>${esc(a.asset)} · ${when} <span class="muted" style="font-weight:400">(${Math.round(e.days)} days)</span></h3>` : ""}
+    <p class="headline">${headline}</p>
+    <div class="kpis">
+      <div class="kpi"><div class="v">${money(a.spot, a.spot)}</div><div class="l">${esc(a.asset)} price today (settlement index)</div></div>
+      <div class="kpi"><div class="v">${when}</div><div class="l">expiry, 08:00 UTC · ${Math.round(e.days)} days away</div></div>
+      <div class="kpi"><div class="v">${(e.atm_iv*100).toFixed(0)}%</div><div class="l">implied volatility (annualised)</div></div>
+      <div class="kpi"><div class="v">${moneyShort(e.support[0], a.spot)}–${moneyShort(e.support[1], a.spot)}</div><div class="l">prices with quoted options</div></div>
+    </div>
+    <div class="grid">
+      <div class="card"><h3>Chance ${esc(a.asset)} settles above each price on ${when}</h3>
+        <div class="sub">${esc(a.family)} options on Deribit${horizonNote(e) ? " · " + horizonNote(e) : ""}</div>
+        <div class="chart" id="${chartId}"></div>
+        <div class="legend"><span><i style="border-color:var(--s1)"></i>Market-implied (full option chain)</span>
+          <span><i style="border-color:var(--s2);border-top-style:dashed"></i>Single-volatility benchmark</span>
+          <span><i class="box"></i>80% market range</span>
+          <span><i style="border-color:#c9cfdb;border-top-width:1px"></i>Target, with quote range</span></div>
+      </div>
+      <div class="card">
+        ${targetTable(a, up, "Upside targets", "Chance of settling <b>above</b> each price")}
+        ${targetTable(a, dn, "Downside targets", "Chance of settling <b>below</b> each price")}
+        <div class="sub" style="margin:10px 0 0;font-size:11.5px">Benchmark: the same expiry priced with one volatility for every strike (Black-76). The gap to the market shows how much extra weight traders put on large moves.${notQuoted ? " <b>Not quoted</b>: no options trade that far out, so the market gives no reading; † marks a benchmark value extrapolated past the quotes." : ""}</div>
+      </div>
+    </div>`;
+}
+
+// Print / PDF: every asset and every listed expiry, independent of the on-screen selection.
+function renderPrint(){
+  const el = $("printOdds"), draws = [];
+  el.innerHTML = odds.assets.filter(a => inScope(a.asset)).map(a => {
+    if (a.status !== "ok") return `<div class="pblock na"><h3>${esc(a.asset)}</h3><div class="sub" style="margin:4px 0 0">No market-implied odds: ${esc(a.reason)}</div></div>`;
+    return a.expiries.map((e, i) => { const id = `pchart_${a.asset}_${i}`; draws.push([a, e, id]);
+      return `<div class="pblock">${assetBlock(a, e, id, true)}</div>`; }).join("");
+  }).join("");
+  draws.forEach(([a, e, id]) => drawChart(a, e, upTargets(e), $(id), false));
+}
+
+function niceTicks(lo, hi, n){
+  const raw = (hi - lo) / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= raw) || 10 * mag;
+  const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(10));
+  return out;
+}
+
+function drawChart(a, e, targets, el, interactive){
+  const W = 760, H = 380, m = {l:48, r:18, t:14, b:42};
+  // show the informative part of the curve (about 98.5% down to 1.5%), widened to include today's price and quoted targets
+  const c = e.curve, s = stats(a, e);
+  let x0 = priceAt(c, 0.985) ?? c[0][0], x1 = priceAt(c, 0.015) ?? c[c.length - 1][0];
+  const tk = targets.filter(t => t.q != null && t.q >= 0.01 && t.q <= 0.99).map(t => t.K);
+  x0 = Math.min(x0, a.spot, ...tk); x1 = Math.max(x1, a.spot, ...tk);
+  const pad = (x1 - x0) * 0.04; x0 = Math.max(c[0][0], x0 - pad); x1 = Math.min(c[c.length - 1][0], x1 + pad);
+  const X = k => m.l + (k - x0) / (x1 - x0) * (W - m.l - m.r), Y = q => m.t + (1 - q) * (H - m.t - m.b);
+  const clip = pts => pts.filter(p => p[0] >= x0 && p[0] <= x1);
+  const path = pts => clip(pts).map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)).join("");
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Chance ${esc(a.asset)} settles above each price">`;
+  if (s.lo != null && s.hi != null) svg += `<rect x="${X(Math.max(x0, s.lo))}" y="${m.t}" width="${Math.max(0, X(Math.min(x1, s.hi)) - X(Math.max(x0, s.lo)))}" height="${H - m.t - m.b}" fill="var(--band)"/>`;
+  [0, .25, .5, .75, 1].forEach(q => { svg += `<line x1="${m.l}" x2="${W - m.r}" y1="${Y(q)}" y2="${Y(q)}" stroke="#252b3a"/>
+    <text x="${m.l - 8}" y="${Y(q) + 4}" fill="#8a93a6" font-size="11" text-anchor="end">${q * 100}%</text>`; });
+  niceTicks(x0, x1, 6).forEach(k => { svg += `<line x1="${X(k)}" x2="${X(k)}" y1="${H - m.b}" y2="${H - m.b + 4}" stroke="#5b6478"/>
+    <text x="${X(k)}" y="${H - m.b + 17}" fill="#8a93a6" font-size="11" text-anchor="middle">${moneyShort(k, a.spot)}</text>`; });
+  svg += `<text x="${(m.l + W - m.r) / 2}" y="${H - 4}" fill="#8a93a6" font-size="11" text-anchor="middle">${esc(a.asset)} settlement price on ${dateLong(e.expiry_utc)}</text>`;
+  if (a.spot >= x0 && a.spot <= x1) svg += `<line x1="${X(a.spot)}" x2="${X(a.spot)}" y1="${m.t}" y2="${H - m.b}" stroke="#5b6478" stroke-dasharray="2 3"/>
+    <text x="${X(a.spot) + 5}" y="${m.t + 12}" fill="#8a93a6" font-size="11">today ${moneyShort(a.spot, a.spot)}</text>`;
+  if (e.black76_curve.length) svg += `<path d="${path(e.black76_curve)}" fill="none" stroke="var(--s2)" stroke-width="1.6" stroke-dasharray="5 4"/>`;
+  svg += `<path d="${path(c)}" fill="none" stroke="var(--s1)" stroke-width="2.4"/>`;
+  const shown = targets.filter(t => t.q != null && t.K >= x0 && t.K <= x1);
+  shown.forEach((t, i) => {
+    svg += `<g class="tgt" data-i="${i}"><line x1="${X(t.K)}" x2="${X(t.K)}" y1="${Y(t.lo)}" y2="${Y(t.hi)}" stroke="#c9cfdb" stroke-width="1.2"/>
+      <circle cx="${X(t.K)}" cy="${Y(t.q)}" r="5" fill="#0b0d12" stroke="#c9cfdb" stroke-width="2"/>
+      <circle cx="${X(t.K)}" cy="${Y(t.q)}" r="14" fill="transparent"/></g>`; });
+  svg += `<line id="xh" y1="${m.t}" y2="${H - m.b}" stroke="#8a93a6" stroke-width="1" visibility="hidden"/>
+    <rect id="hit" x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent"/></svg>`;
+  el.innerHTML = svg;
+  if (!interactive) return;
+  const sv = el.querySelector("svg"), xh = sv.querySelector("#xh"), hit = sv.querySelector("#hit");
+  hit.addEventListener("mousemove", ev => { const r = sv.getBoundingClientRect(); const px = (ev.clientX - r.left) / r.width * W;
+    const k = x0 + (px - m.l) / (W - m.l - m.r) * (x1 - x0); xh.setAttribute("x1", px); xh.setAttribute("x2", px); xh.setAttribute("visibility", "visible");
+    const q = probAbove(c, k), b = probAbove(e.black76_curve, k);
+    showTip(`Settles above <b>${money(k, a.spot)}</b><br><span style="color:var(--s1)">Market-implied:</span> ${pct(q) ?? "—"}` +
+      (b != null ? `<br><span style="color:var(--s2)">Benchmark:</span> ${pct(b)}` : ""), ev); });
+  hit.addEventListener("mouseleave", () => { xh.setAttribute("visibility", "hidden"); hideTip(); });
+  sv.querySelectorAll(".tgt").forEach(g => { const t = shown[+g.dataset.i];
+    g.addEventListener("mousemove", ev => { ev.stopPropagation(); xh.setAttribute("visibility", "hidden");
+      showTip(`<b>${esc(t.label)}</b> · above ${money(t.K, a.spot)}<br>Market-implied: <b>${pct(t.q)}</b><br>Range from quotes: ${pct(t.lo)}–${pct(t.hi)}` +
+        (t.black76 != null ? `<br>Benchmark: ${pct(t.black76)}` : ""), ev); });
+    g.addEventListener("mouseleave", hideTip); });
+}
+
+/* ---- findings ---- */
+const fmt = v => v == null ? null : (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(1) + "%";
+const chip = (ci, good) => good ? ' <span class="chip good">reliably better</span>' : (ci && ci[1] < 0 ? ' <span class="chip bad">reliably worse</span>' : "");
+function skillCell(name, v, ci, good, why){
+  if (v == null) return `<td><span class="na">—${why ? "<sup>" + why + "</sup>" : ""}</span></td>`;
+  return `<td>${name ? `<span class="mname">${esc(LABEL[name] || name)}</span>` : ""}<b>${fmt(v)}</b>${chip(ci, good)}</td>`;
+}
+function findingsTable(cohort){
+  const cells = findings.cells.filter(c => c.cohort === cohort && inScope(c.asset)).sort((a, b) => a.asset.localeCompare(b.asset) || a.h - b.h);
+  const hasFM = findings.cells.some(c => c.best_fm != null);
+  const rows = cells.map(c => `<tr><td><b>${esc(c.asset)}</b></td><td>${c.h} days</td><td>${Math.round(c.indep_outcomes)}</td>
+    ${skillCell(c.best_baseline, c.best_baseline_bss, c.best_baseline_ci, c.best_baseline_reliably_better)}
+    ${skillCell(null, c.dvol_q_bss, c.dvol_q_ci, false, "a")}
+    ${skillCell(c.best_ml, c.best_ml_bss, c.best_ml_ci, c.best_ml_reliably_better, "c")}
+    ${hasFM ? skillCell(c.best_fm, c.best_fm_bss, c.best_fm_ci, c.best_fm_reliably_better, "b") : ""}</tr>`).join("");
+  const have = new Set(cells.map(c => c.asset + "|" + c.h));
+  const missing = [...new Set(findings.cells.map(c => c.asset))].filter(inScope).sort().flatMap(a => [30, 60, 90].filter(h => !have.has(a + "|" + h)).map(h => `${a} ${h} days`));
+  return `<thead><tr><th>Asset</th><th>Horizon</th><th title="Non-overlapping windows: how many truly separate outcomes were scored">Separate outcomes</th>
+    <th>Best history model</th><th>Implied vol (DVOL)</th><th>Best machine learning</th>${hasFM ? "<th>Foundation model</th>" : ""}</tr></thead><tbody>${rows}</tbody>` +
+    (missing.length ? `<tfoot><tr><td class="l" colspan="7" style="border:none;padding-top:10px"><span class="na">Not scored: ${missing.join(", ")}. This price history is too short for that horizon.</span></td></tr></tfoot>` : "");
+}
+function keysHtml(){
+  return `<div><b>Skill</b>: reduction in forecast error versus the base rate (how often a move that size happened before). 0% = no better, +10% = 10% less error, negative = worse.</div>
+    <div><b>Reliably better / worse</b>: the 95% interval excludes zero. A result without a tag is within noise.</div>
+    <div><b>Separate outcomes</b>: non-overlapping windows. Daily forecasts overlap, so this count, usually a few dozen, decides how much a result can be trusted.</div>
+    <div><b>—</b> <sup>a</sup> the DVOL implied-vol index exists for BTC and ETH only. <sup>b</sup> Chronos forecasts 30 and 60 days only. <sup>c</sup> too little history to train.</div>`;
+}
+function renderFindings(){
+  const cells = findings.cells;
+  const blWins = cells.filter(c => c.best_baseline_reliably_better).length;
+  const mlWins = cells.filter(c => c.best_ml_reliably_better).length;
+  const fm = cells.filter(c => c.best_fm != null), fmWins = fm.filter(c => c.best_fm_reliably_better).length;
+  const hs = findings.holdout_summary;
+  $("findingsSub").innerHTML = `Each model forecast the same kind of price targets as the options above, using only data available at the time, and was scored against what actually happened. ` +
+    `The yardstick is the <b>base rate</b>: how often a move that size happened before.`;
+  $("findingsVerdict").innerHTML = `<div class="big">Mostly no.</div><div>Across ${cells.length} asset × horizon tests, the best price-history model was reliably better than the base rate in only <b>${blWins}</b>, ` +
+    `machine learning in <b>${mlWins}</b>${fm.length ? `, and the Chronos foundation model in <b>${fmWins}</b> of the ${fm.length} it covered` : ""}. ` +
+    (hs ? `On the sealed final test (the most recent 20% of history, scored once), <b>${hs.promoted === 0 ? "no model was promoted" : hs.promoted + " model(s) were promoted"}</b>. ` +
+      `Only ${hs.testable_cells} tests had enough outcomes to judge, so this is &ldquo;no demonstrated improvement&rdquo;, not proof of no skill.` : "") + `</div>`;
+  pills($("cohortTabs"), COHORTS.map(([k, label]) => ({label, k})), it => it.k === state.cohort, it => { state.cohort = it.k; renderFindings(); }, "small");
+  $("findingsTable").innerHTML = findingsTable(state.cohort);
+  $("findingsKeys").innerHTML = keysHtml();
+  $("findingsPrint").innerHTML = COHORTS.map(([k, l]) => `<div class="card"><h3>${l}</h3><table>${findingsTable(k)}</table></div>`).join("") +
+    `<div class="keys">${keysHtml()}</div>`;
+  const note = `<b>Method.</b> Results above are from the development period (${esc(findings.metric)}). Every forecast used only data available on its date. ` +
+    `<b>Final test:</b> the last 20% of history (settlement outcomes from ${esc(findings.holdout_seal.settlement.slice(0,10))}, spot from ` +
+    `${esc(findings.holdout_seal.spot.slice(0,10))}) was set aside before any model was built and scored once under a promotion rule fixed in advance. ` +
+    (hs ? `Testable there: ${esc(hs.testable_list.join(", "))}. ` : "") +
+    (findings.ml_note ? esc(findings.ml_note) + " " : "") + (findings.fm_note ? esc(findings.fm_note) : "") +
+    ` Full results, condition by condition, are on the <a href="../crypto-scorecard/">Model Scorecard</a>.`;
+  $("findingsNote").innerHTML = note; $("findingsNotePrint").innerHTML = note;
+}
+
+function load(){
+  // no-store so an open tab picks up the daily refresh; state (asset, expiry, cohort) is kept across reloads
+  return Promise.all([fetch("odds.json", {cache: "no-store"}).then(r => r.json()),
+                      fetch("findings.json", {cache: "no-store"}).then(r => r.json()),
+                      fetch("outlook.json", {cache: "no-store"}).then(r => r.ok ? r.json() : null).catch(() => null)]).then(([o, f, ol]) => {
+  if (odds && o.as_of_utc !== odds.as_of_utc) state.expiry = null;
+  odds = o; findings = f; outlook = ol;
+  const t = new Date(o.as_of_utc);
+  $("asof").innerHTML = `Market data as of ${t.toISOString().slice(0,16).replace("T", " ")} UTC<br>` +
+    t.toLocaleString("en-US", {timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short"}) + " New York · refreshed daily";
+  renderOutlook(); renderSnapshot(); render(); renderFindings(); renderPrint();
+  if (PRINT_ASSET) $("printTitle").textContent = " · " + PRINT_ASSET;
+  $("footer").innerHTML = `<b>Source:</b> ${esc(o.source)}. Probabilities are risk-neutral (market-implied) and include any risk premium; ` +
+    `they are not forecasts or investment advice. LINK has no listed options on any reachable venue. ` +
+    `<span class="print-only">btabiado.github.io/alpine-data/crypto-odds/ · </span>Engine <code>${esc(o.engine_revision.slice(0, 7))}</code> · odds run <code>${esc(o.run_id)}</code> · findings run <code>${esc(f.run_id)}</code>.`;
+}).catch(err => { if (odds) return;   // keep showing the last good data if a background refresh fails
+  $("asof").textContent = "Data unavailable"; $("assetView").innerHTML =
+  `<div class="card unavail">Could not load the latest odds (${esc(err)}).</div>`; });
+}
+
+// One-page print mode: size the page to the content so a PDF is a single page.
+function enterPrint(){ document.documentElement.classList.add("pm");
+  const h = Math.ceil(document.body.getBoundingClientRect().height) + 2;
+  let st = document.getElementById("pageSize");
+  if (!st){ st = document.createElement("style"); st.id = "pageSize"; document.head.appendChild(st); }
+  st.textContent = `@page{size:1100px ${h}px;margin:0}`; }
+function exitPrint(){ if (!/print/.test(location.search + location.hash)) document.documentElement.classList.remove("pm"); }
+document.addEventListener("click", e => { const m = $("dlMenu"); if (m && m.open && !m.contains(e.target)) m.open = false; });
+window.addEventListener("beforeprint", enterPrint); window.addEventListener("afterprint", exitPrint);
+load().then(() => { if (/print/.test(location.search + location.hash)) enterPrint(); });
+setInterval(load, 30 * 60 * 1000);   // re-fetch every 30 minutes while the page is open
+})();
+</script>
+</body>
+</html>

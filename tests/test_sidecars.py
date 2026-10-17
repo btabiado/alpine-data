@@ -99,7 +99,15 @@ def test_render_html_default_sidecars_manifest_is_empty_object():
 # ---------- 3. app.py main() writes sidecars ----------
 
 
-def test_main_writes_sidecar_files(tmp_path: Path, monkeypatch):
+@pytest.fixture
+def no_travel_scrape(monkeypatch):
+    """``app.main()`` refreshes data-travel.json from travel.state.gov on
+    every build. Stub the scrape so these tests stay offline."""
+    import fetch_advisories
+    monkeypatch.setattr(fetch_advisories, "main", lambda *a, **k: 0)
+
+
+def test_main_writes_sidecar_files(tmp_path: Path, monkeypatch, no_travel_scrape):
     """``python app.py --no-open`` should produce dashboard.html AND
     data-whale.json side-by-side, with the whale data extracted out of the
     inlined payload."""
@@ -115,8 +123,9 @@ def test_main_writes_sidecar_files(tmp_path: Path, monkeypatch):
     (tmp_path / "whale.json").write_text(json.dumps({"btc": {"tx_volume_usd": [1.0, 2.0, 3.0]}}))
 
     # In-process call (no subprocess) so we share the monkeypatched DATA_DIR/OUT.
-    # `--no-open` skips webbrowser.open and `--fetch-market` is omitted so no
-    # network calls — we use the seeded JSON above as the live data.
+    # `--no-open` skips webbrowser.open, `--fetch-market` is omitted and the
+    # travel scrape is stubbed, so no network calls — we use the seeded JSON
+    # above as the live data.
     monkeypatch.setattr(sys, "argv", ["app.py", "--no-open"])
     exit_code = app.main()
     assert exit_code == 0
@@ -312,7 +321,7 @@ def test_build_payload_defi_defaults_to_empty_dict(tmp_path: Path, monkeypatch):
     assert manifest == {}
 
 
-def test_main_writes_defi_sidecar(tmp_path: Path, monkeypatch):
+def test_main_writes_defi_sidecar(tmp_path: Path, monkeypatch, no_travel_scrape):
     """End-to-end build: DeFi subtree must land in ``data-defi.json`` and
     NOT be inlined in dashboard.html — same contract as the whale sidecar
     test above, with a sentinel value we can grep for."""

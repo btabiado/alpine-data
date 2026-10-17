@@ -1,6 +1,6 @@
 {
   "_doc": "Gaps in committed or archived history that no real source can fill. Read by scripts/history_continuity.py: a missing period (or null required field) listed here is reported as DISCLOSED instead of failing the daily data-health run. Published at /health/known_gaps.json so the dashboard can disclose it. Add an entry only after trying every real source (git history of the file, the upstream's historical endpoint, the R2 archive, Internet Archive copies of the site) and say which in backfill_attempted. Never add a gap that can still be filled; fill it. `fillable: true` marks a gap that a named tool can still fill (see remedy) and is listed so the dashboard can say so until it is. An entry with \"end\": null is open-ended and must name `until_env`, the env var whose presence ends it (a source that needs a key this deployment does not have): it discloses every period from start on while that var is unset, and nothing once it is set.",
-  "checked": "2026-10-05",
+  "checked": "2026-10-16",
   "gaps": [
     {
       "feed": "data/composites/",
@@ -167,6 +167,20 @@
       "backfill_attempted": [
         "upstream: anonymous OpenSky serves live state only",
         "R2: copies exist for all three days"
+      ],
+      "fillable": false
+    },
+    {
+      "feed": "data-cfpb.json",
+      "history": "daily commits",
+      "start": "2026-10-12",
+      "end": "2026-10-12",
+      "reason": "cfpb-daily run 38277091475 (2026-10-12 16:23Z) died in Fetch CFPB complaint counts: urllib raised TimeoutError while reading the response status line. That error is not a URLError, so the 45s timeout was uncaught and the script exited 1 before writing data-cfpb.json. The commit step never ran. Neighbors 2026-10-11 and 2026-10-13 both committed and the counts moved (student_loan recent-3mo 4083 to 3964), so this was not an unchanged-data skip. Columbus Day is not a day the job is designed to miss: Labor Day 2026-09-07 committed normally, and the cron has no holiday branch. The same TimeoutError dropped 2026-07-20, 2026-07-21 and 2026-08-19. The file is overwritten in place; a later successful fetch is a new observation and cannot be back-dated onto 2026-10-12 without rewriting main.",
+      "backfill_attempted": [
+        "git: no commit of data-cfpb.json on 2026-10-12 (neighbors b272c184a on 2026-10-11 and 589a2f166 on 2026-10-13)",
+        "actions: run 38277091475 failed before the commit step and stored no artifact to replay",
+        "upstream: scripts/fetch_cfpb.py reads trailing 90/365-day counts as of the run. Re-querying date_received_max=2026-10-12 today counts complaints indexed after that day, which is not the snapshot the cron would have stored",
+        "R2: the failed fetch never produced a payload. A pages deploy that day would have archived the already-committed 2026-10-11 file. health/r2-coverage.json in this checkout is empty (R2_BUCKET_NAME unset) and shows no distinct 2026-10-12 copy"
       ],
       "fillable": false
     }

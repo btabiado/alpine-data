@@ -25,7 +25,7 @@ All math is pure -- no I/O. The raw data is fetched once by the
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from lthcs.normalize import bounded_linear
 from lthcs.sources.crypto_data import pct_change_30d
@@ -59,16 +59,6 @@ def _component_score(
     if pct is None:
         return None
     return float(bounded_linear(pct, low, high))
-
-
-def _tx_count_pct_change_30d(series: List[Dict[str, Any]]) -> Optional[float]:
-    """Fallback for non-BTC assets where 'hash rate' doesn't apply.
-
-    Computes a 30d pct change on the tx-count or equivalent throughput
-    series. Mirrors :func:`pct_change_30d` but operates on tx counts
-    instead of USD volume.
-    """
-    return pct_change_30d(series)
 
 
 def _renormalize(components: Dict[str, Optional[float]],

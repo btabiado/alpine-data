@@ -55,25 +55,38 @@ def _normal_scores(n, mu=48.0, sd=10.0, seed=7):
     return [round(min(99.9, max(1.0, rng.gauss(mu, sd))), 1) for _ in range(n)]
 
 
+def _drop_top_level_key(text: str, key: str) -> str:
+    """Remove a top-level JSON key and the comma in front of it."""
+    token = f'"{key}"'
+    idx = text.find(token)
+    if idx < 0:
+        return text
+    start = text.index(":", idx + len(token)) + 1
+    while text[start] in " \t\r\n":
+        start += 1
+    _, end = json.JSONDecoder().raw_decode(text, start)
+    return text[:text.rindex(",", 0, idx)] + text[end:]
+
+
 def _weights_text_with_fixture_bands(text: str) -> str:
-    """The live weights.json text with the fixture band numbers and without a
-    ``score_bands_calibration`` block. Edited as text so the hand-aligned
-    layout the --write path must preserve is still there."""
+    """The live weights.json text with the fixture band numbers and without
+    calibration provenance or closed band regimes. Edited as text so the
+    hand-aligned layout the --write path must preserve is still there.
+
+    The number substitution is count=1, so it only rewrites the live
+    ``score_bands`` object (the first occurrence). History is then removed
+    entirely: these tests start from "no regimes recorded yet"."""
     for b, spec in FIXTURE_SCORE_BANDS.items():
         pat = re.compile(r'("' + re.escape(b) + r'"\s*:\s*\{\s*"min"\s*:\s*)-?\d+(\s*,\s*"max"\s*:\s*)-?\d+')
         text, n = pat.subn(lambda m: f'{m.group(1)}{spec["min"]}{m.group(2)}{spec["max"]}', text, count=1)
         assert n == 1, b
-    key = '"score_bands_calibration"'
-    idx = text.find(key)
-    if idx >= 0:
-        start = text.index(":", idx + len(key)) + 1
-        while text[start] in " \t\r\n":
-            start += 1
-        _, end = json.JSONDecoder().raw_decode(text, start)
-        text = text[:text.rindex(",", 0, idx)] + text[end:]
+    # Later key first, so each removal still sees the comma in front of it.
+    text = _drop_top_level_key(text, "score_bands_history")
+    text = _drop_top_level_key(text, "score_bands_calibration")
     cfg = json.loads(text)
     assert {k: (v["min"], v["max"]) for k, v in cfg["score_bands"].items()} == fixture_band_ranges()
     assert "score_bands_calibration" not in cfg
+    assert "score_bands_history" not in cfg
     return text
 
 
@@ -277,7 +290,17 @@ def test_write_updates_bands_and_adds_provenance(cal, env, capsys):
     # Hand-aligned layout of the profiles block survives.
     assert '"standard_compounder":       [0.25, 0.20, 0.15, 0.20, 0.20]' in weights.read_text()
 
-    # Second --write replaces (not duplicates) the provenance block.
+    # The outgoing fixture cutoffs were closed into history, ending the day
+    # the new bands take effect. One entry: nothing was recorded before.
+    hist = new["score_bands_history"]
+    assert len(hist) == 1
+    assert hist[0]["effective_from"] is None
+    assert hist[0]["effective_until"] == "2026-10-05"
+    assert hist[0]["score_bands"]["elite"]["min"] == 85
+    assert hist[0]["score_bands"]["elite"]["max"] == 100
+
+    # Second --write replaces (not duplicates) the provenance block and
+    # appends another closed regime. Layout of the profiles block survives.
     rc = cal.main([
         "--snapshot-dir", str(snaps), "--weights", str(weights),
         "--write", "--today", "2026-10-06", "--targets",
@@ -286,14 +309,128 @@ def test_write_updates_bands_and_adds_provenance(cal, env, capsys):
     assert rc == 0
     text = weights.read_text()
     assert text.count('"score_bands_calibration"') == 1
+    assert text.count('"score_bands_history"') == 1
+    assert '"standard_compounder":       [0.25, 0.20, 0.15, 0.20, 0.20]' in text
     again = json.loads(text)
     assert again["score_bands_calibration"]["calibrated_at"] == "2026-10-06"
     assert again["score_bands_calibration"]["calibrated_from"] == ["2026-10-04"]
+    assert len(again["score_bands_history"]) == 2
+    assert again["score_bands_history"][1]["effective_from"] == "2026-10-05"
+    assert again["score_bands_history"][1]["effective_until"] == "2026-10-06"
+    closed = again["score_bands_history"][-1]["score_bands"]["elite"]
+    assert again["score_bands_calibration"]["previous_cutoffs"]["elite"] == [closed["min"], closed["max"]]
+    from lthcs.schemas.weights import Weights
+    Weights.model_validate(again)
+
+
+def test_write_appends_existing_band_history(cal, tmp_path, capsys):
+    """A file that already records closed regimes keeps them and appends one."""
+    snaps = tmp_path / "snapshots"
+    snaps.mkdir()
+    weights = tmp_path / "weights.json"
+    original_text = REAL_WEIGHTS.read_text()
+    weights.write_text(original_text)
+    original = json.loads(original_text)
+    _snapshot(snaps / "2026-10-16.json", "2026-10-16", _normal_scores(520, seed=11))
+    rc = cal.main([
+        "--snapshot-dir", str(snaps), "--weights", str(weights),
+        "--write", "--today", "2026-10-17", "--min-tickers", "400",
+    ])
+    assert rc == 0, capsys.readouterr().out
+    new = json.loads(weights.read_text())
+    assert len(new["score_bands_history"]) == len(original["score_bands_history"]) + 1
+    assert new["score_bands_history"][:-1] == original["score_bands_history"]
+    closed = new["score_bands_history"][-1]
+    assert closed["effective_from"] == original["score_bands_history"][-1]["effective_until"]
+    assert closed["effective_until"] == "2026-10-17"
+    assert {
+        b: [closed["score_bands"][b]["min"], closed["score_bands"][b]["max"]]
+        for b in BANDS
+    } == {
+        b: [original["score_bands"][b]["min"], original["score_bands"][b]["max"]]
+        for b in BANDS
+    }
+    assert new["score_bands_calibration"]["calibrated_at"] == "2026-10-17"
+    assert new["score_bands_calibration"]["previous_cutoffs"]["elite"] == [
+        original["score_bands"]["elite"]["min"], original["score_bands"]["elite"]["max"],
+    ]
+    assert {b: (new["score_bands"][b]["min"], new["score_bands"][b]["max"]) for b in BANDS} != {
+        b: (original["score_bands"][b]["min"], original["score_bands"][b]["max"]) for b in BANDS
+    }
+    assert '"standard_compounder":       [0.25, 0.20, 0.15, 0.20, 0.20]' in weights.read_text()
+    from lthcs.schemas.weights import Weights
+    Weights.model_validate(new)
+
+    # A calibration dated inside an already-closed regime is refused.
+    rc = cal.main([
+        "--snapshot-dir", str(snaps), "--weights", str(weights),
+        "--write", "--today", "2026-10-06",
+    ])
+    assert rc == 2
+    assert "last closed band regime" in capsys.readouterr().err
 
 
 # ---------------------------------------------------------------------------
 # lthcs.bands: consumers read the live config
 # ---------------------------------------------------------------------------
+
+def test_scorer_validator_and_history_share_one_band_definition():
+    """assign_band is one function, and history picks the cutoffs for a date.
+
+    The 2026-10-15 daily audit (run 38251149250) failed lthcs-validate-weekly
+    on 38,413 rows such as 2026-02-17 AAPL 57.7 labeled weakening. That label
+    is correct under the cutoffs in effect that day and wrong under the
+    live ones. Every published equity snapshot must agree with the regime
+    for its calc date, via the same function the scorer uses.
+    """
+    from lthcs.bands import assign_band, score_bands_for_date
+    from lthcs.schemas.weights import Weights
+    from lthcs.score import assign_band as scorer_assign_band
+
+    assert scorer_assign_band is assign_band
+    raw = json.loads(REAL_WEIGHTS.read_text())
+    Weights.model_validate(raw)
+
+    early = score_bands_for_date(raw, "2026-02-17")
+    assert early["elite"]["min"] == 90
+    assert early["weakening"] == {"min": 50, "max": 59, "color": "#B85A3E", "label": "Confidence Weakening"}
+    mid = score_bands_for_date(raw, "2026-05-18")
+    assert (mid["elite"]["min"], mid["high_confidence"]["max"]) == (85, 84)
+    assert score_bands_for_date(raw, "2026-10-05")["elite"]["min"] == 85
+    live = score_bands_for_date(raw, "2026-10-06")
+    assert live == raw["score_bands"]
+    # 57.7 floors to 57: weakening before 2026-10-06, constructive after.
+    assert assign_band(57.7, early) == "weakening"
+    assert assign_band(57.7, live) == "constructive"
+    # The May 18 elite move only matters inside [85, 90).
+    assert assign_band(86.0, early) == "high_confidence"
+    assert assign_band(86.0, mid) == "elite"
+
+    snap = json.loads((REPO_ROOT / "data" / "lthcs" / "snapshots" / "2026-02-17.json").read_text())
+    aapl = next(r for r in snap["scores"] if r["ticker"] == "AAPL")
+    assert (aapl["lthcs_score"], aapl["band"]) == (57.7, "weakening")
+
+    mismatches = []
+    snap_dir = REPO_ROOT / "data" / "lthcs" / "snapshots"
+    for path in sorted(snap_dir.glob("*.json")):
+        if path.stem == "index":
+            continue
+        bands = score_bands_for_date(raw, path.stem)
+        doc = json.loads(path.read_text())
+        for row in doc.get("scores") or []:
+            score = row.get("lthcs_score")
+            band = row.get("band")
+            if isinstance(score, bool) or not isinstance(score, (int, float)) or not band:
+                continue
+            got = assign_band(score, bands)
+            if got != band:
+                mismatches.append((path.stem, row.get("ticker"), score, band, got))
+                if len(mismatches) >= 5:
+                    break
+        if len(mismatches) >= 5:
+            break
+    assert mismatches == []
+
 
 def test_bands_module_reads_weights_and_falls_back(tmp_path):
     from lthcs import bands
@@ -400,6 +537,23 @@ def test_fallback_bands_mirror_the_live_weights():
     js_ranges = {m.group(1): (int(m.group(2)), int(m.group(3))) for m in re.finditer(
         r"(\w+):\s*\{\s*min:\s*(\d+),\s*max:\s*(\d+)", block)}
     assert js_ranges == _live_ranges()
+
+
+def test_help_page_fallback_bands_mirror_the_live_weights():
+    # lthcs_help/index.html shows static band ranges until lthcs-help-bands.js
+    # replaces them from weights.json (and for good if that fetch fails or JS
+    # is off). They sat at the pre-2026-10-06 cutoffs after a recalibration,
+    # so keep them in step like the other fallbacks.
+    html = (REPO_ROOT / "lthcs_help" / "index.html").read_text(encoding="utf-8")
+    ui_to_key = {"high": "high_confidence"}
+    found = {
+        ui_to_key.get(m.group(1), m.group(1)): (int(m.group(2)), int(m.group(3)))
+        for m in re.finditer(
+            r'class="lhlp-band" data-band="(\w+)">.*?'
+            r'class="lhlp-band-range">(\d+)&ndash;(\d+)<',
+            html, re.S)
+    }
+    assert found == _live_ranges()
 
 
 def test_dashboard_payload_carries_live_bands_for_the_about_panel(tmp_path, monkeypatch):

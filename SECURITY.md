@@ -2,9 +2,12 @@
 
 ## Reporting a vulnerability
 
-If you discover a security issue, please report it privately via GitHub
-Security Advisory at https://github.com/btabiado/alpine-data/security/advisories/new
-or email btabiado@gmail.com (replace with the actual repo owner email if different).
+If you discover a security issue, please report it privately through GitHub's
+private vulnerability reporting:
+https://github.com/btabiado/alpine-data/security/advisories/new
+
+That opens a private advisory that only the maintainers can see. Please don't
+open a public issue or pull request for a vulnerability.
 
 Please include:
 - A description of the issue and its potential impact

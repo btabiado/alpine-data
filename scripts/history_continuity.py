@@ -46,7 +46,11 @@ coverage file the pages build writes):
          for those, git history IS the archive, so a day with no commit is a
          day with no stored snapshot
   r2     per-file daily presence in health/r2-coverage.json (the R2 archive of
-         every deploy-time data-*.json)
+         every deploy-time data-*.json). A key under a History.retired_prefixes
+         entry is a path that moved: once the unprefixed successor is present
+         on or after the cutoff, the old key is not extended to the bucket's
+         newest day. A hole before that handoff, or a move whose successor
+         never appears, still fails.
 
 Pure stdlib. Nothing here touches the network; the r2 payload is handed in.
 """
@@ -106,7 +110,11 @@ class History:
     that must be non-null in every `files` member inside the window; suffix
     one with "@YYYY-MM-DD" when the writer only started emitting it that day.
     `since` is the first date the cadence applies (a series that went from
-    weekdays to every day, say).
+    weekdays to every day, say). `retired_prefixes` is R2-only: each item is
+    ``(prefix, cutoff_day)``. A coverage key under `prefix` whose path with
+    the prefix removed is present on or after `cutoff_day` moved; it is judged
+    through the day before the successor's first such day and is not extended
+    out to the newest day in the bucket. See `_successor_cap`.
     """
     path: str
     cadence: str
@@ -120,6 +128,7 @@ class History:
     required_fields: tuple[str, ...] = ()
     window_days: int | None = None
     since: str | None = None
+    retired_prefixes: tuple[tuple[str, str], ...] = ()
 
     @property
     def name(self) -> str:
@@ -497,8 +506,29 @@ def _field_value(member, dotted: str):
     return node
 
 
+def _successor_cap(gname: str, rows: dict, prefixes: tuple[tuple[str, str], ...]) -> str | None:
+    """Last day `gname` is still expected, when it is a retired R2 prefix.
+
+    None means "do not cap": either this key did not move, or the successor
+    key is not present on or after the cutoff, so a stop is still a stop.
+    When the successor is present, the cap is the day before its first covered
+    day on or after the cutoff. Days between the cutoff and a late successor
+    stay missing on the old key; they are not quietly dropped.
+    """
+    for prefix, cutoff in prefixes:
+        if not gname.startswith(prefix):
+            continue
+        successor = gname[len(prefix):]
+        covered = [r[0] for r in rows.get(successor, ()) if r[0] >= cutoff]
+        if not covered:
+            return None
+        return (date.fromisoformat(min(covered)) - timedelta(days=1)).isoformat()
+    return None
+
+
 def _judge(rows, spec: History, feed: str, today: date, gaps: list[dict],
-           group: str | None, f: Finding, end: str | None = None) -> None:
+           group: str | None, f: Finding, end: str | None = None,
+           cap: str | None = None) -> None:
     window_start = today - timedelta(days=spec.window())
     lo = window_start.isoformat()
     if spec.since and spec.since > lo:
@@ -512,6 +542,11 @@ def _judge(rows, spec: History, feed: str, today: date, gaps: list[dict],
     first, last = periods[0], periods[-1]
     if end and end > last:
         last = end   # judged up to a shared end date (R2: the bucket's newest day)
+    if cap and cap < last:
+        # A retired key is not a gap for the days its successor already holds.
+        last = cap
+    if last < first:
+        return
     f.first = min(f.first or first, first)
     f.last = max(f.last or last, last)
     expected = expected_periods(first, last, spec.cadence)
@@ -580,12 +615,14 @@ def check(feed: str, spec: History, root: Path, today: date,
     if isinstance(rows, dict):
         # Grouped sources (one series per city feed / per R2 file). For R2, a
         # file that silently stopped being uploaded must show up too, so every
-        # file is judged up to the newest date anywhere in the bucket.
+        # file is judged up to the newest date anywhere in the bucket — except
+        # a retired prefix whose successor key is already present (_successor_cap).
         end_all = None
         if spec.source == "r2":
             end_all = max((r[0] for rs in rows.values() for r in rs), default=None)
         for gname, rs in sorted(rows.items()):
-            _judge(rs, spec, feed, today, gaps, gname, f, end=end_all)
+            cap = _successor_cap(gname, rows, spec.retired_prefixes) if end_all else None
+            _judge(rs, spec, feed, today, gaps, gname, f, end=end_all, cap=cap)
     else:
         _judge(rows, spec, feed, today, gaps, None, f)
     if f.periods_checked == 0 and not f.error:

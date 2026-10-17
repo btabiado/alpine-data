@@ -196,5 +196,5 @@ Phase 5:
 - **CoinMetrics community vs. paid**: free has 1-day lag and a narrower metric set; paid unlocks realized cap, SOPR, MVRV. Phase 4 cost-benefit.
 - **Funding-rate aggregation**: V1 has Coinbase International + Deribit + OKX. Recommend open-interest-weighted average, median fallback when <2 venues report.
 - **AV NEWS_SENTIMENT for crypto tickers**: untested on `CRYPTO:BTC`; shared free-tier rate budget (Tier 6 #31) already gates equity. Phase 3 should reuse the LLM sentiment shadow (Tier 5 #28) instead.
-- **`asset_class` field rollout**: breaking change for anything reading universe by index. Coordinate `lthcs/peer_groups_loader.py` + V1 narratives loader in the same commit.
+- **`asset_class` field rollout**: breaking change for anything reading universe by index. Coordinate the peer-group and V1 narratives loaders in the same commit (`lthcs/peer_groups_loader.py`, named here originally, was deleted unused in 2026-10).
 - **Score-band recalibration**: audit at 90 days; if crypto composites systematically sit above equity, tighten macro overlay magnitude rather than introduce a separate band table.

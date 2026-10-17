@@ -9,7 +9,7 @@ interactive HTML dashboard (dashboard.html).
 Run:
     python app.py            # build + open dashboard
     python app.py --no-open  # just build
-    python app.py --fetch    # fetch live first (needs API key, see fetch_live.py)
+    python app.py --fetch-market   # fetch live market + whale data first (free)
 
 CSV schema (wide, USD millions, negative = outflow):
     date,IBIT,FBTC,BITB,...,Total
@@ -22,13 +22,23 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import sys
 import webbrowser
-from datetime import datetime
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
+
+try:
+    from zoneinfo import ZoneInfo
+    _ET = ZoneInfo("America/New_York")
+except Exception:  # no tz database: EST is close enough for "has the session opened"
+    _ET = timezone(timedelta(hours=-5))
+
+try:
+    from scripts.history_continuity import NYSE_HOLIDAYS
+except Exception:  # weekday-only calendar is the safe fallback
+    NYSE_HOLIDAYS = frozenset()
 
 
 ROOT = Path(__file__).parent
@@ -101,8 +111,7 @@ def defi_observation_date(defi: dict) -> str | None:
     must render an explicit "unavailable" state rather than substituting a
     build/fetch timestamp.
 
-    Byte-equivalent to v2/app.py's function of the same name; both frontends
-    consume the same ``market.json``.
+    (The retired V2 frontend carried an identical copy; this is now the only one.)
     """
     hist = (defi or {}).get("tvl_history")
     if not isinstance(hist, dict):
@@ -183,6 +192,33 @@ def load_csv(path: Path) -> pd.DataFrame:
     return df
 
 
+# Same windows as scripts/fetch_etf_flows (ACTIVE_LOOKBACK / SETTLING_ROWS).
+ETF_ACTIVE_LOOKBACK = 10
+ETF_SETTLING_ROWS = 5
+
+
+def complete_row_total(funds: pd.DataFrame,
+                       lookback: int = ETF_ACTIVE_LOOKBACK,
+                       settling: int = ETF_SETTLING_ROWS) -> pd.Series:
+    """Per-row sum of the fund columns, or NaN when the row is incomplete.
+
+    An empty cell is a fund that has not reported, not a zero, so summing
+    around it would publish a partial day as the day's flow. A row is
+    incomplete when a fund that reported in the previous ``lookback`` rows is
+    missing, except, on rows older than the newest ``settling``, a fund that
+    never reports again (it closed). A fund that has not launched yet does
+    not count. Same rule as scripts/fetch_etf_flows.withhold_incomplete_totals.
+    """
+    has = funds.notna()
+    reporting = (has.astype(float).rolling(lookback, min_periods=1).max()
+                 .shift(1).fillna(0).astype(bool))
+    reports_later = has[::-1].cummax()[::-1].shift(-1, fill_value=False)
+    settled = pd.Series(range(len(funds)), index=funds.index) < len(funds) - settling
+    closed = (~reports_later).apply(lambda col: col & settled)
+    incomplete = (~has & reporting & ~closed).any(axis=1)
+    return funds.sum(axis=1, min_count=1).mask(incomplete)
+
+
 def ensure_total(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
@@ -190,35 +226,107 @@ def ensure_total(df: pd.DataFrame) -> pd.DataFrame:
     if total_col is None:
         numeric = df.drop(columns=["date"]).select_dtypes("number")
         df = df.copy()
-        df["Total"] = numeric.sum(axis=1)
+        df["Total"] = complete_row_total(numeric)
     else:
         df = df.rename(columns={total_col: "Total"})
     return df
 
 
-def aggregate(df: pd.DataFrame) -> dict:
-    if df.empty:
-        return {
-            "daily": [], "weekly": [], "monthly": [], "yearly": [],
-            "cumulative": [], "by_fund": [], "yoy": {},
-            "stats": {}, "funds": [], "last_date": None,
-        }
+def _is_trading_day(d: date) -> bool:
+    return d.weekday() < 5 and d not in NYSE_HOLIDAYS
 
-    daily = df[["date", "Total"]].rename(columns={"Total": "flow"}).copy()
+
+def _latest_opened_session(now: datetime | None = None) -> date:
+    """Most recent NYSE session that has opened as of ``now`` (New York date)."""
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    et = now.astimezone(_ET)
+    d = et.date()
+    if not (_is_trading_day(d) and (et.hour, et.minute) >= (9, 30)):
+        d -= timedelta(days=1)
+        while not _is_trading_day(d):
+            d -= timedelta(days=1)
+    return d
+
+
+def pending_flow_days(df: pd.DataFrame, now: datetime | None = None,
+                      max_unpublished: int = 5) -> list[dict]:
+    """Sessions after the newest complete row whose flows are not in yet.
+
+    Two kinds, both "not reported yet" and never a zero:
+      * ``partial``: a row on file with an empty Total, i.e. some funds have
+        reported and others have not (``reported`` names the ones that have);
+      * ``unpublished``: a session that has opened but has no row at all,
+        typically today before Farside posts. Only listed when there are at
+        most ``max_unpublished`` of them; a longer gap is a stale feed, which
+        the tab's freshness stamp already reports.
+    """
+    if df.empty or "Total" not in df.columns:
+        return []
+    settled = df.loc[df["Total"].notna(), "date"]
+    partial = df[df["Total"].isna()]
+    if len(settled):
+        # An unreported row older than the newest complete day is a gap in
+        # the history, not something still on its way.
+        partial = partial[partial["date"] > settled.max()]
+    fund_cols = [c for c in df.columns if c not in ("date", "Total")]
+    out: list[dict] = [
+        {"date": r["date"].strftime("%Y-%m-%d"), "status": "partial",
+         "reported": [c for c in fund_cols if pd.notna(r[c])]}
+        for _, r in partial.iterrows()
+    ]
+    d = df["date"].max().date() + timedelta(days=1)
+    session = _latest_opened_session(now)
+    unpublished: list[date] = []
+    while d <= session and len(unpublished) <= max_unpublished:
+        if _is_trading_day(d):
+            unpublished.append(d)
+        d += timedelta(days=1)
+    if len(unpublished) <= max_unpublished:
+        out.extend({"date": u.isoformat(), "status": "unpublished"}
+                   for u in unpublished)
+    return out
+
+
+def aggregate(df: pd.DataFrame, now: datetime | None = None) -> dict:
+    empty = {
+        "daily": [], "weekly": [], "monthly": [], "yearly": [],
+        "cumulative": [], "by_fund": [], "yoy": {},
+        "stats": {}, "funds": [], "last_date": None,
+    }
+    if df.empty:
+        return empty
+
+    # A row with an empty Total is a day Farside has not finished publishing
+    # (some funds in, others still "-"). It is not a day of zero flow, so it is
+    # left out of every Total-based series and figure below (charts, 7d/30d,
+    # YTD, all-time, streak, "last day") and listed under stats["pending"]
+    # instead. Its funds that DID report still count in their own per-fund
+    # figures, because those are real readings.
+    settled = df[df["Total"].notna()].reset_index(drop=True)
+    pending = pending_flow_days(df, now=now)
+    if settled.empty:
+        if pending:
+            empty["stats"] = {"pending": pending}
+        return empty
+
+    daily = settled[["date", "Total"]].rename(columns={"Total": "flow"}).copy()
     daily["cumulative"] = daily["flow"].cumsum()
 
-    s = df.set_index("date")["Total"]
-    weekly = s.resample("W-MON", label="left", closed="left").sum().reset_index()
-    weekly.columns = ["date", "flow"]
-    weekly["cumulative"] = weekly["flow"].cumsum()
+    s = settled.set_index("date")["Total"]
 
-    monthly = s.resample("MS").sum().reset_index()
-    monthly.columns = ["date", "flow"]
-    monthly["cumulative"] = monthly["flow"].cumsum()
+    def _buckets(rule: str, **kw) -> pd.DataFrame:
+        # min_count=1 + dropna: a bucket with no reported day is absent, not a
+        # bar of zero flow.
+        b = s.resample(rule, **kw).sum(min_count=1).dropna().reset_index()
+        b.columns = ["date", "flow"]
+        b["cumulative"] = b["flow"].cumsum()
+        return b
 
-    yearly = s.resample("YS").sum().reset_index()
-    yearly.columns = ["date", "flow"]
-    yearly["cumulative"] = yearly["flow"].cumsum()
+    weekly = _buckets("W-MON", label="left", closed="left")
+    monthly = _buckets("MS")
+    yearly = _buckets("YS")
 
     try:
         from fund_meta import name_for as _fund_name
@@ -226,7 +334,8 @@ def aggregate(df: pd.DataFrame) -> dict:
         def _fund_name(s): return s
 
     fund_cols = [c for c in df.columns if c not in ("date", "Total")]
-    fund_cols = [c for c in fund_cols if pd.api.types.is_numeric_dtype(df[c])]
+    fund_cols = [c for c in fund_cols
+                 if pd.api.types.is_numeric_dtype(df[c]) and df[c].notna().any()]
 
     max_d = df["date"].max()
     win30 = max_d - pd.Timedelta(days=30)
@@ -241,6 +350,9 @@ def aggregate(df: pd.DataFrame) -> dict:
         last_30 = float(df[df["date"] >= win30][c].sum())
         last_60 = float(df[df["date"] >= win60][c].sum())
         last_90 = float(df[df["date"] >= win90][c].sum())
+        # The fund's own newest READING, not the table's newest row: on a day
+        # it has not reported yet its last flow is the previous one it posted.
+        reported = df.loc[df[c].notna(), ["date", c]]
         by_fund.append({
             "fund": c,
             "name": _fund_name(c),
@@ -249,22 +361,25 @@ def aggregate(df: pd.DataFrame) -> dict:
             "last_60d": last_60,
             "last_90d": last_90,
             "share_pct": (abs(total) / all_time_abs) * 100.0,
-            "last_flow": float(df[c].iloc[-1]),
-            "last_date": df["date"].iloc[-1].strftime("%Y-%m-%d"),
+            "last_flow": float(reported[c].iloc[-1]),
+            "last_date": reported["date"].iloc[-1].strftime("%Y-%m-%d"),
         })
-        # Daily series for charts (date, flow, cumulative)
+        # Daily series for charts (date, flow, cumulative). One entry per row
+        # so every fund shares the same date axis; flow is None (not 0) where
+        # the fund has not reported, and cumulative carries the running sum of
+        # what it HAS reported (0 before its first session).
         series = df[["date", c]].copy()
-        series["cum"] = series[c].cumsum()
+        series["cum"] = series[c].fillna(0.0).cumsum()
         by_fund_daily[c] = [
             {"date": r["date"].strftime("%Y-%m-%d"),
-             "flow": float(r[c]) if pd.notna(r[c]) else 0.0,
-             "cumulative": float(r["cum"]) if pd.notna(r["cum"]) else 0.0}
+             "flow": float(r[c]) if pd.notna(r[c]) else None,
+             "cumulative": float(r["cum"])}
             for _, r in series.iterrows()
         ]
     by_fund.sort(key=lambda r: r["total"], reverse=True)
 
     yoy = {}
-    df_y = df.copy()
+    df_y = settled.copy()
     df_y["year"] = df_y["date"].dt.year
     df_y["doy"] = df_y["date"].dt.dayofyear
     for year, grp in df_y.groupby("year"):
@@ -272,11 +387,11 @@ def aggregate(df: pd.DataFrame) -> dict:
         doy = grp["doy"].tolist()
         yoy[str(int(year))] = {"doy": doy, "cumulative": cum}
 
-    last = df.iloc[-1]
-    last_7 = df.tail(7)["Total"].sum()
-    last_30 = df.tail(30)["Total"].sum()
-    ytd = df[df["date"].dt.year == df["date"].max().year]["Total"].sum()
-    streak = streak_calc(df["Total"].tolist())
+    last = settled.iloc[-1]
+    last_7 = settled.tail(7)["Total"].sum()
+    last_30 = settled.tail(30)["Total"].sum()
+    ytd = settled[settled["date"].dt.year == settled["date"].max().year]["Total"].sum()
+    streak = streak_calc(settled["Total"].tolist())
 
     stats = {
         "last_day_flow": float(last["Total"]),
@@ -284,8 +399,11 @@ def aggregate(df: pd.DataFrame) -> dict:
         "last_7d": float(last_7),
         "last_30d": float(last_30),
         "ytd": float(ytd),
-        "all_time": float(df["Total"].sum()),
+        "all_time": float(settled["Total"].sum()),
         "streak": streak,
+        # Sessions after last_date whose flows are not in yet. Rendered as
+        # "not reported yet", never as a zero.
+        "pending": pending,
     }
 
     def to_records(d):
@@ -373,7 +491,7 @@ def load_composite_history(max_snapshots: int = COMPOSITE_HISTORY_MAX_SNAPSHOTS)
     Never raises: a missing directory or an unparseable file is a gap in the
     series, not a reason to fail a build.
 
-    Byte-for-byte the same loader v2/app.py carries. Change one, change both.
+    (The retired V2 frontend carried the same loader; this is now the only one.)
     """
     out: dict = {"snapshots": 0, "first_snapshot": None,
                  "last_snapshot": None, "indexes": {}}
@@ -1058,81 +1176,11 @@ def load_json(path: Path) -> dict:
         return {}
 
 
-# Top-level sidecar keys that move on EVERY fetch even when not one observation
-# changed: the build/fetch stamp, and the fetcher's own per-run bookkeeping
-# (how many months it pulled, how long it took, whether the network was up).
-#
-# By rule 1 of the honesty contract the age the page reports comes from the
-# DATA — the UAP tab's freshness is mufonFreshness(), which reads
-# `date_range[1]`, the newest SIGHTING, and never `generated_at`. So a payload
-# whose only difference is one of these fields is the same data seen again, and
-# rewriting a git-tracked file for it is pure churn.
-SIDECAR_VOLATILE_KEYS = ("generated_at", "fetched_at", "_nuforc_live_meta")
-
-
-def _sidecar_substance(path: Path):
-    """The sidecar's payload minus per-run bookkeeping, or ``None`` if it can't
-    be read as JSON at all (missing file, truncated write, HTML error page)."""
-    try:
-        obj = json.loads(path.read_text())
-    except Exception:
-        return None
-    if not isinstance(obj, dict):
-        return obj
-    return {k: v for k, v in obj.items() if k not in SIDECAR_VOLATILE_KEYS}
-
-
-def copy_sidecar_if_changed(src: Path, dst: Path, label: str) -> bool:
-    """Copy ``src`` over ``dst`` only when the DATA differs. Returns whether it
-    copied.
-
-    ``dst`` here is a git-TRACKED file (see the data-mufon.json carve-out in
-    .gitignore) and ``src`` is a build product regenerated on every run. An
-    unconditional ``shutil.copyfile`` therefore left the working tree dirty
-    after every single local build, which is how a previous round committed
-    data churn through ``git add -A``.
-
-    Three cases, in order:
-
-    * ``src`` is unreadable as JSON — refuse to clobber a readable ``dst``. A
-      truncated or half-written fetch must not destroy the committed
-      stale-keep fallback the carve-out exists to provide.
-    * substance identical (only ``SIDECAR_VOLATILE_KEYS`` moved) — skip. The
-      served file keeps its older stamp, which is honest: the observations
-      behind it really are the same ones.
-    * anything else — copy, because the deployed page needs the current data.
-    """
-    src_sub = _sidecar_substance(src)
-    if src_sub is None:
-        if dst.exists() and _sidecar_substance(dst) is not None:
-            print(f"  [{label}] {src.name} is not readable JSON — kept the "
-                  f"existing {dst.name} rather than overwriting it with it",
-                  file=sys.stderr)
-            return False
-        shutil.copyfile(src, dst)
-        return True
-    if dst.exists() and _sidecar_substance(dst) == src_sub:
-        print(f"  [{label}] {dst.name} already holds this data "
-              f"(only the build stamp differs) — not rewritten")
-        return False
-    shutil.copyfile(src, dst)
-    print(f"  [{label}] {dst.name} updated from {src.parent.name}/{src.name}")
-    return True
-
-
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-open", action="store_true", help="don't open the browser")
-    ap.add_argument("--fetch", action="store_true", help="fetch live ETF flow data (needs API key)")
     ap.add_argument("--fetch-market", action="store_true", help="fetch live market + whale data (free)")
     args = ap.parse_args()
-
-    if args.fetch:
-        try:
-            import fetch_live
-            fetch_live.fetch_all(DATA_DIR)
-        except Exception as e:
-            print(f"[fetch] failed: {e}", file=sys.stderr)
 
     if args.fetch_market:
         try:
@@ -1158,7 +1206,7 @@ def main() -> int:
     # prior good JSON on failure. Runs unconditionally (not behind
     # --fetch-market) because the source is a free public scrape and the
     # data only changes when State Dept reissues an advisory — same gating
-    # as the V2 build does.
+    # as the retired V2 build used.
     try:
         import fetch_advisories
         rc = fetch_advisories.main(["--out", str(ROOT / "data-travel.json")])
@@ -1189,44 +1237,22 @@ def main() -> int:
         sidecar_path.write_text(json.dumps(blob))
         print(f"  Wrote {sidecar_path.name} ({sidecar_path.stat().st_size:,} bytes)")
 
-    # External sidecars produced by standalone fetchers (fetch_cpi.py,
-    # fetch_supplies.py, fetch_metals.py — each dual-writes to v2/data-X.json
-    # AND data-X.json at repo root). Always declare them in the manifest —
-    # in CI, V1 builds BEFORE V2 (which is what triggers the dual-write
-    # fetchers), so the .exists() check we used to do would always miss and
-    # the JS lazy-loader would never try the fetch. By the time the page is
-    # served from _site/, V2 has run and the files exist. The JS-side fetch
-    # gracefully handles 404 → empty-state, so unconditional declaration is
-    # safe and lets V1 pick up the data on the first deploy.
+    # External sidecars written outside this build: data-cpi.json,
+    # data-supplies.json and data-metals.json by fetch_cpi.py / fetch_supplies.py
+    # / fetch_metals.py in pages.yml's "Fetch dashboard sidecars" step, which
+    # runs AFTER this render. Always declared, so the page tries the fetch; the
+    # JS lazy-loader turns a 404 into the tab's empty state.
     #
-    # Travel Advisories (data-travel.json) is in this same group: the V1
-    # build calls fetch_advisories.main() above with --out pointing at the
-    # V1 root, so the file is written before render_html. Declared
-    # unconditionally for the same reason as cpi/supplies/metals — the JS
-    # lazy-loader handles a missing file as an empty-state.
+    # Travel Advisories (data-travel.json) is in this same group: this build
+    # calls fetch_advisories.main() above with --out pointing at the repo root,
+    # so the file is written before render_html. Declared unconditionally for
+    # the same reason.
     for ext_key in ("cpi", "supplies", "metals", "travel"):
         manifest[ext_key] = f"data-{ext_key}.json"
-    # UAP/MUFON sidecar: only v2/app.py owns the network fetch (writes
-    # v2/data-mufon.json). Serve it from the V1 root so production V1 doesn't
-    # depend on the /v2/ preview path. Locally we copy the already-built v2
-    # file across (best-effort, no network); in CI the workflow stages the
-    # freshly-built v2/data-mufon.json to the root after the V2 step. The JS
-    # lazy-loader treats a missing file as an empty state.
-    #
-    # DIRECTION: v2/ is authoritative for CONTENT (it owns the fetch) but the
-    # ROOT file is the one git tracks — a committed stale-keep fallback, see the
-    # .gitignore carve-out. So the copy is v2 -> root, guarded, never the other
-    # way. It used to run unconditionally, which meant every local build
-    # rewrote a tracked file with nothing but a new `generated_at`; one
-    # accidental `git add -A` then committed pure data churn (it has happened).
-    # copy_if_changed() compares the SUBSTANCE and leaves the tracked file
-    # byte-identical when only the build stamp moved.
-    _mufon_src = ROOT / "v2" / "data-mufon.json"
-    if _mufon_src.exists():
-        try:
-            copy_sidecar_if_changed(_mufon_src, ROOT / "data-mufon.json", "mufon")
-        except OSError as e:
-            print(f"  [mufon] could not copy {_mufon_src} -> root: {e}", file=sys.stderr)
+    # UAP sidecar (data-mufon.json at repo root): aggregated counts only.
+    # Nothing fetches nuforc.org. A person updates the file with
+    # scripts/update_ufo_counts.py from a page they saved by hand.
+    # Published as is by the stage step's data-*.json glob.
     manifest["mufon"] = "data-mufon.json"
 
     # City Pulse sidecar (data-city.json at repo root): written out-of-band by
@@ -1431,9 +1457,9 @@ header .meta{color:var(--muted);font-size:12px}
 /* ---- P4: two nav models, two shapes -------------------------------------
    The tab strip mixes DROPDOWN GROUPS (Crypto▾ Markets▾ Macro▾ Explore▾ —
    pressing one opens a menu) with DIRECT JUMPS (LTHCS, AI News — pressing one
-   changes the panel) and one EXIT (Summit — pressing it leaves the site). They
-   used to be visually identical, so the only way to learn which was which was
-   to press it. Now:
+   changes the panel) and EXITS (Summit, API Universe — pressing one leaves the
+   dashboard). They used to be visually identical, so the only way to learn
+   which was which was to press it. Now:
      menu group  = outlined pill + ▾ caret  -> "this opens something"
      direct jump = flat, underline on active -> "this is a destination"
      exit        = flat + dashed underline + ↗ -> "this leaves"
@@ -1453,8 +1479,10 @@ header .meta{color:var(--muted);font-size:12px}
 /* The pill already carries the active state; the 2px bottom rule the flat
    tabs use would double up and make the pill look clipped. */
 .tabgroup:not(.tabgroup--solo) .tabgroup-btn{border-bottom-width:1px}
-/* An EXIT, not a tab. Dashed underline = "this link goes off this page". */
+/* An EXIT, not a tab. Dashed underline = "this link goes off this page".
+   Summit is a scripted div; API Universe is a real <a>, hence the reset. */
 .tab--exit{color:var(--muted);border-bottom-style:dashed;border-bottom-color:var(--border)}
+a.tab--exit{text-decoration:none}
 .tab--exit:hover{color:var(--text);border-bottom-color:var(--muted)}
 .tab--exit .exitmark{margin-left:5px;font-size:11px;opacity:.85;vertical-align:baseline}
 
@@ -1576,7 +1604,7 @@ header .meta{color:var(--muted);font-size:12px}
    overflow-wrap is inherited, so one class on the row element covers the
    headline, the body and the source chip, and `anywhere` (not `break-word`)
    also lowers min-content so the enclosing grid track shrinks with it.
-   Identical rule in v2/app.py. */
+   */
 /* Rule 2 lives on the .metals-grid2 / .supplies-grid declarations themselves,
    further down this stylesheet — an override up here would lose the cascade
    to the later same-specificity rule. */
@@ -1588,7 +1616,7 @@ header .meta{color:var(--muted);font-size:12px}
    positioned, because every one of these cards already puts its big score in
    the top-right corner and an overlay chip would land on top of it. Adding a
    row at the bottom cannot reflow anything above it.
-   Mirrors v2/app.py's .v2-hist* block; V1 palette tokens (--purple is the
+   Ported from the retired V2 frontend's .v2-hist* block; V1 palette tokens (--purple is the
    composite-card accent, already the border-left colour on all seven .card
    sentiment cards). */
 .histcard{cursor:pointer}
@@ -1659,8 +1687,8 @@ header .meta{color:var(--muted);font-size:12px}
 .chart-card h2{font-size:13px;margin:0;font-weight:600}
 .chart-card .desc{font-size:11px;color:var(--muted)}
 /* --- DATA FRESHNESS STAMPS ------------------------------------------------
-   Shared vocabulary with V2 (v2/app.py) and lthcs_tab/lthcs-freshness.js so
-   the three frontends stay diffable: same class names, same four tones,
+   Shared vocabulary with lthcs_tab/lthcs-freshness.js so the two frontends
+   stay diffable: same class names, same four tones,
    same thresholds (see freshness() in the script below).
 
    DELIBERATE TOKEN CHOICE: the tints use V1's own --amber / --red, NOT the
@@ -2569,8 +2597,8 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
 
 /* ===================== TOUCH BLOCK (site audit V2-C) =====================
    Deliberately LAST in the sheet so these win on source order. Gated on a
-   coarse pointer OR a phone-width viewport, matching the equivalent block in
-   v2/app.py, so the production and preview frontends behave identically.
+   coarse pointer OR a phone-width viewport (ported from the retired V2
+   frontend).
 
    V2-C — the Travel sub-view buttons measured 69.4x28, 72.6x28, 72.6x28,
    93.9x28 and 83.8x28 at 360x740 with a coarse pointer. The 44px touch floor
@@ -2604,8 +2632,8 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
      this way" cue, and a far better one than an invisible gradient mask.
      Smallest button is then 61.4x44, still clear of the 44px floor.
 
-     This is the one place V1 deviates from v2/app.py's touch block, and it
-     deviates by two declarations. V2 should adopt the same two. */
+     This is the one place V1 deviated from the retired V2 frontend's touch
+     block, by two declarations. */
   .travel-subtabs{position:sticky;top:0;z-index:6;
     background:var(--bg);margin-left:-2px;margin-right:-2px;
     padding-left:2px;padding-right:2px;gap:3px;
@@ -2717,6 +2745,18 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
     <div class="tab" data-tab="aviation" role="tab" tabindex="0" aria-selected="false">Aviation</div>
     </div>
   </div>
+  <!-- Models: the crypto options research pages. Each is its own page, so the
+       items are real <a href> exits (no data-tab), like API Universe: they stay
+       out of the tab wiring and the tab-strip validator, and wear the ↗ exit mark. -->
+  <div class="tabgroup" data-group="models">
+    <button class="tabgroup-btn" type="button" aria-haspopup="true" aria-expanded="false">Models<span class="caret" aria-hidden="true">&#9662;</span></button>
+    <div class="tabgroup-menu" role="group" aria-label="Model pages">
+    <a class="tab tab--exit" href="crypto-odds/" title="Option-implied settlement odds for BTC, ETH and XRP"
+       aria-label="Crypto Odds — opens the option-implied price odds page">Crypto Odds<span class="exitmark" aria-hidden="true">&#8599;</span></a>
+    <a class="tab tab--exit" href="crypto-scorecard/" title="How each forecasting model scored on the sealed holdout"
+       aria-label="Model Scorecard — opens the crypto forecasting model scorecard">Model Scorecard<span class="exitmark" aria-hidden="true">&#8599;</span></a>
+    </div>
+  </div>
   <!-- P4: the four dropdown groups above and the three direct jumps below used
        to be interleaved in one undifferentiated row (Crypto▾ Markets▾ Macro▾
        LTHCS Explore▾ Summit AI News), so nothing told a reader which of them
@@ -2748,6 +2788,23 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
     <div class="tab tab--solo tab--exit" data-tab="summit" role="link" tabindex="0"
          title="Leaves this dashboard — opens the Competitive Landscape site, where the Summit views now live"
          aria-label="Summit — leaves this dashboard and opens the Competitive Landscape site">Summit<span class="exitmark" aria-hidden="true">&#8599;</span></div>
+  </div>
+  <!-- API Universe opens /api-universe/, a separate page (a radial map of every
+       API in the Data Sources catalog), so it is a real <a href> rather than a
+       scripted tab: no data-tab, which keeps it out of the tab wiring below
+       (.tab[data-tab]) and out of the tab-strip validator, and lets
+       middle-click / open-in-new-tab work. It wears Summit's exit look
+       (.tab--exit, the ↗ glyph, an accessible name that says where it goes)
+       because it does the same thing: it leaves the dashboard. -->
+  <div class="tabgroup tabgroup--solo">
+    <a class="tab tab--solo tab--exit" href="api-universe/"
+       title="Leaves this dashboard — opens the API Universe, a map of every API in the Data Sources catalog"
+       aria-label="API Universe — leaves this dashboard and opens a map of every API in the Data Sources catalog">API Universe<span class="exitmark" aria-hidden="true">&#8599;</span></a>
+  </div>
+  <div class="tabgroup tabgroup--solo">
+    <a class="tab tab--solo tab--exit" href="kwg/"
+       title="Opens KWG Customer Insights — brand performance, sales and customer analytics"
+       aria-label="KWG Customer Insights — opens the KnitWell customer insights dashboard">KWG Customer Insights<span class="exitmark" aria-hidden="true">&#8599;</span></a>
   </div>
   </span>
 </div>
@@ -3205,7 +3262,6 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
       <span class="lbl" style="margin:0">Load data</span>
       <button class="btn" id="loadBtcBtn" title="Paste BTC ETF flow CSV from Farside">Paste BTC</button>
       <button class="btn" id="loadEthBtn" title="Paste ETH ETF flow CSV from Farside">Paste ETH</button>
-      <button class="btn" id="seedBtcBtn" title="Pull BTC from canadiancode/btc-etf-flows GitHub mirror (may be stale)">Seed BTC (mirror)</button>
       __BOOKMARKLET_LINK__
       <span id="loadStatus" class="sub" style="margin-left:8px;color:var(--muted)"></span>
     </div>
@@ -3220,10 +3276,8 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
     <div id="etfEmpty" class="empty hidden">
       <div>No ETF flow data loaded yet.</div>
       <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-        <button class="btn" id="seedBtn" title="Pull from canadiancode/btc-etf-flows GitHub mirror (BTC Total only, may be stale)">Seed BTC from GitHub mirror</button>
         <button class="btn" id="pasteBtn">Paste CSV…</button>
       </div>
-      <div id="seedStatus" class="sub" style="margin-top:10px;color:var(--muted)"></div>
     </div>
     <div id="pasteModal" class="modal-bg hidden">
       <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;width:min(720px,100%);max-height:90vh;display:flex;flex-direction:column;gap:10px">
@@ -3707,7 +3761,8 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
   <!-- ============ REAL ESTATE TAB ============ -->
   <!-- Gateway for the standalone US Real Estate Markets dashboard. Shows
        headline freshness + a small stat strip computed at tab-activate time
-       from /data/real_estate.json (committed daily by real-estate-daily.yml).
+       from /data/real_estate.json (refreshed by real-estate-daily.yml;
+       recommitted when the monthly housing substance changes).
        Big CTA opens the full /real-estate/ page with all 10 KPIs, 5Y chart,
        and sortable 50-metro table. -->
   <div id="tab-real_estate" class="hidden">
@@ -4456,8 +4511,8 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
   <!-- ============ CPI TAB (ported from V2) ============ -->
   <!-- 22 FRED Consumer Price Index series across 7 categories (Headlines /
        Food / Energy / Housing / Cars / Healthcare / Other). Sidecar is
-       data-cpi.json — dual-written by fetch_cpi.py to v2/data-cpi.json
-       AND data-cpi.json. Loads lazily via SIDECAR_FOR_TAB.cpi the first
+       data-cpi.json — written by fetch_cpi.py in pages.yml's "Fetch
+       dashboard sidecars" step. Loads lazily via SIDECAR_FOR_TAB.cpi the first
        time the user opens this tab. When FRED_API_KEY is unset the
        payload arrives with fred_available=false and we render an
        empty-state explainer instead of an empty grid. -->
@@ -4719,6 +4774,9 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
       <!-- Freshness strip: OLDEST real observation date feeding this tab.
            Written by renderTabFreshness(); hidden while empty. -->
       <div id="tabFresh-mufon" class="v2-freshstrip"></div>
+      <p id="mufonAttribution" style="margin:0 0 14px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--panel);font-size:13px;line-height:1.5;color:var(--text)">
+        Data used on this dashboard was provided by the National UFO Reporting Center (nuforc.org) and is used with NUFORC's special permission.
+      </p>
 
     <!-- Lead section: Recent sighting activity — moved to the top of the UAP
          tab per request. Short-horizon velocity KPIs derived client-side from
@@ -4799,9 +4857,8 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
             <div id="mufonMapSidePanel" style="background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);border-radius:8px;padding:12px;font-size:12px"></div>
           </div>
           <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">
-            Data: NUFORC via community archive — sighting <strong>reports</strong>, not verified phenomena.
-            Filed shapes and durations are eyewitness claims. Browse the live database at
-            <a href="https://nuforc.org/" target="_blank" rel="noopener noreferrer" style="color:#60a5fa">nuforc.org</a>.
+            Data used on this dashboard was provided by the National UFO Reporting Center (nuforc.org) and is used with NUFORC's special permission.
+            Figures are report counts, not verified phenomena.
           </div>
         </div>
       </div>
@@ -5327,8 +5384,7 @@ window.addEventListener('error', e => {
 // downgraded to a no-op rather than allowed to take the page down with them.
 // Real Chart.js, when it loads, is left completely untouched.
 //
-// Byte-for-byte the same stub V2 carries (v2/app.py). If you change one,
-// change both — a fix that lands in only one frontend is a half fix.
+// (The retired V2 frontend carried the same stub.)
 //
 // WHAT CHANGED WHEN CHART.JS STOPPED BLOCKING THE PARSER: this test used to
 // run right here, at parse time, when a synchronous script-src tag in <head>
@@ -5419,8 +5475,8 @@ async function loadSidecar(name){
 
 // Which sidecar (if any) each tab needs. Tabs absent here are eager-rendered.
 // cpi / supplies / metals payloads are produced by standalone fetchers
-// (fetch_cpi.py / fetch_supplies.py / fetch_metals.py) which dual-write to
-// v2/data-X.json AND data-X.json — the latter is what V1 loads here.
+// (fetch_cpi.py / fetch_supplies.py / fetch_metals.py) which pages.yml's
+// "Fetch dashboard sidecars" step runs, writing data-X.json at the repo root.
 // travel sidecar is written by fetch_advisories.py from the V1 build itself
 // (see main() in app.py) to /data-travel.json at repo root.
 const SIDECAR_FOR_TAB = {
@@ -5620,10 +5676,10 @@ function baseOpts({yLabel='', tooltipFmt=null}={}){
 // DATA FRESHNESS — one implementation, used by every stamp on the page
 // ============================================================================
 // This is the PRODUCTION frontend (`/dashboard.html`, deployed by
-// .github/workflows/pages.yml). The helper family below is a byte-for-byte
-// port of v2/app.py's; lthcs_tab/lthcs-freshness.js carries a third copy as
+// .github/workflows/pages.yml). The helper family below was ported from the
+// retired V2 frontend; lthcs_tab/lthcs-freshness.js carries a second copy as
 // an ES module. Same thresholds, same wording, same tones. If you change a
-// rule, change it in all three or the frontends drift apart.
+// rule, change it in both or the frontends drift apart.
 //
 // THE RULES THIS ENFORCES (do not "simplify" any of them away):
 //
@@ -5770,9 +5826,8 @@ function freshnessHtml(isoDate, opts){
 //
 // This is done ONCE here rather than at the 30-odd call sites, and it is
 // deliberately attached to the RENDERED CHIP rather than edited into
-// freshnessHtml()/paintFreshness(): those two are byte-for-byte parity-locked
-// against v2/app.py (tests/test_v1_freshness.py::test_helper_is_byte_identical_
-// to_v2) and V2 is not this lane's to change. Working on `.v2-fresh[title]`
+// freshnessHtml()/paintFreshness(), which are shared vocabulary with
+// lthcs_tab/lthcs-freshness.js. Working on `.v2-fresh[title]`
 // also catches the chips paintFreshness() writes, the tab strips, and the
 // header stamp — every chip on the page, from one place.
 //
@@ -6584,11 +6639,14 @@ function mufonFreshness(){
   const through = fDay(mu.data_through) || fDay(range[1]);
   if (!through) return null;
   const refresh = mu.live_refresh || {};
-  const notRefreshed = !!mu._stale || refresh.ok === false;
+  const manual = refresh.manual === true;
+  const notRefreshed = !manual && (!!mu._stale || refresh.ok === false);
   return {
     date: through, stale: 0, total: 1,
     label: notRefreshed ? 'not refreshed · data through' : 'data through',
-    title: notRefreshed
+    title: manual
+      ? 'Newest report date in the manually saved NUFORC copy.'
+      : notRefreshed
       ? 'NUFORC was not refreshed on the last build'
         + (refresh.cause ? ' (' + refresh.cause + ')' : '')
         + ', so this tab shows the sightings already on file.'
@@ -6850,10 +6908,24 @@ function paintCompositeFreshness(prefix, fresh){
 function etfAsset(){ return state.etfAsset; }
 function etfData(){ return DATA[etfAsset()] || {}; }
 
+// Sessions after the last complete day whose flows are not in yet (from
+// aggregate()'s stats.pending). Shown as "not reported yet", never as a 0:
+// Farside posts a day overnight, and a day nobody has reported is not a day
+// of zero flow.
+function etfPendingNote(s){
+  const p = Array.isArray(s && s.pending) ? s.pending : [];
+  return p.filter(x => x && x.date).map(x => {
+    if (x.status !== 'partial') return `${x.date}: not reported yet`;
+    const n = (x.reported || []).length;
+    return `${x.date}: partly reported (${n} fund${n === 1 ? '' : 's'} so far)`;
+  }).join(' · ');
+}
+
 function renderEtfKpis(){
   const d = etfData(); const s = d.stats || {};
   const items = [
-    {label:`Last day (${s.last_date||'—'})`, val:fmtSigned(s.last_day_flow), cls:s.last_day_flow>=0?'green':'red'},
+    {label:`Last day (${s.last_date||'—'})`, val:fmtSigned(s.last_day_flow), cls:s.last_day_flow>=0?'green':'red',
+     sub: etfPendingNote(s)},
     {label:'Last 7 days', val:fmtSigned(s.last_7d), cls:s.last_7d>=0?'green':'red'},
     {label:'Last 30 days', val:fmtSigned(s.last_30d), cls:s.last_30d>=0?'green':'red'},
     {label:'Year to date', val:fmtSigned(s.ytd), cls:s.ytd>=0?'green':'red'},
@@ -6862,7 +6934,9 @@ function renderEtfKpis(){
      cls: s.streak ? (s.streak.direction==='up'?'green':s.streak.direction==='down'?'red':'amber') : ''},
   ];
   document.getElementById('etfKpis').innerHTML = items.map(i =>
-    `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls}">${i.val}</div></div>`
+    `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls}">${i.val}</div>`
+    + (i.sub ? `<div class="sub" style="color:var(--muted);font-size:11px;margin-top:4px">${escapeHtml(i.sub)}</div>` : '')
+    + `</div>`
   ).join('');
   // Staleness chip: flows come from committed CSV (Farside is Cloudflare-blocked),
   // refreshed manually.
@@ -7623,15 +7697,6 @@ function renderSignals(){
   // LTC 4-chart grid so every top-25 coin gets the full breakdown plus
   // a price chart.
   renderPerCoinSignalList();
-}
-
-// Map a signal label to a coarse bucket used by the strip's filter chips
-// and the colored chip on each compact card.
-function labelBucket(label){
-  const L = (label||'').toUpperCase();
-  if (L.indexOf('BUY')  >= 0) return 'buy';
-  if (L.indexOf('SELL') >= 0) return 'sell';
-  return 'hold';
 }
 
 // Inline SVG sparkline for the detail modal. Tries the signal's own
@@ -10552,20 +10617,9 @@ function renderMultichainWhale(){
 }
 
 // BTC supply held: whales (≥1,000 BTC addresses) vs non-whales (<1,000 BTC).
-// Real cohort data from bitinfocharts.com — daily back to ~2021-05. Honors
-// the Range selector at the top of the Whale tab via _whaleRangeFilter.
-function _whaleRangeFilter(rows){
-  if (!rows || !rows.length) return rows || [];
-  const range = state.range;
-  if (range === 'ytd'){
-    const yr = new Date(rows[rows.length-1].date).getFullYear();
-    return rows.filter(r => new Date(r.date).getFullYear() === yr);
-  }
-  const days = {'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095}[range] || null;
-  if (!days) return rows;
-  return rows.slice(-days);
-}
-
+// Real cohort data from bitinfocharts.com — daily back to ~2021-05. The chart
+// shows full history with its own bin selector; it does not follow the tab's
+// Range buttons (see renderWhaleCohortChart).
 // Bin daily cohort rows down to weekly / monthly / quarterly / yearly buckets
 // using the LAST value in each window (it's a stock metric — supply held —
 // not a flow, so sampling the period-end value is the right aggregation).
@@ -12143,17 +12197,7 @@ const fmtUsdShort = p => p == null ? '—' :
          p >= 0.01 ? p.toFixed(4) : p.toFixed(6));
 
 // ===== Point of Control =====
-// Multi-timeframe POC ladder. Each card shows 4 timeframes' POCs in a
-// compact table — clustering across timeframes signals high-conviction
-// levels. Inline SVG volume profile histogram visualizes distribution shape.
-const POC_TFS = [['d30','30d'],['d90','90d'],['d180','180d'],['d365','365d']];
-
-// "Clustered" = 3+ of the 4 POCs land within 2% of each other.
-function pocClustered(rows){
-  const pocs = (rows||[]).filter(r => r && r.poc).map(r => r.poc);
-  if (pocs.length < 3) return false;
-  return pocs.some(ref => pocs.filter(p => Math.abs(p-ref)/ref*100 <= 2).length >= 3);
-}
+// Volume-profile renderers shared by the POC top-25 grid and the detail modal.
 
 // Horizontal volume profile SVG. Primary = 90d filled histogram; 30d shown
 // as a dashed overlay for divergence-at-a-glance. POC bin highlighted
@@ -12256,50 +12300,6 @@ function volumeProfileSVGLarge(primary, alt, current){
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-height:420px;display:block;border-radius:6px;background:#0b0d12">
     ${vaBand}${bars}${altLine}${pocLine}${curMarker}${labels}${legend}
   </svg>`;
-}
-
-function volumeProfileSVG(primary, alt, current){
-  const W = 120, H = 140, padL = 4, padR = 4;
-  if (!primary || !primary.buckets || !primary.buckets.length){
-    return `<svg width="${W}" height="${H}"><text x="${W/2}" y="${H/2}" text-anchor="middle" font-size="10" fill="#888">no profile</text></svg>`;
-  }
-  const bks = primary.buckets;
-  const maxV = Math.max(...bks.map(b => b.volume)) || 1;
-  const prices = bks.map(b => b.price);
-  const pMin = prices[0] - primary.step / 2;
-  const pMax = prices[prices.length - 1] + primary.step / 2;
-  const barH = (H - 4) / bks.length;
-  const barW = W - padL - padR;
-  const yFor = i => 2 + (bks.length - 1 - i) * barH;
-  const bars = bks.map((b, i) => {
-    const w = (b.volume / maxV) * barW;
-    const isPoc = Math.abs(b.price - primary.poc) < primary.step / 2 + 1e-6;
-    const inVA  = b.price >= primary.val && b.price <= primary.vah;
-    const fill  = isPoc ? '#ff6b35' : (inVA ? '#4a90e2' : '#7aa7d9');
-    const op    = isPoc ? 1 : (inVA ? 0.85 : 0.45);
-    return `<rect x="${padL}" y="${yFor(i)}" width="${w}" height="${Math.max(1, barH-1)}" fill="${fill}" opacity="${op}"/>`;
-  }).join('');
-  const vaTop = 2 + ((pMax - primary.vah) / (pMax - pMin)) * (H - 4);
-  const vaBot = 2 + ((pMax - primary.val) / (pMax - pMin)) * (H - 4);
-  const vaBand = `<rect x="0" y="${vaTop}" width="${W}" height="${vaBot - vaTop}" fill="#4a90e2" opacity="0.08"/>`;
-  let altLine = '';
-  if (alt && alt.buckets && alt.buckets.length){
-    const maxA = Math.max(...alt.buckets.map(b => b.volume)) || 1;
-    const pts = alt.buckets.map(b => {
-      const y = 2 + ((pMax - b.price) / (pMax - pMin)) * (H - 4);
-      const x = padL + (b.volume / maxA) * barW;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    }).join(' ');
-    altLine = `<polyline points="${pts}" fill="none" stroke="#888" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>`;
-  }
-  let curMarker = '';
-  if (current != null){
-    const clamped = Math.min(Math.max(current, pMin), pMax);
-    const yC = 2 + ((pMax - clamped) / (pMax - pMin)) * (H - 4);
-    const dash = (current < pMin || current > pMax) ? 'stroke-dasharray="3,2"' : '';
-    curMarker = `<line x1="0" y1="${yC}" x2="${W}" y2="${yC}" stroke="#00c853" stroke-width="1.5" ${dash}/>`;
-  }
-  return `<svg width="${W}" height="${H}">${vaBand}${bars}${altLine}${curMarker}</svg>`;
 }
 
 // Tiny inline SVG sparkline of the last 7 days of signal score for a
@@ -13403,93 +13403,6 @@ function pocMigrationSparklineLarge(series){
   </svg>`;
 }
 
-function renderPocCards(){
-  const poc = (DATA.market||{}).poc || {};
-  const host = document.getElementById('pocCards');
-  if (!host) return;
-  host.innerHTML = RESEARCH_ASSETS.map(a => {
-    const d = poc[a];
-    const accent = RESEARCH_ACCENT(a);
-    if (!d || !POC_TFS.some(([k]) => d[k])){
-      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no POC data</div></div>`;
-    }
-    const rows = POC_TFS.map(([k]) => d[k]);
-    const anchor = d.d90 || d.d30 || rows.find(Boolean);
-    // Cluster badge: 3+ TFs within 2%
-    const clustered = pocClustered(rows);
-    const clusterBadge = clustered
-      ? '<span style="background:#a78bfa22;color:#a78bfa;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600" title="3+ timeframes within 2%">🎯 CLUSTERED</span>'
-      : '';
-    // Migration badge: 30d vs 90d POC delta
-    const mig = d.migration;
-    let migBadge = '';
-    if (mig){
-      const cfg = mig.direction === 'UP'
-        ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:`Migrating UP ${mig.delta_pct >= 0 ? '+' : ''}${mig.delta_pct}%`}
-        : mig.direction === 'DOWN'
-        ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:`Migrating DOWN ${mig.delta_pct}%`}
-        : {bg:'#6b728022', fg:'var(--muted)', arrow:'·', label:'Value stable'};
-      const tip = (mig.explanation || '').replace(/"/g,'&quot;');
-      migBadge = `<span title="${tip}" style="background:${cfg.bg};color:${cfg.fg};padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600;cursor:help">${cfg.arrow} ${cfg.label}${mig.between_pocs ? ' ⇆' : ''}</span>`;
-    }
-    // 4-row ladder
-    const ladder = POC_TFS.map(([k, label]) => {
-      const r = d[k];
-      if (!r) return `<tr><td style="color:var(--muted);font-size:10px">${label}</td><td colspan="3" style="color:var(--muted)">—</td></tr>`;
-      const inVA = r.in_value_area;
-      const tag = inVA
-        ? '<span style="background:#22c55e22;color:#22c55e;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">IN VA</span>'
-        : '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>';
-      const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
-      const dt = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + r.distance_pct.toFixed(1) + '%';
-      return `<tr>
-        <td style="color:var(--muted);font-size:10px">${label}</td>
-        <td style="font-weight:600">${fmtUsdShort(r.poc)}</td>
-        <td style="color:${dc};text-align:right">${dt}</td>
-        <td style="text-align:right">${tag}</td>
-      </tr>`;
-    }).join('');
-    // Naked POCs subsection
-    const naked = Array.isArray(d.naked) ? d.naked : [];
-    const cur = anchor && anchor.current;
-    const nakedHtml = naked.length ? `
-      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Naked POCs <span style="opacity:.7">(untested magnet levels, 180d)</span></div>
-        ${naked.map(n => {
-          const isSupport = cur != null && cur > n.poc;
-          const col = isSupport ? '#22c55e' : '#ef4444';
-          const sign = n.distance_pct >= 0 ? '+' : '';
-          return `<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0">
-            <span style="color:${col};font-weight:600">${fmtUsdShort(n.poc)}</span>
-            <span style="color:var(--muted)">${n.days_ago}d ago · ${sign}${n.distance_pct}%</span>
-          </div>`;
-        }).join('')}
-      </div>` : '';
-    const sparkline = pocMigrationSparkline(d.migration_series);
-    return `<div class="card" style="border-left:4px solid ${accent}">
-      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;flex-wrap:wrap">
-        <h3 style="font-size:13px;color:var(--text);margin:0">${a.toUpperCase()}
-          <span class="sub" style="color:var(--muted);font-size:10px">${fmtUsdShort(anchor.current)} now</span>
-        </h3>
-        <div style="display:flex;gap:4px;flex-wrap:wrap">${clusterBadge}${migBadge}</div>
-      </div>
-      ${sparkline}
-      <div style="display:flex;gap:10px;margin-top:8px">
-        <div style="flex:1;min-width:0">
-          <table style="width:100%;font-size:11px;border-collapse:collapse">
-            <thead><tr style="color:var(--muted);font-size:9px;text-align:left">
-              <th>TF</th><th>POC</th><th style="text-align:right">Δ</th><th style="text-align:right">VA</th>
-            </tr></thead>
-            <tbody>${ladder}</tbody>
-          </table>
-        </div>
-        <div style="flex:0 0 120px">${volumeProfileSVG(d.d90, d.d30, anchor.current)}</div>
-      </div>
-      ${nakedHtml}
-    </div>`;
-  }).join('');
-}
-
 // ===== Sentiment composite cards (Overview / DeFi / ETF Flows / Futures) =====
 // Each tab has its own domain-specific sentiment composite card mirroring the
 // visual pattern of #pocSentimentCard. paintSentimentCard() is the shared
@@ -13582,8 +13495,8 @@ function hideSentimentCard(prefix){
 // "not recorded" explanation — silently hiding the gap is how the archive
 // went a whole release unnoticed and unread in the first place.
 //
-// Mirrors v2/app.py's block one-for-one (same card set, same thresholds, same
-// stale marker, same copy). Change one, change both.
+// Ported one-for-one from the retired V2 frontend (same card set, same
+// thresholds, same stale marker, same copy).
 const COMPOSITE_HISTORY_CARDS = [
   { card: 'cryptoSignalsSentimentCard', key: 'crypto_signal_sentiment', archived: true,
     title: 'Crypto Signal Sentiment',
@@ -13775,8 +13688,7 @@ function compositeHistoryChart(points){
   // series is unaffected — the floor only ever widens the domain, never
   // narrows it, so no real movement is ever compressed out of view.
   //
-  // Kept numerically identical to v2/app.py compositeHistoryChart() so the
-  // production and preview frontends cannot drift apart.
+  // Ported from the retired V2 frontend's compositeHistoryChart().
   const MIN_SPAN = 20;
   if (y1 - y0 < MIN_SPAN){
     const mid = (y0 + y1) / 2;
@@ -14073,8 +13985,7 @@ function closeCompositeHistory(){
   // treating as modal, with no way to tell they had left. aria-modal is a
   // promise to the AT; the trap is what makes it true.
   //
-  // Byte-for-byte the same behaviour as v2/app.py's trap so production and
-  // preview cannot drift apart.
+  // Same behaviour as the retired V2 frontend's trap.
   document.addEventListener('keydown', e => {
     if (e.key !== 'Tab') return;
     const modal = document.getElementById('compositeHistoryModal');
@@ -14393,8 +14304,8 @@ function renderFuturesSentiment(){
 
 // ===== POC top-25 grid (Point of Control tab) =====
 // Renders one card per top-25 coin from DATA.market.poc_top. Reuses the
-// renderPocCards() layout but keyed off coin metadata (image/symbol/name/price)
-// instead of the fixed RESEARCH_ASSETS list.
+// layout of the original fixed-asset POC cards (since removed) but keyed off
+// coin metadata (image/symbol/name/price) instead of the RESEARCH_ASSETS list.
 // POC SENTIMENT INDEX — aggregate migration direction across the top 25
 // by signal score. Renders into #pocSentimentCard. Index in [-100,+100]:
 // positive = broad accumulation (POCs drifting higher), negative = broad
@@ -16356,7 +16267,9 @@ function selectTab(t){
     try { _activeTab.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'}); }
     catch(_){ _activeTab.scrollIntoView(); }
   }
-  document.querySelectorAll('.tab').forEach(el => {
+  // .tab[data-tab]: the strip's tabs only. The API Universe exit is a plain
+  // <a class="tab"> link, and aria-selected is not allowed on a link.
+  document.querySelectorAll('.tab[data-tab]').forEach(el => {
     const isActive = el.dataset.tab === t;
     el.classList.toggle('active', isActive);
     el.setAttribute('aria-selected', isActive ? 'true' : 'false');
@@ -16948,7 +16861,9 @@ function handleTabActivate(t){
   if (t === 'summit') { window.location.href = 'landscape/?pres=absent'; return; }
   selectTab(t);
 }
-document.querySelectorAll('.tab').forEach(b => {
+// .tab[data-tab], not .tab: the API Universe exit is a real <a href> and must
+// keep the browser's own click / Enter / middle-click behaviour.
+document.querySelectorAll('.tab[data-tab]').forEach(b => {
   b.addEventListener('click', () => handleTabActivate(b.dataset.tab));
   b.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -17013,23 +16928,8 @@ async function liveRefresh(force){
 
 document.getElementById('refreshBtn')?.addEventListener('click', () => liveRefresh(true));
 
-// Seed BTC from GitHub mirror — function so we can re-bind after innerHTML restore
+// Paste-CSV button — a function so it can be re-bound after an innerHTML restore
 function rebindEtfImportButtons(){
-  const sb = document.getElementById('seedBtn');
-  if (sb && !sb.dataset.bound) {
-    sb.dataset.bound = '1';
-    sb.addEventListener('click', async () => {
-      const s = document.getElementById('seedStatus');
-      s.textContent = 'Pulling from GitHub mirror…';
-      try {
-        const r = await fetch('/api/seed-etf', {method:'POST'});
-        const j = await r.json();
-        if (!j.ok) throw new Error(j.error || 'failed');
-        s.textContent = `Imported ${j.rows} rows. Reloading…`;
-        setTimeout(() => liveRefresh(false), 400);
-      } catch(e) { s.textContent = 'Seed failed: ' + e.message; }
-    });
-  }
   const pb = document.getElementById('pasteBtn');
   if (pb && !pb.dataset.bound) {
     pb.dataset.bound = '1';
@@ -17053,18 +16953,6 @@ document.getElementById('pasteClose')?.addEventListener('click', closeModal);
 // Persistent ETF action-bar buttons
 document.getElementById('loadBtcBtn')?.addEventListener('click', () => openModal('btc'));
 document.getElementById('loadEthBtn')?.addEventListener('click', () => openModal('eth'));
-document.getElementById('seedBtcBtn')?.addEventListener('click', async () => {
-  const s = document.getElementById('loadStatus');
-  s.textContent = 'Pulling from GitHub mirror…';
-  try {
-    const r = await fetch('/api/seed-etf', {method:'POST'});
-    const j = await r.json();
-    if (!j.ok) throw new Error(j.error || 'failed');
-    s.textContent = `Imported ${j.rows} BTC rows. Reloading…`;
-    setTimeout(() => liveRefresh(false), 400);
-    setTimeout(() => s.textContent = '', 4000);
-  } catch(e) { s.textContent = 'Seed failed: ' + e.message; }
-});
 // Click outside the inner box to close
 pasteModal?.addEventListener('click', (e) => { if (e.target === pasteModal) closeModal(); });
 // Escape to close
@@ -17112,12 +17000,11 @@ if (!isServer){
   }
   const _sb = document.getElementById('shareBtn');
   if (_sb) _sb.style.display = 'none';
-  // ETF Flows tab: "Paste BTC", "Paste ETH", "Seed BTC (mirror)" + the
-  // inline "Seed BTC from GitHub mirror" all POST to /api/upload-csv or
-  // /api/seed-etf, which only exist in local Flask mode. On the static
-  // mirror they 404 — hide the buttons entirely. Public-mirror users
-  // refresh the ETF CSVs via the hourly Pages workflow, not by clicking.
-  ['loadBtcBtn', 'loadEthBtn', 'seedBtcBtn', 'seedBtn'].forEach(id => {
+  // ETF Flows tab: "Paste BTC" / "Paste ETH" POST to /api/upload-csv, which
+  // only exists in local Flask mode. On the static mirror it 404s — hide the
+  // buttons entirely. The ETF CSVs are refreshed daily from Farside by
+  // etf-flows-daily.yml, not by clicking.
+  ['loadBtcBtn', 'loadEthBtn'].forEach(id => {
     const b = document.getElementById(id);
     if (b) b.style.display = 'none';
   });
@@ -17315,7 +17202,7 @@ document.getElementById('shareCopyBtn')?.addEventListener('click', () => {
 if (IS_SHARE) {
   // Hide write-action buttons. The chat dock and refresh button mutate
   // server state (or cost Anthropic credits), so they're owner-only.
-  ['refreshBtn','loadBtcBtn','loadEthBtn','seedBtcBtn','chatFab','chatDock'].forEach(id => {
+  ['refreshBtn','loadBtcBtn','loadEthBtn','chatFab','chatDock'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
@@ -19585,7 +19472,7 @@ function renderMufonTrend(){
     + '</div>'
     + '<div style="margin-top:12px;padding:10px 12px;background:var(--bg2,#0f1419);border-left:3px solid var(--v2-warn,#fbbf24);border-radius:4px;font-size:11px;color:var(--muted);line-height:1.5">'
     +   '<strong style="color:var(--v2-warn,#fbbf24)">Note:</strong> '
-    +   'Combines the planetsig community mirror (1906-2014) with a direct scrape of NUFORC\'s monthly subndx pages (2014+). '
+    +   'Counts only, from the saved NUFORC index. '
     +   (m._stale
           ? 'NUFORC was <strong>not refreshed</strong> on the last build'
             + ((m.live_refresh && m.live_refresh.cause) ? ' (' + escapeHtml(m.live_refresh.cause) + ')' : '')
@@ -19667,7 +19554,9 @@ function renderMufonMap(){
       note.textContent = (dr[0] && dr[1]) ? ('All records ' + dr[0] + ' to ' + dr[1] + '.') : '';
     } else if (m._stale) {
       const anchor = m.recent_buckets_anchor || (m.date_range && m.date_range[1]) || '—';
-      note.textContent = 'NUFORC not refreshed — window ends at the newest sighting on file (' + anchor + '), not today.';
+      note.textContent = (m.live_refresh && m.live_refresh.manual)
+        ? 'Window ends at the newest report in the saved file (' + anchor + '), not today.'
+        : 'NUFORC not refreshed — window ends at the newest sighting on file (' + anchor + '), not today.';
     } else {
       note.textContent = 'Window anchored to today (UTC).';
     }
@@ -20233,10 +20122,8 @@ function renderMufonShapes(){
     + '<div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">'
     +   'Aggregated by NUFORC-reported shape (lowercased; blanks bucketed as "unknown"). '
     +   'Top 15 shapes shown; rarer ones collapse into "other". '
-    +   'Series runs ' + (dr[0] || '?') + ' through ' + (dr[1] || '?') + ', '
-    +   'combining the planetsig historical mirror with a direct NUFORC subndx scrape'
-    +   (m._stale ? ' <strong>(NUFORC not refreshed this run)</strong>' : '')
-    +   '. Range toggle re-slices the stacked area only; the legend totals stay all-time.'
+    +   'Series runs ' + (dr[0] || '?') + ' through ' + (dr[1] || '?') + '. '
+    +   'Range toggle re-slices the stacked area only; the legend totals stay all-time.'
     + '</div>';
 
   body.innerHTML = ''
@@ -21714,10 +21601,10 @@ function travelFmtDate(iso){
 // challenge) every row carries risks:[] because the data is MISSING, not
 // because a country has none. Treat that as "unavailable" so a Level 4
 // country never reads "No specific risk indicators" and the terrorism count
-// is never a fabricated 0. Older payloads without the flag are recognised by
-// their source tag.
+// is never a fabricated 0. `fallback === true` is the status flag for that
+// mode; older payloads are recognised by source / risks_available.
 function travelRisksAvailable(t){
-  return !!t && t.risks_available !== false && t.source !== 'rss-fallback';
+  return !!t && t.fallback !== true && t.risks_available !== false && t.source !== 'rss-fallback';
 }
 const TRAVEL_RISKS_UNAVAILABLE = 'Risk indicators unavailable (source blocked)';
 

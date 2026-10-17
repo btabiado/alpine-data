@@ -71,7 +71,7 @@ DESIGN NOTES
 * Missing inputs are recorded as null rather than skipped, so a gap in the
   series is visible as a gap.
 * THE ARITHMETIC MIRRORS THE SHIPPED JS. Every composite here is also computed
-  in the browser by app.py / v2/app.py; the archive is worthless if it stores a
+  in the browser by app.py; the archive is worthless if it stores a
   different number than the card displayed, so clampScore(), Math.round() and
   sentimentBucket() are ported exactly (see _clamp / _jsround / _bucket).
   Verified by executing both against one payload — the built dashboard.html in
@@ -209,8 +209,8 @@ def _whale_sentiment_date(sent) -> str | None:
 # ---------------------------------------------------------------------------
 # Shared arithmetic — the browser's, ported exactly.
 #
-# Every composite below is ALSO computed in JS at render time (app.py /
-# v2/app.py). The archive is only worth keeping if the number it stores is the
+# Every composite below is ALSO computed in JS at render time (app.py).
+# The archive is only worth keeping if the number it stores is the
 # number the card showed, so these mirror the shipped helpers one-for-one:
 # clampScore(), Math.round() and sentimentBucket().
 # ---------------------------------------------------------------------------
@@ -287,7 +287,7 @@ def _last(series, field: str):
 def _signals_top20(market: dict) -> list:
     """The top-50 simplified signal rows the cards score from.
 
-    ``signals_top20`` is computed at RENDER time by app.py / v2/app.py and
+    ``signals_top20`` is computed at RENDER time by app.py and
     only ever exists in their in-memory payload — it is never written to
     data/market.json, which is all this script can see. Recompute it from
     the same pure function the builders call, over the same markets_top
@@ -540,19 +540,27 @@ def defi_sentiment(market: dict) -> dict | None:
     )
 
 
-def _etf_daily_totals(path: Path) -> list[tuple[str, float | None]]:
+ETF_ACTIVE_LOOKBACK = 10   # app.ETF_ACTIVE_LOOKBACK / fetch_etf_flows.ACTIVE_LOOKBACK
+ETF_SETTLING_ROWS = 5      # app.ETF_SETTLING_ROWS / fetch_etf_flows.SETTLING_ROWS
+
+
+def _etf_daily_totals(path: Path) -> list[tuple[str, float]]:
     """``aggregate(ensure_total(load_csv(path)))['daily']``, without pandas:
     (date, total flow $m) per row, chronological.
 
     Same column rules as app.py: a case-insensitive ``Total`` column wins,
-    otherwise the numeric per-fund columns are summed. Same number cleanup
-    (thousands separators, $, accounting parentheses).
+    otherwise the numeric per-fund columns are summed, but only on a complete
+    row (the app.complete_row_total rule: no fund that reported in the
+    previous ETF_ACTIVE_LOOKBACK rows is missing, a fund that closed for good
+    excepted). Same number cleanup (thousands separators, $, accounting
+    parentheses).
 
-    An unreadable total is kept as a DATED ROW WITH A None FLOW rather than
-    dropped, because the card's windows are the last 7 and last 30 ROWS: a
-    dropped row would silently pull an eighth trading day into the 7d sum.
-    The None is skipped when summing (renderEtfFlowSentiment's flowVal does
-    the same with NaN) — a day nobody reported is not a day of zero flow.
+    A row with no total is LEFT OUT, exactly as aggregate() leaves it out of
+    'daily': it is a day Farside has not finished publishing (or never
+    reported), not a day of zero flow, and the card's last-7/last-30-row
+    windows are windows over that daily series. Counting it as 0 would invent
+    a flat day; keeping it in the window would make the archive disagree with
+    the card it records.
     """
     if not path.exists():
         return []
@@ -578,19 +586,40 @@ def _etf_daily_totals(path: Path) -> list[tuple[str, float | None]]:
               .replace("$", "").strip())
         return _num(s)
 
-    out: list[tuple[str, float | None]] = []
+    dated = []
     for r in rows:
         d = (r.get(date_col) or "").strip()[:10]
         if len(d) < 10:
             continue                      # load_csv drops undated rows too
+        dated.append((d, r))
+    dated.sort(key=lambda t: t[0])
+
+    grid: list[list] = []
+    last_seen: dict[int, int] = {}
+    edge = 0
+    if total_col is None:
+        grid = [[_cell(r.get(c)) for c in fund_cols] for _, r in dated]
+        last_seen = {k: i for i, vals in enumerate(grid)
+                     for k, v in enumerate(vals) if v is not None}
+        edge = len(grid) - ETF_SETTLING_ROWS
+
+    out: list[tuple[str, float]] = []
+    for i, (d, r) in enumerate(dated):
         if total_col is not None:
             tot = _cell(r.get(total_col))
         else:
-            vals = [v for v in (_cell(r.get(c)) for c in fund_cols)
-                    if v is not None]
-            tot = sum(vals) if vals else None
+            vals = grid[i]
+            window = grid[max(0, i - ETF_ACTIVE_LOOKBACK):i]
+            incomplete = any(
+                v is None
+                and not (i < edge and last_seen.get(k, -1) < i)   # closed fund
+                and any(w[k] is not None for w in window)
+                for k, v in enumerate(vals))
+            nums = [v for v in vals if v is not None]
+            tot = None if (incomplete or not nums) else sum(nums)
+        if tot is None:
+            continue
         out.append((d, tot))
-    out.sort(key=lambda t: t[0])
     return out
 
 
@@ -611,9 +640,9 @@ def etf_flow_sentiment(asset: str) -> dict | None:
     weighted, total_w = 0.0, 0.0
     parts = []
     for window, weight in ((7, 0.6), (30, 0.4)):
-        # Last N ROWS (the card slices the series, not the calendar), then
-        # drop the rows that reported no number at all.
-        vals = [v for _, v in daily[-window:] if v is not None]
+        # Last N ROWS of the daily series (the card slices the series, not
+        # the calendar). Unreported days are already out of it.
+        vals = [v for _, v in daily[-window:]]
         if not vals:
             continue
         s = _clamp((sum(vals) / NORM) * 100)
@@ -741,7 +770,7 @@ def stocks_signal_breadth(market: dict) -> dict | None:
 def _whale_sentiments(whale: dict) -> tuple[dict, dict]:
     """(BTC, ETH) whale-sentiment composites for a whale tree.
 
-    app.py and v2/app.py compute both at RENDER time (build_payload attaches
+    app.py computes both at RENDER time (build_payload attaches
     ``whale["sentiment"]`` and ``whale["eth"]["sentiment"]`` in memory) and
     never write them back to data/whale.json, which is all this script reads.
     So every snapshot from 2026-08-02 on archived ``whale_sentiment_btc`` and
@@ -853,7 +882,7 @@ def collect() -> dict:
         u = (sym or "").upper()
         return u.startswith("USD") or u.endswith("USD") or u == "DAI"
 
-    # `signals_top20` is computed at RENDER time by app.py / v2/app.py and
+    # `signals_top20` is computed at RENDER time by app.py and
     # only ever exists in their in-memory payload — it is never written to
     # data/market.json, which is all this script can see. That is why every
     # committed snapshot so far records `crypto_signal_sentiment: null`:

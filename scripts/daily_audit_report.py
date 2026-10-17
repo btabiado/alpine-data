@@ -57,8 +57,9 @@ P0, P1, P2 = "P0", "P1", "P2"
 SEV_ORDER = {P0: 0, P1: 1, P2: 2}
 
 PAGE_LABELS = {
-    "v1": "V1 (/)", "v2": "V2 (/v2/)", "summit": "/summit/", "health": "/health/",
+    "v1": "V1 (/)", "summit": "/summit/", "health": "/health/",
     "real-estate": "/real-estate/", "lthcs": "/lthcs/",
+    "api-universe": "/api-universe/",
 }
 
 # Thresholds for the P2 "heavy page" flag (initial load, encoded bytes).
@@ -79,7 +80,8 @@ BENIGN_CONSOLE = (
 )
 
 # Pages whose top-level tabs the UX audit opens one by one.
-TABBED_PAGES = ("v1", "v2")
+# (V2 at /v2/ was retired in 2026-10; /v2/ is now a redirect to /.)
+TABBED_PAGES = ("v1",)
 
 DATED_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})\.(json|md)$")
 

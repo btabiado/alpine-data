@@ -467,10 +467,17 @@ def test_load_baseline_roundtrip(tmp_path: Path) -> None:
 # Integration smoke test — compute_post_ic against tmp snapshots
 # ---------------------------------------------------------------------------
 
-def test_compute_post_ic_returns_shaped_payload(tmp_path: Path) -> None:
+def test_compute_post_ic_returns_shaped_payload(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Tiny end-to-end: a 2-day window over 2 tickers returns a dict
     shaped how ``classify_verdict`` expects.
     """
+    # compute_post_ic() has no cache_root argument, so the forward-return
+    # fetch used the repo's .cache/lthcs/backtest/prices/ and kept the fake
+    # AAA/BBB series there across runs. Keep that cache in tmp_path.
+    monkeypatch.setattr(
+        verdict_mod.backtest, "_default_cache_root", lambda: tmp_path / "cache")
     data_root = tmp_path / "lthcs"
     # Two snapshots ranked AAA > BBB.
     _write_snapshot(data_root, "2026-05-18", [

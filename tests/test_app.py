@@ -129,6 +129,78 @@ def test_aggregate_buckets_and_cumulative():
     assert out["last_date"] == dates[-1].strftime("%Y-%m-%d")
 
 
+def test_aggregate_leaves_a_partly_reported_day_out_and_marks_it_pending(tmp_path: Path):
+    """An empty cell is "not reported yet", never 0.
+
+    The CSV's newest row is half published: IBIT in, FBTC still empty, so the
+    Total is empty. It must not become today's flow, a zero in the charts, a
+    break in the streak, or a drag on 7d/30d/all-time.
+    """
+    from datetime import datetime, timezone
+    p = tmp_path / "btc_flows.csv"
+    p.write_text(
+        "date,IBIT,FBTC,MSBT,Total\n"
+        "2026-09-30,10.0,5.0,,15.0\n"       # MSBT not launched yet
+        "2026-10-01,20.0,0.0,,20.0\n"
+        "2026-10-02,30.0,-5.0,1.0,26.0\n"
+        "2026-10-05,40.0,,,\n"              # partly published
+    )
+    df = app.ensure_total(app.load_csv(p))
+    out = app.aggregate(df, now=datetime(2026, 10, 6, 15, 0, tzinfo=timezone.utc))
+
+    assert [r["date"] for r in out["daily"]] == ["2026-09-30", "2026-10-01", "2026-10-02"]
+    assert all(r["flow"] != 0 for r in out["daily"])
+    st = out["stats"]
+    assert st["last_date"] == "2026-10-02" and st["last_day_flow"] == 26.0
+    assert st["all_time"] == pytest.approx(61.0)
+    assert st["streak"] == {"direction": "up", "length": 3}
+    assert out["last_date"] == "2026-10-02"
+    # 10-05 partly in; 10-06 (session open at 11:00 ET) not reported at all.
+    assert st["pending"] == [
+        {"date": "2026-10-05", "status": "partial", "reported": ["IBIT"]},
+        {"date": "2026-10-06", "status": "unpublished"},
+    ]
+    # Per fund: a missing cell is None, not 0, and is not someone's last flow.
+    fbtc = {r["date"]: r for r in out["by_fund_daily"]["FBTC"]}
+    assert fbtc["2026-10-05"]["flow"] is None
+    assert fbtc["2026-10-05"]["cumulative"] == pytest.approx(0.0)
+    assert fbtc["2026-10-01"]["flow"] == 0.0           # a reported zero stays
+    msbt = {r["date"]: r for r in out["by_fund_daily"]["MSBT"]}
+    assert msbt["2026-09-30"]["flow"] is None
+    by = {f["fund"]: f for f in out["by_fund"]}
+    assert by["FBTC"]["last_date"] == "2026-10-02" and by["FBTC"]["last_flow"] == -5.0
+    assert by["IBIT"]["total"] == pytest.approx(100.0)  # its 10-05 reading counts
+    json.dumps(out, allow_nan=False)                      # no NaN leaks into JSON
+
+
+def test_aggregate_shows_no_pending_before_the_session_opens():
+    from datetime import datetime, timezone
+    df = app.ensure_total(pd.DataFrame({
+        "date": pd.to_datetime(["2026-10-02", "2026-10-05"]),
+        "Total": [1.0, 2.0],
+    }))
+    # 08:00 ET on Tue 2026-10-06: Monday is in, Tuesday has not opened.
+    early = app.aggregate(df, now=datetime(2026, 10, 6, 12, 0, tzinfo=timezone.utc))
+    assert early["stats"]["pending"] == []
+    # A long gap is a stale feed, not "pending": the freshness stamp says so.
+    late = app.aggregate(df, now=datetime(2026, 11, 30, 18, 0, tzinfo=timezone.utc))
+    assert late["stats"]["pending"] == []
+
+
+def test_ensure_total_does_not_sum_around_a_missing_fund():
+    """No Total column: a row where a reporting fund is empty gets no Total,
+    but a fund that has not launched yet does not hold the sum back."""
+    df = pd.DataFrame({
+        "date": pd.to_datetime(["2026-10-01", "2026-10-02", "2026-10-05"]),
+        "IBIT": [100.0, 50.0, 70.0],
+        "FBTC": [20.0, 10.0, float("nan")],     # FBTC not in yet on 10-05
+        "MSBT": [float("nan"), float("nan"), 3.0],  # launches on 10-05
+    })
+    out = app.ensure_total(df)
+    assert out["Total"].iloc[0] == 120.0 and out["Total"].iloc[1] == 60.0
+    assert pd.isna(out["Total"].iloc[2])
+
+
 # ---------- streak_calc ----------
 
 def test_streak_empty():
@@ -200,93 +272,18 @@ def test_render_html_substitutes_payload():
     assert "generated_at" in html
 
 
-# ---------- copy_sidecar_if_changed (Item 6: builds must not dirty the tree) ----------
+# ---------- data-mufon.json: the committed frozen NUFORC cache ----------
 #
-# app.py stages v2/data-mufon.json into the repo ROOT so V1 can serve it without
-# depending on the /v2/ preview path. The root file is git-TRACKED (an explicit
-# .gitignore carve-out — it is the committed stale-keep fallback), while the v2
-# one is a build product regenerated on every run. The copy used to be
-# unconditional, so every local build rewrote a tracked file with nothing but a
-# fresh `generated_at`, and one `git add -A` then committed pure data churn.
+# V1 used to copy v2/data-mufon.json (rebuilt hourly by the V2 build, which
+# also tried to scrape nuforc.org) over the committed root file. V2 is retired
+# and nothing scrapes NUFORC: the committed file IS the published sidecar.
 
-def _mufon(generated_at, total, extra=None):
-    blob = {"total_records": total, "date_range": ["1906-11-11", "2026-06-05"],
-            "generated_at": generated_at,
-            "_nuforc_live_meta": {"months_pulled": 2, "wall_clock_sec": 4.9}}
-    blob.update(extra or {})
-    return json.dumps(blob)
-
-
-def test_sidecar_copy_skips_when_only_the_build_stamp_moved(tmp_path: Path, capsys):
-    """The whole point. A refetch that produced the SAME sightings must leave
-    the tracked file byte-identical, stamp and all."""
-    src = tmp_path / "src.json"
-    dst = tmp_path / "dst.json"
-    dst.write_text(_mufon("2026-06-07T15:56:14Z", 144521))
-    before = dst.read_bytes()
-    src.write_text(_mufon("2026-08-03T19:23:09Z", 144521,
-                          {"_nuforc_live_meta": {"months_pulled": 0,
-                                                 "network_disabled": True}}))
-
-    assert app.copy_sidecar_if_changed(src, dst, "mufon") is False
-    assert dst.read_bytes() == before
-    assert "not rewritten" in capsys.readouterr().out
-
-
-def test_sidecar_copy_happens_when_the_data_actually_differs(tmp_path: Path):
-    """Not a no-op cache: the deployed page needs the new data, so a real
-    change still copies."""
-    src = tmp_path / "src.json"
-    dst = tmp_path / "dst.json"
-    dst.write_text(_mufon("2026-06-07T15:56:14Z", 144521))
-    src.write_text(_mufon("2026-08-03T19:23:09Z", 144548))
-
-    assert app.copy_sidecar_if_changed(src, dst, "mufon") is True
-    assert json.loads(dst.read_text())["total_records"] == 144548
-
-
-def test_sidecar_copy_creates_a_missing_destination(tmp_path: Path):
-    src = tmp_path / "src.json"
-    dst = tmp_path / "dst.json"
-    src.write_text(_mufon("2026-08-03T19:23:09Z", 144548))
-
-    assert app.copy_sidecar_if_changed(src, dst, "mufon") is True
-    assert json.loads(dst.read_text())["total_records"] == 144548
-
-
-def test_sidecar_copy_refuses_to_clobber_with_unreadable_json(tmp_path: Path):
-    """A truncated or half-written fetch must not destroy the committed
-    stale-keep fallback the .gitignore carve-out exists to provide."""
-    src = tmp_path / "src.json"
-    dst = tmp_path / "dst.json"
-    dst.write_text(_mufon("2026-06-07T15:56:14Z", 144521))
-    src.write_text('{"total_records": 14454')  # truncated
-
-    assert app.copy_sidecar_if_changed(src, dst, "mufon") is False
-    assert json.loads(dst.read_text())["total_records"] == 144521
-
-
-def test_sidecar_copy_writes_unreadable_source_only_when_there_is_no_prior(tmp_path: Path):
-    src = tmp_path / "src.json"
-    dst = tmp_path / "dst.json"
-    src.write_text("not json at all")
-
-    assert app.copy_sidecar_if_changed(src, dst, "mufon") is True
-    assert dst.read_text() == "not json at all"
-
-
-def test_the_mufon_stage_goes_through_the_guard_not_a_bare_copyfile():
-    """Source contract: the unconditional shutil.copyfile is gone. It is the
-    exact line that dirtied a tracked file on every single build."""
+def test_mufon_sidecar_is_the_committed_frozen_cache():
     src = Path(app.__file__).read_text(encoding="utf-8")
-    assert 'copy_sidecar_if_changed(_mufon_src, ROOT / "data-mufon.json"' in src
-    assert 'shutil.copyfile(_mufon_src' not in src
-
-
-def test_volatile_keys_never_include_a_real_observation_field():
-    """`date_range` is what mufonFreshness() reports as the data's age. If it
-    ever landed in the volatile set, a genuinely newer archive would stop
-    being copied and the page would silently serve older sightings."""
-    for k in ("date_range", "total_records", "by_state_year", "velocity",
-              "totals_by_month", "shape_totals"):
-        assert k not in app.SIDECAR_VOLATILE_KEYS
+    assert 'manifest["mufon"] = "data-mufon.json"' in src
+    assert '"v2"' not in src and "fetch_mufon" not in src.split("HTML_TEMPLATE")[0]
+    mu = json.loads((Path(app.__file__).parent / "data-mufon.json").read_text())
+    # It says what it is: frozen, through 2026-06-09, not refreshed.
+    assert mu["data_through"] == mu["date_range"][1] == "2026-06-09"
+    assert mu["_stale"] is True and mu["live_refresh"]["ok"] is False
+    assert mu["total_records"] > 100_000

@@ -13,7 +13,7 @@ login:
 ### Pick a strong password and set env vars
 ```bash
 # Open ~/.zprofile in any editor and add:
-export DASH_USER="btabiado"
+export DASH_USER="<a username>"
 export DASH_PASS="<a strong password — use 1Password, etc.>"
 
 # Reload your shell env:
@@ -27,7 +27,7 @@ HOST=0.0.0.0 .venv/bin/python server.py
 
 ### Verify
 Visit **http://127.0.0.1:8765/**. The browser pops a username/password
-dialog. Enter `btabiado` + your password. After success, the browser
+dialog. Enter that username + your password. After success, the browser
 caches it for the session — no further prompts.
 
 ### What's protected vs not
@@ -92,17 +92,11 @@ export CHAT_MODEL=claude-haiku-4-5     # default — fast and cheap
 Haiku is roughly **$0.001 per question** at typical lengths. A heavy month
 of chatting is still under $1. Anthropic's billing dashboard tracks it.
 
-### Optional: live LunarCrush tool calls in chat (MCP)
-If you've also set `LUNARCRUSH_API_KEY` (see §7), the chat dock attaches
-LunarCrush's official MCP server to its Anthropic call. Claude can then
-fetch fresh social sentiment / Galaxy Score / trending coins mid-chat
-instead of relying on the cached snapshot. Full details in **§8**.
-
 ---
 
 ## 2. Tailscale: phone-from-anywhere access
 
-Right now your phone can reach the dashboard at `http://192.168.12.114:8765/`
+Right now your phone can reach the dashboard at `http://<your Mac's LAN IP>:8765/`
 **only on the same Wi-Fi as your Mac**. Tailscale fixes that with a
 zero-config encrypted tunnel — works on cellular, hotel Wi-Fi, anywhere.
 
@@ -111,7 +105,7 @@ zero-config encrypted tunnel — works on cellular, hotel Wi-Fi, anywhere.
 2. Install, open it. It'll ask you to sign in — use Google/Apple/Microsoft
    account (free for personal use, up to 100 devices)
 3. The menu-bar icon should show **green** and your machine appears as
-   something like `bryantabiados-macbook-pro` with a `100.x.x.x` IP
+   under its machine name (for example `my-macbook`) with a `100.x.x.x` IP
 
 ### Phone side (2 min)
 1. Install the **Tailscale** app from the App Store / Play Store
@@ -119,7 +113,7 @@ zero-config encrypted tunnel — works on cellular, hotel Wi-Fi, anywhere.
 3. Enable VPN when prompted
 
 ### Use it
-- On your phone, open: `http://bryantabiados-macbook-pro:8765/`
+- On your phone, open: `http://<machine-name>:8765/`
   (or the `100.x.x.x` IP shown in the Tailscale menu on your Mac)
 - Works from anywhere your phone has internet — coffee shop, plane Wi-Fi, etc.
 
@@ -131,35 +125,29 @@ the public internet. Don't share your auth tokens.
 
 ## 3. GitHub Pages: published static dashboard
 
-A workflow at `.github/workflows/pages.yml` builds and deploys a static
-snapshot of `dashboard.html` on every push to `main`. To enable it:
+A workflow at `.github/workflows/pages.yml` builds and deploys the static
+site (`dashboard.html`, the `/lthcs/` pages and the other sub-sites) on every
+push to `main` and hourly. It is already enabled for this repo; for a fork:
 
 ### One-time setup
 1. Visit https://github.com/btabiado/alpine-data/settings/pages
 2. Under **Build and deployment**, set **Source = GitHub Actions**
 3. Save
 
-### Push to deploy
-The workflow runs on every `git push origin main`. After ~60 sec:
+### Deploy
+`main` is protected, so changes land through a pull request; the merge
+triggers a build. After a few minutes:
 - Check https://github.com/btabiado/alpine-data/actions → "pages" workflow → green ✓
 - Your dashboard is live at: **https://btabiado.github.io/alpine-data/**
 
 ### Important caveats
-- The Pages version is a **static snapshot** — no live `/api/refresh`,
-  no chat dock backend, no `/api/upload-csv`. Charts work, KPI cards work,
-  signal scores reflect the moment of generation.
-- To publish with **live market data**, run locally before pushing:
-  ```bash
-  cd ~/alpine-data
-  HOST=0.0.0.0 .venv/bin/python app.py --fetch-market --no-open
-  git add data/market.json data/whale.json
-  git commit -m "Refresh data snapshot"
-  git push
-  ```
-- The repo is currently **private**, which means Pages will require a
-  GitHub Pro subscription to host. Either flip the repo to public on
-  https://github.com/btabiado/alpine-data/settings (scroll to
-  bottom → Change visibility), or upgrade to Pro.
+- The Pages version is a **static build**: no live `/api/refresh`, no
+  server chat backend (the chat dock asks visitors for their own key), no
+  `/api/upload-csv`.
+- Each build fetches market data itself (`app.py --fetch-market`), so there
+  is nothing to refresh by hand. `data/market.json` and `data/whale.json` are
+  gitignored build caches; don't commit them.
+- Pages on a private repo needs a paid plan. This repo is public.
 
 ### Disable
 Don't want public Pages? Delete `.github/workflows/pages.yml` and the
@@ -261,7 +249,7 @@ cloudflared tunnel route dns dashboard dashboard.yourdomain.com
 # Config file ~/.cloudflared/config.yml:
 cat > ~/.cloudflared/config.yml <<'EOF'
 tunnel: dashboard
-credentials-file: /Users/btabiado/.cloudflared/<tunnel-uuid>.json
+credentials-file: /path/to/home/.cloudflared/<tunnel-uuid>.json
 ingress:
   - hostname: dashboard.yourdomain.com
     service: http://localhost:8765
@@ -420,119 +408,3 @@ Tier 3 ("Advanced", more): adds entity-adjusted and SOPR/MVRV variants.
 
 Cancel anytime — the dashboard falls back gracefully when the key is
 removed or expires.
-
----
-
-## 7. LunarCrush (optional — social sentiment)
-
-The dashboard ships without social-sentiment context out of the box. Wire
-a LunarCrush key and the Crypto Overview gains a social-sentiment KPI
-strip with Galaxy Score, AltRank, and 24h social volume for the top
-50 coins — the cheapest credible social signal available.
-
-### Get a key
-1. Sign up at https://lunarcrush.com/developers/api/authentication —
-   the **Individual** plan ($24/mo) covers the `coins/list/v1` endpoint
-   the dashboard uses; a free trial credit pool is usually included
-2. Account → **API Keys** → create a new key
-3. Copy the value
-
-### Activate it on your Mac
-```bash
-echo 'export LUNARCRUSH_API_KEY="<your-key>"' >> ~/.zprofile
-source ~/.zprofile
-
-# Verify it's set:
-echo $LUNARCRUSH_API_KEY | head -c 12
-
-# Restart the dashboard server so it picks up the env var:
-lsof -ti:8765 | xargs kill -9
-cd ~/alpine-data
-HOST=0.0.0.0 .venv/bin/python server.py
-```
-
-### Trigger a refresh
-The next auto-refresh (every 30 min) will hit LunarCrush. To pull
-immediately: click the **↻ Refresh** button in the dashboard header
-or `curl -X POST http://127.0.0.1:8765/api/refresh` (auth required).
-
-### What you get when active
-The dashboard renders a **social-sentiment KPI strip on the Crypto
-Overview** when the key is present, with per-coin tiles for:
-
-- **Galaxy Score** (0-100 composite of price + social health)
-- **AltRank** (rank vs all tracked alts on combined performance)
-- **Social volume 24h** (interactions across X, Reddit, news)
-- **Sentiment** (bullish/bearish skew)
-- **Social dominance** (% of all crypto chatter pointed at this coin)
-
-If your tier doesn't cover a metric or the API returns 4xx, the strip
-silently hides (no error). Removing the env var fully disables it.
-
-### Same key also drives the chat dock (MCP)
-Setting `LUNARCRUSH_API_KEY` activates **two** features off the one key,
-no extra setup needed:
-
-1. **`fetch_market.lunarcrush_snapshot()`** — bulk REST snapshot pulled
-   on every auto-refresh (every 30 min) and baked into the dashboard
-   payload as `market.lunarcrush.*`. Fast, but can be up to ~30 min
-   stale and gated by your tier's rate limits.
-2. **Chat dock MCP** — the chat dock attaches LunarCrush's official MCP
-   server to its Claude API call, so Claude can make **live tool calls**
-   when you ask about social sentiment. Useful when the cached snapshot
-   is stale, was rate-limited (HTTP 429), or doesn't cover the coin you
-   asked about. See **§8** below.
-
-### Cost
-Free tier: limited credit pool, fine for daily refreshes if cached.
-Individual ($24/mo): comfortable headroom for personal use.
-Builder ($240/mo): production / commercial use.
-
-Cancel anytime — the dashboard falls back gracefully when the key is
-removed or expires.
-
----
-
-## 8. LunarCrush MCP for chat (uses key from §7)
-
-When `LUNARCRUSH_API_KEY` is set, the chat dock wires LunarCrush's
-official hosted **MCP server** (`https://lunarcrush.ai/sse?key=...`)
-into the Anthropic Messages API call. Claude can then call LunarCrush
-tools mid-conversation to fetch fresh social-sentiment data —
-**without** waiting for the dashboard's next 30-minute auto-refresh.
-
-### Behaviour
-- If `LUNARCRUSH_API_KEY` is **set**: chat dock has live access to
-  Galaxy Score, AltRank, trending coins, social-volume series, etc.
-  Ask things like *"what's BTC sentiment today?"* or *"which coin is
-  trending hardest on Twitter right now?"* and Claude will call the
-  MCP tool rather than read the cached snapshot.
-- If `LUNARCRUSH_API_KEY` is **unset**: chat dock works exactly as
-  before — the system prompt never mentions MCP, no tool calls happen,
-  responses fall back to the cached `lunarcrush_snapshot()` data
-  embedded in the dashboard payload (or the rule-based fallback if
-  `ANTHROPIC_API_KEY` is also unset).
-
-### Override the MCP URL
-For a self-hosted MCP proxy (e.g. you want to add auth logging or
-caching), set an explicit override and the dashboard will use it
-verbatim instead of building one from your API key:
-```bash
-export LUNARCRUSH_MCP_URL="https://my-proxy.example.com/sse?token=..."
-```
-Unset it again to fall back to the official endpoint.
-
-### Verify it's wired
-POST a chat question; the SSE stream now begins with a small `meta`
-frame like:
-```
-data: {"meta": {"llm_configured": true, "mcp_available": true, "mcp_servers": ["lunarcrush"]}}
-```
-`mcp_available: true` confirms the server is being passed to
-Anthropic. (Backwards-compatible: existing clients ignore the meta
-frame and process subsequent `text` frames as before.)
-
-### Cost
-The MCP call counts as normal LunarCrush API usage on whichever tier
-you're on — same metering as the REST snapshot. Anthropic does **not**
-add a surcharge for MCP-routed tool calls.

@@ -1,5 +1,5 @@
-// LTHCS — Index Exiles (shared by /lthcs/, /lthcs/table/, /lthcs/v2/,
-// /lthcs/heatmap/ and /lthcs/leaderboards/).
+// LTHCS — Index Exiles (shared by /lthcs/, /lthcs/table/, /lthcs/heatmap/
+// and /lthcs/leaderboards/).
 //
 // Owner's rule: a ticker that was in a tracked index (S&P 500, S&P 100,
 // NASDAQ-100, DJIA) and has left all of them stays in the universe, is

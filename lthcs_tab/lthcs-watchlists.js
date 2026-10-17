@@ -733,18 +733,6 @@ function parseSharedParam(raw) {
   return [valid, invalid];
 }
 
-// Returns true if a shared watchlist is currently active for this session.
-export function sharedIsActive() {
-  return sharedState.active;
-}
-
-// Returns the ticker set when a shared watchlist is active, else null. This
-// is merged into getActiveTickerSet() so the existing filter pipe just works.
-export function getSharedTickerSet() {
-  if (!sharedState.active) return null;
-  return new Set(sharedState.tickers);
-}
-
 function renderSharedBanner() {
   const host = document.getElementById('lthcs-shared-watchlist');
   if (!host) return;
@@ -973,15 +961,6 @@ function startShareObserver() {
 // ---------------------------------------------------------------------------
 // Init augmentation — wire shared-list activation + chip merge
 // ---------------------------------------------------------------------------
-
-// Wrap initWatchlists to ALSO activate shared-from-URL state. We can't reassign
-// the exported binding, so this is done via a side effect within initWatchlists
-// itself — see the patched body below. Instead, expose an extra hook.
-
-export function activateSharedWatchlist() {
-  activateSharedFromUrl();
-  renderSharedBanner();
-}
 
 // Merge: when a shared watchlist is active, getActiveTickerSet() should
 // return the shared set rather than null. We monkey-patch the existing

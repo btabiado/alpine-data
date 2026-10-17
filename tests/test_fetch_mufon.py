@@ -77,36 +77,21 @@ def _http_error(code: int, body: bytes, headers: dict[str, str]):
                                   msg, io.BytesIO(body))
 
 
-# ------------------------------------- 1. Cloudflare challenge detection ---
+# ------------------------------------- 1. NUFORC fetches are refused ---
 
-def test_http_fetch_names_cloudflare_challenge(monkeypatch):
+def test_http_fetch_refuses_nuforc_without_opening_a_socket(monkeypatch):
     def boom(req, timeout=60):
-        raise _http_error(403, CF_BODY, {"Server": "cloudflare",
-                                         "cf-mitigated": "challenge"})
+        raise AssertionError(f"urlopen called for {getattr(req, 'full_url', req)}")
     monkeypatch.setattr(fm.urllib.request, "urlopen", boom)
-    text, cause = fm._http_fetch("https://nuforc.org/subndx/?id=e202609")
-    assert text is None
-    assert cause == "Cloudflare challenge (403)"
-
-
-def test_http_fetch_detects_challenge_from_title_alone(monkeypatch):
-    def boom(req, timeout=60):
-        raise _http_error(403, CF_BODY, {"Server": "cloudflare"})
-    monkeypatch.setattr(fm.urllib.request, "urlopen", boom)
-    assert fm._http_fetch("https://nuforc.org/")[1] == "Cloudflare challenge (403)"
-
-
-def test_plain_403_is_not_reported_as_cloudflare(monkeypatch):
-    def boom(req, timeout=60):
-        raise _http_error(403, b"<html><title>Forbidden</title></html>", {})
-    monkeypatch.setattr(fm.urllib.request, "urlopen", boom)
-    assert fm._http_fetch("https://nuforc.org/")[1] == "HTTP 403"
-
-
-def test_http_get_text_keeps_its_quiet_contract(monkeypatch):
-    def boom(req, timeout=60):
-        raise _http_error(403, CF_BODY, {"cf-mitigated": "challenge"})
-    monkeypatch.setattr(fm.urllib.request, "urlopen", boom)
+    for url in (
+        "https://nuforc.org/subndx/?id=e202609",
+        "https://www.nuforc.org/",
+        "https://raw.githubusercontent.com/planetsig/ufo-reports/master/csv-data/ufo-scrubbed-geocoded-time-standardized.csv",
+        "https://raw.githubusercontent.com/timothyrenner/nuforc_sightings_data/main/data/processed/nuforc_reports.csv",
+    ):
+        text, cause = fm._http_fetch(url)
+        assert text is None
+        assert cause == fm.NUFORC_FETCH_DISABLED
     assert fm._http_get_text("https://nuforc.org/") is None
 
 
@@ -224,46 +209,17 @@ def test_zero_months_fetched_trips_the_alert_even_when_reachable(
     assert "::warning title=MUFON not refreshed::" in capsys.readouterr().out
 
 
-def test_main_emits_the_annotation_end_to_end(monkeypatch, tmp_path, capsys):
-    monkeypatch.setenv("GITHUB_ACTIONS", "true")
-    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    _fixed_now(monkeypatch, "2026-10-04T03:00:00")
-    rows = fm._nuforc_parse_data_rows(_month_payload("202606", 4)["data"])
-    meta = {"months_pulled": 0, "months_404": 0, "months_cached": 1,
-            "months_refreshed": 0, "months_skipped_offline": 4,
-            "network_disabled": True, "cloudflare_challenge": True,
-            "failure_cause": "Cloudflare challenge (403) on "
-                             "https://nuforc.org/subndx/?id=e202610",
-            "incomplete_months_served": ["202606"],
-            "wall_clock_sec": 0.1, "stopped_reason": "x"}
-    monkeypatch.setattr(fm, "_fetch_planetsig_rows", lambda: ([], None, None))
-    monkeypatch.setattr(fm, "_fetch_nuforc_live",
-                        lambda months_back=144: {"rows": rows, "meta": meta})
+def test_main_refuses_to_fetch_and_leaves_the_counts_file_alone(monkeypatch, tmp_path, capsys):
+    def boom(*args, **kwargs):
+        raise AssertionError("urlopen called")
+    monkeypatch.setattr(fm.urllib.request, "urlopen", boom)
     out_path = tmp_path / "data-mufon.json"
+    out_path.write_text('{"total_records": 3}', encoding="utf-8")
     assert fm.main(["--out", str(out_path)]) == 0
-    out = capsys.readouterr().out
-    assert "::warning title=MUFON not refreshed::" in out
-    assert "Cloudflare challenge (403)" in out
-    # The generic "degraded" marker no longer duplicates it.
-    assert "MUFON/NUFORC feed degraded" not in out
-    payload = json.loads(out_path.read_text())
-    assert payload["data_through"] == payload["date_range"][1]
-
-
-def test_main_alerts_when_every_source_failed(monkeypatch, tmp_path, capsys):
-    monkeypatch.setenv("GITHUB_ACTIONS", "true")
-    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    out_path = tmp_path / "data-mufon.json"
-    out_path.write_text(json.dumps({"total_records": 5000,
-                                    "date_range": ["1906-11-11", "2026-06-09"],
-                                    "generated_at": "2026-10-04T00:00:00Z"}))
-    monkeypatch.setattr(fm, "fetch_all", lambda **kw: None)
-    assert fm.main(["--out", str(out_path)]) == 1
-    assert "::warning title=MUFON not refreshed::" in capsys.readouterr().out
-    prior = json.loads(out_path.read_text())
-    assert prior["_stale"] is True
-    assert prior["data_through"] == "2026-06-09"
-    assert prior["live_refresh"]["ok"] is False
+    err = capsys.readouterr().err
+    assert "python3 scripts/update_ufo_counts.py" in err
+    assert "https://nuforc.org/subndx/?id=all" in err
+    assert out_path.read_text(encoding="utf-8") == '{"total_records": 3}'
 
 
 # ----------------------------------------- 3. honest freshness payload ---
@@ -312,14 +268,8 @@ def test_fresh_run_is_not_stale_and_anchors_to_today(monkeypatch):
 
 # -------------------------------------- 4. partial months are refetched ---
 
-def test_committed_june_2026_cache_is_recognised_as_partial():
-    """The real file: 40 rows, written 2026-06-10, newest report 06/09."""
-    june = REAL_CACHE / "nuforc_subndx_202606.json"
-    may = REAL_CACHE / "nuforc_subndx_202605.json"
-    if not june.exists() or not may.exists():
-        pytest.skip("committed NUFORC cache not present")
-    assert fm._month_cache_complete(json.loads(june.read_text()), "202606") is False
-    assert fm._month_cache_complete(json.loads(may.read_text()), "202605") is True
+def test_committed_month_caches_are_not_in_the_tree():
+    assert list(REAL_CACHE.glob("nuforc_subndx_*.json")) == []
 
 
 def test_month_cache_complete_uses_the_fetch_stamp_when_present():
@@ -426,7 +376,7 @@ def _extract_function(js: str, name: str) -> str:
     raise AssertionError("unbalanced braces")  # pragma: no cover
 
 
-@pytest.fixture(scope="module", params=["v2/app.py", "app.py"])
+@pytest.fixture(scope="module", params=["app.py"])
 def mufon_freshness(request):
     py_mini_racer = pytest.importorskip(
         "py_mini_racer", reason="V8 needed to execute the shipped JS")
@@ -473,7 +423,7 @@ def test_dashboard_freshness_null_without_a_data_date(mufon_freshness):
                             "date_range": [None, None]}) is None
 
 
-@pytest.mark.parametrize("rel", ["v2/app.py", "app.py"])
+@pytest.mark.parametrize("rel", ["app.py"])
 def test_map_and_trend_notes_use_the_real_bucket_anchor(rel):
     js = _template_js(rel)
     assert "historical mirror cutoff" not in js

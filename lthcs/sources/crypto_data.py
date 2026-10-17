@@ -267,21 +267,6 @@ def compute_etf_flow_30d(rows: List[Dict[str, Any]]) -> Optional[float]:
     return float(total)
 
 
-def compute_etf_flow_pace(rows: List[Dict[str, Any]]) -> Optional[float]:
-    """Return the 30d/prior-30d ratio of ETF flows (signed).
-
-    Used as a "pace acceleration" signal: a positive ratio means recent
-    flows exceed the prior month. None when we don't have 60 rows.
-    """
-    if not rows or len(rows) < 60:
-        return None
-    recent = sum(float(r.get("total") or 0.0) for r in rows[-30:])
-    prior = sum(float(r.get("total") or 0.0) for r in rows[-60:-30])
-    if abs(prior) < 1e-6:
-        return None
-    return float((recent - prior) / abs(prior))
-
-
 # --- Generic HTTP helpers --------------------------------------------------
 
 def _http_get(url: str, *, timeout: float = _HTTP_TIMEOUT) -> Optional[bytes]:

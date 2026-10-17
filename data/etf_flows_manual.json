@@ -1,0 +1,5 @@
+{
+  "_comment": "Hand-entered spot-ETF flows (US$ millions) merged by scripts/fetch_etf_flows.py when Farside does not publish the date. Empty arrays are the steady state. A blank or null cell is not reported and is stored empty — never 0. See README, Getting ETF flow data.",
+  "btc": [],
+  "eth": []
+}

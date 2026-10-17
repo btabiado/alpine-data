@@ -121,10 +121,16 @@ def test_fallback_summary_and_persisted_top_level_flag(tmp_path):
     assert mixed["fallback"] is False and mixed["narrative_source"] == "mixed"
 
 
-def test_llm_prompt_marks_dropped_pillar_na():
-    msg = narratives_llm._format_subscores(
-        {"adoption_momentum": 40.0, "thesis_integrity": None})
-    assert "Thesis Integrity=n/a" in msg
+def test_llm_prompt_sends_dropped_pillar_as_null():
+    """The real prompt payload (build_user_message) keeps a dropped pillar
+    null and never names it as the binding or supporting pillar."""
+    msg = narratives_llm.build_user_message(
+        "AAA", {"subscores": _subs(thesis_integrity=None)}, [])
+    inner = msg[msg.index("<article>") + len("<article>"):msg.rindex("</article>")]
+    payload = json.loads(inner)
+    assert payload["subscores"]["thesis_integrity"] is None
+    bs = payload["binding_and_supporting"]
+    assert "Thesis Integrity" not in (bs["binding_pillar"], bs["supporting_pillar"])
 
 
 # ---- crypto: placeholder pillars dropped and renormalised ------------------

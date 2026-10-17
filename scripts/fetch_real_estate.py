@@ -13,7 +13,15 @@ into a single payload the real-estate dashboard page consumes:
 
 Pure stdlib. HTTP caching is If-Modified-Since against data/.cache/real_estate/.
 
+Also writes data/real_estate_check.json on every successful run. The snapshot
+is recommitted only when its substance changes (the upstreams publish
+monthly); the check file is how data-health knows the job ran anyway.
+A run that would replace a good snapshot with an empty one, a regressed
+housing month, or a source that lost more than half its metros exits 1
+and writes nothing.
+
 Run from repo root: python scripts/fetch_real_estate.py [--no-cache]
+                     python scripts/fetch_real_estate.py --verify-check
 """
 from __future__ import annotations
 
@@ -36,7 +44,15 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "data"
 OUT_PATH = DATA_DIR / "real_estate.json"
+CHECK_PATH = DATA_DIR / "real_estate_check.json"
 CACHE_DIR = DATA_DIR / ".cache" / "real_estate"
+# Clocks the daily workflow ignores when deciding whether the snapshot
+# itself is worth a commit. Kept in sync with real-estate-daily.yml's
+# --ignore-key list.
+_CLOCK_KEYS = frozenset({"generated_at", "fetched_at"})
+# A source that previously had at least this many metros and then loses
+# more than half of them is a broken fetch, not a quieter housing market.
+_COLLAPSE_MIN_PREV_ROWS = 50
 
 USER_AGENT = "alpine-data/real-estate-fetcher (+https://github.com/)"
 HTTP_TIMEOUT = 60
@@ -690,16 +706,6 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def _kpi_with_yoy(spark: list[float | None], cols_present: int) -> dict:
-    latest = spark[-1] if spark else None
-    year_ago = spark[0] if len(spark) >= 12 else None
-    return {
-        "value": latest,
-        "yoy_pct": yoy_pct(latest, year_ago) if latest is not None and year_ago is not None else None,
-        "spark": spark,
-    }
-
-
 def build_metro(metro_def: dict[str, object], zillow: dict, redfin: dict) -> dict:
     rank = int(metro_def["rank"])
     short = str(metro_def["short"])
@@ -881,13 +887,213 @@ def populated_kpi_count(metro: dict) -> int:
     return sum(1 for k in KPI_KEYS if metro["kpis"].get(k, {}).get("value") is not None)
 
 
+def _monitor():
+    """build_health_status, loaded by path so this script does not depend on
+    cwd or sys.path. The housing-month helpers live there so the watchdog
+    and this writer cannot disagree about what month the file is as of."""
+    name = "build_health_status"
+    mod = sys.modules.get(name)
+    if mod is not None and hasattr(mod, "newest_housing_month"):
+        return mod
+    import importlib.util
+    path = Path(__file__).resolve().parent / "build_health_status.py"
+    spec = importlib.util.spec_from_file_location(name, path)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[name] = mod
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def _strip_clocks(obj):
+    """obj with generated_at / fetched_at removed at every depth."""
+    if isinstance(obj, dict):
+        return {k: _strip_clocks(v) for k, v in obj.items() if k not in _CLOCK_KEYS}
+    if isinstance(obj, list):
+        return [_strip_clocks(v) for v in obj]
+    return obj
+
+
+def _source_rows(source: object) -> int:
+    if not isinstance(source, dict):
+        return 0
+    try:
+        return int(source.get("rows") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _load_json_object(path: Path) -> dict | None:
+    if not path.is_file():
+        return None
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return doc if isinstance(doc, dict) else None
+
+
+def payload_problems(payload: dict, previous: dict | None) -> list[str]:
+    """Reasons this payload must not replace the committed snapshot.
+
+    An empty or collapsed fetch used to exit 0 as long as one of the two
+    primary sources returned anything, and the workflow would then commit
+    the nulls over last-known-good. That is an update, but not one we want.
+    """
+    problems: list[str] = []
+    bhs = _monitor()
+    metros = payload.get("metros")
+    if not isinstance(metros, list) or not metros:
+        problems.append("payload has no metros")
+    month = bhs.newest_housing_month(payload)
+    if isinstance(metros, list) and metros and not month:
+        problems.append("payload has metros but no YYYY-MM housing month")
+    sources = payload.get("sources") if isinstance(payload.get("sources"), dict) else {}
+    for name in ("zillow", "redfin"):
+        if _source_rows(sources.get(name)) <= 0:
+            problems.append(f"{name} contributed 0 rows")
+    if not isinstance(previous, dict):
+        return problems
+    prev_month = bhs.newest_housing_month(previous)
+    if prev_month and month and month < prev_month:
+        problems.append(f"housing month regressed from {prev_month} to {month}")
+    prev_sources = previous.get("sources") if isinstance(previous.get("sources"), dict) else {}
+    for name in ("zillow", "redfin"):
+        prev_rows = _source_rows(prev_sources.get(name))
+        rows = _source_rows(sources.get(name))
+        if prev_rows < _COLLAPSE_MIN_PREV_ROWS:
+            continue
+        if rows == 0:
+            problems.append(f"{name} rows collapsed from {prev_rows} to 0")
+        elif rows * 2 < prev_rows:
+            problems.append(
+                f"{name} rows fell from {prev_rows} to {rows} "
+                "(more than half the metros disappeared)")
+    return problems
+
+
+def substance_changed(previous: dict | None, payload: dict) -> bool:
+    """True when the snapshot differs from `previous` by more than run clocks.
+
+    Compared after a JSON round-trip, which is what ``json_content_changed.py``
+    sees once the file is written. In-memory floats and the on-disk encoding
+    of those same floats are not always ``==``.
+    """
+    if previous is None:
+        return True
+    normalized = json.loads(json.dumps(payload, separators=(",", ":")))
+    return _strip_clocks(previous) != _strip_clocks(normalized)
+
+
+def write_check_record(payload: dict, *, payload_changed: bool,
+                       checked_at: str | None = None,
+                       snapshot_generated_at: str | None = None) -> dict:
+    """Record that this run succeeded. Committed even when the snapshot is not.
+
+    `generated_at` is the check time on purpose: data-health dates this file
+    from that key, and the key must move on a run whose snapshot did not.
+    `snapshot_generated_at` is the stamp that stays in git — the previous
+    one when this run only moved clocks and the workflow restores the
+    snapshot, the new one when the substance is committed.
+    """
+    bhs = _monitor()
+    sources = payload.get("sources") if isinstance(payload.get("sources"), dict) else {}
+
+    def brief(name: str) -> dict:
+        src = sources.get(name) if isinstance(sources.get(name), dict) else {}
+        return {k: src[k] for k in ("rows", "last_modified", "national_permits_yoy_pct") if k in src}
+
+    rec = {
+        "generated_at": checked_at or payload.get("generated_at") or _now_iso(),
+        "outcome": "updated" if payload_changed else "unchanged",
+        "housing_month": bhs.newest_housing_month(payload),
+        "snapshot_generated_at": (
+            payload.get("generated_at") if snapshot_generated_at is None
+            else snapshot_generated_at),
+        "sources": {name: brief(name) for name in ("zillow", "redfin", "fred")},
+    }
+    CHECK_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CHECK_PATH.write_text(json.dumps(rec, indent=2) + "\n", encoding="utf-8")
+    return rec
+
+
+def check_record_problems(check: object, payload: dict, *,
+                          now: datetime | None = None,
+                          max_age_h: float = 6.0) -> list[str]:
+    """Why a check record does not prove that THIS run looked at THIS payload.
+
+    The workflow runs this after the fetch. A fetch that exits 0 without
+    refreshing the record — or that records a different month than the
+    snapshot it just wrote — is a failed run, not a quiet success.
+    """
+    if not isinstance(check, dict):
+        return ["check record is not a JSON object"]
+    problems: list[str] = []
+    bhs = _monitor()
+    raw = check.get("generated_at")
+    dt = bhs._parse_date_value(raw) if isinstance(raw, str) else None
+    if dt is None:
+        problems.append(f"check record generated_at is missing or not a timestamp ({raw!r})")
+    else:
+        now = now or datetime.now(timezone.utc)
+        age_h = (now - dt).total_seconds() / 3600.0
+        if age_h > max_age_h or age_h < -1:
+            problems.append(
+                f"check record generated_at is {age_h:.1f}h off the clock "
+                f"(limit {max_age_h:.0f}h); this run did not record a check")
+    month = bhs.newest_housing_month(payload)
+    if check.get("housing_month") != month:
+        problems.append(
+            f"check record housing_month is {check.get('housing_month')!r}, "
+            f"snapshot month is {month!r}")
+    if check.get("outcome") not in ("updated", "unchanged"):
+        problems.append(f"check record outcome is {check.get('outcome')!r}")
+    return problems
+
+
+def reject_payload(problems: list[str]) -> int:
+    """Exit path for a fetch that must not touch the committed files."""
+    detail = "; ".join(problems)
+    print(f"::error title=Real estate snapshot rejected::{detail}", file=sys.stderr)
+    for problem in problems:
+        print(f"real-estate: refusing to write: {problem}", file=sys.stderr)
+    return 1
+
+
+def verify_check_record(now: datetime | None = None) -> int:
+    """``--verify-check``: the on-disk check record must describe this snapshot."""
+    payload = _load_json_object(OUT_PATH)
+    check = _load_json_object(CHECK_PATH)
+    problems: list[str] = []
+    if payload is None:
+        problems.append(f"{OUT_PATH.name} is missing or not a JSON object")
+    if check is None:
+        problems.append(f"{CHECK_PATH.name} is missing or not a JSON object")
+    if payload is not None and check is not None:
+        problems.extend(check_record_problems(check, payload, now=now))
+    if problems:
+        detail = "; ".join(problems)
+        print(f"::error title=Real estate check record rejected::{detail}", file=sys.stderr)
+        for problem in problems:
+            print(f"real-estate: {problem}", file=sys.stderr)
+        return 1
+    print(f"real-estate: check record ok "
+          f"(outcome={check.get('outcome')}, housing_month={check.get('housing_month')}, "
+          f"checked_at={check.get('generated_at')})")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--verify-check", action="store_true",
+                        help="Validate data/real_estate_check.json against the "
+                             "snapshot and exit. Does not fetch.")
     parser.add_argument("--no-cache", action="store_true", help="Bypass HTTP cache")
     parser.add_argument("--max-metros", type=int, default=0,
                         help="Cap number of metros (default 0 = all US MSAs from Zillow). "
                              "Useful for fast local iteration with e.g. --max-metros 20.")
     args = parser.parse_args()
+    if args.verify_check:
+        return verify_check_record()
 
     started = time.time()
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -956,17 +1162,33 @@ def main() -> int:
         "metros": metros,
     }
 
+    previous = _load_json_object(OUT_PATH)
+    problems = payload_problems(payload, previous)
+    if problems:
+        return reject_payload(problems)
+    changed = substance_changed(previous, payload)
+
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     # Compact JSON — at 894 metros, indent=2 inflates the file by ~3x with
     # no readability benefit (no human's reading 7 MB by hand). gh-pages
     # auto-gzips text/* responses so over-the-wire size is ~25% of disk.
     OUT_PATH.write_text(json.dumps(payload, separators=(",", ":")))
+    # The check record is the freshness signal for "this run succeeded".
+    # It is written even when the snapshot's substance did not move, and
+    # the workflow commits it on those days instead of the 3MB file.
+    # When the substance did not move, the workflow restores the snapshot,
+    # so the stamp that remains committed is the previous one.
+    kept_stamp = payload.get("generated_at") if changed else (previous or {}).get("generated_at")
+    write_check_record(payload, payload_changed=changed, snapshot_generated_at=kept_stamp)
 
     avg_pop = sum(populated_kpi_count(m) for m in metros) / max(len(metros), 1)
     elapsed = time.time() - started
+    disposition = "substance changed" if changed else (
+        "substance unchanged; snapshot clocks moved in the working tree only, "
+        "check record is the commit")
     print(f"wrote {OUT_PATH.relative_to(REPO_ROOT)} "
           f"({len(metros)} metros, {avg_pop:.1f}/10 KPIs populated on avg, "
-          f"took {elapsed:.1f}s)")
+          f"{disposition}, took {elapsed:.1f}s)")
     return 0
 
 

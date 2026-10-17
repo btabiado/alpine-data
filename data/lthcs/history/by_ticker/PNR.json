@@ -3,6 +3,61 @@
   "model_version": "v1.1.1",
   "history": [
     {
+      "date": "2026-10-17",
+      "score": 41.7,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-10-16",
+      "score": 29.5,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-15",
+      "score": 29.6,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-14",
+      "score": 27.7,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-13",
+      "score": 28.1,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-12",
+      "score": 28.1,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-11",
+      "score": 28.1,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-10",
+      "score": 28.1,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-09",
+      "score": 27.8,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-08",
+      "score": 27.8,
+      "band": "review"
+    },
+    {
+      "date": "2026-10-07",
+      "score": 27.6,
+      "band": "review"
+    },
+    {
       "date": "2026-10-06",
       "score": 27.3,
       "band": "review"

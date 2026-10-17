@@ -195,21 +195,39 @@ def build_report(asof: str, snap_dir: Path = SNAP_DIR) -> str:
         mean_stdev = round(statistics.fmean(ticker_stdevs), 2) if ticker_stdevs else 0.0
 
         lines.append(f"\n## {pillar}\n")
-        lines.append(f"- Coverage (non-default 50.0): **{cov}%** ({s['n']} tickers)")
-        lines.append(
-            f"- Mean **{s['mean']}** | stdev {s['stdev']} | "
-            f"p5/p25/p50/p75/p95 = {s['p5']}/{s['p25']}/{s['p50']}/{s['p75']}/{s['p95']}"
-        )
-        lines.append(
-            f"- Floor (==0): {s['count_at_floor']} | Ceiling (==100): {s['count_at_ceiling']}"
-        )
+        # pillar_stats([]) is {n: 0} with no mean/stdev/percentiles. A pillar
+        # dropped on every ticker (null / absent subscores) hits that path —
+        # thesis_integrity on the 2026-10-16 snapshot. Report the gap; do not
+        # KeyError on keys that were never computed.
+        if s.get("n", 0) == 0:
+            lines.append(
+                f"- Coverage (non-default 50.0): **{cov}%** "
+                "(0 tickers with a measured score)"
+            )
+            lines.append(
+                "- Distribution: not computed (no measured scores; "
+                "pillar missing or null on every ticker). "
+                "Mean, stdev, percentiles, floor, and ceiling are n/a."
+            )
+        else:
+            lines.append(f"- Coverage (non-default 50.0): **{cov}%** ({s['n']} tickers)")
+            lines.append(
+                f"- Mean **{s['mean']}** | stdev {s['stdev']} | "
+                f"p5/p25/p50/p75/p95 = {s['p5']}/{s['p25']}/{s['p50']}/{s['p75']}/{s['p95']}"
+            )
+            lines.append(
+                f"- Floor (==0): {s['count_at_floor']} | Ceiling (==100): {s['count_at_ceiling']}"
+            )
         lines.append(
             f"- 30d per-ticker stdev: median {median_stdev}, mean {mean_stdev} "
             f"(n_tickers_with_history={len(ticker_stdevs)})"
         )
-        lines.append("- Cohort means: " + ", ".join(f"{c}={m}" for c, m in sorted(cmeans.items())))
-        lines.append("- Top 5: " + ", ".join(f"{t}={v}" for t, v in top))
-        lines.append("- Bottom 5: " + ", ".join(f"{t}={v}" for t, v in bottom))
+        cohort_txt = ", ".join(f"{c}={m}" for c, m in sorted(cmeans.items())) or "(none)"
+        top_txt = ", ".join(f"{t}={v}" for t, v in top) or "(none)"
+        bottom_txt = ", ".join(f"{t}={v}" for t, v in bottom) or "(none)"
+        lines.append("- Cohort means: " + cohort_txt)
+        lines.append("- Top 5: " + top_txt)
+        lines.append("- Bottom 5: " + bottom_txt)
 
     lines.append("")
     return "\n".join(lines)

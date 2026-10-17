@@ -72,8 +72,8 @@
         <section class="lhlp-intro" id="start-here" aria-label="Start here">
           <p>
             <strong>What you&rsquo;re looking at.</strong> LTHCS (Long-Term Hold Confidence Score)
-            ranks ~168 US equities and ~10 large-cap cryptocurrencies on a <code>&minus;100</code> to <code>+100</code>
-            scale, refreshed daily. Higher = stronger long-term ownership thesis based on five
+            ranks the S&amp;P 500 and Dow 30 (plus NASDAQ-100 names and Index Exiles) and ~10 large-cap
+            cryptocurrencies on a <code>0</code> to <code>100</code> scale, refreshed daily. Higher = stronger long-term ownership thesis based on five
             independent pillars of evidence. Lower = weakening thesis worth a second look.
           </p>
           <p>
@@ -165,7 +165,7 @@
           <h2>The 5 pillars <a href="#pillars" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
           <p>
             Each ticker&rsquo;s composite score is the weighted average of five independent
-            pillar scores. Every pillar is itself a <code>&minus;100..+100</code> read and
+            pillar scores. Every pillar is itself a <code>0..100</code> read and
             can be missing (<code>n/a</code>) when its source data isn&rsquo;t available &mdash;
             see <a href="#flags">data-quality flags</a>.
           </p>
@@ -232,38 +232,39 @@
           <h2>The 6 bands <a href="#bands" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
           <p>
             Each ticker&rsquo;s composite gets mapped into one of six color-coded bands. The
-            thresholds are stable across runs (defined in <code>weights.json</code>), so
-            band membership is the cleanest period-over-period comparison.
+            thresholds are stable across runs (defined in <code>weights.json</code>, which this page
+            reads; the ranges below are the fallback if it can&rsquo;t), so band membership is the
+            cleanest period-over-period comparison.
           </p>
           <div class="lhlp-bands">
             <div class="lhlp-band" data-band="elite">
               <div class="lhlp-band-name">Elite</div>
-              <div class="lhlp-band-range">85&ndash;100</div>
+              <div class="lhlp-band-range">70&ndash;100</div>
               <div class="lhlp-band-blurb">All five pillars firmly positive. The strongest read.</div>
             </div>
             <div class="lhlp-band" data-band="high">
               <div class="lhlp-band-name">High Confidence</div>
-              <div class="lhlp-band-range">80&ndash;84</div>
+              <div class="lhlp-band-range">63&ndash;69</div>
               <div class="lhlp-band-blurb">Most pillars positive, maybe one mixed. Solid long-term posture.</div>
             </div>
             <div class="lhlp-band" data-band="constructive">
               <div class="lhlp-band-name">Constructive</div>
-              <div class="lhlp-band-range">70&ndash;79</div>
+              <div class="lhlp-band-range">52&ndash;62</div>
               <div class="lhlp-band-blurb">More green than red. Watchable but not high-conviction.</div>
             </div>
             <div class="lhlp-band" data-band="monitor">
               <div class="lhlp-band-name">Monitor</div>
-              <div class="lhlp-band-range">60&ndash;69</div>
+              <div class="lhlp-band-range">42&ndash;51</div>
               <div class="lhlp-band-blurb">Mixed signals &mdash; the default neutral zone. Mostly noise.</div>
             </div>
             <div class="lhlp-band" data-band="weakening">
               <div class="lhlp-band-name">Weakening</div>
-              <div class="lhlp-band-range">50&ndash;59</div>
+              <div class="lhlp-band-range">33&ndash;41</div>
               <div class="lhlp-band-blurb">Multiple pillars softening. Worth a fresh look at the thesis.</div>
             </div>
             <div class="lhlp-band" data-band="review">
               <div class="lhlp-band-name">Review</div>
-              <div class="lhlp-band-range">0&ndash;49</div>
+              <div class="lhlp-band-range">0&ndash;32</div>
               <div class="lhlp-band-blurb">Broadly negative read. Re-underwrite or reduce.</div>
             </div>
           </div>
@@ -409,7 +410,7 @@
           </p>
           <dl class="lhlp-qa">
             <dt>What it means</dt>
-            <dd>Crypto composite score with the same <code>&minus;100..+100</code> scale and the same six bands as equities, so you can compare across asset classes.</dd>
+            <dd>Crypto composite score with the same <code>0..100</code> scale and the same six bands as equities, so you can compare across asset classes.</dd>
             <dt>Gotcha</dt>
             <dd>Crypto data is more permissive of stale-keep than equities (CoinGecko and the exchange fallbacks are rate-limited free tiers). Check <a href="#page-health">Pipeline Health</a> if a score looks frozen.</dd>
           </dl>
@@ -541,12 +542,12 @@
             (no backend, no auth, no rate limits for readers).
           </p>
           <p>
-            The full build spec, methodology, and pillar definitions live on GitHub:
-            <a href="https://github.com/btabiado/alpine-data/blob/main/PHASE_1_BUILD_SPEC.md"
-               target="_blank" rel="noopener">PHASE_1_BUILD_SPEC.md</a>
-            and
+            The methodology and pillar definitions are on GitHub in
             <a href="https://github.com/btabiado/alpine-data/blob/main/README_LTHCS.md"
-               target="_blank" rel="noopener">README_LTHCS.md</a>.
+               target="_blank" rel="noopener">README_LTHCS.md</a>,
+            and the scoring code is in
+            <a href="https://github.com/btabiado/alpine-data/tree/main/lthcs"
+               target="_blank" rel="noopener"><code>lthcs/</code></a>.
           </p>
           <p>
             <strong>Reminder.</strong> Nothing on this site is investment advice. LTHCS is

@@ -296,7 +296,7 @@ def test_tsa_copy_no_longer_claims_near_real_time(v1_js):
 
 # --------------------------------------------------------- whale fee units ---
 
-@pytest.mark.parametrize("path", ["app.py", "v2/app.py"])
+@pytest.mark.parametrize("path", ["app.py"])
 def test_whale_eth_renderers_coerce_and_undo_wei(path):
     js = _template_js(ROOT / path)
     i = js.index("const statsBox = document.getElementById('ethStatsBox');")
@@ -306,12 +306,12 @@ def test_whale_eth_renderers_coerce_and_undo_wei(path):
     assert "toFiniteNum(bc.burned_eth_24h)" in block
 
 
-@pytest.mark.parametrize("path", ["app.py", "v2/app.py"])
+@pytest.mark.parametrize("path", ["app.py"])
 def test_static_mirror_drops_the_dead_bookmarklet_link(path):
     js = _template_js(ROOT / path)
-    # app.py emits the anchor via a placeholder (server-side, Flask only);
-    # v2/app.py still has it inline. Both keep the client-side removal.
-    assert 'id="bookmarkletLink"' in js or "__BOOKMARKLET_LINK__" in js
+    # app.py emits the anchor via a placeholder filled only in Flask mode,
+    # and keeps the client-side removal as a backstop.
+    assert "__BOOKMARKLET_LINK__" in js
     i = js.index("if (!isServer){")
     assert "getElementById('bookmarkletLink')" in js[i:i + 4000]
     assert ".remove()" in js[i:i + 4000]

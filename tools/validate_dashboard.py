@@ -7,9 +7,10 @@ git conflict markers, leftover __DATA_JSON__ placeholder, brace/paren
 balance, state-keys-unique, SIDECARS↔SIDECAR_FOR_TAB coverage) can be run
 against either build:
 
-    python3 tools/validate_dashboard.py v2/dashboard.html   # V2 (was the original target)
     python3 tools/validate_dashboard.py dashboard.html      # V1
-    python3 tools/validate_dashboard.py                     # defaults to v2/dashboard.html
+    python3 tools/validate_dashboard.py                     # defaults to dashboard.html
+
+(V2 and its v2/dashboard.html, the original target, were retired in 2026-10.)
 
 The original `validate_v2_dashboard.py` is kept as-is so existing
 pages.yml callers and any in-flight parallel work that touches it keep

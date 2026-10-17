@@ -1,5 +1,5 @@
 """
-Gold & silver metals fetcher for the V2 dashboard's Metals tab.
+Gold & silver metals fetcher for the dashboard's Metals tab.
 
 Sources (all free, no auth required):
   FRED            GOLDPMGBD228NLBM    London Gold PM Fix (USD/oz, daily)
@@ -14,7 +14,7 @@ Sources (all free, no auth required):
   USGS / ScienceBase  MCS Gold Data Release (item 65b7d7b2d34e36a39045b4c8)
                   Annual world gold mine production by country (metric tons).
 
-Output: v2/data-metals.json (sidecar consumed by the V2 dashboard's
+Output: data-metals.json (sidecar consumed by the dashboard's
 Metals tab via the existing SIDECARS lazy-load mechanism).
 
 Schema:
@@ -43,7 +43,7 @@ either sees a fully-fresh payload or the last-known-good payload mixed
 with whatever sources DID succeed this run.
 
 CLI:
-    python fetch_metals.py                 # default --out v2/data-metals.json
+    python fetch_metals.py                 # default --out data-metals.json
     python fetch_metals.py --out PATH      # custom output path
     python fetch_metals.py --no-network    # offline parser self-test only
 """
@@ -66,14 +66,11 @@ import requests
 UA = "Mozilla/5.0 (compatible; etf-flow-dashboard/1.0; +metals-fetcher)"
 H = {"User-Agent": UA}
 ROOT = Path(__file__).parent
-DEFAULT_OUT = ROOT / "v2" / "data-metals.json"
-# V1 dual-write target — the V1 dashboard lazy-loads /data-metals.json via
-# the same SIDECARS mechanism it already uses for whale/defi (those live at
-# data-whale.json / data-defi.json next to dashboard.html). Writing here
-# keeps V2's existing wiring untouched while giving V1 a self-contained
-# sidecar that the CI stage step picks up automatically (it globs
-# `data-*.json` at repo root). Pass --out-v1 '' to disable.
-DEFAULT_OUT_V1 = ROOT / "data-metals.json"
+DEFAULT_OUT = ROOT / "data-metals.json"
+# Optional second copy (--out-v1). It mirrored the output into the repo root
+# for V1 while the retired V2 dashboard owned DEFAULT_OUT (v2/); DEFAULT_OUT
+# is now the root file the dashboard reads, so the mirror is off by default.
+DEFAULT_OUT_V1 = ""
 
 # IMF SDMX namespaces (SDMX-ML StructureSpecificData v2.1)
 NS_MSG = "http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message"
@@ -799,8 +796,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", default=str(DEFAULT_OUT),
                     help=f"Output JSON path (default: {DEFAULT_OUT})")
     ap.add_argument("--out-v1", default=str(DEFAULT_OUT_V1),
-                    help=f"V1 dashboard dual-write path (default: {DEFAULT_OUT_V1}; "
-                         f"pass empty string '' to disable)")
+                    help="Optional second output path (default: none)")
     ap.add_argument("--no-network", action="store_true",
                     help="Run offline parser self-test and exit (no HTTP).")
     args = ap.parse_args(argv)

@@ -11,8 +11,8 @@ with the schema documented in `lthcs/sources/google_trends.py`.
 
 | Writer | When | Behaviour |
 |---|---|---|
-| `scripts/lthcs_trends_weekly.py` | Mon 04:00 UTC (`.github/workflows/lthcs-trends-weekly.yml`) | Try to refresh the full universe in one ~11-minute pass. Polite cadence ~4 s/ticker. Empirically rate-limited — only ~11/167 tickers survive the run. |
-| `scripts/lthcs_trends_daily.py` | Daily 04:00 UTC (`.github/workflows/lthcs-trends-daily.yml`, **staged but not yet committed** as of 2026-05-19) | Process ~30 tickers/day with adaptive backoff + resumable progress. Spreads work over ~5.5 days to refresh the universe without hitting a sustained 429 wall. |
+| `scripts/lthcs_trends_weekly.py` | Mon 02:47 UTC (`.github/workflows/lthcs-trends-weekly.yml`) | Try to refresh the full universe in one pass. Polite cadence ~4 s/ticker. Empirically rate-limited: only about a dozen tickers survive the run. |
+| `scripts/lthcs_trends_daily.py` | Daily 04:13 UTC (`.github/workflows/lthcs-trends-daily.yml`) | Process ~30 tickers/day with adaptive backoff + resumable progress, so one pass over the universe (515 active tickers, 2026-10) takes about two and a half weeks instead of hitting a sustained 429 wall. |
 
 Both writers merge **additively** into the same per-week snapshot
 file. Neither writer deletes existing tickers — the only way a ticker

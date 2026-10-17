@@ -406,13 +406,19 @@ def _synthetic_returns_series(n: int, mu: float, sigma: float, seed: int) -> pd.
     return pd.Series(arr, index=idx)
 
 
+def _sharpe_ci(series, **kw):
+    """Sharpe bounds from the joint bootstrap run_backtest uses."""
+    ci = be._bootstrap_sharpe_sortino_ci(series, **kw)
+    return ci["sharpe_ci_lower"], ci["sharpe_ci_upper"]
+
+
 def test_bootstrap_ci_deterministic_for_same_seed():
     """Same seed -> identical CI bounds; different seed -> different bounds."""
     s = _synthetic_returns_series(n=64, mu=0.001, sigma=0.01, seed=11)
-    a = be._bootstrap_sharpe_ci(s, n_bootstrap=500, seed=42)
-    b = be._bootstrap_sharpe_ci(s, n_bootstrap=500, seed=42)
+    a = be._bootstrap_sharpe_sortino_ci(s, n_bootstrap=500, seed=42)
+    b = be._bootstrap_sharpe_sortino_ci(s, n_bootstrap=500, seed=42)
     assert a == b
-    c = be._bootstrap_sharpe_ci(s, n_bootstrap=500, seed=43)
+    c = be._bootstrap_sharpe_sortino_ci(s, n_bootstrap=500, seed=43)
     assert a != c
 
 
@@ -422,7 +428,7 @@ def test_bootstrap_ci_brackets_point_estimate():
     expectation, so this is essentially a sanity check on plumbing."""
     s = _synthetic_returns_series(n=90, mu=0.0008, sigma=0.012, seed=7)
     point = be._annualized_sharpe(s)
-    lo, hi = be._bootstrap_sharpe_ci(s, n_bootstrap=1000, seed=42)
+    lo, hi = _sharpe_ci(s, n_bootstrap=1000, seed=42)
     assert lo <= point <= hi
 
 
@@ -431,8 +437,8 @@ def test_bootstrap_ci_wider_on_high_variance_series():
     a low-variance series at the same length and mean."""
     low = _synthetic_returns_series(n=90, mu=0.0005, sigma=0.003, seed=21)
     high = _synthetic_returns_series(n=90, mu=0.0005, sigma=0.03, seed=21)
-    lo_lo, lo_hi = be._bootstrap_sharpe_ci(low, n_bootstrap=1000, seed=42)
-    hi_lo, hi_hi = be._bootstrap_sharpe_ci(high, n_bootstrap=1000, seed=42)
+    lo_lo, lo_hi = _sharpe_ci(low, n_bootstrap=1000, seed=42)
+    hi_lo, hi_hi = _sharpe_ci(high, n_bootstrap=1000, seed=42)
     # The Sharpe ratio itself is variance-normalized, but the *bootstrap
     # distribution* of Sharpe (block-resampled returns) is sensitive to
     # the raw scale of noise -- noisier samples imply noisier Sharpe.
@@ -441,10 +447,9 @@ def test_bootstrap_ci_wider_on_high_variance_series():
 
 def test_bootstrap_ci_degenerate_series_returns_nan():
     """An empty or single-point series can't be bootstrapped sensibly."""
-    lo, hi = be._bootstrap_sharpe_ci(pd.Series([], dtype=float), n_bootstrap=100)
-    assert math.isnan(lo) and math.isnan(hi)
-    lo2, hi2 = be._bootstrap_sharpe_ci(pd.Series([0.01]), n_bootstrap=100)
-    assert math.isnan(lo2) and math.isnan(hi2)
+    for degenerate in (pd.Series([], dtype=float), pd.Series([0.01])):
+        ci = be._bootstrap_sharpe_sortino_ci(degenerate, n_bootstrap=100)
+        assert all(math.isnan(v) for v in ci.values()), ci
 
 
 def test_summary_includes_ci_keys_by_default():

@@ -203,6 +203,13 @@ def fallback_answer(question: str, payload: dict) -> str:
             if s:
                 out.append(f"{asset.upper()} ETF stats (as of {s.get('last_date','?')}):")
                 out.append(f"  • Last day: {fmt(s.get('last_day_flow'))}")
+                pend = [p for p in (s.get("pending") or []) if isinstance(p, dict)]
+                if pend:
+                    # A day Farside has not (fully) published is pending, not 0.
+                    out.append("  • Not reported yet: " + ", ".join(
+                        f"{p.get('date', '?')}"
+                        + (" (partly reported)" if p.get("status") == "partial" else "")
+                        for p in pend))
                 out.append(f"  • 7d: {fmt(s.get('last_7d'))}   30d: {fmt(s.get('last_30d'))}   YTD: {fmt(s.get('ytd'))}")
                 out.append(f"  • All-time net: {fmt(s.get('all_time'))}")
                 streak = s.get("streak") or {}

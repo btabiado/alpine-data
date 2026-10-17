@@ -292,9 +292,11 @@ def test_built_mode_runs_in_pages_after_the_builds(build_steps):
     def index_of(fragment):
         return next(i for i, n in enumerate(names) if fragment in n)
 
-    # After both dashboards are generated — otherwise it judges last run's files.
+    # After the dashboard and its sidecars are built — otherwise it judges last
+    # run's files. (The V2 build that also wrote sidecars was retired in 2026-10.)
     assert idx > index_of("Fetch live data"), "runs before the V1 build"
-    assert idx > index_of("Generate V2 dashboard"), "runs before the V2 build"
+    assert idx > index_of("Fetch dashboard sidecars"), "runs before the sidecar fetch"
+    assert idx > index_of("Fetch OpenSky flight positions"), "runs before the positions fetch"
     # Before staging, so the verdict is about what is actually being shipped.
     assert idx < index_of("Stage site directory")
 

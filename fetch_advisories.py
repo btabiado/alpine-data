@@ -5,11 +5,15 @@ Sources (all free, no auth required):
   travel.state.gov HTML  per-country advisory level, risk codes, date
   travel.state.gov RSS   security alerts / advisory-update bulletins
 
-Output: v2/data-travel.json (sidecar for the V2 dashboard's Travel Advisories tab).
+Output: data-travel.json (sidecar for the dashboard's Travel Advisories tab).
 
 Schema (matches what the front-end consumes):
     {
       "generated_at": "2026-05-25T12:00:00Z",
+      "source": "html",                 # or "rss-fallback"
+      "fallback": false,                 # true when the country list came from RSS
+      "fallback_reason": null,           # why, when fallback is true
+      "risks_available": true,           # false in fallback: the feed has no indicator codes
       "advisories": [
         {"name": "Afghanistan", "level": 4, "risks": ["U","C","H","K","T","D","N"],
          "date": "2026-02-20",
@@ -27,12 +31,19 @@ whoever wires up CI — there's no benefit to scraping the HTML page 24 times
 a day. We do NOT enforce that here; leaving the cadence decision to the
 caller keeps this module a pure pipeline step.
 
-Resilience: on any scrape failure (or zero-advisory result) we read the
-existing v2/data-travel.json, log a warning, and exit non-zero WITHOUT
-overwriting it. The dashboard never sees an empty advisories list.
+Resilience: a usable country list from the HTML table is a normal success.
+If that page is blocked or unreadable but the RSS feed yields a well-formed
+list, we write that list, set fallback=true, log a warning, and exit 0.
+Risk-indicator codes are not in the feed, so risks_available is false.
+No list from either source, or a list that does not match the schema, is a
+hard failure: the existing data-travel.json is left in place and the process
+exits non-zero. The dashboard never sees an empty or malformed advisories list.
+
+A 403 from the advisory page is accepted as the host's answer. This module
+does not rotate User-Agents, use a proxy, or otherwise try to get past it.
 
 CLI:
-    python fetch_advisories.py                 # default --out v2/data-travel.json
+    python fetch_advisories.py                 # default --out data-travel.json
     python fetch_advisories.py --out PATH      # custom output path
     python fetch_advisories.py --no-network    # offline parser self-test only
 """
@@ -66,7 +77,7 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "
       "(KHTML, like Gecko) Version/17.0 Safari/605.1.15")
 H = {"User-Agent": UA}
 ROOT = Path(__file__).parent
-DEFAULT_OUT = ROOT / "v2" / "data-travel.json"
+DEFAULT_OUT = ROOT / "data-travel.json"
 
 # One retry with a short backoff. Akamai occasionally serves a transient
 # 403/503 to a cold connection; one retry costs ~2s and removes the cheapest
@@ -147,12 +158,55 @@ def _decode_response(r) -> str:
     return r.text or ""
 
 
+# Set only by the tests workflow. When "1", the two State Dept URLs are
+# answered from offline fixtures and requests is never called. pages.yml
+# leaves it unset, so a deploy still fetches live. This is a test double,
+# not a way around the live 403.
+ADVISORIES_MOCK_ENV = "ALPINE_ADVISORIES_MOCK"
+
+# Body the mock returns for the HTML page: the shape CI actually got on
+# 2026-10-15 (Cloudflare "Just a moment..."), minus any challenge script.
+_MOCK_CHALLENGE = (
+    '<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title>'
+    "</head><body>Cloudflare challenge</body></html>"
+)
+
+
+def _offline_mock(url: str) -> FetchResult | None:
+    """Fixture answers for the tests workflow. None when the env is unset,
+    which is every production run."""
+    if os.environ.get(ADVISORIES_MOCK_ENV) != "1":
+        return None
+    if url == ADVISORY_LIST_URL:
+        snippet = " ".join(_MOCK_CHALLENGE.split())[:200]
+        return FetchResult(url, None, 403, "", len(_MOCK_CHALLENGE), snippet, 1)
+    if url == ADVISORY_RSS_URL:
+        # Defined further down; resolved at call time, after import finishes.
+        text = _RSS_FIXTURE_PATH.read_text(encoding="utf-8")
+        return FetchResult(url, text, 200, "", len(text), "", 1)
+    return FetchResult(
+        url, None, None,
+        f"{ADVISORIES_MOCK_ENV} refused an unexpected URL without contacting the network",
+        0, "", 1,
+    )
+
+
 def _get(url: str, timeout: int = 25, retries: int = HTTP_RETRIES) -> FetchResult:
     """GET with a browser UA. NEVER raises; always returns a FetchResult.
 
     Returns a result object rather than `str | None` so the caller can report
     the HTTP status and the upstream's own error body instead of just "failed".
+
+    A non-200, including the Cloudflare 403 on the advisory page, is returned
+    as-is. The one existing retry is for a transient Akamai blip; it is not
+    expanded, and nothing here changes the User-Agent or routes around the host.
     """
+    mocked = _offline_mock(url)
+    if mocked is not None:
+        if not mocked.ok:
+            print(f"  [skip] {url} -> {mocked.describe()} (offline mock)",
+                  file=sys.stderr)
+        return mocked
     status: int | None = None
     error = ""
     nbytes = 0
@@ -906,12 +960,50 @@ def _endpoint_status(r: FetchResult) -> dict:
     }
 
 
+_ADVISORY_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _malformed_advisory_reason(rows: object) -> str:
+    """'' when `rows` is a publishable advisory list.
+
+    An empty list is not malformed — it is "no data", and the caller decides
+    whether the other source can fill it. A list that would be written with a
+    missing country, a level outside 1-4, a risks value that is not a list of
+    indicator codes, a bad date, or a non-https url is malformed and must not
+    be published. An empty `risks` list is valid: the RSS feed has no codes,
+    and some countries publish none.
+    """
+    if not isinstance(rows, list):
+        return "advisories is not a list"
+    for i, row in enumerate(rows):
+        if not isinstance(row, dict):
+            return f"row {i} is not an object"
+        name = row.get("name")
+        if not isinstance(name, str) or not name.strip():
+            return f"row {i} has no country name"
+        level = row.get("level")
+        if isinstance(level, bool) or not isinstance(level, int) or not 1 <= level <= 4:
+            return f"row {i} level {level!r} is not an integer 1-4"
+        risks = row.get("risks")
+        if (not isinstance(risks, list)
+                or any(not isinstance(c, str) or c not in VALID_RISK_CODES for c in risks)):
+            return f"row {i} risks {risks!r} is not a list of indicator codes"
+        date = row.get("date")
+        if not isinstance(date, str) or (date and not _ADVISORY_DATE_RE.fullmatch(date)):
+            return f"row {i} date {date!r} is not YYYY-MM-DD or empty"
+        url = row.get("url")
+        if not isinstance(url, str) or not url.startswith("https://"):
+            return f"row {i} url is not an https URL"
+    return ""
+
+
 def fetch_live(status: dict | None = None) -> dict | None:
     """Scrape both endpoints and assemble the output payload.
 
-    Returns None if the advisory list comes back empty from BOTH the HTML
-    table and the RSS fallback — caller treats that as a hard failure and
-    preserves the prior good JSON file.
+    Returns None when neither source produced a well-formed advisory list.
+    The caller treats that as a hard failure and preserves the prior JSON.
+    A well-formed RSS list after the HTML page failed is a success with
+    ``fallback`` set; it is not a failure.
 
     ``status``: optional dict, always populated with a machine-readable record
     of what each endpoint did. main() writes it to disk whether the run
@@ -929,19 +1021,28 @@ def fetch_live(status: dict | None = None) -> dict | None:
     status["html"] = _endpoint_status(html_r)
     advisories: list[dict] = []
     table_diag: dict = {}
+    html_malformed = ""
     if html_r.ok:
         advisories = parse_advisory_table(html_r.text, diag=table_diag)
-        print(f"    -> {len(advisories)} advisories parsed "
-              f"({html_r.nbytes} bytes, lock_engaged="
-              f"{table_diag.get('lock_engaged')})")
+        html_malformed = _malformed_advisory_reason(advisories)
+        if html_malformed:
+            print(f"    -> HTML rows malformed ({html_malformed}); "
+                  f"discarding {len(advisories)} rows", file=sys.stderr)
+            advisories = []
+        else:
+            print(f"    -> {len(advisories)} advisories parsed "
+                  f"({html_r.nbytes} bytes, lock_engaged="
+                  f"{table_diag.get('lock_engaged')})")
     else:
         print(f"    -> HTML fetch failed: {html_r.describe()}", file=sys.stderr)
     status["html"].update(table_diag)
+    if html_malformed:
+        status["html"]["malformed"] = html_malformed
 
     # HTTP 200 but zero rows is the parser-break signature, and it is the one
     # case a human needs markup detail for. Print it here rather than dumping
     # a file: this must survive in a build log, not in an untracked artifact.
-    if html_r.ok and not advisories:
+    if html_r.ok and not advisories and not html_malformed:
         print(f"    -> PARSE BREAK: {html_r.nbytes} bytes of HTML, "
               f"{table_diag.get('tables_seen', 0)} <table>s, "
               f"lock_engaged={table_diag.get('lock_engaged')}, "
@@ -963,45 +1064,78 @@ def fetch_live(status: dict | None = None) -> dict | None:
         print(f"    -> RSS fetch failed: {rss_r.describe()}", file=sys.stderr)
 
     source = "html"
+    fallback_reason: str | None = None
+    rss_malformed = ""
     if not advisories and rss_r.ok:
-        # The HTML table is gone or unparseable but the RSS feed answered.
-        # Rebuild the country list from it rather than freezing the whole tab
-        # (see advisories_from_rss for what this loses: the risk pills).
-        advisories = advisories_from_rss(rss_r.text)
-        if advisories:
+        # The HTML table is blocked, empty, or malformed, but the RSS feed
+        # answered. Rebuild the country list from it. What this loses is the
+        # risk-indicator codes (see advisories_from_rss). The 403 is not
+        # worked around: no extra retry, no other User-Agent, no proxy.
+        rss_rows = advisories_from_rss(rss_r.text)
+        rss_malformed = _malformed_advisory_reason(rss_rows)
+        if rss_rows and not rss_malformed:
+            advisories = rss_rows
             source = "rss-fallback"
+            if html_malformed:
+                fallback_reason = f"html rows malformed: {html_malformed}"
+            elif not html_r.ok:
+                fallback_reason = f"html HTTP {html_r.status}"
+            else:
+                fallback_reason = "html table yielded 0 rows"
             print(f"    -> RSS FALLBACK: rebuilt {len(advisories)} advisories from "
-                  f"the RSS feed because the HTML table yielded 0 rows. "
+                  f"the RSS feed ({fallback_reason}). "
                   f"Risk-indicator pills are unavailable in this mode.",
                   file=sys.stderr)
+        elif rss_malformed:
+            print(f"    -> RSS rows malformed ({rss_malformed}); "
+                  f"discarding {len(rss_rows)} rows", file=sys.stderr)
+    if rss_malformed:
+        status["rss"]["malformed"] = rss_malformed
 
+    using_fallback = source == "rss-fallback" and bool(advisories)
     status["rss"]["bulletins_parsed"] = len(bulletins)
     status["advisories"] = len(advisories)
     status["source"] = source if advisories else None
+    # Clear on every run, success or failure, so a reader never has to treat
+    # a missing key as "maybe". True only when the country list was rebuilt
+    # from RSS after the HTML page produced nothing usable.
+    status["fallback"] = using_fallback
+    status["fallback_reason"] = fallback_reason
     # Risk-indicator codes only exist on the HTML table. The RSS items carry
     # the level, a FIPS country code and free-text prose, never the T/C/U/...
     # indicators, and the per-country pages sit behind the same bot challenge
     # as the table. So in the fallback every row's `risks` is [] because the
     # data is MISSING, not because the country has no risks; this flag is how
     # the dashboard tells those two apart.
-    risks_available = source == "html"
+    risks_available = source == "html" and bool(advisories)
     status["risks_available"] = risks_available if advisories else None
 
     if not advisories:
         # Hard fail — don't write a payload with an empty country list, even
         # if the bulletins came through. The dashboard tab is useless without
-        # the country table and the spec explicitly says: never overwrite
-        # with empty.
+        # the country table. Malformed rows are a different failure from "the
+        # host sent nothing": both refuse the write, and the status says which.
         status["ok"] = False
+        if html_malformed or rss_malformed:
+            status["failure"] = "malformed"
+            status["malformed"] = rss_malformed or html_malformed
+        else:
+            status["failure"] = "no-data"
+            status["malformed"] = None
         return None
 
     status["ok"] = True
+    status["failure"] = None
+    status["malformed"] = None
     return {
         "generated_at": _now_iso(),
         # Which path produced the country list. "rss-fallback" means the HTML
-        # table broke and `risks` is empty for every row — visible in the data
-        # itself, not just in a log line nobody reads.
+        # table was blocked or unreadable and `risks` is empty for every row.
         "source": source,
+        # The status flag for that mode. True => the list is from RSS, risk
+        # indicators are unknown, and the run is a warning rather than a failure.
+        "fallback": using_fallback,
+        "fallback_reason": fallback_reason,
         # False => `risks` is unknown for every row (show "unavailable", not
         # "none"; a terrorism count of 0 would be a fabricated zero).
         "risks_available": risks_available,
@@ -1265,6 +1399,14 @@ def _self_test() -> int:
          "RSS fallback should handle multi-word country names"),
         (advisories_from_rss("") == [] and advisories_from_rss("<not xml") == [],
          "RSS fallback should degrade to [] on empty/invalid XML"),
+        (_malformed_advisory_reason([]) == "",
+         "an empty advisory list is no-data, not malformed"),
+        (_malformed_advisory_reason(
+            [{"name": "X", "level": 9, "risks": [], "date": "", "url": "https://x"}]) != "",
+         "a level outside 1-4 must be malformed"),
+        (_malformed_advisory_reason(
+            [{"name": "X", "level": True, "risks": [], "date": "", "url": "https://x"}]) != "",
+         "bool is an int in Python; a boolean level must still be malformed"),
 
         # --- _diagnose must separate (a) block from (b) parser break ---
         ("REFUSING" in _diagnose({"html": {"http_status": 403, "body_snippet": "Access Denied"},
@@ -1306,7 +1448,7 @@ STALE_ALERT_DAYS = 3
 def _annotate(level: str, title: str, message: str) -> None:
     """Emit a GitHub Actions annotation *and* a plain line.
 
-    The build invokes this fetcher inside app.py/v2/app.py, whose step in
+    The build invokes this fetcher inside app.py, whose step in
     pages.yml ends with `|| echo`, so a non-zero exit alone can never surface.
     A ``::error::`` workflow command is picked up from stdout regardless of
     exit code and shows on the run summary page, so the alarm does not depend
@@ -1443,6 +1585,15 @@ def main(argv: list[str] | None = None) -> int:
     status["prior_age_days"] = prior_age
 
     if payload is None:
+        # Malformed rows are not a stale-data blip. Refuse the write and fail
+        # even when yesterday's file is only hours old.
+        if status.get("failure") == "malformed":
+            detail = (f"REFUSED {out_path.name}: advisory rows are malformed "
+                      f"({status.get('malformed')}). Nothing was written.")
+            _annotate("error", "Travel advisories malformed", detail)
+            _write_status(out_path, status)
+            return 1
+
         # Fallback-to-last-good: preserve the existing file (if any) and make
         # the preserve LOUD. A silent preserve is what let this feed serve
         # 2026-05-26 data while looking current for 68 days.
@@ -1470,13 +1621,18 @@ def main(argv: list[str] | None = None) -> int:
     out_path.write_text(json.dumps(payload, indent=2))
     _write_status(out_path, status)
     note = ""
-    if payload.get("source") == "rss-fallback":
-        note = " [via RSS fallback — HTML table broke, risk pills unavailable]"
-        _annotate("warning", "Travel advisories degraded",
-                  f"HTML advisory table yielded 0 rows; rebuilt "
-                  f"{len(payload['advisories'])} advisories from RSS instead. "
-                  f"{_diagnose(status)} Risk-indicator pills are empty until the "
-                  f"HTML parser is repaired.")
+    if payload.get("fallback"):
+        # A logged warning, exit 0. The country list is real; the risk codes
+        # are not. Calling this a failure is what turned a Cloudflare 403 into
+        # a red tests workflow on 2026-10-15.
+        why = payload.get("fallback_reason") or _diagnose(status)
+        note = " [via RSS fallback — risk indicators unavailable]"
+        _annotate(
+            "warning", "Travel advisories degraded",
+            f"fallback=true ({why}). Rebuilt {len(payload['advisories'])} "
+            f"advisories from the State Dept RSS feed. risks_available=false: "
+            f"indicator codes are not in that feed. {_diagnose(status)}",
+        )
     print(f"  Wrote {out_path} ({len(payload['advisories'])} advisories, "
           f"{len(payload['bulletins'])} bulletins){note}")
     return 0

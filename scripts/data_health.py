@@ -152,6 +152,7 @@ from build_health_status import (  # noqa: E402  (path set above)
     humanize_age,
     nested_age_h,
     resolve_age,
+    threshold_for,
 )
 from build_health_status import NESTED_DATE_PATHS as _NESTED_DATE_PATHS  # noqa: E402
 import history_continuity as hc  # noqa: E402  (path set above)
@@ -169,7 +170,7 @@ DAILY, MONTHLY, TRADING, History = hc.DAILY, hc.MONTHLY, hc.TRADING, hc.History
 __all__ = [
     # re-exported age machinery (shared with build_health_status / /health/)
     "AgeProbe", "DEFAULT", "NESTED_DATE_PATHS", "THRESHOLDS",
-    "_select", "humanize_age", "nested_age_h", "resolve_age",
+    "_select", "humanize_age", "nested_age_h", "resolve_age", "threshold_for",
     # this module's own surface
     "COMMITTED", "BUILT", "STATIC", "DELEGATED",
     "REPO", "DEPLOYED", "PAGES_BASE_URL", "LiveFetchError", "deployed_url",
@@ -218,6 +219,10 @@ class Feed:
     something to re-derive at 2am. `refresher` is the command the --remediate
     path runs to try to self-heal; None means no safe automatic retry exists.
 
+    There is deliberately no per-feed age limit here: a feed fails past
+    ``threshold_for(rel).stale_h`` from build_health_status.THRESHOLDS, the
+    same table /health/ colours its rows with, so the two cannot disagree.
+
     `source` says which copy `--mode committed` judges. REPO (the default) is
     the committed file. DEPLOYED is for a feed pages.yml regenerates at deploy
     time and never commits back: its repo file is a stale fallback, so the
@@ -228,7 +233,6 @@ class Feed:
     kind: str
     owner: str
     refresher: str | None = None
-    limit_h: float | None = None    # overrides THRESHOLDS when the cadence is unusual
     justification: str = ""         # required for STATIC and DELEGATED, enforced below
     series_glob: str = "*.json"     # SERIES only: which files in the directory count
     source: str = REPO              # COMMITTED only: REPO or DEPLOYED, see above
@@ -241,7 +245,7 @@ class Feed:
     # How often the UNDERLYING data is published, when that is slower than any
     # cron (e.g. "annual"). Reported next to the age wherever the feed is
     # shown, so a long age on a slow source reads as expected, not broken.
-    # Documentation only: limit_h is still what fails the feed.
+    # Documentation only: THRESHOLDS is still what fails the feed.
     cadence: str = ""
 
 
@@ -288,13 +292,9 @@ MANIFEST: dict[str, Feed] = {
         COMMITTED, "aviation-tsa.yml (daily 14:10Z)", "python fetch_tsa.py",
         # The page publishes a trailing window; fetch_tsa rewrites it whole,
         # so continuity here means "no hole inside the window we serve".
+        # Limit: 48h, THRESHOLDS["data-tsa.json"] (TSA posts yesterday's count).
         history=(History("data-tsa.json", DAILY, "json", label="checkpoint series",
-                         series_key="series", date_field="d"),),
-        # Age is measured from the newest checkpoint date, and TSA posts
-        # yesterday's count, so a healthy file is already ~24h old at fetch
-        # time and the 14:10Z cron routinely starts hours late. 48h tolerates
-        # that and still flags a single missed day.
-        limit_h=48.0),
+                         series_key="series", date_field="d"),)),
     "data-city.json": Feed(
         COMMITTED, "city-daily.yml (daily 06:00Z)", "python fetch_city.py",
         # Upstream (Socrata) monthly counts, re-pulled whole each run. A month
@@ -322,8 +322,12 @@ MANIFEST: dict[str, Feed] = {
         COMMITTED, "aviation-opensky.yml (hourly)", "python fetch_opensky.py",
         history=(History("data-opensky.json", DAILY, "git",
                          label="daily commits"),)),
+    # Live Flight Map positions. Fetched by pages.yml at deploy time and never
+    # committed (its hourly commits were 46% of repo history); the previous
+    # deploy's copy is restored from the Actions cache if a fetch fails.
+    # Judged in --mode built, against the file the deploy is about to serve.
     "data-opensky-positions.json": Feed(
-        COMMITTED, "aviation-opensky.yml (hourly)", "python fetch_opensky.py"),
+        BUILT, "fetch_opensky.py, inside pages.yml (deploy-time, never committed)"),
     "data-aviation.json": Feed(
         # No dedicated fetch_aviation.py exists; the file is consumed by app.py
         # and health/build_r2_coverage.py. Refresher intentionally left None
@@ -331,52 +335,55 @@ MANIFEST: dict[str, Feed] = {
         # worse than no auto-retry.
         COMMITTED, "hand-refreshed; no fetch_aviation.py at root — identify the "
                    "owner before enabling auto-remediation",
-        # 400 DAYS, not the 24h default. This file is a COMPOSITE of three
-        # vintages and data_date is the OLDEST of them (rule 2) — the FAA
-        # airman roll, which FAA publishes ANNUALLY (currently 2025-12-31).
-        # Under the default it reports 215d/24h STALE today and every day
-        # after, forever. That is not vigilance, it is a permanently red light
-        # that teaches everyone to ignore the monitor — the precise failure
-        # this file's docstring blames for 30 unnoticed TSA failures.
-        # 400d gives the annual roll a ~5-week grace window before alarming.
-        #
-        # ACCEPTED COST, stated plainly: because the composite takes the oldest
-        # component, a 400d budget also means the two ~monthly components
-        # (registry, market snapshot) could freeze for over a year without
-        # tripping this check. Fixing that properly means watching the three
-        # components separately, which needs an owner for the file first.
-        #
-        # Checked 2026-10-05: faa.gov's U.S. Civil Airmen Statistics page calls
-        # it "an annual study", lists "2025 Active Civil Airmen Statistics" as
-        # the newest roll and was last updated 2026-04-07. So 2025-12-31 IS the
-        # current vintage (age ~279d is expected), and if the 2026 roll posts
-        # as late as the 2025 one did, this 400d limit fires ~2027-02-04, some
-        # weeks before it can be refreshed. That alarm is then "annual roll
-        # due: check faa.gov", not rot; it is left on purpose.
-        limit_h=400 * 24.0,
+        # Limit: 400 DAYS, THRESHOLDS["data-aviation.json"], which explains
+        # why (an annual FAA roll dates this composite) and what it costs.
         cadence="annual"),
     "data/real_estate.json": Feed(
+        # Age: newest housing month (month-end), THRESHOLDS["real_estate.json"]
+        # (55d fresh / 75d red). generated_at is a fetch clock committed only
+        # when the snapshot's substance changes, so a 48h limit on it reported
+        # the file STALE for nine days (audit 2026-10-15) while the daily job
+        # was succeeding and correctly skipping timestamp-only commits.
+        # "Did today's check run?" is data/real_estate_check.json.
+        #
+        # No daily git history. A day without a payload commit is a successful
+        # unchanged check, not a missing snapshot. With the spec in place,
+        # data-health.yml (full history) would have called 2026-10-07..15 a
+        # gap the morning the October 16 content commit landed. The daily
+        # audit never saw that gap: its checkout is shallow and the git
+        # history check skips those.
         COMMITTED, "real-estate-daily.yml (daily)",
         "python scripts/fetch_real_estate.py",
+        cadence="monthly",
         history=(
             History("data/real_estate.json", MONTHLY, "json",
                     label="metro 5y monthly history",
                     rows="metros[].history_5y_monthly", series_key="labels",
                     date_field=""),
-            History("data/real_estate.json", DAILY, "git", label="daily commits"),
+        )),
+    "data/real_estate_check.json": Feed(
+        # Limit: 48h, THRESHOLDS["real_estate_check.json"]. generated_at here
+        # is the time the fetch succeeded, written even when the snapshot was
+        # not recommitted. A missed run ages this file; it does not age the
+        # housing month.
+        COMMITTED, "real-estate-daily.yml (daily)",
+        "python scripts/fetch_real_estate.py",
+        history=(
+            History("data/real_estate_check.json", DAILY, "git",
+                    label="daily check commits"),
         )),
     "data/ai_curated.json": Feed(
         # Corrected owner. Nothing regenerates this file: it is a hand-curated
         # snapshot (compiled_at), and fetch_market.load_ai_curated() only READS
-        # it, wiki-enriches it in memory and inlines it into dashboard.html and
-        # v2/dashboard.html as DATA.market.ai_curated. It is not published as a
+        # it, wiki-enriches it in memory and inlines it into dashboard.html
+        # as DATA.market.ai_curated. It is not published as a
         # file (<site>/data/ai_curated.json is a 404), and the live pages carry
         # the very same compiled_at as the repo copy, so the repo copy IS the
         # deployed data and REPO is the right source. When it is red, the fix
         # is a human re-curating it, not a fetcher.
         #
-        # Limit: 90 days, from THRESHOLDS["ai_curated.json"] (shared with
-        # /health/). It was the 24h default, which judged a quarterly hand
+        # Limit: 90 days, THRESHOLDS["ai_curated.json"] (the table /health/
+        # shares). It was the 24h default, which judged a quarterly hand
         # snapshot as if it were an hourly feed. No keyless source publishes
         # private-company valuations, so this cannot be automated without a
         # paid API. Refresh = re-verify every row against its source_url (or a
@@ -384,11 +391,11 @@ MANIFEST: dict[str, Feed] = {
         COMMITTED, "hand-curated snapshot (manual PR, re-curate quarterly); read "
                    "and inlined into the built HTML by "
                    "fetch_market.load_ai_curated, never rewritten"),
-    # Trading-day feeds. No limit_h: build_health_status measures their last
-    # row on a WEEKDAY clock (TRADING_DAY_FEEDS) and THRESHOLDS gives the
-    # budget (56 weekday hours), shared with /health/. The old flat 96h wall-
-    # clock limit here disagreed with /health/'s 48h, which read Friday's
-    # complete data as "critical 2.8d" every weekend.
+    # Trading-day feeds. build_health_status measures their last row on a
+    # WEEKDAY clock (TRADING_DAY_FEEDS) and THRESHOLDS gives the budget (56
+    # weekday hours), shared with /health/. The old flat 96h wall-clock limit
+    # here disagreed with /health/'s 48h, which read Friday's complete data as
+    # "critical 2.8d" every weekend.
     "data/equity_etf_flows.csv": Feed(
         COMMITTED, "money-flow-daily.yml (daily 08:30Z)",
         # One row per (trading day, ticker). There is no free upstream for
@@ -407,6 +414,15 @@ MANIFEST: dict[str, Feed] = {
         "python scripts/fetch_etf_flows.py",
         history=(History("data/eth_flows.csv", TRADING, "csv",
                          label="daily flow rows"),)),
+    # Operator input, not a feed. Empty arrays are the steady state; staleness
+    # is judged on the two CSVs above. Classified so the file cannot trip the
+    # unwatched check the day it is committed.
+    "data/etf_flows_manual.json": Feed(
+        STATIC, "etf-flows-daily.yml (manual_entry) and scripts/fetch_etf_flows.py",
+        justification="Hand-entered spot-ETF flows merged when Farside returns "
+                      "HTTP 403. The file is an override, not a publication: it "
+                      "has no refresh clock, and an empty list is correct. "
+                      "Freshness is data/btc_flows.csv and data/eth_flows.csv."),
     # --- daily history of deploy-time sidecars (scripts/snapshot_history.py,
     #     committed by pages.yml) ------------------------------------------
     # The two sidecars below are rebuilt every deploy and never committed, and
@@ -416,14 +432,13 @@ MANIFEST: dict[str, Feed] = {
         COMMITTED, "scripts/snapshot_history.py, committed by pages.yml "
                    "('Commit deploy-time feed history')",
         "python scripts/snapshot_history.py",
-        # Same trading-day cadence as the sidecar it records (see its 120h).
-        limit_h=120.0,
+        # Same trading-day cadence (and 120h limit) as the sidecar it records.
         history=(History("data/stock_money_flow_history.csv", TRADING, "csv",
                          label="daily ticker rows", key_fields=("symbol",)),)),
     "data/travel_advisory_levels.csv": Feed(
         COMMITTED, "scripts/snapshot_history.py, committed by pages.yml "
                    "('Commit deploy-time feed history')",
-        "python scripts/snapshot_history.py", limit_h=48.0,
+        "python scripts/snapshot_history.py",
         history=(History("data/travel_advisory_levels.csv", DAILY, "csv",
                          label="daily level counts"),)),
     "data/travel_advisory_changes.csv": Feed(
@@ -447,13 +462,11 @@ MANIFEST: dict[str, Feed] = {
     # coincidence — they froze *because* nothing was watching, so the V2 build
     # timeout that starved them produced no signal for eight weeks.
     "data-mufon.json": Feed(
-        # DEPLOYED: v2/app.py writes v2/data-mufon.json and the staging step
-        # copies it to the site root; the root repo file is a frozen fallback
-        # (last committed 2026-06-08) that the deploy never reads.
-        COMMITTED, "fetch_mufon.py, called by v2/app.py inside pages.yml "
-                   "(deployed from v2/data-mufon.json, never committed back)",
-        "python fetch_mufon.py", source=DEPLOYED,
-        built_path="v2/data-mufon.json"),
+        # Aggregated counts only. Raw month copies were removed. No refresher:
+        # a fetcher would download nuforc.org, which is not allowed. A person
+        # updates the file with scripts/update_ufo_counts.py.
+        COMMITTED, "committed NUFORC aggregate counts (no fetcher runs; "
+                   "update with scripts/update_ufo_counts.py)"),
     "data-stock-money-flow.json": Feed(
         # Corrected owner: the standalone daily cron referenced by .gitignore
         # (stock-money-flow-daily.yml) does not exist. pages.yml line ~113
@@ -468,14 +481,8 @@ MANIFEST: dict[str, Feed] = {
         COMMITTED, "fetch_market.py --fetch-market step in pages.yml (via "
                    "fetch_stock_money_flow.build_from_signals; deployed, never "
                    "committed back)",
-        source=DEPLOYED,
-        # 120h, not the 24h default: `as_of` is the date of the last DAILY BAR
-        # (the oldest across scored tickers), so it only moves on trading days.
-        # At the 15:00Z check, Friday's bar is ~87h old on Monday, and ~111h
-        # on the Tuesday after a Monday market holiday (or the Monday after
-        # Good Friday). 120h covers those without hiding a feed that has
-        # really stopped for a full trading week.
-        limit_h=120.0),
+        # Limit: 120h, THRESHOLDS["data-stock-money-flow.json"] (trading days).
+        source=DEPLOYED),
     "snowflake_summit/news.json": Feed(
         # Owner corrected: pages.yml runs the enricher (Google News RSS) on
         # every deploy and its "Commit Summit news feed" step commits the file
@@ -514,9 +521,7 @@ MANIFEST: dict[str, Feed] = {
         SERIES, "scripts/snapshot_composites.py, committed by pages.yml "
                 "(composites-bot)",
         "python scripts/snapshot_composites.py",
-        # One snapshot per pages build. 48h tolerates a quiet weekend without
-        # tolerating a genuinely dead snapshotter.
-        limit_h=48.0,
+        # Limit: 48h, THRESHOLDS["data/composites/"].
         # One file per day, and the indexes the cards chart must actually be
         # IN it: every archived snapshot carried whale_sentiment_* = null for
         # two months behind a green freshness check, because a file with nulls
@@ -533,9 +538,12 @@ MANIFEST: dict[str, Feed] = {
     "data-metals.json": Feed(BUILT, "fetch_metals.py, inside pages.yml"),
     "data-supplies.json": Feed(BUILT, "fetch_supplies.py, inside pages.yml"),
     "data-cpi.json": Feed(BUILT, "fetch_cpi.py, inside pages.yml"),
+    "data-stock-prices.json": Feed(
+        BUILT, "fetch_stock_prices.py, inside pages.yml (7-day hourly closes, "
+               "published at the site root)"),
     # The four build artifacts the built-mode check reported as UNWATCHED.
     "data-defi.json": Feed(
-        BUILT, "app.py / v2/app.py lazy sidecar from fetch_market's DeFi subtree"),
+        BUILT, "app.py lazy sidecar from fetch_market's DeFi subtree"),
     "data-mmf.json": Feed(
         BUILT, "fetch_money_flows.py, via fetch_market.build_money_flow_payload "
                "inside pages.yml (ICI; FRED WRMFNS fallback)"),
@@ -553,8 +561,8 @@ MANIFEST: dict[str, Feed] = {
     "data/coinbase.json": Feed(BUILT, "fetch_coinbase.py, inside pages.yml"),
     # data/cpi.json, data/metals.json and data/supplies.json were listed here
     # and reported MISSING on every build: nothing writes them. fetch_cpi /
-    # fetch_metals / fetch_supplies dual-write v2/data-X.json and the root
-    # data-X.json (their DEFAULT_OUT_V1), which are the entries above.
+    # fetch_metals / fetch_supplies write the root data-X.json, which are the
+    # entries above.
     "data/insights_history.json": Feed(BUILT, "insights.py, inside pages.yml"),
 
     # --- legitimately static ------------------------------------------------
@@ -618,11 +626,11 @@ MANIFEST: dict[str, Feed] = {
                       "committed outputs already report."),
     "data/.stale/": Feed(
         DELEGATED, "the individual fetchers' stale-keep caches",
-        justification="Last-known-good caches for flaky upstreams, plus the "
-                      "committed NUFORC subndx backfill. Their age is reported "
-                      "on /health/ by build_health_status.collect_stale(); "
-                      "alarming on a fallback cache being old says nothing "
-                      "about whether the live feed is working."),
+        justification="Last-known-good caches for flaky upstreams. Their age "
+                      "is reported on /health/ by "
+                      "build_health_status.collect_stale(); alarming on a "
+                      "fallback cache being old says nothing about whether "
+                      "the live feed is working."),
 }
 
 
@@ -641,23 +649,17 @@ NESTED_DATE_PATHS = _NESTED_DATE_PATHS
 # been renewed three times is telling you the fix is never coming, and should
 # either be fixed properly or the feed retired from the dashboard.
 SUPPRESSIONS: dict[str, Suppression] = {
-    # Frozen on purpose, not broken. Since 2026-06-10 nuforc.org answers every
-    # non-browser request with a Cloudflare managed challenge, and NUFORC's
-    # terms forbid automated collection without written consent, so
-    # fetch_mufon.py serves the committed month cache and the dashboard labels
-    # the tab "data through June 9". No code change may route around that
-    # gate (see fetch_mufon.py's docstring). The owner emailed NUFORC for
-    # permission on 2026-10-04. Three months is time for an answer; on expiry,
-    # either wire the sanctioned feed or retire/relabel the map, rather than
-    # extending this by reflex.
+    # Counts only, updated by hand. Automated collection stays off. The file
+    # stays at whatever date the last saved index contained (2026-06-09 until
+    # someone runs scripts/update_ufo_counts.py), so age alone is not a failure.
     "data-mufon.json": Suppression(
-        reason="NUFORC blocks automated access (Cloudflare challenge) and its "
-               "terms forbid automated collection without written consent, so "
-               "the UAP map is deliberately frozen at 2026-06-09 and labelled "
-               "that way on the dashboard. Permission requested by email "
-               "2026-10-04; revisit on expiry.",
+        reason="NUFORC permitted aggregated totals only. Raw copies were "
+               "removed and automated collection is disabled, so the UAP tab "
+               "shows counts through 2026-06-09 until someone updates them "
+               "with scripts/update_ufo_counts.py from a saved copy of "
+               "https://nuforc.org/subndx/?id=all.",
         until=date(2027, 1, 4),
-        tracked_in="NUFORC permission request emailed 2026-10-04"),
+        tracked_in="NUFORC aggregates only; manual update via update_ufo_counts.py"),
     # NOTE: the crypto-flow suppressions that used to live here were REMOVED,
     # not renewed. Their stated blocker ("needs COINGLASS_API_KEY; free mirror
     # is dead") stopped being true when scripts/fetch_etf_flows.py landed with
@@ -681,9 +683,20 @@ SUPPRESSIONS: dict[str, Suppression] = {
 # which is the ONLY record of feeds the deploy regenerates and never commits.
 # Its per-file daily presence is published by the pages build as
 # health/r2-coverage.json, so the committed-mode run reads the deployed copy.
+#
+# V2 was retired on 2026-10-06 (PR #94). Through that day pages.yml built
+# v2/data-*.json and uploaded them beside the repo-root copies. From
+# 2026-10-07 the same payloads are archived only at the unprefixed key
+# (data-cpi.json, not v2/data-cpi.json). The coverage report still lists the
+# old keys, and without retired_prefixes the continuity check extends every
+# key to the bucket's newest day, so each retired file looks like another
+# missing day forever. That is the "missing 81" P0 in the 2026-10-15 audit
+# (9 v2 files × 2026-10-07..15). The bytes are at the root keys. A hole in a
+# root key, or a v2 key whose root successor never shows up, still fails.
 ARCHIVES: dict[str, History] = {
     "R2 archive": History("health/r2-coverage.json", DAILY, "r2",
-                          label="daily payload copies"),
+                          label="daily payload copies",
+                          retired_prefixes=(("v2/", "2026-10-07"),)),
 }
 
 
@@ -827,6 +840,15 @@ def _verify_history(h: History) -> list[str]:
                    f"histories only")
     if h.source == "json" and not h.series_key:
         out.append(f"history {h.name!r}: a json history needs series_key")
+    if h.retired_prefixes and h.source != "r2":
+        out.append(f"history {h.name!r}: retired_prefixes applies to r2 "
+                   f"histories only")
+    for prefix, cutoff in h.retired_prefixes:
+        if not isinstance(prefix, str) or not prefix or prefix == "/":
+            out.append(f"history {h.name!r}: retired prefix {prefix!r} is empty")
+        if hc.parse_period(cutoff, hc.DAILY) != cutoff:
+            out.append(f"history {h.name!r}: retired cutoff {cutoff!r} "
+                       f"must be YYYY-MM-DD")
     return out
 
 
@@ -888,8 +910,9 @@ def _probe_deployed(rel: str, now: float) -> "tuple[Path, AgeProbe, str, str]":
     """Age of the copy the live site serves. Raises LiveFetchError.
 
     The payload is written under its own name into a scratch directory so the
-    exact same resolve_age path (THRESHOLDS by filename, NESTED_DATE_PATHS by
-    rel) judges it as would judge a local file — no second parser to drift.
+    exact same resolve_age path (file-name rules such as the trading-day
+    clock, NESTED_DATE_PATHS by rel) judges it as would judge a local file —
+    no second parser to drift.
     """
     url = deployed_url(rel)
     payload = _fetch_deployed(url)
@@ -1037,7 +1060,9 @@ def evaluate(mode: str, today: date | None = None,
                 detail=f"payload marks itself unavailable: {probe.unavailable_reason}"))
             continue
 
-        limit = feed.limit_h or THRESHOLDS.get(judged.name, DEFAULT).stale_h
+        # Keyed by rel, not judged.name: a SERIES is judged on a dated member
+        # file, and a DEPLOYED feed on a scratch or built_path copy.
+        limit = threshold_for(rel).stale_h
         if age_h <= limit:
             results.append(Result(rel, OK, age_h, limit, feed.owner, detail, source,
                                   cadence=feed.cadence))

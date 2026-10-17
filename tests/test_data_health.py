@@ -179,13 +179,6 @@ def test_csv_age_comes_from_the_last_row(bhs, tmp_path):
     assert probe.age_h == pytest.approx(48, abs=0.1)
 
 
-def test_content_age_h_wrapper_still_returns_a_float_or_none(bhs, tmp_path):
-    """Back-compat: build_health_status.scan() and any external caller."""
-    p = _write(tmp_path, "c.json", {"generated_at": "2026-08-03T00:00:00Z"})
-    assert isinstance(bhs._content_age_h(p, NOW), float)
-    assert bhs._content_age_h(_write(tmp_path, "d.json", {}), NOW) is None
-
-
 # ==========================================================================
 # C (live): the two files named in the bug report, against the real tree
 # ==========================================================================
@@ -945,19 +938,22 @@ def _serve(dh, monkeypatch, pages: dict):
 
 
 def test_the_deploy_time_feeds_are_marked_deployed(dh):
-    """These three are rewritten by every pages.yml build and never committed
-    back (its only commit-backs are data/composites and the NUFORC month
-    cache), so their repo files are fallbacks frozen at their last hand commit.
+    """These two are rewritten by every pages.yml build and never committed
+    back, so their repo files are fallbacks frozen at their last hand commit.
     Judging those reported 118-131 days stale on feeds the live site was
     serving fresh."""
-    for rel in ("data-travel.json", "data-stock-money-flow.json",
-                "data-mufon.json"):
+    for rel in ("data-travel.json", "data-stock-money-flow.json"):
         assert dh.MANIFEST[rel].source == dh.DEPLOYED, rel
     # ...and the feeds a cron really commits back stay judged from the repo.
+    # data-mufon.json too: since V2 was retired (2026-10) nothing rebuilds it,
+    # and the committed frozen cache IS what the site serves.
     for rel in ("data-city.json", "data-tsa.json", "data-cfpb.json",
                 "data-usaspending.json", "data/real_estate.json",
-                "data/btc_flows.csv", "data/equity_etf_flows.csv"):
+                "data/btc_flows.csv", "data/equity_etf_flows.csv",
+                "data-mufon.json"):
         assert dh.MANIFEST[rel].source == dh.REPO, rel
+    assert dh.MANIFEST["data-mufon.json"].built_path is None
+    assert dh.MANIFEST["data-mufon.json"].refresher is None   # running it would scrape NUFORC
 
 
 def test_deployed_feed_is_judged_from_the_live_copy(dh, tmp_path, monkeypatch):
@@ -1063,21 +1059,15 @@ def test_real_fetcher_turns_transport_errors_into_live_fetch_error(
 def test_built_mode_judges_the_freshly_built_file_not_the_site(
         dh, tmp_path, monkeypatch):
     """Inside pages.yml the build has just written the copy it is about to
-    publish; the live site still holds the PREVIOUS deploy. MUFON's build
-    writes v2/data-mufon.json, not the root fallback."""
+    publish; the live site still holds the PREVIOUS deploy."""
     monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
 
     def _must_not_fetch(url):
         raise AssertionError(f"built mode fetched {url}")
     monkeypatch.setattr(dh, "_fetch_deployed", _must_not_fetch)
     _write(tmp_path, "data-travel.json", {"generated_at": "2026-08-03T11:00:00Z"})
-    _write(tmp_path, "data-mufon.json", {"generated_at": "2026-01-01T00:00:00Z",
-                                         "date_range": ["1906-11-11", "2026-01-01"]})
-    _write(tmp_path, "v2/data-mufon.json", {"generated_at": "2026-08-03T11:00:00Z",
-                                            "date_range": ["1906-11-11", "2026-08-03"]})
     rows = {r.path: r for r in dh.evaluate(dh.BUILT, now_ts=NOW)}
     assert rows["data-travel.json"].status == dh.OK
-    assert rows["data-mufon.json"].status == dh.OK, rows["data-mufon.json"].line()
 
 
 def test_remediation_does_not_pretend_to_fix_a_deployed_feed(dh, monkeypatch):
@@ -1112,15 +1102,16 @@ MUFON_LIVE = {"generated_at": "2026-10-04T15:17:50Z", "_stale": True,
 def test_mufon_freeze_is_suppressed_with_a_reason_and_an_expiry(dh):
     sup = dh.SUPPRESSIONS["data-mufon.json"]
     assert sup.until == date(2027, 1, 4)
-    for needle in ("NUFORC", "Cloudflare", "consent", "2026-06-09"):
+    for needle in ("NUFORC", "aggregated", "2026-06-09", "update_ufo_counts.py"):
         assert needle in sup.reason, needle
 
 
 def test_mufon_is_muted_until_the_suppression_expires(dh, tmp_path, monkeypatch):
-    """Judged on the live copy, which is frozen at 2026-06-09 on purpose (the
-    container's generated_at is the build clock; date_range[1] is the data)."""
+    """Judged on the committed file (since V2 was retired it IS the served
+    copy), frozen at 2026-06-09 on purpose (the container's generated_at is
+    the build clock; date_range[1] is the data)."""
     monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
-    _serve(dh, monkeypatch, {"data-mufon.json": MUFON_LIVE})
+    _write(tmp_path, "data-mufon.json", MUFON_LIVE)
     now = datetime(2026, 10, 4, 19, 0, tzinfo=timezone.utc).timestamp()
     row = next(r for r in dh.evaluate(dh.COMMITTED, today=date(2026, 10, 4),
                                       now_ts=now)

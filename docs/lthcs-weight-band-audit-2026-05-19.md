@@ -68,8 +68,8 @@ defined, not because the weights are wrong per se. **Recommendation: re-audit
 Today's commit `10daa39` migrated Thesis sentiment from AV `NEWS_SENTIMENT`
 to Finnhub `/news-sentiment` (Tier 6 #31). The snapshot data feeding this
 audit is **pre-Finnhub**. In V1's daily pipeline the AV multi-ticker AND-filter
-collapsed most Thesis sub-scores to neutral 50 (see `MEMORY.md` /
-[alpha_vantage_news_sentiment_quirk](../../../.claude/projects/-Users-bryantabiadon/memory/alpha_vantage_news_sentiment_quirk.md)).
+collapsed most Thesis sub-scores to neutral 50 (the Alpha Vantage
+NEWS_SENTIMENT multi-ticker quirk; its write-up was a private note, not in this repo).
 Yet Thesis still shows up as the **highest-Sharpe pillar in
 `mature_compounder`** (+2.37) despite that headwind — because of its tight
 std, not its mean. Post-Finnhub, the IC *mean* should rise too, and the

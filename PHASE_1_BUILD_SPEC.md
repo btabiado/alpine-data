@@ -1,5 +1,15 @@
 # LTHCS Phase 1 / V1 — Build Specification
 
+> **Historical document (May 2026). It does not describe the repo today.**
+> This is the original Phase 1 build plan. It stays here because code comments cite its sections (§5 scoring formula, §7 snapshot schemas, §11 milestones).
+> Since then:
+> - The universe grew from 75 to the S&P 500 and Dow 30, plus NASDAQ-100 names and Index Exiles (`data/lthcs/universe.json`).
+> - The band cutoffs moved, and are now read from `data/lthcs/weights.json`.
+> - The pipeline runs in GitHub Actions (`lthcs-daily.yml`), not on a laptop.
+> - The code lives in `lthcs/`, `lthcs_daily.py` and `lthcs_tab/`, not in the folders sketched below.
+>
+> For current conventions see [`SKILL.md`](SKILL.md). For setup and operation see [`README_LTHCS.md`](README_LTHCS.md).
+
 **Project:** Long-Term Hold Confidence Score, integrated as a new tab on the existing `alpine-data` GitHub Pages site.
 **Build target:** End-to-end working V1 in 8–10 weeks of part-time effort, executed by Claude Code on Bryan's laptop.
 **Status:** Greenfield. No prior LTHCS code exists in the repo.
