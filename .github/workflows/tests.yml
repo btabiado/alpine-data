@@ -51,10 +51,13 @@ jobs:
           # The State Dept advisory page answers this runner with HTTP 403
           # (Cloudflare "Just a moment..."). Daily audit 2026-10-15 counted
           # tests.yml run 38662092966, where both Python jobs hit that page
-          # live and the scraper rebuilt 216 advisories from RSS. This build
-          # must not open a socket to travel.state.gov: the env var serves
-          # the offline fixtures (HTML 403, RSS sample) so the fallback path
-          # runs as a warning. pages.yml does not set it and still fetches live.
+          # live and the scraper rebuilt advisories from RSS. This build
+          # must not open a socket to travel.state.gov or cadataapi.state.gov:
+          # the env var serves offline fixtures (HTML 403, empty CA API list,
+          # RSS sample) so the RSS fallback path runs as a warning and cannot
+          # fail the job. pages.yml does not set it and still fetches live.
+          # pytest does not need the env var: tests monkeypatch the fetch, and
+          # conftest refuses any other outbound socket.
           ALPINE_ADVISORIES_MOCK: "1"
         run: |
           # Aggregator should produce a working dashboard.html from a
