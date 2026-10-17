@@ -25,6 +25,12 @@ others, so a flaky upstream degrades the report instead of erasing it):
                 mempool.space, treasury.gov) plus the live build's age.
   live_payloads the ``as_of`` / generated stamps of every sidecar JSON the
                 live V1 page loads.
+  quality_audit the committed LTHCS monthly verdict
+                (``data/lthcs/quality_audit/latest_summary.json``).
+                ``verdict_fails`` follows
+                ``lthcs_quality_audit_runner.audit_failed``. An accepted
+                known gap is recorded and is not a failure. Missing or
+                unreadable verdicts fail closed.
 
 This script observes; it does not grade. Severity and new-vs-ongoing are the
 report builder's job.
@@ -817,6 +823,94 @@ def payload_stamps(doc: Any, now: datetime) -> dict:
     return out
 
 
+def section_quality_audit(repo_root: Path) -> dict:
+    """Record the committed LTHCS quality verdict for this day's data audit.
+
+    Local file only. ``verdict_fails`` is ``lthcs_quality_audit_runner.audit_failed``
+    on ``latest_summary.json``. A missing, unreadable, or unloadable verdict
+    fails closed (``verdict_fails`` true) so a gap in the summary cannot clear
+    a red workflow. The report suppresses ``lthcs-quality-audit-monthly`` only
+    when that recorded flag is exactly false. Accepted known gaps stay in
+    ``known_gaps`` so the daily summary can show them.
+    """
+    summary_rel = "data/lthcs/quality_audit/latest_summary.json"
+    workflow = "lthcs-quality-audit-monthly"
+    scripts = Path(__file__).resolve().parent
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    try:
+        import lthcs_quality_audit_runner as qrunner
+        workflow = str(qrunner.QUALITY_AUDIT_WORKFLOW)
+    except Exception as e:  # noqa: BLE001 — a missing runner must not mute the alarm
+        return {
+            "status": "error",
+            "workflow": workflow,
+            "verdict_fails": True,
+            "overall_verdict": None,
+            "summary": summary_rel,
+            "known_gaps": [],
+            "error": clip(f"{type(e).__name__}: {e}", 400),
+        }
+
+    summary = Path(repo_root) / summary_rel
+    try:
+        payload = json.loads(summary.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        return {
+            "status": "error",
+            "workflow": workflow,
+            "verdict_fails": True,
+            "overall_verdict": None,
+            "summary": summary_rel,
+            "known_gaps": [],
+            "error": clip(f"{type(e).__name__}: {e}", 400),
+        }
+    if not isinstance(payload, dict):
+        return {
+            "status": "error",
+            "workflow": workflow,
+            "verdict_fails": True,
+            "overall_verdict": None,
+            "summary": summary_rel,
+            "known_gaps": [],
+            "error": "latest_summary.json is not an object",
+        }
+    try:
+        fails = bool(qrunner.audit_failed(payload))
+    except Exception as e:  # noqa: BLE001
+        return {
+            "status": "error",
+            "workflow": workflow,
+            "verdict_fails": True,
+            "overall_verdict": payload.get("overall_verdict"),
+            "summary": summary_rel,
+            "known_gaps": [],
+            "error": clip(f"{type(e).__name__}: {e}", 400),
+        }
+
+    gaps: list[dict] = []
+    for g in payload.get("known_gaps") or []:
+        if not isinstance(g, dict) or not g.get("pillar"):
+            continue
+        gaps.append({
+            "pillar": g.get("pillar"),
+            "verdict": g.get("verdict"),
+            "decided": g.get("decided"),
+            "review_by": g.get("review_by"),
+            "reason": clip(g.get("reason"), 300),
+            "accepted": bool(g.get("accepted")),
+            "mismatch": bool(g.get("mismatch")),
+        })
+    return {
+        "status": "ok",
+        "workflow": workflow,
+        "verdict_fails": fails,
+        "overall_verdict": payload.get("overall_verdict"),
+        "summary": summary_rel,
+        "known_gaps": gaps,
+    }
+
+
 def section_live_payloads(site: LiveSite, now: datetime) -> dict:
     names = sorted(set(re.findall(r"data-[a-z0-9_\-]+\.json", site.html)))
     payloads = []
@@ -846,7 +940,8 @@ def section_live_payloads(site: LiveSite, now: datetime) -> dict:
 
 # ---------------------------------------------------------------------------
 
-SECTIONS = ("data_health", "workflows", "schedules", "api_status", "spot_checks", "live_payloads")
+SECTIONS = ("data_health", "workflows", "schedules", "api_status", "spot_checks",
+           "live_payloads", "quality_audit")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -871,6 +966,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if "data_health" not in skip:
         out["data_health"] = run_section("data_health", lambda: section_data_health(REPO_ROOT))
+    if "quality_audit" not in skip:
+        out["quality_audit"] = run_section(
+            "quality_audit", lambda: section_quality_audit(REPO_ROOT))
 
     if not ({"workflows", "schedules"} <= skip):
         if gh is None:

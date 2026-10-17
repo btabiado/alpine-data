@@ -343,3 +343,291 @@ def test_cross_cutting_no_alert_when_drift_present():
     ]}
     alerts = runner._cross_cutting_alerts(snap)
     assert not any("drift_30d" in a for a in alerts)
+
+
+# ---------------------------------------------------------------------------
+# Accepted known stubs (thesis_integrity, decided 2026-10-17)
+# ---------------------------------------------------------------------------
+
+_ACCEPTANCE_REASON = (
+    "Bryan decided not to add a FINNHUB_API_KEY. Thesis stays dropped "
+    "and its weight stays on the other four pillars."
+)
+
+
+def _write_known_stubs(directory: Path, **overrides) -> None:
+    entry = {
+        "pillar": "thesis_integrity",
+        "decided": "2026-10-17",
+        "review_by": "2027-04-17",
+        "reason": _ACCEPTANCE_REASON,
+    }
+    entry.update(overrides)
+    (directory / "known_pillar_stubs.json").write_text(json.dumps({"stubs": [entry]}))
+
+
+def _retarget(snap_dir: Path, asof: str, **pillar_values: float) -> None:
+    """Overwrite selected subscores. Pass None via a sentinel by deleting keys separately."""
+    path = snap_dir / f"{asof}.json"
+    payload = json.loads(path.read_text())
+    for row in payload["scores"]:
+        for pillar, value in pillar_values.items():
+            row["subscores"][pillar] = value
+    path.write_text(json.dumps(payload))
+
+
+def _null_thesis(snap_dir: Path, asof: str) -> None:
+    path = snap_dir / f"{asof}.json"
+    payload = json.loads(path.read_text())
+    for row in payload["scores"]:
+        row["subscores"]["thesis_integrity"] = None
+    path.write_text(json.dumps(payload))
+
+
+class TestKnownStubConfig:
+    def test_missing_file_accepts_nothing(self, tmp_path: Path):
+        assert runner.load_known_stubs(tmp_path / "missing.json") == []
+
+    def test_committed_entry_is_thesis_on_the_decision_date(self):
+        known = runner.load_known_stubs(REPO_ROOT / "data" / "lthcs" / "known_pillar_stubs.json")
+        assert [k["pillar"] for k in known] == ["thesis_integrity"]
+        assert known[0]["decided"] == "2026-10-17"
+        assert known[0]["review_by"] == "2027-04-17"
+        assert "FINNHUB_API_KEY" in known[0]["reason"]
+        assert "four pillars" in known[0]["reason"]
+
+    def test_rejects_unknown_pillar_short_reason_and_bad_dates(self, tmp_path: Path):
+        path = tmp_path / "known_pillar_stubs.json"
+        path.write_text(json.dumps({"stubs": [{"pillar": "not_a_pillar", "decided": "2026-10-17",
+                                               "reason": _ACCEPTANCE_REASON}]}))
+        with pytest.raises(ValueError, match="pillar"):
+            runner.load_known_stubs(path)
+
+        path.write_text(json.dumps({"stubs": [{"pillar": "thesis_integrity", "decided": "2026-10-17",
+                                               "reason": "too short"}]}))
+        with pytest.raises(ValueError, match="reason"):
+            runner.load_known_stubs(path)
+
+        path.write_text(json.dumps({"stubs": [{"pillar": "thesis_integrity", "decided": "17 Oct 2026",
+                                               "reason": _ACCEPTANCE_REASON}]}))
+        with pytest.raises(ValueError, match="decided"):
+            runner.load_known_stubs(path)
+
+        path.write_text(json.dumps({"stubs": [
+            {"pillar": "thesis_integrity", "decided": "2026-10-17", "review_by": "2026-01-01",
+             "reason": _ACCEPTANCE_REASON},
+        ]}))
+        with pytest.raises(ValueError, match="review_by"):
+            runner.load_known_stubs(path)
+
+        path.write_text("{")
+        with pytest.raises(ValueError, match="not valid JSON"):
+            runner.load_known_stubs(path)
+
+    def test_duplicate_pillar_rejected(self, tmp_path: Path):
+        path = tmp_path / "known_pillar_stubs.json"
+        entry = {"pillar": "des", "decided": "2026-10-17", "reason": _ACCEPTANCE_REASON}
+        path.write_text(json.dumps({"stubs": [entry, dict(entry)]}))
+        with pytest.raises(ValueError, match="duplicates"):
+            runner.load_known_stubs(path)
+
+
+class TestAuditFailed:
+    def test_accepted_gap_is_not_a_failure(self):
+        payload = {
+            "overall_verdict": "HEALTHY",
+            "pillars": {"thesis_integrity": {"verdict": runner.KNOWN_GAP_VERDICT, "coverage_pct": 0.0}},
+            "distribution": {"critical": False},
+        }
+        assert runner.audit_failed(payload) is False
+
+    def test_unaccepted_stub_mismatch_distribution_and_bad_config_fail(self):
+        assert runner.audit_failed({"overall_verdict": "HEALTHY",
+                                    "pillars": {"des": {"verdict": "STUB"}},
+                                    "distribution": {"critical": False}}) is True
+        assert runner.audit_failed({"overall_verdict": "DEGRADED",
+                                    "pillars": {"thesis_integrity": {"verdict": "HEALTHY",
+                                                                     "known_gap_mismatch": True}},
+                                    "distribution": {"critical": False}}) is True
+        assert runner.audit_failed({"overall_verdict": "HEALTHY", "pillars": {},
+                                    "distribution": {"critical": True}}) is True
+        assert runner.audit_failed({"overall_verdict": "CRITICAL", "pillars": {},
+                                    "distribution": {"critical": False}}) is True
+        assert runner.audit_failed({"known_stubs_error": "broken", "overall_verdict": "HEALTHY",
+                                    "pillars": {}, "distribution": {}}) is True
+        assert runner.audit_failed(None) is True  # type: ignore[arg-type]
+
+
+class TestKnownGapVerdict:
+    def test_summary_keeps_the_accepted_gap_visible(self):
+        pillars = {p: {"verdict": "HEALTHY", "coverage_pct": 96.0, "mean": 50.0, "stdev": 20.0, "n": 10}
+                   for p in runner.PILLARS}
+        pillars["thesis_integrity"] = {
+            "verdict": runner.KNOWN_GAP_VERDICT,
+            "raw_verdict": "STUB",
+            "coverage_pct": 0.0,
+            "mean": None,
+            "stdev": None,
+            "n": 0,
+            "accepted_stub": True,
+            "known_gap": {"decided": "2026-10-17", "review_by": "2027-04-17", "reason": _ACCEPTANCE_REASON},
+        }
+        payload = {
+            "asof": "2026-10-17",
+            "snapshot_date": "2026-10-16",
+            "generated_at_utc": "2026-10-17T12:00:00+00:00",
+            "overall_verdict": "HEALTHY",
+            "pillars": pillars,
+            "known_gaps": runner.known_gap_records(pillars),
+            "distribution": {"n": 10, "mean": 50.0, "stdev": 12.0, "elite_count": 1,
+                             "high_conf_count": 1, "review_count": 1, "review_pct": 10.0, "critical": False},
+            "weights": {"verdict": "UNKNOWN", "n_cohorts": 0, "misaligned_cohorts": []},
+            "bands": {"verdict": "BALANCED", "counts": {}, "starved": [], "review_pct": 10.0},
+            "alerts": [],
+            "sub_audits": {"pillar_quality": {"ok": True}, "score_distribution": {"ok": True},
+                           "weights_thresholds": {"ok": True}},
+        }
+        md = runner.render_summary_md(payload)
+        assert "Overall verdict: **HEALTHY**" in md
+        assert "KNOWN GAP (accepted)" in md
+        assert "thesis_integrity" in md
+        assert "2026-10-17" in md
+        assert "2027-04-17" in md
+        assert _ACCEPTANCE_REASON in md
+        assert "does not count toward CRITICAL" in md
+        # The pillar row is still in the table; the gap is not dropped from the report.
+        assert "| thesis_integrity | 🔵 KNOWN GAP (accepted) |" in md
+
+    def test_null_thesis_is_accepted_and_does_not_fail(self, isolated_audit, tmp_path: Path):
+        snap_dir, out_dir = isolated_audit
+        _write_healthy_snapshot(snap_dir, "2026-10-17")
+        _null_thesis(snap_dir, "2026-10-17")
+        _write_known_stubs(tmp_path)
+        rc = runner.main(["--asof", "2026-10-17", "--out", str(out_dir)])
+        assert rc == 0
+        payload = json.loads((out_dir / "latest_summary.json").read_text())
+        thesis = payload["pillars"]["thesis_integrity"]
+        assert thesis["verdict"] == runner.KNOWN_GAP_VERDICT
+        assert thesis["raw_verdict"] == "STUB"
+        assert thesis["coverage_pct"] == 0.0
+        assert thesis["counts_toward_critical"] is False
+        assert payload["overall_verdict"] != "CRITICAL"
+        assert runner.audit_failed(payload) is False
+        body = (out_dir / "2026-10-17_summary.md").read_text()
+        assert "KNOWN GAP (accepted)" in body
+        assert "FINNHUB_API_KEY" in body
+        gap = payload["known_gaps"][0]
+        assert gap["pillar"] == "thesis_integrity"
+        assert gap["accepted"] is True
+        assert gap["mismatch"] is False
+
+    def test_placeholder_fifties_are_the_same_accepted_stub(self, isolated_audit, tmp_path: Path):
+        snap_dir, out_dir = isolated_audit
+        _write_healthy_snapshot(snap_dir, "2026-10-17")
+        _retarget(snap_dir, "2026-10-17", thesis_integrity=50.0)
+        _write_known_stubs(tmp_path)
+        payload, _ = runner.run(asof="2026-10-17", out_dir=out_dir, snap_dir=snap_dir)
+        assert payload["pillars"]["thesis_integrity"]["verdict"] == runner.KNOWN_GAP_VERDICT
+        assert payload["overall_verdict"] != "CRITICAL"
+
+    def test_another_pillar_stub_still_critical(self, isolated_audit, tmp_path: Path):
+        snap_dir, out_dir = isolated_audit
+        _write_healthy_snapshot(snap_dir, "2026-10-17")
+        _retarget(snap_dir, "2026-10-17", thesis_integrity=50.0, adoption_momentum=50.0)
+        _write_known_stubs(tmp_path)
+        rc = runner.main(["--asof", "2026-10-17", "--out", str(out_dir)])
+        assert rc == 1
+        payload = json.loads((out_dir / "latest_summary.json").read_text())
+        assert payload["overall_verdict"] == "CRITICAL"
+        assert payload["pillars"]["adoption_momentum"]["verdict"] == "STUB"
+        assert payload["pillars"]["thesis_integrity"]["verdict"] == runner.KNOWN_GAP_VERDICT
+        assert runner.audit_failed(payload) is True
+
+    def test_thesis_regaining_coverage_is_critical(self, isolated_audit, tmp_path: Path):
+        snap_dir, out_dir = isolated_audit
+        _write_healthy_snapshot(snap_dir, "2026-10-17")
+        _write_known_stubs(tmp_path)
+        rc = runner.main(["--asof", "2026-10-17", "--out", str(out_dir)])
+        assert rc == 1
+        payload = json.loads((out_dir / "latest_summary.json").read_text())
+        thesis = payload["pillars"]["thesis_integrity"]
+        assert thesis["verdict"] != runner.KNOWN_GAP_VERDICT
+        assert thesis["known_gap_mismatch"] is True
+        assert thesis["counts_toward_critical"] is True
+        assert payload["overall_verdict"] == "CRITICAL"
+        body = (out_dir / "2026-10-17_summary.md").read_text()
+        assert "accepted stub no longer matches" in body
+        assert "counts toward CRITICAL" in body
+        assert any("no longer" in a or "counts toward CRITICAL" in a or "not covered" in a
+                   for a in payload["alerts"])
+
+    def test_critical_distribution_still_fails_when_thesis_is_accepted(self, isolated_audit, tmp_path: Path):
+        snap_dir, out_dir = isolated_audit
+        _write_critical_distribution_snapshot(snap_dir, "2026-10-17")
+        _retarget(snap_dir, "2026-10-17", thesis_integrity=50.0)
+        _write_known_stubs(tmp_path)
+        rc = runner.main(["--asof", "2026-10-17", "--out", str(out_dir)])
+        assert rc == 1
+        payload = json.loads((out_dir / "latest_summary.json").read_text())
+        assert payload["distribution"]["critical"] is True
+        assert payload["overall_verdict"] == "CRITICAL"
+        assert payload["pillars"]["thesis_integrity"]["verdict"] == runner.KNOWN_GAP_VERDICT
+
+    def test_invalid_config_does_not_silence_a_stub(self, isolated_audit, tmp_path: Path):
+        snap_dir, out_dir = isolated_audit
+        _write_healthy_snapshot(snap_dir, "2026-10-17")
+        _null_thesis(snap_dir, "2026-10-17")
+        (tmp_path / "known_pillar_stubs.json").write_text("{")
+        rc = runner.main(["--asof", "2026-10-17", "--out", str(out_dir)])
+        assert rc == 1
+        payload = json.loads((out_dir / "latest_summary.json").read_text())
+        assert payload["pillars"]["thesis_integrity"]["verdict"] == "STUB"
+        assert payload["overall_verdict"] == "CRITICAL"
+        assert payload["known_stubs_error"]
+        assert any("invalid" in a for a in payload["alerts"])
+
+    def test_past_review_by_is_visible_and_not_critical(self, isolated_audit, tmp_path: Path):
+        snap_dir, out_dir = isolated_audit
+        _write_healthy_snapshot(snap_dir, "2026-10-17")
+        _null_thesis(snap_dir, "2026-10-17")
+        _write_known_stubs(tmp_path, decided="2026-01-17", review_by="2026-04-17")
+        rc = runner.main(["--asof", "2026-10-17", "--out", str(out_dir)])
+        assert rc == 0
+        payload = json.loads((out_dir / "latest_summary.json").read_text())
+        assert payload["overall_verdict"] != "CRITICAL"
+        assert payload["pillars"]["thesis_integrity"]["verdict"] == runner.KNOWN_GAP_VERDICT
+        assert any("review-by" in a for a in payload["alerts"])
+        assert "review-by" in (out_dir / "2026-10-17_summary.md").read_text()
+
+
+def test_live_snapshot_thesis_stub_is_accepted_and_not_critical():
+    """The snapshot on disk is the case Bryan accepted: thesis dropped, others not stub."""
+    known = runner.load_known_stubs(REPO_ROOT / "data" / "lthcs" / "known_pillar_stubs.json")
+    snap_date = runner.latest_snapshot_date()
+    snap = runner._load_snapshot(snap_date)
+    pillars = runner._compute_pillar_verdicts(snap)
+    alerts = runner.apply_known_stubs(pillars, known, "2026-10-17")
+    thesis = pillars["thesis_integrity"]
+    assert thesis["raw_verdict"] == "STUB"
+    assert thesis["verdict"] == runner.KNOWN_GAP_VERDICT
+    assert thesis["counts_toward_critical"] is False
+    others = {p: pillars[p]["verdict"] for p in runner.PILLARS if p != "thesis_integrity"}
+    assert "STUB" not in others.values(), others
+    dist = runner._distribution_summary(snap)
+    overall = runner._overall_verdict(
+        pillars, dist, {"verdict": "UNKNOWN"}, {"verdict": "BALANCED"}, stubs_error=False,
+    )
+    payload = {"overall_verdict": overall, "pillars": pillars, "distribution": dist, "alerts": alerts}
+    assert overall != "CRITICAL"
+    assert runner.audit_failed(payload) is False
+
+
+def test_quality_page_shows_accepted_gap_and_does_not_paint_it_red():
+    js = (REPO_ROOT / "lthcs_health" / "lthcs-quality.js").read_text()
+    html = (REPO_ROOT / "lthcs_health" / "quality.html").read_text()
+    assert "KNOWN GAP (accepted)" in js
+    assert "return 'accepted'" in js
+    assert "lq-known-gaps" in html
+    assert "lq-badge.accepted" in html
+    red_line = next(ln for ln in js.splitlines() if "return 'red'" in ln)
+    assert "KNOWN GAP" not in red_line

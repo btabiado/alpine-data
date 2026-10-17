@@ -611,7 +611,15 @@ MANIFEST: dict[str, Feed] = {
                       "tests/test_lthcs_freshness.py) and ~thousands of dated "
                       "snapshot files. Declared here so a NEW data/ "
                       "subdirectory still trips the unwatched check, without "
-                      "this monitor duplicating that one."),
+                      "this monitor duplicating that one. "
+                      "thesis_integrity is an accepted known gap "
+                      "(data/lthcs/known_pillar_stubs.json, decided 2026-10-17): "
+                      "the pillar is dropped and its weight sits on the other "
+                      "four. A null thesis sub-score is not a failure here. "
+                      "The monthly quality audit reports that pillar as "
+                      "KNOWN GAP (accepted); audit_failed() in "
+                      "scripts/lthcs_quality_audit_runner.py is the shared "
+                      "rule, and it does not count that label as an error."),
     "data/health/": Feed(
         DELEGATED, "scripts/build_health_status.py, inside pages.yml",
         justification="This monitor's sibling output, regenerated from scratch "

@@ -354,6 +354,139 @@ class TestProblems:
         ids = _ids(dar.data_problems(d))
         assert "workflow:aviation-tsa:failed" in ids and "schedule:aviation-tsa:failing" not in ids
 
+    def test_accepted_quality_gap_is_not_an_email_or_repo_audit_error(self, dar):
+        """A red Actions run for the monthly audit stops paging once this day's
+        recorded verdict says it does not fail. Other workflows are unchanged.
+        The accepted gap stays in the markdown."""
+        s = _data()["schedules"]["schedules"][0]
+        d = _data(
+            quality_audit={
+                "status": "ok",
+                "workflow": "lthcs-quality-audit-monthly",
+                "verdict_fails": False,
+                "overall_verdict": "DEGRADED",
+                "summary": "data/lthcs/quality_audit/latest_summary.json",
+                "known_gaps": [{
+                    "pillar": "thesis_integrity",
+                    "verdict": "KNOWN GAP (accepted)",
+                    "decided": "2026-10-17",
+                    "review_by": "2027-04-17",
+                    "accepted": True,
+                }],
+            },
+            workflows={"status": "ok", "workflows": [
+                {"name": "lthcs-quality-audit-monthly", "latest_24h": {"url": "u", "conclusion": "failure"},
+                 "failed_24h": True, "failing_2_days": True, "failed_jobs": []},
+                {"name": "other", "latest_24h": {"url": "u2"}, "failed_24h": True, "failing_2_days": False},
+            ]},
+            schedules={"status": "ok", "schedules": [
+                {**s, "name": "lthcs-quality-audit-monthly", "last_failed": True,
+                 "last_run": {"created_at": "2026-10-01T15:53:00Z", "url": "u", "conclusion": "failure"}},
+            ]},
+        )
+        ids = _ids(dar.data_problems(d))
+        assert "workflow:lthcs-quality-audit-monthly:failing-2d" not in ids
+        assert "workflow:lthcs-quality-audit-monthly:failed" not in ids
+        assert "schedule:lthcs-quality-audit-monthly:failing" not in ids
+        assert "workflow:other:failed" in ids
+        report = dar.build_report(d, _ux(), None, "2026-10-17")
+        md = dar.render_md(report)
+        assert "FAILING" not in md
+        assert "ended failed (lthcs-quality-audit-monthly)" not in md
+        assert "thesis_integrity is KNOWN GAP (accepted)" in md
+        assert "decided 2026-10-17" in md
+        assert "review by 2027-04-17" in md
+
+    def test_quality_audit_still_pages_when_the_verdict_is_a_failure(self, dar):
+        s = _data()["schedules"]["schedules"][0]
+        d = _data(
+            quality_audit={
+                "status": "ok",
+                "workflow": "lthcs-quality-audit-monthly",
+                "verdict_fails": True,
+                "overall_verdict": "CRITICAL",
+            },
+            workflows={"status": "ok", "workflows": [
+                {"name": "lthcs-quality-audit-monthly", "latest_24h": {"url": "u"},
+                 "failed_24h": True, "failing_2_days": True, "failed_jobs": []},
+            ]},
+            schedules={"status": "ok", "schedules": [
+                {**s, "name": "lthcs-quality-audit-monthly", "last_failed": True,
+                 "last_run": {"created_at": "2026-10-01T15:53:00Z", "url": "u"}},
+            ]},
+        )
+        ids = _ids(dar.data_problems(d))
+        assert "workflow:lthcs-quality-audit-monthly:failing-2d" in ids
+        # The same red run is not listed twice.
+        assert "schedule:lthcs-quality-audit-monthly:failing" not in ids
+
+    def test_quality_audit_pages_when_the_verdict_was_not_recorded(self, dar):
+        """No quality_audit section (historical fixtures) keeps paging."""
+        s = _data()["schedules"]["schedules"][0]
+        d = _data(
+            workflows={"status": "ok", "workflows": [
+                {"name": "lthcs-quality-audit-monthly", "latest_24h": {"url": "u"},
+                 "failed_24h": True, "failing_2_days": False, "failed_jobs": []},
+            ]},
+            schedules={"status": "ok", "schedules": [
+                {**s, "name": "lthcs-quality-audit-monthly", "last_failed": True,
+                 "last_run": {"created_at": "2026-10-01T15:53:00Z", "url": "u"}},
+            ]},
+        )
+        assert "quality_audit" not in d
+        ids = _ids(dar.data_problems(d))
+        assert "workflow:lthcs-quality-audit-monthly:failed" in ids
+        # Flag present but not exactly false still pages.
+        d["quality_audit"] = {"status": "ok", "workflow": "lthcs-quality-audit-monthly"}
+        ids = _ids(dar.data_problems(d))
+        assert "workflow:lthcs-quality-audit-monthly:failed" in ids
+
+    def test_quality_verdict_reader_follows_audit_failed(self, dad, tmp_path):
+        missing = dad.section_quality_audit(tmp_path)
+        assert missing["verdict_fails"] is True
+        assert missing["status"] == "error"
+        summary = tmp_path / "data" / "lthcs" / "quality_audit"
+        summary.mkdir(parents=True)
+        (summary / "latest_summary.json").write_text("{")
+        broken = dad.section_quality_audit(tmp_path)
+        assert broken["verdict_fails"] is True
+        accepted = {
+            "overall_verdict": "DEGRADED",
+            "known_gaps": [{
+                "pillar": "thesis_integrity",
+                "verdict": "KNOWN GAP (accepted)",
+                "decided": "2026-10-17",
+                "review_by": "2027-04-17",
+                "reason": "accepted gap",
+                "accepted": True,
+                "mismatch": False,
+            }],
+            "pillars": {"thesis_integrity": {"verdict": "KNOWN GAP (accepted)", "coverage_pct": 0.0}},
+            "distribution": {"critical": False},
+        }
+        (summary / "latest_summary.json").write_text(json.dumps(accepted))
+        ok = dad.section_quality_audit(tmp_path)
+        assert ok["verdict_fails"] is False
+        assert ok["workflow"] == "lthcs-quality-audit-monthly"
+        assert ok["overall_verdict"] == "DEGRADED"
+        assert ok["known_gaps"][0]["pillar"] == "thesis_integrity"
+        assert ok["known_gaps"][0]["verdict"] == "KNOWN GAP (accepted)"
+        accepted["pillars"]["adoption_momentum"] = {"verdict": "STUB"}
+        (summary / "latest_summary.json").write_text(json.dumps(accepted))
+        assert dad.section_quality_audit(tmp_path)["verdict_fails"] is True
+
+    def test_known_gap_verdict_is_not_a_data_health_failure(self, dad):
+        failing = dad._failing_statuses(REPO_ROOT)
+        lowered = {s.lower() for s in failing}
+        assert "known gap (accepted)" not in lowered
+        assert "critical" not in lowered
+        recs = dad.collect_failing(
+            {"quality_audit": {"status": "KNOWN GAP (accepted)", "verdict": "KNOWN GAP (accepted)"}},
+            "quality_audit",
+            failing,
+        )
+        assert recs == []
+
     def test_spot_checks_and_api(self, dar):
         d = _data(spot_checks={"status": "ok", "checks": {
                       "live_site_build_age": {"status": "fail", "age_h": 9, "max_age_h": 6},

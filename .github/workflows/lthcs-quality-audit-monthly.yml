@@ -9,10 +9,14 @@ name: lthcs-quality-audit-monthly
 # lthcs-backtest-monthly.yml (06:00) and lthcs-tune-weights-monthly.yml
 # (07:00) so the three monthly jobs don't fight for the same runner pool.
 #
-# The runner exits non-zero if any pillar is STUB or the composite
-# distribution is critically broken — those failures bubble up as a
-# red ✗ on the Actions UI and post the verdict summary to the Job
-# Summary so red runs are surfaced without needing to dig into logs.
+# The runner exits non-zero if an unaccepted pillar is STUB, if an
+# accepted pillar is no longer a stub, or if the composite distribution
+# is critically broken. A pillar listed in
+# data/lthcs/known_pillar_stubs.json whose measured verdict is still
+# STUB is reported as "KNOWN GAP (accepted)" and does not fail the run
+# (thesis_integrity, accepted 2026-10-17). Those real failures bubble
+# up as a red ✗ on the Actions UI and post the verdict summary to the
+# Job Summary so red runs are surfaced without needing to dig into logs.
 on:
   schedule:
     - cron: "0 9 1 * *"
@@ -52,8 +56,10 @@ jobs:
         run: |
           # Orchestrator runs all three audits, writes the combined
           # summary + per-audit reports under data/lthcs/quality_audit/,
-          # exits non-zero on STUB/CRITICAL. We capture exit code +
-          # surface the summary file path so the next step can post it.
+          # exits non-zero on an unaccepted STUB, a known-gap mismatch,
+          # or a critical distribution. An accepted known gap does not.
+          # We capture exit code + surface the summary file path so the
+          # next step can post it.
           set +e
           python scripts/lthcs_quality_audit_runner.py
           ec=$?
