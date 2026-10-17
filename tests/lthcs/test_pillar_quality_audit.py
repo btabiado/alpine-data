@@ -195,3 +195,79 @@ def test_build_report_handles_missing_pillar_gracefully(monkeypatch, tmp_path):
     # Should not raise even though Y lacks 'des'
     report = audit.build_report("2026-01-01", snap_dir=snap_dir)
     assert "## des" in report
+
+
+def _empty_pillar_snapshot(tickers):
+    return {
+        "calc_date": "2026-10-16",
+        "model_version": "test",
+        "scores": tickers,
+    }
+
+
+def test_build_report_all_missing_pillar_does_not_crash(monkeypatch, tmp_path):
+    """thesis_integrity on 2026-10-16 is null/absent for every ticker.
+
+    pillar_stats([]) is {n: 0} and has no 'mean'. The 2026-10-16 monthly
+    audit died with KeyError: 'mean' in build_report. An all-missing pillar
+    must render an explicit empty section instead.
+    """
+    snap_dir = tmp_path / "snapshots"
+    snap_dir.mkdir()
+    snap = _empty_pillar_snapshot([
+        {
+            "ticker": "X",
+            "subscores": {
+                "adoption_momentum": 40.0,
+                "institutional_confidence": 60.0,
+                "financial_evolution": 70.0,
+                "thesis_integrity": None,
+                "des": 55.0,
+            },
+        },
+        {
+            "ticker": "Y",
+            "subscores": {
+                "adoption_momentum": 80.0,
+                "institutional_confidence": 20.0,
+                "financial_evolution": 30.0,
+                # key absent entirely, same as a dropped pillar
+                "des": 45.0,
+            },
+        },
+    ])
+    (snap_dir / "2026-10-16.json").write_text(json.dumps(snap))
+    monkeypatch.setattr(audit, "cohort_map", lambda *a, **k: {})
+
+    report = audit.build_report("2026-10-16", snap_dir=snap_dir)
+
+    thesis = report.split("## thesis_integrity", 1)[1].split("## des", 1)[0]
+    assert "0 tickers with a measured score" in thesis
+    assert "Distribution: not computed" in thesis
+    assert "Mean **" not in thesis
+    assert "Cohort means: (none)" in thesis
+    assert "Top 5: (none)" in thesis
+    assert "Bottom 5: (none)" in thesis
+    # A pillar that does have scores still gets a distribution.
+    des = report.split("## des", 1)[1]
+    assert "Mean **50.0**" in des
+    assert "Floor (==0): 0" in des
+
+
+def test_build_report_every_pillar_missing(monkeypatch, tmp_path):
+    """A snapshot whose subscores are all null must still emit all five sections."""
+    snap_dir = tmp_path / "snapshots"
+    snap_dir.mkdir()
+    snap = _empty_pillar_snapshot([
+        {"ticker": "X", "subscores": {p: None for p in audit.PILLARS}},
+        {"ticker": "Y", "subscores": {}},
+    ])
+    (snap_dir / "2026-10-16.json").write_text(json.dumps(snap))
+    monkeypatch.setattr(audit, "cohort_map", lambda *a, **k: {})
+
+    report = audit.build_report("2026-10-16", snap_dir=snap_dir)
+
+    for pillar in audit.PILLARS:
+        section = report.split(f"## {pillar}", 1)[1]
+        assert "Distribution: not computed" in section
+        assert "Mean **" not in section.split("## ", 1)[0]
