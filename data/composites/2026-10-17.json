@@ -1,6 +1,6 @@
 {
   "as_of": "2026-10-17",
-  "generated_at": "2026-10-17T16:18:39Z",
+  "generated_at": "2026-10-17T16:36:42Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-17",
@@ -52,17 +52,17 @@
       "stale": false
     },
     "futures_sentiment_eth": {
-      "as_of": "2026-10-16",
-      "label": "CROWDED LONGS",
+      "as_of": "2026-10-17",
+      "label": "STRONG CROWDED LONGS",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 29,
+      "score": 71,
       "stale": false
     },
     "futures_sentiment_link": {
-      "as_of": "2026-10-16",
-      "label": "BALANCED",
+      "as_of": "2026-10-17",
+      "label": "CROWDED LONGS",
       "note": "LINK; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 18,
+      "score": 34,
       "stale": false
     },
     "futures_sentiment_ltc": {
