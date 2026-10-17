@@ -1,7 +1,7 @@
 # Pinned to the versions the research engine is tested with (Back_Test_Model uv.lock).
 numpy==2.4.6
 scipy==1.18.1
-pandas==2.3.3
+pandas==3.0.6
 pyarrow==26.0.0
 requests==2.34.2
 PyYAML==6.0.3

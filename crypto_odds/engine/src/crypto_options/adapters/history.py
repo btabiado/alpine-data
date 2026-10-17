@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 
+from ..pandas_compat import utc_ns
 from .http import JsonClient, RawArchive
 
 SETTLEMENT_INDEX = {"BTC": "btc_usd", "ETH": "eth_usd", "XRP": "xrp_usdc", "LINK": "link_usdc"}
@@ -38,8 +39,8 @@ def settlement_prices(asset: str, archive: RawArchive | None) -> pd.DataFrame:
         if not res["data"] or offset >= res["records_total"]:
             break
     df = pd.DataFrame(rows).rename(columns={"delivery_price": "price"})
-    df["date"] = pd.to_datetime(df["date"]).dt.tz_localize("UTC")
-    df["obs_time"] = df["date"] + pd.Timedelta(hours=8)          # TWAP window ends 08:00 UTC
+    df["date"] = utc_ns(pd.to_datetime(df["date"]).dt.tz_localize("UTC"))
+    df["obs_time"] = utc_ns(df["date"] + pd.Timedelta(hours=8))  # TWAP window ends 08:00 UTC
     df["available_time"] = df["obs_time"]
     df = df.sort_values("date").drop_duplicates("date")
     return df.assign(asset=asset, series="settlement", source=f"deribit:{name}")[
@@ -74,9 +75,9 @@ def spot_closes(asset: str, archive: RawArchive | None, start: str = "2014-01-01
             rows.extend({"open_time": int(b["timestamp"]), "close": float(b["close"])} for b in bars)
             t = int(bars[-1]["timestamp"]) + 86400
     df = pd.DataFrame(rows).drop_duplicates("open_time")
-    df["date"] = pd.to_datetime(df["open_time"], unit="s", utc=True)
-    df = df[df["date"] < pd.Timestamp(now)]                       # drop the in-progress bar
-    df["obs_time"] = df["date"] + pd.Timedelta(days=1)            # close is the 00:00 UTC next-day print
+    df["date"] = utc_ns(pd.to_datetime(df["open_time"], unit="s", utc=True))
+    df = df[df["date"] < utc_ns(pd.Timestamp(now))]               # drop the in-progress bar
+    df["obs_time"] = utc_ns(df["date"] + pd.Timedelta(days=1))    # close is the 00:00 UTC next-day print
     df["available_time"] = df["obs_time"]
     df = df.sort_values("date").rename(columns={"close": "price"})
     return df.assign(asset=asset, series="spot", source=f"{venue}:{pair}")[
@@ -99,8 +100,8 @@ def dvol(asset: str, archive: RawArchive | None) -> pd.DataFrame:
         rows.extend({"ts": r[0], "dvol": r[4]} for r in fr.data["result"]["data"])
         t = t2 + 1
     df = pd.DataFrame(rows).drop_duplicates("ts")
-    df["date"] = pd.to_datetime(df["ts"], unit="ms", utc=True)
-    today = pd.Timestamp(datetime.now(timezone.utc).date(), tz="UTC")
+    df["date"] = utc_ns(pd.to_datetime(df["ts"], unit="ms", utc=True))
+    today = utc_ns(pd.Timestamp(datetime.now(timezone.utc).date(), tz="UTC"))
     df = df[df["date"] < today]
-    df["available_time"] = df["date"] + pd.Timedelta(days=1)       # daily close known at next 00:00 UTC
+    df["available_time"] = utc_ns(df["date"] + pd.Timedelta(days=1))  # daily close known at next 00:00 UTC
     return df.sort_values("date").assign(asset=asset)[["asset", "date", "available_time", "dvol"]]

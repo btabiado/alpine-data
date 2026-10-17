@@ -17,6 +17,7 @@ from . import analysis
 from .adapters import deribit
 from .adapters.http import RawArchive
 from .config import PROJECT_ROOT
+from .pandas_compat import utc_ns
 from .quality.normalize import apply_quality, normalize_chain, parity_check, utc_now
 
 _log = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ def _time_skew(df, idx, cfg):
     ts = pd.to_datetime(df["response_ts"])
     spread_s = (ts.max() - ts.min()).total_seconds()
     retrieved = pd.Timestamp(df["retrieval_ts"].iat[0])
-    idx_times = [pd.Timestamp(v["retrieved_at"]) for v in idx.values() if v.get("retrieved_at")]
+    idx_times = [utc_ns(pd.Timestamp(v["retrieved_at"])) for v in idx.values() if v.get("retrieved_at")]
     idx_gap = max((abs((t - retrieved).total_seconds()) for t in idx_times), default=0.0)
     skew = max(spread_s, idx_gap)
     return {"time_skew_s": round(skew, 3), "time_skew_flag": bool(skew > cfg["quality"]["max_time_skew_s"]),
@@ -168,7 +169,7 @@ def run_analyze(cfg, snapshot_id=None, make_charts=True) -> str:
     sdir = Path(cfg["paths"]["normalized"]) / snapshot_id
     smani = json.loads((sdir / "snapshot_manifest.json").read_text())
     quotes = pd.read_parquet(sdir / "quotes.parquet") if (sdir / "quotes.parquet").exists() else pd.DataFrame()
-    asof = pd.Timestamp(smani["started_utc"])
+    asof = utc_ns(pd.Timestamp(smani["started_utc"]))
 
     cfg_clean = {k: v for k, v in cfg.items() if not k.startswith("_")}
     cfg_hash = hashlib.sha256(json.dumps(cfg_clean, sort_keys=True, default=str).encode()).hexdigest()

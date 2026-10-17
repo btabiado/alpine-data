@@ -34,6 +34,7 @@ from crypto_options.adapters import history  # noqa: E402
 from crypto_options.backtest import models  # noqa: E402
 from crypto_options.backtest.panel import Series  # noqa: E402
 from crypto_options.config import load_config  # noqa: E402
+from crypto_options.pandas_compat import utc_ns  # noqa: E402
 
 H = 30
 THRESHOLD = 0.10
@@ -50,8 +51,8 @@ RULE = (f"Headline model: the best skill on the sealed final test (spot prices, 
 
 def spot_series(asset: str) -> Series:
     df = history.spot_closes(asset, None)
-    return Series(asset, "spot", df["source"].iat[0], pd.DatetimeIndex(df["date"]),
-                  pd.DatetimeIndex(df["available_time"]), df["price"].to_numpy(float), None)
+    return Series(asset, "spot", df["source"].iat[0], pd.DatetimeIndex(utc_ns(df["date"])),
+                  pd.DatetimeIndex(utc_ns(df["available_time"])), df["price"].to_numpy(float), None)
 
 
 def ranges(s: Series, bt: dict) -> dict:
@@ -132,7 +133,7 @@ def grade(hist: list, prices: dict) -> list:
         if e.get("outcome") or e["asset"] not in prices:
             continue
         px = prices[e["asset"]]
-        target = pd.Timestamp(e["date"], tz="UTC") + pd.Timedelta(days=H)
+        target = utc_ns(pd.Timestamp(e["date"], tz="UTC") + pd.Timedelta(days=H))
         if target in px.index:
             ret = float(px[target] / e["price"] - 1)
             e["realized_return"] = round(ret, 4)
