@@ -8,6 +8,7 @@ test touches the network, and no test writes to disk outside of
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -932,6 +933,19 @@ class TestInsiderHoldingsFallback:
         assert state.holdings_by_ticker.get("AAPL", {}).get("conviction_signal") == "accumulating"
         assert state.fetch_counts.get("insider_fallback_age_days") == 1
         assert state.fetch_counts.get("holdings_fallback_age_days") == 1
+
+
+def test_load_json_lenient_accepts_nonstandard_constants(tmp_path: Path) -> None:
+    """NaN / Infinity tokens become floats. ``json.dumps`` writes them, and a
+    failed parse would drop the whole variable_detail file."""
+    path = tmp_path / "vd.json"
+    path.write_text('{"ok": 1.25, "nan": NaN, "pos": Infinity, "neg": -Infinity}')
+    got = lthcs_daily._load_json_lenient(path)
+    assert set(got) == {"ok", "nan", "pos", "neg"}
+    assert got["ok"] == 1.25
+    assert math.isnan(got["nan"])
+    assert got["pos"] == math.inf
+    assert got["neg"] == -math.inf
 
 
 def test_sector_etf_flag_parses_and_defaults_off():

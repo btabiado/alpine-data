@@ -10,6 +10,8 @@
 # one file. Keep this file free of extras ("pkg[extra]") because pip rejects
 # extras in a constraints file.
 anthropic==1.13.0
+# numpy 2.5+ requires Python >= 3.12. Jobs that `pip install -r` this file
+# still run 3.11 (and tests.yml covers 3.11), so stay on the 2.4 line.
 numpy==2.4.6
 pandas==3.0.6
 # requests 2.33.0 preserves the GHSA-gc5v-m9x4-r6x2 security bump (commit 3e8d026).

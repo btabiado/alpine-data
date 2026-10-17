@@ -622,7 +622,7 @@ def _load_json_lenient(path: Path) -> Optional[Any]:
     caller; this only keeps the file readable.
     """
     try:
-        return json.loads(path.read_text(), parse_constant=lambda token: float(token))
+        return json.loads(path.read_text(), parse_constant=float)
     except (OSError, json.JSONDecodeError, ValueError):
         return None
 
