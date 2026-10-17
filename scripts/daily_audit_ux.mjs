@@ -17,6 +17,9 @@
 //     document.elementFromPoint; if something else is on top, the tab is
 //     reported UNREACHABLE (and then opened programmatically anyway, so its
 //     content is still audited for errors).
+//     An exit control (`.tab--exit` or role=link — the Summit jump) is tapped
+//     the same way, but it has no panel and never becomes `.active`. Success
+//     is the URL leaving the dashboard, not aria-selected / #tab-<id>.
 //
 // Output: one JSON document (see --out). The report builder
 // (scripts/daily_audit_report.py) turns it into problems + regressions; this
@@ -267,13 +270,89 @@ async function tapAt(page, vp, x, y) {
   else await page.mouse.click(x, y);
 }
 
+// Summit is a role=link exit, not an in-page tab: selectTab never gives it
+// .active, aria-selected stays "false", and there is no #tab-summit. probeTabActive
+// would therefore always report switched:false. A tap succeeds when the browser
+// leaves this page (today: landscape/?pres=absent). Checked after the in-page
+// tabs so the navigation does not abandon the rest of the strip.
+export async function confirmExitTab(page, vp, rec, t, entry, state, deadline) {
+  if (Date.now() > deadline) { entry.skipped = 'time budget exhausted'; return; }
+  state.where = `tab:${t.id}`;
+  entry.exit = true;
+  try {
+    await page.keyboard.press('Escape').catch(() => {});
+    let hit = await page.evaluate(probeTabHit, t.id);
+    if (!hit.exists) { entry.reachable = false; entry.problem = 'tab element disappeared'; return; }
+    entry.via = 'direct';
+    if (!hit.visible && hit.hasOpener) {
+      entry.via = 'menu';
+      const op = await page.evaluate(openerCenter, t.id);
+      if (op) {
+        if (!op.ok) entry.opener_covered = true;
+        await tapAt(page, vp, op.x, op.y);
+        const t0 = Date.now();
+        do {
+          await page.waitForTimeout(120);
+          hit = await page.evaluate(probeTabHit, t.id);
+        } while (!hit.visible && Date.now() - t0 < 1500);
+      }
+    }
+    if (hit.visible && !hit.inViewport) {
+      entry.via = entry.via === 'menu' ? 'menu' : 'scroll';
+      await page.evaluate(scrollTabIntoView, t.id);
+      await page.waitForTimeout(150);
+      hit = await page.evaluate(probeTabHit, t.id);
+    }
+    entry.reachable = !!(hit.visible && hit.inViewport && hit.hitOk);
+    if (!entry.reachable) {
+      if (!hit.visible) entry.problem = entry.via === 'menu' ? 'menu item not visible after opening its menu' : 'tab not visible';
+      else if (!hit.inViewport) entry.problem = 'tab outside the viewport';
+      else entry.problem = 'tap target covered';
+      if (hit.coveredBy) entry.covered_by = hit.coveredBy;
+      // No programmatic click: that would navigate and hide an untappable control.
+      return;
+    }
+    const before = page.url();
+    const marks = {
+      console: rec.console_errors.length,
+      page: rec.page_errors.length,
+      failed: rec.failed_requests.length,
+    };
+    let dest = before;
+    try {
+      // 'commit' — the destination (the landscape page) is audited on its own
+      // route. Waiting for its load event is slow and is not this check.
+      const waited = page.waitForURL((url) => url.href !== before, { timeout: 8000, waitUntil: 'commit' });
+      await tapAt(page, vp, hit.x, hit.y);
+      await waited;
+      dest = page.url();
+    } catch (e) {
+      dest = page.url();
+      if (dest === before) entry.error = clip(e && e.message, 200);
+    }
+    if (dest !== before) {
+      // The destination's own console/HTTP noise does not belong to this page.
+      rec.console_errors.length = marks.console;
+      rec.page_errors.length = marks.page;
+      rec.failed_requests.length = marks.failed;
+    }
+    entry.opened = 'tap';
+    entry.switched = dest !== before;
+    if (entry.switched) entry.navigated_to = dest;
+    else entry.problem = 'tap did not leave the dashboard';
+  } catch (e) {
+    entry.error = clip(e && e.message, 200);
+  }
+}
+
 async function auditTabs(page, vp, rec, state, deadline) {
   const tabs = await page.evaluate(probeTabs);
   rec.tabs = [];
+  const exits = [];
   for (const t of tabs) {
     const entry = { id: t.id, label: t.label };
     rec.tabs.push(entry);
-    if (t.exit) { entry.skipped = 'navigates away from the dashboard'; continue; }
+    if (t.exit) { exits.push({ t, entry }); continue; }
     if (Date.now() > deadline) { entry.skipped = 'time budget exhausted'; continue; }
     state.where = `tab:${t.id}`;
     try {
@@ -331,6 +410,22 @@ async function auditTabs(page, vp, rec, state, deadline) {
     } catch (e) {
       entry.error = clip(e && e.message, 200);
     }
+  }
+  // Exit tabs last: tapping one navigates away, so the in-page strip is
+  // finished first. A later exit reloads the dashboard before its own tap.
+  const home = page.url();
+  for (const { t, entry } of exits) {
+    if (page.url() !== home) {
+      try {
+        await page.goto(home, { waitUntil: 'load', timeout: NAV_TIMEOUT_MS });
+        await settle(page, 2000);
+      } catch (e) {
+        entry.error = clip(e && e.message, 200);
+        entry.skipped = 'could not return to the dashboard';
+        continue;
+      }
+    }
+    await confirmExitTab(page, vp, rec, t, entry, state, deadline);
   }
   state.where = 'after-tabs';
 }
@@ -468,4 +563,6 @@ async function main() {
   }
 }
 
-main();
+const invokedDirectly = process.argv[1]
+  && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href;
+if (invokedDirectly) main();

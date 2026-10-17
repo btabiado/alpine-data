@@ -423,11 +423,20 @@ def ux_problems(ux: dict | None) -> list[dict]:
                             group_title=f"{label} @ {vp}: tabs a user cannot tap ({why})",
                             item=tlabel), vp)
             if t.get("switched") is False:
-                add(problem(f"ux:{page}:{vp}:tab-dead:{tid}", P0, "ux",
-                            f"{label} @ {vp}: tab '{tlabel}' does not open its panel",
-                            group=f"ux:{page}:{vp}:tab-dead",
-                            group_title=f"{label} @ {vp}: tabs that do not open their panel",
-                            item=tlabel), vp)
+                # Exit controls (Summit) have no panel. "Did not switch" means
+                # the tap did not leave the dashboard, not a hidden #tab-<id>.
+                if t.get("exit"):
+                    add(problem(f"ux:{page}:{vp}:tab-dead:{tid}", P0, "ux",
+                                f"{label} @ {vp}: tab '{tlabel}' does not leave the dashboard",
+                                group=f"ux:{page}:{vp}:tab-exit-dead",
+                                group_title=f"{label} @ {vp}: exit tabs that do not leave the dashboard",
+                                item=tlabel), vp)
+                else:
+                    add(problem(f"ux:{page}:{vp}:tab-dead:{tid}", P0, "ux",
+                                f"{label} @ {vp}: tab '{tlabel}' does not open its panel",
+                                group=f"ux:{page}:{vp}:tab-dead",
+                                group_title=f"{label} @ {vp}: tabs that do not open their panel",
+                                item=tlabel), vp)
             if t.get("error"):
                 add(problem(f"ux:{page}:{vp}:tab-error:{tid}", P2, "ux",
                             f"{label} @ {vp}: audit error on tab '{tlabel}' — {_short(t['error'], 100)}"), vp)
