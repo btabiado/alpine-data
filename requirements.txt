@@ -9,7 +9,9 @@
 # `pip install -c requirements.txt <package>`, so every pin lives in exactly
 # one file. Keep this file free of extras ("pkg[extra]") because pip rejects
 # extras in a constraints file.
-anthropic==1.13.0
+anthropic==1.14.0
+# numpy 2.5+ requires Python >= 3.12. Jobs that `pip install -r` this file
+# still run 3.11 (and tests.yml covers 3.11), so stay on the 2.4 line.
 numpy==2.4.6
 pandas==3.0.6
 # requests 2.33.0 preserves the GHSA-gc5v-m9x4-r6x2 security bump (commit 3e8d026).
@@ -20,7 +22,7 @@ requests==2.34.2
 xlrd==2.0.2
 
 # LTHCS Phase 1 (Week 1: schemas + validate)
-pydantic==2.14.0
+pydantic==2.14.1
 # python-dotenv: the set_key symlink code path (GHSA-mf9w-mj56-hr94) is
 # UNUSED in this repo (read-only).
 python-dotenv==1.2.4

@@ -1,4 +1,7 @@
 # Pinned to the versions the research engine is tested with (Back_Test_Model uv.lock).
+# crypto-odds-daily.yml installs this file on Python 3.12. scipy 1.18+ has no
+# 3.11 wheels; numpy stays on 2.4.x because 2.5+ also requires Python >= 3.12
+# and the rest of the repo still installs numpy on 3.11.
 numpy==2.4.6
 scipy==1.18.1
 pandas==3.0.6

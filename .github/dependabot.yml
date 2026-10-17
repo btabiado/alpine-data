@@ -4,20 +4,39 @@ updates:
     directory: "/"
     schedule: { interval: "weekly", day: "monday", time: "06:00", timezone: "America/Los_Angeles" }
     open-pull-requests-limit: 5
-    # numpy 2.5 requires Python >= 3.12, but the repo still supports and tests
-    # Python 3.11 (tests.yml matrix), so a numpy 2.5 bump breaks `test (3.11)`
-    # at "Install dependencies". Ignore rules apply before grouping, so this
-    # also keeps numpy out of the minor-updates group PR. Patch releases of
-    # numpy 2.4.x still come through. Remove this rule when the repo drops
-    # Python 3.11.
+    # Pins that need a newer Python than the oldest job which installs
+    # them. Ignore rules apply before grouping, so these stay out of the
+    # minor-updates group PR. Patch releases below the cutoff still come
+    # through. tests/test_requirement_python.py fails a workflow whose
+    # Python is older than one of these floors.
+    #
+    # numpy 2.5+ requires Python >= 3.12. requirements.txt is installed by
+    # the 3.11 jobs and by tests.yml's 3.11 leg, so a 2.5 bump breaks
+    # `test (3.11)` at "Install dependencies". Remove this when the repo
+    # drops Python 3.11.
+    #
+    # scipy 1.18+ also requires Python >= 3.12, but it is not in this
+    # manifest: crypto_odds/requirements.txt is installed only by
+    # crypto-odds-daily, which runs 3.12. Do not ignore scipy >=1.18 here
+    # (that would freeze 1.18.x, including patches, on the 3.12 job).
+    # Dependabot reads first-level requirements files such as
+    # crypto_odds/requirements.txt from this "/" entry; the 3.12 install
+    # in tests.yml is what rejects a later scipy that drops 3.12.
     ignore:
       - dependency-name: "numpy"
         versions: [">=2.5"]
     groups:
       patch-updates:
         update-types: ["patch"]
+      # scipy minors are not in this group. PR #103 landed scipy 1.18.1
+      # (needs Python >= 3.12) inside the minor-updates bundle while
+      # crypto-odds-daily was still on 3.11. A future minor that drops the
+      # workflow's Python has to be its own PR. 1.18.x patches stay in
+      # patch-updates.
       minor-updates:
         update-types: ["minor"]
+        exclude-patterns:
+          - "scipy"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule: { interval: "weekly", day: "monday", time: "06:00", timezone: "America/Los_Angeles" }
