@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 import numpy as np
 import pandas as pd
 
+from ..pandas_compat import as_naive_ns, utc_ns
 from ..pricing.black76 import SECONDS_PER_YEAR
 
 
@@ -45,8 +46,8 @@ def normalize_chain(snap, venue: str = "deribit") -> pd.DataFrame:
         mid = (bid + ask) / 2 if np.isfinite(bid) and np.isfinite(ask) else np.nan
         tick = _tick(inst, mid if np.isfinite(mid) else mark)
         scale = 1.0 if snap.family == "inverse" else (1.0 / F if F and F > 0 else np.nan)
-        expiry = pd.Timestamp(inst["expiration_timestamp"], unit="ms", tz="UTC")
-        retrieved = pd.Timestamp(snap.retrieved_at)
+        expiry = utc_ns(pd.Timestamp(inst["expiration_timestamp"], unit="ms", tz="UTC"))
+        retrieved = utc_ns(pd.Timestamp(snap.retrieved_at))
         rows.append({
             "venue": venue, "instrument": b["instrument_name"], "asset": snap.asset,
             "family": snap.family, "role": snap.role,
@@ -55,7 +56,7 @@ def normalize_chain(snap, venue: str = "deribit") -> pd.DataFrame:
             "payoff_type": "inverse_coin_settled" if snap.family == "inverse" else "linear_cash_settled",
             "exercise": "european",
             "quote_ts": pd.NaT,  # Deribit supplies no genuine last-quote-update time
-            "response_ts": pd.Timestamp(b["creation_timestamp"], unit="ms", tz="UTC"),
+            "response_ts": utc_ns(pd.Timestamp(b["creation_timestamp"], unit="ms", tz="UTC")),
             "retrieval_ts": retrieved, "expiry_ts": expiry,
             "T": (expiry - retrieved).total_seconds() / SECONDS_PER_YEAR,
             "strike": float(inst["strike"]), "cp": "C" if inst["option_type"] == "call" else "P",
@@ -71,6 +72,8 @@ def normalize_chain(snap, venue: str = "deribit") -> pd.DataFrame:
     df = pd.DataFrame(rows)
     if df.empty:
         return df
+    # An all-missing column is datetime64[s] under pandas 3; pandas 2.3 wrote ns.
+    df["quote_ts"] = as_naive_ns(df["quote_ts"])
     df["k"] = df["strike"] / df["forward"]
     return df
 

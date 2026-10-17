@@ -14,6 +14,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from ..pandas_compat import merge_asof_utc
 from .models import ewma_var
 from .panel import Series
 
@@ -43,7 +44,7 @@ def origin_features(s: Series, ewma_lambda: float, dvol: pd.DataFrame | None = N
         o = pd.DataFrame({"t": s.info_time, "i": np.arange(n)})
         d = dvol.sort_values("available_time")[["available_time", "dvol"]].rename(columns={"available_time": "t"})
         d["t_obs"] = d["t"]
-        m = pd.merge_asof(o.sort_values("t"), d, on="t", direction="backward").sort_values("i")
+        m = merge_asof_utc(o, d, on="t", direction="backward").sort_values("i")
         dv = m["dvol"].to_numpy() / 100.0
         age = (m["t"] - m["t_obs"]).dt.total_seconds().to_numpy() / 86400
         stale = ~(age <= 3)

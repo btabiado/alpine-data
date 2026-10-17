@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
+from ..pandas_compat import merge_asof_utc
 from .panel import Series
 
 P_MODELS = ["climatology", "lognormal_rv90", "lognormal_ewma", "lognormal_ewma_drift", "fhs_ewma", "garch_t"]
@@ -125,7 +126,7 @@ def forecast(s: Series, hs: list[int], targets: list[float], cfg: dict, dvol: pd
     if dvol is not None and len(dvol):
         o = pd.DataFrame({"t": s.info_time, "i": np.arange(n)})
         d = dvol.sort_values("available_time")[["available_time", "dvol"]].rename(columns={"available_time": "t"})
-        m = pd.merge_asof(o.sort_values("t"), d, on="t", direction="backward", tolerance=pd.Timedelta(days=3))
+        m = merge_asof_utc(o, d, on="t", direction="backward", tolerance=pd.Timedelta(days=3))
         dv = m.sort_values("i")["dvol"].to_numpy() / 100.0
 
     rows = []

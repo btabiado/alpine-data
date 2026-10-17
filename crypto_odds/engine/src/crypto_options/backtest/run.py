@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 from ..adapters import history as H
+from ..pandas_compat import as_py_str, utc_ns
 from ..adapters.http import RawArchive
 from ..pipeline import _code_hash, _git_rev, _sha256, _versions, write_json
 from ..quality.normalize import utc_now
@@ -120,12 +121,12 @@ def run_backtest(cfg, final: bool = False, make_charts: bool = True, ml_on: bool
                 qs = FM.quantile_scores(ch, realdf)
                 if vol is not None:   # variance calibration of the volatility representation: mean var_h / mean R^2
                     vv = vol.merge(realdf, on=["origin_idx", "h"])
-                    vv = vv.assign(outcome_date=pd.to_datetime(vv["origin_date"], utc=True) + pd.to_timedelta(vv["h"], unit="D"))
+                    vv = vv.assign(outcome_date=utc_ns(pd.to_datetime(vv["origin_date"], utc=True) + pd.to_timedelta(vv["h"], unit="D")))
                     volcal.append(vv.assign(asset=a, cohort=cohort))
                 if len(qs):
                     qscores.append(qs.assign(asset=a, cohort=cohort,
-                                             outcome_date=pd.to_datetime(qs["origin_date"], utc=True)
-                                             + pd.to_timedelta(qs["h"], unit="D")))
+                                             outcome_date=utc_ns(pd.to_datetime(qs["origin_date"], utc=True)
+                                             + pd.to_timedelta(qs["h"], unit="D"))))
             per_asset[a] = df
             series[(a, cohort)] = s
             e30 = df[(df["h"] == 30) & df["y"].notna() & (df["target"] == targets[0])]
@@ -266,8 +267,8 @@ def run_backtest(cfg, final: bool = False, make_charts: bool = True, ml_on: bool
     keep.drop(columns=["threshold"]).to_parquet(rdir / "forecasts.parquet", index=False)
     if ml_log:
         mlog = pd.DataFrame(ml_log)
-        mlog["refit"] = pd.to_datetime(mlog["refit"], utc=True)
-        mlog["params"] = mlog["params"].astype(str)
+        mlog["refit"] = utc_ns(mlog["refit"])
+        mlog["params"] = as_py_str(mlog["params"])
         mlog.to_csv(rdir / "ml_refits.csv", index=False)
     if qscores:
         q = pd.concat(qscores, ignore_index=True)

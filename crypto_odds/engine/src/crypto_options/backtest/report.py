@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from ..pandas_compat import as_py_str
 from ..reporting.report import _md_table
 from .charts import LABEL
 
@@ -194,14 +195,14 @@ def write(rdir: Path) -> str:
                        "positive in some years and negative in others.\n")
             disp = pv.round(2).astype(object).where(pv.notna(), "—")
             disp.index = [f"{a} · {LABEL[m]}" for a, m in disp.index]
-            out.append(_md_table(disp.reset_index(names="Asset · model").astype(str)) + "\n")
+            out.append(_md_table(as_py_str(disp.reset_index(names="Asset · model"))) + "\n")
 
     # ---------------- sample sizes and holdout share
     out.append("## Sample size, testability and split\n")
     tt = S[(S["split"] == "dev") & (S["model"] == "climatology") & (S["comparison"] == "P models")]
     tt = tt.groupby(["cohort", "asset", "h"]).agg(targets=("target", "size"), testable=("testable", "sum"),
                                                   origins=("n", "max")).reset_index()
-    out.append(_md_table(tt.assign(h=tt["h"].astype(str) + "d").rename(columns={
+    out.append(_md_table(tt.assign(h=as_py_str(tt["h"]) + "d").rename(columns={
         "cohort": "Cohort", "asset": "Asset", "targets": "Targets", "testable": "Testable", "origins": "Dev origins"})) + "\n")
     untest = S[(S["split"] == "dev") & (S["model"] == "climatology") & (S["comparison"] == "P models") & ~S["testable"]]
     rare = untest["target"].isin([0.75, 1.0, -0.5]).sum()
@@ -215,7 +216,7 @@ def write(rdir: Path) -> str:
         out.append("Split of forecastable 30-day origins. The holdout is the last 20% of the shortest asset's "
                    "label-eligible timeline, with one date per cohort so pooled comparisons stay aligned. That is "
                    "why its share differs by asset.\n")
-        out.append(_md_table(sp.reset_index().astype(str)) + "\n")
+        out.append(_md_table(as_py_str(sp.reset_index())) + "\n")
 
     # ---------------- coverage and cost
     out.append("## Coverage and cost\n")
@@ -375,7 +376,7 @@ def stage4_section(rdir: Path, dev: pd.DataFrame, man: dict, bt: dict) -> str:
         o.append(_md_table(g.reset_index()) + "\n")
         ok = lg[lg["status"] == "ok"]
         if len(ok) and "calibrated" in ok:
-            cal = ok["calibrated"].astype(str).eq("True")
+            cal = as_py_str(ok["calibrated"]).eq("True")
             o.append(f"ML refits calibrated on a past-only slice: {int(cal.sum())} of {len(ok)}. The rest had too few events "
                      "in the slice and were left uncalibrated. "
                      + (f"Median fitted calibration slope: {ok['cal_slope'].median():.2f}. The bound is 1, which means no "
@@ -383,7 +384,7 @@ def stage4_section(rdir: Path, dev: pd.DataFrame, man: dict, bt: dict) -> str:
                         "overconfidence that appears out of sample. " if "cal_slope" in ok else ""))
         if "params" in ok:
             tun = ok[ok["model"] == "logit_A"].drop_duplicates(["asset", "cohort", "h", "side", "tuned_at"])
-            hit = tun["params"].astype(str).str.contains("'C': 0.0001").sum()
+            hit = as_py_str(tun["params"]).str.contains("'C': 0.0001").sum()
             o.append(f"Logistic tuning events that chose the smallest C offered (1e-4): {int(hit)} of {len(tun)}. The data "
                      "keep asking for more regularization. The grid was fixed before this run and is not widened after "
                      "seeing results.\n")
@@ -400,7 +401,7 @@ def stage4_section(rdir: Path, dev: pd.DataFrame, man: dict, bt: dict) -> str:
                      "cohort × asset combinations, ML covers under 90% of the rows past frequency covers (median ratio "
                      f"{ratio.stack().median():.2f}). Promotion condition (4) therefore fails in those cells whatever "
                      "the skill.\n")
-            o.append(_md_table(ratio.round(2).reset_index().astype(str)) + "\n")
+            o.append(_md_table(as_py_str(ratio.round(2).reset_index())) + "\n")
     o.append("### Promotion rule (predeclared, applied once on the holdout)\n")
     o.append("> " + " ".join(bt["promotion"]["rule"].split()) + "\n")
     o.append("XGBoost quantile regression is deferred, because the data cannot support it. With 12–100 approximately "
@@ -515,7 +516,7 @@ def stage5_section(rdir: Path, dev: pd.DataFrame, man: dict, bt: dict) -> str:
                      f"bias {q['median_bias_chronos'].mean():+.3f} log points, with {int((q['median_bias_chronos'] < 0).sum())} cells negative). "
                      "The comparison model has zero drift, so this measures Chronos's own drift relative to outcomes.\n")
             o.append(_md_table(pd.DataFrame({
-                "Cohort": q["cohort"], "Asset": q["asset"], "h": q["h"].astype(str) + "d",
+                "Cohort": q["cohort"], "Asset": q["asset"], "h": as_py_str(q["h"]) + "d",
                 "Pinball Chronos": q["pinball_chronos"].map(lambda v: f"{v:.4f}"),
                 "Pinball lognormal": q["pinball_lognormal_ewma"].map(lambda v: f"{v:.4f}"),
                 "ΔPinball [95% CI]": [f"{a:+.4f} [{b:+.4f}, {c:+.4f}]" for a, b, c in zip(q["dpinball"], q["dpinball_ci_lo"], q["dpinball_ci_hi"])],
