@@ -30,9 +30,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Python
+        # scipy 1.18+ (crypto_odds/requirements.txt) ships wheels only for
+        # Python >= 3.12. On 3.11 this step died with
+        # "No matching distribution found for scipy==1.18.1"
+        # (crypto-odds-daily run 39052317800, 2026-10-17).
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install engine dependencies
         run: pip install -r crypto_odds/requirements.txt
