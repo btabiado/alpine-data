@@ -2,18 +2,21 @@
 U.S. State Department travel-advisory fetcher.
 
 Sources (all free, no auth required):
-  travel.state.gov HTML  per-country advisory level, risk codes, date
-  travel.state.gov RSS   security alerts / advisory-update bulletins
+  travel.state.gov HTML                         per-country level, risk-pill codes, date
+  cadataapi.state.gov/api/TravelAdvisories      official JSON list (no API key) used
+                                                when the HTML page is blocked
+  travel.state.gov RSS                          security alerts, and the level-only
+                                                fallback when the JSON list is down
 
 Output: data-travel.json (sidecar for the dashboard's Travel Advisories tab).
 
 Schema (matches what the front-end consumes):
     {
       "generated_at": "2026-05-25T12:00:00Z",
-      "source": "html",                 # or "rss-fallback"
-      "fallback": false,                 # true when the country list came from RSS
+      "source": "html",                 # or "cadata-api", or "rss-fallback"
+      "fallback": false,                 # true only when the country list came from RSS
       "fallback_reason": null,           # why, when fallback is true
-      "risks_available": true,           # false in fallback: the feed has no indicator codes
+      "risks_available": true,           # false in RSS fallback: that feed has no indicator codes
       "advisories": [
         {"name": "Afghanistan", "level": 4, "risks": ["U","C","H","K","T","D","N"],
          "date": "2026-02-20",
@@ -31,16 +34,30 @@ whoever wires up CI — there's no benefit to scraping the HTML page 24 times
 a day. We do NOT enforce that here; leaving the cadence decision to the
 caller keeps this module a pure pipeline step.
 
-Resilience: a usable country list from the HTML table is a normal success.
-If that page is blocked or unreadable but the RSS feed yields a well-formed
-list, we write that list, set fallback=true, log a warning, and exit 0.
-Risk-indicator codes are not in the feed, so risks_available is false.
-No list from either source, or a list that does not match the schema, is a
+Resilience, in order:
+  1. A usable country list from the HTML table is a normal success. The pills
+     on that table are the letter codes (T/C/U/H/K/N/D/O/E).
+  2. If that page is blocked or unreadable, the Bureau of Consular Affairs
+     public data API supplies the same list. Its index
+     (https://cadataapi.state.gov/) links "All Travel Advisories" at
+     /api/TravelAdvisories with no API key and no registration. Each item's
+     title carries the level ("France - Level 2: ..."). The level sentence
+     in Summary names the indicators ("due to crime, terrorism, ..."), which
+     is how risks_available becomes true again. Indicator headings are used
+     only when that sentence names none.
+  3. If the JSON feed yields nothing usable, the RSS feed still rebuilds
+     levels. fallback=true, risks_available=false (the feed has the level in
+     the title, not the letter codes), a warning is logged, and the process
+     exits 0. That degraded mode must not fail CI.
+No list from any source, or a list that does not match the schema, is a
 hard failure: the existing data-travel.json is left in place and the process
 exits non-zero. The dashboard never sees an empty or malformed advisories list.
 
-A 403 from the advisory page is accepted as the host's answer. This module
-does not rotate User-Agents, use a proxy, or otherwise try to get past it.
+A 403 from the advisory HTML page is accepted as the host's answer. This
+module does not rotate User-Agents, use a proxy, solve a challenge, or
+otherwise try to get past it. The singular /api/TravelAdvisory path on the
+same API host answers with that challenge and is never requested; only the
+plural collection the index actually links is used.
 
 CLI:
     python fetch_advisories.py                 # default --out data-travel.json
@@ -92,6 +109,10 @@ ADVISORY_LIST_URL = "https://travel.state.gov/en/international-travel/travel-adv
 # (Also available at /content/travel/en/_jcr_content.xy.html but this is the
 # documented feed URL surfaced in the front-end of travel.state.gov.)
 ADVISORY_RSS_URL = "https://travel.state.gov/_res/rss/TAsTWs.xml"
+# Bureau of Consular Affairs public data API. Linked from the index at
+# https://cadataapi.state.gov/ as "All Travel Advisories" — JSON, no API key.
+# The singular /api/TravelAdvisory URL is a different path and is not used.
+ADVISORY_API_URL = "https://cadataapi.state.gov/api/TravelAdvisories"
 
 # Valid State Dept risk indicator code letters. Anything outside this set is
 # dropped by the parser (defensive against stray punctuation in cells).
@@ -183,6 +204,13 @@ def _offline_mock(url: str) -> FetchResult | None:
     if url == ADVISORY_RSS_URL:
         # Defined further down; resolved at call time, after import finishes.
         text = _RSS_FIXTURE_PATH.read_text(encoding="utf-8")
+        return FetchResult(url, text, 200, "", len(text), "", 1)
+    if url == ADVISORY_API_URL:
+        # Empty on purpose. The tests workflow uses this double to exercise
+        # the RSS fallback (HTML 403, API has nothing, RSS fixture). A unit
+        # test that wants the API path passes its own body. Either way no
+        # socket is opened.
+        text = "[]"
         return FetchResult(url, text, 200, "", len(text), "", 1)
     return FetchResult(
         url, None, None,
@@ -881,9 +909,230 @@ def advisories_from_rss(xml_str: str) -> list[dict]:
         out.append({
             "name": name,
             "level": int(m.group(2)),
-            "risks": [],          # not carried by the RSS feed
+            "risks": [],          # letter codes are not a field of the RSS item
             "date": date_iso,
             "url": build_country_url(name),
+        })
+    return out
+
+
+# ----- CA data API (cadataapi.state.gov/api/TravelAdvisories) ----------------
+#
+# The HTML table is the only place the letter codes are published as pills.
+# When that page 403s, the Consular Affairs JSON feed still carries each
+# advisory's level in the title and the same indicator words the pills name,
+# inside the level sentence ("Exercise increased caution in X due to crime,
+# terrorism, and health."). That sentence is the State Dept's own list. A
+# later "due to" buried in advice ("avoid night travel due to safety risks")
+# is not, so only the level sentence is read.
+#
+# Some advisories state the level with no "due to" and then use the indicator
+# name as a heading (Crime / Terrorism / Health / ...). Those headings are
+# used only when the level sentence itself names no indicator. Scanning the
+# whole summary would turn a Level 1 note about petty crime into a Crime pill.
+
+_LEVEL_VERB_RE = re.compile(
+    r"(?:do not travel|reconsider travel|exercise increased caution|"
+    r"exercise normal precautions?)",
+    re.IGNORECASE,
+)
+# A period ends the sentence unless it belongs to an initialism ("U.S.").
+_SENTENCE_END_RE = re.compile(r"(?<![A-Z])[.!](?:\s|$)")
+_DUE_TO_RE = re.compile(r"\bdue to\b", re.IGNORECASE)
+
+# First match position in the level sentence decides pill order, which is the
+# order the State Dept wrote the reasons. Patterns are the indicator names
+# from travel.state.gov's own "Risk indicator definitions", plus the short
+# phrases the advisories use for the same nine codes.
+_RISK_RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("D", re.compile(r"wrongful detention|arbitrary detention|arbitrary arrest", re.I)),
+    ("K", re.compile(r"kidnapp|hostage", re.I)),
+    ("T", re.compile(r"terroris", re.I)),
+    ("U", re.compile(r"civil unrest|\bunrest\b|demonstration|political violence", re.I)),
+    ("N", re.compile(r"natural disaster|extreme weather|environmental hazard", re.I)),
+    ("H", re.compile(r"\bhealth\b|medical facilit", re.I)),
+    ("C", re.compile(r"\bcrime\b", re.I)),
+    ("E", re.compile(r"time-limited event", re.I)),
+    ("O", re.compile(
+        r"\bother\b|armed conflict|\bwar\b|landmine|unexploded|"
+        r"arbitrary enforcement|emergency service|consular|\bpiracy\b|"
+        r"harassment|\bdrone\b|\bmissile\b|ordnance|ordinance|exit ban",
+        re.I,
+    )),
+)
+# Words left over after those phrases are removed. They are glue around a
+# named indicator ("limited health facilities", "health risks") and must not
+# invent an Other pill. A leftover content word ("violence", "piracy" if it
+# was not already matched) does mean Other.
+_RESIDUAL_STOP = frozenset({
+    "ability", "administrative", "advisory", "against", "also", "american",
+    "and", "area", "areas", "citizens", "citizen", "conditions", "due",
+    "employees", "entire", "extreme", "facilities", "facility", "family",
+    "from", "government", "have", "high", "including", "increased",
+    "infrastructure", "inadequate", "inside", "issue", "issues", "limited",
+    "local", "laws", "members", "more", "most", "only", "part", "parts",
+    "personnel", "poor", "posed", "provide", "read", "reason", "region",
+    "risk", "risks", "service", "services", "some", "special", "such",
+    "that", "their", "there", "this", "travel", "traveling", "unpredictable",
+    "weather", "when", "with", "within", "your",
+})
+# Whole-line headings. A sentence that merely starts with "Crime is common"
+# does not match.
+_HEADER_CODES = {
+    "crime": "C",
+    "terrorism": "T",
+    "unrest": "U",
+    "civil unrest": "U",
+    "health": "H",
+    "kidnapping": "K",
+    "kidnapping or hostage-taking": "K",
+    "kidnapping or hostage taking": "K",
+    "natural disaster": "N",
+    "natural disasters": "N",
+    "wrongful detention": "D",
+    "time-limited event": "E",
+    "other": "O",
+    "armed conflict": "O",
+    "landmines": "O",
+    "unexploded ordnance": "O",
+}
+_TITLE_LEVEL_NAME_RE = re.compile(
+    r"^(.*?)\s+[-–—]\s+Level\s+([1-4])\b", re.IGNORECASE,
+)
+
+
+def _header_code(line: str) -> str | None:
+    key = re.sub(r"\s+", " ", (line or "").strip()).strip(" :.").lower()
+    return _HEADER_CODES.get(key)
+
+
+def _level_sentence(text: str) -> str:
+    """The sentence that assigns the level, and nothing after it.
+
+    Stops at the first real period, or at the first indicator heading, so a
+    later "due to safety risks" inside a Crime section is not the level list.
+    """
+    match = _LEVEL_VERB_RE.search(text or "")
+    if not match:
+        return ""
+    parts: list[str] = []
+    for i, line in enumerate(text[match.start():].split("\n")):
+        if i > 0 and _header_code(line):
+            break
+        end = _SENTENCE_END_RE.search(line)
+        if end:
+            parts.append(line[:end.start()])
+            break
+        parts.append(line)
+    return " ".join(part.strip() for part in parts if part.strip())
+
+
+def _residual_other(clause: str) -> bool:
+    stripped = clause
+    for _, pattern in _RISK_RULES:
+        stripped = pattern.sub(" ", stripped)
+    words = re.findall(r"[A-Za-z]{4,}", stripped)
+    return any(word.lower() not in _RESIDUAL_STOP for word in words)
+
+
+def _codes_in_clause(clause: str) -> list[str]:
+    hits: list[tuple[int, str]] = []
+    for code, pattern in _RISK_RULES:
+        found = pattern.search(clause)
+        if found:
+            hits.append((found.start(), code))
+    hits.sort(key=lambda item: item[0])
+    out: list[str] = []
+    for _, code in hits:
+        if code not in out:
+            out.append(code)
+    if "O" not in out and _residual_other(clause):
+        out.append("O")
+    return out
+
+
+def risks_from_advisory_prose(summary: str) -> list[str]:
+    """Indicator codes named by one advisory's own summary.
+
+    Returns [] when the summary names none (a normal Level 1). The caller
+    decides whether an all-empty list means the feed did not carry indicators.
+    """
+    text = _html_fragment_to_text(summary or "")
+    sentence = _level_sentence(text)
+    due = _DUE_TO_RE.search(sentence)
+    # Any code the level sentence names, including Other alone, is the list.
+    # Headings are only for advisories whose level sentence names nothing
+    # (Mali, Liberia). Falling through on Other would replace "arbitrary
+    # enforcement" with whatever section heading appears later in the body.
+    named = _codes_in_clause(sentence[due.end():]) if due else []
+    if named:
+        return named
+    # Level 1 ("exercise normal precautions") pages include a Crime or Unrest
+    # heading as ordinary travel guidance. That is not a risk pill. Paraguay
+    # still gets Crime, because its level sentence says "due to crime".
+    if re.match(r"exercise normal precaution", sentence or "", re.IGNORECASE):
+        return []
+    headings: list[str] = []
+    for line in text.split("\n"):
+        code = _header_code(line)
+        if code and code not in headings:
+            headings.append(code)
+    return headings
+
+
+def _cadata_date(item: dict) -> str:
+    """Updated/Published ISO timestamp to UTC YYYY-MM-DD. '' if neither parses."""
+    for key in ("Updated", "Published"):
+        raw = item.get(key)
+        if not isinstance(raw, str) or not raw.strip():
+            continue
+        try:
+            dt = datetime.fromisoformat(raw.strip())
+        except ValueError:
+            continue
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc).strftime("%Y-%m-%d")
+    return ""
+
+
+def advisories_from_cadata(payload: str) -> list[dict]:
+    """Country list from the Consular Affairs TravelAdvisories JSON feed.
+
+    ``payload`` is the raw response body (a JSON array). A non-JSON body or
+    any other shape returns [], which the caller treats as "this source
+    produced nothing" and continues to the RSS fallback.
+    """
+    if not payload or not payload.strip():
+        return []
+    try:
+        data = json.loads(payload)
+    except json.JSONDecodeError as e:
+        print(f"  [advisories_from_cadata] json parse: {e}", file=sys.stderr)
+        return []
+    if not isinstance(data, list):
+        return []
+    out: list[dict] = []
+    seen: set[str] = set()
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        title = _plain_text(str(item.get("Title") or ""))
+        match = _TITLE_LEVEL_NAME_RE.match(title)
+        if not match:
+            continue
+        name = match.group(1).strip()
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        link = str(item.get("Link") or "").strip()
+        url = link if link.startswith("https://") else build_country_url(name)
+        out.append({
+            "name": name,
+            "level": int(match.group(2)),
+            "risks": risks_from_advisory_prose(str(item.get("Summary") or "")),
+            "date": _cadata_date(item),
+            "url": url,
         })
     return out
 
@@ -998,11 +1247,13 @@ def _malformed_advisory_reason(rows: object) -> str:
 
 
 def fetch_live(status: dict | None = None) -> dict | None:
-    """Scrape both endpoints and assemble the output payload.
+    """Fetch the country list and the RSS bulletins.
 
-    Returns None when neither source produced a well-formed advisory list.
+    Returns None when no source produced a well-formed advisory list.
     The caller treats that as a hard failure and preserves the prior JSON.
-    A well-formed RSS list after the HTML page failed is a success with
+    Order is the HTML table, then the Consular Affairs JSON API, then RSS.
+    A JSON list restores indicator codes and is a normal success. A
+    well-formed RSS list after both of those failed is a success with
     ``fallback`` set; it is not a failure.
 
     ``status``: optional dict, always populated with a machine-readable record
@@ -1066,11 +1317,42 @@ def fetch_live(status: dict | None = None) -> dict | None:
     source = "html"
     fallback_reason: str | None = None
     rss_malformed = ""
+    api_malformed = ""
+    if not advisories:
+        # The HTML table is blocked, empty, or malformed. The Consular Affairs
+        # JSON feed is a different host and a different document: the index
+        # page links it, and it does not sit behind the HTML page's challenge.
+        # One GET, the same client as everything else. No second User-Agent,
+        # no proxy, no challenge handling.
+        time.sleep(0.3)
+        print("  Advisories: fetching State Dept CA data API...")
+        api_r = _get(ADVISORY_API_URL)
+        status["api"] = _endpoint_status(api_r)
+        if api_r.ok:
+            api_rows = advisories_from_cadata(api_r.text)
+            api_malformed = _malformed_advisory_reason(api_rows)
+            if api_rows and not api_malformed:
+                advisories = api_rows
+                source = "cadata-api"
+                coded = sum(1 for row in advisories if row["risks"])
+                print(f"    -> {len(advisories)} advisories from the CA data API "
+                      f"({coded} with risk indicators)")
+            elif api_malformed:
+                print(f"    -> CA data API rows malformed ({api_malformed}); "
+                      f"discarding {len(api_rows)} rows", file=sys.stderr)
+            else:
+                print("    -> CA data API returned no advisories", file=sys.stderr)
+        else:
+            print(f"    -> CA data API fetch failed: {api_r.describe()}",
+                  file=sys.stderr)
+    if api_malformed:
+        status.setdefault("api", {})["malformed"] = api_malformed
+
     if not advisories and rss_r.ok:
-        # The HTML table is blocked, empty, or malformed, but the RSS feed
-        # answered. Rebuild the country list from it. What this loses is the
-        # risk-indicator codes (see advisories_from_rss). The 403 is not
-        # worked around: no extra retry, no other User-Agent, no proxy.
+        # HTML and the CA data API both produced nothing usable. The RSS feed
+        # still has one item per country, with the level in the title and no
+        # letter codes (see advisories_from_rss). The HTML 403 is not worked
+        # around: no extra retry, no other User-Agent, no proxy.
         rss_rows = advisories_from_rss(rss_r.text)
         rss_malformed = _malformed_advisory_reason(rss_rows)
         if rss_rows and not rss_malformed:
@@ -1101,13 +1383,15 @@ def fetch_live(status: dict | None = None) -> dict | None:
     # from RSS after the HTML page produced nothing usable.
     status["fallback"] = using_fallback
     status["fallback_reason"] = fallback_reason
-    # Risk-indicator codes only exist on the HTML table. The RSS items carry
-    # the level, a FIPS country code and free-text prose, never the T/C/U/...
-    # indicators, and the per-country pages sit behind the same bot challenge
-    # as the table. So in the fallback every row's `risks` is [] because the
-    # data is MISSING, not because the country has no risks; this flag is how
-    # the dashboard tells those two apart.
-    risks_available = source == "html" and bool(advisories)
+    # Letter codes come from the HTML pills, or from the CA API level sentence
+    # (see risks_from_advisory_prose). The RSS fallback still has none: an
+    # empty `risks` there means MISSING, and this flag is how the dashboard
+    # tells that apart from a country that published no indicators. An API
+    # list whose summaries named nothing is the same honest "unavailable".
+    risks_available = bool(advisories) and (
+        source == "html"
+        or (source == "cadata-api" and any(row["risks"] for row in advisories))
+    )
     status["risks_available"] = risks_available if advisories else None
 
     if not advisories:
@@ -1129,8 +1413,9 @@ def fetch_live(status: dict | None = None) -> dict | None:
     status["malformed"] = None
     return {
         "generated_at": _now_iso(),
-        # Which path produced the country list. "rss-fallback" means the HTML
-        # table was blocked or unreadable and `risks` is empty for every row.
+        # Which path produced the country list. "html" parsed the pills.
+        # "cadata-api" is the public JSON feed (levels + indicator words).
+        # "rss-fallback" means both of those failed and `risks` is empty.
         "source": source,
         # The status flag for that mode. True => the list is from RSS, risk
         # indicators are unknown, and the run is a warning rather than a failure.
@@ -1393,6 +1678,46 @@ def _self_test() -> int:
          f"RSS fallback Bahrain.date={rss_adv_by_name.get('Bahrain', {}).get('date')!r}"),
         (rss_adv_by_name.get("Bahrain", {}).get("risks") == [],
          "RSS fallback carries no risk codes — risks must be []"),
+        # CA API prose: the level sentence, not a later "due to", and not an
+        # Other pill invented from the words around a named indicator.
+        (risks_from_advisory_prose(
+            "<p>Do not travel due to <b>civil unrest</b>, <b>crime, terrorism</b>, "
+            "<b>risk of wrongful detention</b>, <b>kidnapping</b>, "
+            "<b>natural disasters</b>, and <b>limited health facilities</b>.</p>")
+         == ["U", "C", "T", "D", "K", "N", "H"],
+         "Afghanistan level sentence should map onto the nine indicator codes"),
+        (risks_from_advisory_prose(
+            "<p>Exercise increased caution in Jamaica due to <b>crime</b> and "
+            "<b>health risks</b>. Some areas have increased risk.</p>"
+            "<p>Crime</p><p>Violent crime is a risk. Avoid night travel due to "
+            "safety risks.</p>")
+         == ["C", "H"],
+         "Jamaica: 'health risks' is Health, and a later 'due to' is not a pill"),
+        (risks_from_advisory_prose(
+            "<p>Exercise normal precaution in Austria. Petty crime is possible.</p>"
+            "<p>Crime</p><p>Petty crime is common in tourist areas.</p>")
+         == [],
+         "Level 1 guidance headings are not risk pills"),
+        (risks_from_advisory_prose(
+            "<p>Do not travel to Mali for any reason.</p>"
+            "<p>Crime</p><p>Violent crime includes kidnapping.</p>"
+            "<p>Terrorism</p><p>Attacks continue.</p>"
+            "<p>Health</p><p>Care is limited.</p>")
+         == ["C", "T", "H"],
+         "When the level sentence names nothing, indicator headings are the list"),
+        (risks_from_advisory_prose(
+            "<p>Exercise increased caution in Hong Kong due to the arbitrary "
+            "enforcement of local laws.</p>")
+         == ["O"],
+         "arbitrary enforcement is the Other indicator"),
+        (advisories_from_cadata("") == [] and advisories_from_cadata("{") == [],
+         "CA API parser should degrade to [] on empty/invalid JSON"),
+        (advisories_from_cadata(
+            '[{"Title":"Andorra - Level 1: Exercise Normal Precautions",'
+            '"Link":"https://travel.state.gov/andorra.html",'
+            '"Summary":"<p>Exercise normal precaution in Andorra.</p>",'
+            '"Updated":"2026-05-21T00:00:00Z"}]')[0]["risks"] == [],
+         "a Level 1 API row is a real empty risk list, not a parse failure"),
         (rss_adv_by_name.get("Bahrain", {}).get("url", "").endswith("/bahrain.html"),
          f"RSS fallback Bahrain.url={rss_adv_by_name.get('Bahrain', {}).get('url')!r}"),
         (rss_adv_by_name.get("United Arab Emirates", {}).get("level") == 3,
@@ -1621,17 +1946,32 @@ def main(argv: list[str] | None = None) -> int:
     out_path.write_text(json.dumps(payload, indent=2))
     _write_status(out_path, status)
     note = ""
+    if payload.get("source") == "cadata-api":
+        note = " [via CA data API — risk indicators restored]"
     if payload.get("fallback"):
         # A logged warning, exit 0. The country list is real; the risk codes
         # are not. Calling this a failure is what turned a Cloudflare 403 into
         # a red tests workflow on 2026-10-15.
         why = payload.get("fallback_reason") or _diagnose(status)
         note = " [via RSS fallback — risk indicators unavailable]"
+        api = status.get("api") or {}
+        if api.get("malformed"):
+            api_bit = (f" The CA data API rows were malformed "
+                       f"({api['malformed']}).")
+        elif api.get("http_status") == 200:
+            api_bit = " The CA data API returned no usable country list."
+        elif api:
+            http_status = api.get("http_status")
+            answered = (f"HTTP {http_status}" if http_status
+                        else "no HTTP response")
+            api_bit = f" The CA data API did not answer ({answered})."
+        else:
+            api_bit = ""
         _annotate(
             "warning", "Travel advisories degraded",
             f"fallback=true ({why}). Rebuilt {len(payload['advisories'])} "
             f"advisories from the State Dept RSS feed. risks_available=false: "
-            f"indicator codes are not in that feed. {_diagnose(status)}",
+            f"indicator codes are not in that feed.{api_bit} {_diagnose(status)}",
         )
     print(f"  Wrote {out_path} ({len(payload['advisories'])} advisories, "
           f"{len(payload['bulletins'])} bulletins){note}")

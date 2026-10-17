@@ -21596,13 +21596,15 @@ function travelFmtDate(iso){
   return months[m] + ' ' + d + ', ' + parts[0];
 }
 
-// Risk-indicator pills exist only when fetch_advisories parsed the State
-// Dept HTML table. In its RSS fallback (the table sits behind a bot
-// challenge) every row carries risks:[] because the data is MISSING, not
-// because a country has none. Treat that as "unavailable" so a Level 4
-// country never reads "No specific risk indicators" and the terrorism count
-// is never a fabricated 0. `fallback === true` is the status flag for that
-// mode; older payloads are recognised by source / risks_available.
+// Risk-indicator pills are real when the payload says so. The HTML table
+// publishes the letter codes. When that page is blocked, source "cadata-api"
+// is the public Consular Affairs JSON feed: its level sentence names the
+// same indicators, and risks_available is true. The RSS fallback does not
+// carry the codes, so every row's risks:[] there means MISSING, not none.
+// Treat that mode as "unavailable" so a Level 4 country never reads "No
+// specific risk indicators" and the terrorism count is never a fabricated 0.
+// `fallback === true` is the status flag for the RSS mode; older payloads
+// are recognised by source / risks_available.
 function travelRisksAvailable(t){
   return !!t && t.fallback !== true && t.risks_available !== false && t.source !== 'rss-fallback';
 }
