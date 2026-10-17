@@ -514,6 +514,31 @@ class TestProblems:
         lines = dar.render_problem_lines(probs)
         assert any("(2): ETF Flows, CPI" in ln or "(2): CPI, ETF Flows" in ln for ln in lines)
 
+    def test_exit_tab_switch_is_navigation_not_a_panel(self, dar):
+        """Summit is a link. switched:true means the tap left the dashboard;
+        a missing `switched` used to be read as 'did not register as switched'."""
+        gone = [{"id": "summit", "label": "Summit↗", "exit": True, "reachable": True,
+                 "opened": "tap", "switched": True,
+                 "navigated_to": "https://btabiado.github.io/alpine-data/landscape/?pres=absent"}]
+        assert dar.ux_problems(_ux(_ux_page(tabs=gone), _ux_page(vp="desktop", tabs=gone))) == []
+        stuck = [{"id": "summit", "label": "Summit↗", "exit": True, "reachable": True,
+                  "opened": "tap", "switched": False, "problem": "tap did not leave the dashboard"}]
+        probs = dar.ux_problems(_ux(_ux_page(tabs=stuck)))
+        assert [p["id"] for p in probs] == ["ux:v1:phone:tab-dead:summit"]
+        assert probs[0]["severity"] == "P0"
+        assert "does not leave the dashboard" in probs[0]["title"]
+        assert "panel" not in probs[0]["title"]
+
+    def test_ux_script_checks_exit_navigation(self):
+        src = (SCRIPTS / "daily_audit_ux.mjs").read_text(encoding="utf-8")
+        # The old tap test skipped Summit before tapping and never set
+        # `switched`, which the 2026-10-17 email read as a failed switch.
+        assert "entry.skipped = 'navigates away from the dashboard'" not in src
+        assert "export async function confirmExitTab" in src
+        assert "waitUntil: 'commit'" in src
+        assert "entry.switched = dest !== before" in src
+        assert "entry.exit = true" in src
+
     def test_ux_findings_dedupe_across_viewports(self, dar):
         err = {"text": "TypeError: x is undefined", "step": "tab:etf"}
         req = {"url": "https://btabiado.github.io/alpine-data/data-x.json", "status": 404, "step": "load"}
