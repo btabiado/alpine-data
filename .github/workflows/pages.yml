@@ -35,7 +35,7 @@ permissions:
   contents: write
   pages: write
   id-token: write
-  actions: read   # build_backfill_jobs.py reads r2-backfill workflow run history; publish_github_status.py reads every workflow's runs and jobs
+  actions: read   # build_backfill_jobs.py reads r2-backfill workflow run history; publish_github_status.py reads workflow runs, jobs, and recent failure logs
   # Read-only, for scripts/publish_github_status.py (/health/github_status.json):
   checks: read            # failed jobs' annotations + open PRs' head check runs
   pull-requests: read     # open PRs
@@ -999,19 +999,23 @@ jobs:
           EOF
 
       - name: Publish GitHub status JSON (/health/github_status.json)
-        # Workflow runs (+ derived failing / not-running flags and failed-run
-        # annotations), open PRs on alpine-data and adw-site, open issues, and
-        # code-scanning / Dependabot alert counts, read with this run's token
-        # and published next to /health/. The daily audit agent can fetch the
-        # site but not the GitHub API, so this is its view of GitHub.
+        # Workflow runs (+ derived failing / not-running flags, failed-run
+        # annotations, and a one-line failure summary — the job log's first
+        # error line when annotations are only the generic exit code), open
+        # PRs on alpine-data and adw-site, open issues, and code-scanning /
+        # Dependabot alert counts, read with this run's token and published
+        # next to /health/. The daily audit agent can fetch the site but not
+        # the GitHub API, so this is its view of GitHub.
         # Written straight into _site/health/ (after the stage step's
         # `cp -R health/*`, so nothing has to be mirrored afterwards).
         # Observability only: a failing API section is recorded as
         # "unavailable" inside the file, and a crash here must never block the
         # deploy -- `|| echo` plus continue-on-error, as for /health/ above.
-        # Budget: <= 100 API calls (~50 in practice) against GITHUB_TOKEN's
-        # 1000/h. adw-site is private, so its PRs read as unavailable unless
-        # the optional ADW_SITE_TOKEN secret (read-only, adw-site) is set.
+        # Budget: <= 100 API calls (~50 in practice, plus at most 8 job-log
+        # reads when a recent failure's annotations don't explain it) against
+        # GITHUB_TOKEN's 1000/h. adw-site is private, so its PRs read as
+        # unavailable unless the optional ADW_SITE_TOKEN secret (read-only,
+        # adw-site) is set.
         timeout-minutes: 4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
