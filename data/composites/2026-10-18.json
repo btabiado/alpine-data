@@ -1,19 +1,19 @@
 {
   "as_of": "2026-10-18",
-  "generated_at": "2026-10-18T00:57:19Z",
+  "generated_at": "2026-10-18T05:47:27Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-18",
       "label": null,
-      "note": "40 coins; 2 buy+, 18 sell+",
-      "score": -40,
+      "note": "40 coins; 2 buy+, 20 sell+",
+      "score": -45,
       "stale": false
     },
     "defi_sentiment": {
-      "as_of": "2026-10-17",
+      "as_of": "2026-10-18",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": -5,
+      "score": -4,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -41,14 +41,14 @@
       "as_of": "2026-10-17",
       "label": "STRONG CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 64,
+      "score": 62,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-10-17",
       "label": "STRONG CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 64,
+      "score": 62,
       "stale": false
     },
     "futures_sentiment_eth": {
@@ -69,14 +69,14 @@
       "as_of": "2026-10-17",
       "label": "CROWDED LONGS",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 28,
+      "score": 27,
       "stale": false
     },
     "lthcs_composite": {
-      "as_of": "2026-10-17",
+      "as_of": "2026-10-18",
       "label": "LTHCS NEUTRAL",
       "note": null,
-      "score": 4,
+      "score": 2,
       "stale": false
     },
     "money_flow_index": {
@@ -90,7 +90,7 @@
       "as_of": "2026-10-18",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": -2,
+      "score": -3,
       "stale": false
     },
     "poc_signal_breadth": {
@@ -115,10 +115,10 @@
       "stale": false
     },
     "whale_sentiment_eth": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-17",
       "label": "NEUTRAL",
       "note": null,
-      "score": 7,
+      "score": -8,
       "stale": false
     }
   }
