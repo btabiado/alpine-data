@@ -6,7 +6,6 @@ The workflow file is checked by parsing its YAML.
 from __future__ import annotations
 
 import importlib.util
-import os
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
