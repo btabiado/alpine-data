@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-18T12:12:46Z",
+  "generated_at": "2026-10-18T12:16:53Z",
   "methodology_version": "1.1",
   "as_of": "2026-09",
   "methodology_disclosures": [
@@ -543,7 +543,7 @@
         "effective_property_tax_rate": 0.014794971565399582,
         "unemployment_rate": 6.0,
         "aqi": 14,
-        "context_score": 48
+        "context_score": 44
       },
       "disclosures": [
         "Crimes 2001-present: excludes last ~7 days; latest complete month lags to prior month"
@@ -1590,7 +1590,7 @@
         "effective_property_tax_rate": 0.008419495884773663,
         "unemployment_rate": 5.3,
         "aqi": 19,
-        "context_score": 51
+        "context_score": 48
       },
       "disclosures": [
         "311 (2010-present): ~38M rows; REQUIRES app token + recent $where filter or it times out",
@@ -2376,7 +2376,7 @@
         "median_real_estate_taxes": 6050,
         "effective_property_tax_rate": 0.006567520625271385,
         "unemployment_rate": 5.0,
-        "aqi": 38,
+        "aqi": 34,
         "context_score": 43
       },
       "disclosures": [
@@ -2915,7 +2915,7 @@
         "effective_property_tax_rate": 0.00781696143191988,
         "unemployment_rate": 4.5,
         "aqi": 19,
-        "context_score": 62
+        "context_score": 58
       },
       "disclosures": [
         "Customer Service Requests: CORRECTED: column is 'createddate' (one word), not 'created_date'.",
@@ -3616,8 +3616,8 @@
         "median_real_estate_taxes": 9862,
         "effective_property_tax_rate": 0.00707206884187881,
         "unemployment_rate": 4.2,
-        "aqi": 22,
-        "context_score": 53
+        "aqi": 8,
+        "context_score": 58
       },
       "disclosures": [
         "Police Incident Reports: 2018 portal/system migration = continuity breakpoint"
@@ -4168,8 +4168,8 @@
         "median_real_estate_taxes": 3744,
         "effective_property_tax_rate": 0.008086393088552916,
         "unemployment_rate": 2.7,
-        "aqi": 37,
-        "context_score": 58
+        "aqi": 34,
+        "context_score": 57
       },
       "disclosures": [
         "Footprint = Miami-Dade County (not the City of Miami). County 311 excludes City-of-Miami-proper requests.",
