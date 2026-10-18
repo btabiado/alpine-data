@@ -1,19 +1,19 @@
 {
   "as_of": "2026-10-18",
-  "generated_at": "2026-10-18T14:32:09Z",
+  "generated_at": "2026-10-18T18:03:21Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-18",
       "label": null,
-      "note": "40 coins; 2 buy+, 22 sell+",
-      "score": -50,
+      "note": "40 coins; 2 buy+, 24 sell+",
+      "score": -55,
       "stale": false
     },
     "defi_sentiment": {
       "as_of": "2026-10-18",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": -4,
+      "score": -5,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -38,38 +38,38 @@
       "stale": false
     },
     "futures_sentiment": {
-      "as_of": "2026-10-17",
+      "as_of": "2026-10-18",
       "label": "STRONG CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 61,
+      "score": 67,
       "stale": false
     },
     "futures_sentiment_btc": {
-      "as_of": "2026-10-17",
+      "as_of": "2026-10-18",
       "label": "STRONG CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 61,
+      "score": 67,
       "stale": false
     },
     "futures_sentiment_eth": {
-      "as_of": "2026-10-17",
+      "as_of": "2026-10-18",
       "label": "STRONG CROWDED LONGS",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
       "score": 70,
       "stale": false
     },
     "futures_sentiment_link": {
-      "as_of": "2026-10-17",
+      "as_of": "2026-10-18",
       "label": "CROWDED LONGS",
       "note": "LINK; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 30,
+      "score": 47,
       "stale": false
     },
     "futures_sentiment_ltc": {
-      "as_of": "2026-10-17",
-      "label": "CROWDED LONGS",
+      "as_of": "2026-10-18",
+      "label": "STRONG CROWDED LONGS",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 24,
+      "score": 53,
       "stale": false
     },
     "lthcs_composite": {
@@ -102,9 +102,9 @@
     },
     "stocks_signal_breadth": {
       "as_of": "2026-10-16",
-      "label": "STRONG DISTRIBUTION",
-      "note": "50 stocks; 4 buy+, 29 sell+",
-      "score": -50,
+      "label": "DISTRIBUTION",
+      "note": "50 stocks; 5 buy+, 29 sell+",
+      "score": -48,
       "stale": false
     },
     "whale_sentiment_btc": {
