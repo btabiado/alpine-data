@@ -214,6 +214,18 @@ def _wf(doc: dict, name: str) -> dict:
     return next(w for w in doc["workflows"]["items"] if w["name"] == name)
 
 
+def _iter_strings(obj):
+    """Every string nested in a JSON-like value."""
+    if isinstance(obj, str):
+        yield obj
+    elif isinstance(obj, dict):
+        for value in obj.values():
+            yield from _iter_strings(value)
+    elif isinstance(obj, list):
+        for value in obj:
+            yield from _iter_strings(value)
+
+
 # ===========================================================================
 # Pure helpers
 # ===========================================================================
@@ -377,6 +389,52 @@ class TestFailureSummary:
         assert pgs.annotation_cause([
             {"message": "Process completed with exit code 1."},
         ]) is None
+
+    def test_host_match_uses_the_parsed_hostname(self, pgs):
+        blob = "blob.core.windows.net"
+        assert pgs.host_is_or_child(
+            "https://productionresultssa5.blob.core.windows.net/job-logs.txt?sig=1", blob)
+        assert pgs.host_is_or_child("https://blob.core.windows.net/x", blob)
+        assert pgs.host_is_or_child(
+            "https://USER:pw@productionresultssa5.blob.core.windows.net:443/x", blob)
+        # The domain sitting in the path, the query, or a lookalike host is not a match.
+        assert not pgs.host_is_or_child("https://evil.example/blob.core.windows.net", blob)
+        assert not pgs.host_is_or_child("https://evil.example/?next=https://blob.core.windows.net", blob)
+        assert not pgs.host_is_or_child("https://blob.core.windows.net.evil.example/x", blob)
+        assert not pgs.host_is_or_child("https://notblob.core.windows.net/x", blob)
+        assert pgs.host_is("https://API.GITHUB.COM:443/repos", "api.github.com")
+        assert pgs.host_is("https://api.github.com./repos", "api.github.com")
+        assert not pgs.host_is("https://api.github.com.evil.example/repos", "api.github.com")
+        assert not pgs.host_is("https://evil.example/?q=api.github.com", "api.github.com")
+        assert pgs.url_hostname("https://api.github.com:not-a-port/x") == ""
+
+    def test_log_redirect_sends_the_token_only_to_the_api_host(self, pgs):
+        base = f"/repos/{REPO}/actions/jobs/1/logs"
+        same = "https://api.github.com:443/logs/next"
+        lookalike = "https://api.github.com.evil.example/job-logs.txt"
+        bait = "https://evil.example/log"
+        routes = {
+            base: (302, "", {"Location": same}),
+            same: (200, "ERROR: from api"),
+            base + "-lookalike": (302, "", {"Location": lookalike}),
+            lookalike: (200, "ERROR: lookalike"),
+            base + "-bait": (302, "", {"Location": bait + "?host=api.github.com"}),
+            bait: (200, "ERROR: bait"),
+        }
+        client, session = _client(pgs, routes)
+        assert "from api" in client.get_text(base)
+        client.get_text(base + "-lookalike")
+        client.get_text(base + "-bait")
+
+        def headers_for(url_pred):
+            return [h for u, h in session.requests if url_pred(u)]
+
+        api_follow = headers_for(lambda u: pgs.host_is(u, "api.github.com") and u.split("?")[0].endswith("/logs/next"))
+        assert api_follow and api_follow[0].get("Authorization", "").startswith("Bearer ")
+        for pred in (lambda u: pgs.host_is(u, "api.github.com.evil.example"),
+                     lambda u: pgs.host_is(u, "evil.example")):
+            sent = headers_for(pred)
+            assert sent and all("Authorization" not in h for h in sent)
 
     def test_log_read_stops_at_the_byte_cap(self, pgs):
         class Chunked:
@@ -548,8 +606,12 @@ class TestBuildStatus:
         assert failed["jobs"][0]["error_line"] == (
             "ERROR: No matching distribution found for scipy==1.18.1")
         assert failed["jobs"][0]["annotations"][0]["message"] == "Process completed with exit code 1."
-        blob_reqs = [(u, h) for u, h in session.requests if "blob.core.windows.net" in u]
+        # Hostname, not a substring: ".../blob.core.windows.net" or
+        # "blob.core.windows.net.evil.example" must not count.
+        blob_reqs = [(u, h) for u, h in session.requests
+                     if pgs.host_is_or_child(u, "blob.core.windows.net")]
         assert len(blob_reqs) == 1
+        assert pgs.host_is_or_child(blob_reqs[0][0], "blob.core.windows.net")
         assert "Authorization" not in blob_reqs[0][1]
         assert "sig=" not in blob_reqs[0][1].get("Authorization", "")
         api_logs = [(u, h) for u, h in session.requests if u.split("?")[0].endswith(f"/jobs/{job_id}/logs")]
@@ -588,7 +650,11 @@ class TestBuildStatus:
         assert failed["summary"] == (
             "run / Install engine dependencies: Process completed with exit code 1.")
         assert "SIGVALUE_DO_NOT_LEAK" not in json.dumps(sec)
-        assert "blob.core.windows.net" not in json.dumps(sec)
+        leaked = [text for text in _iter_strings(sec)
+                  if pgs.host_is_or_child(text, "blob.core.windows.net")
+                  or any(pgs.host_is_or_child(m, "blob.core.windows.net")
+                         for m in re.findall(r"https?://[^\s\"\\]+", text))]
+        assert leaked == []
         assert sec["items"][0]["flags"]["recovered"] is True
 
     def test_prs_issues_and_alerts(self, pgs, tmp_path):

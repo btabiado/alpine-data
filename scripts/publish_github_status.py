@@ -325,13 +325,19 @@ class GitHubClient:
             raise ApiError(None, self._clean(f"network error: {type(e).__name__}"))
         if resp.status_code in (301, 302, 303, 307, 308):
             loc = _header(resp, "Location")
-            parts = urlsplit(loc)
-            if parts.scheme != "https" or not parts.netloc:
+            host = url_hostname(loc)
+            try:
+                scheme = urlsplit(loc).scheme
+            except ValueError:
+                scheme = ""
+            if scheme != "https" or not host:
                 raise ApiError(resp.status_code, "log redirect was not an https URL")
             fwd = {"User-Agent": UA, "Accept": "text/plain"}
-            # The signed URL authenticates itself. Forwarding the token off
-            # api.github.com would hand it to blob storage.
-            if parts.netloc == "api.github.com" and self.token:
+            # The signed URL authenticates itself. The token stays on
+            # api.github.com only — judged by the parsed hostname, not a
+            # substring of the URL, so a lookalike host or a query string
+            # that mentions api.github.com does not receive it.
+            if host == "api.github.com" and self.token:
                 fwd["Authorization"] = f"Bearer {self.token}"
             try:
                 resp = self._session.get(loc, headers=fwd, timeout=self.timeout,
@@ -487,6 +493,42 @@ def _header(resp: Any, name: str) -> str:
     if not hasattr(headers, "get"):
         return ""
     return str(headers.get(name) or headers.get(name.lower()) or "")
+
+
+def url_hostname(url: str) -> str:
+    """Parsed hostname, lowercased, with a trailing dot removed.
+
+    Empty when the URL has no host or the port is not a number. Host checks
+    use this instead of a substring of the whole URL: a domain that only
+    appears in the path or query, or as the prefix of a different host, does
+    not match.
+    """
+    try:
+        parts = urlsplit(url)
+        host = parts.hostname or ""
+        # A non-numeric port raises here. Fail closed: don't treat a URL we
+        # cannot fully parse as a trusted host.
+        _ = parts.port
+    except ValueError:
+        return ""
+    return host.lower().rstrip(".")
+
+
+def host_is(url: str, expected: str) -> bool:
+    """True when ``url``'s hostname is exactly ``expected``."""
+    return url_hostname(url) == expected.lower().rstrip(".")
+
+
+def host_is_or_child(url: str, expected: str) -> bool:
+    """True when the hostname is ``expected`` or a subdomain of it.
+
+    ``endswith`` is applied to the hostname and the suffix includes the dot,
+    so ``notblob.core.windows.net`` and ``blob.core.windows.net.evil.com``
+    do not match ``blob.core.windows.net``.
+    """
+    name = url_hostname(url)
+    expected = expected.lower().rstrip(".")
+    return bool(name) and (name == expected or name.endswith("." + expected))
 
 
 def _bounded_text(resp: Any, max_bytes: int) -> str:
