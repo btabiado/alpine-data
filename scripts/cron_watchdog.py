@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 """Catch up scheduled workflows that GitHub dropped or started very late.
 
-The daily audit for 2026-10-17 (TOP ISSUES #3) measured three hourly crons
-landing about 20% of their ticks, and most daily crons starting 4–10 hours
+The daily audit (2026-10-17 and 2026-10-18) measured three hourly crons
+landing about 20% of their ticks, and most daily crons starting 4–9 hours
 after the minute they name. GitHub documents the schedule event as
 best-effort and names the start of every hour as the congested window.
 
 This script is the in-repo safeguard. It does not add a secret, a PAT, or an
-external scheduler. A scheduled workflow calls it with the built-in
+external scheduler. The cron-watchdog workflow calls it with the built-in
 ``GITHUB_TOKEN`` (``actions: write``). GitHub's rule is that events fired by
 ``GITHUB_TOKEN`` do not start new workflow runs, except ``workflow_dispatch``
 and ``repository_dispatch``, which always do. So a POST to
-``/actions/workflows/{file}/dispatches`` is the supported catch-up.
+``/actions/workflows/{file}/dispatches`` is the supported catch-up. Those
+dispatches are attributed to ``github-actions[bot]``; the daily audit labels
+them as catch-ups instead of counting them as schedule events.
 
 What it will not do:
 
@@ -30,9 +32,13 @@ What it will not do:
 
 Thresholds (UTC):
 
-* Hourly: the latest fire that is at least 3 hours old was not served.
-* Daily: same rule. A job scheduled at 07:29 is not eligible until 10:29,
-  which is "not run today by a cutoff" without inventing a second clock.
+* Hourly (``aviation-opensky``, ``lthcs-news-hourly``, ``pages``): dispatch
+  when the last success is at least 2 hours old and the newest fire that has
+  had ``HOURLY_FIRE_SETTLE`` (15 minutes) to appear was not served. A fire
+  younger than that is left for GitHub's scheduler, but an older missed fire
+  is still caught up — a brand-new tick must not hide a stale one.
+* Daily: dispatch once the scheduled minute is 90 minutes in the past and
+  that tick has not produced a run.
 """
 from __future__ import annotations
 
@@ -54,11 +60,14 @@ if HERE not in sys.path:
 
 import daily_audit_data as dad  # noqa: E402
 
-# 3h is the conservative end of "hourly jobs older than ~2–3h". The same
-# grace is the daily cutoff (scheduled time + 3h). A run created up to 15
-# minutes before the nominal fire still counts, matching the daily audit.
-HOURLY_GRACE = timedelta(hours=3)
-DAILY_GRACE = timedelta(hours=3)
+# Hourly freshness is "last success at least 2 hours old". FIRE_SETTLE is how
+# long a brand-new tick is left for GitHub's scheduler before it counts as
+# missed. Daily jobs are eligible 90 minutes after the minute they name. A
+# run created up to 15 minutes before the nominal fire still counts, matching
+# the daily audit.
+HOURLY_MAX_AGE = timedelta(hours=2)
+HOURLY_FIRE_SETTLE = timedelta(minutes=15)
+DAILY_GRACE = timedelta(minutes=90)
 SLACK = timedelta(minutes=15)
 MAX_DISPATCH = 5
 LOOKBACK = timedelta(days=4)
@@ -142,14 +151,6 @@ def env_flag(name: str) -> bool:
     return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
 
 
-def grace_for(kind: str) -> timedelta:
-    if kind == "hourly":
-        return HOURLY_GRACE
-    if kind == "daily":
-        return DAILY_GRACE
-    raise ValueError(f"unknown watch kind {kind!r}")
-
-
 def fire_times(crons: tuple[str, ...] | list[str], now: datetime) -> list[datetime]:
     if now.tzinfo is None:
         raise ValueError("now must be timezone-aware")
@@ -186,27 +187,83 @@ def _last_success(runs: list[dict]) -> datetime | None:
     return max(stamps) if stamps else None
 
 
-def classify(workflow: str, kind: str, crons: tuple[str, ...] | list[str],
-             runs: list[dict], now: datetime) -> Decision:
-    """Decide whether one workflow is overdue. Pure: no I/O."""
-    fires = fire_times(crons, now)
-    elapsed = [t for t in fires if t <= now]
-    if not elapsed:
-        return Decision(workflow, kind, "skip", "no fire at or before now")
-    grace = grace_for(kind)
+def _fire_attempt(runs: list[dict], window_start: datetime) -> str:
+    """How the fire that opened at ``window_start`` was handled.
+
+    ``success`` — a completed success landed in or after the window.
+    ``attempt`` — a completed non-success (failure) did. Not retried.
+    ``active`` — a queued or in-progress run covers the window.
+    ``none`` — nothing but cancels, skips, or older runs.
+    """
+    covering = [r for r in runs if _covers(r, window_start)]
+    if not covering:
+        return "none"
+    if any(r.get("status") in ACTIVE_STATUSES for r in covering):
+        return "active"
+
+    def _succeeded(run: dict) -> bool:
+        if run.get("conclusion") != "success":
+            return False
+        ts = parse_ts(run.get("updated_at")) or parse_ts(run.get("created_at"))
+        return ts is not None and ts >= window_start
+
+    if any(_succeeded(r) for r in covering):
+        return "success"
+    return "attempt"
+
+
+def _classify_hourly(workflow: str, kind: str, elapsed: list[datetime], runs: list[dict],
+                     now: datetime, last_success: datetime | None,
+                     overdue_hours: float) -> Decision:
+    """Dispatch when the last success is >= 2h old and a settled fire was missed.
+
+    The newest fire younger than ``HOURLY_FIRE_SETTLE`` is not itself evidence
+    of a drop (GitHub may still be about to deliver it). An older unsettled
+    miss still is: that new fire must not hide data that is already stale.
+    """
+    latest = elapsed[-1]
+    judged = [t for t in elapsed if t <= now - HOURLY_FIRE_SETTLE]
+    if not judged:
+        minutes = int(HOURLY_FIRE_SETTLE.total_seconds() // 60)
+        return Decision(
+            workflow, kind, "skip",
+            f"latest fire {iso(latest)} is inside the {minutes}m scheduler settle window",
+            overdue_hours, latest, last_success)
+    due = judged[-1]
+    attempt = _fire_attempt(runs, due - SLACK)
+    if attempt == "active":
+        return Decision(workflow, kind, "skip", "a run is queued or in progress",
+                        overdue_hours, due, last_success)
+    if attempt == "success":
+        return Decision(workflow, kind, "skip", f"succeeded since {iso(due)}",
+                        overdue_hours, due, last_success)
+    if attempt == "attempt":
+        return Decision(
+            workflow, kind, "skip",
+            f"already attempted since {iso(due)} (not retrying a failure)",
+            overdue_hours, due, last_success)
+    if last_success is not None and (now - last_success) < HOURLY_MAX_AGE:
+        age_h = (now - last_success).total_seconds() / 3600.0
+        return Decision(
+            workflow, kind, "skip",
+            f"last success {iso(last_success)} is within 2h ({age_h:.1f}h)",
+            overdue_hours, due, last_success)
+    reason = f"due {iso(due)}, last success {iso(last_success)} ({overdue_hours:.1f}h)"
+    return Decision(workflow, kind, "dispatch", reason, overdue_hours, due, last_success)
+
+
+def _classify_daily(workflow: str, kind: str, elapsed: list[datetime], runs: list[dict],
+                    now: datetime, last_success: datetime | None,
+                    overdue_hours: float) -> Decision:
+    """Dispatch when the scheduled minute is 90 minutes past and unserved."""
+    grace = DAILY_GRACE
     eligible = [t for t in elapsed if t <= now - grace]
     if not eligible:
-        return Decision(workflow, kind, "skip",
-                        f"no fire older than {grace.total_seconds() / 3600:g}h grace")
+        return Decision(workflow, kind, "skip", "no fire older than 90 minutes",
+                        overdue_hours, elapsed[-1], last_success)
     due = eligible[-1]
     latest = elapsed[-1]
     window = due - SLACK
-    last_success = _last_success(runs)
-    overdue_hours = ((now - last_success).total_seconds() / 3600.0) if last_success else 24 * 30
-
-    if any(r.get("status") in ACTIVE_STATUSES for r in runs):
-        return Decision(workflow, kind, "skip", "a run is queued or in progress",
-                        overdue_hours, due, last_success)
     served = [r for r in runs if _covers(r, window)]
     if served:
         succeeded = any(
@@ -224,9 +281,27 @@ def classify(workflow: str, kind: str, crons: tuple[str, ...] | list[str],
         else:
             reason = f"already attempted since {iso(due)} (not retrying a failure)"
         return Decision(workflow, kind, "skip", reason, overdue_hours, due, last_success)
-
     reason = f"due {iso(due)}, last success {iso(last_success)} ({overdue_hours:.1f}h)"
     return Decision(workflow, kind, "dispatch", reason, overdue_hours, due, last_success)
+
+
+def classify(workflow: str, kind: str, crons: tuple[str, ...] | list[str],
+             runs: list[dict], now: datetime) -> Decision:
+    """Decide whether one workflow is overdue. Pure: no I/O."""
+    fires = fire_times(crons, now)
+    elapsed = [t for t in fires if t <= now]
+    if not elapsed:
+        return Decision(workflow, kind, "skip", "no fire at or before now")
+    last_success = _last_success(runs)
+    overdue_hours = ((now - last_success).total_seconds() / 3600.0) if last_success else 24 * 30
+    if any(r.get("status") in ACTIVE_STATUSES for r in runs):
+        return Decision(workflow, kind, "skip", "a run is queued or in progress",
+                        overdue_hours, elapsed[-1], last_success)
+    if kind == "hourly":
+        return _classify_hourly(workflow, kind, elapsed, runs, now, last_success, overdue_hours)
+    if kind == "daily":
+        return _classify_daily(workflow, kind, elapsed, runs, now, last_success, overdue_hours)
+    raise ValueError(f"unknown watch kind {kind!r}")
 
 
 def _tier(decision: Decision) -> int:
@@ -298,10 +373,12 @@ def render_summary(decisions: list[Decision], *, dry_run: bool, disabled: bool,
         lines.append(f"| `{d.workflow}` | {d.kind} | {d.action} | {detail} |")
     lines.append("")
     lines.append(
-        "Hourly and daily grace is 3 hours (a daily job is eligible once its "
-        "scheduled UTC time is 3 hours in the past). Queued or in-progress runs "
-        "are left alone. A completed failure is not retried until the next fire "
-        "is itself overdue. Cancelled runs do not count as served."
+        "Hourly jobs are dispatched when the last success is at least 2 hours "
+        "old and the newest fire that has had 15 minutes to start was not "
+        "served. Daily jobs are dispatched 90 minutes after their scheduled "
+        "UTC time if that tick has not produced a run. Queued or in-progress "
+        "runs are left alone. A completed failure is not retried until the "
+        "next fire is missed. Cancelled runs do not count as served."
     )
     lines.append("")
     return "\n".join(lines)

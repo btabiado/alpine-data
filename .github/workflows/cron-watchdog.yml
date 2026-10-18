@@ -2,9 +2,9 @@ name: cron-watchdog
 
 # Catch up scheduled workflows that GitHub dropped or started hours late.
 #
-# Alpine Data daily audit 2026-10-17, TOP ISSUES #3: aviation-opensky,
-# lthcs-news-hourly and pages each ran about 20% of their hourly ticks, and
-# most daily crons started 4–10 hours late. Data still updated, with gaps.
+# Alpine Data daily audit 2026-10-18: aviation-opensky, lthcs-news-hourly and
+# pages each ran about 20% of their hourly ticks, and most daily crons
+# started 4–9 hours late. Data still updated, with gaps.
 #
 # GitHub's rule (triggering a workflow from a workflow): events caused by
 # GITHUB_TOKEN do not create new workflow runs, EXCEPT workflow_dispatch and
@@ -13,10 +13,17 @@ name: cron-watchdog
 # GITHUB_TOKEN with actions: write, which is the permission the workflow
 # dispatch API requires.
 #
-# The schedule is a few daily-style ticks at staggered minutes off :00 (the
-# minute GitHub documents as the most congested). Hourly crons on this repo
-# are the ones that get dropped, so an hourly watchdog would miss the same
-# way. Each tick that does land dispatches every overdue target, up to a cap.
+# The watchdog's own schedule can be dropped the same way, so it is triggered
+# two ways:
+#   1. Four times an hour, at minutes 12, 27, 42 and 57. Those are off minute
+#      0 (the congested window) and off the minutes the watched jobs use, so
+#      one dropped tick is not the only chance that hour. A 2-hour freshness
+#      gap is then seen within about 15 minutes of crossing it.
+#   2. workflow_run when any watched data workflow completes on main. Those
+#      jobs do run (dailies land late; hourlies land some of the time). One
+#      of them landing rechecks the others. A catch-up this job dispatched
+#      with GITHUB_TOKEN does not itself fire workflow_run, so catch-ups do
+#      not loop.
 #
 # Disable without editing the file: set the repository variable
 # CRON_WATCHDOG_DISABLED to true (Settings → Secrets and variables → Actions
@@ -25,18 +32,43 @@ name: cron-watchdog
 # decisions without dispatching.
 #
 # Targets and thresholds live in scripts/cron_watchdog.py. Hourly jobs are
-# overdue 3 hours after a missed fire. Daily jobs use the same grace, so a
-# 07:29 UTC cron is not eligible until 10:29 UTC. Anything queued or in
-# progress is left alone; target concurrency groups keep a catch-up from
-# stacking on the scheduled run if GitHub delivers that late tick too.
+# caught up when the last success is at least 2 hours old. Daily jobs are
+# caught up 90 minutes after their cron time if that tick produced no run.
+# Anything queued or in progress is left alone; target concurrency groups
+# keep a catch-up from stacking on a scheduled run GitHub delivers as well.
 
 on:
   schedule:
-    # Off :00. Spread across the day so one delayed tick does not cover it.
-    - cron: "17 1 * * *"
-    - cron: "23 7 * * *"
-    - cron: "41 13 * * *"
-    - cron: "53 19 * * *"
+    # Off :00, and off the minutes the watched workflows already use.
+    # Spread across the hour so a single dropped tick still leaves three.
+    - cron: "12 * * * *"
+    - cron: "27 * * * *"
+    - cron: "42 * * * *"
+    - cron: "57 * * * *"
+  workflow_run:
+    # Names (the `name:` key), in the same order as WATCHES in
+    # scripts/cron_watchdog.py. Not this workflow: a scheduled run of the
+    # watchdog must not retrigger itself.
+    workflows:
+      - aviation-opensky
+      - lthcs-news-hourly
+      - pages
+      - aviation-tsa
+      - cfpb-daily
+      - city-daily
+      - crypto-odds-daily
+      - daily-audit
+      - data-health
+      - etf-flows-daily
+      - lthcs-backtest-daily
+      - lthcs-crypto-daily
+      - lthcs-daily
+      - lthcs-trends-daily
+      - money-flow-daily
+      - real-estate-daily
+      - usaspending-daily
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       dry_run:

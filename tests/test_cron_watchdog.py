@@ -18,10 +18,9 @@ SCRIPTS = REPO_ROOT / "scripts"
 WORKFLOWS = REPO_ROOT / ".github" / "workflows"
 UTC = timezone.utc
 
-# 16:00 UTC is past the 3h grace of a 07:xx daily and of the 12:xx hourly fire,
-# and still inside the grace of the 15:xx hourly fire.
+# 16:00 UTC is past the 90-minute grace of a 07:xx daily and of the 15:xx
+# hourly fire (that fire is older than the 15-minute settle window).
 NOW = datetime(2026, 10, 17, 16, 0, tzinfo=UTC)
-MORNING = datetime(2026, 10, 17, 9, 0, tzinfo=UTC)
 
 
 def _load():
@@ -60,20 +59,52 @@ def _active(cw, workflow: str, runs: list[dict]) -> dict:
 
 
 class TestClassify:
-    def test_hourly_inside_grace_is_not_dispatched(self, cw):
-        # Last success 15:20. The 15:07 fire is only ~1h old, under the 3h grace.
+    def test_hourly_fresh_success_is_not_dispatched(self, cw):
+        # Last success 15:20 covers the 15:07 fire. Data is under 2 hours old.
         runs = [_run("2026-10-17T15:20:00Z")]
         d = cw.classify("pages.yml", "hourly", ["7 * * * *"], runs, NOW)
         assert d.action == "skip"
-        assert "inside grace" in d.reason
+        assert "succeeded" in d.reason
 
-    def test_hourly_older_than_grace_is_dispatched(self, cw):
-        # Last success 11:00. The 12:07 fire is more than 3h before 16:00 and unserved.
+    def test_hourly_under_two_hours_waits_even_if_a_tick_was_missed(self, cw):
+        # 14:07 succeeded, 15:07 did not. At 16:06 the gap is 1h59m.
+        runs = [_run("2026-10-17T14:07:00Z")]
+        now = datetime(2026, 10, 17, 16, 6, tzinfo=UTC)
+        d = cw.classify("pages.yml", "hourly", ["7 * * * *"], runs, now)
+        assert d.action == "skip"
+        assert "within 2h" in d.reason
+
+    def test_hourly_at_two_hours_dispatches_the_missed_fire(self, cw):
+        # Exactly 2h after 14:07. The 16:07 fire is still settling; 15:07 was missed.
+        runs = [_run("2026-10-17T14:07:00Z")]
+        now = datetime(2026, 10, 17, 16, 7, tzinfo=UTC)
+        d = cw.classify("pages.yml", "hourly", ["7 * * * *"], runs, now)
+        assert d.action == "dispatch"
+        assert "15:07Z" in d.reason
+        assert d.overdue_hours >= 2
+
+    def test_hourly_older_than_two_hours_is_dispatched(self, cw):
+        # Last success 11:00. The settled 15:07 fire was not served.
         runs = [_run("2026-10-17T11:00:00Z")]
         d = cw.classify("pages.yml", "hourly", ["7 * * * *"], runs, NOW)
         assert d.action == "dispatch"
-        assert "12:07Z" in d.reason
-        assert d.overdue_hours > 3
+        assert "15:07Z" in d.reason
+        assert d.overdue_hours > 2
+
+    def test_settling_fire_does_not_hide_an_older_miss(self, cw):
+        # 16:07 is only 3 minutes old, but 15:07 was missed and data is hours stale.
+        runs = [_run("2026-10-17T12:00:00Z")]
+        now = datetime(2026, 10, 17, 16, 10, tzinfo=UTC)
+        d = cw.classify("pages.yml", "hourly", ["7 * * * *"], runs, now)
+        assert d.action == "dispatch"
+        assert "15:07Z" in d.reason
+
+    def test_fresh_success_is_not_dispatched_while_the_next_fire_settles(self, cw):
+        runs = [_run("2026-10-17T15:10:00Z")]
+        now = datetime(2026, 10, 17, 16, 10, tzinfo=UTC)
+        d = cw.classify("pages.yml", "hourly", ["7 * * * *"], runs, now)
+        assert d.action == "skip"
+        assert "succeeded" in d.reason
 
     def test_hourly_in_progress_is_left_alone(self, cw):
         runs = [_run("2026-10-17T15:50:00Z", conclusion=None, status="in_progress")]
@@ -102,18 +133,42 @@ class TestClassify:
         assert d.action == "dispatch"
 
     def test_daily_before_cutoff_is_not_dispatched(self, cw):
-        # 09:00 is before 07:29 + 3h. Yesterday's success covers yesterday's fire.
+        # 08:30 is before 07:29 + 90 minutes. Yesterday's success covers yesterday.
         runs = [_run("2026-10-16T11:12:00Z")]
-        d = cw.classify("city-daily.yml", "daily", ["29 7 * * *"], runs, MORNING)
+        early = datetime(2026, 10, 17, 8, 30, tzinfo=UTC)
+        d = cw.classify("city-daily.yml", "daily", ["29 7 * * *"], runs, early)
         assert d.action == "skip"
-        assert "inside grace" in d.reason
+        assert "inside grace" in d.reason or "90 minutes" in d.reason
+
+    def test_daily_dispatches_at_90_minutes(self, cw):
+        runs = [_run("2026-10-16T11:12:00Z")]
+        almost = datetime(2026, 10, 17, 8, 58, tzinfo=UTC)
+        assert cw.classify("city-daily.yml", "daily", ["29 7 * * *"], runs, almost).action == "skip"
+        due = datetime(2026, 10, 17, 8, 59, tzinfo=UTC)
+        d = cw.classify("city-daily.yml", "daily", ["29 7 * * *"], runs, due)
+        assert d.action == "dispatch"
+        assert "07:29Z" in d.reason
 
     def test_daily_after_cutoff_with_no_run_today_is_dispatched(self, cw):
         runs = [_run("2026-10-16T11:12:00Z")]
-        late = datetime(2026, 10, 17, 11, 0, tzinfo=UTC)  # past 07:29+3h
+        late = datetime(2026, 10, 17, 11, 0, tzinfo=UTC)  # past 07:29+90m
         d = cw.classify("city-daily.yml", "daily", ["29 7 * * *"], runs, late)
         assert d.action == "dispatch"
         assert "07:29Z" in d.reason
+
+    def test_daily_in_progress_past_cutoff_is_left_alone(self, cw):
+        runs = [_run("2026-10-17T08:40:00Z", conclusion=None, status="in_progress")]
+        late = datetime(2026, 10, 17, 11, 0, tzinfo=UTC)
+        d = cw.classify("city-daily.yml", "daily", ["29 7 * * *"], runs, late)
+        assert d.action == "skip"
+        assert "in progress" in d.reason
+
+    def test_daily_failure_is_not_retried(self, cw):
+        runs = [_run("2026-10-17T08:00:00Z", conclusion="failure")]
+        late = datetime(2026, 10, 17, 11, 0, tzinfo=UTC)
+        d = cw.classify("city-daily.yml", "daily", ["29 7 * * *"], runs, late)
+        assert d.action == "skip"
+        assert "not retrying" in d.reason or "already attempted" in d.reason
 
     def test_daily_success_today_is_not_dispatched(self, cw):
         runs = [_run("2026-10-17T11:12:00Z")]
@@ -144,7 +199,9 @@ class TestPlan:
         for name, (kind, _crons) in cw.WATCHES.items():
             if name in snapshots and snapshots[name]["runs"]:
                 continue
-            snapshots[name] = _snap(fresh if kind == "hourly" else [_run("2026-10-17T12:00:00Z")])
+            # 15:50 is after every daily fire that is already past the 90-minute
+            # grace at 16:00, so only the explicitly stale dailies want a dispatch.
+            snapshots[name] = _snap(fresh if kind == "hourly" else [_run("2026-10-17T15:50:00Z")])
 
         decisions = cw.plan(NOW, snapshots, cap=5)
         dispatched = {d.workflow for d in decisions if d.action == "dispatch"}
@@ -196,7 +253,8 @@ class TestSummaryAndFlags:
         text = cw.render_summary(decisions, dry_run=True, disabled=False, cap=5, posted=[])
         assert "Dry run" in text
         assert "`pages.yml`" in text
-        assert "3 hours" in text
+        assert "2 hours" in text
+        assert "90 minutes" in text
 
     def test_disabled_summary_makes_no_promises_of_a_dispatch(self, cw):
         text = cw.render_summary([], dry_run=False, disabled=True, cap=5, posted=[])
@@ -231,8 +289,9 @@ class TestSummaryAndFlags:
 
 class TestWiring:
     def test_thresholds_match_the_audit(self, cw):
-        assert cw.HOURLY_GRACE == timedelta(hours=3)
-        assert cw.DAILY_GRACE == timedelta(hours=3)
+        assert cw.HOURLY_MAX_AGE == timedelta(hours=2)
+        assert cw.HOURLY_FIRE_SETTLE == timedelta(minutes=15)
+        assert cw.DAILY_GRACE == timedelta(minutes=90)
         assert cw.MAX_DISPATCH == 5
         watched = set(cw.WATCHES)
         assert {"aviation-opensky.yml", "lthcs-news-hourly.yml", "pages.yml"} <= watched
@@ -262,18 +321,31 @@ class TestWiring:
                 minute = cron.split()[0]
                 assert minute not in {"0", "00"}, f"{path.name} still fires at minute 0: {cron}"
 
-    def test_watchdog_workflow_is_conservative(self):
+    def test_watchdog_workflow_is_conservative(self, cw):
         doc = yaml.safe_load((WORKFLOWS / "cron-watchdog.yml").read_text())
         on = doc.get("on", doc.get(True))
         assert "pull_request" not in on and "push" not in on
         crons = [s["cron"] for s in on["schedule"]]
-        assert len(crons) >= 3
-        assert all(c.split()[0] not in {"0", "00"} for c in crons)
-        # Staggered: not the same minute, and not all the same hour.
+        # Several times an hour, not a few times a day: the watchdog's own
+        # schedule is dropped too, so one tick per hour is not enough.
+        assert crons == ["12 * * * *", "27 * * * *", "42 * * * *", "57 * * * *"]
         minutes = {c.split()[0] for c in crons}
-        hours = {c.split()[1] for c in crons}
-        assert len(minutes) == len(crons)
-        assert len(hours) == len(crons)
+        assert minutes.isdisjoint({"0", "00"})
+        assert all(c.split()[1] == "*" for c in crons)
+        watched_minutes = set()
+        watched_names = []
+        for name in cw.WATCHES:
+            wdoc = yaml.safe_load((WORKFLOWS / name).read_text())
+            won = wdoc.get("on", wdoc.get(True))
+            watched_names.append(wdoc["name"])
+            for entry in won.get("schedule") or []:
+                watched_minutes.add(entry["cron"].split()[0])
+        assert minutes.isdisjoint(watched_minutes)
+        wr = on["workflow_run"]
+        assert wr["types"] == ["completed"]
+        assert wr["branches"] == ["main"]
+        assert wr["workflows"] == watched_names
+        assert "cron-watchdog" not in wr["workflows"]
         assert doc["permissions"] == {"contents": "read", "actions": "write"}
         assert doc["concurrency"]["group"] == "cron-watchdog"
         assert doc["concurrency"]["cancel-in-progress"] is False
