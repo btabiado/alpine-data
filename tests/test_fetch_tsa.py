@@ -15,6 +15,7 @@ Nothing here touches the network.
 
 from __future__ import annotations
 
+import datetime
 import io
 import json
 import urllib.error
@@ -138,6 +139,8 @@ def test_direct_success_never_touches_the_archive(env):
     assert data["src"] == fetch_tsa.SRC_DIRECT
     assert data["snapshot_url"] is None and data["snapshot_timestamp"] is None
     assert data["as_of"] == "2026-10-02"
+    assert data["source_latest"] == "2026-10-02"
+    assert data["last_checked"].endswith("Z")
     assert data["latest"] == {"date": "10/2/2026", "vol": 2722200}
     assert data["avg7"] == 2574559
     assert len(data["series"]) == fetch_tsa.KEEP
@@ -334,8 +337,12 @@ def test_older_snapshot_never_replaces_newer_data(env):
     assert out.read_bytes() == before
 
 
-def test_newer_capture_of_identical_table_is_not_rewritten(env):
+def test_newer_capture_of_identical_table_is_not_rewritten(env, monkeypatch):
     out, _, install = env
+    # Same check instant: a newer capture of an identical table is not new
+    # data, and the source-check stamps have nothing new to record either.
+    frozen = datetime.datetime(2026, 10, 4, 8, 10, tzinfo=datetime.timezone.utc)
+    monkeypatch.setattr(fetch_tsa, "_utc_now", lambda: frozen)
     install(FakeNet(tsa=[FORBIDDEN], avail=[_availability()], snap=[HTML]))
     assert fetch_tsa.main() == 0
     first = out.read_bytes()
@@ -345,6 +352,72 @@ def test_newer_capture_of_identical_table_is_not_rewritten(env):
                     snap=[(HTML, SNAPSHOT.replace(AVAIL_TS, later))]))
     assert fetch_tsa.main() == 0
     assert out.read_bytes() == first  # no churn commit for a re-capture
+    data = json.loads(first)
+    assert data["as_of"] == data["source_latest"] == "2026-10-02"
+    assert data["last_checked"] == "2026-10-04T08:10:00Z"
+    assert data["snapshot_timestamp"] == "2026-10-03T08:15:14Z"
+
+
+def test_unchanged_table_still_records_the_source_check(env, monkeypatch):
+    """A no-new-day run must stamp when we looked and what the source's
+    newest date was, without moving the checkpoint series or `generated`."""
+    out, _, install = env
+    clock = {"now": datetime.datetime(2026, 10, 18, 14, 12, tzinfo=datetime.timezone.utc)}
+    monkeypatch.setattr(fetch_tsa, "_utc_now", lambda: clock["now"])
+    install(FakeNet(tsa=[HTML]))
+    assert fetch_tsa.main() == 0
+    first = json.loads(out.read_text())
+    assert first["as_of"] == first["source_latest"] == "2026-10-02"
+    assert first["last_checked"] == "2026-10-18T14:12:00Z"
+
+    clock["now"] = datetime.datetime(2026, 10, 19, 14, 12, tzinfo=datetime.timezone.utc)
+    install(FakeNet(tsa=[HTML]))
+    assert fetch_tsa.main() == 0
+    second = json.loads(out.read_text())
+    assert second["series"] == first["series"]
+    assert second["generated"] == first["generated"]
+    assert second["latest"] == first["latest"]
+    assert second["avg7"] == first["avg7"]
+    assert second["as_of"] == "2026-10-02"
+    assert second["source_latest"] == "2026-10-02"
+    assert second["last_checked"] == "2026-10-19T14:12:00Z"
+
+
+def test_older_snapshot_does_not_refresh_the_source_check(env):
+    """A mirror/archive that lags the file on disk did not confirm the
+    source's current newest date, so the previous check stands."""
+    out, _, install = env
+    prior = dict(PRIOR, as_of="2026-10-03",
+                 latest={"date": "10/3/2026", "vol": 2600000},
+                 last_checked="2026-10-16T14:10:00Z",
+                 source_latest="2026-10-03")
+    out.write_text(json.dumps(prior, indent=1))
+    before = out.read_bytes()
+    install(FakeNet(tsa=[FORBIDDEN], avail=[_availability()], snap=[HTML]))
+    assert fetch_tsa.main() == 0
+    assert out.read_bytes() == before
+
+
+def test_failed_fetch_leaves_the_source_check_in_place(env):
+    out, _, install = env
+    prior = dict(PRIOR, as_of="2026-06-17",
+                 last_checked="2026-10-16T14:10:00Z",
+                 source_latest="2026-06-17")
+    out.write_text(json.dumps(prior, indent=1))
+    before = out.read_bytes()
+    _both_fail(install)
+    assert fetch_tsa.main() == 1
+    assert out.read_bytes() == before
+
+
+def test_workflow_commits_a_source_check_when_the_table_is_unchanged():
+    text = (Path(__file__).resolve().parents[1] / ".github" / "workflows"
+            / "aviation-tsa.yml").read_text()
+    assert "--ignore-key last_checked" in text
+    assert "--ignore-key source_latest" in text
+    assert "upstream unchanged" in text
+    # A quiet diff is the only skip. A stamp-only diff must still be committed.
+    assert "json_content_changed.py" in text
 
 
 # --- `requests` for tsa.gov ----------------------------------------------------

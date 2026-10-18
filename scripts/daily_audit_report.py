@@ -33,7 +33,8 @@ Severities:
         primary source, console errors, failed same-origin requests, visible
         NaN/undefined text, an upstream API down
     P2  layout overflow at 390px, heavy pages, chronically late/dropped cron
-        ticks, degraded/blocked upstreams
+        ticks, degraded/blocked upstreams, a feed whose source was checked
+        and has not published newer data (disclosed upstream lag)
 
 Alert verdict (written to $GITHUB_OUTPUT as ``alert_action``):
     open    there is at least one NEW P0 -> open/update the tracking issue
@@ -180,6 +181,20 @@ def _best_annotation(jobs: list[dict]) -> str:
     return "; ".join(lines)
 
 
+def _disclosed_upstream_lag(row: dict) -> bool:
+    """A freshness row data_health marked disclosed.
+
+    History disclosures (``path`` contains ``[history:``) are known gaps from
+    health/known_gaps.json. They stay out of the audit problem list. A
+    freshness row with status ``disclosed`` is an upstream that was checked
+    and has not published anything newer — reported at P2, not paged as P0.
+    """
+    if str(row.get("status") or "").lower() != "disclosed":
+        return False
+    path = str(row.get("path") or "")
+    return bool(path) and "[history:" not in path
+
+
 def data_problems(data: dict | None) -> list[dict]:
     out: list[dict] = []
     if not isinstance(data, dict):
@@ -198,6 +213,18 @@ def data_problems(data: dict | None) -> list[dict]:
                     f"feed:{r.get('path')}", P0, "feed",
                     f"Feed {r.get('path')} is {str(r.get('status')).upper()} "
                     f"({_hours(r.get('age_h'))} old, limit {_hours(r.get('limit_h'))})",
+                    r.get("detail", ""), owner=r.get("owner") or None))
+            elif _disclosed_upstream_lag(r):
+                # data_health's DISCLOSED freshness row: the pipeline checked
+                # and the source has not published. History disclosures stay
+                # out of this list (they are not failures). P2 is visible in
+                # the report and does not page — only a P0 opens the issue.
+                path = r.get("path")
+                out.append(problem(
+                    f"feed:{path}:upstream-lag", P2, "feed",
+                    f"Feed {path} is an upstream lag "
+                    f"({_hours(r.get('age_h'))} old, limit {_hours(r.get('limit_h'))}); "
+                    f"the source has not published a newer row",
                     r.get("detail", ""), owner=r.get("owner") or None))
         for r in dh.get("extra_failing") or []:
             name = r.get("path") or r.get("name") or r.get("feed") or "?"

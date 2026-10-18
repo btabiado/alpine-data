@@ -59,8 +59,14 @@ jobs:
         # No AUTHOR_NAME / AUTHOR_EMAIL: omitting them is the exact condition
         # under which the GitHub Git Data API auto-signs the commit with
         # GitHub's key, producing the Verified badge. See api-commit.sh.
-        # Skip the commit cleanly when fetch_tsa.py left the file unchanged
-        # (e.g. TSA hasn't posted a new day, or the fetch failed).
+        #
+        # A successful read always stamps last_checked and source_latest, even
+        # when TSA has not posted a new row. That stamp is the commit on those
+        # days: skipping it is how a green job looks the same as a job that
+        # never ran, and data-health then pages the weekend lag as a stale
+        # pipeline. The checkpoint series itself is committed only when it
+        # moved. A failed fetch never reaches this step, so it cannot refresh
+        # the stamp.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -69,4 +75,15 @@ jobs:
             exit 0
           fi
           git add data-tsa.json
-          .github/scripts/api-commit.sh "aviation: refresh TSA throughput $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
+          rc=0
+          python .github/scripts/json_content_changed.py data-tsa.json \
+            --ignore-key last_checked --ignore-key source_latest || rc=$?
+          if [ "$rc" -eq 1 ]; then
+            msg="aviation: TSA source checked $(date -u +%Y-%m-%dT%H:%MZ) (upstream unchanged) [skip ci]"
+          elif [ "$rc" -eq 0 ]; then
+            msg="aviation: refresh TSA throughput $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"
+          else
+            echo "::error title=TSA diff unreadable::json_content_changed.py exited $rc"
+            exit "$rc"
+          fi
+          .github/scripts/api-commit.sh "$msg"
