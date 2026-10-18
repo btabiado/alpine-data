@@ -35,7 +35,8 @@ SOURCES (tried in order):
 
 OUTPUT:
   data-tsa.json  — { generated, latest:{date,vol}, avg7, series:[{d,v}...], src,
-                     source, as_of, snapshot_url, snapshot_timestamp }
+                     source, as_of, snapshot_url, snapshot_timestamp,
+                     last_checked, source_latest }
   The client (renderAviationTab -> tsa()) reads this at runtime and falls back to the
   baked-in seed (DATA.aviation.tsa.seed) when the file is missing/empty.
   Provenance fields (added; nothing the client reads was renamed):
@@ -45,6 +46,15 @@ OUTPUT:
                         so an old snapshot cannot pass itself off as fresh
     snapshot_url        the mirror or Wayback URL actually read (null for tsa.gov)
     snapshot_timestamp  when the Archive captured it, UTC (null when source is tsa.gov)
+    last_checked        when this run successfully read the source, UTC. Written
+                        even when the table itself is unchanged, so a weekend
+                        with no new row is distinguishable from a fetch that
+                        never ran. Not a freshness date: data_health still ages
+                        the feed from as_of.
+    source_latest       newest date IN THE TABLE just read (YYYY-MM-DD), the
+                        same value as as_of on a write. data_health compares it
+                        to the file's as_of: equal, plus a recent last_checked,
+                        means TSA has not published a newer row.
 
 FAILURE CONTRACT:
   On any fetch/parse failure of ALL sources we DO NOT overwrite an existing good
@@ -128,6 +138,33 @@ def date_key(d):
         return datetime.date(yr, mo, da)
     except Exception:
         return datetime.date(1900, 1, 1)
+
+
+def _utc_now():
+    """Clock for stamps this run writes. Tests replace this; nothing else."""
+    return datetime.datetime.now(datetime.timezone.utc)
+
+
+def _iso_now():
+    return _utc_now().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+# Written on every successful read of the source, including a no-new-day run.
+# Kept out of the substantive comparison so the series is not what moves.
+SOURCE_CHECK_KEYS = ("last_checked", "source_latest")
+
+
+def _apply_source_check(payload):
+    """Record that this run read the source and what its newest date was.
+
+    ``last_checked`` is the clock. ``source_latest`` is the newest date in
+    the table just read (the same day as ``as_of``), never the clock.
+    data_health uses the pair to tell "TSA has not published" from "we
+    stopped checking".
+    """
+    payload["last_checked"] = _iso_now()
+    payload["source_latest"] = payload["as_of"]
+    return payload
 
 
 def _describe(e):
@@ -302,8 +339,7 @@ def main():
     latest_d, latest_v = ordered[-1]
 
     payload = {
-        "generated": datetime.datetime.now(datetime.timezone.utc)
-                     .strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated": _iso_now(),
         "latest": {"date": latest_d, "vol": latest_v},
         "avg7": avg7,
         "series": [{"d": d, "v": n} for d, n in series],
@@ -314,6 +350,7 @@ def main():
         "snapshot_url": info["snapshot_url"],
         "snapshot_timestamp": info["snapshot_timestamp"],
     }
+    _apply_source_check(payload)
 
     try:
         with open(OUT) as f:
@@ -324,23 +361,36 @@ def main():
         prev = None  # no prior file / corrupt — fall through and write fresh
 
     # Never step backwards: an archive capture can lag the data already on disk.
+    # That read did not confirm the source's current newest date, so it must
+    # not refresh last_checked / source_latest either. A lagging mirror is not
+    # evidence that TSA has stopped publishing.
     prev_latest = ((prev or {}).get("latest") or {}).get("date")
     if prev_latest and date_key(prev_latest) > date_key(latest_d):
         print(f"fetch_tsa: {info['source']} table ends {latest_d}, older than "
               f"{prev_latest} already in {OUT} — not overwriting")
         return 0
 
-    # Skip the rewrite when nothing substantive changed (TSA posts on weekdays;
-    # on a no-new-day run the table is identical). The `generated` timestamp is
-    # not part of this comparison — rewriting it every run would defeat the
-    # workflow's `git diff --quiet` skip-if-unchanged guard and churn a daily
-    # signed commit. `generated` is only consumed by the client as a truthiness
-    # flag, so preserving the prior value on a no-op run is fine. The snapshot
-    # URL/timestamp are left out for the same reason: a newer capture of an
-    # identical table is not new data.
+    # TSA posts on weekdays and often skips weekends and holidays. On a
+    # no-new-day run the table is identical. The series, as_of and `generated`
+    # stay as they were — `generated` is only a truthiness flag for the client,
+    # and moving it would make a clock look like new data. The source-check
+    # stamps are the exception: they move on every successful read, including
+    # this one, so data_health can see that we looked and what the source's
+    # newest date was. aviation-tsa.yml commits that stamp even when nothing
+    # else changed.
     substantive = ("latest", "avg7", "series", "src", "source", "as_of")
     if prev and all(prev.get(k) == payload[k] for k in substantive):
-        print(f"fetch_tsa: {OUT} unchanged (latest {latest_d}) — not rewriting")
+        stamped = dict(prev)
+        for k in SOURCE_CHECK_KEYS:
+            stamped[k] = payload[k]
+        if all(prev.get(k) == stamped[k] for k in SOURCE_CHECK_KEYS):
+            print(f"fetch_tsa: {OUT} unchanged (latest {latest_d}) — not rewriting")
+            return 0
+        with open(OUT, "w") as f:
+            json.dump(stamped, f, indent=1)
+        print(f"fetch_tsa: {OUT} data unchanged (latest {latest_d}); "
+              f"recorded source check {stamped['last_checked']} "
+              f"(source latest {stamped['source_latest']})")
         return 0
 
     with open(OUT, "w") as f:

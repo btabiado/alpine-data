@@ -304,6 +304,26 @@ class TestProblems:
         assert [(p["id"], p["severity"]) for p in probs] == [("feed:data-b.json", "P0")]
         assert "STALE" in probs[0]["title"]
 
+    def test_tsa_upstream_lag_is_p2_and_does_not_page(self, dar):
+        """A disclosed freshness row is an upstream that has not published.
+        A known history gap uses the same status and stays out of the list.
+        Neither one is a P0, so the tracking issue closes."""
+        d = _data()
+        d["data_health"]["results"].extend([
+            {"path": "data-tsa.json", "status": "disclosed", "age_h": 72, "limit_h": 48,
+             "detail": "upstream lag: source newest date 2026-10-15 equals this file's as_of",
+             "owner": "aviation-tsa.yml (daily 14:10Z)"},
+            {"path": "data-cfpb.json [history: daily commits]", "status": "disclosed",
+             "detail": "disclosed 1: 2026-10-12"},
+        ])
+        probs = dar.data_problems(d)
+        assert [(p["id"], p["severity"]) for p in probs] == [
+            ("feed:data-tsa.json:upstream-lag", "P2")]
+        assert "upstream lag" in probs[0]["title"]
+        assert "3d" in probs[0]["title"] and "2d" in probs[0]["title"]
+        assert probs[0]["detail"].startswith("upstream lag")
+        assert dar.alert_action(probs) == "close"
+
     def test_extra_data_health_records_are_judged_too(self, dar):
         d = _data()
         d["data_health"]["extra_failing"] = [

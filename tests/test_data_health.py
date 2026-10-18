@@ -1154,3 +1154,118 @@ def test_stock_money_flow_survives_a_holiday_weekend(dh, tmp_path, monkeypatch):
     row = next(r for r in dh.evaluate(dh.COMMITTED, now_ts=tue)
                if r.path == "data-stock-money-flow.json")
     assert row.status == dh.OK, row.line()
+
+
+# ==========================================================================
+# TSA upstream lag: a source that has not published is disclosed, not stale
+# ==========================================================================
+
+# Audit-shaped moment: 2026-10-18 15:11Z, checkpoint still 2026-10-15 (3d).
+_TSA_NOW = datetime(2026, 10, 18, 15, 11, tzinfo=timezone.utc)
+_TSA_NOW_TS = _TSA_NOW.timestamp()
+
+
+def _tsa_payload(**over):
+    doc = {
+        "generated": "2026-10-16T17:57:26Z",
+        "latest": {"date": "10/15/2026", "vol": 2820142},
+        "as_of": "2026-10-15",
+        "source_latest": "2026-10-15",
+        "last_checked": "2026-10-18T14:12:00Z",
+    }
+    doc.update(over)
+    return doc
+
+
+def _tsa_row(dh, tmp_path, monkeypatch, payload, now_ts=_TSA_NOW_TS):
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    _write(tmp_path, "data-tsa.json", payload)
+    return next(r for r in dh.evaluate(dh.COMMITTED, history=False, now_ts=now_ts)
+                if r.path == "data-tsa.json")
+
+
+def test_tsa_upstream_lag_is_disclosed_not_stale(dh, tmp_path, monkeypatch):
+    """The 2026-10-18 audit paged data-tsa.json STALE at 3d / limit 2d while
+    the daily job had just read a source that still ended 10/15."""
+    row = _tsa_row(dh, tmp_path, monkeypatch, _tsa_payload())
+    assert row.status == dh.DISCLOSED and not row.fails
+    assert row.age_h == 72
+    assert row.limit_h == 48
+    assert "upstream lag" in row.detail
+    assert "2026-10-15" in row.detail
+    assert len(row.detail) <= 300
+
+
+def test_tsa_lag_ceiling_is_seven_days_inclusive(dh, tmp_path, monkeypatch):
+    """A checkpoint 7 days old is still a disclosed lag. The next day is stale."""
+    seven = _tsa_row(dh, tmp_path, monkeypatch, _tsa_payload(
+        as_of="2026-10-11", source_latest="2026-10-11",
+        latest={"date": "10/11/2026", "vol": 1}))
+    assert seven.age_h == 7 * 24
+    assert seven.status == dh.DISCLOSED and not seven.fails
+
+    eight = _tsa_row(dh, tmp_path, monkeypatch, _tsa_payload(
+        as_of="2026-10-10", source_latest="2026-10-10",
+        latest={"date": "10/10/2026", "vol": 1}))
+    assert eight.age_h == 8 * 24
+    assert eight.status == dh.STALE and eight.fails
+
+
+def test_tsa_without_a_recent_check_stays_stale(dh, tmp_path, monkeypatch):
+    """No stamp, or a check older than the 48h limit, is a pipeline that
+    stopped looking — even when the dates we do have happen to match."""
+    missing = _tsa_row(dh, tmp_path, monkeypatch, _tsa_payload(
+        last_checked=None, source_latest=None))
+    assert missing.status == dh.STALE and missing.fails
+
+    old_check = _tsa_row(dh, tmp_path, monkeypatch, _tsa_payload(
+        last_checked="2026-10-16T14:10:00Z"))
+    assert old_check.status == dh.STALE and old_check.fails
+
+    # Exactly 48h is still a confirmation (yesterday's cron, plus slack).
+    on_the_hour = _tsa_row(dh, tmp_path, monkeypatch, _tsa_payload(
+        last_checked="2026-10-16T15:11:00Z"))
+    assert on_the_hour.status == dh.DISCLOSED
+
+
+def test_tsa_source_ahead_of_our_file_is_stale(dh, tmp_path, monkeypatch):
+    """The source published a newer day and we do not have it. That is our
+    pipeline, not their publication lag."""
+    row = _tsa_row(dh, tmp_path, monkeypatch, _tsa_payload(
+        source_latest="2026-10-16"))
+    assert row.status == dh.STALE and row.fails
+
+
+def test_tsa_future_check_stamp_is_not_a_confirmation(dh, tmp_path, monkeypatch):
+    row = _tsa_row(dh, tmp_path, monkeypatch, _tsa_payload(
+        last_checked="2026-10-19T00:00:00Z"))
+    assert row.status == dh.STALE and row.fails
+
+
+def test_tsa_inside_the_normal_limit_stays_ok(dh, tmp_path, monkeypatch):
+    """Yesterday's count is the healthy case. It does not need a disclosure,
+    and it does not need a source-check stamp to get there."""
+    payload = _tsa_payload(as_of="2026-10-17", latest={"date": "10/17/2026", "vol": 1})
+    payload.pop("last_checked")
+    payload.pop("source_latest")
+    row = _tsa_row(dh, tmp_path, monkeypatch, payload)
+    assert row.status == dh.OK and not row.fails
+    assert row.age_h == 24
+
+
+def test_tsa_lag_does_not_override_a_suppression(dh, tmp_path, monkeypatch):
+    monkeypatch.setitem(dh.SUPPRESSIONS, "data-tsa.json",
+                        dh.Suppression(reason="x" * 50, until=date(2026, 12, 1)))
+    row = _tsa_row(dh, tmp_path, monkeypatch, _tsa_payload())
+    assert row.status == dh.SUPPRESSED and not row.fails
+
+    monkeypatch.setitem(dh.SUPPRESSIONS, "data-tsa.json",
+                        dh.Suppression(reason="x" * 50, until=date(2026, 10, 1)))
+    expired = _tsa_row(dh, tmp_path, monkeypatch, _tsa_payload())
+    assert expired.status == dh.EXPIRED and expired.fails
+
+
+def test_upstream_lag_detail_is_tsa_only(dh, tmp_path):
+    path = _write(tmp_path, "data-cfpb.json", _tsa_payload())
+    assert dh.upstream_lag_detail("data-cfpb.json", path, _TSA_NOW_TS, 72) is None
+    assert dh.TSA_UPSTREAM_LAG_CEILING_H == 7 * 24

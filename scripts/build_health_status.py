@@ -146,6 +146,13 @@ THRESHOLDS: dict[str, Threshold] = {
     # yesterday's count, so a healthy file is already ~24h old at fetch time
     # and the 14:10Z cron routinely starts hours late. 48h tolerates that and
     # still flags a single missed day.
+    #
+    # Do not raise this to swallow a weekend. TSA often publishes nothing
+    # over a weekend or holiday; that is data_health.upstream_lag_detail,
+    # which discloses the feed (daily audit P2) when last_checked is recent
+    # and source_latest equals as_of, and leaves it stale after 7 days or
+    # when that check is missing. This table still colours the checkpoint
+    # age on /health/.
     "data-tsa.json": Threshold(24, 48),
     # `as_of` is the date of the last DAILY BAR (the oldest across scored
     # tickers), so it only moves on trading days. At the 15:00Z check,

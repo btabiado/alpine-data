@@ -89,6 +89,15 @@ And one hole freshness cannot see at all:
         duplicates and null required fields; gaps no real source can fill
         are disclosed in health/known_gaps.json instead of failing.
 
+     The same disclosed-not-failed treatment covers a TSA checkpoint that is
+     past its 48h limit only because TSA has not published a newer row.
+     fetch_tsa.py stamps last_checked and source_latest on every successful
+     read, including when the table is unchanged. When the source's newest
+     date equals ours and that check is recent, the feed is DISCLOSED and the
+     daily audit lists it at P2. Older than TSA_UPSTREAM_LAG_CEILING_H, or
+     with no recent confirming check, it is STALE: a source-side delay is
+     not a free pass, and a pipeline that stopped looking is still a failure.
+
 Freshness is judged on file CONTENT (last row date / generated_at), never on
 mtime: a stateless CI checkout rewrites every mtime on every run, which would
 make every feed look perpetually fresh. This is inherited from
@@ -148,6 +157,7 @@ from build_health_status import (  # noqa: E402  (path set above)
     DEFAULT,
     THRESHOLDS,
     AgeProbe,
+    _parse_date_value,
     _select,
     humanize_age,
     nested_age_h,
@@ -293,6 +303,12 @@ MANIFEST: dict[str, Feed] = {
         # The page publishes a trailing window; fetch_tsa rewrites it whole,
         # so continuity here means "no hole inside the window we serve".
         # Limit: 48h, THRESHOLDS["data-tsa.json"] (TSA posts yesterday's count).
+        # A weekend or holiday with no new row is not that failure by itself.
+        # fetch_tsa stamps last_checked and source_latest on every successful
+        # read. When those say the source's newest date is the one we already
+        # have and the check is recent, evaluate() reports DISCLOSED (daily
+        # audit P2) up to TSA_UPSTREAM_LAG_CEILING_H. Past that ceiling, or
+        # with no recent check, the feed is STALE.
         history=(History("data-tsa.json", DAILY, "json", label="checkpoint series",
                          series_key="series", date_field="d"),)),
     "data-city.json": Feed(
@@ -723,6 +739,15 @@ GAP, DUPLICATE, DISCLOSED = "gap", "duplicate", "disclosed"
 FAILING_STATUSES = frozenset({STALE, UNKNOWN, MISSING, UNWATCHED, EXPIRED,
                               GAP, DUPLICATE})
 
+# TSA's checkpoint date is often a few days behind over a weekend or holiday
+# because TSA has not published, not because aviation-tsa.yml stopped. A lag
+# up to this age is DISCLOSED when the source check confirms it (see
+# upstream_lag_detail). Older than this is STALE anyway: a week without a new
+# row is no longer a routine publication delay. 7 days is inclusive — a
+# checkpoint dated 7 days ago is still disclosed; the next day is not.
+TSA_UPSTREAM_LAG_CEILING_H = 7 * 24
+TSA_FEED = "data-tsa.json"
+
 
 @dataclass
 class Result:
@@ -957,6 +982,72 @@ def _probe_feed(rel: str, feed: Feed, now: float,
     return path, probe, probe.key or ""
 
 
+def _iso_day(value: object) -> str | None:
+    """YYYY-MM-DD, or None. A clock stamp is not a checkpoint date."""
+    if not isinstance(value, str):
+        return None
+    s = value.strip()
+    if len(s) != 10 or s[4] != "-" or s[7] != "-":
+        return None
+    try:
+        date.fromisoformat(s)
+    except ValueError:
+        return None
+    return s
+
+
+def upstream_lag_detail(rel: str, payload_path: Path, now_ts: float,
+                        age_h: float) -> str | None:
+    """Why a past-limit TSA file is a disclosed upstream lag, or None.
+
+    None means the caller should keep its own verdict (STALE, once the age
+    is past the feed's limit). A lag is disclosed only when all of these hold:
+
+      * this is the TSA feed
+      * the checkpoint is past the normal limit but not past the 7-day ceiling
+      * ``last_checked`` is a recent timestamp (the daily job really ran;
+        the window is the feed's own stale limit, 48h)
+      * ``source_latest`` equals ``as_of`` (the source's newest row is the
+        one this file already holds)
+
+    A missing stamp, a check older than that window, or a source date that
+    is not ours means we did not confirm the delay is upstream. Those stay
+    stale. Same for a file older than TSA_UPSTREAM_LAG_CEILING_H.
+    """
+    if rel != TSA_FEED:
+        return None
+    limit = threshold_for(rel).stale_h
+    if age_h <= limit or age_h > TSA_UPSTREAM_LAG_CEILING_H:
+        return None
+    try:
+        data = json.loads(payload_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    as_of = _iso_day(data.get("as_of"))
+    source_latest = _iso_day(data.get("source_latest"))
+    if as_of is None or source_latest is None or as_of != source_latest:
+        return None
+    checked = _parse_date_value(data.get("last_checked"))
+    if checked is None:
+        return None
+    check_age_h = (now_ts - checked.timestamp()) / 3600.0
+    # A daily cron that ran yesterday is still a confirmation. Older than the
+    # feed's own stale limit, the pipeline has stopped looking. A stamp in
+    # the future is not a check either.
+    if check_age_h < -1 or check_age_h > limit:
+        return None
+    checked_at = str(data.get("last_checked")).strip()
+    return (
+        f"upstream lag: source newest date {source_latest} equals this file's "
+        f"as_of, checked {humanize_age(check_age_h)} ago ({checked_at}). "
+        f"TSA has not published a newer checkpoint. Disclosed under "
+        f"{TSA_UPSTREAM_LAG_CEILING_H // 24}d; a missed check or an older "
+        f"file is still stale."
+    )
+
+
 def evaluate(mode: str, today: date | None = None,
              now_ts: float | None = None, history: bool = True) -> list[Result]:
     now = now_ts if now_ts is not None else datetime.now(timezone.utc).timestamp()
@@ -1090,8 +1181,19 @@ def evaluate(mode: str, today: date | None = None,
                        f"blocker: {sup.reason} — re-validate that this is still "
                        f"true, then fix it or consciously extend the mute."))
         else:
-            results.append(Result(rel, STALE, age_h, limit, feed.owner, detail, source,
-                                  cadence=feed.cadence))
+            # A source that has not published is disclosed, the same
+            # reported-not-failed treatment known_gaps.json gives a history
+            # hole nobody can fill. It is not a mute: the ceiling and the
+            # check window are in upstream_lag_detail, and anything else
+            # here is still STALE.
+            lag = upstream_lag_detail(rel, path, now, age_h)
+            if lag:
+                results.append(Result(
+                    rel, DISCLOSED, age_h, limit, feed.owner, lag, source,
+                    cadence=feed.cadence))
+            else:
+                results.append(Result(rel, STALE, age_h, limit, feed.owner, detail, source,
+                                      cadence=feed.cadence))
 
     return results
 
@@ -1255,7 +1357,9 @@ def render_text(results: list[Result], notes: list[str]) -> str:
     section(UNKNOWN, "UNEVALUABLE - monitor is blind here", "UNKNOWN")
     section(MISSING, "MISSING - expected on disk", "MISSING")
     section(UNWATCHED, "UNWATCHED - not classified in MANIFEST", "UNWATCH")
-    section(DISCLOSED, "history: known unfillable gaps (health/known_gaps.json)",
+    section(DISCLOSED,
+            "DISCLOSED - reported, not failing "
+            "(known history gap, or a source that has not published newer data)",
             "KNOWN  ")
     section(GAP, "HISTORY GAP - a day/month is missing or a required field is null",
             "GAP    ")
