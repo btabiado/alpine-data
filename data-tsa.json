@@ -131,5 +131,7 @@
  "source": "tsa.gov",
  "as_of": "2026-10-15",
  "snapshot_url": null,
- "snapshot_timestamp": null
+ "snapshot_timestamp": null,
+ "last_checked": "2026-10-18T14:08:14Z",
+ "source_latest": "2026-10-15"
 }
