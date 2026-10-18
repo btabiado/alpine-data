@@ -16,8 +16,9 @@ others, so a flaky upstream degrades the report instead of erasing it):
                 the day before, and for failures the failed jobs' annotation
                 titles/messages (``/check-runs/<job>/annotations``).
   schedules     every workflow with an ``on.schedule`` cron: which of the
-                last 7 days it was due, which of those days actually got a
-                scheduled run, the last scheduled run and its conclusion.
+                last 7 days it was due, which ticks a schedule event served,
+                and which a cron-watchdog catch-up served instead (labeled
+                separately, not counted as a schedule delivery).
   api_status    ``data/health/api_status.json`` verdict counts, and per-source
                 verdict changes vs. the committed copy from ~24h earlier.
   spot_checks   cheap correctness checks of the LIVE site against primary
@@ -320,16 +321,52 @@ def workflow_crons(workflows_dir: Path) -> dict[str, list[str]]:
     return out
 
 
+# A cron-watchdog catch-up is a workflow_dispatch created with GITHUB_TOKEN,
+# so the run's actor is the Actions bot. A person clicking "Run workflow" is
+# not relabeled as a catch-up. scripts/cron_watchdog.py is the only caller
+# that dispatches this way.
+WATCHDOG_ACTOR = "github-actions[bot]"
+
+
+def _actor_login(actor: Any) -> str | None:
+    if isinstance(actor, dict) and actor.get("login"):
+        return str(actor["login"])
+    return None
+
+
+def is_watchdog_catchup(run: dict) -> bool:
+    """True for a watchdog dispatch, false for schedule events and manual runs."""
+    if run.get("event") != "workflow_dispatch":
+        return False
+    return (WATCHDOG_ACTOR in {
+        _actor_login(run.get("actor")),
+        _actor_login(run.get("triggering_actor")),
+    })
+
+
+def _run_in_window(times: list[datetime], start: datetime, end: datetime) -> datetime | None:
+    return next((rt for rt in times if start <= rt < end), None)
+
+
 def evaluate_schedule(crons: list[str], runs: list[dict], now: datetime,
-                      created_at: datetime | None = None, days: int = 7) -> dict:
+                      created_at: datetime | None = None, days: int = 7,
+                      catchup_runs: list[dict] | None = None) -> dict:
     """Which of the last ``days`` days the crons were due, and which got a run.
 
     ``runs`` are this workflow's runs with ``event == "schedule"``. GitHub's
-    scheduler is best-effort: on this repo top-of-the-hour crons routinely
-    start 5-8 hours late, and hourly crons lose most of their ticks. So a due
-    time counts as served by any scheduled run created from 15 min before it
-    up to 15 min before the NEXT due time (capped at now). A day is MISSED
-    only when none of its due times got a run at all.
+    scheduler is best-effort: on this repo crons routinely start hours late,
+    and hourly crons lose most of their ticks. A due time counts as served by
+    a scheduled run created from 15 min before it up to 15 min before the NEXT
+    due time (capped at now). A day is MISSED only when none of its due times
+    got a run at all.
+
+    ``catchup_runs`` are watchdog dispatches (see ``is_watchdog_catchup``).
+    They cover a tick the same way a schedule run does, and they are counted
+    separately so a catch-up is not reported as if GitHub's scheduler had
+    delivered it. ``coverage_pct`` is effective freshness (schedule or
+    catch-up, whichever started the work). ``schedule_coverage_pct`` is the
+    scheduler on its own. ``catchup_ticks`` is how many judged ticks the
+    catch-up reached first.
 
     Due times later than ``now - SCHEDULE_GRACE`` are not judged yet; that is
     also why the audit itself runs well after the overnight crons.
@@ -344,32 +381,57 @@ def evaluate_schedule(crons: list[str], runs: list[dict], now: datetime,
         fires.extend(cron_fire_times(c, window_start, now + timedelta(days=1)))
     fires = sorted(set(fires))
     run_times = sorted(t for t in (parse_ts(r.get("created_at")) for r in runs) if t)
+    catch_times = sorted(
+        t for t in (parse_ts(r.get("created_at")) for r in (catchup_runs or [])) if t)
     slack = timedelta(minutes=15)
     served: dict[date, int] = {}
     due: dict[date, int] = {}
     delays: list[float] = []
+    schedule_delays: list[float] = []
+    schedule_served = 0
+    catchup_ticks = 0
     for i, t in enumerate(fires):
         if t >= judge_until:
             break
         nxt = fires[i + 1] if i + 1 < len(fires) else now
         hi = min(nxt, now) - slack
-        hit = next((rt for rt in run_times if t - slack <= rt < max(hi, t + slack)), None)
+        end = max(hi, t + slack)
+        sched_hit = _run_in_window(run_times, t - slack, end)
+        catch_hit = _run_in_window(catch_times, t - slack, end)
         due[t.date()] = due.get(t.date(), 0) + 1
-        if hit is not None:
-            served[t.date()] = served.get(t.date(), 0) + 1
-            delays.append(max(0.0, (hit - t).total_seconds() / 60.0))
+        if sched_hit is None and catch_hit is None:
+            continue
+        served[t.date()] = served.get(t.date(), 0) + 1
+        if sched_hit is not None:
+            schedule_served += 1
+            schedule_delays.append(max(0.0, (sched_hit - t).total_seconds() / 60.0))
+        # The run that actually started the work. A later schedule delivery
+        # still counts above, but the delay is the earlier of the two.
+        if catch_hit is not None and (sched_hit is None or catch_hit <= sched_hit):
+            hit = catch_hit
+            catchup_ticks += 1
+        else:
+            hit = sched_hit
+        delays.append(max(0.0, (hit - t).total_seconds() / 60.0))
     due_runs = sum(due.values())
     missed = sorted(d.isoformat() for d in due if not served.get(d))
     delays.sort()
+    schedule_delays.sort()
     median = delays[len(delays) // 2] if delays else None
+    schedule_median = schedule_delays[len(schedule_delays) // 2] if schedule_delays else None
+    since = now - timedelta(days=days)
     return {
         "due_days": len(due),
         "due_runs": due_runs,
         "days_with_run": len(due) - len(missed),
         "missed_days": missed,
-        "scheduled_runs": sum(1 for rt in run_times if rt >= now - timedelta(days=days)),
+        "scheduled_runs": sum(1 for rt in run_times if rt >= since),
+        "catchup_runs": sum(1 for rt in catch_times if rt >= since),
+        "catchup_ticks": catchup_ticks,
         "coverage_pct": round(100.0 * sum(served.values()) / due_runs, 1) if due_runs else None,
+        "schedule_coverage_pct": round(100.0 * schedule_served / due_runs, 1) if due_runs else None,
         "median_delay_min": round(median) if median is not None else None,
+        "schedule_median_delay_min": round(schedule_median) if schedule_median is not None else None,
     }
 
 
@@ -542,9 +604,13 @@ def section_workflows_and_schedules(gh: GitHub, repo_root: Path, now: datetime,
         if not crons:
             continue
         sched_runs = [r for r in runs if r.get("event") == "schedule"]
+        # Watchdog catch-ups stay out of `sched_runs` so scheduler delivery
+        # is still measurable, and are passed beside them so freshness counts.
+        catchup_runs = [r for r in runs if is_watchdog_catchup(r)]
         s: dict[str, Any] = {"name": name, "path": path, "crons": crons, "state": wf.get("state")}
         try:
-            s.update(evaluate_schedule(crons, sched_runs, now, parse_ts(wf.get("created_at")), days))
+            s.update(evaluate_schedule(
+                crons, sched_runs, now, parse_ts(wf.get("created_at")), days, catchup_runs))
         except ValueError as e:
             s["error"] = clip(e, 200)
         last = sorted((r for r in sched_runs if r.get("status") == "completed"),
@@ -558,6 +624,10 @@ def section_workflows_and_schedules(gh: GitHub, repo_root: Path, now: datetime,
                 last = []
         s["last_run"] = _summarize_run(last[0]) if last else None
         s["last_failed"] = bool(last) and last[0].get("conclusion") in FAILED_CONCLUSIONS
+        caught = sorted((r for r in catchup_runs if r.get("status") == "completed"),
+                        key=lambda r: r.get("created_at") or "", reverse=True)
+        if caught:
+            s["last_catchup"] = _summarize_run(caught[0])
         schedules.append(s)
     workflows.sort(key=lambda w: w.get("name") or "")
     schedules.sort(key=lambda w: w.get("name") or "")

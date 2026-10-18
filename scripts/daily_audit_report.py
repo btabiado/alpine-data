@@ -293,17 +293,36 @@ def data_problems(data: dict | None) -> list[dict]:
                     f"Scheduled workflow {name}: last scheduled run failed ({(last.get('created_at') or '?')[:10]})",
                     f"cron {crons}", url=last.get("url")))
             cov = s.get("coverage_pct")
+            sched_cov = s.get("schedule_coverage_pct")
+            catchup_ticks = s.get("catchup_ticks") or 0
+            # coverage_pct is effective freshness (schedule event or a labeled
+            # watchdog catch-up). A scheduler-only gap that the watchdog
+            # filled is not "ticks that never ran".
             if cov is not None and (s.get("due_runs") or 0) > (s.get("due_days") or 0) and cov < MIN_COVERAGE_PCT:
+                detail = (f"cron {crons}; {s.get('scheduled_runs')} scheduled runs")
+                if catchup_ticks:
+                    detail += f", {catchup_ticks} tick(s) covered first by a watchdog catch-up"
+                detail += f" for {s.get('due_runs')} due ticks"
+                if sched_cov is not None and abs(float(sched_cov) - float(cov)) >= 0.05:
+                    detail += f"; scheduler delivered {sched_cov:.0f}%, effective {cov:.0f}%"
+                title = f"{name}: {cov:.0f}% of cron ticks ran"
+                if catchup_ticks and sched_cov is not None and abs(float(sched_cov) - float(cov)) >= 0.05:
+                    title = (f"{name}: {cov:.0f}% of cron ticks covered "
+                             f"({catchup_ticks} by watchdog catch-up)")
                 out.append(problem(
-                    f"schedule:{name}:dropped", P2, "schedule", f"{name}: {cov:.0f}% of cron ticks ran",
-                    f"cron {crons}; {s.get('scheduled_runs')} scheduled runs for {s.get('due_runs')} due ticks",
+                    f"schedule:{name}:dropped", P2, "schedule", title, detail,
                     group="schedule:dropped", group_title="Crons that lose most of their ticks",
                     item=f"{name} {cov:.0f}%"))
             delay = s.get("median_delay_min")
             if delay is not None and delay > LATE_MINUTES:
+                late_detail = f"cron {crons}"
+                sched_delay = s.get("schedule_median_delay_min")
+                if sched_delay is not None and abs(float(sched_delay) - float(delay)) >= 30:
+                    late_detail += (f"; scheduler median {float(sched_delay) / 60:.1f}h, "
+                                    f"effective {float(delay) / 60:.1f}h")
                 out.append(problem(
                     f"schedule:{name}:late", P2, "schedule",
-                    f"{name} starts ~{delay / 60:.1f}h after its cron time (median)", f"cron {crons}",
+                    f"{name} starts ~{delay / 60:.1f}h after its cron time (median)", late_detail,
                     group="schedule:late",
                     group_title=f"Crons starting >{LATE_MINUTES // 60}h late (median delay)",
                     item=f"{name} {delay / 60:.1f}h"))
@@ -735,6 +754,7 @@ def render_md(report: dict) -> str:
     L += ["", "## Schedules (last 7 days)", ""]
     if _section_ok(sc) and sc:
         rows = []
+        any_catchup = False
         for x in sc.get("schedules") or []:
             last = x.get("last_run") or {}
             flags = []
@@ -744,17 +764,46 @@ def render_md(report: dict) -> str:
                 flags.append("FAILING")
             if x.get("state") and x.get("state") != "active":
                 flags.append(str(x["state"]).upper())
+            catchup_ticks = x.get("catchup_ticks") or 0
+            if catchup_ticks:
+                any_catchup = True
+                flags.append(f"catch-up {catchup_ticks}")
+            eff = x.get("coverage_pct")
+            sched_cov = x.get("schedule_coverage_pct")
+            if eff is None:
+                ticks = "–"
+            elif sched_cov is not None and abs(float(sched_cov) - float(eff)) >= 0.05:
+                ticks = f"{eff:.0f}% (scheduler {sched_cov:.0f}%)"
+            else:
+                ticks = f"{eff:.0f}%"
             delay = x.get("median_delay_min")
+            sched_delay = x.get("schedule_median_delay_min")
+            if delay is None:
+                delay_cell = "–"
+            elif sched_delay is not None and abs(float(sched_delay) - float(delay)) >= 30:
+                delay_cell = f"{delay / 60:.1f}h (scheduler {float(sched_delay) / 60:.1f}h)"
+            else:
+                delay_cell = f"{delay / 60:.1f}h"
+            last_cell = f"{(last.get('created_at') or '')[:16]} {last.get('conclusion') or ''}".strip() or "never"
+            caught = x.get("last_catchup") or {}
+            if caught.get("created_at"):
+                any_catchup = True
+                last_cell += (f"; catch-up {(caught.get('created_at') or '')[:16]} "
+                              f"{caught.get('conclusion') or ''}").rstrip()
             rows.append([
                 x.get("name"), " ; ".join(x.get("crons") or []),
                 f"{x.get('days_with_run')}/{x.get('due_days')}",
-                f"{x.get('coverage_pct'):.0f}%" if x.get("coverage_pct") is not None else "–",
-                f"{delay / 60:.1f}h" if delay is not None else "–",
-                f"{(last.get('created_at') or '')[:16]} {last.get('conclusion') or ''}".strip() or "never",
+                ticks, delay_cell, last_cell,
                 ", ".join(flags) or "ok",
             ])
         L += _table(["workflow", "cron (UTC)", "days run/due", "ticks run", "median delay",
                      "last scheduled run", "flag"], rows)
+        if any_catchup:
+            L += ["",
+                  "A catch-up is a `workflow_dispatch` by `github-actions[bot]` (the cron "
+                  "watchdog), not a GitHub schedule event. Ticks run and median delay count "
+                  "it toward freshness; the scheduler figure is what the schedule event "
+                  "delivered on its own."]
     else:
         L.append(f"- could not be read: {sc.get('error', 'no data')}")
 

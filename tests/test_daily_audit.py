@@ -130,6 +130,52 @@ class TestScheduleEvaluation:
         out = dad.evaluate_schedule(["0 7 * * *"], [], self.NOW, created_at=T("2026-10-08T12:00"))
         assert out["due_days"] == 0 and out["missed_days"] == []
 
+    def test_schedule_only_history_reports_scheduler_coverage_separately(self, dad):
+        runs = self._runs(*[f"2026-10-0{d}T13:0{d}:00" for d in range(1, 9)])
+        out = dad.evaluate_schedule(["0 7 * * *"], runs, self.NOW)
+        assert out["coverage_pct"] == out["schedule_coverage_pct"] == 100.0
+        assert out["catchup_ticks"] == 0 and out["catchup_runs"] == 0
+        assert out["schedule_median_delay_min"] == out["median_delay_min"]
+
+    def test_watchdog_catchup_covers_a_tick_and_stays_labeled(self, dad):
+        # No schedule events. A bot dispatch 95 minutes after 07:00 each judged day.
+        catch = [{"created_at": f"2026-10-0{d}T08:35:00Z", "event": "workflow_dispatch",
+                  "actor": {"login": "github-actions[bot]"}} for d in range(2, 9)]
+        out = dad.evaluate_schedule(["0 7 * * *"], [], self.NOW, catchup_runs=catch)
+        assert out["missed_days"] == []
+        assert out["coverage_pct"] == 100.0
+        assert out["schedule_coverage_pct"] == 0.0
+        assert out["catchup_ticks"] == out["due_runs"]
+        assert out["catchup_runs"] == out["due_runs"]
+        assert out["median_delay_min"] == 95
+        assert out["schedule_median_delay_min"] is None
+        assert out["scheduled_runs"] == 0
+
+    def test_catchup_that_lands_first_does_not_hide_a_later_schedule_delivery(self, dad):
+        # Catch-up at 08:35, scheduler finally delivers at 13:00. Both cover the
+        # same daily tick. Freshness delay is the catch-up; scheduler delay stays visible.
+        sched = self._runs("2026-10-08T13:00:00")
+        catch = [{"created_at": "2026-10-08T08:35:00Z"}]
+        out = dad.evaluate_schedule(["0 7 * * *"], sched, self.NOW, days=1, catchup_runs=catch)
+        assert out["coverage_pct"] == 100.0
+        assert out["schedule_coverage_pct"] == 100.0
+        assert out["catchup_ticks"] == 1
+        assert out["median_delay_min"] == 95
+        assert out["schedule_median_delay_min"] == 360
+
+    def test_human_dispatch_is_not_a_watchdog_catchup(self, dad):
+        assert dad.is_watchdog_catchup({
+            "event": "workflow_dispatch", "actor": {"login": "github-actions[bot]"}})
+        assert dad.is_watchdog_catchup({
+            "event": "workflow_dispatch", "triggering_actor": {"login": "github-actions[bot]"}})
+        assert not dad.is_watchdog_catchup({
+            "event": "workflow_dispatch", "actor": {"login": "octocat"}})
+        assert not dad.is_watchdog_catchup({
+            "event": "schedule", "actor": {"login": "github-actions[bot]"}})
+        assert not dad.is_watchdog_catchup({
+            "event": "workflow_run", "actor": {"login": "github-actions[bot]"}})
+        assert dad.WATCHDOG_ACTOR == "github-actions[bot]"
+
 
 class TestParsing:
     @pytest.mark.parametrize("raw,expect", [
@@ -365,6 +411,34 @@ class TestProblems:
         assert probs["schedule:old:disabled"]["severity"] == "P1"
         # Daily crons are not judged on tick coverage (one tick a day).
         assert "schedule:city-daily:dropped" not in probs
+
+    def test_catchups_count_as_freshness_and_stay_labeled(self, dar):
+        s = _data()["schedules"]["schedules"][0]
+        covered = {**s, "name": "pages", "coverage_pct": 92.0, "schedule_coverage_pct": 18.0,
+                   "due_runs": 160, "due_days": 8, "catchup_ticks": 120, "catchup_runs": 120,
+                   "median_delay_min": 90, "schedule_median_delay_min": 360,
+                   "scheduled_runs": 30,
+                   "last_catchup": {"created_at": "2026-10-17T16:40:00Z", "conclusion": "success",
+                                    "event": "workflow_dispatch"}}
+        still_thin = {**s, "name": "aviation-opensky", "coverage_pct": 40.0,
+                      "schedule_coverage_pct": 18.0, "due_runs": 160, "due_days": 8,
+                      "catchup_ticks": 35, "scheduled_runs": 29, "median_delay_min": 80}
+        d = _data(schedules={"status": "ok", "schedules": [covered, still_thin]})
+        probs = {p["id"]: p for p in dar.data_problems(d)}
+        # Effective freshness is above the dropped-tick line, so no P2.
+        assert "schedule:pages:dropped" not in probs
+        # Scheduler lateness is disclosed, but the effective start is inside 3h.
+        assert "schedule:pages:late" not in probs
+        dropped = probs["schedule:aviation-opensky:dropped"]
+        assert "watchdog catch-up" in dropped["title"]
+        assert "scheduler delivered 18%" in dropped["detail"]
+        assert "35 tick" in dropped["detail"]
+        md = dar.render_md(dar.build_report(d, _ux(), None, "2026-10-17"))
+        assert "92% (scheduler 18%)" in md
+        assert "1.5h (scheduler 6.0h)" in md
+        assert "catch-up 120" in md
+        assert "catch-up 2026-10-17T16:40 success" in md
+        assert "github-actions[bot]" in md
 
     def test_schedule_failure_not_double_counted_with_workflow_failure(self, dar):
         s = _data()["schedules"]["schedules"][0]
