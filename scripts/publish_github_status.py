@@ -28,9 +28,16 @@ WHAT IT RECORDS
                                      fire times (or the workflow is disabled)
                     recovered        latest completed run succeeded after a
                                      failure in the last 48h
-                  For failed runs in the last 48h: the failed jobs, their
-                  failed steps and the key check-run annotations (trimmed;
-                  Node.js-deprecation and runner-label notices dropped).
+                  For failed runs in the last 48h, including a run the workflow
+                  has since recovered from: the failed jobs, their failed steps,
+                  the key check-run annotations (trimmed; Node.js-deprecation
+                  and runner-label notices dropped), and a one-line summary.
+                  A step that merely exits non-zero is annotated only
+                  "Process completed with exit code N." The summary then uses
+                  the first substantive error line from that job's log
+                  (the same GITHUB_TOKEN; actions: read). Pip's "Ignored the
+                  following …" resolver notes are skipped. Output stays one
+                  clipped line per inspected run, not the log.
   pull_requests   open PRs on btabiado/alpine-data and btabiado/adw-site with
                   author, age and the head commit's CI conclusion.
   issues          open issues on alpine-data (pull requests skipped).
@@ -75,7 +82,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Iterable
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
@@ -113,6 +120,15 @@ MAX_FAILED_RUNS_INSPECTED = 8        # across all workflows, newest first
 MAX_FAILED_RUNS_PER_WORKFLOW = 2
 MAX_FAILED_JOBS_PER_RUN = 2
 MAX_ANNOTATIONS_PER_JOB = 5
+# Job logs are read only when annotations don't explain the failure (the
+# 2026-10-17 crypto-odds-daily run's only annotation was the generic exit
+# line; "No matching distribution found for scipy==1.18.1" was in the log).
+# One fetch per inspected run, eight at most, so a noisy day stays inside
+# the API budget. The JSON stores one clipped line, never the log.
+MAX_LOG_FETCHES = 8
+MAX_LOG_BYTES = 384 * 1024
+MAX_ERROR_LINE = 180
+MAX_SUMMARY = 240
 MAX_PRS_PER_REPO = 50
 MAX_PR_CI_LOOKUPS = 12               # per repository
 MAX_ISSUE_PAGES = 3
@@ -258,6 +274,74 @@ class GitHubClient:
             msg = ""
         return self._clean(msg or getattr(resp, "text", "") or "no message")
 
+    def get_text(self, path: str, *, max_bytes: int = MAX_LOG_BYTES) -> str:
+        """GET a text body, following one redirect, capped at ``max_bytes``.
+
+        Job logs answer 302 to a signed blob URL. The token is sent only to
+        api.github.com — never to the blob host. One budget unit and no
+        retry: a miss falls back to the step name and the annotation.
+        """
+        self._spend()
+        rel = path if path.startswith("/") else "/" + path
+        if self.use_cli:
+            return self._get_text_cli(rel, max_bytes)
+        return self._get_text_http(rel, max_bytes)
+
+    def _get_text_cli(self, rel: str, max_bytes: int) -> str:
+        try:
+            proc = subprocess.run(
+                ["gh", "api", "--allow-escape-sequences", rel.lstrip("/")],
+                capture_output=True, timeout=60)
+        except (OSError, subprocess.SubprocessError) as e:
+            raise ApiError(None, self._clean(f"gh api failed: {type(e).__name__}"))
+        if proc.returncode != 0:
+            err = proc.stderr if isinstance(proc.stderr, str) else (
+                proc.stderr or b"").decode("utf-8", "replace")
+            out = proc.stdout if isinstance(proc.stdout, str) else (
+                proc.stdout or b"").decode("utf-8", "replace")
+            m = re.search(r"\(HTTP (\d{3})\)", err)
+            msg = ""
+            try:
+                msg = (json.loads(out or "{}") or {}).get("message") or ""
+            except (ValueError, AttributeError):
+                msg = ""
+            # stderr can echo the signed log URL; keep only the API message.
+            raise ApiError(int(m.group(1)) if m else None, self._clean(msg or "gh api failed"))
+        raw = proc.stdout if isinstance(proc.stdout, bytes) else (proc.stdout or "").encode()
+        return raw[:max_bytes].decode("utf-8", "replace")
+
+    def _get_text_http(self, rel: str, max_bytes: int) -> str:
+        if self._session is None:
+            import requests  # in requirements.txt; imported lazily so tests can inject a session
+            self._session = requests.Session()
+        headers = {"Accept": "application/vnd.github+json",
+                   "X-GitHub-Api-Version": "2022-11-28", "User-Agent": UA}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        try:
+            resp = self._session.get(API_ROOT + rel, headers=headers, timeout=self.timeout,
+                                     allow_redirects=False)
+        except Exception as e:  # noqa: BLE001 - requests' exception tree, or a test double
+            raise ApiError(None, self._clean(f"network error: {type(e).__name__}"))
+        if resp.status_code in (301, 302, 303, 307, 308):
+            loc = _header(resp, "Location")
+            parts = urlsplit(loc)
+            if parts.scheme != "https" or not parts.netloc:
+                raise ApiError(resp.status_code, "log redirect was not an https URL")
+            fwd = {"User-Agent": UA, "Accept": "text/plain"}
+            # The signed URL authenticates itself. Forwarding the token off
+            # api.github.com would hand it to blob storage.
+            if parts.netloc == "api.github.com" and self.token:
+                fwd["Authorization"] = f"Bearer {self.token}"
+            try:
+                resp = self._session.get(loc, headers=fwd, timeout=self.timeout,
+                                         allow_redirects=False)
+            except Exception as e:  # noqa: BLE001
+                raise ApiError(None, self._clean(f"network error: {type(e).__name__}"))
+        if getattr(resp, "status_code", None) != 200:
+            raise ApiError(getattr(resp, "status_code", None), self._error_text(resp))
+        return _bounded_text(resp, max_bytes)
+
     def paginate(self, path: str, params: dict | None = None, *, max_pages: int = 3,
                  per_page: int = 100, key: str | None = None,
                  token: str | None = None) -> tuple[list, bool]:
@@ -398,6 +482,146 @@ def select_annotations(raw: Any, limit: int = MAX_ANNOTATIONS_PER_JOB) -> list[d
     return out[:limit]
 
 
+def _header(resp: Any, name: str) -> str:
+    headers = getattr(resp, "headers", None) or {}
+    if not hasattr(headers, "get"):
+        return ""
+    return str(headers.get(name) or headers.get(name.lower()) or "")
+
+
+def _bounded_text(resp: Any, max_bytes: int) -> str:
+    """The response body, reading at most ``max_bytes`` so a huge log cannot
+    land in memory. Prefers a streaming ``iter_content`` when the response
+    has one (requests); a test double may just expose ``text``."""
+    chunks: list[bytes] = []
+    read = 0
+    stream = getattr(resp, "iter_content", None)
+    if callable(stream):
+        try:
+            iterator = stream(8192)
+        except TypeError:
+            iterator = stream()
+        for chunk in iterator:
+            if not chunk:
+                continue
+            if isinstance(chunk, str):
+                chunk = chunk.encode("utf-8", "replace")
+            room = max_bytes - read
+            if room <= 0:
+                break
+            chunks.append(chunk[:room])
+            read += len(chunks[-1])
+            if read >= max_bytes:
+                break
+        closer = getattr(resp, "close", None)
+        if callable(closer):
+            closer()
+        return b"".join(chunks).decode("utf-8", "replace")
+    raw = getattr(resp, "content", None)
+    if raw is None:
+        raw = getattr(resp, "text", "") or ""
+    if isinstance(raw, str):
+        raw = raw.encode("utf-8", "replace")
+    return bytes(raw[:max_bytes]).decode("utf-8", "replace")
+
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+_LOG_TS_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T[\d:.]+Z\s+")
+_ERR_MARK_RE = re.compile(r"^##\[error\]\s*")
+_ERROR_COLON_RE = re.compile(r"^(?:ERROR|Error|error)\s*:")
+_EXC_LINE_RE = re.compile(r"^[A-Za-z_][\w.]*(?:Error|Exception):\s+\S")
+_PIP_NO_MATCH_RE = re.compile(r"^ERROR: No matching distribution found for \S+", re.I)
+_PIP_IGNORED_RE = re.compile(r"^ERROR: Ignored the following\b", re.I)
+_URL_IN_TEXT_RE = re.compile(r"https?://\S+")
+_QUERY_SECRET_RE = re.compile(r"[?&](?:sig|signature|token|access_token)=[^&\s]+", re.I)
+
+
+def _log_lines(text: str) -> list[str]:
+    lines: list[str] = []
+    for raw in (text or "").splitlines():
+        line = _ANSI_RE.sub("", raw)
+        line = _LOG_TS_RE.sub("", line).strip()
+        if line:
+            lines.append(line)
+    return lines
+
+
+def _is_log_error(line: str) -> bool:
+    if line.startswith("##[error]"):
+        return True
+    if _ERROR_COLON_RE.match(line):
+        return True
+    return bool(_EXC_LINE_RE.match(line))
+
+
+def first_error_line(text: str, *, limit: int = MAX_ERROR_LINE) -> str | None:
+    """First substantive error line in a job log, clipped.
+
+    GitHub's "Process completed with exit code N." and pip's "Ignored the
+    following …" resolver notes are skipped. When pip prints both a long
+    "Could not find a version …" dump and "No matching distribution found
+    for …", the latter is the one-line cause and wins.
+    """
+    found: list[str] = []
+    for line in _log_lines(text):
+        if not _is_log_error(line):
+            continue
+        body = _ERR_MARK_RE.sub("", line).strip()
+        if not body or _GENERIC_EXIT.match(body) or is_platform_notice(body):
+            continue
+        found.append(body)
+    if not found:
+        return None
+    for line in found:
+        if _PIP_NO_MATCH_RE.match(line):
+            return clip(line, limit)
+    specific = [ln for ln in found if not _PIP_IGNORED_RE.match(ln)]
+    return clip((specific or found)[0], limit)
+
+
+def annotation_cause(annotations: list[dict]) -> str | None:
+    """First annotation that says more than the generic exit line.
+
+    ``annotations`` is already ranked by ``select_annotations`` (specific
+    failures, then warnings, then the generic exit line).
+    """
+    for a in annotations or []:
+        msg = (a.get("message") or "").strip()
+        if not msg or _GENERIC_EXIT.match(msg):
+            continue
+        title = (a.get("title") or "").strip()
+        text = f"{title}: {msg}" if title else msg
+        if is_platform_notice(text):
+            continue
+        return text
+    return None
+
+
+def failure_summary(job_name: str, failed_steps: list[str], message: str | None,
+                    *, limit: int = MAX_SUMMARY) -> str:
+    """One line: failed job / step, then the error line or annotation."""
+    where = (job_name or "job").strip() or "job"
+    steps = [s for s in (failed_steps or []) if s]
+    if steps:
+        where = f"{where} / {steps[0]}"
+        if len(steps) > 1:
+            where += f" (+{len(steps) - 1} more)"
+    msg = (message or "").strip()
+    line = f"{where}: {msg}" if msg else f"{where} failed"
+    return clip(line, limit)
+
+
+def public_reason(e: BaseException) -> str:
+    """``reason`` with URLs and signed-query secrets removed.
+
+    A failed log download must not store the blob URL: its query string is
+    a credential.
+    """
+    msg = _URL_IN_TEXT_RE.sub("[url]", reason(e))
+    msg = _QUERY_SECRET_RE.sub("sig=…", msg)
+    return clip(msg, 160)
+
+
 def summarize_checks(check_runs: list[dict]) -> dict:
     """One CI verdict for a commit from its check runs."""
     if not check_runs:
@@ -448,7 +672,18 @@ def run_section(name: str, fn: Callable[[], dict]) -> dict:
     return out
 
 
-def _failed_run_detail(client: GitHubClient, repo: str, run: dict) -> dict:
+def _failed_run_detail(client: GitHubClient, repo: str, run: dict,
+                       log_budget: list[int] | None = None) -> dict:
+    """One failed run: jobs, annotations, and a one-line ``summary``.
+
+    The summary is kept for every inspected failure inside the 48h window,
+    including after a later run has succeeded. Check-run annotations for a
+    bare non-zero exit are only the generic exit line, so when nothing more
+    specific is there the job log is read (one fetch per run, under
+    ``log_budget``) and the first substantive error line is used instead.
+    """
+    if log_budget is None:
+        log_budget = [MAX_LOG_FETCHES]
     rec: dict[str, Any] = {"run_id": run.get("id"), "html_url": run.get("html_url"),
                            "event": run.get("event"), "conclusion": run.get("conclusion"),
                            "created_at": run.get("created_at")}
@@ -457,26 +692,63 @@ def _failed_run_detail(client: GitHubClient, repo: str, run: dict) -> dict:
                           {"filter": "latest", "per_page": 30})
     except Exception as e:  # noqa: BLE001
         rec["unavailable"] = reason(e)
+        rec["summary"] = failure_summary("jobs", [], rec["unavailable"])
         return rec
     jobs: list[dict] = []
     failed_jobs = [j for j in (data or {}).get("jobs") or [] if j.get("conclusion") in FAILED]
+    explained = False
+    tried_log = False
     for job in failed_jobs[:MAX_FAILED_JOBS_PER_RUN]:
+        failed_steps = [clip(s.get("name"), 120) for s in job.get("steps") or []
+                        if s.get("conclusion") in FAILED][:5]
         j: dict[str, Any] = {
             "name": clip(job.get("name"), 120), "html_url": job.get("html_url"),
-            "failed_steps": [clip(s.get("name"), 120) for s in job.get("steps") or []
-                             if s.get("conclusion") in FAILED][:5],
+            "failed_steps": failed_steps,
         }
+        annotations: list[dict] = []
         try:
             raw = client.get(f"/repos/{repo}/check-runs/{job.get('id')}/annotations", {"per_page": 50})
-            j["annotations"] = select_annotations(raw)
+            annotations = select_annotations(raw)
+            j["annotations"] = annotations
         except Exception as e:  # noqa: BLE001
             j["annotations_unavailable"] = reason(e)
+        cause = annotation_cause(annotations)
+        if cause:
+            explained = True
+        elif not explained and not tried_log and log_budget[0] > 0 and job.get("id") is not None:
+            # At most one log per run: skip it once an earlier job's annotations
+            # already explained the failure, or this run has spent its fetch.
+            tried_log = True
+            log_budget[0] -= 1
+            try:
+                text = client.get_text(f"/repos/{repo}/actions/jobs/{job.get('id')}/logs")
+                line = first_error_line(text)
+                if line:
+                    cause = client._clean(line, MAX_ERROR_LINE) or None
+                    if cause:
+                        explained = True
+            except Exception as e:  # noqa: BLE001
+                j["log_unavailable"] = public_reason(e)
+        if not cause:
+            for a in annotations:
+                msg = (a.get("message") or "").strip()
+                if msg:
+                    cause = msg
+                    break
+        if cause:
+            j["error_line"] = clip(cause, MAX_ERROR_LINE)
+        j["summary"] = failure_summary(str(j.get("name") or ""), failed_steps, j.get("error_line"))
         jobs.append(j)
     rec["jobs"] = jobs
+    if jobs:
+        rec["summary"] = clip(" | ".join(j["summary"] for j in jobs if j.get("summary")), MAX_SUMMARY)
     if len(failed_jobs) > MAX_FAILED_JOBS_PER_RUN:
         rec["more_failed_jobs"] = len(failed_jobs) - MAX_FAILED_JOBS_PER_RUN
     if not failed_jobs and run.get("conclusion") == "startup_failure":
         rec["note"] = "startup_failure: no job ran (invalid workflow file, missing runner label, ...)"
+        rec["summary"] = clip(rec["note"], MAX_SUMMARY)
+    elif not rec.get("summary"):
+        rec["summary"] = failure_summary("run", [], str(run.get("conclusion") or "failed"))
     return rec
 
 
@@ -526,8 +798,12 @@ def section_workflows(client: GitHubClient, repo: str, crons_by_path: dict[str, 
             item["failed_runs_not_inspected"] = len(recent_failed) - MAX_FAILED_RUNS_PER_WORKFLOW
         items.append(item)
 
-    # Annotations: newest failures first, across workflows, under a global cap.
+    # Annotations and, where those don't explain the failure, one job-log
+    # line. Newest failures first, across workflows, under a global cap.
+    # Recovered workflows are included: a later success does not drop a
+    # failure that is still inside the 48h window.
     failed_candidates.sort(key=lambda t: t[0], reverse=True)
+    log_budget = [MAX_LOG_FETCHES]
     for i, (_, run, item) in enumerate(failed_candidates):
         item.setdefault("failed_runs", [])
         if i >= MAX_FAILED_RUNS_INSPECTED:
@@ -536,7 +812,7 @@ def section_workflows(client: GitHubClient, repo: str, crons_by_path: dict[str, 
                                         "conclusion": run.get("conclusion"),
                                         "unavailable": "not inspected (per-run cap on failed-run lookups)"})
             continue
-        item["failed_runs"].append(_failed_run_detail(client, repo, run))
+        item["failed_runs"].append(_failed_run_detail(client, repo, run, log_budget))
 
     def names(flag: str) -> list[str]:
         return [w["name"] for w in items if (w.get("flags") or {}).get(flag)]
@@ -690,8 +966,13 @@ FIELD_NOTES = {
     "flags.not_running": "scheduled workflow with no run of any kind for more than 2 x cron_interval_h "
                          "(the longest gap between its cron fire times), or disabled; null = not scheduled",
     "flags.recovered": "latest completed run succeeded after a failure in the last 48h",
-    "failed_runs": "failed runs from the last 48h: failed jobs, failed steps and key annotations "
-                   "(Node.js-deprecation and runner-label notices dropped)",
+    "failed_runs": "failed runs from the last 48h, kept after the workflow recovers. "
+                   "summary is one line: failed job/step plus the first specific annotation, "
+                   "or the first substantive job-log error line when annotations are only "
+                   "'Process completed with exit code N.' (pip 'Ignored the following' notes "
+                   "and Node.js/runner-label notices dropped)",
+    "failed_runs[].summary": "bounded one-line cause for that failed run "
+                             "(job / step: error line or annotation)",
     "unavailable": "this section or item could not be read; counts there are null, never 0",
 }
 

@@ -81,18 +81,26 @@ class FakeSession:
         self.routes = routes
         self.requests: list[tuple[str, dict]] = []
 
-    def get(self, url, headers=None, timeout=None):
+    def get(self, url, headers=None, timeout=None, **kwargs):
         self.requests.append((url, dict(headers or {})))
         parts = urlsplit(url)
-        assert parts.scheme == "https" and parts.netloc == "api.github.com", url
+        assert parts.scheme == "https", url
         query = {k: v[0] for k, v in parse_qs(parts.query).items()}
-        r = self.routes.get(parts.path)
+        # API routes are keyed by path. A log redirect is keyed by the full
+        # https URL without its signed query string.
+        no_query = url.split("?", 1)[0]
+        r = self.routes.get(no_query)
+        if r is None and parts.netloc == "api.github.com":
+            r = self.routes.get(parts.path)
         if r is None:
             return FakeResp(404, {"message": "Not Found"})
         if callable(r):
             r = r(query, headers or {})
         if isinstance(r, Exception):
             raise r
+        if isinstance(r, tuple) and len(r) == 3:
+            status, body, hdrs = r
+            return FakeResp(status, body, hdrs)
         status, body = r
         return FakeResp(status, body)
 
@@ -312,6 +320,81 @@ class TestAnnotations:
             {"level": "failure", "title": "", "message": ""}]
 
 
+# The 2026-10-17 crypto-odds-daily log (run 39052317800). Annotations carried
+# only "Process completed with exit code 1."; the cause was this pip error.
+SCIPY_LOG = (
+    "2026-10-17T17:06:56.9686166Z ERROR: Ignored the following yanked versions: 1.11.0\n"
+    "2026-10-17T17:06:56.9694920Z ERROR: Ignored the following versions that require a "
+    "different python version: 1.18.1 Requires-Python >=3.12\n"
+    "2026-10-17T17:06:56.9702535Z ERROR: Could not find a version that satisfies the "
+    "requirement scipy==1.18.1 (from versions: 1.11.4, 1.12.0)\n"
+    "2026-10-17T17:06:56.9704920Z \x1b[31mERROR: No matching distribution found for "
+    "scipy==1.18.1\x1b[0m\n"
+    "2026-10-17T17:06:57.0121998Z ##[error]Process completed with exit code 1.\n"
+)
+
+
+class TestFailureSummary:
+    def test_scipy_log_picks_the_one_line_cause(self, pgs):
+        assert pgs.first_error_line(SCIPY_LOG) == (
+            "ERROR: No matching distribution found for scipy==1.18.1")
+
+    def test_generic_exit_and_platform_noise_are_not_a_cause(self, pgs):
+        text = (
+            "2026-10-17T17:06:57.0121998Z ##[error]Process completed with exit code 1.\n"
+            "2026-10-17T17:06:57.0200000Z ##[warning]" + NODE_DEPRECATION + "\n"
+        )
+        assert pgs.first_error_line(text) is None
+
+    def test_exception_line_and_group_error_are_kept(self, pgs):
+        assert pgs.first_error_line(
+            "2026-10-17T00:00:00.0000000Z ModuleNotFoundError: No module named 'scipy'\n"
+        ) == "ModuleNotFoundError: No module named 'scipy'"
+        assert pgs.first_error_line(
+            "##[error]The runner has received a shutdown signal\n"
+        ) == "The runner has received a shutdown signal"
+
+    def test_ignored_pip_note_is_a_fallback_only(self, pgs):
+        only = "ERROR: Ignored the following yanked versions: 1.11.0\n"
+        assert pgs.first_error_line(only) == "ERROR: Ignored the following yanked versions: 1.11.0"
+
+    def test_long_line_is_clipped(self, pgs):
+        line = pgs.first_error_line("ERROR: " + "x" * 500)
+        assert line.endswith("…") and len(line) <= pgs.MAX_ERROR_LINE
+
+    def test_summary_names_the_job_and_step(self, pgs):
+        assert pgs.failure_summary(
+            "run", ["Install engine dependencies"],
+            "ERROR: No matching distribution found for scipy==1.18.1",
+        ) == ("run / Install engine dependencies: "
+              "ERROR: No matching distribution found for scipy==1.18.1")
+        assert pgs.failure_summary("pytest", [], None) == "pytest failed"
+        assert pgs.annotation_cause([
+            {"message": "Process completed with exit code 1."},
+            {"title": "TSA", "message": "HTTP Error 403: Forbidden"},
+        ]) == "TSA: HTTP Error 403: Forbidden"
+        # select_annotations ranks the specific line first; either order works.
+        assert pgs.annotation_cause([
+            {"message": "Process completed with exit code 1."},
+        ]) is None
+
+    def test_log_read_stops_at_the_byte_cap(self, pgs):
+        class Chunked:
+            def iter_content(self, chunk_size=8192):
+                yield b"ERROR: "
+                yield b"No matching distribution found for scipy==1.18.1\n"
+                yield b"x" * 1000
+
+            def close(self):
+                self.closed = True
+
+        resp = Chunked()
+        text = pgs._bounded_text(resp, 20)
+        assert text == "ERROR: No matching d"
+        assert resp.closed is True
+        assert len(text.encode()) <= 20
+
+
 def test_summarize_checks(pgs):
     s = pgs.summarize_checks
     assert s([]) == {"conclusion": "none", "total": 0}
@@ -386,15 +469,127 @@ class TestBuildStatus:
         assert [a["message"] for a in job[0]["annotations"]] == [
             "tsa.gov: HTTPError: HTTP Error 403: Forbidden", "Process completed with exit code 1."]
         assert all("path" not in a for a in job[0]["annotations"])       # ".github" is noise
+        # Recovered, and the annotation already says why: no log fetch.
+        assert tsa["flags"]["recovered"] is True
+        assert tsa["failed_runs"][0]["summary"] == (
+            "run / Fetch TSA throughput snapshot: "
+            "TSA not refreshed: tsa.gov: HTTPError: HTTP Error 403: Forbidden")
+        assert not any(p.endswith("/actions/jobs/9202/logs") for p in session.paths())
         # Per-workflow cap: 3 recent failures, 2 inspected, the rest counted.
         tests = _wf(doc, "tests")
         assert [f["run_id"] for f in tests["failed_runs"]] == [301, 302]
         assert tests["failed_runs_not_inspected"] == 1
-        # An annotations 403 is recorded on that job only.
+        # An annotations 403 is recorded on that job only. With no specific
+        # annotation, the log is attempted and a one-line summary still lands.
         assert tests["failed_runs"][0]["jobs"][0]["annotations_unavailable"].startswith("HTTP 403")
+        assert tests["failed_runs"][0]["jobs"][0]["log_unavailable"].startswith("HTTP 404")
+        assert tests["failed_runs"][0]["summary"] == "pytest / Run tests failed"
         assert tests["failed_runs"][1]["jobs"][0]["annotations"] == []
-        assert f"/repos/{REPO}/actions/runs/303/jobs" not in session.paths()
-        assert f"/repos/{REPO}/actions/runs/203/jobs" not in session.paths()
+        assert tests["failed_runs"][1]["summary"] == "pytest failed"
+        paths = session.paths()
+        assert any(p.endswith("/actions/jobs/9301/logs") for p in paths)
+        assert any(p.endswith("/actions/jobs/9302/logs") for p in paths)
+        assert f"/repos/{REPO}/actions/runs/303/jobs" not in paths
+        assert f"/repos/{REPO}/actions/runs/203/jobs" not in paths
+
+    def test_recovered_run_keeps_a_log_summary(self, pgs):
+        """crypto-odds-daily run 39052317800: latest run succeeded, the failure
+        30h earlier is inside the 48h window, and its only annotation is the
+        generic exit line. The summary has to come from the job log, and the
+        token must not follow the log redirect off api.github.com."""
+        base = f"/repos/{REPO}"
+        job_id = 117453217631
+        run_id = 39052317800
+        blob = "https://productionresultssa5.blob.core.windows.net/actions-results/job-logs.txt"
+        routes = {
+            f"{base}/actions/workflows": (200, {"workflows": [{
+                "id": 7, "name": "crypto-odds-daily",
+                "path": ".github/workflows/crypto-odds-daily.yml",
+                "state": "active", "created_at": "2026-01-01T00:00:00Z",
+                "html_url": f"https://github.com/{REPO}/blob/main/.github/workflows/crypto-odds-daily.yml",
+            }]}),
+            f"{base}/actions/workflows/7/runs": (200, {"workflow_runs": [
+                run(39061149848, 2, "success", "workflow_dispatch"),
+                run(run_id, 30, "failure", "schedule"),
+                run(111, 50, "failure", "schedule"),
+            ]}),
+            f"{base}/actions/runs/{run_id}/jobs": (200, {"jobs": [{
+                "id": job_id, "name": "run", "conclusion": "failure",
+                "html_url": f"https://github.com/{REPO}/actions/runs/{run_id}/job/{job_id}",
+                "steps": [
+                    {"name": "Set up job", "conclusion": "success"},
+                    {"name": "Set up Python", "conclusion": "success"},
+                    {"name": "Install engine dependencies", "conclusion": "failure"},
+                    {"name": "Build odds.json from live Deribit chains", "conclusion": "skipped"},
+                ],
+            }]}),
+            f"{base}/check-runs/{job_id}/annotations": (200, [
+                {"annotation_level": "failure", "title": "",
+                 "message": "Process completed with exit code 1.", "path": ".github"},
+            ]),
+            f"{base}/actions/jobs/{job_id}/logs": (
+                302, "", {"Location": blob + "?sig=SIGVALUE_DO_NOT_LEAK"}),
+            blob: (200, SCIPY_LOG),
+        }
+        client, session = _client(pgs, routes)
+        sec = pgs.section_workflows(
+            client, REPO,
+            {".github/workflows/crypto-odds-daily.yml": ["15 14 * * *"]}, NOW)
+        item = sec["items"][0]
+        assert item["flags"]["recovered"] is True
+        assert item["flags"]["failed_last_24h"] is False
+        assert sec["recovered"] == ["crypto-odds-daily"]
+        assert [f["run_id"] for f in item["failed_runs"]] == [run_id]   # the 50h failure is outside
+        failed = item["failed_runs"][0]
+        assert failed["summary"] == (
+            "run / Install engine dependencies: "
+            "ERROR: No matching distribution found for scipy==1.18.1")
+        assert "Process completed with exit code" not in failed["summary"]
+        assert failed["jobs"][0]["error_line"] == (
+            "ERROR: No matching distribution found for scipy==1.18.1")
+        assert failed["jobs"][0]["annotations"][0]["message"] == "Process completed with exit code 1."
+        blob_reqs = [(u, h) for u, h in session.requests if "blob.core.windows.net" in u]
+        assert len(blob_reqs) == 1
+        assert "Authorization" not in blob_reqs[0][1]
+        assert "sig=" not in blob_reqs[0][1].get("Authorization", "")
+        api_logs = [(u, h) for u, h in session.requests if u.split("?")[0].endswith(f"/jobs/{job_id}/logs")]
+        assert api_logs and api_logs[0][1].get("Authorization", "").startswith("Bearer ")
+        assert "SIGVALUE_DO_NOT_LEAK" not in json.dumps(sec)
+        assert f"/repos/{REPO}/actions/runs/111/jobs" not in session.paths()
+
+    def test_log_failure_stays_off_the_blob_url_and_still_summarizes(self, pgs):
+        base = f"/repos/{REPO}"
+        job_id = 42
+        blob = "https://productionresultssa5.blob.core.windows.net/actions-results/job-logs.txt"
+        routes = {
+            f"{base}/actions/workflows": (200, {"workflows": [{
+                "id": 7, "name": "crypto-odds-daily",
+                "path": ".github/workflows/crypto-odds-daily.yml", "state": "active",
+            }]}),
+            f"{base}/actions/workflows/7/runs": (200, {"workflow_runs": [
+                run(2, 1, "success"), run(1, 5, "failure"),
+            ]}),
+            f"{base}/actions/runs/1/jobs": (200, {"jobs": [{
+                "id": job_id, "name": "run", "conclusion": "failure",
+                "steps": [{"name": "Install engine dependencies", "conclusion": "failure"}],
+            }]}),
+            f"{base}/check-runs/{job_id}/annotations": (200, [
+                {"annotation_level": "failure", "message": "Process completed with exit code 1."},
+            ]),
+            f"{base}/actions/jobs/{job_id}/logs": (
+                302, "", {"Location": blob + "?sig=SIGVALUE_DO_NOT_LEAK"}),
+            blob: ConnectionError(
+                "connection reset by peer for https://productionresultssa5.blob.core.windows.net"
+                "/actions-results/job-logs.txt?sig=SIGVALUE_DO_NOT_LEAK"),
+        }
+        client, _ = _client(pgs, routes)
+        sec = pgs.section_workflows(client, REPO, {}, NOW)
+        failed = sec["items"][0]["failed_runs"][0]
+        assert failed["summary"] == (
+            "run / Install engine dependencies: Process completed with exit code 1.")
+        assert "SIGVALUE_DO_NOT_LEAK" not in json.dumps(sec)
+        assert "blob.core.windows.net" not in json.dumps(sec)
+        assert sec["items"][0]["flags"]["recovered"] is True
 
     def test_prs_issues_and_alerts(self, pgs, tmp_path):
         doc, _, _ = _build(pgs, tmp_path)
