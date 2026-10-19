@@ -57,6 +57,36 @@ def test_codeql_pin_comment_matches_its_major():
     assert "8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v3" not in text
 
 
+def test_codeql_action_steps_share_one_pin():
+    """init, autobuild, and analyze must be the same release. A mixed
+    workflow fails Analyze Python: the later step loads a config written
+    by a different codeql-action version."""
+    text = (WORKFLOWS / "codeql.yml").read_text()
+    pins = re.findall(
+        r"github/codeql-action/(?:init|autobuild|analyze)@([0-9a-f]{40})\s+#\s+(v\S+)",
+        text,
+    )
+    assert len(pins) == 3
+    assert len({sha for sha, _comment in pins}) == 1
+    assert len({comment for _sha, comment in pins}) == 1
+
+
+def test_dependabot_groups_codeql_action_updates():
+    document = yaml.safe_load(
+        (WORKFLOWS.parent / "dependabot.yml").read_text(encoding="utf-8")
+    )
+    actions = [entry for entry in document["updates"] if entry["package-ecosystem"] == "github-actions"]
+    assert len(actions) == 1
+    patterns = [
+        pattern
+        for group in actions[0]["groups"].values()
+        for pattern in (group.get("patterns") or [])
+    ]
+    assert "github/codeql-action/*" in patterns
+    pip = next(entry for entry in document["updates"] if entry["package-ecosystem"] == "pip")
+    assert set(pip["groups"]) == {"patch-updates", "minor-updates"}
+
+
 def test_codeql_and_trufflehog_pin_an_explicit_ubuntu_image():
     for wf in ("codeql.yml", "trufflehog-weekly.yml"):
         doc = yaml.safe_load((WORKFLOWS / wf).read_text())

@@ -41,3 +41,11 @@ updates:
     directory: "/"
     schedule: { interval: "weekly", day: "monday", time: "06:00", timezone: "America/Los_Angeles" }
     open-pull-requests-limit: 5
+    # init, autobuild, and analyze must be the same release. CodeQL fails
+    # the job when a workflow mixes versions ("Loaded a configuration file
+    # for version '4.38.3', but running version '4.39.0'"). Dependabot
+    # otherwise opens one PR per sub-action. Other actions stay ungrouped.
+    groups:
+      codeql-action:
+        patterns:
+          - "github/codeql-action/*"
