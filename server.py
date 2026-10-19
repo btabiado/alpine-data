@@ -1139,7 +1139,7 @@ def api_status_json() -> Response:
     """Live upstream-API reachability snapshot (TTL-cached ~60s).
 
     Probes the fixed allowlist in api_status.TARGETS in parallel and reports
-    up / auth-gated / rate-limited / blocked / down per source. Distinct from
+    up / auth-gated / rate-limited / blocked / down / retired per source. Distinct from
     /healthz (this server) and /health/ (cached-data freshness)."""
     snap = api_status.get_status(ttl=60.0)
     return jsonify(snap)

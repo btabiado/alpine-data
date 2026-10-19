@@ -4211,13 +4211,13 @@ def naked_pocs(price_series: list[dict], volume_series: list[dict],
 # The two whale composites below used to stamp themselves with
 # ``whale["fetched_at"][:10]`` — the wall clock at fetch time. That advances
 # on every run whether or not a single on-chain number moved, and the whale
-# tree is stale-kept in pieces (bitinfocharts falls back to the previous
-# distribution, glassnode/etherscan fall back to data/.stale/*.json), so a
-# completely failed refresh still came out wearing today's date.
+# tree is stale-kept in pieces (the retired cohort table falls back to the
+# previous distribution, glassnode/etherscan fall back to data/.stale/*.json),
+# so a completely failed refresh still came out wearing today's date.
 #
 # The underlying proxy series all carry REAL observation dates
-# (blockchain.info charts, bitinfocharts cohort rows, Coin Metrics, the
-# synthesized Etherscan blocks/day series). Those dates are frozen by
+# (blockchain.info charts, cohort rows when a payload still has them, Coin
+# Metrics, the synthesized Etherscan blocks/day series). Those dates are frozen by
 # construction: carry a payload forward and its dates come with it.
 #
 # So: each contributing component reports the observation date of the series
@@ -4252,7 +4252,7 @@ def _obs_date_of_series(series) -> str | None:
 
 
 def _obs_date_of_row(row) -> str | None:
-    """Observation date of a single dated row (e.g. a bitinfocharts cohort)."""
+    """Observation date of a single dated row (e.g. a supply-cohort bucket)."""
     if not isinstance(row, dict):
         return None
     d = row.get("date")
@@ -4264,7 +4264,8 @@ def compute_whale_sentiment(whale: dict) -> dict | None:
     proxies (no new API calls). Six components, drawing on Glassnode-style
     framing translated to free data:
 
-      ±20  Whale supply Δ30d (bitinfocharts cohorts, ≥1K BTC addresses)
+      ±20  Whale supply Δ30d (address-balance cohorts, ≥1K BTC addresses).
+           Omitted while that series is a known gap (see btc_cohort_distribution).
       ±20  Hash rate vs 30d mean (miner confidence proxy)
       ±15  Miner revenue vs 30d mean (selling-pressure inverse)
       ±15  Avg tx USD z-score(30d) (larger-ticket flow = whale-shaped)
@@ -4278,9 +4279,14 @@ def compute_whale_sentiment(whale: dict) -> dict | None:
     if not isinstance(whale, dict):
         return None
     btc = whale.get("btc") or {}
-    dist = (whale.get("distribution") or {}).get("buckets") or []
-    if len(dist) < 31:
-        return None
+    dist_block = whale.get("distribution") if isinstance(whale.get("distribution"), dict) else {}
+    dist = dist_block.get("buckets") or []
+    # A retired cohort table is kept for the chart but must not pin this
+    # composite's as_of to the last day bitinfocharts answered. Historical
+    # payloads (backfill) have no flag and still contribute the component.
+    cohort_gap = bool(
+        dist_block.get("unavailable") or dist_block.get("status") == "known_gap"
+    )
 
     def _last_values(series: list[dict], n: int) -> list[float]:
         vals = [r.get("value") for r in (series or []) if isinstance(r, dict) and r.get("value") is not None]
@@ -4334,15 +4340,18 @@ def compute_whale_sentiment(whale: dict) -> dict | None:
         else:
             undated += 1
 
-    # 1) Whale supply 30d Δ — ±20 saturates at ±1%
-    sup_now = _whale_supply(dist[-1])
-    sup_30 = _whale_supply(dist[-31])
-    if sup_30:
-        sup_delta = (sup_now - sup_30) / sup_30 * 100
-        c = _clamp(sup_delta / 1.0 * 20, -20, 20)
-        add("Whale supply Δ30d", f"{sup_delta:+.2f}%", c,
-            "whales accumulating" if c > 0 else "whales distributing" if c < 0 else "flat",
-            _obs_date_of_row(dist[-1]))
+    # 1) Whale supply 30d Δ — ±20 saturates at ±1%. Skipped on a known gap
+    #    (too few rows, or the retired bitinfocharts series). The other
+    #    components still produce a score so the job does not go null.
+    if not cohort_gap and len(dist) >= 31:
+        sup_now = _whale_supply(dist[-1])
+        sup_30 = _whale_supply(dist[-31])
+        if sup_30:
+            sup_delta = (sup_now - sup_30) / sup_30 * 100
+            c = _clamp(sup_delta / 1.0 * 20, -20, 20)
+            add("Whale supply Δ30d", f"{sup_delta:+.2f}%", c,
+                "whales accumulating" if c > 0 else "whales distributing" if c < 0 else "flat",
+                _obs_date_of_row(dist[-1]))
 
     # 2) Hash rate vs 30d mean — ±20 saturates at ±10%
     hr = _pct_vs_mean30("hash_rate")
@@ -4409,9 +4418,19 @@ def compute_whale_sentiment(whale: dict) -> dict | None:
         # whale tree advances this while every date above stays frozen,
         # which is exactly why it may never be the headline stamp.
         "fetched_at": whale.get("fetched_at"),
-        "disclaimer": ("Proxy composite from free blockchain.info + bitinfocharts "
-                       "cohorts. Not a Glassnode metric — directional indicator, "
-                       "not a trading signal."),
+        "disclaimer": (
+            ("Proxy composite from free blockchain.info charts (hash rate, "
+              "miner revenue, average transaction size, output volume, active "
+              "addresses). The ≥1,000 BTC supply Δ30d component is a known gap: "
+              "bitinfocharts was retired on 2026-10-19 after HTTP 403, and "
+              "blockchain.info, mempool.space, and Blockchair do not publish an "
+              "equivalent. Not a Glassnode metric — directional indicator, "
+              "not a trading signal.")
+            if cohort_gap else
+            ("Proxy composite from free blockchain.info charts plus the "
+             "address-balance cohort table carried in this payload. Not a "
+             "Glassnode metric — directional indicator, not a trading signal.")
+        ),
     }
 
 
@@ -6537,8 +6556,9 @@ def glassnode_btc_whale_metrics() -> dict:
     """Optional: pull true whale cohort metrics from Glassnode Studio.
 
     Env-gated by GLASSNODE_API_KEY. If unset (or 403 returned for higher-tier
-    metrics), returns an empty dict and the dashboard falls back to free
-    bitinfocharts data + the activity proxy chart.
+    metrics), returns an empty dict and the dashboard keeps the free
+    blockchain.info activity proxies. The address-balance cohort chart is a
+    known gap (bitinfocharts retired 2026-10-19); it is not a live fallback.
 
     Each call is independent — partial tier access is fine; failures skip
     the missing series rather than aborting the whole batch.
@@ -6596,115 +6616,127 @@ def glassnode_btc_whale_metrics() -> dict:
     return out if isinstance(out, dict) else {}
 
 
-def _bitinfocharts_cached_distribution() -> dict:
-    """Return the previous `distribution` dict from data/whale.json, if any.
-    Used as the last-line fallback when the live scrape parses zero rows
-    (page restructure, anti-bot block, etc.) so the dashboard doesn't blow
-    away a known-good payload."""
+# Address-balance cohort supply: eight bands (0–0.1 … 100K–1M BTC). The last
+# three are the ≥1,000 BTC whale cohort. bitinfocharts.com was the only free
+# source of the daily history. The 2026-10-19 daily audit recorded that host
+# blocked (HTTP 403). Checked the keyless sources this job already uses:
+# blockchain.info charts (no balance-band series), mempool.space (per-address
+# and mempool stats only), Blockchair /stats (aggregate network stats, not
+# cohort supply). None publish an equivalent. A new key (Glassnode, CryptoQuant)
+# is out of scope. The fetcher does not request bitinfocharts — no user-agent
+# swap, proxy, or header workaround. Last good rows are kept and flagged.
+BTC_COHORT_LABELS = [
+    "0-0.1", "0.1-1", "1-10", "10-100",
+    "100-1K", "1K-10K", "10K-100K", "100K-1M",
+]
+BTC_COHORT_STALE_KEY = "btc_cohort_distribution"
+BTC_COHORT_GAP_REASON = (
+    "BTC address-balance cohort supply (eight balance bands, including "
+    "addresses holding ≥1,000 BTC) has no equivalent on blockchain.info, "
+    "mempool.space, or Blockchair. bitinfocharts.com, the previous source, "
+    "returned HTTP 403 on 2026-10-19 (daily audit) and is retired — this job "
+    "does not request it. Last good rows are kept for the chart and marked "
+    "stale; they are not a live observation."
+)
+
+
+def _cohort_as_of(buckets) -> str | None:
+    if not isinstance(buckets, list):
+        return None
+    for row in reversed(buckets):
+        if not isinstance(row, dict):
+            continue
+        d = row.get("date")
+        if isinstance(d, str) and len(d) >= 10:
+            return d[:10]
+    return None
+
+
+def _cohort_buckets(blob) -> list:
+    if not isinstance(blob, dict):
+        return []
+    rows = blob.get("buckets")
+    if not isinstance(rows, list):
+        return []
+    return [r for r in rows if isinstance(r, dict) and r.get("date")]
+
+
+def _cohort_gap(buckets: list, historical_source: str | None) -> dict:
+    return {
+        "labels": list(BTC_COHORT_LABELS),
+        "buckets": buckets,
+        "source": "known-gap",
+        "historical_source": historical_source or "bitinfocharts.com",
+        "stale": True,
+        "unavailable": True,
+        "status": "known_gap",
+        "as_of": _cohort_as_of(buckets),
+        "reason": BTC_COHORT_GAP_REASON,
+        "note": (
+            "Known gap since 2026-10-19. The chart may show the last good "
+            "cohort snapshot; the live whale-sentiment composite does not use it."
+        ),
+    }
+
+
+def _cohort_from_previous_whale() -> tuple[list, str | None]:
+    """Last distribution embedded in data/whale.json, if a previous run left one."""
     try:
         prev = json.loads((CACHE / "whale.json").read_text())
-        d = (prev or {}).get("distribution") or {}
-        if isinstance(d, dict) and d.get("buckets"):
-            print("  [stale-keep] whale.distribution kept from previous fetch",
-                  file=sys.stderr)
-            return d
     except Exception as e:
-        print(f"  [stale-keep] whale.distribution suppressed: {type(e).__name__}", file=sys.stderr)
-    return {}
+        print(f"  [cohort] previous whale.json unreadable: {type(e).__name__}",
+              file=sys.stderr)
+        return [], None
+    dist = (prev or {}).get("distribution") if isinstance(prev, dict) else None
+    if not isinstance(dist, dict):
+        return [], None
+    src = dist.get("historical_source") or dist.get("source")
+    if src == "known-gap":
+        src = dist.get("historical_source") or "bitinfocharts.com"
+    return _cohort_buckets(dist), src if isinstance(src, str) else None
 
 
-def bitinfocharts_btc_distribution() -> dict:
-    """BTC supply held per address-balance cohort, daily, ~5 years back.
+def btc_cohort_distribution() -> dict:
+    """Last-good BTC supply by address-balance cohort, flagged as a known gap.
 
-    Source: bitinfocharts.com/bitcoin-distribution-history.html — they publish
-    the Dygraph data inline as `[new Date("YYYY/MM/DD"), v1, v2, ..., v8]`
-    arrays. Each row is one day; the 8 values are supply (BTC) held by
-    addresses in each balance band:
-
-        0-0.1, 0.1-1, 1-10, 10-100, 100-1K, 1K-10K, 10K-100K, 100K-1M
-
-    The last three columns (≥1,000 BTC) are the whale cohort.
-
-    Returns:
-        {
-            "labels": [...],
-            "buckets": [
-                {"date": "YYYY-MM-DD",
-                 "b0_01": ..., "b01_1": ..., "b1_10": ..., "b10_100": ...,
-                 "b100_1k": ..., "b1k_10k": ..., "b10k_100k": ..., "b100k_1m": ...},
-                ...
-            ],
-            "source": "bitinfocharts.com",
-        }
-
-    Defensive guards:
-      * Each captured cell is type-guarded before `.strip()` — the regex can
-        in theory hand back non-string match groups under exotic re flags;
-        only strings are stripped, others are skipped.
-      * If 0 rows are parsed (network, anti-bot 403, HTML restructure) the
-        previous `distribution` from `data/whale.json` is reused if present
-        instead of returning empty and clobbering the cached payload.
+    Does not contact bitinfocharts. Reads ``data/.stale/btc_cohort_distribution.json``
+    first, then the previous ``data/whale.json`` distribution (seeding the stale
+    cache once so a later rewrite of whale.json cannot drop the rows). An empty
+    cache, or any unexpected error, returns the same unavailable envelope with
+    ``buckets: []`` — the whale job continues, and the live composite omits
+    this component.
     """
     try:
-        r = requests.get(
-            "https://bitinfocharts.com/bitcoin-distribution-history.html",
-            headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X)"},
-            timeout=30,
-        )
-        if r.status_code != 200 or not r.text:
-            print(f"  [skip] bitinfocharts -> {r.status_code}", file=sys.stderr)
-            return _bitinfocharts_cached_distribution()
-    except Exception as e:
-        print(f"  [skip] bitinfocharts -> {e}", file=sys.stderr)
-        return _bitinfocharts_cached_distribution()
-
-    pattern = re.compile(
-        r'\[new Date\("(\d{4}/\d{1,2}/\d{1,2})"\)((?:,\s*-?\d+(?:\.\d+)?|,\s*null)+)\]'
-    )
-    rows = []
-    for m in pattern.finditer(r.text):
-        # Pad single-digit month / day to 2 chars
-        try:
-            d = datetime.strptime(m.group(1), "%Y/%m/%d").strftime("%Y-%m-%d")
-        except ValueError:
-            continue
-        # Type-guard each split fragment: only call .strip() on strings.
-        raw_cells = m.group(2).strip(",").split(",")
-        vals: list[str] = []
-        for v in raw_cells:
-            if isinstance(v, str):
-                vals.append(v.strip())
+        cached = _stale_load(BTC_COHORT_STALE_KEY)
+        buckets = _cohort_buckets(cached)
+        historical = None
+        if isinstance(cached, dict):
+            historical = cached.get("historical_source") or cached.get("source")
+            if historical == "known-gap":
+                historical = cached.get("historical_source")
+        if not buckets:
+            buckets, historical = _cohort_from_previous_whale()
+            if buckets:
+                # Seed once. Saving again on later runs would reset stale_age_sec
+                # and make a frozen series look freshly observed.
+                _stale_save(BTC_COHORT_STALE_KEY, {
+                    "labels": list(BTC_COHORT_LABELS),
+                    "buckets": buckets,
+                    "historical_source": historical or "bitinfocharts.com",
+                })
+                print("  [cohort] seeded last-good distribution into the stale cache",
+                      file=sys.stderr)
             else:
-                # Non-str token — skip the whole row defensively.
-                vals = []
-                break
-        if len(vals) != 8:
-            continue
-        try:
-            parsed = [None if v == "null" else float(v) for v in vals]
-        except ValueError:
-            continue
-        rows.append({
-            "date": d,
-            "b0_01":     parsed[0],
-            "b01_1":     parsed[1],
-            "b1_10":     parsed[2],
-            "b10_100":   parsed[3],
-            "b100_1k":   parsed[4],
-            "b1k_10k":   parsed[5],
-            "b10k_100k": parsed[6],
-            "b100k_1m":  parsed[7],
-        })
-    if not rows:
-        print("  [skip] bitinfocharts: no rows parsed", file=sys.stderr)
-        return _bitinfocharts_cached_distribution()
-    return {
-        "labels": ["0-0.1", "0.1-1", "1-10", "10-100",
-                   "100-1K", "1K-10K", "10K-100K", "100K-1M"],
-        "buckets": rows,
-        "source": "bitinfocharts.com",
-        "note": "BTC supply held per address-balance cohort. ≥1,000 BTC = whale.",
-    }
+                print("  [cohort] no last-good distribution; recording the known gap",
+                      file=sys.stderr)
+        else:
+            print("  [cohort] serving last-good distribution (known gap, not refreshed)",
+                  file=sys.stderr)
+        return _cohort_gap(buckets, historical if isinstance(historical, str) else None)
+    except Exception as e:
+        print(f"  [cohort] known-gap envelope after {type(e).__name__}: {e}",
+              file=sys.stderr)
+        return _cohort_gap([], None)
 
 
 async def _fetch_whale_async(btc_price_usd: float | None = None) -> dict:
@@ -6732,7 +6764,7 @@ async def _fetch_whale_async(btc_price_usd: float | None = None) -> dict:
         eth_bc, eth_large_txs, eth_cm, eth_etherscan, multichain,
     ) = await asyncio.gather(
         _timed("whale_proxies_btc",                _bg_call(whale_proxies_btc)),
-        _timed("bitinfocharts_btc_distribution",   _bg_call(bitinfocharts_btc_distribution)),
+        _timed("btc_cohort_distribution",          _bg_call(btc_cohort_distribution)),
         _timed("glassnode_btc_whale_metrics",      _bg_call(glassnode_btc_whale_metrics)),
         _timed("mempool_whale_transactions",       _whale_tx()),
         _timed("blockchair_eth_stats",             _bg_call(blockchair_eth_stats)),
@@ -6756,8 +6788,11 @@ async def _fetch_whale_async(btc_price_usd: float | None = None) -> dict:
         },
         "multichain": multichain,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "note": ("Free: blockchain.info + bitinfocharts cohorts + mempool.space "
-                 "tx scan. ETH side via Blockchair + Coin Metrics. "
+        "note": ("Free: blockchain.info charts + mempool.space tx scan. "
+                 "BTC address-balance cohorts are a known gap (bitinfocharts "
+                 "retired 2026-10-19 after HTTP 403); last good rows are kept "
+                 "stale and are not a live observation. "
+                 "ETH side via Blockchair + Coin Metrics. "
                  "Multichain (LTC/BCH/DOGE) via Blockchair /stats. "
                  "Glassnode auto-activates when GLASSNODE_API_KEY is set. "
                  "Etherscan 90d blocks-per-day series activates when "

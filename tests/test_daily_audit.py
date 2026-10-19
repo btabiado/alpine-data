@@ -343,6 +343,19 @@ class TestProblems:
         assert dar.data_problems(_data()) == []
         assert dar.ux_problems(_ux()) == []
 
+    def test_retired_upstream_is_not_a_blocked_finding(self, dar):
+        """bitinfocharts is a by-design retirement (2026-10-19 audit), not a
+        new outage. A still-blocked source on the same snapshot stays a P2."""
+        d = _data()
+        d["api_status"]["verdicts"] = {
+            "bitinfocharts": "retired",
+            "Farside (ETF flows)": "blocked",
+        }
+        probs = dar.data_problems(d)
+        ids = {p["id"] for p in probs}
+        assert "api:bitinfocharts" not in ids
+        assert "api:Farside (ETF flows)" in ids
+
     def test_feed_failure_is_p0_and_suppressed_is_not_a_problem(self, dar):
         d = _data()
         d["data_health"]["results"].append({"path": "data-b.json", "status": "stale", "age_h": 50, "limit_h": 24})

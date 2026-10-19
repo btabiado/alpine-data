@@ -9,8 +9,9 @@
     "auth_required": 2,
     "rate_limited": 0,
     "degraded": 1,
-    "blocked": 2,
+    "blocked": 1,
     "down": 0,
+    "retired": 1,
     "reachable": 51,
     "keyed": 15,
     "keys_set": 9,
@@ -838,9 +839,9 @@
       "label": "bitinfocharts",
       "category": "Whale",
       "host": "bitinfocharts.com",
-      "status": 403,
-      "latency_ms": 47,
-      "verdict": "blocked",
+      "status": null,
+      "latency_ms": null,
+      "verdict": "retired",
       "reachable": false,
       "needs_key": false,
       "key_present": null,
@@ -848,7 +849,7 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": "Forbidden"
+      "note": "Retired 2026-10-19 (daily audit): HTTP 403, no longer a dependency. Cohort supply is a known gap; last good values stay stale. Not probed."
     },
     {
       "label": "blockchain.info",

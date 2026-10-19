@@ -197,11 +197,19 @@ def whale_series(whale: Dict[str, Any], asset: str, key: str) -> List[Dict[str, 
 
 
 def whale_distribution(whale: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Return ``whale['distribution']['buckets']`` if any (BTC cohort series)."""
+    """Return live ``whale['distribution']['buckets']`` (BTC cohort series).
+
+    A payload flagged ``unavailable`` or ``status == "known_gap"`` is the
+    retired bitinfocharts snapshot (2026-10-19). Those rows stay in the file
+    for the chart, but they are not a current observation, so scoring sees
+    an empty series and the institutional pillar renormalizes.
+    """
     if not isinstance(whale, dict):
         return []
     dist = whale.get("distribution")
     if not isinstance(dist, dict):
+        return []
+    if dist.get("unavailable") or dist.get("status") == "known_gap":
         return []
     buckets = dist.get("buckets")
     if isinstance(buckets, list):

@@ -352,9 +352,13 @@ Zero. FRED is a public-good service.
 
 ## 6. Glassnode (optional — true whale-cohort metrics)
 
-The Whale tab already shows free supply-cohort data scraped from
-bitinfocharts.com (whales vs non-whales BTC held over time). For
-**richer cohort flow metrics** — number of whale addresses over time,
+The Whale tab's live BTC proxies come from blockchain.info. The
+supply-cohort chart (whales vs non-whales BTC held over time) used to
+be scraped from bitinfocharts.com. That host returned HTTP 403 on
+2026-10-19 and is retired; blockchain.info, mempool.space, and Blockchair
+do not publish the same series, so the chart keeps the last good snapshot
+and labels it stale. It is not used in the live whale-sentiment score.
+For **richer cohort flow metrics** — number of whale addresses over time,
 exchange inflow/outflow in BTC, supply in profit, etc. — wire a
 Glassnode API key. The dashboard auto-activates a "Glassnode" KPI
 strip on the Whale tab the moment the key is present.
@@ -398,8 +402,9 @@ vs non-whales** card on the Whale tab, with cards showing:
 - **Supply in profit (%)** — % of supply currently above its cost basis
 
 If your tier doesn't cover a given metric, that card silently skips
-(no error). The bitinfocharts cohort chart and free proxies stay live
-either way.
+(no error). The free blockchain.info proxies stay live either way. The
+retired cohort chart does not come back without a source that actually
+publishes it.
 
 ### Cost
 Tier 1 (free): basic metrics only — most whale cohort series are gated.

@@ -33,7 +33,7 @@ Extend LTHCS to a 0–100 Long-Term Hold Confidence Score for crypto (BTC / ETH 
 
 ### 2.2 Institutional Confidence — `lthcs/pillars/crypto_institutional.py`
 
-- **Whale-cohort balance Δ30d (BTC only)** 0.50 — sum of `b1k_10k + b10k_100k + b100k_1m` from `data/whale.json` distribution buckets; bounds (-1.0%, +1.0%) matching the V1 Whale Sentiment Index saturation point. ETH/SOL drop this component.
+- **Whale-cohort balance Δ30d (BTC only)** 0.50 — sum of `b1k_10k + b10k_100k + b100k_1m` from `data/whale.json` distribution buckets when the series is live; bounds (-1.0%, +1.0%) matching the V1 Whale Sentiment Index saturation point. ETH/SOL drop this component. As of 2026-10-19 the BTC series is a known gap (bitinfocharts HTTP 403, no equivalent on blockchain.info, mempool.space, or Blockchair); a payload with `distribution.unavailable` drops it too and the remaining weights renormalize. Last good rows stay in the whale chart, marked stale, and are not scored.
 - **ETF flows trailing 30d** 0.30 — sum of Farside `Total` column from `data/btc_flows.csv` / `data/eth_flows.csv`, bounds (-$3B, +$3B). SOL drops (no spot ETF yet).
 - **30d price momentum** 0.20 — CoinGecko `price_change_pct_30d`, bounds (-30%, +30%). Always available; serves as the floor signal when whale + ETF data are missing.
 

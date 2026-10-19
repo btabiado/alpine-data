@@ -123,7 +123,7 @@ def test_successful_fetch_is_cached_under_the_new_key(monkeypatch, stale_dir):
 
 
 def test_fetch_whale_ships_rows_and_status(monkeypatch):
-    for name in ("whale_proxies_btc", "bitinfocharts_btc_distribution",
+    for name in ("whale_proxies_btc", "btc_cohort_distribution",
                  "glassnode_btc_whale_metrics", "blockchair_eth_stats",
                  "coin_metrics_eth_whale_metrics", "fetch_multichain_whale_stats",
                  "etherscan_eth_daily"):

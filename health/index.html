@@ -208,6 +208,7 @@
        measured 4.0:1; this is 5.3:1. */
     .pill.blocked { background: rgba(239,68,68,0.15); color: #f87171; }
     .pill.down { background: rgba(239,68,68,0.15); color: #f87171; }
+    .pill.retired { background: rgba(148,163,184,0.18); color: #cbd5e1; }
     .keytag { font-size: 10px; font-family: var(--mono); padding: 1px 5px; border-radius: 3px; margin-left: 6px; border: 1px solid var(--border); color: var(--text-faint); }
     .keytag.set { color: var(--up); border-color: rgba(16,185,129,0.4); }
     .keytag.missing { color: var(--warn); border-color: rgba(245,158,11,0.4); }
@@ -282,7 +283,8 @@
         Reachability of each upstream the dashboard pulls from, probed live.
         <b>up</b> = serving · <b>auth&nbsp;required</b> = endpoint live, needs a key ·
         <b>rate&nbsp;limited</b> = live but throttling us · <b>degraded</b> = reachable but erroring ·
-        <b>blocked</b> = the source refused our request (region/firewall) · <b>down</b> = no response at all.
+        <b>blocked</b> = the source refused our request (region/firewall) · <b>down</b> = no response at all ·
+        <b>retired</b> = we stopped calling it on purpose (a by-design block, not an outage).
         Distinct from <b>Data Freshness</b> (are the cached Data Fact Containers recent?).
       </p>
 
@@ -489,6 +491,7 @@
     const VERDICT_LABEL = {
       up: 'up', auth_required: 'auth required', rate_limited: 'rate limited',
       degraded: 'degraded', blocked: 'blocked', down: 'down',
+      retired: 'retired',
     };
 
     function renderSrcHeadline(s) {
@@ -510,7 +513,8 @@
         <div class="chip up"><span class="num">${s.up}</span><span class="lbl">Up</span></div>
         <div class="chip warn"><span class="num">${warn}</span><span class="lbl">Warn</span></div>
         <div class="chip down"><span class="num">${down}</span><span class="lbl">Down</span></div>
-        <div class="chip"><span class="num">${s.total}</span><span class="lbl">Total</span></div>`;
+        <div class="chip"><span class="num">${s.total}</span><span class="lbl">Total</span></div>
+        ${(s.retired || 0) ? `<div class="chip"><span class="num">${s.retired}</span><span class="lbl">Retired</span></div>` : ''}`;
     }
 
     // Three states, three tags. Until api_status.py grew `key_state` this
@@ -557,7 +561,7 @@
                 <td class="mono">${escapeHtml(s.host)}</td>
                 <td><span class="pill ${s.verdict}">${VERDICT_LABEL[s.verdict] || s.verdict}</span>${s.note ? `<div class="note-cell">${escapeHtml(s.note)}</div>` : ''}</td>
                 <td class="num">${s.status == null ? '—' : s.status}</td>
-                <td class="num">${s.latency_ms}ms</td>
+                <td class="num">${s.latency_ms == null ? '—' : s.latency_ms + 'ms'}</td>
               </tr>`).join('')}
           </tbody>
         </table></div>`;
