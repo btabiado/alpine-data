@@ -9,7 +9,7 @@
 # `pip install -c requirements.txt <package>`, so every pin lives in exactly
 # one file. Keep this file free of extras ("pkg[extra]") because pip rejects
 # extras in a constraints file.
-anthropic==1.14.0
+anthropic==1.15.0
 # numpy 2.5+ requires Python >= 3.12. Jobs that `pip install -r` this file
 # still run 3.11 (and tests.yml covers 3.11), so stay on the 2.4 line.
 numpy==2.4.6
