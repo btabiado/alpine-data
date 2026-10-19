@@ -799,11 +799,13 @@ def render_md(report: dict) -> str:
         L += _table(["workflow", "cron (UTC)", "days run/due", "ticks run", "median delay",
                      "last scheduled run", "flag"], rows)
         if any_catchup:
+            # One sentence, split for line length. + keeps the join explicit
+            # so these stay a single list element.
             L += ["",
-                  "A catch-up is a `workflow_dispatch` by `github-actions[bot]` (the cron "
-                  "watchdog), not a GitHub schedule event. Ticks run and median delay count "
-                  "it toward freshness; the scheduler figure is what the schedule event "
-                  "delivered on its own."]
+                  ("A catch-up is a `workflow_dispatch` by `github-actions[bot]` (the cron "
+                   + "watchdog), not a GitHub schedule event. Ticks run and median delay count "
+                   + "it toward freshness; the scheduler figure is what the schedule event "
+                   + "delivered on its own.")]
     else:
         L.append(f"- could not be read: {sc.get('error', 'no data')}")
 

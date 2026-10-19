@@ -438,7 +438,14 @@ class TestProblems:
         assert "1.5h (scheduler 6.0h)" in md
         assert "catch-up 120" in md
         assert "catch-up 2026-10-17T16:40 success" in md
-        assert "github-actions[bot]" in md
+        # One paragraph, not four list lines. A missing comma between the
+        # source literals would split this sentence across newlines.
+        note = (
+            "A catch-up is a `workflow_dispatch` by `github-actions[bot]` (the cron watchdog), "
+            "not a GitHub schedule event. Ticks run and median delay count it toward freshness; "
+            "the scheduler figure is what the schedule event delivered on its own."
+        )
+        assert note in md.splitlines()
 
     def test_schedule_failure_not_double_counted_with_workflow_failure(self, dar):
         s = _data()["schedules"]["schedules"][0]
