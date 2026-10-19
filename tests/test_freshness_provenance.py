@@ -560,7 +560,7 @@ def test_build_from_signals_undated_rows_yield_no_stamp(monkeypatch):
 # ============================================================================
 # The BTC and ETH whale composites used to stamp themselves with
 # ``whale["fetched_at"][:10]``. That advances on every run, and the whale tree
-# is stale-kept in pieces (bitinfocharts falls back to the previous
+# is stale-kept in pieces (the retired cohort table falls back to the previous
 # distribution; glassnode / etherscan fall back to data/.stale/*.json), so a
 # completely failed refresh still came out wearing today's date — under a UI
 # tooltip promising "Observation date … Not the page build time".
@@ -594,7 +594,7 @@ def _whale_payload(*, frozen_series: str | None = None,
 def test_whale_sentiment_as_of_is_not_the_fetch_clock():
     out = fetch_market.compute_whale_sentiment(_whale_payload())
     assert out["as_of"] != TODAY
-    # Oldest contributing input: the bitinfocharts cohort row.
+    # Oldest contributing input: the cohort row on this historical payload.
     assert out["as_of"] == "2026-07-25"
     # The clock survives, but only under an unambiguous name.
     assert out["fetched_at"] == "2026-08-02T23:00:00+00:00"

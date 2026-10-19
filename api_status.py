@@ -124,7 +124,15 @@ TARGETS: list[dict] = [
     {"label": "Etherscan v2",         "category": "Whale",         "url": "https://api.etherscan.io/v2/api?chainid=1&module=stats&action=ethprice",                         "key_env": "ETHERSCAN_API_KEY", "key_auth": {"param": "apikey"}},
     {"label": "CoinMetrics",          "category": "Whale",         "url": "https://community-api.coinmetrics.io/v4/catalog/assets?assets=btc",                              "key_env": "COINMETRICS_API_KEY", "key_auth": {"header": "Authorization", "format": "Api-Key {key}"}},
     {"label": "Glassnode",            "category": "Whale",         "url": "https://api.glassnode.com/v1/metrics/market/price_usd_close",                                     "key_env": "GLASSNODE_API_KEY", "key_auth": {"param": "api_key"}},
-    {"label": "bitinfocharts",        "category": "Whale",         "url": "https://bitinfocharts.com/bitcoin-distribution-history.html",                                     "key_env": None},
+    # Retired 2026-10-19. The daily audit recorded HTTP 403, and the whale job
+    # no longer calls this host (no user-agent swap or other workaround). The
+    # address-balance cohort series it served has no equivalent on
+    # blockchain.info, mempool.space, or Blockchair; last good rows are a
+    # known gap. The row stays so the probe reports verdict "retired" instead
+    # of "blocked" — a by-design state, not a new outage. ``retired`` skips
+    # the HTTP request entirely (see _probe_one).
+    {"label": "bitinfocharts",        "category": "Whale",         "url": "https://bitinfocharts.com/bitcoin-distribution-history.html",                                     "key_env": None, "retired": True,
+     "retired_note": "Retired 2026-10-19 (daily audit): HTTP 403, no longer a dependency. Cohort supply is a known gap; last good values stay stale. Not probed."},
     # ---- defi ----
     {"label": "DeFiLlama TVL",        "category": "DeFi",          "url": "https://api.llama.fi/v2/chains",                                                                 "key_env": None},
     {"label": "DeFiLlama yields",     "category": "DeFi",          "url": "https://yields.llama.fi/pools",                                                                  "key_env": None},
@@ -351,6 +359,31 @@ def _arcgis_inband_error(body: bytes) -> tuple[int, str] | None:
     return code, str(err.get("message") or "")
 
 
+def _retired_row(target: dict) -> dict:
+    """Snapshot row for a source we no longer call.
+
+    Verdict ``retired`` is by design: the daily audit treats blocked/degraded
+    /down as problems and ignores this one. No HTTP request is made, so a 403
+    on the old host cannot come back as a new outage.
+    """
+    return {
+        "label": target["label"],
+        "category": target["category"],
+        "host": target["url"].split("/")[2],
+        "status": None,
+        "latency_ms": None,
+        "verdict": "retired",
+        "reachable": False,
+        "needs_key": False,
+        "key_present": None,
+        "key_state": None,
+        "key_env": target.get("key_env"),
+        "retries": 0,
+        "key_sent": False,
+        "note": (target.get("retired_note") or "Retired. Not probed.")[:240],
+    }
+
+
 def _verdict(status: int | None, needs_key: bool) -> str:
     """Map an HTTP status (or None for connection failure) to a verdict.
 
@@ -450,6 +483,8 @@ def _scrub(note: str, key: str | None) -> str:
 
 
 def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> dict:
+    if target.get("retired"):
+        return _retired_row(target)
     key_env = target.get("key_env")
     needs_key = bool(key_env)
     # Default UA for all probes; a target may override/extend via "headers"
@@ -554,6 +589,9 @@ def probe_all(timeout: float = DEFAULT_TIMEOUT, max_workers: int = 12) -> dict:
         "degraded": count("degraded"),
         "blocked": count("blocked"),
         "down": count("down"),
+        # By-design retirements. Not an outage; the health page and the daily
+        # audit must not fold this into blocked/down.
+        "retired": count("retired"),
         "reachable": sum(1 for s in sources if s["reachable"]),
         # Key accounting, so "how many of my keys actually arrived?" is answerable
         # from the summary alone. keys_not_wired > 0 is a WORKFLOW bug, not a
@@ -616,14 +654,16 @@ def main() -> int:
     print(
         f"wrote {rel} ({s['total']} sources: {s['up']} up, "
         f"{s['auth_required']} auth-gated, {s['rate_limited']} rate-limited, "
-        f"{s['degraded']} degraded, {s['blocked']} blocked, {s['down']} down)"
+        f"{s['degraded']} degraded, {s['blocked']} blocked, {s['down']} down, "
+        f"{s.get('retired', 0)} retired)"
     )
     # Print a compact table to stdout for CI logs / manual runs.
     key_tag = {KEY_SET: " [key set]", KEY_UNSET: " [no key]",
                KEY_NOT_WIRED: " [KEY NOT WIRED]"}
     for src in snapshot["sources"]:
         st = src["status"] if src["status"] is not None else "—"
-        print(f"  {src['verdict']:<13} {str(st):>4} {src['latency_ms']:>5}ms  "
+        lat = "    —" if src["latency_ms"] is None else f"{src['latency_ms']:>5}ms"
+        print(f"  {src['verdict']:<13} {str(st):>4} {lat}  "
               f"{src['label']}{key_tag.get(src['key_state'], '')}")
     # Shout about unwired keys. This is a defect in whatever launched us, and it
     # is invisible in the per-row table if you are skimming: every unwired source

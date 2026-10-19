@@ -4,9 +4,11 @@ Three signals combined into a 0-100 sub-score:
 
 * **Whale cohort accumulation Δ30d** (50%, BTC only) -- the change in
   aggregate balance held by addresses with >=1k BTC (the standard
-  "whale" cohort). Sourced from the existing ``whale.json`` distribution
-  buckets. ETH/SOL have no equivalent free-tier cohort series, so they
-  zero out this component and the rest are renormalized.
+  "whale" cohort). Sourced from ``whale.json`` distribution buckets when
+  that series is live. Since 2026-10-19 the series is a known gap
+  (bitinfocharts retired, no equivalent on blockchain.info / mempool.space
+  / Blockchair); a flagged payload drops this component and the rest are
+  renormalized. ETH/SOL never had the series, so they do the same.
 * **ETF net inflows / outflows (trailing 30d)** (30%) -- sum of daily
   net flows across all spot ETFs for the asset. BTC + ETH have full
   Farside CSV coverage in the repo; SOL has no ETF product so this

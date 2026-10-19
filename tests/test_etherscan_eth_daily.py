@@ -137,7 +137,7 @@ def test_fetch_whale_exposes_etherscan_daily_key(monkeypatch):
 
     # Stub the heavy sub-fetchers so we don't actually hit the network.
     monkeypatch.setattr(fetch_market, "whale_proxies_btc", lambda: {})
-    monkeypatch.setattr(fetch_market, "bitinfocharts_btc_distribution", lambda: {})
+    monkeypatch.setattr(fetch_market, "btc_cohort_distribution", lambda: {})
     monkeypatch.setattr(fetch_market, "glassnode_btc_whale_metrics", lambda: {})
     monkeypatch.setattr(fetch_market, "mempool_whale_transactions", lambda *_: [])
     monkeypatch.setattr(fetch_market, "blockchair_eth_stats", lambda: {})

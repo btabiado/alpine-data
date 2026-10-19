@@ -334,6 +334,11 @@ def data_problems(data: dict | None) -> list[dict]:
                            "data/health/api_status.json could not be read", api.get("error", "")))
     elif api:
         for label, verdict in sorted((api.get("verdicts") or {}).items()):
+            # "retired" is a by-design row: the probe does not call the host
+            # (bitinfocharts, retired 2026-10-19 after HTTP 403). It is not an
+            # outage and must not reappear as a new blocked-API finding.
+            if verdict in ("retired",):
+                continue
             if verdict == "down":
                 out.append(problem(f"api:{label}", P1, "api", f"Upstream API {label} is DOWN"))
             elif verdict in ("blocked", "degraded"):

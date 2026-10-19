@@ -8,7 +8,8 @@ value it writes comes from one of:
           (`git show <last commit before midnight UTC>:<path>`), run through
           the same function the live snapshotter uses
   series  the upstream's own dated daily series (blockchain.info charts,
-          bitinfocharts cohorts, Coin Metrics community) truncated to what
+          cohort rows already stored on a historical whale payload, Coin
+          Metrics community) truncated to what
           existed at the end of that day, run through the shipped formula
   r2      the exact payload the site served that day, from the R2 archive
           (raw/alpine-data/<day>/<file>); CI only, needs the R2_* secrets
@@ -55,7 +56,8 @@ R2_ENDPOINT = "https://d486b561a8eacd568dd8edf9c749ee47.r2.cloudflarestorage.com
 
 # The blockchain.info / Coin Metrics daily series publish a day's value the
 # following day: the live payload read on 2026-10-04 ends at 2026-10-03, while
-# the bitinfocharts cohort table already carries 2026-10-04. So a snapshot of
+# the cohort table already stored on that day's whale payload carries
+# 2026-10-04 (the live job stopped refreshing it on 2026-10-19). So a snapshot of
 # day D saw on-chain series through D-1 and cohorts through D. Recomputing
 # 2026-10-04 under this rule reproduces the live card exactly (BTC -38,
 # ETH -32), which is the check that the rule matches what the card saw.

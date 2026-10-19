@@ -4288,7 +4288,7 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
       </div>
       <!-- ===== BTC PANEL (default) ===== -->
       <div id="whaleBtcPanel">
-      <div class="note">Free BTC on-chain proxies (blockchain.info + bitinfocharts cohorts). Glassnode-level metrics (true exchange flows, SOPR) require paid feed.</div>
+      <div class="note">Free BTC on-chain proxies from blockchain.info. The address-balance cohort chart is a known gap (bitinfocharts retired 2026-10-19 after HTTP 403); last good values stay on screen and are marked stale. Glassnode-level metrics (true exchange flows, SOPR) require a paid feed.</div>
       <!-- Headline: Whale Sentiment Index (composite ±100 from on-chain proxies) -->
       <div class="chart-card" id="whaleSentimentCard" style="position:relative"></div>
       <div class="row" id="whaleKpis"></div>
@@ -4323,12 +4323,13 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
           </table>
         </div>
       </div>
-      <!-- Whale vs non-whale supply held (real cohort data from bitinfocharts) -->
+      <!-- Whale vs non-whale supply. Live refresh retired with bitinfocharts
+           (HTTP 403, 2026-10-19). Last good rows render with a stale banner. -->
       <div class="chart-card">
         <div class="head" style="flex-wrap:wrap;gap:12px">
           <div>
-            <h2>BTC supply: whales vs non-whales <span class="tag">bitinfocharts</span></h2>
-            <span class="desc">Stacked: addresses with ≥1,000 BTC (whales) vs everyone else &middot; ~5y daily history binned to your selection</span>
+            <h2>BTC supply: whales vs non-whales <span class="tag" id="whaleCohortTag">known gap</span></h2>
+            <span class="desc">Addresses with ≥1,000 BTC (whales) vs everyone else. No live source since 2026-10-19; the chart shows the last good snapshot when one exists.</span>
           </div>
           <div class="controls" id="cohortBins" style="border:0;padding:0;margin:0;gap:4px">
             <span class="lbl" style="margin:0">Bin</span>
@@ -4339,6 +4340,7 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
           </div>
         </div>
         <div class="chart-wrap tall"><canvas id="whaleCohortChart"></canvas></div>
+        <div class="note" id="whaleCohortGap" style="margin-top:8px"></div>
         <div class="row" id="whaleCohortKpis" style="margin-top:10px"></div>
       </div>
       <!-- Whale activity proxy: BTC volume + avg tx size combined view -->
@@ -9913,8 +9915,10 @@ function _drawRealEstate(host, d){
 
 // 8 focused KPIs based on cohort migration + tx-shape signals (not the
 // noisy active-addresses/tx-count combo that was there before). See the
-// agent report: cohort-driven metrics from bitinfocharts are the strongest
-// whale signal we can get from free data. Replaces the prior 10-card set.
+// agent report: cohort-driven metrics were the strongest whale signal we
+// could get from free data. That series is a known gap (bitinfocharts
+// retired 2026-10-19). The four cohort cards still render last good values
+// and say so. Replaces the prior 10-card set.
 function renderWhaleKpisV2(){
   const w = whaleData();
   const dist = ((DATA.whale||{}).distribution || {}).buckets || [];
@@ -9941,7 +9945,11 @@ function renderWhaleKpisV2(){
 
   const items = [];
 
-  // ====== 4 cohort-based cards (need bitinfocharts data) ======
+  // ====== 4 cohort-based cards (last-good snapshot; live source retired) ======
+  const cohortGap = !!(((DATA.whale||{}).distribution || {}).unavailable
+    || ((DATA.whale||{}).distribution || {}).status === 'known_gap');
+  const cohortAsOf = ((DATA.whale||{}).distribution || {}).as_of || '';
+  const staleSub = cohortGap ? ` · stale${cohortAsOf ? ' through ' + cohortAsOf : ''}` : '';
   if (dist.length >= 31){
     const cur = dist[dist.length-1];
     const prev30 = dist[dist.length-31];
@@ -9949,12 +9957,12 @@ function renderWhaleKpisV2(){
     const wNow = whaleSup(cur), w30 = whaleSup(prev30);
     const wPct = w30 ? (wNow - w30) / w30 * 100 : null;
     items.push({label:'Whale Supply (≥1K)', val: fmtBTC(wNow),
-                cls: colorFor(wPct, 0.5), sub:`30d Δ ${fmtPct(wPct, 2)}`});
+                cls: colorFor(wPct, 0.5), sub:`30d Δ ${fmtPct(wPct, 2)}${staleSub}`});
     // 2. Whale Δ 30d (BTC accumulated/sold)
     const wDeltaBtc = wNow - w30;
     items.push({label:'Whale Δ 30d', val: (wDeltaBtc>=0?'+':'') + fmtBTC(Math.abs(wDeltaBtc)),
                 cls: wDeltaBtc >= 0 ? 'green' : 'red',
-                sub:'net accumulation last 30d'});
+                sub:'net accumulation last 30d' + staleSub});
     // 3. Mega-Whale Share (≥10K BTC as % of total tracked supply)
     const totalNow = totalSup(cur), totalPrev = totalSup(prev30);
     const megaShareNow = totalNow ? megaSup(cur) / totalNow * 100 : 0;
@@ -9962,12 +9970,12 @@ function renderWhaleKpisV2(){
     const sharePP = megaShareNow - megaSharePrev;
     items.push({label:'Mega-Whale Share', val: megaShareNow.toFixed(2)+'%',
                 cls: sharePP >= 0.2 ? 'green' : sharePP <= -0.2 ? 'red' : 'amber',
-                sub:`30d Δ ${sharePP>=0?'+':''}${sharePP.toFixed(2)}pp`});
+                sub:`30d Δ ${sharePP>=0?'+':''}${sharePP.toFixed(2)}pp${staleSub}`});
     // 4. Shrimp Supply (<1 BTC) — retail counter-signal
     const sNow = shrimpSup(cur), sPrev = shrimpSup(prev30);
     const sPct = sPrev ? (sNow - sPrev) / sPrev * 100 : null;
     items.push({label:'Shrimp Supply (<1)', val: fmtBTC(sNow),
-                cls: colorFor(sPct, 0.5), sub:`30d Δ ${fmtPct(sPct, 2)} · retail proxy`});
+                cls: colorFor(sPct, 0.5), sub:`30d Δ ${fmtPct(sPct, 2)} · retail proxy${staleSub}`});
   }
 
   // ====== 4 flow/miner cards (from blockchain.info) ======
@@ -10617,9 +10625,11 @@ function renderMultichainWhale(){
 }
 
 // BTC supply held: whales (≥1,000 BTC addresses) vs non-whales (<1,000 BTC).
-// Real cohort data from bitinfocharts.com — daily back to ~2021-05. The chart
-// shows full history with its own bin selector; it does not follow the tab's
-// Range buttons (see renderWhaleCohortChart).
+// The daily history used to come from bitinfocharts. That host returned HTTP
+// 403 on 2026-10-19 and is retired; blockchain.info, mempool.space and
+// Blockchair have no equivalent series. The chart shows the last good rows
+// when the payload still has them, with an explicit stale/known-gap banner.
+// It has its own bin selector and does not follow the tab's Range buttons.
 // Bin daily cohort rows down to weekly / monthly / quarterly / yearly buckets
 // using the LAST value in each window (it's a stock metric — supply held —
 // not a flow, so sampling the period-end value is the right aggregation).
@@ -10644,14 +10654,29 @@ function _binCohortRows(rows, mode){
 
 function renderWhaleCohortChart(){
   const dist = ((DATA.whale||{}).distribution || {});
+  const cohortGap = !!(dist.unavailable || dist.status === 'known_gap');
   // Use the chart's own bin selector — independent from the tab Range buttons.
   // Show full history; the bin width controls visual density.
   const mode = state.cohortBin || 'month';
   const buckets = _binCohortRows(dist.buckets || [], mode);
   const kpiHost = document.getElementById('whaleCohortKpis');
+  const gapEl = document.getElementById('whaleCohortGap');
+  const tagEl = document.getElementById('whaleCohortTag');
   destroy('whaleCohort');
+  if (tagEl) tagEl.textContent = cohortGap ? 'known gap' : (dist.source || 'cohorts');
+  if (gapEl) {
+    if (cohortGap) {
+      const through = dist.as_of ? (' Last good values through ' + dist.as_of + '.') : '';
+      gapEl.textContent = 'Stale / unavailable. bitinfocharts was retired on 2026-10-19 '
+        + 'after HTTP 403. blockchain.info, mempool.space and Blockchair do not publish '
+        + 'this cohort series, so it is a known gap and is not used in the live whale score.'
+        + through;
+    } else {
+      gapEl.textContent = '';
+    }
+  }
   if (!buckets.length) {
-    if (kpiHost) kpiHost.innerHTML = '<div class="sub" style="color:var(--muted)">No cohort data — wait for next fetch, or run python app.py --fetch-market.</div>';
+    if (kpiHost) kpiHost.innerHTML = '<div class="sub" style="color:var(--muted)">No cohort snapshot on disk. The live source is retired; this chart stays empty until a last-good copy is restored. Other whale charts still update from blockchain.info.</div>';
     return;
   }
   // Sum the 3 whale buckets vs the 5 non-whale buckets per row.
@@ -10707,7 +10732,7 @@ function renderWhaleCohortChart(){
       {label:'Non-whale supply',       val: fmtNum(nTotal/1e6, 2) + 'M BTC',
        sub: `${(100-whalePct).toFixed(1)}% of tracked supply`, cls: ''},
       {label:'≥10K BTC ("mega-whales")', val: fmtNum(((last.b10k_100k||0) + (last.b100k_1m||0))/1e6, 2) + 'M BTC',
-       sub: `${last.date}`, cls: ''},
+       sub: `${last.date}${cohortGap ? ' · stale' : ''}`, cls: ''},
       {label:'Whale supply 1y Δ', val: wDelta == null ? '—' : `${wDelta>=0?'+':''}${wDelta.toFixed(2)}%`,
        sub:'whales accumulating or distributing', cls: wDelta == null ? '' : (wDelta>=0?'green':'red')},
     ];

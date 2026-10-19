@@ -124,7 +124,8 @@ jobs:
           # repo Settings → Secrets and variables → Actions → New repository
           # secret to light up the corresponding sections on the public mirror:
           #   FRED            macro overlay (DXY/SPX/Gold/10Y/M2)
-          #   GLASSNODE       true BTC whale-cohort metrics (replaces bitinfocharts)
+          #   GLASSNODE       true BTC whale-cohort metrics (bitinfocharts was
+          #                   retired 2026-10-19; the free cohort chart is a known gap)
           #   (CRYPTOCOMPARE_API_KEY is no longer mapped: since 2026-10 every
           #   CryptoCompare/CoinDesk dependency was replaced with free sources
           #   — CoinGecko, Coinbase/Kraken/Binance.US candles, Google News RSS,

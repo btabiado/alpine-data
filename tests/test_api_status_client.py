@@ -127,7 +127,9 @@ def test_tsa_probe_goes_through_requests(net):
 def test_other_targets_still_use_urllib(net):
     fake, urlopen = net(FakeRequests(AssertionError("requests must not be used")),
                         FakeUrlopen())
-    others = [t for t in api_status.TARGETS if "client" not in t]
+    # Retired rows (bitinfocharts) are not requested at all. See
+    # test_btc_cohort_gap.py.
+    others = [t for t in api_status.TARGETS if "client" not in t and not t.get("retired")]
     assert others, "expected urllib targets"
 
     for target in others:

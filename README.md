@@ -90,7 +90,7 @@ That command updates `data-mufon.json` and deletes the saved file. Do not commit
 - **Derivatives**: OKX (funding rate, open interest, long/short ratio)
 - **Options-implied vol**: Deribit DVOL (BTC, ETH)
 - **Sentiment**: Alternative.me Fear & Greed
-- **BTC on-chain**: blockchain.info charts (tx vol, hash rate, miners rev, active addresses), Blockchair (supplementary stats), bitinfocharts (rich list / distribution)
+- **BTC on-chain**: blockchain.info charts (tx vol, hash rate, miners rev, active addresses), Blockchair (supplementary stats). Address-balance cohort supply (whales vs non-whales) is a known gap: bitinfocharts returned HTTP 403 on 2026-10-19 and was retired; last good rows are kept stale and are not a live input.
 - **BTC network**: mempool.space (fees, hashrate, tip height, **difficulty adjustment**, **Lightning Network**, **mining pools**, latest-block scan for Whale Alerts ≥$1M)
 - **ETH on-chain**: Etherscan v2 (gas oracle, ETH whale stats — burn, largest tx, ERC-20/721)
 - **ETH large transactions**: Blockchair (top 10 recent whale txs ≥$1M USD, no key required)
@@ -339,7 +339,7 @@ True whale exchange-flow series (Glassnode / CryptoQuant / CoinMetrics Pro) requ
 - **Miners revenue (USD)** — block reward + fees
 - **Output volume (BTC)** — total BTC moved per day
 
-Source: blockchain.info `/charts/...`, supplemented by Blockchair and bitinfocharts.
+Source: blockchain.info `/charts/...`, supplemented by Blockchair. The old bitinfocharts cohort table is retired (HTTP 403 on 2026-10-19); it is not refreshed.
 
 **ETH panel** (BTC/ETH switcher in the Whale tab): 24h EIP-1559 burn, largest tx, ERC-20/721 activity, supply. Etherscan v2 (free) covers the basics; `COINMETRICS_API_KEY` unlocks the historical ETH whale series. ETH side now lists top 10 recent whale transactions (≥$1M USD) via Blockchair, in addition to the existing largest-24h tx.
 
