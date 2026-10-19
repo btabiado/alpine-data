@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-19T11:45:05Z",
+  "generated_at": "2026-10-19T14:57:01Z",
   "methodology_version": "1.1",
   "as_of": "2026-09",
   "methodology_disclosures": [
@@ -542,8 +542,8 @@
         "median_real_estate_taxes": 4943,
         "effective_property_tax_rate": 0.014794971565399582,
         "unemployment_rate": 6.0,
-        "aqi": 21,
-        "context_score": 48
+        "aqi": 52,
+        "context_score": 33
       },
       "disclosures": [
         "Crimes 2001-present: excludes last ~7 days; latest complete month lags to prior month"
@@ -883,7 +883,7 @@
           "complete_through": "2026-09",
           "note": "ROLLING ~90-day inventory snapshot, not a historical series: it CANNOT support a 12-month baseline or YoY \u2014 render as a recent-volume tile only (status insufficient_history in scorer output); do NOT z-score. Polarity 0: tow counts reflect enforcement/relocation activity, not safety or wellbeing. pillar_hint context.",
           "status": "insufficient_history",
-          "recent": 2368,
+          "recent": 2367,
           "recent_period": "2026-09",
           "baseline_mean": null,
           "baseline_std": null,
@@ -901,7 +901,7 @@
             },
             {
               "month": "2026-09",
-              "n": 2368
+              "n": 2367
             }
           ]
         },
@@ -1589,8 +1589,8 @@
         "median_real_estate_taxes": 6547,
         "effective_property_tax_rate": 0.008419495884773663,
         "unemployment_rate": 5.3,
-        "aqi": 54,
-        "context_score": 39
+        "aqi": 45,
+        "context_score": 44
       },
       "disclosures": [
         "311 (2010-present): ~38M rows; REQUIRES app token + recent $where filter or it times out",
@@ -2376,7 +2376,7 @@
         "median_real_estate_taxes": 6050,
         "effective_property_tax_rate": 0.006567520625271385,
         "unemployment_rate": 5.0,
-        "aqi": 56,
+        "aqi": 54,
         "context_score": 43
       },
       "disclosures": [
@@ -2914,8 +2914,8 @@
         "median_real_estate_taxes": 7337,
         "effective_property_tax_rate": 0.00781696143191988,
         "unemployment_rate": 4.5,
-        "aqi": 34,
-        "context_score": 59
+        "aqi": 48,
+        "context_score": 52
       },
       "disclosures": [
         "Customer Service Requests: CORRECTED: column is 'createddate' (one word), not 'created_date'.",
@@ -3616,8 +3616,8 @@
         "median_real_estate_taxes": 9862,
         "effective_property_tax_rate": 0.00707206884187881,
         "unemployment_rate": 4.2,
-        "aqi": 24,
-        "context_score": 57
+        "aqi": 27,
+        "context_score": 58
       },
       "disclosures": [
         "Police Incident Reports: 2018 portal/system migration = continuity breakpoint"
@@ -4168,8 +4168,8 @@
         "median_real_estate_taxes": 3744,
         "effective_property_tax_rate": 0.008086393088552916,
         "unemployment_rate": 2.7,
-        "aqi": 37,
-        "context_score": 66
+        "aqi": 35,
+        "context_score": 69
       },
       "disclosures": [
         "Footprint = Miami-Dade County (not the City of Miami). County 311 excludes City-of-Miami-proper requests.",
