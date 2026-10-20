@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-20",
-  "generated_at": "2026-10-20T11:27:41Z",
+  "generated_at": "2026-10-20T13:49:36Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-20",
       "label": null,
-      "note": "40 coins; 4 buy+, 19 sell+",
-      "score": -38,
+      "note": "40 coins; 2 buy+, 14 sell+",
+      "score": -30,
       "stale": false
     },
     "defi_sentiment": {
@@ -17,38 +17,38 @@
       "stale": false
     },
     "etf_flow_sentiment": {
-      "as_of": "2026-10-16",
-      "label": "BALANCED",
-      "note": "BTC ETF; 7d+30d net flow sum (60/40); 691 daily rows; same series as etf_flow_sentiment_btc",
-      "score": -14,
+      "as_of": "2026-10-19",
+      "label": "STRONG INFLOWS",
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 692 daily rows; same series as etf_flow_sentiment_btc",
+      "score": 78,
       "stale": false
     },
     "etf_flow_sentiment_btc": {
-      "as_of": "2026-10-16",
-      "label": "BALANCED",
-      "note": "BTC ETF; 7d+30d net flow sum (60/40); 691 daily rows",
-      "score": -14,
+      "as_of": "2026-10-19",
+      "label": "STRONG INFLOWS",
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 692 daily rows",
+      "score": 78,
       "stale": false
     },
     "etf_flow_sentiment_eth": {
-      "as_of": "2026-10-16",
+      "as_of": "2026-10-19",
       "label": "STRONG OUTFLOWS",
-      "note": "ETH ETF; 7d+30d net flow sum (60/40); 562 daily rows",
-      "score": -72,
+      "note": "ETH ETF; 7d+30d net flow sum (60/40); 563 daily rows",
+      "score": -86,
       "stale": false
     },
     "futures_sentiment": {
       "as_of": "2026-10-19",
       "label": "CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 47,
+      "score": 48,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-10-19",
       "label": "CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 47,
+      "score": 48,
       "stale": false
     },
     "futures_sentiment_eth": {
@@ -69,7 +69,7 @@
       "as_of": "2026-10-19",
       "label": "BALANCED",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 17,
+      "score": 18,
       "stale": false
     },
     "lthcs_composite": {
@@ -80,17 +80,17 @@
       "stale": false
     },
     "money_flow_index": {
-      "as_of": "2026-10-19",
-      "label": "Neutral",
+      "as_of": "2026-10-20",
+      "label": "Outflow",
       "note": null,
-      "score": -13.07,
+      "score": -30.83,
       "stale": false
     },
     "overview_sentiment": {
       "as_of": "2026-10-20",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": 3,
+      "score": 4,
       "stale": false
     },
     "poc_signal_breadth": {
@@ -101,9 +101,9 @@
       "stale": false
     },
     "stocks_signal_breadth": {
-      "as_of": "2026-10-19",
+      "as_of": "2026-10-20",
       "label": "DISTRIBUTION",
-      "note": "50 stocks; 7 buy+, 29 sell+",
+      "note": "16 stocks; 4 buy+, 11 sell+",
       "score": -44,
       "stale": false
     },
