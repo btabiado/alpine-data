@@ -516,7 +516,7 @@
         "last_scored": null,
         "source": "finnhub_recommendation",
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -3441,10 +3441,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -3456,6 +3456,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -5626,7 +5630,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -6788,10 +6792,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -6803,6 +6807,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -10907,10 +10915,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": true,
+        "has_yahoo_earnings": false,
         "sec_8k_score": null,
-        "yahoo_earnings_score": 0.4,
-        "events_score_raw": 70.0,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -10922,10 +10930,6 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -12497,7 +12501,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -13287,7 +13291,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -14277,7 +14281,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -14458,10 +14462,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": true,
+        "has_yahoo_earnings": false,
         "sec_8k_score": null,
-        "yahoo_earnings_score": 0.7,
-        "events_score_raw": 85.0,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -14473,10 +14477,6 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -15255,10 +15255,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.4,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -15270,6 +15270,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -15448,10 +15452,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.4,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -15463,6 +15467,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -20356,10 +20364,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.4,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -20371,6 +20379,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -20747,9 +20759,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": -0.019999999999999997,
+        "sec_8k_score": -0.016666666666666663,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 59.5,
+        "events_score_raw": 59.58,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -28429,10 +28441,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -28444,6 +28456,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -38428,10 +38444,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": true,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": 0.05555555555555555,
-        "yahoo_earnings_score": null,
-        "events_score_raw": 52.78,
+        "yahoo_earnings_score": 0.4,
+        "events_score_raw": 61.39,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -38445,7 +38461,8 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k"
+          "sec_8k",
+          "yahoo_earnings"
         ],
         "has_sector_rss": false
       },
@@ -41184,10 +41201,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.4,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -41199,8 +41216,12 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -44729,10 +44750,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": true,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": -0.15,
-        "yahoo_earnings_score": null,
-        "events_score_raw": 42.5,
+        "yahoo_earnings_score": 0.4,
+        "events_score_raw": 56.25,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -44746,7 +44767,8 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k"
+          "sec_8k",
+          "yahoo_earnings"
         ],
         "has_sector_rss": false
       },
@@ -44926,10 +44948,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -44941,6 +44963,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -50421,10 +50447,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.4,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -50436,6 +50462,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -50634,7 +50664,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -50815,10 +50845,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -50830,6 +50860,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -52391,7 +52425,7 @@
         "last_scored": null,
         "source": "finnhub_recommendation",
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -54169,10 +54203,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.4,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -54184,6 +54218,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -54559,10 +54597,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": true,
+        "has_yahoo_earnings": false,
         "sec_8k_score": null,
-        "yahoo_earnings_score": 0.4,
-        "events_score_raw": 70.0,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -54574,10 +54612,6 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -56722,10 +56756,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.4,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -56737,6 +56771,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -56935,7 +56973,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -60914,7 +60952,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -63532,7 +63570,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -68080,10 +68118,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": true,
+        "has_yahoo_earnings": false,
         "sec_8k_score": null,
-        "yahoo_earnings_score": 0.4,
-        "events_score_raw": 70.0,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -68095,10 +68133,6 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -69275,10 +69309,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -69290,6 +69324,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -73026,7 +73064,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -78542,7 +78580,7 @@
           "yahoo_earnings"
         ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -83656,10 +83694,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.4,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -83671,6 +83709,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -85032,10 +85074,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -85047,6 +85089,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -87993,10 +88039,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -88008,6 +88054,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -88186,10 +88236,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "yahoo_earnings_score": 0.4,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -88201,8 +88251,12 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "yahoo_earnings"
+        ],
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -95471,7 +95525,7 @@
         "last_scored": null,
         "source": "finnhub_recommendation",
         "has_sector_rss": true,
-        "sector_rss_event_count": 5,
+        "sector_rss_event_count": 6,
         "sector_rss_sectors": [
           "pharma"
         ]
@@ -96047,10 +96101,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": true,
-        "has_yahoo_earnings": true,
+        "has_yahoo_earnings": false,
         "sec_8k_score": 0.25,
-        "yahoo_earnings_score": 0.7,
-        "events_score_raw": 73.75,
+        "yahoo_earnings_score": null,
+        "events_score_raw": 62.5,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -96064,8 +96118,7 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
+          "sec_8k"
         ],
         "has_sector_rss": false
       },
@@ -97421,10 +97474,10 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": true,
-        "has_yahoo_earnings": false,
+        "has_yahoo_earnings": true,
         "sec_8k_score": 0.1,
-        "yahoo_earnings_score": null,
-        "events_score_raw": 55.0,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -97438,7 +97491,8 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k"
+          "sec_8k",
+          "yahoo_earnings"
         ],
         "has_sector_rss": false
       },
