@@ -1,22 +1,22 @@
 # LTHCS Backtest Engine Report
 
-Window: **2026-02-17 -> 2026-10-16** (169 trading days)
+Window: **2026-02-17 -> 2026-10-19** (170 trading days)
 Universe: **517 tickers** | long bands: ['constructive', 'elite', 'high_confidence'] | cost: 5.0 bps/side | delay: 1 td
 
 ## Headline P&L (non-overlapping)
 
 | Metric | Value |
 |:-------|------:|
-| Total return | +0.2091 |
-| Annualized return | +0.3295 |
-| Annualized Sharpe | +1.581 (95% CI: -0.64 ... +4.14) |
-| Annualized Sortino | +1.050 (95% CI: -0.38 ... +3.19) |
+| Total return | +0.2076 |
+| Annualized return | +0.3249 |
+| Annualized Sharpe | +1.567 (95% CI: -0.58 ... +4.09) |
+| Annualized Sortino | +1.052 (95% CI: -0.38 ... +3.20) |
 | Max drawdown | -0.1058 |
-| Hit rate (daily) | 0.308 |
-| Avg hold days | 7.8 |
-| Avg turnover / day | 0.1106 |
-| Total trades | 162 |
-| Unique tickers | 111 |
+| Hit rate (daily) | 0.306 |
+| Avg hold days | 7.6 |
+| Avg turnover / day | 0.1102 |
+| Total trades | 170 |
+| Unique tickers | 115 |
 
 > Non-overlapping construction: every trading day's return is realized on the actual close-to-close of held names. No forward-window reuse, so Sharpe is directly comparable to a passive benchmark.
 
@@ -24,16 +24,16 @@ Universe: **517 tickers** | long bands: ['constructive', 'elite', 'high_confiden
 
 | Band | Total return |
 |:-----|------:|
-| elite | -0.0079 |
-| high_confidence | +0.4179 |
-| constructive | +0.1580 |
-| monitor | +0.1093 |
-| weakening | +0.0369 |
-| review | +0.1014 |
+| elite | -0.0091 |
+| high_confidence | +0.4184 |
+| constructive | +0.1556 |
+| monitor | +0.1029 |
+| weakening | +0.0314 |
+| review | +0.0980 |
 
 ## Benchmark
 
-Benchmark total return: **+0.1265**
+Benchmark total return: **+0.1312**
 
 ## Run metadata
 
@@ -62,15 +62,15 @@ Benchmark total return: **+0.1265**
     "top_k": 0
   },
   "params_hash": "49269b2e937d327d",
-  "price_hash": "bae30ca4a1ea3baf",
+  "price_hash": "c8186962ee9c5ae8",
   "profile_name": "long_only_buy",
   "short_bottom_quintile": false,
   "short_set": [],
   "top_k": 0,
   "universe_size": 517,
   "window": {
-    "end": "2026-10-16",
-    "n_trading_days": 169,
+    "end": "2026-10-19",
+    "n_trading_days": 170,
     "start": "2026-02-17"
   }
 }
