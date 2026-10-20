@@ -222,30 +222,155 @@ class TestParsing:
         ]
 
 
+def _pt(dad, stamp, price):
+    return (dad.parse_ts(stamp), price)
+
+
 class FakeSite:
-    def __init__(self, data):
+    def __init__(self, data, charts=None):
         self.data = data
         self.base = "https://example.invalid"
+        self.charts = charts or {}
+        self.chart_calls: list[str] = []
 
-    def coingecko(self):
-        return {"bitcoin": {"usd": 100_000.0}, "ethereum": {"usd": 4000.0}}
+    def coingecko_chart(self, coin):
+        self.chart_calls.append(coin)
+        if coin not in self.charts:
+            raise AssertionError(f"unexpected chart fetch {coin}")
+        return self.charts[coin]
 
 
 class TestSpotChecks:
     NOW = T("2026-10-04T22:00")
 
     def test_price_within_and_outside_tolerance(self, dad):
+        # A later sample (the live spot the old check used) is 3% away. The
+        # reference has to be the sample next to the payload timestamp.
+        charts = {
+            "bitcoin": [_pt(dad, "2026-10-04T21:00:00Z", 100_000.0),
+                        _pt(dad, "2026-10-04T22:00:00Z", 103_000.0)],
+            "ethereum": [_pt(dad, "2026-10-04T21:00:00Z", 4_000.0),
+                         _pt(dad, "2026-10-04T22:00:00Z", 4_000.0)],
+        }
         ok = dad.check_price_vs_coingecko(
-            FakeSite({"market": {"coinbase": {"btc": {"price_usd": 100_500, "time": "2026-10-04T21:00:00Z"}}}}),
+            FakeSite({"market": {"coinbase": {"btc": {"price_usd": 100_500,
+                                                      "time": "2026-10-04T21:00:00Z"}}}}, charts),
             self.NOW, "bitcoin", "btc")
         assert ok["status"] == "ok" and ok["diff_pct"] == 0.5 and ok["page_age_h"] == 1.0
+        assert ok["reference"] == 100_000.0 and ok["reference_offset_s"] == 0
+        assert "reason" not in ok
+        assert "market_chart" in ok["source"] and "no key" in ok["source"]
+        assert "payload timestamp" in ok["note"]
         bad = dad.check_price_vs_coingecko(
-            FakeSite({"market": {"coinbase": {"eth": {"price_usd": 4100}}}}), self.NOW, "ethereum", "eth")
+            FakeSite({"market": {"coinbase": {"eth": {"price_usd": 4100,
+                                                      "time": "2026-10-04T21:00:00Z"}}}}, charts),
+            self.NOW, "ethereum", "eth")
         assert bad["status"] == "fail" and bad["diff_pct"] == 2.5
+        assert bad["reason"] == "price_mismatch"
+        assert bad["page_age_h"] == 1.0 and "payload timestamp" in bad["note"]
+
+    def test_rally_after_the_print_is_not_a_mismatch(self, dad):
+        """2026-10-20 shape: the page's Coinbase print matches CoinGecko at
+        13:50Z, and both venues are ~1.8% higher by the time the audit runs."""
+        now = T("2026-10-20T14:18:18")
+        charts = {"bitcoin": [
+            _pt(dad, "2026-10-20T13:45:00Z", 81_574.08),
+            _pt(dad, "2026-10-20T13:50:00Z", 81_840.35),
+            _pt(dad, "2026-10-20T14:15:00Z", 83_122.18),
+        ]}
+        out = dad.check_price_vs_coingecko(
+            FakeSite({"market": {"coinbase": {"btc": {"price_usd": 81634.01,
+                                                      "time": "2026-10-20T13:47:40Z"}}}}, charts),
+            now, "bitcoin", "btc")
+        assert out["status"] == "ok"
+        assert out["page_age_h"] == 0.51
+        assert out["reference"] == 81_840.35
+        assert out["reference_time"] == "2026-10-20T13:50:00Z"
+        assert out["reference_offset_s"] == 140
+        assert out["diff_pct"] == 0.252
+        assert "reason" not in out
+
+    def test_stale_quote_fails_even_when_it_matched(self, dad):
+        charts = {"bitcoin": [_pt(dad, "2026-10-04T10:00:00Z", 80_000.0)]}
+        out = dad.check_price_vs_coingecko(
+            FakeSite({"market": {"coinbase": {"btc": {"price_usd": 80_000,
+                                                      "time": "2026-10-04T10:00:00Z"}}}}, charts),
+            self.NOW, "bitcoin", "btc")
+        assert out["status"] == "fail" and out["reason"] == "stale"
+        assert out["page_age_h"] == 12.0 and out["diff_pct"] == 0.0
+        assert out["max_age_h"] == 6.0
+        assert "too old" in out["note"]
+
+    def test_stale_and_wrong_are_both_reported(self, dad):
+        charts = {"ethereum": [_pt(dad, "2026-10-04T10:00:00Z", 4_000.0)]}
+        out = dad.check_price_vs_coingecko(
+            FakeSite({"market": {"coinbase": {"eth": {"price_usd": 4500,
+                                                      "time": "2026-10-04T10:00:00Z"}}}}, charts),
+            self.NOW, "ethereum", "eth")
+        assert out["status"] == "fail" and out["reason"] == "price_mismatch+stale"
+        assert out["diff_pct"] == 12.5
+
+    def test_missing_timestamp_is_stale_and_does_not_fetch(self, dad):
+        site = FakeSite({"market": {"coinbase": {"eth": {"price_usd": 4100}}}},
+                        {"ethereum": [_pt(dad, "2026-10-04T22:00:00Z", 4_000.0)]})
+        out = dad.check_price_vs_coingecko(site, self.NOW, "ethereum", "eth")
+        assert out["status"] == "fail" and out["reason"] == "stale"
+        assert out["page_age_h"] is None and "diff_pct" not in out
+        assert site.chart_calls == []
+        assert "no timestamp" in out["note"]
+
+    def test_chart_gap_is_an_error_not_a_price_fail(self, dad):
+        charts = {"bitcoin": [_pt(dad, "2026-10-04T18:00:00Z", 90_000.0)]}
+        out = dad.check_price_vs_coingecko(
+            FakeSite({"market": {"coinbase": {"btc": {"price_usd": 100_000,
+                                                      "time": "2026-10-04T21:00:00Z"}}}}, charts),
+            self.NOW, "bitcoin", "btc")
+        assert out["status"] == "error"
+        assert "within" in out["error"] and "diff_pct" not in out
+
+    def test_old_quote_outside_the_chart_is_stale(self, dad):
+        charts = {"bitcoin": [_pt(dad, "2026-10-04T18:00:00Z", 90_000.0)]}
+        out = dad.check_price_vs_coingecko(
+            FakeSite({"market": {"coinbase": {"btc": {"price_usd": 80_000,
+                                                      "time": "2026-10-04T08:00:00Z"}}}}, charts),
+            self.NOW, "bitcoin", "btc")
+        assert out["status"] == "fail" and out["reason"] == "stale"
+        assert "diff_pct" not in out
 
     def test_missing_field_is_error_not_fail(self, dad):
         out = dad.check_price_vs_coingecko(FakeSite({"market": {}}), self.NOW, "bitcoin", "btc")
         assert out["status"] == "error"
+
+    def test_chart_url_is_keyless_and_rejects_odd_ids(self, dad):
+        url = dad.coingecko_chart_url("bitcoin")
+        assert url.startswith("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?")
+        assert "vs_currency=usd" in url and "days=1" in url and "interval" not in url
+        with pytest.raises(ValueError):
+            dad.coingecko_chart_url("bitcoin/../admin")
+
+    def test_parse_chart_drops_junk_and_reads_epoch_millis(self, dad):
+        pts = dad.parse_coingecko_chart({"prices": [
+            [1792503900000, 81574.08],
+            ["nope", 1],
+            [1792504200000, 0],
+            [1792504200000, "81840.35"],
+        ]})
+        assert len(pts) == 2
+        assert pts[0][1] == 81574.08
+        assert pts[0][0] == dad.parse_ts(1792503900000)
+        assert pts[1][1] == 81840.35
+
+    def test_chart_fetch_is_cached_per_coin(self, dad, monkeypatch):
+        calls = []
+
+        def fake_get(url, **kw):
+            calls.append(url)
+            return {"prices": [[1792503900000, 81574.08]]}
+
+        monkeypatch.setattr(dad, "get_json", fake_get)
+        site = dad.LiveSite("https://example.invalid")
+        assert site.coingecko_chart("bitcoin") == site.coingecko_chart("bitcoin")
+        assert len(calls) == 1 and "days=1" in calls[0] and "interval" not in calls[0]
 
     def test_live_build_age(self, dad):
         fresh = dad.check_live_build_age(FakeSite({"generated_at": "2026-10-04T21:00:00"}), self.NOW)
@@ -611,6 +736,41 @@ class TestProblems:
         probs = {p["id"]: p["severity"] for p in dar.data_problems(d)}
         assert probs == {"spot:live_site_build_age": "P0", "spot:btc_price_vs_coingecko": "P1",
                          "api:A": "P1", "api:B": "P2"}
+
+    def test_price_titles_say_which_failure_and_name_the_source(self, dar):
+        mismatch = dar.spot_title("btc_price_vs_coingecko", {
+            "status": "fail", "page": 81634.01, "reference": 80000.0, "diff_pct": 2.043,
+            "page_age_h": 0.51, "reason": "price_mismatch",
+            "source": "CoinGecko market_chart days=1 (nearest to payload time, no key)"})
+        assert "2.043% off CoinGecko at the payload time" in mismatch
+        assert "payload 31m old" in mismatch and "price_mismatch" not in mismatch
+        assert "market_chart" in mismatch and "no key" in mismatch
+        stale = dar.spot_title("eth_price_vs_coingecko", {
+            "status": "fail", "page_age_h": 7.71, "max_age_h": 6.0, "reason": "stale",
+            "source": "CoinGecko market_chart days=1 (nearest to payload time, no key)"})
+        assert stale.startswith("ETH price on the site is stale")
+        assert "8h" in stale and "6h" in stale and "market_chart" in stale
+        both = dar.spot_title("btc_price_vs_coingecko", {
+            "status": "fail", "page": 100, "reference": 80, "diff_pct": 25.0,
+            "page_age_h": 12, "reason": "price_mismatch+stale",
+            "source": "CoinGecko market_chart days=1 (nearest to payload time, no key)"})
+        assert "25.0% off CoinGecko at the payload time" in both
+        assert "quote is stale" in both and "payload 12h old" in both
+
+    def test_price_problem_records_age_source_and_reason(self, dar):
+        d = _data(spot_checks={"status": "ok", "checks": {
+            "btc_price_vs_coingecko": {
+                "status": "fail", "page": 81634.01, "reference": 80000.0,
+                "diff_pct": 2.043, "page_age_h": 0.51, "tolerance_pct": 1.0,
+                "reason": "price_mismatch",
+                "source": "CoinGecko market_chart days=1 (nearest to payload time, no key)",
+                "note": "wrong print"}}})
+        p = next(x for x in dar.data_problems(d) if x["id"] == "spot:btc_price_vs_coingecko")
+        assert p["severity"] == "P1"
+        assert "payload 31m old" in p["title"] and "market_chart" in p["title"]
+        assert "page_age_h=0.51" in p["detail"]
+        assert "reason=price_mismatch" in p["detail"]
+        assert "source=CoinGecko market_chart days=1" in p["detail"]
 
     def test_unreachable_tabs_are_p0_and_grouped(self, dar):
         tabs = [{"id": "etf", "label": "ETF Flows", "reachable": False, "problem": "tap target covered",

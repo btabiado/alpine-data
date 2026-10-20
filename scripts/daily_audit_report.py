@@ -381,6 +381,17 @@ def spot_title(name: str, c: dict) -> str:
                 f"(limit {_hours(c.get('max_age_h'))}) — pages deploy may be stuck")
     if "price" in name:
         coin = name.split("_")[0].upper()
+        reason = str(c.get("reason") or "")
+        age = _hours(c.get("page_age_h"))
+        source = c.get("source") or "CoinGecko"
+        if "price_mismatch" in reason:
+            stale_bit = " and the quote is stale" if "stale" in reason else ""
+            return (f"{coin} price on the site ({c.get('page')}) is {c.get('diff_pct')}% off "
+                    f"CoinGecko at the payload time ({c.get('reference')}){stale_bit} "
+                    f"— payload {age} old; source {source}")
+        if "stale" in reason:
+            return (f"{coin} price on the site is stale "
+                    f"(payload {age} old, limit {_hours(c.get('max_age_h'))}; source {source})")
         return (f"{coin} price on the site ({c.get('page')}) is {c.get('diff_pct')}% off "
                 f"CoinGecko ({c.get('reference')})")
     pretty = name.replace("_", " ")
@@ -727,6 +738,15 @@ def render_md(report: dict) -> str:
             detail = c.get("error") or c.get("note") or ""
             if "diff_pct" in c:
                 detail = f"site {c.get('page')} vs {c.get('reference')} ({c.get('diff_pct')}%)"
+                if c.get("page_age_h") is not None:
+                    detail += f", payload {_hours(c.get('page_age_h'))} old"
+                if c.get("reason"):
+                    detail += f", {c['reason']}"
+                if c.get("source"):
+                    detail += f", source {c['source']}"
+            elif c.get("reason"):
+                detail = (f"{c['reason']}: payload {_hours(c.get('page_age_h'))} old "
+                          f"(limit {_hours(c.get('max_age_h'))}), source {c.get('source')}")
             elif "lag_blocks" in c:
                 detail = f"site {c.get('page')} vs {c.get('reference')} (lag {c.get('lag_blocks')} blocks)"
             elif "age_h" in c:

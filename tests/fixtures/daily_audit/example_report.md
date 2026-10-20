@@ -43,8 +43,8 @@ Generated 2026-10-04T22:20:29Z. Machine-readable: `audit/daily/2026-10-04.json`.
 | check | status | detail |
 |---|---|---|
 | live_site_build_age | ok | built 2026-10-04T21:11:18Z (1h ago) |
-| btc_price_vs_coingecko | ok | site 85873.37 vs 86487.0 (0.71%) |
-| eth_price_vs_coingecko | ok | site 2706.51 vs 2718.84 (0.454%) |
+| btc_price_vs_coingecko | ok | site 85873.37 vs 86487.0 (0.71%), payload 1h old, source api.coingecko.com simple/price |
+| eth_price_vs_coingecko | ok | site 2706.51 vs 2718.84 (0.454%), payload 1h old, source api.coingecko.com simple/price |
 | fear_greed_vs_alternative_me | ok | 2026-10-04: site 65 vs 65 |
 | btc_tip_height_vs_mempool_space | ok | site 969901 vs 969911 (lag 10 blocks) |
 | treasury_10y_vs_treasury_gov | ok | 2026-10-01: site 5.24 vs 5.24 |
