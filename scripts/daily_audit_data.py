@@ -22,8 +22,9 @@ others, so a flaky upstream degrades the report instead of erasing it):
   api_status    ``data/health/api_status.json`` verdict counts, and per-source
                 verdict changes vs. the committed copy from ~24h earlier.
   spot_checks   cheap correctness checks of the LIVE site against primary
-                sources that need no secrets (CoinGecko, alternative.me,
-                mempool.space, treasury.gov) plus the live build's age.
+                sources that need no secrets (CoinGecko's keyless market_chart
+                at the payload's own timestamp, alternative.me, mempool.space,
+                treasury.gov) plus the live build's age.
   live_payloads the ``as_of`` / generated stamps of every sidecar JSON the
                 live V1 page loads.
   quality_audit the committed LTHCS monthly verdict
@@ -74,11 +75,45 @@ HTTP_TIMEOUT_S = 20
 FAILED_CONCLUSIONS = frozenset({"failure", "timed_out", "startup_failure"})
 
 # Spot-check tolerances.
-PRICE_TOLERANCE_PCT = 1.0
 TREASURY_TOLERANCE = 0.02            # percentage points
 TREASURY_MAX_LAG_DAYS = 6            # FRED trails treasury.gov by ~1 business day
 LIVE_BUILD_MAX_AGE_H = 6.0           # pages.yml rebuilds hourly
 SCHEDULE_GRACE = timedelta(hours=10)  # GitHub cron here routinely starts 5-8 h late
+
+# Price cross-check. The number on the page is the Coinbase Exchange last
+# trade (``market.coinbase.{btc,eth}`` from
+# ``api.exchange.coinbase.com/products/{PRODUCT}/ticker``: ``price`` plus the
+# trade's own ``time``), not a CoinGecko quote. Comparing that print to
+# CoinGecko's *live* ``simple/price`` flags ordinary movement between the page
+# build and the audit. That is what the 2026-10-20 audit did. The page carried
+# the 13:47Z Coinbase prints (BTC 81,634.01, ETH 2,395.78). Thirty-one minutes
+# later the live CoinGecko spot was BTC 83,104 and ETH 2,461.81, outside the
+# 1% band. Coinbase's own 1-minute candles show the same rally (BTC ~81,631 at
+# 13:47Z, ~83,073 at 14:17Z; ETH ~2,395 to ~2,462), and CoinGecko's 5-minute
+# series agrees at both ends (13:50Z: BTC 81,840 / ETH 2,401, 0.25% and 0.21%
+# from the page; 14:15Z: BTC 83,122 / ETH 2,462). The feed was current. The
+# check was comparing two different moments.
+#
+# The reference is therefore CoinGecko's keyless ``market_chart?days=1`` series
+# (5-minute samples, no API key — the paid ``interval`` parameter is not used)
+# at the nearest sample to the payload timestamp, and only when that sample is
+# within PRICE_REF_MAX_OFFSET. Two 5-minute buckets is as far as "nearest" can
+# be and still be the same moment. The 1% band is unchanged on purpose: it is
+# a same-time venue tolerance, not a budget that grows with payload age.
+# Audits from 2026-10-05 through 2026-10-19 stayed under 0.64% except the two
+# fast-move days (10-14 and 10-20), and the aligned 10-20 samples above are
+# about 0.25%. Widening the band would hide a print that was already wrong
+# when the page was built.
+#
+# A quote older than PRICE_MAX_AGE_H is stale even when it matched CoinGecko
+# at its own timestamp, and the fail reason says so (``stale``, separately
+# from ``price_mismatch``). The bound is the live-build limit. pages.yml is
+# hourly, but GitHub cron here is best-effort; payload ages of 0.1–3.1h are
+# normal across those audits, while 7.7h (2026-10-13) was already a stuck
+# deploy. A tighter bound would page on ordinary cron lag.
+PRICE_TOLERANCE_PCT = 1.0
+PRICE_MAX_AGE_H = LIVE_BUILD_MAX_AGE_H
+PRICE_REF_MAX_OFFSET = timedelta(minutes=10)
 
 
 # ---------------------------------------------------------------------------
@@ -695,7 +730,7 @@ class LiveSite:
         self.base = base.rstrip("/")
         self._html: str | None = None
         self._data: dict | None = None
-        self._coingecko: dict | None = None
+        self._charts: dict[str, list[tuple[datetime, float]]] = {}
 
     @property
     def html(self) -> str:
@@ -712,13 +747,16 @@ class LiveSite:
             self._data = extract_inline_data(self.html)
         return self._data
 
-    def coingecko(self) -> dict:
-        """One CoinGecko call for every coin checked (its free tier 429s fast)."""
-        if self._coingecko is None:
-            self._coingecko = get_json(
-                "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum"
-                "&vs_currencies=usd&include_last_updated_at=true", attempts=3)
-        return self._coingecko
+    def coingecko_chart(self, coin: str) -> list[tuple[datetime, float]]:
+        """Keyless 5-minute USD prices for the last day, one call per coin.
+
+        Cached on this site object: BTC and ETH are separate ids, and a retry
+        of the same id must not spend another free-tier call.
+        """
+        if coin not in self._charts:
+            self._charts[coin] = parse_coingecko_chart(
+                get_json(coingecko_chart_url(coin), attempts=3))
+        return self._charts[coin]
 
 
 def extract_inline_data(html: str) -> dict:
@@ -737,20 +775,130 @@ def _dig(d: Any, *keys: str) -> Any:
     return d
 
 
+# Fixed URLs, not a formatted id. The audit only cross-checks these two
+# coins, and a keyless market_chart?days=1 call is the free 5-minute series.
+# ``interval`` is a paid parameter and is left off.
+_COINGECKO_CHART_URLS = {
+    "bitcoin": ("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart"
+                "?vs_currency=usd&days=1"),
+    "ethereum": ("https://api.coingecko.com/api/v3/coins/ethereum/market_chart"
+                 "?vs_currency=usd&days=1"),
+}
+
+
+def coingecko_chart_url(coin: str) -> str:
+    """Keyless CoinGecko USD chart covering the last day for one allowlisted id."""
+    try:
+        return _COINGECKO_CHART_URLS[coin]
+    except KeyError:
+        raise ValueError(f"refusing CoinGecko id {coin!r}") from None
+
+
+def parse_coingecko_chart(doc: Any) -> list[tuple[datetime, float]]:
+    """``market_chart`` prices as ``(utc datetime, usd)``, dropping junk rows."""
+    prices = doc.get("prices") if isinstance(doc, dict) else None
+    out: list[tuple[datetime, float]] = []
+    for row in prices or []:
+        if not isinstance(row, (list, tuple)) or len(row) < 2:
+            continue
+        ts = parse_ts(row[0])
+        try:
+            price = float(row[1])
+        except (TypeError, ValueError):
+            continue
+        if ts is None or not price > 0:
+            continue
+        out.append((ts, price))
+    return out
+
+
+def nearest_chart_point(points: list[tuple[datetime, float]],
+                        when: datetime) -> tuple[datetime, float, float] | None:
+    """Nearest ``(time, price, absolute offset in seconds)`` to ``when``."""
+    best: tuple[datetime, float, float] | None = None
+    for ts, price in points:
+        offset = abs((ts - when).total_seconds())
+        if best is None or offset < best[2]:
+            best = (ts, price, offset)
+    return best
+
+
 def check_price_vs_coingecko(site: LiveSite, now: datetime, coin: str, symbol: str) -> dict:
+    """Coinbase print on the page vs CoinGecko at that print's own timestamp.
+
+    ``reason`` is set on a failure: ``price_mismatch`` (the print disagrees
+    with CoinGecko at that time), ``stale`` (the quote is too old, or has no
+    timestamp to line up), or ``price_mismatch+stale`` when both are true.
+    A live CoinGecko spot is never the reference. See ``PRICE_TOLERANCE_PCT``.
+    """
     page = _dig(site.data, "market", "coinbase", symbol) or {}
     page_price = page.get("price_usd")
     page_time = parse_ts(page.get("time")) or parse_ts(_dig(site.data, "market", "fetched_at"))
+    source = "CoinGecko market_chart days=1 (nearest to payload time, no key)"
     if page_price is None:
         return {"status": "error", "error": f"no market.coinbase.{symbol}.price_usd in live DATA"}
-    ref = float(site.coingecko()[coin]["usd"])
-    diff = abs(float(page_price) - ref) / ref * 100.0
-    return {
-        "status": "ok" if diff <= PRICE_TOLERANCE_PCT else "fail",
-        "page": page_price, "reference": ref, "diff_pct": round(diff, 3),
-        "tolerance_pct": PRICE_TOLERANCE_PCT, "page_age_h": age_hours(page_time, now),
-        "source": "api.coingecko.com simple/price",
+    try:
+        page_px = float(page_price)
+    except (TypeError, ValueError):
+        return {"status": "error",
+                "error": f"market.coinbase.{symbol}.price_usd is not a number"}
+    age = age_hours(page_time, now)
+    out: dict[str, Any] = {
+        "page": page_price,
+        "page_time": iso(page_time),
+        "page_age_h": age,
+        "tolerance_pct": PRICE_TOLERANCE_PCT,
+        "max_age_h": PRICE_MAX_AGE_H,
+        "source": source,
     }
+    if page_time is None:
+        out["status"] = "fail"
+        out["reason"] = "stale"
+        out["note"] = ("Coinbase quote has no timestamp, so it cannot be lined up "
+                       "with CoinGecko. Not compared to the live spot.")
+        return out
+
+    stale = age is not None and age > PRICE_MAX_AGE_H
+    nearest = nearest_chart_point(site.coingecko_chart(coin), page_time)
+    if nearest is None:
+        return {**out, "status": "error", "error": "CoinGecko market_chart returned no prices"}
+    ref_time, ref, offset = nearest
+    out["reference"] = ref
+    out["reference_time"] = iso(ref_time)
+    out["reference_offset_s"] = round(offset)
+    if offset > PRICE_REF_MAX_OFFSET.total_seconds():
+        if stale:
+            out["status"] = "fail"
+            out["reason"] = "stale"
+            out["note"] = (f"payload quote is {age}h old (limit {PRICE_MAX_AGE_H}h) and "
+                           "CoinGecko's last-day chart has no sample near that timestamp. "
+                           "Not compared to the live spot.")
+            return out
+        return {**out, "status": "error",
+                "error": (f"no CoinGecko sample within "
+                          f"{int(PRICE_REF_MAX_OFFSET.total_seconds() // 60)} min "
+                          "of the payload timestamp")}
+    diff = abs(page_px - ref) / ref * 100.0
+    out["diff_pct"] = round(diff, 3)
+    mismatch = diff > PRICE_TOLERANCE_PCT
+    if mismatch and stale:
+        out["reason"] = "price_mismatch+stale"
+        out["note"] = (f"site price is {out['diff_pct']}% off CoinGecko at the payload "
+                       f"timestamp, and the quote is {age}h old (limit {PRICE_MAX_AGE_H}h)")
+    elif mismatch:
+        out["reason"] = "price_mismatch"
+        out["note"] = ("site price differs from CoinGecko at the payload timestamp; "
+                       "the live spot was not used, so this is a wrong print rather than "
+                       "movement after the page was built")
+    elif stale:
+        out["reason"] = "stale"
+        out["note"] = (f"payload quote is {age}h old (limit {PRICE_MAX_AGE_H}h). "
+                       f"It matched CoinGecko within {PRICE_TOLERANCE_PCT}% when it was "
+                       "taken, but it is too old to be the current price")
+    else:
+        out["note"] = "matches CoinGecko at the payload timestamp"
+    out["status"] = "fail" if (mismatch or stale) else "ok"
+    return out
 
 
 def check_fear_greed(site: LiveSite, now: datetime) -> dict:
