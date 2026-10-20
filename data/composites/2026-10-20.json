@@ -1,6 +1,6 @@
 {
   "as_of": "2026-10-20",
-  "generated_at": "2026-10-20T19:40:38Z",
+  "generated_at": "2026-10-20T19:46:12Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-20",
@@ -83,7 +83,7 @@
       "as_of": "2026-10-20",
       "label": "Neutral",
       "note": null,
-      "score": -29.49,
+      "score": -29.43,
       "stale": false
     },
     "overview_sentiment": {
