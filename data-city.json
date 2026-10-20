@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-20T10:01:08Z",
+  "generated_at": "2026-10-20T12:54:51Z",
   "methodology_version": "1.1",
   "as_of": "2026-09",
   "methodology_disclosures": [
@@ -27,7 +27,7 @@
         "label": "On baseline",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": 0.0434788075001508,
+        "composite_c": 0.0428526252468718,
         "pillars": [
           {
             "key": "city_services",
@@ -200,7 +200,7 @@
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": -0.8433522581634876,
+            "score_d": -0.8452308049233246,
             "feeds": [
               {
                 "label": "Crimes 2001-present",
@@ -209,13 +209,13 @@
                 "complete_through": "2026-08",
                 "note": "excludes last ~7 days; latest complete month lags to prior month",
                 "status": "ok",
-                "recent": 20844,
+                "recent": 20847,
                 "recent_period": "2026-08",
-                "baseline_mean": 19451.166666666668,
-                "baseline_std": 1651.543966178988,
-                "z": 0.8433522581634876,
-                "yoy_pct": -2.534368278312915,
-                "d": -0.8433522581634876,
+                "baseline_mean": 19450.916666666668,
+                "baseline_std": 1651.7184716900827,
+                "z": 0.8452308049233246,
+                "yoy_pct": -2.520340409613766,
+                "d": -0.8452308049233246,
                 "series": [
                   {
                     "month": "2023-09",
@@ -275,7 +275,7 @@
                   },
                   {
                     "month": "2024-11",
-                    "n": 19771
+                    "n": 19772
                   },
                   {
                     "month": "2024-12",
@@ -327,11 +327,11 @@
                   },
                   {
                     "month": "2025-12",
-                    "n": 17599
+                    "n": 17598
                   },
                   {
                     "month": "2026-01",
-                    "n": 17037
+                    "n": 17036
                   },
                   {
                     "month": "2026-02",
@@ -343,15 +343,15 @@
                   },
                   {
                     "month": "2026-04",
-                    "n": 19166
+                    "n": 19165
                   },
                   {
                     "month": "2026-05",
-                    "n": 21163
+                    "n": 21162
                   },
                   {
                     "month": "2026-06",
-                    "n": 20068
+                    "n": 20069
                   },
                   {
                     "month": "2026-07",
@@ -359,7 +359,7 @@
                   },
                   {
                     "month": "2026-08",
-                    "n": 20844
+                    "n": 20847
                   }
                 ]
               }
@@ -542,8 +542,8 @@
         "median_real_estate_taxes": 4943,
         "effective_property_tax_rate": 0.014794971565399582,
         "unemployment_rate": 6.0,
-        "aqi": 55,
-        "context_score": 32
+        "aqi": 47,
+        "context_score": 35
       },
       "disclosures": [
         "Crimes 2001-present: excludes last ~7 days; latest complete month lags to prior month"
@@ -912,13 +912,13 @@
           "complete_through": "2026-09",
           "note": "license_start_date gives a clean recent flow ONCE future-dated rows are filtered (raw aggregation returns a large NULL bucket plus forward-dated noise), so filter `license_start_date IS NOT NULL AND license_start_date < <next-month>` before bucketing. date_issued is a cleaner alternative that mirrors the backbone Building-Permits issue_date framing. Polarity +1: new/renewed licenses up-is-favorable. pillar_hint development_economy.",
           "status": "ok",
-          "recent": 2361,
+          "recent": 2366,
           "recent_period": "2026-09",
-          "baseline_mean": 2414.1666666666665,
-          "baseline_std": 225.71768256435342,
-          "z": -0.2355449784112877,
-          "yoy_pct": -16.008537886872997,
-          "d": -0.2355449784112877,
+          "baseline_mean": 2415.0,
+          "baseline_std": 225.27316751002547,
+          "z": -0.21751369921950123,
+          "yoy_pct": -15.830665243685521,
+          "d": -0.21751369921950123,
           "series": [
             {
               "month": "2023-10",
@@ -946,7 +946,7 @@
             },
             {
               "month": "2024-04",
-              "n": 2424
+              "n": 2425
             },
             {
               "month": "2024-05",
@@ -998,11 +998,11 @@
             },
             {
               "month": "2025-05",
-              "n": 2616
+              "n": 2617
             },
             {
               "month": "2025-06",
-              "n": 2806
+              "n": 2807
             },
             {
               "month": "2025-07",
@@ -1038,7 +1038,7 @@
             },
             {
               "month": "2026-03",
-              "n": 2024
+              "n": 2026
             },
             {
               "month": "2026-04",
@@ -1050,19 +1050,19 @@
             },
             {
               "month": "2026-06",
-              "n": 2427
+              "n": 2429
             },
             {
               "month": "2026-07",
-              "n": 2360
+              "n": 2363
             },
             {
               "month": "2026-08",
-              "n": 2316
+              "n": 2319
             },
             {
               "month": "2026-09",
-              "n": 2361
+              "n": 2366
             }
           ]
         }
@@ -1589,8 +1589,8 @@
         "median_real_estate_taxes": 6547,
         "effective_property_tax_rate": 0.008419495884773663,
         "unemployment_rate": 5.3,
-        "aqi": 28,
-        "context_score": 51
+        "aqi": 23,
+        "context_score": 55
       },
       "disclosures": [
         "311 (2010-present): ~38M rows; REQUIRES app token + recent $where filter or it times out",
@@ -2376,7 +2376,7 @@
         "median_real_estate_taxes": 6050,
         "effective_property_tax_rate": 0.006567520625271385,
         "unemployment_rate": 5.0,
-        "aqi": 55,
+        "aqi": 53,
         "context_score": 43
       },
       "disclosures": [
@@ -2914,8 +2914,8 @@
         "median_real_estate_taxes": 7337,
         "effective_property_tax_rate": 0.00781696143191988,
         "unemployment_rate": 4.5,
-        "aqi": 29,
-        "context_score": 61
+        "aqi": 36,
+        "context_score": 58
       },
       "disclosures": [
         "Customer Service Requests: CORRECTED: column is 'createddate' (one word), not 'created_date'.",
@@ -3101,7 +3101,7 @@
         "label": "Worsening",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": -0.9311397084146925,
+        "composite_c": -0.9336690869287373,
         "pillars": [
           {
             "key": "city_services",
@@ -3442,7 +3442,7 @@
           {
             "key": "development_economy",
             "name": "Development & Economy",
-            "score_d": -1.8243142532548726,
+            "score_d": -1.8319023887970072,
             "feeds": [
               {
                 "label": "Building Permits",
@@ -3451,13 +3451,13 @@
                 "complete_through": "2026-09",
                 "note": null,
                 "status": "ok",
-                "recent": 1557,
+                "recent": 1555,
                 "recent_period": "2026-09",
                 "baseline_mean": 2037.8333333333333,
                 "baseline_std": 263.56935625287616,
-                "z": -1.8243142532548726,
-                "yoy_pct": -32.30434782608695,
-                "d": -1.8243142532548726,
+                "z": -1.8319023887970072,
+                "yoy_pct": -32.391304347826086,
+                "d": -1.8319023887970072,
                 "series": [
                   {
                     "month": "2023-10",
@@ -3601,7 +3601,7 @@
                   },
                   {
                     "month": "2026-09",
-                    "n": 1557
+                    "n": 1555
                   }
                 ]
               }
@@ -3616,8 +3616,8 @@
         "median_real_estate_taxes": 9862,
         "effective_property_tax_rate": 0.00707206884187881,
         "unemployment_rate": 4.2,
-        "aqi": 21,
-        "context_score": 58
+        "aqi": 25,
+        "context_score": 57
       },
       "disclosures": [
         "Police Incident Reports: 2018 portal/system migration = continuity breakpoint"
@@ -3635,13 +3635,13 @@
           "complete_through": "2026-09",
           "note": "dba_start_date gives a dense flow of new business registrations when filtered to a recent window. location_start_date is the alternative (original location open date; slightly more back-loaded). Polarity +1: new business registrations up-is-favorable. pillar_hint development_economy.",
           "status": "ok",
-          "recent": 863,
+          "recent": 865,
           "recent_period": "2026-09",
-          "baseline_mean": 1009.9166666666666,
-          "baseline_std": 220.4485799203272,
-          "z": -0.666444150920655,
-          "yoy_pct": -5.060506050605061,
-          "d": -0.666444150920655,
+          "baseline_mean": 1010.75,
+          "baseline_std": 220.49759068978508,
+          "z": -0.6610049549478008,
+          "yoy_pct": -4.84048404840484,
+          "d": -0.6610049549478008,
           "series": [
             {
               "month": "2023-10",
@@ -3681,7 +3681,7 @@
             },
             {
               "month": "2024-07",
-              "n": 1252
+              "n": 1253
             },
             {
               "month": "2024-08",
@@ -3729,11 +3729,11 @@
             },
             {
               "month": "2025-07",
-              "n": 1183
+              "n": 1184
             },
             {
               "month": "2025-08",
-              "n": 933
+              "n": 935
             },
             {
               "month": "2025-09",
@@ -3753,15 +3753,15 @@
             },
             {
               "month": "2026-01",
-              "n": 1651
+              "n": 1652
             },
             {
               "month": "2026-02",
-              "n": 1068
+              "n": 1069
             },
             {
               "month": "2026-03",
-              "n": 1091
+              "n": 1092
             },
             {
               "month": "2026-04",
@@ -3773,19 +3773,19 @@
             },
             {
               "month": "2026-06",
-              "n": 920
+              "n": 922
             },
             {
               "month": "2026-07",
-              "n": 920
+              "n": 924
             },
             {
               "month": "2026-08",
-              "n": 891
+              "n": 892
             },
             {
               "month": "2026-09",
-              "n": 863
+              "n": 865
             }
           ]
         }
@@ -4168,8 +4168,8 @@
         "median_real_estate_taxes": 3744,
         "effective_property_tax_rate": 0.008086393088552916,
         "unemployment_rate": 2.7,
-        "aqi": 40,
-        "context_score": 65
+        "aqi": 33,
+        "context_score": 68
       },
       "disclosures": [
         "Footprint = Miami-Dade County (not the City of Miami). County 311 excludes City-of-Miami-proper requests.",
