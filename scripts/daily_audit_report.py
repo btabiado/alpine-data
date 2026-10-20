@@ -29,9 +29,10 @@ Severities:
         not load, a feed stale/broken per data_health, a workflow failing two
         days running, the live site not rebuilt for hours
     P1  a workflow failure today, a scheduled workflow that missed a day or
-        whose last scheduled run failed, a spot check that disagrees with its
-        primary source, console errors, failed same-origin requests, visible
-        NaN/undefined text, an upstream API down
+        whose last scheduled run failed with no success since (a later
+        manual or watchdog run clears it), a spot check that disagrees
+        with its primary source, console errors, failed same-origin
+        requests, visible NaN/undefined text, an upstream API down
     P2  layout overflow at 390px, heavy pages, chronically late/dropped cron
         ticks, degraded/blocked upstreams, a feed whose source was checked
         and has not published newer data (disclosed upstream lag)
@@ -286,6 +287,9 @@ def data_problems(data: dict | None) -> list[dict]:
                     f"Scheduled workflow {name} missed {len(s['missed_days'])} day(s) in the last week",
                     f"cron {crons}; no scheduled run on: {', '.join(s['missed_days'])}"))
             last = s.get("last_run") or {}
+            # last_failed is already false when a later success (manual
+            # workflow_dispatch or watchdog catch-up) recovered the workflow.
+            # Do not keep the P1 until the next monthly schedule.
             if (s.get("last_failed") and name not in flagged_workflows
                     and _actions_failure_is_error(name)):
                 out.append(problem(
@@ -295,9 +299,11 @@ def data_problems(data: dict | None) -> list[dict]:
             cov = s.get("coverage_pct")
             sched_cov = s.get("schedule_coverage_pct")
             catchup_ticks = s.get("catchup_ticks") or 0
+            missed_ticks = s.get("missed_ticks")
             # coverage_pct is effective freshness (schedule event or a labeled
             # watchdog catch-up). A scheduler-only gap that the watchdog
-            # filled is not "ticks that never ran".
+            # filled is not "ticks that never ran". missed_ticks is the
+            # remainder: due fires with neither. The P2 stays informational.
             if cov is not None and (s.get("due_runs") or 0) > (s.get("due_days") or 0) and cov < MIN_COVERAGE_PCT:
                 detail = (f"cron {crons}; {s.get('scheduled_runs')} scheduled runs")
                 if catchup_ticks:
@@ -305,14 +311,24 @@ def data_problems(data: dict | None) -> list[dict]:
                 detail += f" for {s.get('due_runs')} due ticks"
                 if sched_cov is not None and abs(float(sched_cov) - float(cov)) >= 0.05:
                     detail += f"; scheduler delivered {sched_cov:.0f}%, effective {cov:.0f}%"
+                if missed_ticks is not None:
+                    detail += f"; {int(missed_ticks)} tick(s) never ran"
                 title = f"{name}: {cov:.0f}% of cron ticks ran"
                 if catchup_ticks and sched_cov is not None and abs(float(sched_cov) - float(cov)) >= 0.05:
                     title = (f"{name}: {cov:.0f}% of cron ticks covered "
                              f"({catchup_ticks} by watchdog catch-up)")
+                    if missed_ticks is not None:
+                        title += f"; {int(missed_ticks)} never ran"
+                elif missed_ticks is not None:
+                    title = f"{name}: {cov:.0f}% of cron ticks ran; {int(missed_ticks)} never ran"
+                item = f"{name} {cov:.0f}%"
+                if missed_ticks is not None:
+                    item = (f"{name} {cov:.0f}% ({catchup_ticks} catch-up, "
+                            f"{int(missed_ticks)} missed)")
                 out.append(problem(
                     f"schedule:{name}:dropped", P2, "schedule", title, detail,
                     group="schedule:dropped", group_title="Crons that lose most of their ticks",
-                    item=f"{name} {cov:.0f}%"))
+                    item=item))
             delay = s.get("median_delay_min")
             if delay is not None and delay > LATE_MINUTES:
                 late_detail = f"cron {crons}"
@@ -765,8 +781,12 @@ def render_md(report: dict) -> str:
             flags = []
             if x.get("missed_days"):
                 flags.append(f"MISSED {len(x['missed_days'])}d")
+            recovered = x.get("recovered_run") or {}
             if x.get("last_failed") and not (x.get("name") == quality_name and quality_ok):
                 flags.append("FAILING")
+            elif recovered.get("created_at"):
+                # Last scheduled run failed; a later success cleared it.
+                flags.append("recovered")
             if x.get("state") and x.get("state") != "active":
                 flags.append(str(x["state"]).upper())
             catchup_ticks = x.get("catchup_ticks") or 0
@@ -795,6 +815,10 @@ def render_md(report: dict) -> str:
                 any_catchup = True
                 last_cell += (f"; catch-up {(caught.get('created_at') or '')[:16]} "
                               f"{caught.get('conclusion') or ''}").rstrip()
+            if recovered.get("created_at"):
+                last_cell += (f"; recovered {(recovered.get('created_at') or '')[:16]} "
+                              f"{recovered.get('conclusion') or ''} "
+                              f"({recovered.get('event') or 'run'})").rstrip()
             rows.append([
                 x.get("name"), " ; ".join(x.get("crons") or []),
                 f"{x.get('days_with_run')}/{x.get('due_days')}",

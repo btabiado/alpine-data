@@ -18,7 +18,9 @@ others, so a flaky upstream degrades the report instead of erasing it):
   schedules     every workflow with an ``on.schedule`` cron: which of the
                 last 7 days it was due, which ticks a schedule event served,
                 and which a cron-watchdog catch-up served instead (labeled
-                separately, not counted as a schedule delivery).
+                separately, not counted as a schedule delivery). A failed
+                scheduled run is not still failing once a later run has
+                succeeded, including a manual workflow_dispatch.
   api_status    ``data/health/api_status.json`` verdict counts, and per-source
                 verdict changes vs. the committed copy from ~24h earlier.
   spot_checks   cheap correctness checks of the LIVE site against primary
@@ -59,6 +61,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections import Counter
+from collections.abc import Iterable
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
@@ -344,6 +347,52 @@ def is_watchdog_catchup(run: dict) -> bool:
     })
 
 
+# A pull-request run on a side branch is not a recovery of main's schedule.
+_SIDE_EVENTS = frozenset({
+    "pull_request", "pull_request_target", "pull_request_review",
+    "pull_request_review_comment", "merge_group",
+})
+
+
+def clearing_success(failed_run: dict | None, runs: Iterable[dict]) -> dict | None:
+    """Latest completed run after ``failed_run``, if that run succeeded.
+
+    A red scheduled run stays a failure until the newest later attempt on
+    main succeeds. That attempt may be the next schedule event, a watchdog
+    ``workflow_dispatch``, or a person clicking Run workflow. A success
+    that is followed by another failure does not clear it. The flag must
+    not wait for the next monthly cron (the 2026-10-01 LTHCS monthly
+    failures were still flagged after manual re-runs passed on 2026-10-16
+    and 2026-10-17). Returns that successful run, or None.
+    """
+    if not failed_run:
+        return None
+    failed_at = parse_ts(failed_run.get("created_at"))
+    if failed_at is None:
+        return None
+    failed_id = failed_run.get("id")
+    decisive = FAILED_CONCLUSIONS | {"success"}
+    best: dict | None = None
+    best_at: datetime | None = None
+    for run in runs:
+        if run.get("id") is not None and run.get("id") == failed_id:
+            continue
+        if run.get("event") in _SIDE_EVENTS:
+            continue
+        if run.get("conclusion") not in decisive:
+            continue
+        if run.get("status") not in (None, "completed"):
+            continue
+        stamp = parse_ts(run.get("created_at")) or parse_ts(run.get("updated_at"))
+        if stamp is None or stamp < failed_at:
+            continue
+        if best_at is None or stamp > best_at:
+            best, best_at = run, stamp
+    if best is not None and best.get("conclusion") == "success":
+        return best
+    return None
+
+
 def _run_in_window(times: list[datetime], start: datetime, end: datetime) -> datetime | None:
     return next((rt for rt in times if start <= rt < end), None)
 
@@ -414,6 +463,7 @@ def evaluate_schedule(crons: list[str], runs: list[dict], now: datetime,
             hit = sched_hit
         delays.append(max(0.0, (hit - t).total_seconds() / 60.0))
     due_runs = sum(due.values())
+    served_ticks = sum(served.values())
     missed = sorted(d.isoformat() for d in due if not served.get(d))
     delays.sort()
     schedule_delays.sort()
@@ -428,7 +478,11 @@ def evaluate_schedule(crons: list[str], runs: list[dict], now: datetime,
         "scheduled_runs": sum(1 for rt in run_times if rt >= since),
         "catchup_runs": sum(1 for rt in catch_times if rt >= since),
         "catchup_ticks": catchup_ticks,
-        "coverage_pct": round(100.0 * sum(served.values()) / due_runs, 1) if due_runs else None,
+        # Ticks no schedule event and no watchdog catch-up served. Distinct
+        # from catchup_ticks, which are dropped schedule events the watchdog
+        # did cover. Both stay informational; neither is an outage by itself.
+        "missed_ticks": due_runs - served_ticks,
+        "coverage_pct": round(100.0 * served_ticks / due_runs, 1) if due_runs else None,
         "schedule_coverage_pct": round(100.0 * schedule_served / due_runs, 1) if due_runs else None,
         "median_delay_min": round(median) if median is not None else None,
         "schedule_median_delay_min": round(schedule_median) if schedule_median is not None else None,
@@ -624,6 +678,24 @@ def section_workflows_and_schedules(gh: GitHub, repo_root: Path, now: datetime,
                 last = []
         s["last_run"] = _summarize_run(last[0]) if last else None
         s["last_failed"] = bool(last) and last[0].get("conclusion") in FAILED_CONCLUSIONS
+        if s["last_failed"]:
+            # Window runs include manual and watchdog dispatches. If the
+            # success is older than the window (a monthly re-run, then a
+            # week of audits), look the latest completed runs up once so
+            # the flag does not come back before the next schedule.
+            cleared = clearing_success(last[0], runs)
+            if cleared is None:
+                try:
+                    older_any = gh.get(
+                        f"/repos/{{repo}}/actions/workflows/{wf['id']}/runs",
+                        {"branch": "main", "status": "completed",
+                         "exclude_pull_requests": "true", "per_page": 10})
+                    cleared = clearing_success(last[0], older_any.get("workflow_runs") or [])
+                except Exception:  # noqa: BLE001 - keep the failure if the lookup dies
+                    cleared = None
+            if cleared is not None:
+                s["last_failed"] = False
+                s["recovered_run"] = _summarize_run(cleared)
         caught = sorted((r for r in catchup_runs if r.get("status") == "completed"),
                         key=lambda r: r.get("created_at") or "", reverse=True)
         if caught:

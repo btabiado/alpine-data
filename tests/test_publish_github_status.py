@@ -259,12 +259,41 @@ class TestDerivedFlags:
     def test_repeat_failure_is_two_of_the_last_three_completed(self, pgs):
         f = lambda *c: self.flags(pgs, [run(i, i + 1, x) for i, x in enumerate(c)])["repeat_failure"]  # noqa: E731
         assert f("failure", "success", "failure") is True
-        assert f("success", "failure", "failure") is True
+        # Newest run succeeded: the streak is over, even if two of the three failed.
+        assert f("success", "failure", "failure") is False
         assert f("failure", "success", "success", "failure") is False   # 4th run is outside the 3
         # An in-progress run is not one of the "last 3 completed".
         runs = [run(0, 0.1, None, status="in_progress"), run(1, 1, "failure"), run(2, 2, "success"),
                 run(3, 3, "failure")]
         assert self.flags(pgs, runs)["repeat_failure"] is True
+
+    def test_manual_dispatch_success_clears_repeat_failure(self, pgs):
+        """A workflow_dispatch success after the failures clears the flag.
+
+        Monthly jobs were staying on the repeat-failure list until the next
+        schedule even after a manual re-run passed. The failure is recent
+        enough to also count as recovered.
+        """
+        runs = [
+            run(1, 2, "success", "workflow_dispatch"),
+            run(2, 20, "failure", "schedule"),
+            run(3, 40, "failure", "schedule"),
+            run(4, 200, "failure", "schedule"),
+        ]
+        flags = self.flags(pgs, runs, interval=24 * 30)
+        assert flags["repeat_failure"] is False
+        assert flags["recovered"] is True
+        assert flags["not_running"] is False
+
+    def test_repeat_failure_stays_when_the_latest_run_failed(self, pgs):
+        runs = [
+            run(1, 2, "failure", "schedule"),
+            run(2, 20, "failure", "workflow_dispatch"),
+            run(3, 40, "success", "schedule"),
+        ]
+        flags = self.flags(pgs, runs, interval=24.0)
+        assert flags["repeat_failure"] is True
+        assert flags["recovered"] is False
 
     def test_recovered(self, pgs):
         assert self.flags(pgs, [run(1, 1), run(2, 30, "failure")])["recovered"] is True
@@ -272,14 +301,47 @@ class TestDerivedFlags:
         assert self.flags(pgs, [run(1, 1, "failure"), run(2, 3)])["recovered"] is False
         assert self.flags(pgs, [run(1, 1), run(2, 3)])["recovered"] is False
 
-    def test_not_running_is_twice_the_cron_interval(self, pgs):
+    def test_not_running_window(self, pgs):
+        # Hourly and the 15-minute watchdog: a few hours without a tick is
+        # normal. 6h without a success is the outage line. Daily stays 2x.
+        assert pgs.freshness_hours(1.0) == 6.0
+        assert pgs.freshness_hours(0.25) == 6.0
+        assert pgs.freshness_hours(24.0) == 48.0
         assert self.flags(pgs, [run(1, 1.5)], interval=1.0)["not_running"] is False
-        assert self.flags(pgs, [run(1, 2.5)], interval=1.0)["not_running"] is True
+        assert self.flags(pgs, [run(1, 2.5)], interval=1.0)["not_running"] is False
+        assert self.flags(pgs, [run(1, 7)], interval=1.0)["not_running"] is True
+        assert self.flags(pgs, [run(1, 1.2)], interval=0.25)["not_running"] is False
         assert self.flags(pgs, [run(1, 47)], interval=24.0)["not_running"] is False
         assert self.flags(pgs, [run(1, 49)], interval=24.0)["not_running"] is True
-        # Any run counts (a push keeps it alive), whatever its conclusion.
-        assert self.flags(pgs, [run(1, 0.5, "failure", "push"), run(2, 9)],
+        # A successful push inside the window keeps it alive.
+        assert self.flags(pgs, [run(1, 0.5, "success", "push")],
                           interval=1.0)["not_running"] is False
+        # A recent failure is not a success, and the older success is outside the window.
+        assert self.flags(pgs, [run(1, 0.5, "failure", "push"), run(2, 9, "success")],
+                          interval=1.0)["not_running"] is True
+
+    def test_catchup_success_is_not_a_not_running_flag(self, pgs):
+        """Dropped schedule ticks plus a recent watchdog catch-up are fresh."""
+        runs = [
+            run(1, 1.5, "success", "workflow_dispatch"),
+            run(2, 20, "success", "schedule"),
+            run(3, 21, "success", "schedule"),
+        ]
+        assert self.flags(pgs, runs, interval=1.0)["not_running"] is False
+
+    def test_no_recent_success_is_still_not_running(self, pgs):
+        """A recent failed attempt, or a catch-up older than the window, is down."""
+        failed_attempt = [
+            run(1, 0.4, "failure", "schedule"),
+            run(2, 8, "success", "workflow_dispatch"),
+        ]
+        assert self.flags(pgs, failed_attempt, interval=1.0)["not_running"] is True
+        silent = [run(1, 30, "success", "schedule")]
+        assert self.flags(pgs, silent, interval=1.0)["not_running"] is True
+        # An in-progress run inside the window is the workflow running.
+        active = [run(1, 0.2, None, "workflow_dispatch", status="in_progress"),
+                  run(2, 10, "success", "schedule")]
+        assert self.flags(pgs, active, interval=1.0)["not_running"] is False
 
     def test_not_running_edge_cases(self, pgs):
         assert self.flags(pgs, [run(1, 1)], interval=None)["not_running"] is None    # unscheduled
@@ -481,7 +543,9 @@ class TestBuildStatus:
                                  "dependabot": "unavailable", "pull_requests": "partial"}
         assert s["workflows"] == 6
         assert s["failed_last_24h"] == ["tests"]
-        assert s["repeat_failure"] == ["aviation-tsa", "tests"]
+        # aviation-tsa's newest run succeeded, so the repeat flag is clear
+        # and the recent failure is recovered instead.
+        assert s["repeat_failure"] == ["tests"]
         assert s["not_running"] == ["lthcs-trends-daily"]
         assert s["recovered"] == ["aviation-tsa"]
         assert s["open_prs"] == {REPO: 1, ADW: None}          # unreadable is null, not 0

@@ -22,10 +22,21 @@ WHAT IT RECORDS
                                      last 24h, concluded failure/timed_out/
                                      startup_failure (cancelled does not count:
                                      pages.yml cancels superseded runs by design)
-                    repeat_failure   >= 2 of the last 3 completed runs failed
-                    not_running      scheduled, and no run of any kind for more
-                                     than 2x the longest gap between its cron
-                                     fire times (or the workflow is disabled)
+                    repeat_failure   the latest completed run failed, and
+                                     >= 2 of the last 3 completed runs failed.
+                                     A later success clears it, including a
+                                     manual workflow_dispatch; it does not
+                                     wait for the next schedule.
+                    not_running      scheduled, and no successful run (schedule,
+                                     watchdog catch-up, or manual dispatch)
+                                     within the freshness window, or disabled.
+                                     The window is 2x the cron gap for daily
+                                     and slower jobs. High-frequency crons
+                                     (gap <= 6h, including hourly and the
+                                     15-minute watchdog) use at least 6h,
+                                     because GitHub drops most of those ticks
+                                     and the watchdog catch-up covers them.
+                                     Dropped-tick rates stay a separate P2.
                     recovered        latest completed run succeeded after a
                                      failure in the last 48h
                   For failed runs in the last 48h, including a run the workflow
@@ -116,6 +127,18 @@ PR_EVENTS = frozenset({"pull_request", "pull_request_target", "pull_request_revi
                        "pull_request_review_comment", "merge_group"})
 FAILED_WINDOW = timedelta(hours=24)
 ANNOTATION_WINDOW = timedelta(hours=48)
+# A queued or in-progress run is the workflow running. A success is what
+# proves the last attempt finished the work. Failures do not.
+ACTIVE_STATUSES = frozenset({
+    "queued", "in_progress", "waiting", "pending", "requested", "action_required",
+})
+# GitHub drops most hourly (and 15-minute) ticks. The cron watchdog
+# re-dispatches those, so a gap of a few hours with a successful catch-up
+# is freshness, not an outage. 6h is past one missed catch-up cycle: the
+# watchdog waits until a success is 2h old, and its own schedule also loses
+# ticks. Daily and slower crons keep 2x their gap (a missed day is 48h).
+FREQUENT_CRON_MAX_H = 6.0
+FREQUENT_FRESHNESS_H = 6.0
 MAX_FAILED_RUNS_INSPECTED = 8        # across all workflows, newest first
 MAX_FAILED_RUNS_PER_WORKFLOW = 2
 MAX_FAILED_JOBS_PER_RUN = 2
@@ -401,6 +424,38 @@ def cron_interval_hours(crons: Iterable[str], now: datetime) -> float | None:
     return round(gap.total_seconds() / 3600.0, 2)
 
 
+def freshness_hours(interval_h: float) -> float:
+    """How long a scheduled workflow may go without a success before it is down.
+
+    Twice the longest cron gap is the outage line for a daily or slower job
+    (missing two legitimate cycles). A cron that fires more often than every
+    6 hours loses most of its GitHub ticks; the watchdog's catch-up is what
+    keeps it fresh, so the line is at least ``FREQUENT_FRESHNESS_H``.
+    """
+    doubled = 2.0 * interval_h
+    if interval_h <= FREQUENT_CRON_MAX_H:
+        return max(doubled, FREQUENT_FRESHNESS_H)
+    return doubled
+
+
+def success_time(run: dict) -> datetime | None:
+    """When a successful run finished, or None if it did not succeed.
+
+    Completion (``updated_at``) is the freshness stamp: a catch-up that
+    started just outside the window and finished inside it counts.
+    """
+    if run.get("conclusion") != "success" or run.get("status") not in (None, "completed"):
+        return None
+    return parse_ts(run.get("updated_at")) or _created(run)
+
+
+def _active_within(run: dict, now: datetime, threshold: timedelta) -> bool:
+    if run.get("status") not in ACTIVE_STATUSES:
+        return False
+    started = _created(run)
+    return started is not None and now - started <= threshold
+
+
 def derive_flags(runs: list[dict], now: datetime, *, interval_h: float | None,
                  state: str | None = "active", workflow_created_at: Any = None) -> dict:
     """The four derived flags for one workflow from its newest-first runs."""
@@ -408,7 +463,12 @@ def derive_flags(runs: list[dict], now: datetime, *, interval_h: float | None,
     completed = [r for r in runs if r.get("status") == "completed"]
     failed_24h = any(is_failed(r) and (_created(r) or now - 2 * FAILED_WINDOW) >= now - FAILED_WINDOW
                      for r in completed)
-    repeat = sum(1 for r in completed[:3] if is_failed(r)) >= 2
+    # A success after the failures clears the repeat flag, including a manual
+    # workflow_dispatch. Waiting for the next monthly schedule left
+    # lthcs-beta-verdict-monthly and lthcs-quality-audit-monthly flagged
+    # after their 2026-10-16/17 re-runs had already passed.
+    repeat = bool(completed) and is_failed(completed[0]) and sum(
+        1 for r in completed[:3] if is_failed(r)) >= 2
     recovered = bool(completed) and completed[0].get("conclusion") == "success" and any(
         is_failed(r) and (_created(r) or now - 2 * ANNOTATION_WINDOW) >= now - ANNOTATION_WINDOW
         for r in completed[1:])
@@ -418,13 +478,15 @@ def derive_flags(runs: list[dict], now: datetime, *, interval_h: float | None,
         if state and str(state).startswith("disabled"):
             not_running = True
         else:
-            threshold = timedelta(hours=2 * interval_h)
-            last = max((t for t in (_created(r) for r in runs) if t), default=None)
-            if last is not None:
-                not_running = now - last > threshold
+            threshold = timedelta(hours=freshness_hours(interval_h))
+            last_success = max((t for t in (success_time(r) for r in runs) if t), default=None)
+            if any(_active_within(r, now, threshold) for r in runs):
+                not_running = False
+            elif last_success is not None:
+                not_running = now - last_success > threshold
             else:
                 born = parse_ts(workflow_created_at)
-                # Never ran: only a problem once it has existed for a full threshold.
+                # Never succeeded: only a problem once it has existed for a full window.
                 not_running = born is None or now - born > threshold
     return {"failed_last_24h": failed_24h, "repeat_failure": repeat,
             "not_running": not_running, "recovered": recovered}
@@ -830,6 +892,10 @@ def section_workflows(client: GitHubClient, repo: str, crons_by_path: dict[str, 
         item["last_run_at"] = iso(last)
         item["hours_since_last_run"] = (round((now - last).total_seconds() / 3600.0, 1)
                                         if last else None)
+        last_success = max((t for t in (success_time(r) for r in runs) if t), default=None)
+        item["last_success_at"] = iso(last_success)
+        item["hours_since_last_success"] = (
+            round((now - last_success).total_seconds() / 3600.0, 1) if last_success else None)
         item["flags"] = derive_flags(runs, now, interval_h=interval, state=wf.get("state"),
                                      workflow_created_at=wf.get("created_at"))
         recent_failed = [r for r in runs if is_failed(r)
@@ -1004,10 +1070,20 @@ def section_dependabot(client: GitHubClient, repo: str) -> dict:
 FIELD_NOTES = {
     "flags.failed_last_24h": "a run among the last 5 on main, created in the last 24h, concluded "
                              "failure/timed_out/startup_failure (cancelled is not a failure)",
-    "flags.repeat_failure": ">= 2 of the last 3 completed runs failed (can coexist with recovered)",
-    "flags.not_running": "scheduled workflow with no run of any kind for more than 2 x cron_interval_h "
-                         "(the longest gap between its cron fire times), or disabled; null = not scheduled",
-    "flags.recovered": "latest completed run succeeded after a failure in the last 48h",
+    "flags.repeat_failure": "latest completed run failed, and >= 2 of the last 3 completed runs "
+                            "failed. A later success clears it, including a manual workflow_dispatch; "
+                            "it does not linger until the next schedule. Not set on a recovered workflow.",
+    "flags.not_running": "scheduled workflow with no successful run (schedule, watchdog catch-up, "
+                         "or manual dispatch) within its freshness window, or disabled. "
+                         "The window is 2 x cron_interval_h, and at least 6h when that gap is "
+                         "6h or less (hourly ticks and the 15-minute watchdog lose most schedule "
+                         "events; a catch-up success inside the window is fresh). "
+                         "null = not scheduled. A recent failure does not count as running.",
+    "flags.recovered": "latest completed run succeeded after a failure in the last 48h "
+                       "(the repeat-failure flag is clear)",
+    "hours_since_last_success": "hours since the newest successful run finished "
+                                "(updated_at). null when the fetched runs have no success. "
+                                "not_running is judged from this, not from the newest attempt.",
     "failed_runs": "failed runs from the last 48h, kept after the workflow recovers. "
                    "summary is one line: failed job/step plus the first specific annotation, "
                    "or the first substantive job-log error line when annotations are only "
