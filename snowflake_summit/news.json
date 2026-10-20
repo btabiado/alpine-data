@@ -1,6 +1,6 @@
 {
- "generated": "2026-10-19",
- "gathered_at": "2026-10-20T05:59:49Z",
+ "generated": "2026-10-20",
+ "gathered_at": "2026-10-20T09:49:14Z",
  "items": [
   {
    "vendor": "Semarchy",
@@ -3495,15 +3495,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Google Cloud",
-   "headline": "AWS vs Google Cloud: 28% vs 15% Share, 105% Perf Gap [2026]",
-   "date": "2026-09-14",
-   "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTFBLNUFPUkpUU2l4ZTFMNlEzV1FvVXZLdjNWX3VheXA2RlpuQlRGcUw2VjJ5a3Q3S1M4d3VSbk1ieEFEUFFYRm1rXzBUWVQ5Sl9LRHprQUVCbnYwWXNOWlF3?oc=5",
-   "source": "tech-insider.org",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Acxiom",
    "headline": "Acxiom partners with HAWK for omnichannel ad data",
    "date": "2026-09-13",
@@ -4440,24 +4431,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Neo4j",
-   "headline": "Neo4j's Will Lyon: AI Agents Are Trapped in an \"Amnesiac Loop\" — and Skills Won't Save Them Unless They're Grounded in Graphs",
-   "date": "2026-10-08",
-   "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE10UHQtQk5zTjVEWTE2QkJXTVl2MmlmSkhpdldqYUpnUXpYeGRiV2JZZ3M5U0V1RmdfR2JoX18xc2hzdTdHclYwdUpaRVNuWlpTY3RJbEhyZVpaRU0?oc=5",
-   "source": "BigGo Finance",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Neo4j",
-   "headline": "Turning Agent Memory Into Skills That Work — Will Lyon, Neo4j｜AI Engineer",
-   "date": "2026-10-08",
-   "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE9wSk9yTXJ2YTktQzJiTUN2Z0Z4UTIwcHZXNGE2c1RoblZyd0xmQWk1eTFkLTNOZjJyMnMxbWxnRDVUM3VoMUc5Z0JUNTZnTTJwM2VOUXNHbkRpQ3BYSEkw?oc=5",
-   "source": "finance.biggo.com",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "NICE",
    "headline": "Contact Center Analytics Market to Achieve 18% CAGR, Exceed $6 Billion by 2030, with NICE Ltd. at Forefront",
    "date": "2026-10-08",
@@ -4926,15 +4899,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Neo4j",
-   "headline": "RAG Needs a Map: Using GraphRAG to Retrieve Connected Context — Nyah Macklin, Neo4j｜AI Engineer",
-   "date": "2026-10-11",
-   "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE5oblRfYVpqZmczVkFSVG0yajZycmVwZEppV2tMQXlrdjY3OU5TNkRJV1RWZHlvTDZWQ0NSME1oUWlzVXh5UF91LWo1clBLZGlzdU1TOFU5LWhJQndGWkFV?oc=5",
-   "source": "finance.biggo.com",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Alation",
    "headline": "Alation Honors 2026 AI Radicals Award Winners at revAlation",
    "date": "2026-10-09",
@@ -5025,15 +4989,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Boomi",
-   "headline": "Boomi and Jade Global Partner to Bring Governed AI Agents to Manufacturing Operations",
-   "date": "2026-10-13",
-   "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxQejAtaE5DbXpVdGlKUjY3THpqSHVRRU9nYkRiZkxYMzNtTlJGN20wUV9CWG9tcHFYeldZVVpiRkFKSTZSajVNNVFFeWx2UmZELWQ5aWRBNy1pUVZnT3ctRVFMWm9fYmdsVnNJeElMRF9lQndXUHpnT2d2bXVqMXpPZg?oc=5",
-   "source": "AOL.com",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Hightouch",
    "headline": "Daily Research News Online no. 40455 - Hightouch Buys Data Connector Strata",
    "date": "2026-10-13",
@@ -5106,15 +5061,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "OneTrust",
-   "headline": "OneTrust Receives Repeat Recognition in Fortune Future 120 Rankings",
-   "date": "2026-10-06",
-   "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxNN1VtQ09yMy10QnI3ZnFVbnRmOWQ1bnlhUU9LMDVvQjhoamVSMnRGdTJBRzM0LVlyLUpqaFFQLWpkc09aNmZYRVFDbVlzdWd6SEd0ZFI4dndrQUhVQ2tMQ0t6N2h5OTYwTlRYQkE2LTBOMDJwYjB5c1A3OTBlc0F6UzBKaW1IQ3JORUpaemVuLXFLemFmalNLV1ozTjVXOU5kTjJJQnoxOXg2R3lkeDdIQUdwUVJBZw?oc=5",
-   "source": "TipRanks",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Domo",
    "headline": "Progress Software Corp (PRGS) (Q3 2026) Earnings Call Highlights: EPS Beat, Domo Deal, and ...",
    "date": "2026-10-01",
@@ -5147,15 +5093,6 @@
    "date": "2026-10-14",
    "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxPTGdfTDkwT1MzME92WjJITXZqc1NLQmdfX3l3SXNGOF9PN2xkaHUyWjZTeG9qcDhYODVUTkRlWkNKckI5REhqNUU0bGJZWjY1OXktcmpTR1BaZWlZYnhNdHg4ZzFZTmtJQlhVRG9FVnlBTDE2bkQxbzVYU3Q4eHNkYXhfQXI?oc=5",
    "source": "IT Brief Australia",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Cloudera",
-   "headline": "Cloudera bets on hybrid infra as enterprises look to scale AI",
-   "date": "2026-10-13",
-   "url": "https://news.google.com/rss/articles/CBMiywFBVV95cUxOQ21XN1pyVHNqRGU4YXlFdjM4ZEhtTkhmbGd3Mjl0ZFZLcGl0cUtWUDhTSHZsd0xrMWE5WkItVGQ3NE93bkdVMHlWTkVtWElIOG9MRkZfa2VGVXBidXByZEVBYWN1VmZwSWFIZnhwdzQzNFhrdHFZeGRSNlUwTVJ2amJxSF9NRFFabFZ4QnRoYWFaYkt2OTVnU3pnTnJOY1dwcUZNZndPdEp4NHNXVHVDTEsxMXBqamdJaHpfWEhUM01wMjViX0RkOUxxRQ?oc=5",
-   "source": "Livemint",
    "summary": "",
    "relevance": "medium"
   },
@@ -5482,15 +5419,6 @@
    "source": "Investor's Business Daily",
    "summary": "",
    "relevance": "high"
-  },
-  {
-   "vendor": "Cyera",
-   "headline": "Cyera secures $600 million to close the gap between AI ambition and trusted transformation",
-   "date": "2026-10-06",
-   "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFBGTGNwRVlyX3dmMW5nNlJWUkU0eHQ3RVllWDlqd1VfelJBZVIteGN3MElRemRyV3lWR3pyWE5QSS1CeTdsVGVXWTJHQTBQbVd1NzhJenU1VTlPUEthd3Y1ODBn?oc=5",
-   "source": "Ynetnews",
-   "summary": "",
-   "relevance": "medium"
   },
   {
    "vendor": "Integrated Quantum Technologies",
@@ -5889,24 +5817,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Cloudera",
-   "headline": "Tech Firm Cloudera Barred from Green Card Filings for Two Years",
-   "date": "2026-10-16",
-   "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxQWmwtS1hlUVRGSmNFWFo3bE5tMW9LVUpxQV9KRjgxUkFNVkJ1bGhKOGEzVGt6ZS1UZHpaV1I1REFJWFJEeUx2eDA0VWtGeUs5WEdYNndBZ0tHcXQwNFduckJkalNZeS1wTHJYVG53bkpOWl95OHgxNWdkR2poLVhxcHFhaHV1RjVPbFloTGRNMnloZS1zUmljWmI3Q09WUV9pMnlwYnA3emdNVTg0dkZnNlVB?oc=5",
-   "source": "Bloomberg Law News",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Cloudera",
-   "headline": "Cloudera faces two-year PERM ban in U.S. labor bias settlement",
-   "date": "2026-10-16",
-   "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxQNFRpeFc4V1lmU1lUYUdTbFFpZ19HajJhRUxFcXJMWVdnaTZqRWNsUGFjbXZESG9CNVh6bzhTU09MX21NeGo4Ym5wSzBtN3lnY2VveXdvTHFOVDU3VDdGV3BpdVBhdTBYdnhoQVdCQ0FMRGdTbkRLTE96S0lXNHBoUkJQM1A5YnZ4b3BvSUtRSlF3MEVFZTFnXw?oc=5",
-   "source": "Traders Union",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Contentsquare",
    "headline": "Top MarTech News From the Week of October 16th: Updates from Seismic, CallMiner, Contentsquare, and More",
    "date": "2026-10-16",
@@ -6240,15 +6150,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Boomi",
-   "headline": "Real Estate Auctions in Boomi Creek, NSW, 2476 | Properties for Auction this weekend",
-   "date": "2026-10-17",
-   "url": "https://news.google.com/rss/articles/CBMikwFBVV95cUxNaDAtRXlWNndWb083V2FxTDJmaVJjMHRwRUdmSWhLU0wzRmszdUxGWTdSY3pSNnVfZ2dKVHNKajlaeVF1RG9tcnBDekNqWXpGb3hVV2swMlNQb2thb0wwbW5fVGVOLVctLVlnMjZVa0RnWms4dnZseDNHWEktdDJXMmI5UER5SzQ1VnVFd3lnN1J6bTQ?oc=5",
-   "source": "Domain",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "AtScale",
    "headline": "AtScale Research Shows Semantic Layers Double AI Accuracy",
    "date": "2026-10-15",
@@ -6353,24 +6254,6 @@
    "date": "2026-10-19",
    "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPa0otTXpDaGNmX2JVNG00bGsyVVNFY1lqUDB2bXRpYnlaMGUyLUk3eGp5OWhLZjdOdzQ4cjdXTTZESEh3THEyU1RuTUdwTmdkSnlVME5PZzBaYXZtRE5nbWNQZVl1Wk9ZRWNnV3lJeVZHbVJKclNRR0ZfbFBIeEo5Nl92WWR4azlZaFUwTjdfVW1HUUtCYzJfS1p4STdoTm0wM1UxMGY3eWtFNVpQYmh3X0RHbW5aNG56VElJT3VzZjBlUQ?oc=5",
    "source": "Constellation Research",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Boomi",
-   "headline": "Boomi Acquires Elementary Data to Strengthen AI Data Quality and Governance",
-   "date": "2026-10-19",
-   "url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxQX3hEaDFIZ2JZbDBHMFJTaFdzZzVwMURXMzhwV3VGNV9jcVA4cWwyZDBPRXFHNEdaYWpYaDNjRVRjTlMtc3RMTWJ4MUl3WVE3NHVVMTZjZ2xFdEw2RnZVWGtTRzEzckRGOExWaGtqRmJ6LThfU3BWQzBUSUNZOHVjZzlGOGI2N09mRnlLbF9sRWFJMkdtbmR2enNEVWw4SHFneFM1MFRCaTFZaU82SWswWWlFbXI?oc=5",
-   "source": "citybiz",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Boomi",
-   "headline": "Boomi Acquires Elementary Data to Bring Trusted, Governed Data to the AI Era",
-   "date": "2026-10-19",
-   "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxOcVp4dHlQUzZ0NGZ6QWtCdFV1S212MGpTU2otRm1abGR4ak5nVWowVDlHZWxyRlBJNWxXREVCZ04zSDM2RHZYTllGbFZPbGlMSjg1WlVYY1hGSWVlb0hHQjJfS1YxV2lrbE1HZHJ0WGJ0WEQ4X0JiUFVyTzlZbWtpTk50YnJsNDI5VnlGODhCMTU3Q3g2ZlIzYzBHUU5FWkJQYzNnX0RWNk41OEtTb21vVWlWNWFvNTY3aGdpbVM4dUwzWk1UVno4TW45LUI?oc=5",
-   "source": "Business Wire",
    "summary": "",
    "relevance": "medium"
   },
@@ -6497,6 +6380,132 @@
    "date": "2026-09-29",
    "url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxPRmtnM2V1dUctM1ZwM0RJd2NLTFRMUmFQQzYxUzREc3hCWVAxR0EyVW9JVC16VHp4RC1uX3NSb1BGTnN2eWRNTEs2NGVoeHFxdXRFdlNkZDZDUnRSQ1U1UUc5R1pwLUx5V1h1ODBIbG4xSUR0bWl4V3hYaFB3M1VvY1pSdw?oc=5",
    "source": "GitHub",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Boomi",
+   "headline": "US software firm Boomi acquires Israeli data startup for $45m",
+   "date": "2026-10-20",
+   "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxOWlIzZG9laGc4a1lZVF9BMnR6WTJGLUp0Sk85ems5djhJWG1idHpGb19ldGNzclBvakI4TWhfN0c1TmdGcnZJbFlJZ0FMOWZBbThXUFBmdmtoOTVldFdPUDVlVlhRanRkMnZKd3FjYVZJeDg4blNFZC03c3JDYklwYmU4anNWVUJhbEVjaUtB?oc=5",
+   "source": "Tech in Asia",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Boomi",
+   "headline": "Tech M&A deals: Hexagon, Rocscience, AIOS Tech, SmartCore, Boomi, Elementary Data",
+   "date": "2026-10-20",
+   "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxORHZEOGJGbGVtdEhibFpOSXpzY0ZJbjd1Yk9PNnBOT0ZTZ20xNlFNT3c0LXRKQm9oODBBeFBVUGZJOUFhNVNydlMyMUM2ZWxKN2Y3VEUxRWliMzNwRnZqc1N4bnJraGVuWVJNdXdSWWowMVFKUTE0VndQNDBOUUJ1LThFSDg5QU8weUItMWl4NUtmT3hCc2dOZC1IcTZKcEVBTFY1NnZ0SlBOdjdfTTN3cl9uOGZfZkFGRENWa3ZR0gG-AUFVX3lxTE5EdkQ4YkZsZW10SGJsWk5JenNjRkluN3ViT082cE5PRlNnbTE2UU1PdzQtdEpCb2g4MEF4UFVQZkk5QWE1U3J2UzIxQzZlbEo3ZjdURTFFaWIzM3BGdmpzU3hucmtoZW5ZUk11d1JZajAxUUpRMTRWd1A0ME5RQnUtOEVIODlBTzB5Qi0xaXg1S2ZPeEJzZ05kLUhxNkpwRUFMVjU2dnRKUE52N19NM3dyX244Zl9mQUZEQ1ZrdlE?oc=5",
+   "source": "InfotechLead",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Boomi",
+   "headline": "Boomi buys Elementary Data to boost AI reliability",
+   "date": "2026-10-20",
+   "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxNYW9RS0dJME9xWFJZMEN2TFc0TFhqcm85MTgwdnpQbmY3cWFNQ1hjQVVBdmVWUFZtbkZaeE5kcjJiRGJMN3pEemx0dTdqS0JqQ3VMNGZwOWVMZGNPSXZKYnVzS0ZJblhxWTZMeVBVTE8zSDVqSXBrT08tWFh5V1N1cEF6bmo2UQ?oc=5",
+   "source": "IT Brief Australia",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Boomi",
+   "headline": "Israeli Startup Elementary Data Acquired by Boomi in $43 Million Deal",
+   "date": "2026-10-20",
+   "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE5qcWcxVVVGN2hLWUlfX1lJSlU2c1JRUjc5M0dJOW9OdENyQVhFUFQwbktqZHlDdXptangtNGtjZXdpN294Uk42TWZEbEhENHM1VkhQQ3ZzSGc?oc=5",
+   "source": "Israel Defense",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Cloudera settles lawsuit with Trump admin, agrees to pay $2 mn, faces a two-year PERM ban: All you need to know",
+   "date": "2026-10-20",
+   "url": "https://news.google.com/rss/articles/CBMi-wFBVV95cUxQdnNZdXMwMVUxUGtIUUtBUU1vdmVjXzB5ZmxJWWZPZ3lteEYzWmhaRFNac1Uxc2ItZHZ5WVB3RzkwSFc5aWZCeW1kSWduak9YQjVIRnBkT2g5SHQ2S3hWYUl3QWJBZFllRzhwZ0h0Qkt5Z0kzM0lha3Bua2JuU1I3R2hKc051MEg1eGRSX294SVAwVWd1dWVnQWhmekltTTR3a2ZrU2hiQjdzWWJ5aGhyR0xXZ3BYNVhBN0h5clh0dy0yN2JqdlAyUm1vVlFHT1lydlZSb09xZnJJTFZHUko1N09KakpHMVBGcXg4a29qVERNVU1BeFhBMHkzONIBgAJBVV95cUxOeUpRNE13eVM0NHZmNFJ1dDZwLXM3WEV5dDFLUnFfTjZiQTJjUUl6eDlxYVNyeXlZc25ra3ZwWmRMdTBqT0dDdmtHWmN3T0xPbEwtZ1RkS1VicHY3LTJiRG1mX1VSUVE3R08wVjZTNkJfOElaQjBQUkNUUjRwTEszeDlIN3hEWTdLTDhsa2VCeHc4UGlmTlMyTnpua2hGT1laRXV1dXhTR256emlDU19wMl9ubTZJMExVZ2lRSlFibGFEVXJSNWRWNVc5NnZnOUd4U1V4bE1fLVpYajFQSEVZdkFVNUM3OW1OdTVzUmhvVTFkaGY2VkhjMFVyNjBoQ2hY?oc=5",
+   "source": "Livemint",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Google Cloud",
+   "headline": "Cognizant, Google Cloud expand partnership to drive agentic AI adoption",
+   "date": "2026-10-20",
+   "url": "https://news.google.com/rss/articles/CBMi7gFBVV95cUxNV3B2Y1FidjdKUVJrUFo2RWpxYmVRRDhMck5RcExNaWpvQ0lzeFVCZ1RzN3RXSThEQnIzRjJjWTlVN0RWQ0ZleHJ1SWt1a2F6U0sxZTZIWV9UT1N4V1R4YUtva3hldzJCajdVNGt0T2hWS3dNNWs1SjBxUS1ZYUtPVWZxUnNnR1FILURHUUxKMTJTNzhTYWFFZXVTdF9XZDlJaGo5UmFzYkdqVkFCdHlBWGRwOHVHOW1PNXlpUndvZWhldFVBaV8zMVZrUURqcWpKajB4QzI3V2JFUEYyLU0xeG1LcVZmSDZOcjFDOXpn0gHuAUFVX3lxTE1XcHZjUWJ2N0pRUmtQWjZFanFiZVFEOExyTlFwTE1pam9DSXN4VUJnVHM3dFdJOERCcjNGMmNZOVU3RFZDRmV4cnVJa3VrYXpTSzFlNkhZX1RPU3hXVHhhS29reGV3MkJqN1U0a3RPaFZLd001azVKMHFRLVlhS09VZnFSc2dHUUgtREdRTEoxMlM3OFNhYUVldVN0X1dkOUloajlSYXNiR2pWQUJ0eUFYZHA4dUc5bU81eWlSd29laGV0VUFpXzMxVmtRRGpxakpqMHhDMjdXYkVQRjItTTF4bUtxVmZINk5yMUM5emc?oc=5",
+   "source": "The Economic Times",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Neo4j",
+   "headline": "Neo4j Context Engine: Rapidly build dependable enterprise agents",
+   "date": "2026-10-20",
+   "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1PNFhKUjFLMnJGYVNrYXczVVEzR3dyZTQ4VXFIWVVkd0xCTlY5RlRjNlpsbGx1dUVHU3RUOURLSTZld3JqWExJT2tkS20tcl9McjVvSHVNSW94WjFfbWc?oc=5",
+   "source": "Neo4j",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Neo4j",
+   "headline": "Neo4j joins the context cavalcade with suite for informing AI agents",
+   "date": "2026-10-20",
+   "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxPTFZRTkNOemd5UGozTTlsTU9nTlNUU3dKN09iQ2FTZ1FRTkhYLTVEQ3VNdnpCT2VvbFl2MVhrbF9pS1NWYkh0ZDZrWHg0RDJ5RVBZR241Q3MtajBTem9xSjNKaUxTN2FadWl2T0F3UmRiVnRPUnZ0bC02Um5nYVh2SGliV3llNC1rWDdUUG14TlJ1NGg1VG56TTQ0eWpBV1ppRXhBRHVhb2ltMjBfZnZGQU1VdzNBZlp0amZuLUVGOWJ1V0RoT0tj?oc=5",
+   "source": "TechTarget",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Neo4j",
+   "headline": "Neo4j Context Engine Launches to Create AI Knowledge Layer and Enhance Agent Performance",
+   "date": "2026-10-20",
+   "url": "https://news.google.com/rss/articles/CBMi4gFBVV95cUxNR2tJaXVOaVNFZEx2cFotUkhHck80T1g3WG9ETUJ0dGdJc3FhVnJaczZLVGpIQXNHVm5oLVlzMk9NQ0ZobjlQMy1PT2NsRjF4N1dBd3IzQnFXVmIxclpnWkNiQXRaUF91TGpQeG04YTBIeGtSRURlTkg1azVzYmQzUmdFcUNFX3NOV0dMdnk4c05MSjNzbkZfOHhaalQ4MUJzZWdUVEc4a3pwajRjc2RLRXJ3cndkNHN5eTN1UWJaRk0tSXNGWDNPRUY4c2dfazFzQ1lZVXlEbTRQd3dOWlk0M3lB?oc=5",
+   "source": "FinancialContent",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Green Card ban: Tech firm Cloudera agrees to pay $2 million and accepts 2-year ban from PERM for discrimination",
+   "date": "2026-10-19",
+   "url": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxNUHN3aXdvRUNtVGVRYk9SZ3ZNOGtCbVRNc2h0LVRDUFowQV9DNjVuTkVqU0VOVkNRWlRNZ2VXZWFjWkVRNk1IM3IxN2tYcDhPcVg0VTRKRVpXbDd6VXRwZkZSVmhzWWVUU1lma1BPclVsdmFSYXF5eDlKZlVVUTFsVjNtejY2dzA4MGpPNGpYTnF4a240NS0zdVpTRGd1Vy11NGs2S3ZJWkx3VUx5T0FRS3pqd0xIT3VpQkF5U3MtcFA3Q0hDWUZXSFpVRmFvcHZQ?oc=5",
+   "source": "inkl",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Green Card ban: Tech firm Cloudera agrees to pay $2 million and accepts 2-year ban from PERM for discrimi",
+   "date": "2026-10-19",
+   "url": "https://news.google.com/rss/articles/CBMijAJBVV95cUxOM3oyNFdoMTE5QXUtbVlrX0tla0VwLVJlSjlJS2lNd05XVlkxa0hqTmoxdXU3d1ZoLXFFcUhyaWMyUEVKYV9fTldPWGduVG95VTlaZXVnb2g2VF9uTWY1cjF1b0Qwa2hhZUtUNy1rTkpROXc2UWdMcWZ3MU9HOFByMV9zbjJSaUc1aDk2bGFGWXFuNXdBU0ZYd0VxNEZVTlJtLTcxS2tCVXZ5R2VKeElqYjF2U3B4Q2tJTm82eG9oZXg3Nl9kUnd5UlBGTGs4Tl9LY1N1eFNLcjkybTNuRXlQX3RNYmJERW5jeHk4S2FvUkVOY2ZLSUZMY19jTmo2aDhMakUxTVRkMGFSZkM10gGSAkFVX3lxTE5rYTNFSm50dGVOS3F5dnB3QVFxNDBnaW1jdEkwQklqMFhjUzhORDBaSUxCb2d3YXgtYzQ4dG9mMm1NNFZjNkZjcUdHWXVjZFBaZlBmOGxFTThkVHhsT1RFeFRNZDc5R2pJZF9ZYWVYNTVIT1duQ19Ra1hqejVHU1JQZUlxdmJKeVFmSUkyOGQyend2dXNJQUk3VVNwTjRkZExabzVhTjkzYm54SzlhN0VZM2t3N2FzdHFsMFdjaExQV2VQX3JqajlMS1BWN0EweVRwRm5jZk04YWViMDFoQ201YTBaTG9iLUtRN1RLaWxNYVczYkxadjBtTmlqNlE4S2RvTGloMm40TEtXVUxna0JEMWc?oc=5",
+   "source": "The Times of India",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "AtScale",
+   "headline": "AtScale Announces Integration for Snowflake Semantic Views to Extend Governed Metrics to Power BI and Excel",
+   "date": "2026-10-16",
+   "url": "https://news.google.com/rss/articles/CBMi7gFBVV95cUxOcTFITmsxbENOWW9HclpRcEZocWdJM2hMVVZXcDFCQ0EwS180b0ExM0swVG1zd3gtZUxFWk9HVGhxUFBxZW9sa2R3UzhlaThKUFN4LS1YU1JvSy1WRXgzdXNQU3RPbTlhTDFUZFJWcUFjUmtOc3VzSzlFNU5NSTVmWURHUmpkRmpHT3RYSndDWnJBSE1ETmh6SEotT3BQY3pLa3k3ZVFyTWIxNExuNlo4dVNDd2phMGwzaHd5VVU2ZVFWaFdMOTcwYmQ1SXR3U3BFdWpiU3JwSEloTW9SWGRubmxtLUhEdWk0Z2ZwRktn?oc=5",
+   "source": "HPCwire",
+   "summary": "",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Cyera",
+   "headline": "Cyera’s AI Security Platform Is Now Available in Claude Marketplace",
+   "date": "2026-10-15",
+   "url": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxNQXExeC1VN2dkWDd5cGU1aFhVdWZtVTVRTTBMVkpTS2dLNjhaa1dFdFgweFdfdE0zalRvYUJ3TnpEZl9CU2hwUGpZcE5rYVpGVEpKUkR4QlA4alZnY2VxbXVEQzFiOTVqQm5OejFLaEhIdFhXQ25BRnYyTnQxSlVKOUdsVEx6eG5LOEtlRE9GaDhURmtaWTBMSXNUV2JOUVg4bjkyaXB2SERBd2pIdkstVVdsRGJzWlRPZVR2M2ZQS1c?oc=5",
+   "source": "Business Wire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "OneTrust",
+   "headline": "OneTrust Plans to Extend AI-Ready Governance to Workday Agent Passport Through Integration",
+   "date": "2026-10-15",
+   "url": "https://news.google.com/rss/articles/CBMimgFBVV95cUxOV29pUlZEYlpjRlZtZ3VodkpCQzdrdVdoV216S016NkVTdnNHZ2NuWFIyY0xDSjVJekVGeThNS0dKVVNBSldCZUg5Wm0yZTExYm5iRTA1Q0hQeTBxYXprX25CTXFFejJIbjdRdklMWWtGeDF2YlZTUEIxQjFteGtRVXhyOWFVTlFaRjU5eGtDLWsycGgzN25jcVhn?oc=5",
+   "source": "Yahoo Finance",
    "summary": "",
    "relevance": "medium"
   }
