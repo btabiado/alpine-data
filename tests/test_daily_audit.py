@@ -176,6 +176,114 @@ class TestScheduleEvaluation:
             "event": "workflow_run", "actor": {"login": "github-actions[bot]"}})
         assert dad.WATCHDOG_ACTOR == "github-actions[bot]"
 
+    def test_missed_ticks_are_separate_from_catchup_coverage(self, dad):
+        catch = [{"created_at": f"2026-10-0{d}T08:35:00Z", "event": "workflow_dispatch",
+                  "actor": {"login": "github-actions[bot]"}} for d in range(2, 9)]
+        out = dad.evaluate_schedule(["0 7 * * *"], [], self.NOW, catchup_runs=catch)
+        assert out["missed_ticks"] == 0
+        assert out["catchup_ticks"] == out["due_runs"]
+        partial = dad.evaluate_schedule(
+            ["0 * * * *"], self._runs("2026-10-07T03:10:00", "2026-10-07T09:20:00"),
+            T("2026-10-08T00:00"), days=1)
+        assert partial["missed_ticks"] == partial["due_runs"] - 2
+        assert partial["missed_ticks"] > 0 and partial["catchup_ticks"] == 0
+
+    def test_later_manual_dispatch_clears_a_failed_schedule(self, dad):
+        failed = {"id": 1, "event": "schedule", "status": "completed", "conclusion": "failure",
+                  "created_at": "2026-10-01T15:12:50Z"}
+        manual = {"id": 2, "event": "workflow_dispatch", "status": "completed",
+                  "conclusion": "success", "created_at": "2026-10-16T21:48:45Z",
+                  "actor": {"login": "btabiado"}}
+        older = {"id": 3, "event": "schedule", "status": "completed", "conclusion": "success",
+                 "created_at": "2026-09-01T13:14:51Z"}
+        assert dad.clearing_success(failed, [older, manual])["id"] == 2
+        # A success before the failure does not clear it, and a pull-request
+        # success is not a recovery of main.
+        pr = {"id": 4, "event": "pull_request", "status": "completed", "conclusion": "success",
+              "created_at": "2026-10-17T12:00:00Z"}
+        assert dad.clearing_success(failed, [older, pr]) is None
+        still = {"id": 5, "event": "workflow_dispatch", "status": "completed",
+                 "conclusion": "failure", "created_at": "2026-10-17T12:56:12Z"}
+        assert dad.clearing_success(failed, [still, older]) is None
+        # A success that a later failure overtook does not clear the flag.
+        assert dad.clearing_success(failed, [manual, still]) is None
+
+    def test_section_uses_a_later_manual_success_outside_the_window(self, dad):
+        """The 7-day run list drops a monthly re-run; one extra lookup keeps it."""
+        failed = {"id": 1, "conclusion": "failure", "status": "completed", "event": "schedule",
+                  "created_at": "2026-10-01T15:12:50Z", "html_url": "https://example.test/1",
+                  "run_number": 4}
+        manual = {"id": 2, "conclusion": "success", "status": "completed",
+                  "event": "workflow_dispatch", "created_at": "2026-10-16T21:48:45Z",
+                  "html_url": "https://example.test/2", "run_number": 5}
+
+        class GH:
+            def __init__(self):
+                self.calls = 0
+                self.gets = []
+
+            def paginate(self, path, key, params=None, max_pages=5):
+                self.calls += 1
+                if str(path).endswith("/actions/workflows"):
+                    return [{
+                        "id": 9, "name": "lthcs-beta-verdict-monthly",
+                        "path": ".github/workflows/lthcs-beta-verdict-monthly.yml",
+                        "state": "active", "created_at": "2026-01-01T00:00:00Z",
+                    }]
+                return []
+
+            def get(self, path, params=None):
+                self.calls += 1
+                params = params or {}
+                self.gets.append(params)
+                if params.get("event") == "schedule":
+                    return {"workflow_runs": [failed]}
+                return {"workflow_runs": [manual, failed]}
+
+        gh = GH()
+        _workflows, schedules = dad.section_workflows_and_schedules(
+            gh, REPO_ROOT, T("2026-10-28T14:00"))
+        row = next(s for s in schedules["schedules"] if s["name"] == "lthcs-beta-verdict-monthly")
+        assert row["last_run"]["conclusion"] == "failure"
+        assert row["last_failed"] is False
+        assert row["recovered_run"]["event"] == "workflow_dispatch"
+        assert row["recovered_run"]["conclusion"] == "success"
+        assert any(p.get("event") != "schedule" for p in gh.gets)
+
+    def test_section_keeps_the_failure_when_the_later_run_failed(self, dad):
+        failed = {"id": 1, "conclusion": "failure", "status": "completed", "event": "schedule",
+                  "created_at": "2026-10-01T15:12:50Z", "html_url": "https://example.test/1",
+                  "run_number": 4}
+        again = {"id": 2, "conclusion": "failure", "status": "completed",
+                 "event": "workflow_dispatch", "created_at": "2026-10-16T21:48:45Z",
+                 "html_url": "https://example.test/2", "run_number": 5}
+
+        class GH:
+            def __init__(self):
+                self.calls = 0
+
+            def paginate(self, path, key, params=None, max_pages=5):
+                self.calls += 1
+                if str(path).endswith("/actions/workflows"):
+                    return [{
+                        "id": 9, "name": "lthcs-beta-verdict-monthly",
+                        "path": ".github/workflows/lthcs-beta-verdict-monthly.yml",
+                        "state": "active", "created_at": "2026-01-01T00:00:00Z",
+                    }]
+                return []
+
+            def get(self, path, params=None):
+                self.calls += 1
+                if (params or {}).get("event") == "schedule":
+                    return {"workflow_runs": [failed]}
+                return {"workflow_runs": [again, failed]}
+
+        _workflows, schedules = dad.section_workflows_and_schedules(
+            GH(), REPO_ROOT, T("2026-10-20T14:00"))
+        row = next(s for s in schedules["schedules"] if s["name"] == "lthcs-beta-verdict-monthly")
+        assert row["last_failed"] is True
+        assert "recovered_run" not in row
+
 
 class TestParsing:
     @pytest.mark.parametrize("raw,expect", [
@@ -584,6 +692,46 @@ class TestProblems:
             "the scheduler figure is what the schedule event delivered on its own."
         )
         assert note in md.splitlines()
+
+    def test_dropped_tick_detail_splits_catchup_from_never_ran(self, dar):
+        s = _data()["schedules"]["schedules"][0]
+        thin = {**s, "name": "lthcs-news-hourly", "coverage_pct": 27.0,
+                "schedule_coverage_pct": 23.0, "due_runs": 158, "due_days": 8,
+                "catchup_ticks": 8, "scheduled_runs": 38, "missed_ticks": 114,
+                "median_delay_min": 12}
+        probs = {p["id"]: p for p in dar.data_problems(
+            _data(schedules={"status": "ok", "schedules": [thin]}))}
+        dropped = probs["schedule:lthcs-news-hourly:dropped"]
+        assert dropped["severity"] == "P2"
+        assert "8 by watchdog catch-up" in dropped["title"]
+        assert "114 never ran" in dropped["title"]
+        assert "114 tick(s) never ran" in dropped["detail"]
+        assert "8 catch-up, 114 missed" in dropped["item"]
+
+    def test_manual_success_after_schedule_failure_is_recovered_not_failing(self, dar):
+        s = _data()["schedules"]["schedules"][0]
+        recovered = {**s, "name": "lthcs-beta-verdict-monthly", "crons": ["37 8 1 * *"],
+                     "last_failed": False,
+                     "last_run": {"created_at": "2026-10-01T15:12:50Z", "conclusion": "failure",
+                                  "event": "schedule", "url": "u-fail"},
+                     "recovered_run": {"created_at": "2026-10-16T21:48:45Z", "conclusion": "success",
+                                       "event": "workflow_dispatch", "url": "u-ok"}}
+        still = {**s, "name": "lthcs-quality-audit-monthly", "crons": ["43 9 1 * *"],
+                 "last_failed": True,
+                 "last_run": {"created_at": "2026-10-01T15:53:26Z", "conclusion": "failure",
+                              "event": "schedule", "url": "u-still"}}
+        d = _data(schedules={"status": "ok", "schedules": [recovered, still]})
+        ids = _ids(dar.data_problems(d))
+        assert "schedule:lthcs-beta-verdict-monthly:failing" not in ids
+        assert "schedule:lthcs-quality-audit-monthly:failing" in ids
+        md = dar.render_md(dar.build_report(d, _ux(), None, "2026-10-20"))
+        assert "recovered 2026-10-16T21:48 success (workflow_dispatch)" in md
+        assert "lthcs-beta-verdict-monthly" in md
+        # The recovered row is not FAILING; the one that is still red is.
+        beta = next(line for line in md.splitlines() if line.startswith("| lthcs-beta-verdict-monthly"))
+        quality = next(line for line in md.splitlines() if line.startswith("| lthcs-quality-audit-monthly"))
+        assert "recovered" in beta and "FAILING" not in beta
+        assert "FAILING" in quality
 
     def test_schedule_failure_not_double_counted_with_workflow_failure(self, dar):
         s = _data()["schedules"]["schedules"][0]
