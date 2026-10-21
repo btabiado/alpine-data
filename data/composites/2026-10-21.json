@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-21",
-  "generated_at": "2026-10-21T09:41:43Z",
+  "generated_at": "2026-10-21T10:03:52Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-21",
       "label": null,
-      "note": "40 coins; 3 buy+, 15 sell+",
-      "score": -30,
+      "note": "40 coins; 3 buy+, 13 sell+",
+      "score": -25,
       "stale": false
     },
     "defi_sentiment": {
@@ -41,21 +41,21 @@
       "as_of": "2026-10-20",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 16,
+      "score": 14,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-10-20",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 16,
+      "score": 14,
       "stale": false
     },
     "futures_sentiment_eth": {
       "as_of": "2026-10-20",
-      "label": "CROWDED LONGS",
+      "label": "BALANCED",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 21,
+      "score": 19,
       "stale": false
     },
     "futures_sentiment_link": {
@@ -90,7 +90,7 @@
       "as_of": "2026-10-21",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": 7,
+      "score": 8,
       "stale": false
     },
     "poc_signal_breadth": {
@@ -103,8 +103,8 @@
     "stocks_signal_breadth": {
       "as_of": "2026-10-20",
       "label": "DISTRIBUTION",
-      "note": "50 stocks; 11 buy+, 23 sell+",
-      "score": -24,
+      "note": "50 stocks; 10 buy+, 23 sell+",
+      "score": -26,
       "stale": false
     },
     "whale_sentiment_btc": {
