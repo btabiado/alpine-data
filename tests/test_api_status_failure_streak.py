@@ -19,6 +19,7 @@ import io
 import json
 import urllib.error
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import api_status
 
@@ -225,9 +226,10 @@ def test_http_errors_are_not_retried_or_debounced(monkeypatch, tmp_path):
     farside = next(t for t in api_status.TARGETS if t["label"] == "Farside (ETF flows)")
 
     def handler(url):
-        if "bridges.llama.fi" in url:
+        host = urlsplit(url).hostname
+        if host == "bridges.llama.fi":
             return _http_error(url, 402, "Payment Required")
-        if "farside.co.uk" in url:
+        if host == "farside.co.uk":
             return _http_error(url, 403, "Forbidden")
         raise AssertionError(url)
 
