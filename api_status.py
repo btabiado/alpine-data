@@ -16,7 +16,12 @@ Two ways it's used:
   2. Run as a CLI — ``python api_status.py`` writes
      ``data/health/api_status.json`` so the static GitHub-Pages mirror
      (``health/apis.html``) has a snapshot to fall back on when there's no
-     live server to probe through.
+     live server to probe through. That file also carries each source's
+     ``consecutive_failures`` count. A connection failure is retried once,
+     with a short backoff, inside the run; the source is marked ``down``
+     (daily-audit P1) only after two consecutive failed runs. One failed
+     run is ``degraded``. HTTP answers — blocked, auth_required, paid-only
+     402, rate_limited — and retired rows are not debounced.
 
 Stdlib (urllib + concurrent.futures) for every probe except the few that opt
 into ``requests`` with ``"client": "requests"`` (tsa.gov, whose edge 403s
@@ -65,6 +70,14 @@ _UA = "Mozilla/5.0 (alpine-data api-status probe)"
 _SSL_CTX = ssl.create_default_context()
 DEFAULT_TIMEOUT = 12.0  # above the ~8-9s TLS-handshake window CI runners hit
 PROBE_ATTEMPTS = 2       # 1 retry: gov/city hosts give transient timeouts from CI
+# Pause before that retry. Back-to-back attempts just spend a second 12s
+# read on the same hung connection (FRED ENPLANE 2026-10-21, BLS 2026-10-20).
+PROBE_BACKOFF_S = 0.5
+# Raw "down" (no HTTP response after the in-run retry) pages the daily audit
+# as P1. Require this many consecutive failed *runs* before keeping "down".
+# A single failed run is reported "degraded" (audit P2). The count is stored
+# on each source row of data/health/api_status.json.
+FAILURES_BEFORE_DOWN = 2
 
 # Canonical list of the data sources the dashboard depends on. Each probe URL
 # is a real, cheap, keyless endpoint on that host (a ping / single-row query)
@@ -255,6 +268,12 @@ TARGETS: list[dict] = [
     # as the Macro FRED probe) rather than the web fredgraph.csv endpoint, which
     # Akamai tarpits for non-curl clients from CI. Keyed on FRED_API_KEY:
     # auth_required without a key, up in CI where the secret is set.
+    # series_id ENPLANE is still the BTS series "Enplanements for U.S. Air
+    # Carrier Domestic and International, Scheduled Passenger Flights"
+    # (monthly, not seasonally adjusted; observations through 2026-06, last
+    # updated 2026-10-01). Re-checked against the 2026-10-21 audit: the "down"
+    # row was a read timeout, not a 400 for an unknown or discontinued id.
+    # ENPLANED11 is the seasonally adjusted sibling, not a replacement.
     {"label": "FRED ENPLANE (air travel)","category": "Aviation",  "url": "https://api.stlouisfed.org/fred/series/observations?series_id=ENPLANE&file_type=json&limit=1",     "key_env": "FRED_API_KEY", "key_auth": {"param": "api_key"}},
     # AOPA Air Safety Institute (McSpadden Report) — the GA accident/rate source
     # behind the Safety sub-view. Browser UA; annual data, probed for reachability.
@@ -482,7 +501,8 @@ def _scrub(note: str, key: str | None) -> str:
         return note
 
 
-def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> dict:
+def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS,
+               backoff_s: float = PROBE_BACKOFF_S) -> dict:
     if target.get("retired"):
         return _retired_row(target)
     key_env = target.get("key_env")
@@ -504,11 +524,14 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
     inband: tuple[int, str] | None = None
     note = ""
     retried = 0
-    # Probe with one retry. GitHub Actions runners intermittently get slow DNS /
-    # TLS handshakes (and the odd connection reset) to gov/city hosts, producing
-    # transient timeouts that aren't real outages — the "down" cast rotates run to
-    # run. Retry only connection-level failures (no HTTP response); an HTTPError
-    # is a genuine server reply, so take it as-is and stop.
+    # Probe with one retry and a short backoff. GitHub Actions runners
+    # intermittently get slow DNS / TLS handshakes (and the odd connection
+    # reset) to gov/city hosts, producing transient timeouts that aren't real
+    # outages — the "down" cast rotates run to run. Retry only connection-level
+    # failures (no HTTP response); an HTTPError is a genuine server reply
+    # (including Farside's 403 and DeFiLlama's paid-only 402), so take it
+    # as-is and stop. A failure that survives this retry is still only "down"
+    # once it repeats on the next run — see _apply_failure_streak.
     for attempt in range(attempts):
         try:
             if use_requests:
@@ -531,6 +554,8 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
         except Exception as e:  # URLError, timeout, ssl, etc. — transient, retry
             note = f"{type(e).__name__}: {e}"[:120]
             retried = attempt + 1
+            if attempt + 1 < attempts and backoff_s > 0:
+                time.sleep(backoff_s)
     latency_ms = int((time.monotonic() - t0) * 1000)
     note = _scrub(note, key)
     # `status` stays the real HTTP status (the page's HTTP column); an in-band
@@ -569,10 +594,76 @@ def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> 
     }
 
 
+def _prior_failure_counts(path: Path | None = None) -> dict[str, int]:
+    """label -> consecutive connection-failure count from the last snapshot.
+
+    A missing or unreadable file means every source starts at zero. A row
+    written before this counter existed counts as one failed run when its
+    verdict is ``down`` (so an outage already on the board is not hidden for
+    an extra day) and zero otherwise.
+    """
+    path = OUT_PATH if path is None else path
+    try:
+        text = path.read_text()
+    except OSError:
+        return {}
+    try:
+        snap = json.loads(text)
+    except json.JSONDecodeError:
+        return {}
+    if not isinstance(snap, dict):
+        return {}
+    counts: dict[str, int] = {}
+    for src in snap.get("sources") or []:
+        if not isinstance(src, dict):
+            continue
+        label = src.get("label")
+        if not isinstance(label, str) or not label:
+            continue
+        raw = src.get("consecutive_failures")
+        if type(raw) is int and raw >= 0:
+            counts[label] = raw
+        elif src.get("verdict") == "down":
+            counts[label] = 1
+        else:
+            counts[label] = 0
+    return counts
+
+
+def _apply_failure_streak(row: dict, prior_failures: int) -> dict:
+    """Soften a one-off connection failure; escalate only after a repeat.
+
+    A raw ``down`` (no HTTP response after the in-run retry) is one failed
+    run. Fewer than ``FAILURES_BEFORE_DOWN`` consecutive failed runs is
+    reported ``degraded``, which the daily audit treats as P2 rather than
+    P1. The counter is reset by every other verdict: up, auth_required,
+    rate_limited, blocked (Farside 403), the paid-only 402 that ``_verdict``
+    already calls degraded, and retired. Those states are not delayed.
+    """
+    if row.get("verdict") != "down":
+        row["consecutive_failures"] = 0
+        return row
+    streak = max(0, int(prior_failures)) + 1
+    row["consecutive_failures"] = streak
+    if streak < FAILURES_BEFORE_DOWN:
+        row["verdict"] = "degraded"
+        detail = (f" ({streak} consecutive probe failure; "
+                  f"not marked down until {FAILURES_BEFORE_DOWN})")
+    else:
+        detail = f" ({streak} consecutive probe failures)"
+    note = row.get("note") or "no response"
+    row["note"] = (note + detail)[:240]
+    return row
+
+
 def probe_all(timeout: float = DEFAULT_TIMEOUT, max_workers: int = 12) -> dict:
     """Probe every target in parallel. Returns a JSON-ready snapshot dict."""
+    # Read the previous snapshot first. main() overwrites OUT_PATH only after
+    # this returns, so the counts below are the prior run's, not this one's.
+    prior = _prior_failure_counts()
     with cf.ThreadPoolExecutor(max_workers=max_workers) as ex:
         sources = list(ex.map(lambda t: _probe_one(t, timeout), TARGETS))
+    sources = [_apply_failure_streak(row, prior.get(row["label"], 0)) for row in sources]
     sources.sort(key=lambda s: (s["category"], s["label"]))
 
     def count(*verdicts: str) -> int:
