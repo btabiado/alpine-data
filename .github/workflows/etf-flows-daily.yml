@@ -39,6 +39,14 @@ name: etf-flows-daily
 # exits 0. The CSVs stay where they are, so data health keeps reporting them
 # stale — that is the alarm. A bad parse or a malformed override still fails.
 #
+# HTTP 5xx (including Cloudflare 521) and timeouts are not that failure while
+# the CSV is still fresh. The fetch retries them with backoff, on the same
+# User-Agent, with no proxy. If they still fail and nothing new was merged,
+# the step emits a soft warning ("ETF flows delayed") and exits 0 while the
+# newest reported session is less than 2 trading days old. The daily audit
+# grades that warning as a notice, not a failed workflow. Once two or more
+# sessions are already due and missing, the step fails as before.
+#
 # Commit carries [skip ci] so the push doesn't retrigger pages.yml's push
 # build; pages.yml's own hourly cron picks up the new CSVs on its next tick.
 
@@ -80,7 +88,9 @@ jobs:
       - name: Fetch BTC + ETH spot-ETF flows
         # Pure-stdlib fetcher — no pip install. A refused parse or a malformed
         # override fails the step. HTTP 403 from every source warns and exits 0;
-        # staleness stays visible on the CSVs themselves.
+        # staleness stays visible on the CSVs themselves. 5xx and timeouts retry
+        # with backoff (same User-Agent, no proxy) and, if still failing, warn
+        # and exit 0 while the CSV is under 2 trading days old.
         env:
           ETF_FLOWS_MANUAL: ${{ inputs.manual_entry }}
         run: python scripts/fetch_etf_flows.py

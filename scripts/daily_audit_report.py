@@ -35,7 +35,9 @@ Severities:
         requests, visible NaN/undefined text, an upstream API down
     P2  layout overflow at 390px, heavy pages, chronically late/dropped cron
         ticks, degraded/blocked upstreams, a feed whose source was checked
-        and has not published newer data (disclosed upstream lag)
+        and has not published newer data (disclosed upstream lag), a transient
+        Farside 5xx/timeout soft warning while the ETF flows CSV is under
+        2 trading days old (the job exits 0; this is not a workflow failure)
 
 Alert verdict (written to $GITHUB_OUTPUT as ``alert_action``):
     open    there is at least one NEW P0 -> open/update the tracking issue
@@ -158,15 +160,82 @@ def problem(pid: str, severity: str, category: str, title: str, detail: str = ""
 # problems from the data half
 # ---------------------------------------------------------------------------
 
+_GENERIC_EXIT = re.compile(r"^Process completed with exit code \d+\.?$")
+_ANNOTATION_NOISE = re.compile(r"Node\.js \d+ (is deprecated|actions are deprecated)", re.I)
+
+
+def is_etf_flows_soft_warning(title: str | None, message: str | None) -> bool:
+    """True for the fetcher's transient-Farside notice, not a hard refusal.
+
+    ``scripts/fetch_etf_flows.py`` exits 0 and emits ``::warning title=ETF flows
+    delayed`` while the CSV is under two trading days old. That annotation is
+    a notice. ``ETF flows failed`` is the exit-1 refusal and stays a failure.
+    """
+    title = (title or "").strip()
+    message = (message or "").strip()
+    lowered = title.lower()
+    if lowered.startswith("etf flows failed"):
+        return False
+    if lowered.startswith("etf flows delayed"):
+        return True
+    return message.lower().startswith("soft warning:")
+
+
+def _annotation_noise(ann: dict) -> bool:
+    text = f"{ann.get('title') or ''} {ann.get('message') or ''}"
+    return bool(_ANNOTATION_NOISE.search(text))
+
+
+def _soft_warning_annotations(w: dict) -> list[dict]:
+    found: list[dict] = []
+    for job in w.get("failed_jobs") or []:
+        for ann in job.get("annotations") or []:
+            if is_etf_flows_soft_warning(ann.get("title"), ann.get("message")):
+                found.append(ann)
+    for ann in w.get("soft_warnings") or []:
+        if is_etf_flows_soft_warning(ann.get("title"), ann.get("message")):
+            found.append(ann)
+    return found
+
+
+def _only_soft_etf_warning(w: dict) -> bool:
+    """The run's informative annotations are only the ETF soft warning.
+
+    A generic "exit code 1" line and Node deprecation notices do not count.
+    No annotations at all is not this case: an unexplained red run stays a
+    failure. A real ``::error`` (``ETF flows failed``) keeps it a failure too.
+    """
+    anns = [a for job in (w.get("failed_jobs") or []) for a in (job.get("annotations") or [])]
+    if not anns:
+        return False
+    informative: list[dict] = []
+    for ann in anns:
+        if _annotation_noise(ann):
+            continue
+        msg = (ann.get("message") or "").strip()
+        if _GENERIC_EXIT.match(msg):
+            continue
+        informative.append(ann)
+    if not informative:
+        return False
+    return all(is_etf_flows_soft_warning(a.get("title"), a.get("message")) for a in informative)
+
+
 def _best_annotation(jobs: list[dict]) -> str:
-    """The most informative line from a failed run's annotations."""
-    generic = re.compile(r"^Process completed with exit code \d+\.?$")
-    noise = re.compile(r"Node\.js \d+ (is deprecated|actions are deprecated)", re.I)
+    """The most informative line from a failed run's annotations.
+
+    The ETF soft warning is skipped when a real failure annotation is present,
+    so a red run is not described as if the notice were the failure.
+    """
     lines: list[str] = []
     for j in jobs or []:
         steps = ", ".join(j.get("failed_steps") or [])
-        anns = [a for a in (j.get("annotations") or []) if not noise.search(a.get("message") or "")]
-        specific = [a for a in anns if not generic.match((a.get("message") or "").strip())]
+        anns = [a for a in (j.get("annotations") or []) if not _annotation_noise(a)]
+        specific = [a for a in anns
+                    if not _GENERIC_EXIT.match((a.get("message") or "").strip())
+                    and not is_etf_flows_soft_warning(a.get("title"), a.get("message"))]
+        if not specific:
+            specific = [a for a in anns if not _GENERIC_EXIT.match((a.get("message") or "").strip())]
         pick = specific[0] if specific else (anns[0] if anns else None)
         bit = ""
         if pick:
@@ -257,17 +326,36 @@ def data_problems(data: dict | None) -> list[dict]:
             if (w.get("failing_2_days") or w.get("failed_24h")) and not _actions_failure_is_error(name):
                 continue
             latest = w.get("latest_24h") or {}
-            why = _best_annotation(w.get("failed_jobs") or [])
-            if w.get("failing_2_days"):
-                flagged_workflows.add(name)
-                out.append(problem(f"workflow:{name}:failing-2d", P0, "workflow",
-                                   f"Workflow {name} failed two days running", why,
-                                   url=latest.get("url")))
-            elif w.get("failed_24h"):
-                flagged_workflows.add(name)
-                out.append(problem(f"workflow:{name}:failed", P1, "workflow",
-                                   f"Workflow {name} failed in the last 24h", why,
-                                   url=latest.get("url")))
+            # A green run (or a red run whose only informative annotation is
+            # the fetcher's soft warning) is not a workflow failure. The CSV
+            # age is what turns the same outage into an exit-1, and that
+            # refusal is titled "ETF flows failed".
+            only_soft = _only_soft_etf_warning(w)
+            hard = ((w.get("failing_2_days") or w.get("failed_24h")) and not only_soft)
+            if hard:
+                why = _best_annotation(w.get("failed_jobs") or [])
+                if w.get("failing_2_days"):
+                    flagged_workflows.add(name)
+                    out.append(problem(f"workflow:{name}:failing-2d", P0, "workflow",
+                                       f"Workflow {name} failed two days running", why,
+                                       url=latest.get("url")))
+                elif w.get("failed_24h"):
+                    flagged_workflows.add(name)
+                    out.append(problem(f"workflow:{name}:failed", P1, "workflow",
+                                       f"Workflow {name} failed in the last 24h", why,
+                                       url=latest.get("url")))
+            notes = _soft_warning_annotations(w)
+            if notes and not hard:
+                detail = " | ".join(
+                    (f"{a.get('title')}: {a.get('message')}".strip(": ")
+                     if a.get("title") else (a.get("message") or ""))
+                    for a in notes[:3]
+                )
+                out.append(problem(
+                    f"workflow:{name}:soft-warning", P2, "workflow",
+                    f"Workflow {name} soft-warned: Farside was unreachable and "
+                    f"the ETF flows CSV is under 2 trading days old",
+                    detail, url=latest.get("url")))
 
     # -- schedules -------------------------------------------------------------
     sc = data.get("schedules")
@@ -730,10 +818,17 @@ def render_md(report: dict) -> str:
     wf = data.get("workflows") or {}
     if _section_ok(wf) and wf:
         ran = [w for w in wf.get("workflows") or [] if w.get("latest_24h")]
-        bad = [w["name"] for w in ran if w.get("failed_24h")
-               and not (w.get("name") == quality_name and quality_ok)]
+        bad = [w["name"] for w in ran
+               if w.get("failed_24h")
+               and not (w.get("name") == quality_name and quality_ok)
+               and not _only_soft_etf_warning(w)]
         L.append(f"- **Workflows** (last 24h, main): {len(ran)} ran, {len(bad)} ended failed"
                  + (f" ({', '.join(bad)})" if bad else ""))
+        soft = [w["name"] for w in ran
+                if _soft_warning_annotations(w)
+                and not (w.get("failed_24h") and not _only_soft_etf_warning(w))]
+        if soft:
+            L.append("  - soft warning (not a failure): " + ", ".join(soft))
     api = data.get("api_status") or {}
     if _section_ok(api) and api:
         counts = ", ".join(f"{v} {k}" for k, v in sorted((api.get("counts") or {}).items()))
