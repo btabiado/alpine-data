@@ -157,6 +157,9 @@ def test_tsa_falls_back_to_urllib_without_requests(net):
     (403, "Forbidden", "blocked"),           # the Akamai answer to urllib
     (429, "Too Many Requests", "rate_limited"),
     (503, "Service Unavailable", "degraded"),
+    # Cloudflare 521 is an origin error, not "down" (no HTTP response) and
+    # not "blocked" (401/403). The daily audit grades degraded as P2.
+    (521, "Web Server Is Down", "degraded"),
 ])
 def test_requests_error_status_maps_like_urllib(net, code, reason, verdict):
     net(FakeRequests(_FakeRequestsResp(code, reason)), FakeUrlopen())

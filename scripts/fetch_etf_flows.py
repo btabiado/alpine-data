@@ -66,8 +66,28 @@ no browser. It logs the status and the URL, then tries, in order:
 If every source that exists is blocked and nothing new was merged, the process
 exits 0 and emits a warning that names the 403 and how far behind the CSV is.
 The feed stays stale in data health, which is the alarm that keeps the audit
-red. A non-403 failure, a refused parse, or a malformed override still exits
-non-zero and does not write.
+red. A refused parse or a malformed override still exits non-zero and does
+not write.
+
+WHEN FARSIDE RETURNS HTTP 5xx OR TIMES OUT
+------------------------------------------
+On 2026-10-21 etf-flows-daily failed twice because Farside answered HTTP 521
+(Cloudflare's origin-down status) and this script treated that as a hard
+fetch error. ETH has no backup, so the whole job went red and the BTC rows
+TFTC had already merged were never committed.
+
+A 5xx response and a timeout are retried here, with backoff, on the same
+User-Agent. There is no proxy and no browser: a 521 is a dead origin, not a
+block to route around. A 403 is not retried; that refusal is handled above.
+
+If the retries still fail and nothing new was merged, the CSV's age decides
+the exit code. While the newest reported session is less than 2 trading days
+old — NYSE sessions strictly after that day and strictly before today, because
+today is not published yet — the process exits 0 and emits a soft warning
+titled "ETF flows delayed". The daily audit grades that warning as a notice,
+not a workflow failure. Once two or more sessions are already due and missing,
+the process exits non-zero, the same as any other fetch error. A bad parse, a
+date regression, or a malformed override still fails immediately.
 
 ABSENCE IS NOT ZERO (the reason for the None-vs-0.0 split below)
 ----------------------------------------------------------------
@@ -134,6 +154,7 @@ import math
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
@@ -151,6 +172,18 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "data"
 
 UA = "AlpineDataWorks-feed/1.0 (+https://alpinedataworks.com)"
+
+# HTTP 521 / other 5xx and timeouts. Four tries, then the soft-or-hard
+# decision in _fallback. The pause is 1s, 2s, 4s (capped at 8s). Same
+# User-Agent on every try; nothing here selects a proxy.
+FARSIDE_ATTEMPTS = 4
+FARSIDE_TIMEOUT_S = 60
+
+# A transient miss does not fail the job while fewer than this many NYSE
+# sessions are already due and absent. Today is not one of them: Farside
+# posts the prior session overnight. 2 means one missed session warns and
+# exits 0; two or more fail the job.
+SOFT_STALE_TRADING_DAYS = 2
 
 # Operator override, merged on every run. Empty arrays are the steady state.
 # The workflow_dispatch input arrives in this env var as JSON or CSV text.
@@ -255,14 +288,75 @@ class _TableParser(HTMLParser):
             self._cell.append(data)
 
 
+def _sleep(seconds: float) -> None:
+    """Indirection so tests can record backoff without waiting."""
+    time.sleep(seconds)
+
+
+def _backoff(attempt: int) -> None:
+    """Pause before another try. ``attempt`` is 0-based and already failed."""
+    _sleep(min(8.0, float(2 ** attempt)))
+
+
+def is_retryable_fetch_error(exc: BaseException) -> bool:
+    """5xx and timeouts only. A 403 is a refusal, not a blip, and is not retried.
+
+    HTTPError is a URLError and an OSError, so the status is checked first.
+    ``urlopen`` raises TimeoutError directly when the read stalls, and
+    sometimes wraps it in URLError. A connection reset is neither, and stays
+    a hard error.
+    """
+    if isinstance(exc, urllib.error.HTTPError):
+        code = int(exc.code)
+        return code == 408 or 500 <= code < 600
+    if isinstance(exc, TimeoutError):
+        return True
+    reason = getattr(exc, "reason", None)
+    if isinstance(reason, TimeoutError):
+        return True
+    if isinstance(exc, urllib.error.URLError):
+        text = str(reason if reason is not None else exc).lower()
+        return "timed out" in text
+    if isinstance(exc, OSError) and "timed out" in str(exc).lower():
+        return True
+    return False
+
+
 def fetch_html(url: str) -> str:
-    req = urllib.request.Request(url, headers={
-        "User-Agent": UA,
-        "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9",
-    })
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return r.read().decode("utf-8", errors="replace")
+    """GET Farside HTML. Retry 5xx and timeouts. Do not change the client.
+
+    The User-Agent is ``UA`` on every attempt. No proxy is installed and no
+    browser header is added: retrying a dead origin is not a way around a
+    block. A 4xx other than 408 is raised on the first reply.
+    """
+    last: BaseException | None = None
+    for attempt in range(FARSIDE_ATTEMPTS):
+        req = urllib.request.Request(url, headers={
+            "User-Agent": UA,
+            "Accept": "text/html,application/xhtml+xml",
+            "Accept-Language": "en-US,en;q=0.9",
+        })
+        try:
+            with urllib.request.urlopen(req, timeout=FARSIDE_TIMEOUT_S) as r:
+                return r.read().decode("utf-8", errors="replace")
+        except urllib.error.HTTPError as e:
+            last = e
+            retry = is_retryable_fetch_error(e)
+        except (urllib.error.URLError, TimeoutError, OSError) as e:
+            last = e
+            retry = is_retryable_fetch_error(e)
+        if not retry or last is None:
+            raise last if last is not None else OSError(f"fetch failed for {url}")
+        if attempt + 1 >= FARSIDE_ATTEMPTS:
+            break
+        print(f"[etf-flows] {explain_fetch_error('Farside', url, last)} "
+              f"(attempt {attempt + 1}/{FARSIDE_ATTEMPTS}; same User-Agent, "
+              f"no proxy, backing off)",
+              file=sys.stderr)
+        _backoff(attempt)
+    if last is None:
+        raise OSError(f"fetch failed for {url}")
+    raise last
 
 
 def _parse_date_cell(text: str) -> str | None:
@@ -1050,6 +1144,48 @@ def describe_staleness(path: Path, header: list[str], rows: dict[str, list[str]]
     return age_h > limit, text
 
 
+def sessions_behind(last: date, today: date) -> list[str]:
+    """NYSE sessions strictly after ``last`` and strictly before ``today``.
+
+    Today is excluded: Farside posts the prior session overnight, so a file
+    through yesterday is current. Weekends and NYSE holidays are not sessions.
+    """
+    missed: list[str] = []
+    d = last + timedelta(days=1)
+    while d < today:
+        if not market_closed(d.isoformat()):
+            missed.append(d.isoformat())
+        d += timedelta(days=1)
+    return missed
+
+
+def within_soft_window(header: list[str], rows: dict[str, list[str]],
+                       today: date | None = None) -> tuple[bool, str]:
+    """Whether a transient Farside miss may exit 0 instead of failing.
+
+    The CSV is less than ``SOFT_STALE_TRADING_DAYS`` trading days old when
+    fewer than that many sessions are already due and missing. A row with an
+    empty Total does not count (same rule as the health probe). Returns
+    ``(inside_window, prose)``.
+    """
+    today = today or _today()
+    newest_iso = newest_reported(header, rows)
+    limit = SOFT_STALE_TRADING_DAYS
+    if not newest_iso:
+        return False, (f"no row with a Total (a transient Farside error fails "
+                       f"the job until the CSV is under {limit} trading days old)")
+    missed = sessions_behind(date.fromisoformat(newest_iso), today)
+    n = len(missed)
+    shown = ", ".join(missed[:8]) or "none"
+    if len(missed) > 8:
+        shown += f", +{len(missed) - 8} more"
+    fresh = n < limit
+    how = "less than" if fresh else "at least"
+    text = (f"newest reported day {newest_iso} is {how} {limit} trading days old "
+            f"({n} missed session(s) before {today.isoformat()}: {shown})")
+    return fresh, text
+
+
 def _write_table(path: Path, header: list[str], merged: dict[str, list[str]]) -> None:
     out = io.StringIO()
     w = csv.writer(out, lineterminator="\n")
@@ -1098,13 +1234,17 @@ def _fallback(asset: str, cfg: dict, path: Path, old_header: list[str],
     """Farside raised. Try the backup, then the manual override.
 
     A clean block (HTTP 403 from every source that exists) warns and returns
-    0. The CSV is only written when a backup or the override actually adds or
-    replaces a row. Anything else — a timeout, a backup that no longer says
-    CC BY 4.0, a malformed override — returns 1 and does not write.
+    0. A 5xx or a timeout that survives the retries in ``fetch_html`` does the
+    same, but only while the CSV is under ``SOFT_STALE_TRADING_DAYS`` trading
+    days old; past that it fails. The CSV is only written when a backup or the
+    override actually adds or replaces a row. Anything else — a connection
+    reset, a backup that no longer says CC BY 4.0, a malformed override —
+    returns 1 and does not write.
     """
     cause = explain_fetch_error("Farside", cfg["url"], exc)
     print(f"[{asset}] {cause}", file=sys.stderr)
     farside_blocked = is_blocked(exc)
+    farside_transient = is_retryable_fetch_error(exc)
     causes = [cause]
     backup_status = "absent"
     header = list(old_header)
@@ -1168,13 +1308,30 @@ def _fallback(asset: str, cfg: dict, path: Path, old_header: list[str],
                   f"{', '.join(dropped)}", file=sys.stderr)
 
     changed = bool(header) and not _same_rows(old_rows, merged)
-    hard = (not farside_blocked) or backup_status == "failed"
+    fresh, fresh_text = within_soft_window(old_header, old_rows)
+    # A backup that failed for a non-transient reason (bad JSON, a license
+    # other than CC BY 4.0, a connection reset) stays a hard error, including
+    # on a 403. A 5xx/timeout from Farside does not: while the CSV is still
+    # under two trading days old the job warns and exits 0.
+    blocked_soft = farside_blocked and backup_status != "failed"
+    transient_soft = (farside_transient and not farside_blocked and fresh
+                      and backup_status != "failed")
     if not changed:
-        if not hard:
+        if blocked_soft:
             if not _warn_if_stale(asset, path, header, old_rows, causes):
                 print(f"[{asset}] no new rows. {path.name} is within the health "
                       f"limit; Farside remains blocked.", file=sys.stderr)
             return 0
+        if transient_soft:
+            emit_warning(
+                f"ETF flows delayed ({asset})",
+                f"soft warning: {cause} Retried with backoff; still failing. "
+                f"{fresh_text} Leaving {path.name} unchanged. Not a failure "
+                f"while the CSV is under {SOFT_STALE_TRADING_DAYS} trading days old.",
+            )
+            return 0
+        if farside_transient and not fresh:
+            causes.append(fresh_text)
         detail = "; ".join(causes) if causes else "no new rows were merged"
         return refuse(asset, "fetch",
                       f"{detail}; leaving {path.name} untouched")

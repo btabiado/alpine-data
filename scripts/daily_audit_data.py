@@ -14,7 +14,10 @@ others, so a flaky upstream degrades the report instead of erasing it):
   workflows     every workflow's runs on main over the last 7 days (GitHub
                 REST, ``actions: read``): latest conclusion in the last 24h,
                 the day before, and for failures the failed jobs' annotation
-                titles/messages (``/check-runs/<job>/annotations``).
+                titles/messages (``/check-runs/<job>/annotations``). A
+                successful ``etf-flows-daily`` run is also checked for the
+                fetcher's soft warning (``ETF flows delayed``): that notice
+                is recorded and the report does not grade it as a failure.
   schedules     every workflow with an ``on.schedule`` cron: which of the
                 last 7 days it was due, which ticks a schedule event served,
                 and which a cron-watchdog catch-up served instead (labeled
@@ -624,6 +627,50 @@ def _summarize_run(r: dict) -> dict:
     }
 
 
+def _annotation_is_etf_soft_warning(title: str | None, message: str | None) -> bool:
+    """Match ``daily_audit_report.is_etf_flows_soft_warning``. Kept here so
+    collecting the notice does not import the report builder."""
+    title = (title or "").strip()
+    message = (message or "").strip()
+    lowered = title.lower()
+    if lowered.startswith("etf flows failed"):
+        return False
+    if lowered.startswith("etf flows delayed"):
+        return True
+    return message.lower().startswith("soft warning:")
+
+
+def _is_etf_flows_workflow(name: str | None, path: str | None) -> bool:
+    return name == "etf-flows-daily" or str(path or "").endswith("etf-flows-daily.yml")
+
+
+def _etf_soft_warnings(gh: GitHub, run_id: int) -> list[dict]:
+    """Warning annotations on a successful etf-flows-daily run.
+
+    The fetcher exits 0 for a transient Farside miss while the CSV is under
+    two trading days old, so the run is not a failure and ``_annotations``
+    never sees it. Node deprecation warnings on the same job are dropped.
+    """
+    jobs = gh.get(f"/repos/{{repo}}/actions/runs/{run_id}/jobs",
+                  {"filter": "latest", "per_page": 20})
+    out: list[dict] = []
+    for job in (jobs.get("jobs") or []):
+        if job.get("conclusion") in FAILED_CONCLUSIONS:
+            continue
+        raw = gh.get(f"/repos/{{repo}}/check-runs/{job['id']}/annotations", {"per_page": 50})
+        for a in raw or []:
+            if a.get("annotation_level") != "warning":
+                continue
+            title = clip(a.get("title"), 120)
+            message = clip(a.get("message"), 300)
+            if not _annotation_is_etf_soft_warning(title, message):
+                continue
+            out.append({"level": "warning", "title": title, "message": message})
+            if len(out) >= 5:
+                return out
+    return out
+
+
 def _annotations(gh: GitHub, run_id: int) -> list[dict]:
     jobs = gh.get(f"/repos/{{repo}}/actions/runs/{run_id}/jobs", {"filter": "latest", "per_page": 50})
     out: list[dict] = []
@@ -687,6 +734,18 @@ def section_workflows_and_schedules(gh: GitHub, repo_root: Path, now: datetime,
             except Exception as e:  # noqa: BLE001
                 entry["failed_jobs"] = [{"job": "?", "annotations": [
                     {"level": "error", "title": "jobs unavailable", "message": clip(e, 200)}]}]
+        elif (d1 and d1[0].get("conclusion") == "success"
+              and _is_etf_flows_workflow(name, path)):
+            # A green run can still carry the soft warning. A lookup failure
+            # must not turn that success into an audit error.
+            try:
+                notes = _etf_soft_warnings(gh, d1[0]["id"])
+            except Exception as e:  # noqa: BLE001
+                print(f"[audit-data] etf-flows soft warnings unreadable: {clip(e, 200)}",
+                      file=sys.stderr)
+                notes = []
+            if notes:
+                entry["soft_warnings"] = notes
         workflows.append(entry)
 
         crons = crons_by_path.get(path)

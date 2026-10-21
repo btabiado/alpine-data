@@ -1149,6 +1149,250 @@ def test_backup_403_after_farside_403_warns(btc_cfg, monkeypatch, capsys, tmp_pa
     assert err.count("HTTP 403") >= 2
 
 
+# ---------- Farside HTTP 521 / timeouts: retry, then soft-warn ----------
+#
+# 2026-10-21: etf-flows-daily failed twice (runs 39588030660 and 39617299214)
+# because Farside returned HTTP 521. ETH has no backup, so the job exited 1
+# and the BTC rows TFTC had merged were never committed. A 5xx or a timeout
+# is retried with backoff on the same User-Agent. If it still fails, the job
+# warns and exits 0 while the CSV is under 2 trading days old.
+
+
+class _HtmlResponse:
+    def __init__(self, body: bytes):
+        self._body = body
+
+    def read(self):
+        return self._body
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+
+def _patch_urlopen(monkeypatch, fn):
+    slept = []
+    monkeypatch.setattr(fef, "_sleep", lambda s: slept.append(s))
+    monkeypatch.setattr(fef.urllib.request, "urlopen", fn)
+    return slept
+
+
+def test_fetch_html_retries_521_with_backoff_and_the_same_user_agent(monkeypatch):
+    calls = []
+
+    def urlopen(req, timeout=0):
+        calls.append((req.full_url, req.get_header("User-agent"), timeout))
+        if len(calls) < 3:
+            raise _http_error(req.full_url, 521, "Web Server Is Down")
+        return _HtmlResponse(b"<html>ok</html>")
+
+    slept = _patch_urlopen(monkeypatch, urlopen)
+    assert fef.fetch_html("https://farside.co.uk/bitcoin-etf-flow-all-data/") == "<html>ok</html>"
+    assert len(calls) == 3
+    assert slept == [1.0, 2.0]
+    assert {ua for _url, ua, _t in calls} == {fef.UA}
+    assert {t for _url, _ua, t in calls} == {fef.FARSIDE_TIMEOUT_S}
+    assert all("Mozilla" not in (ua or "") for _url, ua, _t in calls)
+
+
+def test_fetch_html_does_not_retry_a_403(monkeypatch):
+    calls = []
+
+    def urlopen(req, timeout=0):
+        calls.append(req.get_header("User-agent"))
+        raise _http_error(req.full_url, 403, "Forbidden", headers={"cf-mitigated": "challenge"})
+
+    slept = _patch_urlopen(monkeypatch, urlopen)
+    with pytest.raises(fef.urllib.error.HTTPError) as ei:
+        fef.fetch_html("https://farside.co.uk/bitcoin-etf-flow-all-data/")
+    assert ei.value.code == 403
+    assert calls == [fef.UA]
+    assert slept == []
+
+
+def test_fetch_html_retries_timeouts_then_raises(monkeypatch):
+    calls = []
+
+    def urlopen(req, timeout=0):
+        calls.append(type(TimeoutError("The read operation timed out")))
+        raise TimeoutError("The read operation timed out")
+
+    slept = _patch_urlopen(monkeypatch, urlopen)
+    with pytest.raises(TimeoutError):
+        fef.fetch_html("https://farside.co.uk/ethereum-etf-flow-all-data/")
+    assert len(calls) == fef.FARSIDE_ATTEMPTS
+    assert slept == [1.0, 2.0, 4.0]
+
+
+def test_fetch_html_does_not_retry_a_connection_reset(monkeypatch):
+    calls = []
+
+    def urlopen(req, timeout=0):
+        calls.append(1)
+        raise OSError("connection reset")
+
+    slept = _patch_urlopen(monkeypatch, urlopen)
+    with pytest.raises(OSError, match="connection reset"):
+        fef.fetch_html("https://farside.co.uk/bitcoin-etf-flow-all-data/")
+    assert calls == [1]
+    assert slept == []
+
+
+def test_soft_window_is_nyse_sessions_before_today():
+    """2026-10-21 incident: Monday's row is one session behind, not two.
+
+    Today is not a session Farside has published yet. 2026-07-03 is an NYSE
+    holiday, so it is not a missed session either.
+    """
+    header = ["date", "IBIT", "Total"]
+
+    def judge(day, today):
+        rows = {day: [day, "1", "1"]}
+        return fef.within_soft_window(header, rows, today=date.fromisoformat(today))
+
+    ok, text = judge("2026-10-19", "2026-10-21")
+    assert ok is True
+    assert "less than 2 trading days old" in text
+    assert "2026-10-20" in text
+    ok, text = judge("2026-10-16", "2026-10-21")
+    assert ok is False
+    assert "at least 2 trading days old" in text
+    assert judge("2026-10-20", "2026-10-21")[0] is True
+    # Thursday 2026-07-02 through Monday 2026-07-06: Friday was a holiday.
+    assert judge("2026-07-02", "2026-07-06")[0] is True
+    # An empty Total does not make the file fresh.
+    rows = {
+        "2026-10-20": ["2026-10-20", "1", ""],
+        "2026-10-16": ["2026-10-16", "1", "5"],
+    }
+    ok, text = fef.within_soft_window(header, rows, today=date(2026, 10, 21))
+    assert ok is False
+    assert "2026-10-16" in text
+
+
+def _recent_csv(path: Path, last: str) -> None:
+    path.write_text(
+        "date,IBIT,FBTC,GBTC,Total\n"
+        "2024-01-11,111.7,227.0,-95.1,243.6\n"
+        f"{last},1,2,3,6\n",
+        encoding="utf-8",
+    )
+
+
+def test_http_521_soft_warns_when_the_csv_is_under_two_trading_days(
+        btc_cfg, monkeypatch, capsys, tmp_path):
+    """The 2026-10-21 failure: Monday's CSV on Wednesday must not go red."""
+    _silence_manual(monkeypatch, tmp_path)
+    _recent_csv(btc_cfg, "2026-10-19")
+    before = btc_cfg.read_text()
+    url = fef.SOURCES["btc"]["url"]
+    monkeypatch.setattr(fef, "_today", lambda: date(2026, 10, 21))
+    monkeypatch.setattr(
+        fef, "fetch_html",
+        lambda _u: (_ for _ in ()).throw(_http_error(url, 521, "Web Server Is Down")))
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    assert fef.refresh("btc") == 0
+    assert btc_cfg.read_text() == before
+    captured = capsys.readouterr()
+    assert "::error" not in captured.out
+    warning = next(ln for ln in captured.out.splitlines() if ln.startswith("::warning "))
+    assert warning.startswith("::warning title=ETF flows delayed (btc)::")
+    assert warning.lower().count("soft warning") >= 1 or "soft warning:" in warning
+    assert "HTTP 521" in warning
+    assert "2026-10-19" in warning
+    assert "less than 2 trading days old" in warning
+    assert "Mozilla" not in warning
+
+
+def test_http_521_fails_once_two_trading_days_are_already_missing(
+        btc_cfg, monkeypatch, capsys, tmp_path):
+    _silence_manual(monkeypatch, tmp_path)
+    _recent_csv(btc_cfg, "2026-10-16")  # Friday; Mon 19 and Tue 20 are due by Wednesday
+    before = btc_cfg.read_text()
+    url = fef.SOURCES["btc"]["url"]
+    monkeypatch.setattr(fef, "_today", lambda: date(2026, 10, 21))
+    monkeypatch.setattr(
+        fef, "fetch_html",
+        lambda _u: (_ for _ in ()).throw(_http_error(url, 521, "Web Server Is Down")))
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    assert fef.refresh("btc") == 1
+    assert btc_cfg.read_text() == before
+    line = next(ln for ln in capsys.readouterr().out.splitlines() if ln.startswith("::error "))
+    assert line.startswith("::error title=ETF flows failed (btc)::")
+    assert "fetch:" in line
+    assert "HTTP 521" in line
+    assert "at least 2 trading days old" in line
+    assert "soft warning" not in line
+
+
+def test_timeout_soft_warns_like_a_5xx(btc_cfg, monkeypatch, capsys, tmp_path):
+    _silence_manual(monkeypatch, tmp_path)
+    _recent_csv(btc_cfg, "2026-10-20")
+    before = btc_cfg.read_text()
+    monkeypatch.setattr(fef, "_today", lambda: date(2026, 10, 21))
+    monkeypatch.setattr(
+        fef, "fetch_html",
+        lambda _u: (_ for _ in ()).throw(TimeoutError("The read operation timed out")))
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    assert fef.refresh("btc") == 0
+    assert btc_cfg.read_text() == before
+    out = capsys.readouterr().out
+    assert "::error" not in out
+    assert "::warning title=ETF flows delayed (btc)::" in out
+    assert "soft warning:" in out
+
+
+def test_http_404_still_fails_when_the_csv_is_fresh(btc_cfg, monkeypatch, capsys, tmp_path):
+    """A 4xx other than the known 403 block is not a transient origin outage."""
+    _silence_manual(monkeypatch, tmp_path)
+    _recent_csv(btc_cfg, "2026-10-20")
+    before = btc_cfg.read_text()
+    url = fef.SOURCES["btc"]["url"]
+    monkeypatch.setattr(fef, "_today", lambda: date(2026, 10, 21))
+    monkeypatch.setattr(
+        fef, "fetch_html",
+        lambda _u: (_ for _ in ()).throw(_http_error(url, 404, "Not Found")))
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    assert fef.refresh("btc") == 1
+    assert btc_cfg.read_text() == before
+    line = next(ln for ln in capsys.readouterr().out.splitlines() if ln.startswith("::error "))
+    assert "HTTP 404" in line
+    assert "ETF flows delayed" not in line
+
+
+def test_521_still_gap_fills_from_the_backup_before_warning(btc_cfg, monkeypatch, tmp_path):
+    """A dead Farside origin must not skip TFTC. A merged row exits 0 and writes."""
+    _silence_manual(monkeypatch, tmp_path)
+    monkeypatch.setitem(fef.SOURCES["btc"], "backup", {
+        "name": "TFTC",
+        "url": "https://tftc.example/data.json",
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "attribution": "TFTC — tftc.io/bitcoin-etf-flows",
+    })
+    monkeypatch.setattr(fef, "_today", lambda: date(2026, 10, 21))
+    days = _tftc_days(fef.MIN_ROWS + 5, date(2024, 1, 11))
+    monkeypatch.setattr(
+        fef, "fetch_html",
+        lambda _u: (_ for _ in ()).throw(
+            _http_error("https://farside.example/btc", 521, "Web Server Is Down")))
+    monkeypatch.setattr(fef, "fetch_json", lambda _u: {
+        "license": "https://creativecommons.org/licenses/by/4.0/",
+        "units": "USD",
+        "days": days,
+    })
+
+    assert fef.refresh("btc") == 0
+    text = btc_cfg.read_text()
+    assert days[1]["date"] in text          # a date the seed did not have
+    assert "2024-01-11,111.7,227.0,-95.1,243.6" in text
+
+
 @pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
 def test_usd_to_millions_rejects_non_finite(bad):
     """TFTC dollars must be a real number. NaN and +/-inf are not a flow."""
@@ -1188,3 +1432,8 @@ def test_committed_manual_override_parses_and_workflow_wires_the_input():
     assert "manual_entry" in readme
     assert "HTTP 403" in readme
     assert "never 0" in readme or "never `0`" in readme or "not a zero" in readme or "not reported" in readme
+    assert "backoff" in workflow
+    assert "2 trading days" in workflow
+    assert "HTTP 521" in readme or "5xx" in readme
+    assert "soft warning" in readme
+    assert "proxy" in readme

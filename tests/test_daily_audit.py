@@ -284,6 +284,61 @@ class TestScheduleEvaluation:
         assert row["last_failed"] is True
         assert "recovered_run" not in row
 
+    def test_successful_etf_flows_run_records_the_soft_warning_only(self, dad):
+        success = {
+            "id": 42, "conclusion": "success", "status": "completed",
+            "event": "schedule", "created_at": "2026-10-21T14:30:00Z",
+            "html_url": "https://example.test/42", "run_number": 9,
+        }
+        notice = {
+            "annotation_level": "warning",
+            "title": "ETF flows delayed (eth)",
+            "message": ("soft warning: Farside returned HTTP 521. "
+                        "newest reported day 2026-10-19 is less than 2 trading days old"),
+            "path": ".github",
+        }
+        noise = {
+            "annotation_level": "warning",
+            "title": "",
+            "message": "Node.js 20 is deprecated. The following actions are deprecated",
+        }
+
+        class GH:
+            def __init__(self):
+                self.calls = 0
+
+            def paginate(self, path, key, params=None, max_pages=5):
+                self.calls += 1
+                if str(path).endswith("/actions/workflows"):
+                    return [{
+                        "id": 9, "name": "etf-flows-daily",
+                        "path": ".github/workflows/etf-flows-daily.yml",
+                        "state": "active", "created_at": "2026-01-01T00:00:00Z",
+                    }]
+                return [success]
+
+            def get(self, path, params=None):
+                self.calls += 1
+                if str(path).endswith("/jobs"):
+                    return {"jobs": [{
+                        "id": 7, "name": "run", "conclusion": "success",
+                        "html_url": "https://example.test/job",
+                    }]}
+                if str(path).endswith("/annotations"):
+                    return [notice, noise]
+                return {"workflow_runs": []}
+
+        workflows, _schedules = dad.section_workflows_and_schedules(
+            GH(), REPO_ROOT, T("2026-10-21T18:00"))
+        row = next(w for w in workflows["workflows"] if w["name"] == "etf-flows-daily")
+        assert row["failed_24h"] is False
+        assert row["failing_2_days"] is False
+        assert row["soft_warnings"] == [{
+            "level": "warning",
+            "title": notice["title"],
+            "message": notice["message"],
+        }]
+
 
 class TestParsing:
     @pytest.mark.parametrize("raw,expect", [
@@ -638,6 +693,96 @@ class TestProblems:
         assert "TSA not refreshed: tsa.gov 403" in probs["workflow:aviation-tsa:failing-2d"]["detail"]
         assert "Node.js" not in probs["workflow:aviation-tsa:failing-2d"]["detail"]
         assert probs["workflow:data-health:failed"]["severity"] == "P1"
+
+    def test_etf_soft_warning_is_p2_and_not_a_failure(self, dar, dad):
+        """A green etf-flows run that warned about HTTP 521 is not a failure.
+
+        The same text on a real refusal (``ETF flows failed``, exit 1) stays
+        a P1. The two classifiers agree on which annotation is which.
+        """
+        notice = {
+            "level": "warning",
+            "title": "ETF flows delayed (eth)",
+            "message": ("soft warning: Farside returned HTTP 521 Web Server Is Down "
+                        "for https://farside.co.uk/ethereum-etf-flow-all-data/. "
+                        "newest reported day 2026-10-19 is less than 2 trading days old"),
+        }
+        assert dar.is_etf_flows_soft_warning(notice["title"], notice["message"])
+        assert dad._annotation_is_etf_soft_warning(notice["title"], notice["message"])
+        assert not dar.is_etf_flows_soft_warning(
+            "ETF flows failed (eth)",
+            "fetch: Farside returned HTTP 521 for https://farside.co.uk/ethereum-etf-flow-all-data/.")
+        assert not dad._annotation_is_etf_soft_warning(
+            "ETF flows failed (eth)", "fetch: Farside returned HTTP 521")
+
+        d = _data(workflows={"status": "ok", "workflows": [{
+            "name": "etf-flows-daily",
+            "latest_24h": {"url": "https://example.test/run", "conclusion": "success"},
+            "failed_24h": False,
+            "failing_2_days": False,
+            "soft_warnings": [notice],
+        }]})
+        probs = {p["id"]: p for p in dar.data_problems(d)}
+        assert "workflow:etf-flows-daily:failed" not in probs
+        assert "workflow:etf-flows-daily:failing-2d" not in probs
+        soft = probs["workflow:etf-flows-daily:soft-warning"]
+        assert soft["severity"] == "P2"
+        assert "not" not in soft["title"] or "soft-warned" in soft["title"]
+        assert "HTTP 521" in soft["detail"]
+        assert "2026-10-19" in soft["detail"]
+        assert dar.alert_action(list(probs.values())) == "close"
+        md = dar.render_md(dar.build_report(d, _ux(), None, "2026-10-21"))
+        assert "ended failed (etf-flows-daily)" not in md
+        assert "soft warning (not a failure): etf-flows-daily" in md
+
+    def test_etf_hard_521_failure_stays_a_failure(self, dar):
+        """Once the CSV is past the soft window the job exits 1. That stays P1."""
+        jobs = [{"job": "run", "failed_steps": ["Fetch BTC + ETH spot-ETF flows"],
+                 "annotations": [
+                     {"level": "failure", "title": "ETF flows failed (eth)",
+                      "message": ("fetch: Farside returned HTTP 521 for "
+                                  "https://farside.co.uk/ethereum-etf-flow-all-data/.; "
+                                  "newest reported day 2026-10-16 is at least 2 trading days old; "
+                                  "leaving eth_flows.csv untouched")},
+                     {"level": "warning", "title": "ETF flows delayed (eth)",
+                      "message": "soft warning: ignored when a real refusal is present"},
+                 ]}]
+        d = _data(workflows={"status": "ok", "workflows": [{
+            "name": "etf-flows-daily",
+            "latest_24h": {"url": "u"},
+            "failed_24h": True,
+            "failing_2_days": False,
+            "failed_jobs": jobs,
+        }]})
+        probs = {p["id"]: p for p in dar.data_problems(d)}
+        assert "workflow:etf-flows-daily:soft-warning" not in probs
+        failed = probs["workflow:etf-flows-daily:failed"]
+        assert failed["severity"] == "P1"
+        assert "ETF flows failed (eth)" in failed["detail"]
+        assert "soft warning" not in failed["detail"]
+
+    def test_red_run_whose_only_annotation_is_the_soft_warning_is_not_a_failure(self, dar):
+        """If the only informative annotation is the notice, do not page it as red."""
+        jobs = [{"job": "run", "failed_steps": ["Fetch BTC + ETH spot-ETF flows"],
+                 "annotations": [
+                     {"level": "failure", "title": "",
+                      "message": "Process completed with exit code 1."},
+                     {"level": "warning", "title": "ETF flows delayed (eth)",
+                      "message": "soft warning: Farside returned HTTP 521. newest reported day 2026-10-19 is less than 2 trading days old"},
+                 ]}]
+        d = _data(workflows={"status": "ok", "workflows": [{
+            "name": "etf-flows-daily",
+            "latest_24h": {"url": "u", "conclusion": "failure"},
+            "failed_24h": True,
+            "failing_2_days": True,
+            "failed_jobs": jobs,
+        }]})
+        probs = {p["id"]: p for p in dar.data_problems(d)}
+        assert "workflow:etf-flows-daily:failing-2d" not in probs
+        assert "workflow:etf-flows-daily:failed" not in probs
+        assert probs["workflow:etf-flows-daily:soft-warning"]["severity"] == "P2"
+        md = dar.render_md(dar.build_report(d, _ux(), None, "2026-10-21"))
+        assert "ended failed (etf-flows-daily)" not in md
 
     def test_schedule_flags(self, dar):
         s = _data()["schedules"]["schedules"][0]
