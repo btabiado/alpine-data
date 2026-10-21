@@ -63646,10 +63646,40 @@
     "ceo_cfo_action": "selling",
     "cluster_buying": false,
     "conviction_score": -0.9240093272928648,
-    "filtered_out_count": 34,
+    "filtered_out_count": 37,
     "net_dollar_value": -2938090.5976,
     "net_weighted_score": -4.25,
     "raw_transactions": [
+      {
+        "code": "A",
+        "date": "2026-10-19",
+        "insider": "Schlossman Robert",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 14185.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-10-19",
+        "insider": "RUBIN KEVIN",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "CFO",
+        "shares": 19859.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-10-19",
+        "insider": "Geller Adam",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 19859.0,
+        "value": 0.0
+      },
       {
         "code": "M",
         "date": "2026-10-12",
@@ -63819,36 +63849,6 @@
         "role": "CFO",
         "shares": 3.0,
         "value": 623.4000000000001
-      },
-      {
-        "code": "S",
-        "date": "2026-09-21",
-        "insider": "Geller Adam",
-        "planned_10b5_1": true,
-        "price": 200.0,
-        "role": "Officer",
-        "shares": 661.0,
-        "value": 132200.0
-      },
-      {
-        "code": "S",
-        "date": "2026-09-21",
-        "insider": "Schlossman Robert",
-        "planned_10b5_1": true,
-        "price": 200.0,
-        "role": "Officer",
-        "shares": 5394.0,
-        "value": 1078800.0
-      },
-      {
-        "code": "S",
-        "date": "2026-09-17",
-        "insider": "Geller Adam",
-        "planned_10b5_1": true,
-        "price": 192.01,
-        "role": "Officer",
-        "shares": 4584.0,
-        "value": 880173.84
       }
     ],
     "regime": "heavy_selling",
