@@ -217,7 +217,7 @@ def test_committed_check_file_matches_the_snapshot(bhs, fre):
 
     real-estate-daily commits a check even when the vendors did not publish.
     That record keeps ``snapshot_generated_at`` on the October 21 fetch
-    (a3e4648f1, [skip ci]) and sets outcome to ``unchanged``, with
+    (a3e4648f1) and sets outcome to ``unchanged``, with
     ``generated_at`` as the later check time. An ``updated`` record is the
     fetch itself. The date is pinned so a test run cannot substitute "now".
     """
