@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-21",
-  "generated_at": "2026-10-21T04:33:58Z",
+  "generated_at": "2026-10-21T07:32:52Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-21",
       "label": null,
-      "note": "40 coins; 2 buy+, 16 sell+",
-      "score": -35,
+      "note": "40 coins; 2 buy+, 13 sell+",
+      "score": -28,
       "stale": false
     },
     "defi_sentiment": {
@@ -55,7 +55,7 @@
       "as_of": "2026-10-20",
       "label": "CROWDED LONGS",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 23,
+      "score": 24,
       "stale": false
     },
     "futures_sentiment_link": {
@@ -90,7 +90,7 @@
       "as_of": "2026-10-21",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": 6,
+      "score": 8,
       "stale": false
     },
     "poc_signal_breadth": {
