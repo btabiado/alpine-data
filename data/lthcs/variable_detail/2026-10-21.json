@@ -68433,8 +68433,8 @@
         "has_sec_8k": false,
         "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": -0.4,
-        "events_score_raw": 30.0,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -86181,8 +86181,8 @@
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
         "sec_8k_score": -0.06666666666666667,
-        "yahoo_earnings_score": 0.7,
-        "events_score_raw": 65.83,
+        "yahoo_earnings_score": 0.4,
+        "events_score_raw": 58.33,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
