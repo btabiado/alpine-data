@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-21T15:07:59+00:00",
+  "generated_at": "2026-10-21T22:20:13+00:00",
   "timeout_s": 12.0,
   "ci": true,
   "unwired_key_envs": [],
@@ -24,7 +24,7 @@
       "category": "AI News",
       "host": "efts.sec.gov",
       "status": 200,
-      "latency_ms": 492,
+      "latency_ms": 318,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -33,14 +33,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "AOPA ASI (GA safety)",
       "category": "Aviation",
       "host": "www.aopa.org",
       "status": 200,
-      "latency_ms": 546,
+      "latency_ms": 3840,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -49,14 +50,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "FRED ENPLANE (air travel)",
       "category": "Aviation",
       "host": "api.stlouisfed.org",
       "status": 200,
-      "latency_ms": 178,
+      "latency_ms": 289,
       "verdict": "up",
       "reachable": true,
       "needs_key": true,
@@ -65,14 +67,15 @@
       "key_env": "FRED_API_KEY",
       "retries": 0,
       "key_sent": true,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "OpenSky Network",
       "category": "Aviation",
       "host": "opensky-network.org",
       "status": 200,
-      "latency_ms": 363,
+      "latency_ms": 317,
       "verdict": "up",
       "reachable": true,
       "needs_key": true,
@@ -81,14 +84,15 @@
       "key_env": "OPENSKY_CLIENT_ID",
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "TSA passenger volumes",
       "category": "Aviation",
       "host": "www.tsa.gov",
       "status": 200,
-      "latency_ms": 112,
+      "latency_ms": 69,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -97,14 +101,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "ArcGIS (Miami)",
       "category": "City",
       "host": "services.arcgis.com",
       "status": 200,
-      "latency_ms": 134,
+      "latency_ms": 111,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -113,14 +118,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "BLS",
       "category": "City",
       "host": "api.bls.gov",
       "status": 200,
-      "latency_ms": 360,
+      "latency_ms": 246,
       "verdict": "up",
       "reachable": true,
       "needs_key": true,
@@ -129,14 +135,15 @@
       "key_env": "BLS_API_KEY",
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Census ACS",
       "category": "City",
       "host": "api.census.gov",
       "status": 200,
-      "latency_ms": 368,
+      "latency_ms": 243,
       "verdict": "up",
       "reachable": true,
       "needs_key": true,
@@ -145,14 +152,15 @@
       "key_env": "CENSUS_API_KEY",
       "retries": 0,
       "key_sent": true,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "EPA AirNow",
       "category": "City",
       "host": "www.airnowapi.org",
       "status": 200,
-      "latency_ms": 204,
+      "latency_ms": 268,
       "verdict": "up",
       "reachable": true,
       "needs_key": true,
@@ -161,14 +169,15 @@
       "key_env": "AIRNOW_API_KEY",
       "retries": 0,
       "key_sent": true,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "FBI Crime Data Explorer",
       "category": "City",
       "host": "cde.ucr.cjis.gov",
       "status": 200,
-      "latency_ms": 374,
+      "latency_ms": 260,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -177,78 +186,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Socrata \u00b7 Chicago",
       "category": "City",
       "host": "data.cityofchicago.org",
       "status": 200,
-      "latency_ms": 4587,
-      "verdict": "up",
-      "reachable": true,
-      "needs_key": true,
-      "key_present": true,
-      "key_state": "set",
-      "key_env": "SOCRATA_APP_TOKEN",
-      "retries": 0,
-      "key_sent": true,
-      "note": ""
-    },
-    {
-      "label": "Socrata \u00b7 Los Angeles",
-      "category": "City",
-      "host": "data.lacity.org",
-      "status": 200,
-      "latency_ms": 691,
-      "verdict": "up",
-      "reachable": true,
-      "needs_key": true,
-      "key_present": true,
-      "key_state": "set",
-      "key_env": "SOCRATA_APP_TOKEN",
-      "retries": 0,
-      "key_sent": true,
-      "note": ""
-    },
-    {
-      "label": "Socrata \u00b7 New York",
-      "category": "City",
-      "host": "data.cityofnewyork.us",
-      "status": 200,
-      "latency_ms": 578,
-      "verdict": "up",
-      "reachable": true,
-      "needs_key": true,
-      "key_present": true,
-      "key_state": "set",
-      "key_env": "SOCRATA_APP_TOKEN",
-      "retries": 0,
-      "key_sent": true,
-      "note": ""
-    },
-    {
-      "label": "Socrata \u00b7 San Francisco",
-      "category": "City",
-      "host": "data.sf.gov",
-      "status": 200,
-      "latency_ms": 922,
-      "verdict": "up",
-      "reachable": true,
-      "needs_key": true,
-      "key_present": true,
-      "key_state": "set",
-      "key_env": "SOCRATA_APP_TOKEN",
-      "retries": 0,
-      "key_sent": true,
-      "note": ""
-    },
-    {
-      "label": "Socrata \u00b7 Seattle",
-      "category": "City",
-      "host": "data.seattle.gov",
-      "status": 200,
-      "latency_ms": 12578,
+      "latency_ms": 13343,
       "verdict": "up",
       "reachable": true,
       "needs_key": true,
@@ -257,14 +203,83 @@
       "key_env": "SOCRATA_APP_TOKEN",
       "retries": 1,
       "key_sent": true,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
+    },
+    {
+      "label": "Socrata \u00b7 Los Angeles",
+      "category": "City",
+      "host": "data.lacity.org",
+      "status": 200,
+      "latency_ms": 763,
+      "verdict": "up",
+      "reachable": true,
+      "needs_key": true,
+      "key_present": true,
+      "key_state": "set",
+      "key_env": "SOCRATA_APP_TOKEN",
+      "retries": 0,
+      "key_sent": true,
+      "note": "",
+      "consecutive_failures": 0
+    },
+    {
+      "label": "Socrata \u00b7 New York",
+      "category": "City",
+      "host": "data.cityofnewyork.us",
+      "status": 200,
+      "latency_ms": 510,
+      "verdict": "up",
+      "reachable": true,
+      "needs_key": true,
+      "key_present": true,
+      "key_state": "set",
+      "key_env": "SOCRATA_APP_TOKEN",
+      "retries": 0,
+      "key_sent": true,
+      "note": "",
+      "consecutive_failures": 0
+    },
+    {
+      "label": "Socrata \u00b7 San Francisco",
+      "category": "City",
+      "host": "data.sf.gov",
+      "status": 200,
+      "latency_ms": 420,
+      "verdict": "up",
+      "reachable": true,
+      "needs_key": true,
+      "key_present": true,
+      "key_state": "set",
+      "key_env": "SOCRATA_APP_TOKEN",
+      "retries": 0,
+      "key_sent": true,
+      "note": "",
+      "consecutive_failures": 0
+    },
+    {
+      "label": "Socrata \u00b7 Seattle",
+      "category": "City",
+      "host": "data.seattle.gov",
+      "status": 200,
+      "latency_ms": 1396,
+      "verdict": "up",
+      "reachable": true,
+      "needs_key": true,
+      "key_present": true,
+      "key_state": "set",
+      "key_env": "SOCRATA_APP_TOKEN",
+      "retries": 0,
+      "key_sent": true,
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "DeFiLlama TVL",
       "category": "DeFi",
       "host": "api.llama.fi",
       "status": 200,
-      "latency_ms": 83,
+      "latency_ms": 32,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -273,14 +288,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "DeFiLlama bridges",
       "category": "DeFi",
       "host": "bridges.llama.fi",
       "status": 402,
-      "latency_ms": 117,
+      "latency_ms": 28,
       "verdict": "degraded",
       "reachable": false,
       "needs_key": false,
@@ -289,14 +305,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": "Payment Required"
+      "note": "Payment Required",
+      "consecutive_failures": 0
     },
     {
       "label": "DeFiLlama prices",
       "category": "DeFi",
       "host": "coins.llama.fi",
       "status": 200,
-      "latency_ms": 301,
+      "latency_ms": 30,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -305,14 +322,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "DeFiLlama stablecoins",
       "category": "DeFi",
       "host": "stablecoins.llama.fi",
       "status": 200,
-      "latency_ms": 189,
+      "latency_ms": 34,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -321,14 +339,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "DeFiLlama yields",
       "category": "DeFi",
       "host": "yields.llama.fi",
       "status": 200,
-      "latency_ms": 87,
+      "latency_ms": 28,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -337,14 +356,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Farside (ETF flows)",
       "category": "ETF Flows",
       "host": "farside.co.uk",
       "status": 403,
-      "latency_ms": 158,
+      "latency_ms": 140,
       "verdict": "blocked",
       "reachable": false,
       "needs_key": false,
@@ -353,14 +373,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": "Forbidden"
+      "note": "Forbidden",
+      "consecutive_failures": 0
     },
     {
       "label": "Coinbase Intl (perps)",
       "category": "Futures",
       "host": "api.international.coinbase.com",
       "status": 200,
-      "latency_ms": 589,
+      "latency_ms": 814,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -369,14 +390,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Deribit",
       "category": "Futures",
       "host": "www.deribit.com",
       "status": 200,
-      "latency_ms": 207,
+      "latency_ms": 140,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -385,14 +407,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "OKX",
       "category": "Futures",
       "host": "www.okx.com",
       "status": 200,
-      "latency_ms": 239,
+      "latency_ms": 217,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -401,14 +424,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "FRED",
       "category": "Macro",
       "host": "api.stlouisfed.org",
       "status": 200,
-      "latency_ms": 299,
+      "latency_ms": 215,
       "verdict": "up",
       "reachable": true,
       "needs_key": true,
@@ -417,14 +441,15 @@
       "key_env": "FRED_API_KEY",
       "retries": 0,
       "key_sent": true,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "IMF SDMX",
       "category": "Metals",
       "host": "api.imf.org",
       "status": 200,
-      "latency_ms": 230,
+      "latency_ms": 80,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -433,14 +458,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "USGS ScienceBase",
       "category": "Metals",
       "host": "www.sciencebase.gov",
       "status": 200,
-      "latency_ms": 223,
+      "latency_ms": 244,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -449,14 +475,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Binance.US klines",
       "category": "Price/MktCap",
       "host": "api.binance.us",
       "status": 200,
-      "latency_ms": 536,
+      "latency_ms": 568,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -465,14 +492,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "CoinGecko",
       "category": "Price/MktCap",
       "host": "api.coingecko.com",
       "status": 200,
-      "latency_ms": 147,
+      "latency_ms": 71,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -481,14 +509,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "CoinGecko market_chart",
       "category": "Price/MktCap",
       "host": "api.coingecko.com",
       "status": 200,
-      "latency_ms": 190,
+      "latency_ms": 106,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -497,14 +526,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Coinbase candles",
       "category": "Price/MktCap",
       "host": "api.exchange.coinbase.com",
       "status": 200,
-      "latency_ms": 40,
+      "latency_ms": 23,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -513,14 +543,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "GeckoTerminal",
       "category": "Price/MktCap",
       "host": "api.geckoterminal.com",
       "status": 200,
-      "latency_ms": 99,
+      "latency_ms": 58,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -529,14 +560,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Kraken OHLC",
       "category": "Price/MktCap",
       "host": "api.kraken.com",
       "status": 200,
-      "latency_ms": 210,
+      "latency_ms": 73,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -545,14 +577,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Census Gazetteer",
       "category": "Real Estate",
       "host": "www2.census.gov",
       "status": 200,
-      "latency_ms": 189,
+      "latency_ms": 74,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -561,14 +594,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Redfin Data Center",
       "category": "Real Estate",
       "host": "redfin-public-data.s3.us-west-2.amazonaws.com",
       "status": 200,
-      "latency_ms": 283,
+      "latency_ms": 336,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -577,14 +611,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Zillow Research",
       "category": "Real Estate",
       "host": "files.zillowstatic.com",
       "status": 200,
-      "latency_ms": 292,
+      "latency_ms": 358,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -593,14 +628,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "GitHub REST",
       "category": "Research",
       "host": "api.github.com",
       "status": 200,
-      "latency_ms": 214,
+      "latency_ms": 145,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -609,14 +645,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Google News RSS",
       "category": "Research",
       "host": "news.google.com",
       "status": 200,
-      "latency_ms": 492,
+      "latency_ms": 491,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -625,14 +662,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Reddit",
       "category": "Research",
       "host": "www.reddit.com",
       "status": 403,
-      "latency_ms": 69,
+      "latency_ms": 19,
       "verdict": "auth_required",
       "reachable": true,
       "needs_key": true,
@@ -641,14 +679,15 @@
       "key_env": "REDDIT_CLIENT_ID",
       "retries": 0,
       "key_sent": false,
-      "note": "Blocked"
+      "note": "Blocked",
+      "consecutive_failures": 0
     },
     {
       "label": "Santiment",
       "category": "Research",
       "host": "api.santiment.net",
       "status": 200,
-      "latency_ms": 670,
+      "latency_ms": 185,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -657,14 +696,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Alternative.me F&G",
       "category": "Sentiment",
       "host": "api.alternative.me",
       "status": 200,
-      "latency_ms": 169,
+      "latency_ms": 62,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -673,14 +713,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Coinbase Exchange",
       "category": "Spot",
       "host": "api.exchange.coinbase.com",
       "status": 200,
-      "latency_ms": 35,
+      "latency_ms": 20,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -689,14 +730,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Yahoo Finance",
       "category": "Stocks",
       "host": "query1.finance.yahoo.com",
       "status": 200,
-      "latency_ms": 124,
+      "latency_ms": 59,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -705,14 +747,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Summit dashboard",
       "category": "Summit",
       "host": "btabiado.github.io",
       "status": 200,
-      "latency_ms": 521,
+      "latency_ms": 163,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -721,14 +764,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "NY Fed GSCPI",
       "category": "Supplies",
       "host": "www.newyorkfed.org",
       "status": 200,
-      "latency_ms": 359,
+      "latency_ms": 81,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -737,14 +781,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Port of Los Angeles",
       "category": "Supplies",
       "host": "portoflosangeles.org",
       "status": 200,
-      "latency_ms": 388,
+      "latency_ms": 310,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -753,14 +798,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "State Dept advisories",
       "category": "Travel",
       "host": "travel.state.gov",
       "status": 200,
-      "latency_ms": 216,
+      "latency_ms": 69,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -769,14 +815,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Blockchair",
       "category": "Whale",
       "host": "api.blockchair.com",
       "status": 200,
-      "latency_ms": 471,
+      "latency_ms": 342,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -785,14 +832,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "CoinMetrics",
       "category": "Whale",
       "host": "community-api.coinmetrics.io",
       "status": 200,
-      "latency_ms": 2691,
+      "latency_ms": 1688,
       "verdict": "up",
       "reachable": true,
       "needs_key": true,
@@ -801,14 +849,15 @@
       "key_env": "COINMETRICS_API_KEY",
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Etherscan v2",
       "category": "Whale",
       "host": "api.etherscan.io",
       "status": 200,
-      "latency_ms": 181,
+      "latency_ms": 130,
       "verdict": "up",
       "reachable": true,
       "needs_key": true,
@@ -817,14 +866,15 @@
       "key_env": "ETHERSCAN_API_KEY",
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "Glassnode",
       "category": "Whale",
       "host": "api.glassnode.com",
       "status": 401,
-      "latency_ms": 230,
+      "latency_ms": 324,
       "verdict": "auth_required",
       "reachable": true,
       "needs_key": true,
@@ -833,7 +883,8 @@
       "key_env": "GLASSNODE_API_KEY",
       "retries": 0,
       "key_sent": false,
-      "note": "Unauthorized"
+      "note": "Unauthorized",
+      "consecutive_failures": 0
     },
     {
       "label": "bitinfocharts",
@@ -849,14 +900,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": "Retired 2026-10-19 (daily audit): HTTP 403, no longer a dependency. Cohort supply is a known gap; last good values stay stale. Not probed."
+      "note": "Retired 2026-10-19 (daily audit): HTTP 403, no longer a dependency. Cohort supply is a known gap; last good values stay stale. Not probed.",
+      "consecutive_failures": 0
     },
     {
       "label": "blockchain.info",
       "category": "Whale",
       "host": "api.blockchain.info",
       "status": 200,
-      "latency_ms": 114,
+      "latency_ms": 38,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -865,14 +917,15 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     },
     {
       "label": "mempool.space",
       "category": "Whale",
       "host": "mempool.space",
       "status": 200,
-      "latency_ms": 254,
+      "latency_ms": 313,
       "verdict": "up",
       "reachable": true,
       "needs_key": false,
@@ -881,7 +934,8 @@
       "key_env": null,
       "retries": 0,
       "key_sent": false,
-      "note": ""
+      "note": "",
+      "consecutive_failures": 0
     }
   ]
 }
