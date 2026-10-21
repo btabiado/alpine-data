@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-10-20T11:28:37Z",
-  "outcome": "unchanged",
+  "generated_at": "2026-10-21T09:39:52Z",
+  "outcome": "updated",
   "housing_month": "2026-09",
-  "snapshot_generated_at": "2026-10-16T11:02:08Z",
+  "snapshot_generated_at": "2026-10-21T09:39:52Z",
   "sources": {
     "zillow": {
       "rows": 894,
@@ -13,7 +13,7 @@
       "last_modified": "Tue, 02 Jun 2026 18:16:11 GMT"
     },
     "fred": {
-      "national_permits_yoy_pct": 4.16
+      "national_permits_yoy_pct": -3.05
     }
   }
 }
