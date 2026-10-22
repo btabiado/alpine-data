@@ -1198,6 +1198,66 @@ class TestProblems:
         (summary / "latest_summary.json").write_text(json.dumps(accepted))
         assert dad.section_quality_audit(tmp_path)["verdict_fails"] is True
 
+    def test_unaccepted_pillar_stub_is_p1_and_thesis_is_not(self, dad, dar, tmp_path):
+        snap = tmp_path / "data" / "lthcs" / "snapshots"
+        snap.mkdir(parents=True)
+        scores = []
+        for i in range(10):
+            scores.append({
+                "ticker": f"T{i}",
+                "subscores": {
+                    "adoption_momentum": 40 + i,
+                    "institutional_confidence": 55 + i,
+                    "financial_evolution": 60,
+                    "thesis_integrity": None,
+                    "des": 50.0,
+                },
+            })
+        (snap / "2026-10-22.json").write_text(json.dumps({"scores": scores}))
+        stubs = tmp_path / "data" / "lthcs" / "known_pillar_stubs.json"
+        stubs.write_text(json.dumps({"stubs": [{
+            "pillar": "thesis_integrity",
+            "decided": "2026-10-17",
+            "review_by": "2027-04-17",
+            "reason": "Thesis is dropped on purpose and its weight is redistributed.",
+        }]}))
+        sec = dad.section_lthcs_pillars(tmp_path)
+        assert sec["status"] == "ok"
+        assert sec["accepted_pillars"] == ["thesis_integrity"]
+        assert [r["pillar"] for r in sec["unaccepted_stubs"]] == ["des"]
+        assert sec["unaccepted_stubs"][0]["coverage_pct"] == 0.0
+        d = _data(lthcs_pillars=sec)
+        probs = {p["id"]: p for p in dar.data_problems(d)}
+        assert probs["lthcs:des:stub"]["severity"] == "P1"
+        assert "50.0" in probs["lthcs:des:stub"]["title"]
+        assert "lthcs:thesis_integrity:stub" not in probs
+        md = dar.render_md(dar.build_report(d, _ux(), None, "2026-10-22"))
+        assert "LTHCS pillar des is STUB" in md
+        assert "unaccepted STUB des" in md
+
+    def test_latest_snapshot_flags_only_unaccepted_stubs(self, dad, dar):
+        sec = dad.section_lthcs_pillars(REPO_ROOT)
+        assert sec["status"] == "ok"
+        assert sec["accepted_pillars"] == ["thesis_integrity"]
+        d = _data(lthcs_pillars=sec)
+        ids = {p["id"]: p["severity"] for p in dar.data_problems(d)}
+        for row in sec["unaccepted_stubs"]:
+            assert ids[f"lthcs:{row['pillar']}:stub"] == "P1"
+            assert row["pillar"] != "thesis_integrity"
+        assert "lthcs:thesis_integrity:stub" not in ids
+        # The committed 2026-10-22 file is the outage. While it is still the
+        # latest snapshot, des must be the P1 and not a silent known gap.
+        if sec["snapshot_date"] == "2026-10-22":
+            assert any(
+                r["pillar"] == "des" and r["coverage_pct"] == 0.0
+                for r in sec["unaccepted_stubs"]
+            )
+
+    def test_pillar_check_error_is_p1(self, dar):
+        d = _data(lthcs_pillars={"status": "error", "error": "no LTHCS snapshot"})
+        ids = {p["id"]: p["severity"] for p in dar.data_problems(d)}
+        assert ids["lthcs:pillar-check"] == "P1"
+
     def test_known_gap_verdict_is_not_a_data_health_failure(self, dad):
         failing = dad._failing_statuses(REPO_ROOT)
         lowered = {s.lower() for s in failing}

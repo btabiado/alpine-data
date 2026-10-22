@@ -483,42 +483,46 @@ def build_macro_inputs(as_of: Optional[str] = None) -> Dict[str, Optional[float]
     """
     fred_kw: Dict[str, Any] = {"as_of": as_of} if as_of else {}
     eia_kw: Dict[str, Any] = {"as_of": as_of} if as_of else {}
-    try:
-        cpi_series = fred.get_series("CPIAUCSL", **fred_kw)
-    except Exception:
-        cpi_series = []
-    try:
-        ten_y_series = fred.get_series("DGS10", **fred_kw)
-    except Exception:
-        ten_y_series = []
-    try:
-        ff = fred.get_latest_value("FEDFUNDS", **fred_kw)
-    except Exception:
-        ff = None
-    try:
-        unrate = fred.get_latest_value("UNRATE", **fred_kw)
-    except Exception:
-        unrate = None
+
+    def _series(label: str, series_id: str) -> List[Dict[str, Any]]:
+        try:
+            return fred.get_series(series_id, **fred_kw)
+        except Exception as exc:
+            # Logged, not swallowed: on 2026-10-22 every series/observations
+            # call returned a non-JSON body and DES went to the 50.0
+            # placeholder with no line saying why.
+            print(
+                "  fred: %s (%s) failed: %s" % (label, series_id, exc),
+                file=sys.stderr,
+            )
+            return []
+
+    def _latest(label: str, series_id: str) -> Optional[Dict[str, Any]]:
+        try:
+            return fred.get_latest_value(series_id, **fred_kw)
+        except Exception as exc:
+            print(
+                "  fred: %s (%s) failed: %s" % (label, series_id, exc),
+                file=sys.stderr,
+            )
+            return None
+
+    cpi_series = _series("cpi", "CPIAUCSL")
+    ten_y_series = _series("ten_y", "DGS10")
+    ff = _latest("fed_funds", "FEDFUNDS")
+    unrate = _latest("unemployment", "UNRATE")
     try:
         wti = eia.get_latest_value("wti", **eia_kw)
-    except Exception:
+    except Exception as exc:
+        print("  eia: wti failed: %s" % exc, file=sys.stderr)
         wti = None
     # --- Phase 1.5 expanded macro signals (des-audit-framework HIGH gaps) ---
-    # Each wrapped in try/except per the existing pattern: a single FRED
-    # outage for one series must not crash the pipeline. Missing values
+    # A single series failure must not crash the pipeline. Missing values
     # propagate as None -> DES treats them as 0 tilt (no contribution).
-    try:
-        real_10y_series = fred.get_series("DFII10", **fred_kw)
-    except Exception:
-        real_10y_series = []
-    try:
-        vix_series = fred.get_series("VIXCLS", **fred_kw)
-    except Exception:
-        vix_series = []
-    try:
-        m2_series = fred.get_series("M2SL", **fred_kw)
-    except Exception:
-        m2_series = []
+    # A miss of every signal is handled later by DES carry-forward.
+    real_10y_series = _series("real_10y", "DFII10")
+    vix_series = _series("vix", "VIXCLS")
+    m2_series = _series("m2", "M2SL")
 
     return {
         "cpi_yoy_pct": _yoy_change_pct(cpi_series),
@@ -614,6 +618,12 @@ def _finite_optional(value: Any) -> Optional[float]:
 # Same window the Form 4 / 13F fallbacks already use. A 90-day return
 # observed within the last week is still that return, not a fabricated one.
 _MOMENTUM_STALENESS_DAYS = 7
+
+# DES is one macro state applied to every ticker. When FRED's observations
+# endpoint returns a non-JSON body (2026-10-22), every signal is missing and
+# compute_des emits the neutral 50.0 for the whole universe. Reuse the last
+# day that actually had macro inputs, inside this window, instead.
+_DES_STALENESS_DAYS = 7
 
 
 def _load_json_lenient(path: Path) -> Optional[Any]:
@@ -712,6 +722,70 @@ def _carry_forward_momentum(state: "PipelineState", counts: Dict[str, int]) -> N
             % (len(missing), len(carried), _MOMENTUM_STALENESS_DAYS),
             file=sys.stderr,
         )
+
+
+def _macro_signal_count(macro_inputs: Optional[Dict[str, Any]]) -> int:
+    """How many macro inputs are a real finite number (not missing)."""
+    return sum(
+        1 for v in (macro_inputs or {}).values() if _finite_optional(v) is not None
+    )
+
+
+def _load_prior_real_des(
+    state: "PipelineState",
+) -> Optional[tuple]:
+    """Newest prior DES rows that were scored from real macro inputs.
+
+    Returns ``(iso_date, {ticker: variable_detail row})`` or ``None``.
+    Skips a day that is itself a carry-forward, and a day whose DES rows
+    have ``has_macro_inputs`` false (the 50.0 placeholder). The window is
+    ``_DES_STALENESS_DAYS`` and does not include ``calc_date``.
+    """
+    for d, _age, path in _recent_variable_detail_files(
+        state, max_age_days=_DES_STALENESS_DAYS
+    ):
+        payload = _load_json_lenient(path)
+        if not isinstance(payload, dict):
+            continue
+        rows: Dict[str, Dict[str, Any]] = {}
+        real = False
+        for row in payload.get("variables") or []:
+            if not isinstance(row, dict) or row.get("pillar") != "des":
+                continue
+            sym = row.get("ticker")
+            if not isinstance(sym, str) or sym in rows:
+                continue
+            dq = row.get("data_quality") or {}
+            if not isinstance(dq, dict) or dq.get("des_carried_forward"):
+                continue
+            if _finite_optional(row.get("sub_score")) is None:
+                continue
+            if dq.get("has_macro_inputs"):
+                real = True
+            rows[sym] = row
+        if real and rows:
+            return d.isoformat(), rows
+    return None
+
+
+def _des_from_carry(
+    sym: str, src: Dict[str, Any], carried_from: str
+) -> Dict[str, Any]:
+    """One DES pillar result copied from a prior real day."""
+    dq = dict(src.get("data_quality") or {})
+    dq["des_carried_forward"] = True
+    dq["carried_from"] = carried_from
+    dq["carried_forward_reason"] = (
+        "macro fetch returned no signals; reused the last real DES "
+        "within %d days" % _DES_STALENESS_DAYS
+    )
+    components = src.get("components")
+    return {
+        "ticker": sym,
+        "sub_score": float(src["sub_score"]),
+        "components": dict(components) if isinstance(components, dict) else {},
+        "data_quality": dq,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -1830,6 +1904,22 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
         if isinstance(sec, str) and sec:
             peer_sectors[sym] = sec
 
+    # A total macro miss (every FRED/EIA signal None) makes compute_des
+    # return 50.0 for every name. Reuse the last real DES instead of
+    # publishing that placeholder. A partial miss still scores live.
+    prior_des_date: Optional[str] = None
+    prior_des: Dict[str, Dict[str, Any]] = {}
+    if _macro_signal_count(state.macro_inputs) == 0:
+        found = _load_prior_real_des(state)
+        if found is not None:
+            prior_des_date, prior_des = found
+            print(
+                "  [lthcs_daily] macro inputs missing; carrying DES forward "
+                "from %s for %d ticker(s)"
+                % (prior_des_date, len(prior_des)),
+                file=sys.stderr,
+            )
+
     state.pillar_results = {}
     for sym in state.scored_tickers:
         entry = state.by_ticker.get(sym, {})
@@ -1945,16 +2035,23 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
         except Exception:
             th = _neutral_thesis(sym)
 
-        try:
-            de = des.compute_des(
-                ticker=sym,
-                sector=sector,
-                macro_inputs=state.macro_inputs,
-                sector_weights=state.sector_weights,
-                tier2_macro=state.tier2_macro,
-            )
-        except Exception:
-            de = _neutral_pillar_result(sym, "des")
+        carried_src = prior_des.get(sym) if prior_des_date else None
+        if (
+            carried_src is not None
+            and _finite_optional(carried_src.get("sub_score")) is not None
+        ):
+            de = _des_from_carry(sym, carried_src, prior_des_date or "")
+        else:
+            try:
+                de = des.compute_des(
+                    ticker=sym,
+                    sector=sector,
+                    macro_inputs=state.macro_inputs,
+                    sector_weights=state.sector_weights,
+                    tier2_macro=state.tier2_macro,
+                )
+            except Exception:
+                de = _neutral_pillar_result(sym, "des")
 
         # Stamp per-ticker sector-RSS coverage on the Thesis pillar so
         # variable_detail surfaces it for the ~30 mapped pharma/energy/

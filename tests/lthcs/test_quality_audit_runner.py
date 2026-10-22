@@ -600,67 +600,13 @@ class TestKnownGapVerdict:
         assert "review-by" in (out_dir / "2026-10-17_summary.md").read_text()
 
 
-_MEASURED_STUB_REASON = (
-    "Bryan accepts a measured stub on the committed snapshot as a known gap. "
-    "It does not count toward CRITICAL."
-)
+def test_unlisted_stub_is_critical_and_a_later_recovery_is_not_a_mismatch():
+    """Only the configured pillar is an accepted stub.
 
-
-def _known_stubs_for_snapshot(
-    pillars: Dict[str, Dict[str, Any]],
-    configured: List[Dict[str, Any]],
-    asof: str,
-) -> List[Dict[str, Any]]:
-    """Configured acceptances, plus every other pillar that measures STUB.
-
-    Daily snapshots refresh on [skip ci] commits. thesis_integrity stays
-    dropped. Another pillar can sit on the 50.0 placeholder for a day and
-    be restored on the next file (des did this on 2026-10-22). Bryan accepts
-    that stub gap, so it is reported as a known gap and is not critical.
-    The extra entry exists only while the pillar measures STUB, so the next
-    refresh does not become a mismatch when coverage comes back, and a
-    different pillar stubbing later follows the same rule. Pillars that are
-    not stub and not configured are unchanged. An unlisted stub still fails
-    ``run()`` until this acceptance is applied.
+    des going STUB for a day and recovering the next day must not be
+    relabeled as a known gap, and the recovery is not a mismatch because
+    des was never accepted.
     """
-    known = [dict(entry) for entry in configured]
-    listed = {entry["pillar"] for entry in known}
-    for pillar, info in pillars.items():
-        if info.get("verdict") == "STUB" and pillar not in listed:
-            known.append({
-                "pillar": pillar,
-                "decided": asof,
-                "review_by": None,
-                "reason": _MEASURED_STUB_REASON,
-            })
-    return known
-
-
-def _graded_snapshot_is_not_critical(
-    pillars: Dict[str, Dict[str, Any]],
-    dist: Dict[str, Any],
-    alerts: List[str],
-) -> None:
-    for pillar, info in pillars.items():
-        if info.get("raw_verdict") == "STUB":
-            assert info["verdict"] == runner.KNOWN_GAP_VERDICT, pillar
-            assert info["counts_toward_critical"] is False, pillar
-    assert all(info.get("verdict") != "STUB" for info in pillars.values())
-    overall = runner._overall_verdict(
-        pillars, dist, {"verdict": "UNKNOWN"}, {"verdict": "BALANCED"}, stubs_error=False,
-    )
-    payload = {
-        "overall_verdict": overall,
-        "pillars": pillars,
-        "distribution": dist,
-        "alerts": alerts,
-    }
-    assert overall != "CRITICAL"
-    assert runner.audit_failed(payload) is False
-
-
-def test_refreshed_snapshot_stub_is_accepted_and_restored_pillar_is_not_critical():
-    """A pillar that stubs on one refresh and recovers on the next stays non-critical."""
     configured = [{
         "pillar": "thesis_integrity",
         "decided": "2026-10-17",
@@ -684,33 +630,38 @@ def test_refreshed_snapshot_stub_is_accepted_and_restored_pillar_is_not_critical
             "stdev": 0.0 if des_verdict == "STUB" else 11.0,
             "n": 10,
         }
-        alerts = runner.apply_known_stubs(
-            pillars, _known_stubs_for_snapshot(pillars, configured, asof), asof,
-        )
+        alerts = runner.apply_known_stubs(pillars, configured, asof)
         return pillars, alerts
 
-    stubbed, alerts = grade("STUB", "2026-10-22")
+    stubbed, _alerts = grade("STUB", "2026-10-22")
     assert stubbed["thesis_integrity"]["verdict"] == runner.KNOWN_GAP_VERDICT
-    assert stubbed["des"]["raw_verdict"] == "STUB"
-    assert stubbed["des"]["verdict"] == runner.KNOWN_GAP_VERDICT
-    assert stubbed["des"]["counts_toward_critical"] is False
-    _graded_snapshot_is_not_critical(stubbed, dist, alerts)
+    assert stubbed["thesis_integrity"]["counts_toward_critical"] is False
+    assert stubbed["des"]["verdict"] == "STUB"
+    assert stubbed["des"].get("accepted_stub") is not True
+    overall = runner._overall_verdict(
+        stubbed, dist, {"verdict": "UNKNOWN"}, {"verdict": "BALANCED"}, stubs_error=False,
+    )
+    assert overall == "CRITICAL"
+    assert runner.audit_failed({
+        "overall_verdict": overall, "pillars": stubbed, "distribution": dist,
+    }) is True
 
-    restored, alerts = grade("HEALTHY", "2026-10-23")
+    restored, _alerts = grade("HEALTHY", "2026-10-23")
     assert restored["des"]["verdict"] == "HEALTHY"
     assert "known_gap_mismatch" not in restored["des"]
     assert restored["thesis_integrity"]["verdict"] == runner.KNOWN_GAP_VERDICT
-    assert restored["thesis_integrity"]["counts_toward_critical"] is False
-    _graded_snapshot_is_not_critical(restored, dist, alerts)
+    overall = runner._overall_verdict(
+        restored, dist, {"verdict": "UNKNOWN"}, {"verdict": "BALANCED"}, stubs_error=False,
+    )
+    assert overall != "CRITICAL"
 
 
-def test_live_snapshot_thesis_stub_is_accepted_and_not_critical():
-    """Latest committed snapshot: thesis and any other measured STUB are accepted.
+def test_live_snapshot_accepts_only_thesis_integrity():
+    """The latest snapshot accepts thesis_integrity and nothing else.
 
-    The file on disk changes with each daily refresh. Grades are not pinned
-    to one date. thesis_integrity is the standing dropped pillar. Any other
-    pillar that measures STUB (des on 2026-10-22) is the same accepted,
-    non-critical gap.
+    An unlisted pillar that measures STUB stays STUB and fails the audit.
+    The file on disk changes with each daily refresh, so this does not
+    require any particular other pillar to be healthy.
     """
     configured = runner.load_known_stubs(REPO_ROOT / "data" / "lthcs" / "known_pillar_stubs.json")
     assert [entry["pillar"] for entry in configured] == ["thesis_integrity"]
@@ -719,16 +670,42 @@ def test_live_snapshot_thesis_stub_is_accepted_and_not_critical():
     snap = runner._load_snapshot(snap_date)
     assert snap and snap.get("scores")
     pillars = runner._compute_pillar_verdicts(snap)
-    alerts = runner.apply_known_stubs(
-        pillars, _known_stubs_for_snapshot(pillars, configured, snap_date), snap_date,
-    )
+    runner.apply_known_stubs(pillars, configured, snap_date)
     thesis = pillars["thesis_integrity"]
     assert thesis["raw_verdict"] == "STUB"
     assert thesis["verdict"] == runner.KNOWN_GAP_VERDICT
     assert thesis["counts_toward_critical"] is False
+    for pillar, info in pillars.items():
+        if pillar == "thesis_integrity":
+            continue
+        assert info.get("verdict") != runner.KNOWN_GAP_VERDICT, pillar
+        assert info.get("accepted_stub") is not True, pillar
+
+
+def test_2026_10_22_des_placeholder_is_an_unaccepted_stub():
+    """The committed 2026-10-22 snapshot grades des STUB and does not accept it.
+
+    That file is historical: every name is the 50.0 placeholder because the
+    macro fetch returned nothing. It must stay an unaccepted STUB.
+    """
+    path = REPO_ROOT / "data" / "lthcs" / "snapshots" / "2026-10-22.json"
+    snap = json.loads(path.read_text(encoding="utf-8"))
+    pillars = runner._compute_pillar_verdicts(snap)
+    assert pillars["des"]["verdict"] == "STUB"
+    assert pillars["des"]["coverage_pct"] == 0.0
+    assert pillars["des"]["n"] == 515
+    configured = runner.load_known_stubs(REPO_ROOT / "data" / "lthcs" / "known_pillar_stubs.json")
+    runner.apply_known_stubs(pillars, configured, "2026-10-22")
+    assert pillars["des"]["verdict"] == "STUB"
+    assert pillars["thesis_integrity"]["verdict"] == runner.KNOWN_GAP_VERDICT
     dist = runner._distribution_summary(snap)
-    assert dist["critical"] is False
-    _graded_snapshot_is_not_critical(pillars, dist, alerts)
+    overall = runner._overall_verdict(
+        pillars, dist, {"verdict": "UNKNOWN"}, {"verdict": "BALANCED"}, stubs_error=False,
+    )
+    assert overall == "CRITICAL"
+    assert runner.audit_failed({
+        "overall_verdict": overall, "pillars": pillars, "distribution": dist,
+    }) is True
 
 
 def test_quality_page_shows_accepted_gap_and_does_not_paint_it_red():

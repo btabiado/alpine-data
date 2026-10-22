@@ -1034,3 +1034,105 @@ class TestMomentumCarryForward:
         assert state.momentum_by_ticker["AAPL"] is None
         assert counts["yahoo_momentum_carried"] == 0
         assert counts["yahoo_momentum_ok"] == 0
+
+
+class TestDesCarryForward:
+    """When today's macro fetch returns no signals, reuse the last real DES.
+
+    A placeholder day (has_macro_inputs false) and a day that is itself a
+    carry-forward are not sources. A live macro signal is never overwritten.
+    """
+
+    def _write_des(self, root: Path, datestr: str, rows: list) -> None:
+        d = root / "variable_detail"
+        d.mkdir(parents=True, exist_ok=True)
+        (d / ("%s.json" % datestr)).write_text(json.dumps({
+            "calc_date": datestr,
+            "variables": rows,
+        }))
+
+    def _row(self, ticker, score, *, has_macro=True, carried=False, carried_from=None):
+        dq = {"has_macro_inputs": has_macro, "macro_signals_present": 8 if has_macro else 0}
+        if carried:
+            dq["des_carried_forward"] = True
+            dq["carried_from"] = carried_from
+        return {
+            "ticker": ticker,
+            "pillar": "des",
+            "sub_score": score,
+            "components": {"total_contribution": 0.2 if has_macro else 0.0},
+            "data_quality": dq,
+        }
+
+    def _state(self, root: Path, macro: dict):
+        args = lthcs_daily.parse_args([])
+        state = lthcs_daily.PipelineState(args=args)
+        state.calc_date = "2026-10-22"
+        state.persist = lthcs_daily.LthcsPersist(data_root=root)
+        state.scored_tickers = ["AAPL", "MSFT"]
+        state.by_ticker = {
+            "AAPL": {"sector": "Information Technology", "maturity_stage": "mature_compounder"},
+            "MSFT": {"sector": "Information Technology", "maturity_stage": "mature_compounder"},
+        }
+        state.macro_inputs = dict(macro)
+        return state
+
+    def test_empty_macro_reuses_the_last_real_day(self, tmp_path: Path) -> None:
+        self._write_des(tmp_path, "2026-10-21", [
+            self._row("AAPL", 42.5),
+            self._row("MSFT", 70.2),
+        ])
+        # Today's own file and an older placeholder must not win.
+        self._write_des(tmp_path, "2026-10-22", [self._row("AAPL", 99.0)])
+        self._write_des(tmp_path, "2026-10-14", [self._row("AAPL", 11.0)])  # age 8
+        state = self._state(tmp_path, {"ten_y_yield_pct": None, "cpi_yoy_pct": None})
+        assert lthcs_daily.stage_4_compute_subscores(state) is True
+        aapl = state.pillar_results["AAPL"]["des"]
+        msft = state.pillar_results["MSFT"]["des"]
+        assert aapl["sub_score"] == pytest.approx(42.5)
+        assert msft["sub_score"] == pytest.approx(70.2)
+        assert aapl["data_quality"]["des_carried_forward"] is True
+        assert aapl["data_quality"]["carried_from"] == "2026-10-21"
+        assert aapl["data_quality"]["has_macro_inputs"] is True
+        assert aapl["components"]["total_contribution"] == pytest.approx(0.2)
+
+    def test_skips_a_placeholder_day_and_a_carry_forward_day(self, tmp_path: Path) -> None:
+        self._write_des(tmp_path, "2026-10-20", [self._row("AAPL", 33.0), self._row("MSFT", 61.0)])
+        self._write_des(tmp_path, "2026-10-21", [
+            self._row("AAPL", 50.0, has_macro=False),
+            self._row("MSFT", 50.0, has_macro=False),
+        ])
+        state = self._state(tmp_path, {})
+        lthcs_daily.stage_4_compute_subscores(state)
+        assert state.pillar_results["AAPL"]["des"]["sub_score"] == pytest.approx(33.0)
+        assert state.pillar_results["AAPL"]["des"]["data_quality"]["carried_from"] == "2026-10-20"
+
+        # A carry-forward day is not a source, even if it still says has_macro.
+        self._write_des(tmp_path, "2026-10-21", [
+            self._row("AAPL", 88.0, carried=True, carried_from="2026-10-20"),
+            self._row("MSFT", 88.0, carried=True, carried_from="2026-10-20"),
+        ])
+        state = self._state(tmp_path, {})
+        lthcs_daily.stage_4_compute_subscores(state)
+        assert state.pillar_results["AAPL"]["des"]["data_quality"]["carried_from"] == "2026-10-20"
+        assert state.pillar_results["AAPL"]["des"]["sub_score"] == pytest.approx(33.0)
+
+    def test_live_macro_is_not_overwritten(self, tmp_path: Path) -> None:
+        self._write_des(tmp_path, "2026-10-21", [self._row("AAPL", 42.5), self._row("MSFT", 70.2)])
+        state = self._state(tmp_path, {"ten_y_yield_pct": 4.2})
+        lthcs_daily.stage_4_compute_subscores(state)
+        for sym in ("AAPL", "MSFT"):
+            de = state.pillar_results[sym]["des"]
+            # Sector block is empty, so the live path is the neutral 50,
+            # not yesterday's real score.
+            assert de["sub_score"] == pytest.approx(50.0)
+            assert "des_carried_forward" not in de["data_quality"]
+            assert de["data_quality"]["has_macro_inputs"] is True
+
+    def test_no_prior_real_day_stays_on_the_placeholder(self, tmp_path: Path) -> None:
+        state = self._state(tmp_path, {})
+        lthcs_daily.stage_4_compute_subscores(state)
+        de = state.pillar_results["AAPL"]["des"]
+        assert de["sub_score"] == pytest.approx(50.0)
+        assert de["data_quality"]["has_macro_inputs"] is False
+        assert de["data_quality"].get("des_carried_forward") is not True
