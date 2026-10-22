@@ -7,16 +7,16 @@ Universe: **517 tickers** | long bands: ['constructive', 'elite', 'high_confiden
 
 | Metric | Value |
 |:-------|------:|
-| Total return | +0.2245 |
-| Annualized return | +0.3477 |
-| Annualized Sharpe | +1.662 (95% CI: -0.48 ... +4.35) |
-| Annualized Sortino | +1.112 (95% CI: -0.31 ... +3.52) |
+| Total return | +0.2240 |
+| Annualized return | +0.3471 |
+| Annualized Sharpe | +1.660 (95% CI: -0.48 ... +4.35) |
+| Annualized Sortino | +1.110 (95% CI: -0.31 ... +3.52) |
 | Max drawdown | -0.1058 |
 | Hit rate (daily) | 0.314 |
-| Avg hold days | 8.5 |
-| Avg turnover / day | 0.1131 |
-| Total trades | 319 |
-| Unique tickers | 199 |
+| Avg hold days | 7.2 |
+| Avg turnover / day | 0.1102 |
+| Total trades | 196 |
+| Unique tickers | 129 |
 
 > Non-overlapping construction: every trading day's return is realized on the actual close-to-close of held names. No forward-window reuse, so Sharpe is directly comparable to a passive benchmark.
 
@@ -24,12 +24,12 @@ Universe: **517 tickers** | long bands: ['constructive', 'elite', 'high_confiden
 
 | Band | Total return |
 |:-----|------:|
-| elite | +0.0079 |
-| high_confidence | +0.4356 |
-| constructive | +0.1709 |
-| monitor | +0.1207 |
-| weakening | +0.0444 |
-| review | +0.1184 |
+| elite | +0.0074 |
+| high_confidence | +0.4355 |
+| constructive | +0.1704 |
+| monitor | +0.1213 |
+| weakening | +0.0434 |
+| review | +0.1160 |
 
 ## Benchmark
 
@@ -62,7 +62,7 @@ Benchmark total return: **+0.1410**
     "top_k": 0
   },
   "params_hash": "49269b2e937d327d",
-  "price_hash": "f6f081dd181d8c13",
+  "price_hash": "41ab0d8c22358e84",
   "profile_name": "long_only_buy",
   "short_bottom_quintile": false,
   "short_set": [],
