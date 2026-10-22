@@ -267,6 +267,38 @@ def test_non_200_response_raises(fred_module) -> None:
     assert "400" in msg
 
 
+def test_non_json_body_names_the_status_and_does_not_retry(fred_module) -> None:
+    """A 200 with an empty body is the 2026-10-22 FRED failure mode."""
+    with patch("lthcs.sources.fred.requests.get") as mock_get:
+        resp = fake_response({}, status=200)
+        resp.json.side_effect = ValueError("Expecting value: line 1 column 1 (char 0)")
+        resp.text = ""
+        resp.headers = {"content-type": "text/html"}
+        mock_get.return_value = resp
+        with pytest.raises(RuntimeError, match="non-JSON") as excinfo:
+            fred_module.get_series("DGS10")
+
+    assert mock_get.call_count == 1
+    message = str(excinfo.value)
+    assert "HTTP 200" in message
+    assert "DGS10" in message
+    assert "char 0" in message
+
+
+def test_error_snippet_redacts_the_api_key(fred_module, monkeypatch) -> None:
+    monkeypatch.setenv("FRED_API_KEY", "abcdef0123456789abcdef0123456789")
+    with patch("lthcs.sources.fred.requests.get") as mock_get:
+        resp = fake_response({}, status=200)
+        resp.json.side_effect = ValueError("Expecting value: line 1 column 1 (char 0)")
+        resp.text = "nope abcdef0123456789abcdef0123456789 trailing"
+        resp.headers = {}
+        mock_get.return_value = resp
+        with pytest.raises(RuntimeError) as excinfo:
+            fred_module.get_series("DGS10")
+    assert "abcdef0123456789abcdef0123456789" not in str(excinfo.value)
+    assert "***" in str(excinfo.value)
+
+
 def test_non_200_response_does_not_retry(fred_module) -> None:
     with patch("lthcs.sources.fred.requests.get") as mock_get:
         mock_get.return_value = fake_response({"err": "x"}, status=500)

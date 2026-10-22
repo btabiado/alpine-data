@@ -41,6 +41,12 @@ others, so a flaky upstream degrades the report instead of erasing it):
                 ``lthcs_quality_audit_runner.audit_failed``. An accepted
                 known gap is recorded and is not a failure. Missing or
                 unreadable verdicts fail closed.
+  lthcs_pillars the latest committed LTHCS snapshot, graded with the same
+                pillar-stub rule as the monthly runner. Only pillars listed
+                in ``data/lthcs/known_pillar_stubs.json`` (thesis_integrity)
+                are an accepted STUB. Any other pillar whose whole universe
+                is the 50.0 placeholder is recorded here so the report can
+                flag it. Local files only.
 
 This script observes; it does not grade. Severity and new-vs-ongoing are the
 report builder's job.
@@ -1342,6 +1348,91 @@ def section_quality_audit(repo_root: Path) -> dict:
     }
 
 
+def _quality_runner():
+    scripts = Path(__file__).resolve().parent
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    import lthcs_quality_audit_runner as qrunner
+    return qrunner
+
+
+def section_lthcs_pillars(repo_root: Path) -> dict:
+    """Grade the latest LTHCS snapshot for a full-universe pillar STUB.
+
+    Uses the monthly runner's coverage rule (a pillar is STUB when fewer
+    than 30% of names differ from the 50.0 placeholder, or the pillar is
+    absent). A pillar listed in ``known_pillar_stubs.json`` is accepted.
+    That file currently names only thesis_integrity. Every other STUB is
+    returned in ``unaccepted_stubs`` for the report to flag as P1.
+
+    Does not relabel an unlisted STUB as a known gap. The 2026-10-22
+    snapshot's ``des`` pillar is the case this exists for: FRED returned
+    a non-JSON body, every name scored 50.0, and that must not be silent.
+    """
+    root = Path(repo_root)
+    snap_dir = root / "data" / "lthcs" / "snapshots"
+    stubs_path = root / "data" / "lthcs" / "known_pillar_stubs.json"
+    try:
+        qrunner = _quality_runner()
+    except Exception as e:  # noqa: BLE001
+        return {
+            "status": "error",
+            "error": clip(f"{type(e).__name__}: {e}", 400),
+            "snapshot_date": None,
+            "accepted_pillars": [],
+            "unaccepted_stubs": [],
+        }
+    try:
+        known = qrunner.load_known_stubs(stubs_path) if stubs_path.exists() else []
+    except ValueError as e:
+        return {
+            "status": "error",
+            "error": clip(f"known_pillar_stubs.json: {e}", 400),
+            "snapshot_date": None,
+            "accepted_pillars": [],
+            "unaccepted_stubs": [],
+        }
+    snap_date = qrunner.latest_snapshot_date(snap_dir)
+    if not snap_date:
+        return {
+            "status": "error",
+            "error": "no LTHCS snapshot",
+            "snapshot_date": None,
+            "accepted_pillars": [e["pillar"] for e in known],
+            "unaccepted_stubs": [],
+        }
+    snapshot = qrunner._load_snapshot(snap_date, snap_dir)
+    if not isinstance(snapshot, dict):
+        return {
+            "status": "error",
+            "error": f"could not read snapshot {snap_date}",
+            "snapshot_date": snap_date,
+            "accepted_pillars": [e["pillar"] for e in known],
+            "unaccepted_stubs": [],
+        }
+    pillars = qrunner._compute_pillar_verdicts(snapshot)
+    # Apply only the explicit acceptances. An unlisted STUB stays STUB.
+    qrunner.apply_known_stubs(pillars, known, snap_date)
+    accepted = [e["pillar"] for e in known]
+    unaccepted: list[dict] = []
+    for pillar in qrunner.PILLARS:
+        info = pillars.get(pillar) or {}
+        if info.get("verdict") != "STUB":
+            continue
+        unaccepted.append({
+            "pillar": pillar,
+            "coverage_pct": info.get("coverage_pct"),
+            "n": info.get("n"),
+            "mean": info.get("mean"),
+        })
+    return {
+        "status": "ok",
+        "snapshot_date": snap_date,
+        "accepted_pillars": accepted,
+        "unaccepted_stubs": unaccepted,
+    }
+
+
 def section_live_payloads(site: LiveSite, now: datetime) -> dict:
     names = sorted(set(re.findall(r"data-[a-z0-9_\-]+\.json", site.html)))
     payloads = []
@@ -1372,7 +1463,7 @@ def section_live_payloads(site: LiveSite, now: datetime) -> dict:
 # ---------------------------------------------------------------------------
 
 SECTIONS = ("data_health", "workflows", "schedules", "api_status", "spot_checks",
-           "live_payloads", "quality_audit")
+           "live_payloads", "quality_audit", "lthcs_pillars")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1400,6 +1491,9 @@ def main(argv: list[str] | None = None) -> int:
     if "quality_audit" not in skip:
         out["quality_audit"] = run_section(
             "quality_audit", lambda: section_quality_audit(REPO_ROOT))
+    if "lthcs_pillars" not in skip:
+        out["lthcs_pillars"] = run_section(
+            "lthcs_pillars", lambda: section_lthcs_pillars(REPO_ROOT))
 
     if not ({"workflows", "schedules"} <= skip):
         if gh is None:

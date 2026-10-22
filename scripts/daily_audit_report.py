@@ -32,7 +32,9 @@ Severities:
         whose last scheduled run failed with no success since (a later
         manual or watchdog run clears it), a spot check that disagrees
         with its primary source, console errors, failed same-origin
-        requests, visible NaN/undefined text, an upstream API down
+        requests, visible NaN/undefined text, an upstream API down, an
+        LTHCS pillar other than the accepted thesis_integrity stub that
+        is the 50.0 placeholder for the whole universe
     P2  layout overflow at 390px, heavy pages, degraded/blocked upstreams, a
         feed whose source was checked and has not published newer data
         (disclosed upstream lag), a transient Farside 5xx/timeout soft warning
@@ -133,6 +135,7 @@ SECTION_OF_PREFIX = {
     "spot:": "spot_checks",
     "live:": "live_payloads",
     "ux:": "ux",
+    "lthcs:": "lthcs_pillars",
 }
 
 
@@ -778,6 +781,36 @@ def data_problems(data: dict | None) -> list[dict]:
             if p.get("status") == "fail":
                 out.append(problem(f"live:payload:{p.get('name')}", P1, "live",
                                    f"Live sidecar {p.get('name')} is broken: {p.get('error')}"))
+
+    # -- LTHCS pillar stubs ------------------------------------------------------
+    # thesis_integrity is the only accepted full-universe stub (it is
+    # listed in known_pillar_stubs.json and the daily job runs
+    # --skip-thesis). Any other pillar at the 50.0 placeholder is a P1.
+    # A missing section (historical fixtures) does not invent a finding.
+    pillars = data.get("lthcs_pillars")
+    if isinstance(pillars, dict) and not _section_ok(pillars):
+        out.append(problem(
+            "lthcs:pillar-check", P1, "lthcs",
+            "LTHCS pillar stub check could not run",
+            pillars.get("error", "")))
+    elif isinstance(pillars, dict):
+        accepted = ", ".join(pillars.get("accepted_pillars") or []) or "none"
+        when = pillars.get("snapshot_date") or "the latest snapshot"
+        for row in pillars.get("unaccepted_stubs") or []:
+            if not isinstance(row, dict) or not row.get("pillar"):
+                continue
+            name = row["pillar"]
+            cov = row.get("coverage_pct")
+            n = row.get("n")
+            out.append(problem(
+                f"lthcs:{name}:stub", P1, "lthcs",
+                f"LTHCS pillar {name} is STUB on {when} "
+                f"({cov}% of names differ from the 50.0 placeholder)",
+                f"Only an explicit entry in data/lthcs/known_pillar_stubs.json "
+                f"is an accepted stub (currently {accepted}). "
+                f"{n} scored names were graded. A full placeholder means the "
+                f"pillar's inputs did not score.",
+            ))
     return out
 
 
@@ -1113,6 +1146,18 @@ def render_md(report: dict) -> str:
         if bits:
             line += ". " + "; ".join(bits)
         L.append(line)
+    lp = data.get("lthcs_pillars") if isinstance(data, dict) else None
+    if isinstance(lp, dict) and lp.get("unaccepted_stubs"):
+        bits = []
+        for row in lp["unaccepted_stubs"]:
+            if isinstance(row, dict) and row.get("pillar"):
+                bits.append(f"{row['pillar']} ({row.get('coverage_pct')}% off 50.0)")
+        accepted = ", ".join(lp.get("accepted_pillars") or []) or "none"
+        L.append(
+            f"- **LTHCS pillars** ({lp.get('snapshot_date')}): unaccepted STUB "
+            + ", ".join(bits)
+            + f". Accepted stub: {accepted}."
+        )
     dh = data.get("data_health") or {}
     if _section_ok(dh) and dh:
         counts = ", ".join(f"{v} {k}" for k, v in sorted((dh.get("counts") or {}).items()))

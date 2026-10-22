@@ -113,16 +113,45 @@ def _fetch_from_fred(
 
     resp = requests.get(_FRED_URL, params=params, timeout=30)
     if not getattr(resp, "ok", resp.status_code == 200):
-        body = ""
-        try:
-            body = resp.text[:200]
-        except Exception:
-            pass  # response body is optional context for the error raised below
         raise FredAPIError(
             f"FRED API returned HTTP {resp.status_code} for series "
-            f"{series_id!r}: {body}"
+            f"{series_id!r}: {_response_snippet(resp)}"
         )
-    return resp.json()
+    try:
+        payload = resp.json()
+    except ValueError as exc:
+        # A 200 with an empty or non-JSON body (the 2026-10-22 outage) used
+        # to surface as a bare JSONDecodeError, which the daily pipeline
+        # swallowed into a neutral 50. Name the status and a short body so
+        # the log shows an empty page versus an error document.
+        ctype = ""
+        try:
+            ctype = resp.headers.get("content-type", "") or ""
+        except Exception:
+            pass
+        raise FredAPIError(
+            f"FRED API returned HTTP {resp.status_code} non-JSON for series "
+            f"{series_id!r} ({ctype}): {exc}; body {_response_snippet(resp)!r}"
+        ) from exc
+    if not isinstance(payload, dict):
+        raise FredAPIError(
+            f"FRED API returned HTTP {resp.status_code} non-object JSON for "
+            f"series {series_id!r}"
+        )
+    return payload
+
+
+def _response_snippet(resp: Any) -> str:
+    """Short response text with the API key removed, for error messages."""
+    text = ""
+    try:
+        text = resp.text or ""
+    except Exception:
+        return ""
+    key = os.environ.get("FRED_API_KEY") or ""
+    if key:
+        text = text.replace(key, "***")
+    return " ".join(text.split())[:160]
 
 
 def get_series(
