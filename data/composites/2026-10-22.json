@@ -1,19 +1,19 @@
 {
   "as_of": "2026-10-22",
-  "generated_at": "2026-10-22T17:48:59Z",
+  "generated_at": "2026-10-22T19:14:30Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-22",
       "label": null,
-      "note": "40 coins; 2 buy+, 11 sell+",
-      "score": -22,
+      "note": "40 coins; 3 buy+, 10 sell+",
+      "score": -18,
       "stale": false
     },
     "defi_sentiment": {
       "as_of": "2026-10-22",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": 1,
+      "score": 0,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -41,14 +41,14 @@
       "as_of": "2026-10-22",
       "label": "CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 25,
+      "score": 23,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-10-22",
       "label": "CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 25,
+      "score": 23,
       "stale": false
     },
     "futures_sentiment_eth": {
@@ -69,7 +69,7 @@
       "as_of": "2026-10-22",
       "label": "CROWDED LONGS",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 26,
+      "score": 27,
       "stale": false
     },
     "lthcs_composite": {
@@ -83,27 +83,27 @@
       "as_of": "2026-10-22",
       "label": "Neutral",
       "note": null,
-      "score": -19.55,
+      "score": -20.87,
       "stale": false
     },
     "overview_sentiment": {
       "as_of": "2026-10-22",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": 11,
+      "score": 12,
       "stale": false
     },
     "poc_signal_breadth": {
       "as_of": "2026-10-21",
       "label": null,
       "note": "49 coins; mean of latest per-coin signal",
-      "score": 5,
+      "score": 7,
       "stale": false
     },
     "stocks_signal_breadth": {
       "as_of": "2026-10-22",
       "label": "DISTRIBUTION",
-      "note": "50 stocks; 9 buy+, 23 sell+",
+      "note": "50 stocks; 10 buy+, 24 sell+",
       "score": -28,
       "stale": false
     },
