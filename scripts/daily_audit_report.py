@@ -33,11 +33,16 @@ Severities:
         manual or watchdog run clears it), a spot check that disagrees
         with its primary source, console errors, failed same-origin
         requests, visible NaN/undefined text, an upstream API down
-    P2  layout overflow at 390px, heavy pages, chronically late/dropped cron
-        ticks, degraded/blocked upstreams, a feed whose source was checked
-        and has not published newer data (disclosed upstream lag), a transient
-        Farside 5xx/timeout soft warning while the ETF flows CSV is under
-        2 trading days old (the job exits 0; this is not a workflow failure)
+    P2  layout overflow at 390px, heavy pages, degraded/blocked upstreams, a
+        feed whose source was checked and has not published newer data
+        (disclosed upstream lag), a transient Farside 5xx/timeout soft warning
+        while the ETF flows CSV is under 2 trading days old (the job exits 0;
+        this is not a workflow failure). A late cron start or a skipped
+        schedule is a P2 only when that condition has already lasted more
+        than a day AND the job's output is stale or it has no success
+        (schedule, watchdog catch-up, or manual run) inside its freshness
+        window. Late or skipped jobs whose data is fresh are one
+        informational line, not a P2 each.
 
 Alert verdict (written to $GITHUB_OUTPUT as ``alert_action``):
     open    there is at least one NEW P0 -> open/update the tracking issue
@@ -69,10 +74,21 @@ PAGE_LABELS = {
 # Thresholds for the P2 "heavy page" flag (initial load, encoded bytes).
 HEAVY_BYTES = 10_000_000
 HEAVY_REQUESTS = 200
-# Schedules: P2 when a cron's median start delay exceeds this, or a
-# several-times-a-day cron gets fewer than this share of its ticks.
+# Schedules: a cron is "late" when its median start delay exceeds this, and
+# a several-times-a-day cron "skipped" when it gets fewer than this share
+# of its ticks. Neither is a P2 by itself — see ``_timing_is_p2``.
+# LATE_MINUTES matches daily_audit_data.SCHEDULE_LATE_MINUTES.
 LATE_MINUTES = 180
 MIN_COVERAGE_PCT = 50.0
+# Same line as scripts/publish_github_status.py. A cron that fires at least
+# every 6h stays fresh when a success landed within 6h (GitHub drops those
+# ticks; the watchdog's catch-up is what keeps the data current). Slower
+# crons are fresh for twice their longest gap (a daily job, 48h).
+FREQUENT_CRON_MAX_H = 6.0
+FREQUENT_FRESHNESS_H = 6.0
+# "More than 1 day": two distinct due days, or a span strictly over 24h.
+SCHEDULE_PERSIST_H = 24.0
+_CRON_LOOKBACK = timedelta(days=62)
 # Live payload stamps older than this are listed in the markdown (info only;
 # freshness verdicts belong to data_health).
 STAMP_NOTE_H = 48
@@ -251,6 +267,286 @@ def _best_annotation(jobs: list[dict]) -> str:
     return "; ".join(lines)
 
 
+# ---------------------------------------------------------------------------
+# late / skipped schedules: P2 only when stale, otherwise one info line
+# ---------------------------------------------------------------------------
+
+_CRON_FIRE_TIMES = None
+
+
+def _cron_fire_times(expr: str, start: datetime, end: datetime) -> list[datetime]:
+    """``daily_audit_data.cron_fire_times``, loaded from the sibling script.
+
+    The report is run as a file, not as a package, so a normal import of
+    that module is not on ``sys.path``.
+    """
+    global _CRON_FIRE_TIMES
+    if _CRON_FIRE_TIMES is None:
+        import importlib.util
+        path = Path(__file__).resolve().with_name("daily_audit_data.py")
+        spec = importlib.util.spec_from_file_location("_dad_cron_for_report", path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"cannot load {path}")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        _CRON_FIRE_TIMES = mod.cron_fire_times
+    return _CRON_FIRE_TIMES(expr, start, end)
+
+
+def _parse_ts(value: Any) -> datetime | None:
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, datetime):
+        dt = value
+    else:
+        text = str(value).strip()
+        if not text:
+            return None
+        try:
+            dt = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def _audit_clock(data: dict) -> datetime | None:
+    """When this audit's data was collected. None on fixtures that omit it."""
+    for value in (data.get("generated_at"),):
+        stamp = _parse_ts(value)
+        if stamp is not None:
+            return stamp
+    dh = data.get("data_health")
+    if isinstance(dh, dict):
+        stamp = _parse_ts(dh.get("checked_at"))
+        if stamp is not None:
+            return stamp
+    return None
+
+
+def _workflows_by_name(data: dict) -> dict[str, dict]:
+    wf = data.get("workflows")
+    if not isinstance(wf, dict):
+        return {}
+    return {w.get("name"): w for w in (wf.get("workflows") or []) if isinstance(w, dict) and w.get("name")}
+
+
+def _freshness_window_h(crons: list, now: datetime) -> float | None:
+    """How long this schedule may go without a success and still be fresh.
+
+    Mirrors ``publish_github_status.freshness_hours``: twice the longest gap
+    between fires, and at least 6h when the cron is more frequent than that.
+    """
+    if not crons:
+        return None
+    fires: list[datetime] = []
+    start = now - _CRON_LOOKBACK
+    end = now + timedelta(days=1)
+    for expr in crons:
+        try:
+            fires.extend(_cron_fire_times(str(expr), start, end))
+        except (TypeError, ValueError):
+            return None
+    ordered = sorted(set(fires))
+    if len(ordered) < 2:
+        return None
+    gap_h = max((b - a).total_seconds() for a, b in zip(ordered, ordered[1:])) / 3600.0
+    doubled = 2.0 * gap_h
+    if gap_h <= FREQUENT_CRON_MAX_H:
+        return max(doubled, FREQUENT_FRESHNESS_H)
+    return doubled
+
+
+def _owner_mentions(owner: str, schedule: dict) -> bool:
+    """True when a data_health owner string names this workflow's file."""
+    text = owner.lower()
+    if not text:
+        return False
+    base = Path(str(schedule.get("path") or "")).name.lower()
+    if base and base in text:
+        return True
+    name = str(schedule.get("name") or "").strip().lower()
+    return bool(name) and (f"{name}.yml" in text or f"{name}.yaml" in text)
+
+
+def _output_is_stale(schedule: dict, data: dict) -> bool | None:
+    """Whether a feed this job owns is stale.
+
+    True: at least one owned feed is in data_health's failing statuses.
+    False: the job owns feeds and none of them is failing (ok, skipped,
+    suppressed, and disclosed upstream lag all count as not stale — the
+    disclosed row has its own P2).
+    None: this job has no feed, or data_health did not run, so freshness
+    falls through to the last success.
+    """
+    dh = data.get("data_health")
+    if not isinstance(dh, dict) or not _section_ok(dh):
+        return None
+    failing = {str(x).lower() for x in (dh.get("failing_statuses") or ())}
+    if not failing:
+        failing = {"stale", "unknown", "missing", "unwatched", "expired"}
+    owned: list[dict] = []
+    for row in list(dh.get("results") or []) + list(dh.get("extra_failing") or []):
+        if isinstance(row, dict) and _owner_mentions(str(row.get("owner") or ""), schedule):
+            owned.append(row)
+    if not owned:
+        return None
+    return any(str(row.get("status") or "").lower() in failing for row in owned)
+
+
+def _success_stamps(schedule: dict, workflow: dict | None) -> list[datetime]:
+    """Completion times of successes, including catch-ups and manual runs."""
+    stamps: list[datetime] = []
+    runs: list[Any] = [
+        schedule.get("last_run"),
+        schedule.get("last_catchup"),
+        schedule.get("recovered_run"),
+    ]
+    if isinstance(workflow, dict):
+        runs.extend((workflow.get("latest_24h"), workflow.get("previous_day")))
+    for run in runs:
+        if not isinstance(run, dict) or run.get("conclusion") != "success":
+            continue
+        stamp = _parse_ts(run.get("updated_at")) or _parse_ts(run.get("created_at"))
+        if stamp is not None:
+            stamps.append(stamp)
+    # Collector's newest success of any event, which may be newer than the
+    # last schedule event (a manual run that was not clearing a failure).
+    extra = _parse_ts(schedule.get("last_success_at"))
+    if extra is not None:
+        stamps.append(extra)
+    return stamps
+
+
+def _success_within_window(schedule: dict, workflow: dict | None, now: datetime | None) -> bool | None:
+    """True when a success landed inside the freshness window.
+
+    None when this row has no clock or no parseable cron, so a legacy
+    fixture is not treated as fresh. False when the clock is known and
+    nothing succeeded in the window.
+    """
+    if now is None:
+        return None
+    window_h = _freshness_window_h(schedule.get("crons") or [], now)
+    if window_h is None:
+        return None
+    stamps = _success_stamps(schedule, workflow)
+    if not stamps:
+        return False
+    return (now - max(stamps)) <= timedelta(hours=window_h)
+
+
+def _condition_persists(schedule: dict, kind: str) -> bool:
+    """True when a late start or skipped ticks already cover more than a day.
+
+    ``kind`` is ``late`` or ``skip``. Current collector rows carry
+    ``{kind}_days`` and ``{kind}_span_h``. Older audit JSON does not: the
+    median and the coverage were computed over every due day in the window,
+    so more than one due day is the same fact.
+    """
+    days_key, span_key = f"{kind}_days", f"{kind}_span_h"
+    if days_key in schedule or span_key in schedule:
+        days = schedule.get(days_key)
+        span = schedule.get(span_key)
+        if days is not None and int(days) >= 2:
+            return True
+        if span is not None and float(span) > SCHEDULE_PERSIST_H:
+            return True
+        return False
+    return (schedule.get("due_days") or 0) > 1
+
+
+def _is_late(schedule: dict) -> bool:
+    delay = schedule.get("median_delay_min")
+    return delay is not None and float(delay) > LATE_MINUTES
+
+
+def _is_dropped(schedule: dict) -> bool:
+    cov = schedule.get("coverage_pct")
+    if cov is None or float(cov) >= MIN_COVERAGE_PCT:
+        return False
+    # One tick a day is judged as a missed day (P1), not as dropped ticks.
+    return (schedule.get("due_runs") or 0) > (schedule.get("due_days") or 0)
+
+
+def _data_is_fresh(schedule: dict, data: dict, workflow: dict | None, now: datetime | None) -> bool:
+    """A late or skipped job whose output is current and that did succeed."""
+    if _output_is_stale(schedule, data) is True:
+        return False
+    return _success_within_window(schedule, workflow, now) is True
+
+
+def _timing_is_p2(schedule: dict, data: dict, workflow: dict | None,
+                  now: datetime | None, kind: str) -> bool:
+    """Open a P2 only after the pattern lasts more than a day and data is stale.
+
+    Stale means a feed this job owns is failing, or there is no success
+    (schedule, watchdog catch-up, or manual) inside the freshness window.
+    A row with no clock keeps the old P2 so existing fixtures stay stable.
+    """
+    if not _condition_persists(schedule, kind):
+        return False
+    if _output_is_stale(schedule, data) is True:
+        return True
+    if _success_within_window(schedule, workflow, now) is True:
+        return False
+    return True
+
+
+def _had_watchdog(schedule: dict) -> bool:
+    return bool(schedule.get("catchup_ticks") or schedule.get("catchup_runs") or schedule.get("last_catchup"))
+
+
+def _n_jobs(n: int, what: str) -> str:
+    noun = "job" if n == 1 else "jobs"
+    return f"{n} {noun} {what}"
+
+
+def format_schedule_note(late: int, skipped: int, *, watchdog: bool) -> str | None:
+    """One informational line for late or skipped jobs whose data is fresh."""
+    if late <= 0 and skipped <= 0:
+        return None
+    parts: list[str] = []
+    if late > 0:
+        parts.append(_n_jobs(late, "started late"))
+    if skipped > 0:
+        parts.append(_n_jobs(skipped, "skipped schedule ticks"))
+    text = "; ".join(parts)
+    if watchdog:
+        text += "; watchdog caught up"
+    return text + "; data fresh"
+
+
+def schedule_timing_note(data: dict | None) -> str | None:
+    """Summarize late/skipped jobs that are fresh. Not a finding."""
+    if not isinstance(data, dict):
+        return None
+    sc = data.get("schedules")
+    if not isinstance(sc, dict) or not _section_ok(sc):
+        return None
+    now = _audit_clock(data)
+    by_name = _workflows_by_name(data)
+    late = skipped = 0
+    watchdog = False
+    for schedule in sc.get("schedules") or []:
+        if not isinstance(schedule, dict):
+            continue
+        workflow = by_name.get(schedule.get("name"))
+        if not _data_is_fresh(schedule, data, workflow, now):
+            continue
+        is_late = _is_late(schedule)
+        is_dropped = _is_dropped(schedule)
+        if not is_late and not is_dropped:
+            continue
+        if is_late:
+            late += 1
+        if is_dropped:
+            skipped += 1
+        watchdog = watchdog or _had_watchdog(schedule)
+    return format_schedule_note(late, skipped, watchdog=watchdog)
+
+
 def _disclosed_upstream_lag(row: dict) -> bool:
     """A freshness row data_health marked disclosed.
 
@@ -363,9 +659,12 @@ def data_problems(data: dict | None) -> list[dict]:
         out.append(problem("audit:schedules", P1, "audit",
                            "Scheduled-workflow history could not be read", sc.get("error", "")))
     elif sc:
+        clock = _audit_clock(data)
+        by_name = _workflows_by_name(data)
         for s in sc.get("schedules") or []:
             name = s.get("name")
             crons = ", ".join(s.get("crons") or [])
+            workflow = by_name.get(name)
             if s.get("state") and s.get("state") != "active":
                 out.append(problem(f"schedule:{name}:disabled", P1, "schedule",
                                    f"Scheduled workflow {name} is {s.get('state')} — its cron ({crons}) will not fire"))
@@ -391,8 +690,11 @@ def data_problems(data: dict | None) -> list[dict]:
             # coverage_pct is effective freshness (schedule event or a labeled
             # watchdog catch-up). A scheduler-only gap that the watchdog
             # filled is not "ticks that never ran". missed_ticks is the
-            # remainder: due fires with neither. The P2 stays informational.
-            if cov is not None and (s.get("due_runs") or 0) > (s.get("due_days") or 0) and cov < MIN_COVERAGE_PCT:
+            # remainder: due fires with neither. A low ratio is a P2 only
+            # when the skips have lasted more than a day and the data is
+            # stale (or nothing has succeeded in the freshness window).
+            # Fresh jobs are one line from schedule_timing_note, not a P2.
+            if _is_dropped(s) and _timing_is_p2(s, data, workflow, clock, "skip"):
                 detail = (f"cron {crons}; {s.get('scheduled_runs')} scheduled runs")
                 if catchup_ticks:
                     detail += f", {catchup_ticks} tick(s) covered first by a watchdog catch-up"
@@ -418,7 +720,7 @@ def data_problems(data: dict | None) -> list[dict]:
                     group="schedule:dropped", group_title="Crons that lose most of their ticks",
                     item=item))
             delay = s.get("median_delay_min")
-            if delay is not None and delay > LATE_MINUTES:
+            if _is_late(s) and _timing_is_p2(s, data, workflow, clock, "late"):
                 late_detail = f"cron {crons}"
                 sched_delay = s.get("schedule_median_delay_min")
                 if sched_delay is not None and abs(float(sched_delay) - float(delay)) >= 30:
@@ -779,6 +1081,9 @@ def render_md(report: dict) -> str:
     if report.get("run_url"):
         meta += f" by [daily-audit]({report['run_url']})"
     L += [meta + ". Machine-readable: `audit/daily/" + report["date"] + ".json`.", ""]
+    if report.get("schedule_note"):
+        # Not a finding. Late or skipped crons whose data is still fresh.
+        L += [str(report["schedule_note"]), ""]
 
     new = [p for p in problems if p.get("state") == "new"]
     ongoing = [p for p in problems if p.get("state") == "ongoing"]
@@ -1064,6 +1369,7 @@ def build_report(data: dict | None, ux: dict | None, previous: dict | None, toda
         "regressions": diff,
         "api_changes": api_changes,
         "api_baseline": api_baseline,
+        "schedule_note": schedule_timing_note(data) if isinstance(data, dict) else None,
         "data": data,
         "ux": ux,
     }
