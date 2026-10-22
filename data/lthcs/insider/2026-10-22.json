@@ -47649,6 +47649,156 @@
     "weighted_sell_score": -0.75,
     "window_days": 90
   },
+  "PSKY": {
+    "as_of": "2026-10-22",
+    "buy_count": 0,
+    "buy_dollar_value": 0.0,
+    "ceo_cfo_action": "neutral",
+    "cluster_buying": false,
+    "conviction_score": 0.0,
+    "filtered_out_count": 13,
+    "net_dollar_value": 0.0,
+    "net_weighted_score": 0.0,
+    "raw_transactions": [
+      {
+        "code": "M",
+        "date": "2026-10-15",
+        "insider": "Cinelli Dennis",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "CFO",
+        "shares": 187500.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-15",
+        "insider": "Cinelli Dennis",
+        "planned_10b5_1": false,
+        "price": 7.26,
+        "role": "CFO",
+        "shares": 95401.0,
+        "value": 692611.26
+      },
+      {
+        "code": "A",
+        "date": "2026-10-06",
+        "insider": "Jobs Laurene Powell",
+        "planned_10b5_1": false,
+        "price": 12.0,
+        "role": "Director",
+        "shares": 20833333.0,
+        "value": 249999996.0
+      },
+      {
+        "code": "M",
+        "date": "2026-10-06",
+        "insider": "Delrahim Makan",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 150000.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-10-06",
+        "insider": "Cardinale Gerald J.",
+        "planned_10b5_1": false,
+        "price": 12.0,
+        "role": "Director",
+        "shares": 175000000.0,
+        "value": 2100000000.0
+      },
+      {
+        "code": "A",
+        "date": "2026-10-06",
+        "insider": "Cardinale Gerald J.",
+        "planned_10b5_1": false,
+        "price": 12.0,
+        "role": "Director",
+        "shares": 158333333.0,
+        "value": 1899999996.0
+      },
+      {
+        "code": "A",
+        "date": "2026-10-05",
+        "insider": "Kreiz Ynon",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "CEO",
+        "shares": 2625000.0,
+        "value": 0.0
+      },
+      {
+        "code": "M",
+        "date": "2026-09-02",
+        "insider": "Gill Charest Katherine",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 7969.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-09-02",
+        "insider": "Gill Charest Katherine",
+        "planned_10b5_1": false,
+        "price": 10.97,
+        "role": "Officer",
+        "shares": 4069.0,
+        "value": 44636.93
+      },
+      {
+        "code": "M",
+        "date": "2026-08-07",
+        "insider": "Brandon-Gordon Andrew Mark",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 200000.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-08-07",
+        "insider": "Brandon-Gordon Andrew Mark",
+        "planned_10b5_1": false,
+        "price": 9.19,
+        "role": "Officer",
+        "shares": 101760.0,
+        "value": 935174.3999999999
+      },
+      {
+        "code": "M",
+        "date": "2026-08-07",
+        "insider": "Ellison David Ferris",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "CEO",
+        "shares": 250000.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-08-07",
+        "insider": "Ellison David Ferris",
+        "planned_10b5_1": false,
+        "price": 9.19,
+        "role": "CEO",
+        "shares": 127200.0,
+        "value": 1168968.0
+      }
+    ],
+    "regime": "neutral",
+    "sell_count": 0,
+    "sell_dollar_value": 0.0,
+    "ticker": "PSKY",
+    "weighted_buy_score": 0.0,
+    "weighted_sell_score": -0.0,
+    "window_days": 90
+  },
   "PSX": {
     "as_of": "2026-10-22",
     "buy_count": 0,
@@ -60767,6 +60917,226 @@
     "ticker": "WAT",
     "weighted_buy_score": 0.0,
     "weighted_sell_score": -0.5,
+    "window_days": 90
+  },
+  "WBD": {
+    "as_of": "2026-10-22",
+    "buy_count": 0,
+    "buy_dollar_value": 0.0,
+    "ceo_cfo_action": "selling",
+    "cluster_buying": false,
+    "conviction_score": -1.0,
+    "filtered_out_count": 66,
+    "net_dollar_value": -54742446.6,
+    "net_weighted_score": -9.5,
+    "raw_transactions": [
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Zeiler Gerhard",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "Officer",
+        "shares": 103922.0,
+        "value": 3223317.4974
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Zeiler Gerhard",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "Officer",
+        "shares": 262864.0,
+        "value": 8153173.8288
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Zeiler Gerhard",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "Officer",
+        "shares": 170650.0,
+        "value": 5292999.855
+      },
+      {
+        "code": "A",
+        "date": "2026-10-06",
+        "insider": "Zeiler Gerhard",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 2236849.0,
+        "value": 0.0
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Zeiler Gerhard",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "Officer",
+        "shares": 2236849.0,
+        "value": 69379674.3783
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Wiedenfels Gunnar",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "CFO",
+        "shares": 41784.0,
+        "value": 1296001.7928
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Wiedenfels Gunnar",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "CFO",
+        "shares": 14140.0,
+        "value": 438576.138
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Wiedenfels Gunnar",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "CFO",
+        "shares": 421941.0,
+        "value": 13087217.4147
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Wiedenfels Gunnar",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "CFO",
+        "shares": 227532.0,
+        "value": 7057291.7844
+      },
+      {
+        "code": "A",
+        "date": "2026-10-06",
+        "insider": "Wiedenfels Gunnar",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "CFO",
+        "shares": 2982465.0,
+        "value": 0.0
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Wiedenfels Gunnar",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "CFO",
+        "shares": 2982465.0,
+        "value": 92506222.1655
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Perrette Jean-Briac",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "CEO",
+        "shares": 432477.0,
+        "value": 13414009.3659
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Perrette Jean-Briac",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "CEO",
+        "shares": 387007.0,
+        "value": 12003680.0169
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Perrette Jean-Briac",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "CEO",
+        "shares": 227532.0,
+        "value": 7057291.7844
+      },
+      {
+        "code": "A",
+        "date": "2026-10-06",
+        "insider": "Perrette Jean-Briac",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "CEO",
+        "shares": 3264855.0,
+        "value": 0.0
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Perrette Jean-Briac",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "CEO",
+        "shares": 3264855.0,
+        "value": 101265028.0785
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Locke Lori C.",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "Officer",
+        "shares": 86906.0,
+        "value": 2695537.3302
+      },
+      {
+        "code": "A",
+        "date": "2026-10-06",
+        "insider": "Locke Lori C.",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 61093.0,
+        "value": 0.0
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Locke Lori C.",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "Officer",
+        "shares": 61093.0,
+        "value": 1894903.2531
+      },
+      {
+        "code": "D",
+        "date": "2026-10-06",
+        "insider": "Girdwood Amy",
+        "planned_10b5_1": false,
+        "price": 31.0167,
+        "role": "Officer",
+        "shares": 539374.0,
+        "value": 16729601.5458
+      }
+    ],
+    "regime": "heavy_selling",
+    "sell_count": 14,
+    "sell_dollar_value": 54742446.6,
+    "ticker": "WBD",
+    "weighted_buy_score": 0.0,
+    "weighted_sell_score": -9.5,
     "window_days": 90
   },
   "WDAY": {

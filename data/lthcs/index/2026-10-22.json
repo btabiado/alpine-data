@@ -7,7 +7,7 @@
       "delta": 9,
       "name": "Band lean (bullish % minus bearish %)",
       "read": "universe constructive",
-      "value": "+30.4%"
+      "value": "+30.1%"
     },
     {
       "delta": 1,
@@ -25,12 +25,12 @@
       "delta": 1,
       "name": "Financial pillar avg",
       "read": "fundamentals stable",
-      "value": 54.8
+      "value": 54.7
     },
     {
       "delta": 0,
       "name": "Thesis pillar avg",
-      "read": "unavailable: dropped from scoring for 514 of 514 tickers",
+      "read": "unavailable: dropped from scoring for 515 of 515 tickers",
       "unavailable": true,
       "value": "n/a"
     },
@@ -50,7 +50,7 @@
       "delta": -7,
       "name": "Insider conviction breadth",
       "read": "insiders distributing",
-      "value": "284 active signals"
+      "value": "285 active signals"
     },
     {
       "delta": 4,
@@ -60,6 +60,6 @@
     }
   ],
   "label": "LTHCS NEUTRAL",
-  "note": "Aggregate of 514-ticker LTHCS universe. Directional read, not a trading signal.",
+  "note": "Aggregate of 515-ticker LTHCS universe. Directional read, not a trading signal.",
   "score": 18
 }
