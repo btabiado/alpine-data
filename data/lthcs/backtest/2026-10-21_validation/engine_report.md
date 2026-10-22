@@ -1,22 +1,22 @@
 # LTHCS Backtest Engine Report
 
-Window: **2026-02-17 -> 2026-10-20** (171 trading days)
+Window: **2026-02-17 -> 2026-10-21** (172 trading days)
 Universe: **517 tickers** | long bands: ['constructive', 'elite', 'high_confidence'] | cost: 5.0 bps/side | delay: 1 td
 
 ## Headline P&L (non-overlapping)
 
 | Metric | Value |
 |:-------|------:|
-| Total return | +0.2203 |
-| Annualized return | +0.3433 |
-| Annualized Sharpe | +1.641 (95% CI: -0.45 ... +4.23) |
-| Annualized Sortino | +1.101 (95% CI: -0.31 ... +3.40) |
+| Total return | +0.2245 |
+| Annualized return | +0.3477 |
+| Annualized Sharpe | +1.662 (95% CI: -0.48 ... +4.35) |
+| Annualized Sortino | +1.112 (95% CI: -0.31 ... +3.52) |
 | Max drawdown | -0.1058 |
-| Hit rate (daily) | 0.310 |
-| Avg hold days | 7.4 |
-| Avg turnover / day | 0.1103 |
-| Total trades | 181 |
-| Unique tickers | 121 |
+| Hit rate (daily) | 0.314 |
+| Avg hold days | 8.5 |
+| Avg turnover / day | 0.1131 |
+| Total trades | 319 |
+| Unique tickers | 199 |
 
 > Non-overlapping construction: every trading day's return is realized on the actual close-to-close of held names. No forward-window reuse, so Sharpe is directly comparable to a passive benchmark.
 
@@ -24,22 +24,22 @@ Universe: **517 tickers** | long bands: ['constructive', 'elite', 'high_confiden
 
 | Band | Total return |
 |:-----|------:|
-| elite | +0.0003 |
-| high_confidence | +0.4375 |
-| constructive | +0.1659 |
-| monitor | +0.1171 |
-| weakening | +0.0437 |
-| review | +0.1106 |
+| elite | +0.0079 |
+| high_confidence | +0.4356 |
+| constructive | +0.1709 |
+| monitor | +0.1207 |
+| weakening | +0.0444 |
+| review | +0.1184 |
 
 ## Benchmark
 
-Benchmark total return: **+0.1350**
+Benchmark total return: **+0.1410**
 
 ## Run metadata
 
 ```json
 {
-  "band_hash": "696ff5bb1b2f6a4a",
+  "band_hash": "a6b8ea3811a4c87d",
   "engine_version": "1.0.0",
   "long_set": [
     "constructive",
@@ -62,15 +62,15 @@ Benchmark total return: **+0.1350**
     "top_k": 0
   },
   "params_hash": "49269b2e937d327d",
-  "price_hash": "2c45adc64d5b0d40",
+  "price_hash": "f6f081dd181d8c13",
   "profile_name": "long_only_buy",
   "short_bottom_quintile": false,
   "short_set": [],
   "top_k": 0,
   "universe_size": 517,
   "window": {
-    "end": "2026-10-20",
-    "n_trading_days": 171,
+    "end": "2026-10-21",
+    "n_trading_days": 172,
     "start": "2026-02-17"
   }
 }
