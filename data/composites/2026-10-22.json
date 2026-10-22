@@ -1,19 +1,19 @@
 {
   "as_of": "2026-10-22",
-  "generated_at": "2026-10-22T01:31:45Z",
+  "generated_at": "2026-10-22T04:32:42Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-22",
       "label": null,
-      "note": "40 coins; 6 buy+, 4 sell+",
-      "score": 5,
+      "note": "40 coins; 8 buy+, 2 sell+",
+      "score": 15,
       "stale": false
     },
     "defi_sentiment": {
       "as_of": "2026-10-22",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": 3,
+      "score": 2,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -41,21 +41,21 @@
       "as_of": "2026-10-21",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 2,
+      "score": 13,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-10-21",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 2,
+      "score": 13,
       "stale": false
     },
     "futures_sentiment_eth": {
       "as_of": "2026-10-21",
-      "label": "BALANCED",
+      "label": "CROWDED LONGS",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 18,
+      "score": 26,
       "stale": false
     },
     "futures_sentiment_link": {
@@ -69,14 +69,14 @@
       "as_of": "2026-10-21",
       "label": "BALANCED",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 10,
+      "score": 11,
       "stale": false
     },
     "lthcs_composite": {
-      "as_of": "2026-10-21",
+      "as_of": "2026-10-22",
       "label": "LTHCS NEUTRAL",
       "note": null,
-      "score": 2,
+      "score": 18,
       "stale": false
     },
     "money_flow_index": {
@@ -90,7 +90,7 @@
       "as_of": "2026-10-22",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": 13,
+      "score": 14,
       "stale": false
     },
     "poc_signal_breadth": {
@@ -108,17 +108,17 @@
       "stale": false
     },
     "whale_sentiment_btc": {
-      "as_of": "2026-10-20",
-      "label": "WHALE ACCUMULATION",
+      "as_of": "2026-10-21",
+      "label": "NEUTRAL",
       "note": null,
-      "score": 37,
+      "score": 5,
       "stale": false
     },
     "whale_sentiment_eth": {
-      "as_of": "2026-10-20",
+      "as_of": "2026-10-21",
       "label": "NEUTRAL",
       "note": null,
-      "score": 4,
+      "score": 7,
       "stale": false
     }
   }
