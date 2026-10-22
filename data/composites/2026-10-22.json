@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-22",
-  "generated_at": "2026-10-22T10:05:44Z",
+  "generated_at": "2026-10-22T12:46:37Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-22",
       "label": null,
-      "note": "40 coins; 8 buy+, 2 sell+",
-      "score": 15,
+      "note": "40 coins; 8 buy+, 1 sell+",
+      "score": 18,
       "stale": false
     },
     "defi_sentiment": {
@@ -17,38 +17,38 @@
       "stale": false
     },
     "etf_flow_sentiment": {
-      "as_of": "2026-10-19",
+      "as_of": "2026-10-21",
       "label": "STRONG INFLOWS",
-      "note": "BTC ETF; 7d+30d net flow sum (60/40); 692 daily rows; same series as etf_flow_sentiment_btc",
-      "score": 78,
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 694 daily rows; same series as etf_flow_sentiment_btc",
+      "score": 100,
       "stale": false
     },
     "etf_flow_sentiment_btc": {
-      "as_of": "2026-10-19",
+      "as_of": "2026-10-21",
       "label": "STRONG INFLOWS",
-      "note": "BTC ETF; 7d+30d net flow sum (60/40); 692 daily rows",
-      "score": 78,
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 694 daily rows",
+      "score": 100,
       "stale": false
     },
     "etf_flow_sentiment_eth": {
-      "as_of": "2026-10-19",
+      "as_of": "2026-10-21",
       "label": "STRONG OUTFLOWS",
-      "note": "ETH ETF; 7d+30d net flow sum (60/40); 563 daily rows",
-      "score": -86,
+      "note": "ETH ETF; 7d+30d net flow sum (60/40); 565 daily rows",
+      "score": -72,
       "stale": false
     },
     "futures_sentiment": {
       "as_of": "2026-10-21",
       "label": "CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 26,
+      "score": 31,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-10-21",
       "label": "CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 26,
+      "score": 31,
       "stale": false
     },
     "futures_sentiment_eth": {
