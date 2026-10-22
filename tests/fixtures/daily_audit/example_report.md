@@ -1,10 +1,12 @@
 # Daily audit 2026-10-04 — RED
 
-**RED** · 20 P0 · 7 P1 · 29 P2 · 56 new · 0 fixed (no previous report)
+**RED** · 20 P0 · 7 P1 · 8 P2 · 35 new · 0 fixed (no previous report)
 
 Generated 2026-10-04T22:20:29Z. Machine-readable: `audit/daily/2026-10-04.json`.
 
-## New since yesterday (56)
+14 jobs started late; 3 jobs skipped schedule ticks; data fresh
+
+## New since yesterday (35)
 - **P0** [ux] V1 (/) @ phone: tabs a user cannot tap (tap target covered) (19): Aviation, City, CPI, DeFi, ETF Flows, Metals, Money Flow, UAP, Overview, Point of Control, Real Estate, Signals, Research, Stock Flows, Stocks, Supplies, Futures, Travel Advisories, Whale
 - **P0** [workflow] Workflow aviation-tsa failed two days running — step 'Fetch TSA throughput snapshot' — TSA not refreshed: tsa.gov: HTTPError: HTTP Error 403: Forbidden; web.archive.org: ValueError: no rows parsed from snapshot 20261004121514 ([run](https://github.com/btabiado/alpine-data/actions/runs/37223025786))
 - **P1** [schedule] Scheduled workflow lthcs-beta-verdict-monthly: last scheduled run failed (2026-10-01) — cron 0 8 1 * * ([run](https://github.com/btabiado/alpine-data/actions/runs/36882479373))
@@ -16,8 +18,7 @@ Generated 2026-10-04T22:20:29Z. Machine-readable: `audit/daily/2026-10-04.json`.
 - **P1** [workflow] Workflow data-health failed in the last 24h — step 'Build issue body' — Process completed with exit code 1. ([run](https://github.com/btabiado/alpine-data/actions/runs/37224950186))
 - **P2** [api] Upstream APIs blocked (1): NUFORC
 - **P2** [api] Upstream APIs degraded (1): DeFiLlama bridges
-- **P2** [schedule] Crons that lose most of their ticks (3): aviation-opensky 18%, lthcs-news-hourly 19%, pages 18%
-- **P2** [schedule] Crons starting >3h late (median delay) (19): aviation-tsa 5.2h, catalog-health 8.7h, cfpb-daily 6.5h, city-daily 6.3h, codeql 6.3h, etf-flows-daily 6.7h, lthcs-backtest-monthly 5.9h, lthcs-beta-verdict-monthly 7.2h, lthcs-quality-audit-monthly 6.9h, lthcs-trends-daily 6.3h, lthcs-trends-weekly 6.4h, lthcs-tune-weights-monthly 7.2h, lthcs-validate-weekly 6.5h, money-flow-daily 6.5h, real-estate-daily 6.2h, secrets-check 6.1h, security-audit 8.2h, trufflehog-weekly 6.2h, usaspending-daily 6.5h
+- **P2** [schedule] Crons starting >3h late (median delay) (1): aviation-tsa 5.2h
 - **P2** [ux] /lthcs/: console error — The Content Security Policy directive 'frame-ancestors' is ignored when delivered via a <meta> element. — during load
 - **P2** [ux] /lthcs/: heavy initial load — 245 requests, 0.7 MB
 - **P2** [ux] /lthcs/: horizontal overflow at 390px (page is 645px wide) — widest elements: table.lthcs-index-table

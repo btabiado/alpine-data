@@ -106,6 +106,10 @@ class TestScheduleEvaluation:
         assert out["due_days"] == 7          # 10-02 .. 10-08 (window opens 10-01 20:00)
         assert out["coverage_pct"] == 100.0
         assert 360 <= out["median_delay_min"] <= 370
+        # Every judged day started >3h late, across more than one day.
+        assert out["late_days"] >= 2
+        assert out["late_span_h"] > 24
+        assert out["skip_days"] == 0
 
     def test_a_day_without_a_run_is_missed(self, dad):
         runs = self._runs("2026-10-02T07:05:00", "2026-10-03T07:05:00", "2026-10-05T07:05:00",
@@ -248,6 +252,8 @@ class TestScheduleEvaluation:
         assert row["last_failed"] is False
         assert row["recovered_run"]["event"] == "workflow_dispatch"
         assert row["recovered_run"]["conclusion"] == "success"
+        assert row["last_success_at"].startswith("2026-10-16T21:48:45")
+        assert row["last_success_event"] == "workflow_dispatch"
         assert any(p.get("event") != "schedule" for p in gh.gets)
 
     def test_section_keeps_the_failure_when_the_later_run_failed(self, dad):
@@ -802,6 +808,191 @@ class TestProblems:
         assert probs["schedule:old:disabled"]["severity"] == "P1"
         # Daily crons are not judged on tick coverage (one tick a day).
         assert "schedule:city-daily:dropped" not in probs
+
+    def test_freshness_window_is_six_hours_for_hourly_and_two_cycles_otherwise(self, dar):
+        """Matches the status page: hourly (and faster) 6h, daily 48h, weekly 14d."""
+        now = T("2026-10-22T14:00:00Z")
+        assert dar._freshness_window_h(["7 * * * *"], now) == 6.0
+        assert dar._freshness_window_h(
+            ["12 * * * *", "27 * * * *", "42 * * * *", "57 * * * *"], now) == 6.0
+        assert dar._freshness_window_h(["29 7 * * *"], now) == 48.0
+        assert dar._freshness_window_h(["23 8 * * 1"], now) == 336.0
+
+    def test_late_but_fresh_is_an_info_line_not_a_p2(self, dar):
+        """A cron that starts hours late is not its own P2 when a catch-up
+        succeeded and the data is current. One line covers every such job."""
+        s = _data()["schedules"]["schedules"][0]
+        city = {**s, "name": "city-daily", "path": ".github/workflows/city-daily.yml",
+                "crons": ["29 7 * * *"], "due_days": 6, "due_runs": 6,
+                "median_delay_min": 253, "schedule_median_delay_min": 323,
+                "coverage_pct": 100.0, "late_days": 6, "late_span_h": 120.0,
+                "catchup_ticks": 4, "catchup_runs": 5,
+                "last_run": {"conclusion": "success", "event": "schedule",
+                             "created_at": "2026-10-22T13:05:00Z"},
+                "last_catchup": {"conclusion": "success", "event": "workflow_dispatch",
+                                 "created_at": "2026-10-22T09:42:00Z"}}
+        d = _data(generated_at="2026-10-22T14:00:00Z",
+                  schedules={"status": "ok", "schedules": [city]})
+        ids = _ids(dar.data_problems(d))
+        assert "schedule:city-daily:late" not in ids
+        assert "schedule:city-daily:dropped" not in ids
+        note = dar.schedule_timing_note(d)
+        assert note == "1 job started late; watchdog caught up; data fresh"
+        md = dar.render_md(dar.build_report(d, _ux(), None, "2026-10-22"))
+        assert note in md.splitlines()
+        assert "Crons starting >3h late" not in md
+
+    def test_manual_success_keeps_a_late_job_fresh(self, dar):
+        """A person clicking Run workflow counts, and is not labeled a watchdog."""
+        s = _data()["schedules"]["schedules"][0]
+        weekly = {**s, "name": "codeql", "path": ".github/workflows/codeql.yml",
+                  "crons": ["23 4 * * 0"], "due_days": 1, "due_runs": 1,
+                  "median_delay_min": 271, "coverage_pct": 100.0,
+                  "late_days": 1, "late_span_h": 0.0,
+                  "last_run": {"conclusion": "failure", "event": "schedule",
+                               "created_at": "2026-10-18T08:53:00Z"},
+                  "last_failed": False}
+        d = _data(
+            generated_at="2026-10-22T14:00:00Z",
+            workflows={"status": "ok", "workflows": [{
+                "name": "codeql",
+                "latest_24h": {"conclusion": "success", "event": "workflow_dispatch",
+                               "created_at": "2026-10-20T12:00:00Z"},
+                "failed_24h": False, "failing_2_days": False,
+            }]},
+            schedules={"status": "ok", "schedules": [weekly]},
+        )
+        assert "schedule:codeql:late" not in _ids(dar.data_problems(d))
+        assert dar.schedule_timing_note(d) == "1 job started late; data fresh"
+
+    def test_late_over_a_day_with_stale_data_is_p2(self, dar):
+        """Persisting lateness plus a stale feed (or no success in the
+        window) is still an open P2. A disclosed upstream lag is not that
+        stale signal — it keeps its own finding."""
+        s = _data()["schedules"]["schedules"][0]
+        stale = {**s, "name": "city-daily", "path": ".github/workflows/city-daily.yml",
+                 "crons": ["29 7 * * *"], "due_days": 6, "due_runs": 6,
+                 "median_delay_min": 400, "late_days": 5, "late_span_h": 96.0,
+                 "coverage_pct": 100.0, "catchup_ticks": 2,
+                 "last_run": {"conclusion": "success", "created_at": "2026-10-22T13:00:00Z"},
+                 "last_catchup": {"conclusion": "success", "event": "workflow_dispatch",
+                                  "created_at": "2026-10-22T09:00:00Z"}}
+        silent = {**s, "name": "money-flow-daily", "path": ".github/workflows/money-flow-daily.yml",
+                  "crons": ["30 8 * * *"], "due_days": 6, "due_runs": 6,
+                  "median_delay_min": 300, "late_days": 4, "late_span_h": 72.0,
+                  "coverage_pct": 100.0,
+                  "last_run": {"conclusion": "success", "created_at": "2026-10-19T12:00:00Z"}}
+        d = _data(generated_at="2026-10-22T14:00:00Z",
+                  schedules={"status": "ok", "schedules": [stale, silent]})
+        d["data_health"]["results"].append({
+            "path": "data-city.json", "status": "stale", "age_h": 80, "limit_h": 48,
+            "owner": "city-daily.yml (daily 06:00Z)",
+        })
+        probs = {p["id"]: p for p in dar.data_problems(d)}
+        assert probs["schedule:city-daily:late"]["severity"] == "P2"
+        assert probs["schedule:money-flow-daily:late"]["severity"] == "P2"
+        assert probs["feed:data-city.json"]["severity"] == "P0"
+        assert dar.schedule_timing_note(d) is None
+
+    def test_one_late_day_does_not_open_a_p2_even_when_the_feed_is_stale(self, dar):
+        s = _data()["schedules"]["schedules"][0]
+        once = {**s, "name": "city-daily", "path": ".github/workflows/city-daily.yml",
+                "crons": ["29 7 * * *"], "due_days": 6, "due_runs": 6,
+                "median_delay_min": 400, "late_days": 1, "late_span_h": 0.0,
+                "coverage_pct": 100.0,
+                "last_run": {"conclusion": "success", "created_at": "2026-10-22T13:00:00Z"}}
+        d = _data(generated_at="2026-10-22T14:00:00Z",
+                  schedules={"status": "ok", "schedules": [once]})
+        d["data_health"]["results"].append({
+            "path": "data-city.json", "status": "stale", "age_h": 80, "limit_h": 48,
+            "owner": "city-daily.yml (daily 06:00Z)",
+        })
+        ids = _ids(dar.data_problems(d))
+        assert "schedule:city-daily:late" not in ids
+        assert "feed:data-city.json" in ids
+        assert dar.schedule_timing_note(d) is None
+
+    def test_hourly_skip_inside_six_hours_is_fresh_and_outside_is_p2(self, dar):
+        s = _data()["schedules"]["schedules"][0]
+
+        def row(created: str) -> dict:
+            return {**s, "name": "pages", "path": ".github/workflows/pages.yml",
+                    "crons": ["7 * * * *"], "due_days": 8, "due_runs": 160,
+                    "coverage_pct": 34.0, "median_delay_min": 12,
+                    "catchup_ticks": 16, "missed_ticks": 105,
+                    "last_catchup": {"conclusion": "success", "event": "workflow_dispatch",
+                                     "created_at": created}}
+
+        fresh = _data(generated_at="2026-10-22T14:00:00Z",
+                      schedules={"status": "ok", "schedules": [row("2026-10-22T09:30:00Z")]})
+        quiet = _data(generated_at="2026-10-22T14:00:00Z",
+                      schedules={"status": "ok", "schedules": [row("2026-10-22T07:00:00Z")]})
+        assert "schedule:pages:dropped" not in _ids(dar.data_problems(fresh))
+        assert dar.schedule_timing_note(fresh) == (
+            "1 job skipped schedule ticks; watchdog caught up; data fresh")
+        dropped = {p["id"]: p for p in dar.data_problems(quiet)}["schedule:pages:dropped"]
+        assert dropped["severity"] == "P2"
+        assert dar.schedule_timing_note(quiet) is None
+
+    def test_failures_stay_flagged_when_the_late_job_is_fresh(self, dar):
+        """Missed days, failed runs, stale feeds, and down APIs are unchanged."""
+        s = _data()["schedules"]["schedules"][0]
+        fresh_late = {**s, "name": "city-daily", "path": ".github/workflows/city-daily.yml",
+                      "crons": ["29 7 * * *"], "due_days": 6, "due_runs": 6,
+                      "missed_days": ["2026-10-20"], "median_delay_min": 380,
+                      "late_days": 5, "late_span_h": 96.0, "coverage_pct": 100.0,
+                      "catchup_ticks": 3,
+                      "last_catchup": {"conclusion": "success", "event": "workflow_dispatch",
+                                       "created_at": "2026-10-22T12:00:00Z"},
+                      "last_run": {"conclusion": "success", "created_at": "2026-10-22T13:00:00Z"}}
+        failing = {**s, "name": "security-audit", "crons": ["31 9 * * 1"],
+                   "due_days": 1, "due_runs": 1, "median_delay_min": 20, "coverage_pct": 100.0,
+                   "last_failed": True,
+                   "last_run": {"created_at": "2026-10-19T16:36:00Z", "conclusion": "failure",
+                                "url": "u"}}
+        d = _data(
+            generated_at="2026-10-22T14:00:00Z",
+            workflows={"status": "ok", "workflows": [{
+                "name": "aviation-tsa", "latest_24h": {"url": "u1", "conclusion": "failure"},
+                "failed_24h": True, "failing_2_days": False, "failed_jobs": [],
+            }]},
+            schedules={"status": "ok", "schedules": [fresh_late, failing]},
+        )
+        d["data_health"]["results"].append(
+            {"path": "data-b.json", "status": "stale", "age_h": 50, "limit_h": 24})
+        d["api_status"]["verdicts"] = {"CoinGecko": "up", "Example": "down"}
+        probs = {p["id"]: p for p in dar.data_problems(d)}
+        assert "schedule:city-daily:late" not in probs
+        assert probs["schedule:city-daily:missed"]["severity"] == "P1"
+        assert probs["schedule:security-audit:failing"]["severity"] == "P1"
+        assert probs["workflow:aviation-tsa:failed"]["severity"] == "P1"
+        assert probs["feed:data-b.json"]["severity"] == "P0"
+        assert probs["api:Example"]["severity"] == "P1"
+        md = dar.render_md(dar.build_report(d, _ux(), None, "2026-10-22"))
+        assert "1 job started late; watchdog caught up; data fresh" in md.splitlines()
+        assert "Crons starting >3h late" not in md
+        assert "Scheduled workflow security-audit: last scheduled run failed" in md
+        assert "Workflow aviation-tsa failed in the last 24h" in md
+        assert "Upstream API Example is DOWN" in md
+
+    def test_disclosed_lag_does_not_make_a_fresh_late_job_a_schedule_p2(self, dar):
+        s = _data()["schedules"]["schedules"][0]
+        tsa = {**s, "name": "aviation-tsa", "path": ".github/workflows/aviation-tsa.yml",
+               "crons": ["10 14 * * *"], "due_days": 6, "due_runs": 6,
+               "median_delay_min": 300, "late_days": 4, "late_span_h": 72.0,
+               "coverage_pct": 100.0,
+               "last_run": {"conclusion": "success", "created_at": "2026-10-22T12:00:00Z"}}
+        d = _data(generated_at="2026-10-22T14:00:00Z",
+                  schedules={"status": "ok", "schedules": [tsa]})
+        d["data_health"]["results"].append({
+            "path": "data-tsa.json", "status": "disclosed", "age_h": 72, "limit_h": 48,
+            "detail": "upstream lag: source newest date equals this file's as_of",
+            "owner": "aviation-tsa.yml (daily 14:10Z)",
+        })
+        probs = {p["id"]: p for p in dar.data_problems(d)}
+        assert "schedule:aviation-tsa:late" not in probs
+        assert probs["feed:data-tsa.json:upstream-lag"]["severity"] == "P2"
+        assert dar.schedule_timing_note(d) == "1 job started late; data fresh"
 
     def test_catchups_count_as_freshness_and_stay_labeled(self, dar):
         s = _data()["schedules"]["schedules"][0]

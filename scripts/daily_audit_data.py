@@ -23,7 +23,10 @@ others, so a flaky upstream degrades the report instead of erasing it):
                 and which a cron-watchdog catch-up served instead (labeled
                 separately, not counted as a schedule delivery). A failed
                 scheduled run is not still failing once a later run has
-                succeeded, including a manual workflow_dispatch.
+                succeeded, including a manual workflow_dispatch. ``late_days``
+                and ``skip_days`` record how long a late start or a missed
+                tick has already lasted; ``last_success_at`` is the newest
+                success of any kind (schedule, watchdog catch-up, or manual).
   api_status    ``data/health/api_status.json`` verdict counts, and per-source
                 verdict changes vs. the committed copy from ~24h earlier.
   spot_checks   cheap correctness checks of the LIVE site against primary
@@ -85,6 +88,10 @@ TREASURY_TOLERANCE = 0.02            # percentage points
 TREASURY_MAX_LAG_DAYS = 6            # FRED trails treasury.gov by ~1 business day
 LIVE_BUILD_MAX_AGE_H = 6.0           # pages.yml rebuilds hourly
 SCHEDULE_GRACE = timedelta(hours=10)  # GitHub cron here routinely starts 5-8 h late
+# Median start delay above this is "late". The report uses the same number
+# (daily_audit_report.LATE_MINUTES) when it decides whether that lateness
+# is a P2. Kept here so the span of late ticks is measured once, at collect.
+SCHEDULE_LATE_MINUTES = 180
 
 # Price cross-check. The number on the page is the Coinbase Exchange last
 # trade (``market.coinbase.{btc,eth}`` from
@@ -431,6 +438,41 @@ def clearing_success(failed_run: dict | None, runs: Iterable[dict]) -> dict | No
     return None
 
 
+def latest_success(runs: Iterable[dict]) -> dict | None:
+    """Newest successful completed run, ignoring pull-request events.
+
+    Schedule events, watchdog catch-ups, and a person clicking Run workflow
+    all count. The stamp is completion (``updated_at``) when GitHub sent it,
+    otherwise ``created_at``.
+    """
+    best: dict | None = None
+    best_at: datetime | None = None
+    for run in runs:
+        if run.get("event") in _SIDE_EVENTS:
+            continue
+        if run.get("conclusion") != "success":
+            continue
+        if run.get("status") not in (None, "completed"):
+            continue
+        stamp = parse_ts(run.get("updated_at")) or parse_ts(run.get("created_at"))
+        if stamp is None:
+            continue
+        if best_at is None or stamp > best_at:
+            best, best_at = run, stamp
+    return best
+
+
+def _occurrence_stats(times: list[datetime]) -> tuple[int, float | None]:
+    """(distinct calendar days, hours from the first occurrence to the last)."""
+    if not times:
+        return 0, None
+    days = len({t.date() for t in times})
+    if len(times) == 1:
+        return days, 0.0
+    span = (max(times) - min(times)).total_seconds() / 3600.0
+    return days, round(span, 1)
+
+
 def _run_in_window(times: list[datetime], start: datetime, end: datetime) -> datetime | None:
     return next((rt for rt in times if start <= rt < end), None)
 
@@ -477,6 +519,8 @@ def evaluate_schedule(crons: list[str], runs: list[dict], now: datetime,
     schedule_delays: list[float] = []
     schedule_served = 0
     catchup_ticks = 0
+    late_times: list[datetime] = []
+    miss_times: list[datetime] = []
     for i, t in enumerate(fires):
         if t >= judge_until:
             break
@@ -487,6 +531,7 @@ def evaluate_schedule(crons: list[str], runs: list[dict], now: datetime,
         catch_hit = _run_in_window(catch_times, t - slack, end)
         due[t.date()] = due.get(t.date(), 0) + 1
         if sched_hit is None and catch_hit is None:
+            miss_times.append(t)
             continue
         served[t.date()] = served.get(t.date(), 0) + 1
         if sched_hit is not None:
@@ -499,7 +544,10 @@ def evaluate_schedule(crons: list[str], runs: list[dict], now: datetime,
             catchup_ticks += 1
         else:
             hit = sched_hit
-        delays.append(max(0.0, (hit - t).total_seconds() / 60.0))
+        delay_min = max(0.0, (hit - t).total_seconds() / 60.0)
+        delays.append(delay_min)
+        if delay_min > SCHEDULE_LATE_MINUTES:
+            late_times.append(t)
     due_runs = sum(due.values())
     served_ticks = sum(served.values())
     missed = sorted(d.isoformat() for d in due if not served.get(d))
@@ -508,6 +556,8 @@ def evaluate_schedule(crons: list[str], runs: list[dict], now: datetime,
     median = delays[len(delays) // 2] if delays else None
     schedule_median = schedule_delays[len(schedule_delays) // 2] if schedule_delays else None
     since = now - timedelta(days=days)
+    late_days, late_span_h = _occurrence_stats(late_times)
+    skip_days, skip_span_h = _occurrence_stats(miss_times)
     return {
         "due_days": len(due),
         "due_runs": due_runs,
@@ -518,12 +568,18 @@ def evaluate_schedule(crons: list[str], runs: list[dict], now: datetime,
         "catchup_ticks": catchup_ticks,
         # Ticks no schedule event and no watchdog catch-up served. Distinct
         # from catchup_ticks, which are dropped schedule events the watchdog
-        # did cover. Both stay informational; neither is an outage by itself.
+        # did cover. late_* / skip_* say whether that pattern already spans
+        # more than one day; the report turns it into a P2 only when the
+        # job's data is also stale or nothing has succeeded in its window.
         "missed_ticks": due_runs - served_ticks,
         "coverage_pct": round(100.0 * served_ticks / due_runs, 1) if due_runs else None,
         "schedule_coverage_pct": round(100.0 * schedule_served / due_runs, 1) if due_runs else None,
         "median_delay_min": round(median) if median is not None else None,
         "schedule_median_delay_min": round(schedule_median) if schedule_median is not None else None,
+        "late_days": late_days,
+        "late_span_h": late_span_h,
+        "skip_days": skip_days,
+        "skip_span_h": skip_span_h,
     }
 
 
@@ -620,11 +676,16 @@ def _failing_statuses(repo_root: Path) -> set[str]:
 
 
 def _summarize_run(r: dict) -> dict:
-    return {
+    out = {
         "id": r.get("id"), "conclusion": r.get("conclusion"), "status": r.get("status"),
         "event": r.get("event"), "created_at": r.get("created_at"),
         "url": r.get("html_url"), "run_number": r.get("run_number"),
     }
+    # Completion is the freshness stamp: a run that started outside the
+    # window and finished inside it still counts.
+    if r.get("updated_at"):
+        out["updated_at"] = r.get("updated_at")
+    return out
 
 
 def _annotation_is_etf_soft_warning(title: str | None, message: str | None) -> bool:
@@ -794,6 +855,27 @@ def section_workflows_and_schedules(gh: GitHub, repo_root: Path, now: datetime,
                         key=lambda r: r.get("created_at") or "", reverse=True)
         if caught:
             s["last_catchup"] = _summarize_run(caught[0])
+        # Newest success of any kind, including a manual run that is not a
+        # recovery of a failed schedule and a watchdog catch-up. The report
+        # treats this as the job having run, even when the schedule event
+        # itself was late or missing.
+        success_pool = list(runs)
+        if last:
+            success_pool.append(last[0])
+        recovered = s.get("recovered_run")
+        if isinstance(recovered, dict):
+            success_pool.append({
+                "conclusion": "success", "status": "completed",
+                "event": recovered.get("event"),
+                "created_at": recovered.get("created_at"),
+                "updated_at": recovered.get("updated_at"),
+            })
+        best = latest_success(success_pool)
+        if best is not None:
+            stamp = parse_ts(best.get("updated_at")) or parse_ts(best.get("created_at"))
+            if stamp is not None:
+                s["last_success_at"] = iso(stamp)
+                s["last_success_event"] = best.get("event")
         schedules.append(s)
     workflows.sort(key=lambda w: w.get("name") or "")
     schedules.sort(key=lambda w: w.get("name") or "")
