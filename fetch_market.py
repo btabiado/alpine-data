@@ -172,116 +172,162 @@ def coingecko_market(asset_id: str, days: int = 365) -> dict:
     return out if isinstance(out, dict) else {"price": [], "volume": [], "market_cap": []}
 
 
-# A perp row only describes the market if the instrument is actually trading
-# and its quote is recent. On 2026-10-04 every Coinbase International PERP was
-# PAUSED (131) or DELISTED (133) with quotes frozen at 2026-09-03 / 2026-10-01,
-# yet those frozen predicted-funding values kept feeding the Overview
-# "Crypto Market Sentiment" composite as if live.
+# A perp row only describes the market if the quote is recent. INTX REST
+# GET /api/v1/instruments on api.international.coinbase.com answered 200
+# through the 2026-10-23 14:19 UTC probe and HTTP 404 ("Endpoint GET
+# /api/v1/instruments not found") from the 18:18 UTC probe on (daily audit
+# 2026-10-23, data integrations). Coinbase's current public docs move
+# international derivatives to the keyless Deribit-backed gateway:
+# public/get_book_summary_by_currency (tag Public, security: []). USDC +
+# kind=future is the linear book those perps moved to; dated futures in the
+# same payload are not perpetuals. funding_8h is the projected 8-hour rate
+# that settles next, replacing INTX's hourly predicted_funding.
+CB_INTL_PERP_URL = (
+    "https://drb.coinbase.com/api/v2/public/get_book_summary_by_currency"
+    "?currency=USDC&kind=future"
+)
 CB_INTL_MAX_QUOTE_AGE_H = 24
 _CB_INTL_LAST_STATUS: dict = {}
 
 
-def _parse_iso_utc(ts: Any) -> datetime | None:
-    if not isinstance(ts, str) or not ts:
-        return None
+def _finite(v: Any) -> float | None:
     try:
-        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
-    except ValueError:
+        n = float(v)
+    except (TypeError, ValueError):
         return None
-    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    if n != n or n in (float("inf"), float("-inf")):
+        return None
+    return n
+
+
+def _epoch_to_utc(v: Any) -> datetime | None:
+    """Book-summary ``creation_timestamp`` is milliseconds since the epoch."""
+    n = _finite(v)
+    if n is None:
+        return None
+    if n > 1e12:
+        n = n / 1000.0
+    try:
+        return datetime.fromtimestamp(n, tz=timezone.utc)
+    except (OverflowError, OSError, ValueError):
+        return None
 
 
 def coinbase_intl_perpetuals(now: datetime | None = None) -> list[dict]:
-    """Coinbase International Exchange — funding rate + mark price + open
-    interest for every PERP that is TRADING with a quote < 24h old. Public
-    endpoint, no auth.
+    """USDC perpetuals on Coinbase's public derivatives gateway.
 
-    Works from US IPs (Binance's /fapi endpoint returns 451 from US, this
-    one returns 200). Use case: cross-exchange perpetual positioning view
-    next to OKX funding. The funding rate field returned is
-    `predicted_funding` from the quote object, which is the rate that will
-    settle at the next funding interval — i.e. forward-looking funding,
-    most useful for spotting crowded positioning right now.
+    Funding, mark, index (estimated delivery price), open interest in the
+    base coin, and 24h volume for every instrument whose name ends in
+    ``-PERPETUAL``. Public endpoint, no auth (``CB_INTL_PERP_URL``).
 
-    Instruments whose ``trading_state`` is not TRADING (PAUSED/DELISTED) or
-    whose quote is older than ``CB_INTL_MAX_QUOTE_AGE_H`` are dropped; the
-    counts and the reason land in ``_CB_INTL_LAST_STATUS`` (published as
-    ``market.coinbase_intl_perps_status``) so an empty table says why.
+    ``funding_rate`` is ``funding_8h``: the projected 8-hour rate for the
+    current settlement window, i.e. the rate charged at the next
+    settlement. Dated futures in the same payload are skipped. A quote
+    older than ``CB_INTL_MAX_QUOTE_AGE_H``, or a perpetual with no finite
+    ``funding_8h``, is dropped. Counts and the reason land in
+    ``_CB_INTL_LAST_STATUS`` (published as ``market.coinbase_intl_perps_status``)
+    so an empty table says why.
 
     Returns rows sorted by funding_rate descending (most crowded long first).
-    Empty list on any failure.
+    Empty list on any failure — a dead gateway must not fail the market job.
     """
     now = now or datetime.now(timezone.utc)
     checked_at = now.isoformat(timespec="seconds")
     _CB_INTL_LAST_STATUS.clear()
-    j = _get("https://api.international.coinbase.com/api/v1/instruments")
-    if not j or not isinstance(j, list):
-        _CB_INTL_LAST_STATUS.update({"available": False, "checked_at": checked_at,
-                                     "reason": "instruments endpoint unreachable"})
+    try:
+        return _coinbase_intl_perpetuals_impl(now, checked_at)
+    except Exception as e:
+        print(f"  [coinbase_intl] {type(e).__name__}", file=sys.stderr)
+        _CB_INTL_LAST_STATUS.clear()
+        _CB_INTL_LAST_STATUS.update({
+            "available": False,
+            "checked_at": checked_at,
+            "reason": f"coinbase intl perps failed ({type(e).__name__})",
+        })
+        return []
+
+
+def _coinbase_intl_perpetuals_impl(now: datetime, checked_at: str) -> list[dict]:
+    j = _get(CB_INTL_PERP_URL)
+    books = j.get("result") if isinstance(j, dict) else None
+    if not isinstance(books, list):
+        _CB_INTL_LAST_STATUS.update({
+            "available": False, "checked_at": checked_at,
+            "reason": "derivatives book summary unreachable",
+        })
         return []
     out: list[dict] = []
     total = 0
-    states: dict[str, int] = {}
+    not_perp = 0
+    missing_funding = 0
     stale_quotes = 0
     newest_quote: str | None = None
-    for it in j:
-        if it.get("type") != "PERP":
+    for it in books:
+        if not isinstance(it, dict):
             continue
-        sym_full = it.get("symbol") or ""
-        sym = sym_full.replace("-PERP", "")
+        name = it.get("instrument_name") or ""
+        if not isinstance(name, str) or not name.endswith("-PERPETUAL"):
+            if name:
+                not_perp += 1
+            continue
+        sym = it.get("base_currency")
+        if not isinstance(sym, str) or not sym.strip():
+            sym = name.split("_", 1)[0]
+        sym = sym.strip().upper()
         if not sym:
             continue
         total += 1
-        quote = it.get("quote") or {}
-        # Coinbase stamps each quote object with its own ISO-8601 UTC
-        # `timestamp` (same object that carries predicted_funding), which
-        # is when THE QUOTE was produced — not when we called. That is the
-        # honest per-row observation time; `market.fetched_at` is not, and
-        # for a stale-kept payload it would be actively wrong. Falls back
-        # to the instrument-level timestamp, then to None so a missing
-        # upstream timestamp renders as "unavailable" instead of "now".
-        q_ts = quote.get("timestamp") or it.get("timestamp")
-        q_ts = q_ts if isinstance(q_ts, str) and q_ts else None
+        # creation_timestamp is when this summary was produced, not when we
+        # called. market.fetched_at is our clock and is not used as as_of.
+        q_dt = _epoch_to_utc(it.get("creation_timestamp"))
+        q_ts = q_dt.strftime("%Y-%m-%dT%H:%M:%SZ") if q_dt else None
         if q_ts and (newest_quote is None or q_ts > newest_quote):
             newest_quote = q_ts
-        state = it.get("trading_state")
-        if state is not None and state != "TRADING":
-            states[str(state)] = states.get(str(state), 0) + 1
+        funding = _finite(it.get("funding_8h"))
+        if funding is None:
+            missing_funding += 1
             continue
-        q_dt = _parse_iso_utc(q_ts)
         if q_dt is None or (now - q_dt) > timedelta(hours=CB_INTL_MAX_QUOTE_AGE_H):
             stale_quotes += 1
             continue
-        try:
-            out.append({
-                "symbol":         sym,
-                "funding_rate":   float(quote.get("predicted_funding") or 0),
-                "mark_price":     float(quote.get("mark_price") or 0),
-                "index_price":    float(quote.get("index_price") or 0),
-                "open_interest_base": float(it.get("open_interest") or 0),
-                "volume_24h":     float(it.get("qty_24hr") or 0),
-                "notional_24h":   float(it.get("notional_24hr") or 0),
-                # `as_of` is the YYYY-MM-DD every other row type in this
-                # payload uses; `as_of_ts` keeps the full precision that
-                # actually matters for an 8-hourly funding rate.
-                "as_of":          (q_ts[:10] if q_ts else None),
-                "as_of_ts":       q_ts,
-            })
-        except (ValueError, TypeError):
-            continue
+        notional = _finite(it.get("volume_notional"))
+        if notional is None:
+            notional = _finite(it.get("volume_usd")) or 0.0
+        out.append({
+            "symbol":         sym,
+            "funding_rate":   funding,
+            "mark_price":     _finite(it.get("mark_price")) or 0.0,
+            "index_price":    _finite(it.get("estimated_delivery_price")) or 0.0,
+            "open_interest_base": _finite(it.get("open_interest")) or 0.0,
+            "volume_24h":     _finite(it.get("volume")) or 0.0,
+            "notional_24h":   notional,
+            # `as_of` is the YYYY-MM-DD every other row type in this
+            # payload uses; `as_of_ts` keeps the full precision.
+            "as_of":          q_ts[:10],
+            "as_of_ts":       q_ts,
+        })
     out.sort(key=lambda r: r["funding_rate"], reverse=True)
     status = {"available": bool(out), "checked_at": checked_at,
               "perps_total": total, "trading_fresh": len(out),
-              "excluded_by_state": states, "excluded_stale_quote": stale_quotes,
+              "excluded_not_perpetual": not_perp,
+              "excluded_missing_funding": missing_funding,
+              "excluded_stale_quote": stale_quotes,
               "max_quote_age_hours": CB_INTL_MAX_QUOTE_AGE_H,
               "newest_quote": newest_quote}
     if not out:
-        bits = [f"{n} {st}" for st, n in sorted(states.items())]
+        bits = []
+        if not_perp:
+            bits.append(f"{not_perp} dated or non-perpetual")
+        if missing_funding:
+            bits.append(f"{missing_funding} without funding_8h")
         if stale_quotes:
             bits.append(f"{stale_quotes} with quotes older than {CB_INTL_MAX_QUOTE_AGE_H}h")
-        status["reason"] = (f"no Coinbase International perp is trading with a fresh quote "
-                            f"({', '.join(bits) or 'no PERP instruments'}"
-                            + (f"; newest quote {newest_quote}" if newest_quote else "") + ")")
+        status["reason"] = (
+            "no USDC perpetual has a fresh funding_8h quote ("
+            + (", ".join(bits) or "no perpetual instruments")
+            + (f"; newest quote {newest_quote}" if newest_quote else "")
+            + ")"
+        )
     _CB_INTL_LAST_STATUS.update(status)
     return out
 
@@ -294,7 +340,8 @@ def perp_funding_summary(funding_by_symbol: dict, now: datetime | None = None,
     of OKX's per-settlement rates, oldest->newest). Each symbol contributes its
     newest row if that row is within ``max_age_days``; ``as_of`` is the OLDEST
     contributing date (a composite is only as fresh as its oldest input).
-    Replaces the Coinbase International perps, which stopped trading."""
+    The Overview composite uses this OKX summary. The Coinbase crowded-long
+    and crowded-short tables are a separate feed and do not vote here."""
     now = now or datetime.now(timezone.utc)
     cutoff = (now - timedelta(days=max_age_days)).strftime("%Y-%m-%d")
     rows, excluded = [], []

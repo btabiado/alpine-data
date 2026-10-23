@@ -3375,7 +3375,7 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
         <div class="card" style="padding:14px 16px;margin-top:6px;margin-bottom:10px;border-left:3px solid var(--btc)">
           <h2 style="margin:0 0 6px;font-size:14px">Futures &amp; perpetuals dashboard</h2>
           <p class="sub" style="font-size:12px;line-height:1.5;color:var(--muted);margin:0">
-            Derivatives positioning for BTC, ETH, LINK, LTC. <strong style="color:var(--text)">Funding rate</strong> shows perp traders paying to hold longs (positive) or shorts (negative); extremes signal crowded positioning. <strong style="color:var(--text)">Open interest</strong> is total notional in active perp contracts. <strong style="color:var(--text)">Long/short ratio</strong> from OKX shows top-account positioning bias. <strong style="color:var(--text)">DVOL</strong> is Deribit's BTC/ETH implied-volatility index. The two tables list Coinbase International Exchange perps with the most extreme positive (crowded longs) and negative (crowded shorts) funding rates.
+            Derivatives positioning for BTC, ETH, LINK, LTC. <strong style="color:var(--text)">Funding rate</strong> shows perp traders paying to hold longs (positive) or shorts (negative); extremes signal crowded positioning. <strong style="color:var(--text)">Open interest</strong> is total notional in active perp contracts. <strong style="color:var(--text)">Long/short ratio</strong> from OKX shows top-account positioning bias. <strong style="color:var(--text)">DVOL</strong> is Deribit's BTC/ETH implied-volatility index. The two tables list Coinbase USDC perpetuals with the most extreme positive (crowded longs) and negative (crowded shorts) 8-hour funding rates.
           </p>
         </div>
       </details>
@@ -3476,15 +3476,13 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
         <div class="chart-wrap"><canvas id="alpineIndexChart"></canvas></div>
         <div id="alpineIndexMeta" class="sub" style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5"></div>
       </div>
-      <!-- Coinbase International Exchange perpetuals positioning: two side-by-side
-           tables surfacing the most crowded LONGS (highest funding) and SHORTS
-           (most negative funding) from the ~246 PERP markets. Funding rate is
-           a positioning gauge — positive = longs paying shorts (crowded long,
-           squeeze setup); negative = shorts paying longs (contrarian buy zone). -->
+      <!-- Coinbase USDC perpetuals: crowded longs and crowded shorts from the
+           keyless public book summary. funding_rate is the projected 8-hour
+           rate (funding_8h), not the retired INTX hourly predicted_funding. -->
       <div class="chart-card" style="background:transparent;border:0;padding:0">
         <div class="head" style="padding:0 4px 6px">
           <h2 style="margin:0">Coinbase Intl perpetuals positioning <span class="tag">FUNDING</span></h2>
-          <span class="desc">crowded longs vs crowded shorts &middot; ~246 PERP markets</span>
+          <span class="desc">crowded longs vs crowded shorts &middot; USDC perpetuals</span>
         </div>
         <div class="grid2">
           <div class="chart-card">
@@ -3513,7 +3511,7 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
           </div>
         </div>
         <div class="note" style="margin-top:8px;font-size:11px">
-          Funding rate fires every 1h. Positive = longs pay shorts (crowded long, squeeze setup). Negative = shorts pay longs (crowded short, contrarian buy zone). Funding &times; 24 &asymp; approx daily annualized cost.
+          Funding is the projected 8-hour rate (funding_8h) on Coinbase's public derivatives gateway. Positive = longs pay shorts (crowded long, squeeze setup). Negative = shorts pay longs (crowded short, contrarian buy zone). Funding &times; 3 &asymp; the rate over a day.
         </div>
       </div>
       <div class="grid2">
@@ -7289,11 +7287,12 @@ function renderLS(){
   });
 }
 
-// Coinbase International Exchange perpetuals positioning tables.
-// Pulls market.coinbase_intl_perps (pre-sorted desc by funding_rate on the
+// Coinbase USDC perpetuals positioning tables.
+// Pulls market.coinbase_intl_perps (pre-sorted desc by funding_8h on the
 // backend), splits into positive-funding (crowded longs) and negative-funding
 // (crowded shorts) buckets, takes top 6 of each, and renders into the two
-// table bodies on the Trading tab.
+// table bodies on the Trading tab. An empty payload with a status reason
+// says why instead of looking like a refresh delay.
 function renderCoinbaseIntlPerps(){
   const perps = (DATA.market || {}).coinbase_intl_perps || [];
   const longs  = perps.filter(p => p && typeof p.funding_rate === 'number' && p.funding_rate > 0)
@@ -14099,9 +14098,9 @@ function renderOverviewSentiment(){
   }
   // 3) Avg perp funding rate. > 0.0001 (0.01%) per +0.0001 contributes +20;
   //    clamp to ±100. Positive funding = crowded longs. Sourced from
-  //    market.perp_funding (OKX BTC/ETH/LINK/LTC, fresh rows only): the
-  //    Coinbase Intl perps are paused/delisted and their frozen quotes must not
-  //    vote. Older payloads without perp_funding fall back to the perp rows.
+  //    market.perp_funding (OKX BTC/ETH/LINK/LTC, fresh rows only). The
+  //    Coinbase tables are a separate 8-hour funding view and do not vote
+  //    here. Older payloads without perp_funding fall back to the perp rows.
   const pfund = m.perp_funding || null;
   const rates = pfund
     ? ((pfund.available && isFinite(Number(pfund.avg_rate))) ? [Number(pfund.avg_rate)] : [])

@@ -385,31 +385,35 @@ def test_compute_poc_top_markets_per_symbol_stale_cache_is_flagged(tmp_path, mon
 # ============================================================================
 
 def _perp(**over):
+    """One public book-summary row, wrapped in the JSON-RPC envelope.
+
+    ``creation_timestamp`` is the gateway's quote time (milliseconds). The
+    clock in the tests sits a few hours later so the 24h freshness gate keeps
+    the row.
+    """
+    quote = datetime(2026, 8, 1, 5, 31, 56, tzinfo=timezone.utc)
     inst = {
-        "type": "PERP",
-        "symbol": "BTC-PERP",
-        "open_interest": "10",
-        "qty_24hr": "5",
-        "notional_24hr": "7",
-        "quote": {
-            "predicted_funding": "0.0001",
-            "mark_price": "50000",
-            "index_price": "49990",
-            "timestamp": "2026-08-01T05:31:56Z",
-        },
+        "instrument_name": "BTC_USDC-PERPETUAL",
+        "base_currency": "BTC",
+        "open_interest": 10,
+        "volume": 5,
+        "volume_notional": 7,
+        "mark_price": 50000,
+        "estimated_delivery_price": 49990,
+        "funding_8h": 0.0001,
+        "creation_timestamp": int(quote.timestamp() * 1000),
     }
     inst.update(over)
-    return inst
+    return {"jsonrpc": "2.0", "result": [inst]}
 
 
-# Rows are now only kept when the quote is < 24h old (frozen quotes from
-# paused instruments used to feed the sentiment composite), so the clock is
-# pinned just after the quote under test.
+# Rows are only kept when the quote is < 24h old, so the clock is pinned
+# just after the quote under test.
 _QUOTE_NOW = datetime(2026, 8, 1, 12, 0, 0, tzinfo=timezone.utc)
 
 
 def test_coinbase_intl_perps_row_carries_quote_timestamp():
-    with patch.object(fetch_market, "_get", return_value=[_perp()]):
+    with patch.object(fetch_market, "_get", return_value=_perp()):
         out = fetch_market.coinbase_intl_perpetuals(now=_QUOTE_NOW)
     assert len(out) == 1
     assert out[0]["as_of"] == "2026-08-01"
@@ -419,21 +423,22 @@ def test_coinbase_intl_perps_row_carries_quote_timestamp():
 def test_coinbase_intl_perps_row_dropped_when_upstream_undated():
     """An undated quote cannot be shown to be fresh, so it is excluded (and
     counted) rather than published as a live funding reading."""
-    inst = _perp()
-    del inst["quote"]["timestamp"]
-    with patch.object(fetch_market, "_get", return_value=[inst]):
+    env = _perp()
+    env["result"][0]["creation_timestamp"] = None
+    with patch.object(fetch_market, "_get", return_value=env):
         out = fetch_market.coinbase_intl_perpetuals(now=_QUOTE_NOW)
     assert out == []
     assert fetch_market._CB_INTL_LAST_STATUS["excluded_stale_quote"] == 1
 
 
-def test_coinbase_intl_perps_falls_back_to_instrument_timestamp():
-    inst = _perp(timestamp="2026-07-15T00:00:00Z")
-    del inst["quote"]["timestamp"]
-    with patch.object(fetch_market, "_get", return_value=[inst]):
-        out = fetch_market.coinbase_intl_perpetuals(
-            now=datetime(2026, 7, 15, 6, 0, 0, tzinfo=timezone.utc))
-    assert out[0]["as_of"] == "2026-07-15"
+def test_coinbase_intl_perps_symbol_falls_back_to_the_instrument_name():
+    env = _perp()
+    del env["result"][0]["base_currency"]
+    env["result"][0]["instrument_name"] = "ETH_USDC-PERPETUAL"
+    with patch.object(fetch_market, "_get", return_value=env):
+        out = fetch_market.coinbase_intl_perpetuals(now=_QUOTE_NOW)
+    assert out[0]["symbol"] == "ETH"
+    assert out[0]["as_of"] == "2026-08-01"
 
 
 # ============================================================================
