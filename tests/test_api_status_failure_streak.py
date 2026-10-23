@@ -316,11 +316,144 @@ def test_audit_raises_p1_only_after_the_second_failed_run(monkeypatch, tmp_path)
 
     def severities(snap):
         verdicts = {s["label"]: s["verdict"] for s in snap["sources"]}
-        probs = dar.data_problems({"api_status": {"status": "ok", "verdicts": verdicts}})
+        streaks = {s["label"]: s["consecutive_failures"] for s in snap["sources"]
+                   if type(s.get("consecutive_failures")) is int}
+        notes = {s["label"]: s["note"] for s in snap["sources"] if s.get("note")}
+        probs = dar.data_problems({"api_status": {
+            "status": "ok", "verdicts": verdicts, "streaks": streaks, "notes": notes}})
         return {p["id"]: p["severity"] for p in probs}
 
     assert severities(first) == {"api:Example": "P2"}
     assert severities(second) == {"api:Example": "P1"}
+
+
+def test_usgs_sciencebase_timeout_uses_the_same_two_run_rule(monkeypatch, tmp_path):
+    """Alpine Data daily audit 2026-10-23, top issue 2.
+
+    The 12:43Z probe recorded USGS ScienceBase ``down`` (audit P1) after a
+    read timeout, and the 18:18Z probe was HTTP 200. That ``down`` was not a
+    one-off and not an HTTP 5xx: the 10:00Z probe had already timed out and
+    been stored ``degraded`` with ``consecutive_failures`` 1. The ScienceBase
+    target sends a browser UA, but it is not a special case. One timeout is
+    P2. The next consecutive timeout is P1, and the audit says why.
+    """
+    target = next(t for t in api_status.TARGETS if t["label"] == "USGS ScienceBase")
+    assert target["url"].startswith("https://www.sciencebase.gov/")
+    assert "User-Agent" in (target.get("headers") or {})
+
+    spec = importlib.util.spec_from_file_location(
+        "_dar_sciencebase",
+        Path(__file__).resolve().parent.parent / "scripts" / "daily_audit_report.py",
+    )
+    dar = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(dar)
+    assert dar.API_FAILURES_BEFORE_DOWN == api_status.FAILURES_BEFORE_DOWN == 2
+
+    first, calls, sleeps, path = _probe(
+        monkeypatch, tmp_path,
+        lambda url: TimeoutError("The read operation timed out"),
+        targets=[target],
+    )
+    row = _row(first, "USGS ScienceBase")
+    assert row["verdict"] == "degraded"
+    assert row["status"] is None
+    assert row["consecutive_failures"] == 1
+    assert row["retries"] == 2
+    assert "not marked down until 2" in row["note"]
+    assert len(calls) == 2
+    assert sleeps == [api_status.PROBE_BACKOFF_S]
+
+    path.write_text(json.dumps(first))
+    second = api_status.probe_all(timeout=1, max_workers=1)
+    row2 = _row(second, "USGS ScienceBase")
+    assert row2["verdict"] == "down"
+    assert row2["status"] is None
+    assert row2["consecutive_failures"] == 2
+    assert "2 consecutive probe failures" in row2["note"]
+
+    def graded(snap, **extra):
+        verdicts = {s["label"]: s["verdict"] for s in snap["sources"]}
+        streaks = {s["label"]: s["consecutive_failures"] for s in snap["sources"]
+                   if type(s.get("consecutive_failures")) is int}
+        notes = {s["label"]: s["note"] for s in snap["sources"] if s.get("note")}
+        api = {"status": "ok", "verdicts": verdicts, "streaks": streaks, "notes": notes}
+        api.update(extra)
+        return {p["id"]: p for p in dar.data_problems({"api_status": api})}
+
+    first_p = graded(first)["api:USGS ScienceBase"]
+    assert first_p["severity"] == "P2"
+    assert first_p["title"].endswith("is degraded")
+    second_p = graded(second, prior_probe={
+        "source": "git:4c1ceb4c56",
+        "generated_at": "2026-10-23T10:00:09+00:00",
+        "verdicts": {"USGS ScienceBase": "degraded"},
+        "streaks": {"USGS ScienceBase": 1},
+    })["api:USGS ScienceBase"]
+    assert second_p["severity"] == "P1"
+    assert "2 consecutive probe failures" in second_p["detail"]
+    assert "previous probe 2026-10-23T10:00:09+00:00 was degraded" in second_p["detail"]
+    md = dar.render_md(dar.build_report(
+        {"api_status": {
+            "status": "ok",
+            "generated_at": "2026-10-23T12:43:53+00:00",
+            "verdicts": {"USGS ScienceBase": "down"},
+            "streaks": {"USGS ScienceBase": 2},
+            "notes": {"USGS ScienceBase": row2["note"]},
+            "prior_probe": {
+                "source": "git:4c1ceb4c56",
+                "generated_at": "2026-10-23T10:00:09+00:00",
+                "verdicts": {"USGS ScienceBase": "degraded"},
+                "streaks": {"USGS ScienceBase": 1},
+            },
+            "previous": {"source": "git:40fed88056",
+                         "generated_at": "2026-10-22T09:45:39+00:00",
+                         "verdicts": {"USGS ScienceBase": "up"}},
+            "changes": [{"source": "USGS ScienceBase", "from": "up", "to": "down"}],
+            "unwired_key_envs": [],
+        }},
+        None, None, "2026-10-23"))
+    assert "USGS ScienceBase: up → down" in md
+    assert "2 consecutive probe failures" in md
+    assert "prior probe git:4c1ceb4c56" in md
+    assert "degraded → down" in md
+
+
+def test_audit_does_not_p1_a_down_row_with_one_strike(monkeypatch, tmp_path):
+    """A verdict of down with a streak below 2 bypasses the probe debounce.
+
+    The audit has to enforce the same bar. HTTP 503 is already degraded
+    (an answer, not a missed connection) and must not become that P1 either.
+    """
+    spec = importlib.util.spec_from_file_location(
+        "_dar_one_strike",
+        Path(__file__).resolve().parent.parent / "scripts" / "daily_audit_report.py",
+    )
+    dar = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(dar)
+
+    probs = {p["id"]: p for p in dar.data_problems({"api_status": {
+        "status": "ok",
+        "verdicts": {"USGS ScienceBase": "down", "Example": "down"},
+        "streaks": {"USGS ScienceBase": 1},
+        "notes": {"USGS ScienceBase": "TimeoutError: timed out"},
+    }})}
+    assert probs["api:USGS ScienceBase"]["severity"] == "P2"
+    assert "not marked down until 2" in probs["api:USGS ScienceBase"]["detail"]
+    # No recorded streak: a pre-counter snapshot. Still P1.
+    assert probs["api:Example"]["severity"] == "P1"
+
+    target = next(t for t in api_status.TARGETS if t["label"] == "USGS ScienceBase")
+    snap, calls, sleeps, _path = _probe(
+        monkeypatch, tmp_path,
+        lambda url: _http_error(url, 503, "Service Unavailable"),
+        prior_sources=[{"label": "USGS ScienceBase", "verdict": "degraded",
+                        "consecutive_failures": 1}],
+        targets=[target],
+    )
+    row = _row(snap, "USGS ScienceBase")
+    assert (row["status"], row["verdict"], row["consecutive_failures"]) == (503, "degraded", 0)
+    assert sleeps == []
+    assert len(calls) == 1
 
 
 def test_no_backoff_when_the_only_attempt_fails(monkeypatch, tmp_path):

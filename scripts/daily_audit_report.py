@@ -32,11 +32,13 @@ Severities:
         whose last scheduled run failed with no success since (a later
         manual or watchdog run clears it), a spot check that disagrees
         with its primary source, console errors, failed same-origin
-        requests, visible NaN/undefined text, an upstream API down, an
-        LTHCS pillar other than the accepted thesis_integrity stub that
-        is the 50.0 placeholder for the whole universe
-    P2  layout overflow at 390px, heavy pages, degraded/blocked upstreams, a
-        feed whose source was checked and has not published newer data
+        requests, visible NaN/undefined text, an upstream API down after
+        two consecutive failed probe runs, an LTHCS pillar other than
+        the accepted thesis_integrity stub that is the 50.0 placeholder
+        for the whole universe
+    P2  layout overflow at 390px, heavy pages, degraded/blocked upstreams
+        (including a one-off probe failure), a feed whose source was
+        checked and has not published newer data
         (disclosed upstream lag), a transient Farside 5xx/timeout soft warning
         while the ETF flows CSV is under 2 trading days old (the job exits 0;
         this is not a workflow failure). A late cron start or a skipped
@@ -66,6 +68,11 @@ from urllib.parse import urlparse
 
 P0, P1, P2 = "P0", "P1", "P2"
 SEV_ORDER = {P0: 0, P1: 1, P2: 2}
+# api_status.FAILURES_BEFORE_DOWN. A recorded streak below this is one
+# failed probe run: grade it P2 (degraded), not P1. A missing streak is a
+# snapshot from before the counter and stays P1, so an outage already on
+# the board is not hidden.
+API_FAILURES_BEFORE_DOWN = 2
 
 PAGE_LABELS = {
     "v1": "V1 (/)", "summit": "/summit/", "health": "/health/",
@@ -564,6 +571,29 @@ def _disclosed_upstream_lag(row: dict) -> bool:
     return bool(path) and "[history:" not in path
 
 
+def _api_failure_detail(label: str, api: dict, streak: Any) -> str:
+    """Why an upstream row is down or degraded, when the probe said so.
+
+    The note is the probe's own text (timeout vs HTTP status, and the
+    streak sentence). The previous probe is appended so a second strike
+    is not read as a one-off flip from yesterday's snapshot.
+    """
+    parts: list[str] = []
+    notes = api.get("notes") if isinstance(api.get("notes"), dict) else {}
+    note = notes.get(label) if isinstance(notes, dict) else None
+    if isinstance(note, str) and note.strip():
+        parts.append(note.strip())
+    elif type(streak) is int and streak >= API_FAILURES_BEFORE_DOWN:
+        parts.append(f"{streak} consecutive probe failures")
+    prior = api.get("prior_probe") if isinstance(api.get("prior_probe"), dict) else {}
+    prior_verdicts = prior.get("verdicts") if isinstance(prior.get("verdicts"), dict) else {}
+    prior_verdict = prior_verdicts.get(label) if isinstance(prior_verdicts, dict) else None
+    if prior_verdict:
+        when = prior.get("generated_at") or "the previous probe"
+        parts.append(f"previous probe {when} was {prior_verdict}")
+    return "; ".join(parts)
+
+
 def data_problems(data: dict | None) -> list[dict]:
     out: list[dict] = []
     if not isinstance(data, dict):
@@ -756,16 +786,37 @@ def data_problems(data: dict | None) -> list[dict]:
         out.append(problem("audit:api_status", P2, "audit",
                            "data/health/api_status.json could not be read", api.get("error", "")))
     elif api:
+        streaks = api.get("streaks") if isinstance(api.get("streaks"), dict) else {}
         for label, verdict in sorted((api.get("verdicts") or {}).items()):
             # "retired" is a by-design row: the probe does not call the host
             # (bitinfocharts, retired 2026-10-19 after HTTP 403). It is not an
             # outage and must not reappear as a new blocked-API finding.
             if verdict in ("retired",):
                 continue
-            if verdict == "down":
-                out.append(problem(f"api:{label}", P1, "api", f"Upstream API {label} is DOWN"))
+            streak = streaks.get(label)
+            # The probe rewrites a single connection failure to "degraded"
+            # and leaves "down" only after API_FAILURES_BEFORE_DOWN runs
+            # (USGS ScienceBase 2026-10-23: 10:00Z degraded, 12:43Z down).
+            # Grade from the streak anyway. A snapshot that says "down"
+            # with a streak below that bar is one failed run — P2, not P1.
+            # No streak at all is a pre-counter snapshot: keep P1.
+            if verdict == "down" and type(streak) is int and streak < API_FAILURES_BEFORE_DOWN:
+                detail = _api_failure_detail(label, api, streak)
+                word = "failure" if streak == 1 else "failures"
+                bar = (f"{streak} consecutive probe {word}; "
+                       f"not marked down until {API_FAILURES_BEFORE_DOWN}")
+                if bar not in detail:
+                    detail = f"{detail}; {bar}" if detail else bar
+                out.append(problem(
+                    f"api:{label}", P2, "api", f"Upstream API {label} is degraded", detail,
+                    group="api:degraded", group_title="Upstream APIs degraded", item=label))
+            elif verdict == "down":
+                out.append(problem(
+                    f"api:{label}", P1, "api", f"Upstream API {label} is DOWN",
+                    _api_failure_detail(label, api, streak)))
             elif verdict in ("blocked", "degraded"):
                 out.append(problem(f"api:{label}", P2, "api", f"Upstream API {label} is {verdict}",
+                                   _api_failure_detail(label, api, streak),
                                    group=f"api:{verdict}", group_title=f"Upstream APIs {verdict}",
                                    item=label))
         if api.get("unwired_key_envs"):
@@ -1113,6 +1164,40 @@ def _table(headers: list[str], rows: list[list[Any]]) -> list[str]:
     return out
 
 
+def _prior_probe_line(api: dict) -> str | None:
+    """One line under the ~24h diff for sources that failed the latest probe.
+
+    The ~24h baseline is what made USGS ScienceBase on 2026-10-23 read as
+    ``up → down``. The probe before the one the audit graded was already
+    ``degraded``.
+    """
+    prior = api.get("prior_probe")
+    if not isinstance(prior, dict) or not isinstance(prior.get("verdicts"), dict):
+        return None
+    streaks = api.get("streaks") if isinstance(api.get("streaks"), dict) else {}
+    prior_streaks = prior.get("streaks") if isinstance(prior.get("streaks"), dict) else {}
+    bits: list[str] = []
+    for label, verdict in sorted((api.get("verdicts") or {}).items()):
+        old = prior["verdicts"].get(label)
+        if verdict not in ("down", "degraded"):
+            continue
+        if verdict != "down" and old == verdict:
+            continue
+        streak = streaks.get(label)
+        bit = f"{label}: {old} → {verdict}"
+        if type(streak) is int:
+            word = "failure" if streak == 1 else "failures"
+            bit += f" ({streak} consecutive probe {word})"
+        old_streak = prior_streaks.get(label)
+        if type(old_streak) is int and old != verdict:
+            bit += f"; previous probe had {old_streak}"
+        bits.append(bit)
+    if not bits:
+        return None
+    return (f"  - prior probe {prior.get('source')} ({prior.get('generated_at')}): "
+            + "; ".join(bits[:8]))
+
+
 def render_md(report: dict) -> str:
     s = report["summary"]
     reg = report["regressions"]
@@ -1205,6 +1290,9 @@ def render_md(report: dict) -> str:
                 f"{c['source']}: {c.get('from')} → {c.get('to')}" for c in ch[:12]))
         else:
             L.append(f"  - no verdict changes vs. {report['api_baseline']}")
+        prior_line = _prior_probe_line(api)
+        if prior_line:
+            L.append(prior_line)
     spot = data.get("spot_checks") or {}
     if _section_ok(spot) and spot:
         L += ["", "**Spot checks** (live site vs. primary sources)", ""]

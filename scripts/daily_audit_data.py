@@ -27,8 +27,11 @@ others, so a flaky upstream degrades the report instead of erasing it):
                 and ``skip_days`` record how long a late start or a missed
                 tick has already lasted; ``last_success_at`` is the newest
                 success of any kind (schedule, watchdog catch-up, or manual).
-  api_status    ``data/health/api_status.json`` verdict counts, and per-source
-                verdict changes vs. the committed copy from ~24h earlier.
+  api_status    ``data/health/api_status.json`` verdict counts, each source's
+                ``consecutive_failures`` streak, per-source verdict changes
+                vs. the committed copy from ~24h earlier, and the immediately
+                previous probe (so a second consecutive failure is not
+                reported as a one-day flip from "up").
   spot_checks   cheap correctness checks of the LIVE site against primary
                 sources that need no secrets (CoinGecko's keyless market_chart
                 at the payload's own timestamp, alternative.me, mempool.space,
@@ -889,13 +892,110 @@ def section_workflows_and_schedules(gh: GitHub, repo_root: Path, now: datetime,
             {"status": "ok", "window_days": days, "schedules": schedules})
 
 
+def _source_label(src: dict) -> str | None:
+    label = src.get("label") or src.get("host")
+    return str(label) if label else None
+
+
 def _verdicts(snapshot: dict) -> dict[str, str]:
     out: dict[str, str] = {}
     for s in snapshot.get("sources") or []:
-        label = s.get("label") or s.get("host")
+        if not isinstance(s, dict):
+            continue
+        label = _source_label(s)
         if label:
-            out[str(label)] = str(s.get("verdict"))
+            out[label] = str(s.get("verdict"))
     return out
+
+
+def _streaks(snapshot: dict) -> dict[str, int]:
+    """label -> consecutive_failures, only where the probe recorded an int.
+
+    A missing key is a snapshot from before the counter (or a row the probe
+    did not write). The report treats that differently from an explicit 0.
+    """
+    out: dict[str, int] = {}
+    for s in snapshot.get("sources") or []:
+        if not isinstance(s, dict):
+            continue
+        label = _source_label(s)
+        raw = s.get("consecutive_failures")
+        if label and type(raw) is int and raw >= 0:
+            out[label] = raw
+    return out
+
+
+def _failure_notes(snapshot: dict) -> dict[str, str]:
+    """Notes for rows the audit might page. Empty notes are omitted."""
+    out: dict[str, str] = {}
+    for s in snapshot.get("sources") or []:
+        if not isinstance(s, dict):
+            continue
+        if s.get("verdict") not in ("down", "degraded"):
+            continue
+        label = _source_label(s)
+        note = s.get("note") or ""
+        if label and isinstance(note, str) and note.strip():
+            out[label] = clip(note.strip(), 240)
+    return out
+
+
+def _github_json_file(gh: GitHub, sha: str) -> dict:
+    blob = gh.get("/repos/{repo}/contents/data/health/api_status.json", {"ref": sha})
+    raw = blob.get("content") if isinstance(blob, dict) else None
+    if not isinstance(raw, str) or not raw.strip():
+        raise ValueError(f"api_status.json at {sha[:10]} has no content")
+    snap = json.loads(base64.b64decode(raw).decode("utf-8"))
+    if not isinstance(snap, dict):
+        raise ValueError(f"api_status.json at {sha[:10]} is not an object")
+    return snap
+
+
+def _prior_probe(gh: GitHub, current_generated_at: str | None) -> dict | None:
+    """The committed probe immediately before the snapshot being graded.
+
+    The ~24h diff hides every probe in between. On 2026-10-23 that made
+    USGS ScienceBase look like a single flip from yesterday's ``up`` to
+    ``down``, when the probe an hour earlier was already ``degraded``
+    (strike 1 of 2). Newest commits are walked until one snapshot is
+    strictly older than the file on disk, so a probe that landed after
+    this job checked out is not treated as the previous run.
+    """
+    commits = gh.get("/repos/{repo}/commits", {
+        "path": "data/health/api_status.json",
+        "per_page": 8,
+    })
+    if not isinstance(commits, list):
+        return None
+    current = parse_ts(current_generated_at) if current_generated_at else None
+    fetches = 0
+    for c in commits:
+        if not isinstance(c, dict):
+            continue
+        sha = c.get("sha")
+        if not isinstance(sha, str) or len(sha) < 7:
+            continue
+        committer = ((c.get("commit") or {}).get("committer") or {})
+        committed = parse_ts(committer.get("date"))
+        # The commit that wrote this snapshot is a few seconds after
+        # generated_at. Skip it, and anything newer.
+        if current is not None and committed is not None and committed >= current:
+            continue
+        if fetches >= 3:
+            break
+        fetches += 1
+        prev = _github_json_file(gh, sha)
+        prev_at = prev.get("generated_at")
+        prev_dt = parse_ts(prev_at)
+        if current is not None and prev_dt is not None and prev_dt >= current:
+            continue
+        return {
+            "source": f"git:{sha[:10]}",
+            "generated_at": prev_at,
+            "verdicts": _verdicts(prev),
+            "streaks": _streaks(prev),
+        }
+    return None
 
 
 def section_api_status(repo_root: Path, gh: GitHub | None, now: datetime) -> dict:
@@ -908,8 +1008,13 @@ def section_api_status(repo_root: Path, gh: GitHub | None, now: datetime) -> dic
         "summary": snap.get("summary"),
         "counts": dict(Counter(verdicts.values())),
         "verdicts": verdicts,
+        # The probe's debounce. The report grades P1 from this, not from the
+        # word "down" alone: a streak below 2 is one failed run.
+        "streaks": _streaks(snap),
+        "notes": _failure_notes(snap),
         "unwired_key_envs": snap.get("unwired_key_envs") or [],
         "previous": None,
+        "prior_probe": None,
         "changes": [],
     }
     if gh is not None:
@@ -919,13 +1024,16 @@ def section_api_status(repo_root: Path, gh: GitHub | None, now: datetime) -> dic
                 "until": iso(now - timedelta(hours=24)), "per_page": 1})
             if commits:
                 sha = commits[0]["sha"]
-                blob = gh.get("/repos/{repo}/contents/data/health/api_status.json", {"ref": sha})
-                prev = json.loads(base64.b64decode(blob["content"]).decode("utf-8"))
+                prev = _github_json_file(gh, sha)
                 out["previous"] = {"source": f"git:{sha[:10]}", "generated_at": prev.get("generated_at"),
                                    "counts": dict(Counter(_verdicts(prev).values())),
                                    "verdicts": _verdicts(prev)}
         except Exception as e:  # noqa: BLE001
             out["previous_error"] = clip(e, 200)
+        try:
+            out["prior_probe"] = _prior_probe(gh, snap.get("generated_at"))
+        except Exception as e:  # noqa: BLE001
+            out["prior_probe_error"] = clip(e, 200)
     if out["previous"]:
         out["changes"] = diff_verdicts(out["previous"]["verdicts"], verdicts)
     return out
