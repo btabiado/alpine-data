@@ -29,7 +29,7 @@ What the main tabs show:
 - **ETF Flows**: daily, weekly, monthly and YoY net flows for US spot BTC and ETH ETFs, with per-fund detail.
 - **Futures**:
   - Price, volume, funding, open interest, long/short ratio, implied vol (DVOL), Fear & Greed, dominance and ETH/BTC.
-  - Crowded longs / crowded shorts tables from Coinbase International Exchange perpetual funding rates.
+  - Crowded longs / crowded shorts tables from Coinbase USDC perpetual funding (projected 8-hour rate).
   - The Alpine Large-Cap Crypto Index (see [Data sources](#data-sources)).
 - **Stocks**: signals for the top 50 most active US stocks via Yahoo Finance, with a per-stock component modal and the Traditional Indices strip (DOW / S&P 500 / NDX / VIX).
 - **Money Flow / Stock Flows**: the Money Flow Index composite from ETF share-count flows and ICI fund flows (`SPEC_money_flow_index.md`), and per-stock MFI and Chaikin Money Flow for index constituents.
@@ -84,7 +84,7 @@ That command updates `data-mufon.json` and deletes the saved file. Do not commit
 - **Top-50 daily closes + volume** (Point of Control table, signal-breadth chart): CoinGecko `market_chart` (aggregate USD volume) with keyless Coinbase → Kraken → Binance.US candle fallbacks; complete UTC days only, cached per coin per UTC day so the CoinGecko Demo budget is spent at most once a day per coin. Each coin records which source it came from; a fallback is labelled as exchange-only volume.
 - **Coinbase data feeds the dashboard from these places:**
   - **Coinbase Exchange spot** (`api.exchange.coinbase.com`) — bid/ask, 24h range, 24h volume per asset (BTC/ETH/LINK/LTC). Used for the spot quote tiles and a cross-exchange price-divergence sanity check.
-  - **Coinbase International Exchange perpetuals** (`api.international.coinbase.com`) — funding rate, mark price, open interest, and volume across all 246 PERP instruments. Surfaced in the **Futures** tab as the crowded longs / crowded shorts tables.
+  - **Coinbase USDC perpetuals** (`drb.coinbase.com` public `get_book_summary_by_currency`, no API key) — projected 8-hour funding (`funding_8h`), mark price, open interest in the base coin, and 24h volume. The old International Exchange instruments route (`api.international.coinbase.com/api/v1/instruments`) returned HTTP 404 starting with the 2026-10-23 18:18 UTC probe. Surfaced in the **Futures** tab as the crowded longs / crowded shorts tables.
   - **Coinbase Exchange daily candles** — the first keyless fallback for the top-50 daily series (and the browser's "look up any crypto") when CoinGecko has no series for a coin.
 - **Alpine Large-Cap Crypto Index** (Futures tab) — Alpine Data's own market-cap-weighted index of the 10 largest eligible coins (stablecoins, wrapped/staked tokens and tokenized real-world assets excluded), computed from CoinGecko daily closes and market caps, 100 = first day of the 90-day window, reconstituted monthly; method, constituents, changes and uncomputed days ship with the payload. It replaced the CoinDesk CADLI chart (CADLI is CoinDesk's proprietary index and its API needs a paid key since 2026-10) and is not CADLI.
 - **Derivatives**: OKX (funding rate, open interest, long/short ratio)

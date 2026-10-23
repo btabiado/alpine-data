@@ -120,7 +120,12 @@ TARGETS: list[dict] = [
     {"label": "GeckoTerminal",        "category": "Price/MktCap",  "url": "https://api.geckoterminal.com/api/v2/networks",                                                  "key_env": None},
     # ---- exchange / derivatives ----
     {"label": "Coinbase Exchange",    "category": "Spot",          "url": "https://api.exchange.coinbase.com/products/BTC-USD/ticker",                                      "key_env": None},
-    {"label": "Coinbase Intl (perps)","category": "Futures",       "url": "https://api.international.coinbase.com/api/v1/instruments",                                      "key_env": None},
+    # INTX REST /api/v1/instruments returned HTTP 404 starting with the
+    # 2026-10-23 18:18 UTC probe (still 200 at 14:19 UTC the same day; daily
+    # audit 2026-10-23). The public replacement is Coinbase's Deribit-backed
+    # gateway, documented as keyless (tag Public, security: []). Same URL
+    # fetch_market.CB_INTL_PERP_URL calls. No API key.
+    {"label": "Coinbase Intl (perps)","category": "Futures",       "url": "https://drb.coinbase.com/api/v2/public/get_book_summary_by_currency?currency=USDC&kind=future", "key_env": None},
     # Keyless daily-candle fallbacks for the top-50 series when CoinGecko fails
     # for a coin (fetch_market.crypto_daily_series), and for the browser's
     # "look up any crypto". Same paths the fetchers call.
