@@ -1265,6 +1265,66 @@ def test_tsa_lag_does_not_override_a_suppression(dh, tmp_path, monkeypatch):
     assert expired.status == dh.EXPIRED and expired.fails
 
 
+def test_city_context_gap_is_sparse_and_does_not_fail(dh):
+    """A metric missing for one city and present for the others is a P2-shaped
+    finding, not a data-health failure. The 2026-10-23 audit missed SF's
+    empty median income because nothing compared cities to each other."""
+    payload = {"cities": [
+        {"id": "chicago", "context": {"median_income": 77902, "aqi": 69}},
+        {"id": "nyc", "context": {"median_income": 80483, "aqi": 31}},
+        {"id": "sf", "context": {"median_income": None, "aqi": 19}},
+        {"id": "miami", "context": {"median_income": 71753, "aqi": None}},
+    ]}
+    rows = dh.city_context_gaps(payload)
+    by_path = {r.path: r for r in rows}
+    income = by_path["data-city.json [context: sf median_income]"]
+    aqi = by_path["data-city.json [context: miami aqi]"]
+    assert income.status == dh.SPARSE and not income.fails
+    assert "chicago" in income.detail and "nyc" in income.detail
+    assert aqi.status == dh.SPARSE
+    assert "sf" in aqi.detail
+    # Fields that are simply absent from the payload are not peer gaps unless
+    # at least one city has a value. median_rent is missing everywhere.
+    assert not any("median_rent" in r.path for r in rows)
+    assert dh.SPARSE not in dh.FAILING_STATUSES
+
+
+def test_city_context_gap_ignores_an_all_null_field(dh):
+    payload = {"cities": [
+        {"id": "chicago", "context": {"median_income": None}},
+        {"id": "sf", "context": None},
+    ]}
+    assert dh.city_context_gaps(payload) == []
+
+
+def test_evaluate_reports_a_one_city_income_gap(dh, tmp_path, monkeypatch):
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    _write(tmp_path, "data-city.json", {
+        "generated_at": "2026-10-23T12:49:59Z",
+        "cities": [
+            {"id": "chicago",
+             "data_health": {"last_updated": "2026-09-01T00:00:00+00:00"},
+             "context": {"median_income": 77902}},
+            {"id": "sf",
+             "data_health": {"last_updated": "2026-09-01T00:00:00+00:00"},
+             "context": {"median_income": None}},
+        ],
+    })
+    rows = [r for r in dh.evaluate(dh.COMMITTED, history=False, now_ts=NOW)
+            if r.status == dh.SPARSE]
+    assert any("sf median_income" in r.path and not r.fails for r in rows)
+
+
+def test_sparse_rows_show_in_the_text_report_without_failing_it(dh):
+    text = dh.render_text([
+        dh.Result("data-city.json [context: sf median_income]", dh.SPARSE,
+                  detail="sf context.median_income is empty while chicago has a value"),
+    ], [])
+    assert "SPARSE" in text
+    assert "sf median_income" in text
+    assert "OK: all feeds healthy." in text
+
+
 def test_upstream_lag_detail_is_tsa_only(dh, tmp_path):
     path = _write(tmp_path, "data-cfpb.json", _tsa_payload())
     assert dh.upstream_lag_detail("data-cfpb.json", path, _TSA_NOW_TS, 72) is None

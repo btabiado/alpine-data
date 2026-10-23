@@ -595,6 +595,20 @@ def data_problems(data: dict | None) -> list[dict]:
                     f"({_hours(r.get('age_h'))} old, limit {_hours(r.get('limit_h'))}); "
                     f"the source has not published a newer row",
                     r.get("detail", ""), owner=r.get("owner") or None))
+            elif str(r.get("status") or "").lower() == "sparse":
+                # One city missing a context metric the others have. P2, not
+                # a page: data_health keeps this out of FAILING_STATUSES so a
+                # single blank (SF median income, 2026-10-23) cannot open a P0.
+                path = r.get("path") or "data-city.json"
+                detail = r.get("detail") or ""
+                out.append(problem(
+                    f"feed:{path}:sparse", P2, "feed",
+                    "City metric missing for one city but present for others",
+                    detail, owner=r.get("owner") or None,
+                    group="city-context-gap",
+                    group_title=("City metric missing for one city but "
+                                 "present for others"),
+                    item=detail or path))
         for r in dh.get("extra_failing") or []:
             name = r.get("path") or r.get("name") or r.get("feed") or "?"
             out.append(problem(

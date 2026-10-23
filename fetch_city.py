@@ -408,6 +408,8 @@ def _cause_class(entry: dict) -> str:
         return "missing secret " + name if name else "missing secret"
     if kind == "bug":
         return "code bug (traceback in job log)"
+    if kind == "carried-forward":
+        return "carried forward last value"
     if kind in ("empty", "no value"):
         return "empty response"
     if str(kind or "").startswith("no geography"):
@@ -540,8 +542,9 @@ def _report_diagnostics(diagnostics: list) -> None:
 
     no_key = [d for d in diagnostics if d.get("kind") == "no key"]
     failed = [d for d in diagnostics if d.get("kind") in ("failed", "bug")]
+    carried = [d for d in diagnostics if d.get("kind") == "carried-forward"]
     other = [d for d in diagnostics
-             if d.get("kind") not in ("no key", "failed", "bug")]
+             if d.get("kind") not in ("no key", "failed", "bug", "carried-forward")]
 
     print("")
     print("[fetch-city] DEGRADATION SUMMARY — {} event(s). Nothing below "
@@ -579,6 +582,14 @@ def _report_diagnostics(diagnostics: list) -> None:
         for d in other:
             print("    - {} {}: {} ({})".format(
                 d["city"], d["source"], d["lost"], redact(d["detail"])), file=sys.stderr)
+
+    if carried:
+        print("  CARRIED FORWARD ({}) — lookup returned nothing; kept the "
+              "last good value:".format(len(carried)), file=sys.stderr)
+        for d in carried:
+            print("    - {} {}: {} ({})".format(
+                d["city"], d["source"], d["lost"], redact(d["detail"])),
+                file=sys.stderr)
     print("", file=sys.stderr)
 
 
@@ -642,6 +653,25 @@ def main(argv=None) -> int:
                 "kind": "bug", "detail": "{}: {}".format(type(e).__name__, e)[:300],
                 "lost": "the whole city",
             })
+
+    # A Census 503 (or a sentinel / empty estimate) used to publish null
+    # ACS fields and wipe the previous good numbers. The 2026-10-23 12:44Z
+    # run did that to San Francisco only. Carry the last good median income
+    # forward before the cross-city score, so the score sees the restored
+    # value. The context schema has no as-of field; the disclosure is the
+    # marker.
+    missing_income = [
+        c.get("id") for c in cities
+        if not city_context.good_median_income(
+            (c.get("context") or {}).get("median_income")
+            if isinstance(c.get("context"), dict) else None)
+    ]
+    if missing_income:
+        priors = city_context.load_last_good_contexts(
+            out_path, missing_income, repo_root=ROOT)
+        for city_obj in cities:
+            city_context.apply_median_income_carry_forward(
+                city_obj, priors.get(city_obj.get("id")), diagnostics=diagnostics)
 
     # P2 transparent cross-city Context composite (post-pass: min-max needs all
     # cities' context at once). Optional/guarded — no-ops until the scorer lands.

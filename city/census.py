@@ -46,6 +46,11 @@ Live-probe findings (2026-05-31):
     negatives** (e.g. ``-666666666``). None of these dollar-valued estimates
     can legitimately be negative, so any negative (or non-numeric / missing)
     value maps to ``None`` for that field.
+  * HTTP 429/500/502/503/504 and transport errors are retried (three attempts).
+    A single busy response is not an empty estimate. On 2026-10-23 the
+    12:44Z city-daily run got HTTP 503 for San Francisco only
+    (``place:67000`` / ``state:06``, the same geography that had been
+    returning median income 140970); the other five cities succeeded.
 
 Public surface:
   * :class:`CensusError`
@@ -58,6 +63,8 @@ to ``os.environ.get('CENSUS_API_KEY')``.
 from __future__ import annotations
 
 import os
+import sys
+import time
 from typing import Optional
 
 import requests
@@ -90,6 +97,18 @@ _ACS_BASE = "https://api.census.gov/data/{vintage}/acs/acs5"
 # Module-level default session (connection pooling + keep-alive). Callers may
 # override per-call via ``session=``; tests inject a fake exposing ``.get``.
 _SESSION = requests.Session()
+
+# Transient Census failures worth a second try. The 2026-10-23 12:44Z
+# city-daily run got HTTP 503 ("system is currently undergoing maintenance
+# or is busy") on the San Francisco place query only; the other five cities
+# returned ACS 2024 on the same run, and the same SF geography
+# (state 06 / place 67000) had been returning median income 140970 since
+# 2026-10-05. One busy response is not "this city has no income".
+# 4xx (bad geography, rejected key) is not retried. Three attempts total,
+# matching the Socrata adapter. ``_sleep`` is a hook so tests do not wait.
+_RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
+_RETRY_BACKOFF_S = (3, 10)
+_sleep = time.sleep
 
 
 def _coerce_estimate(raw) -> Optional[int]:
@@ -189,6 +208,48 @@ def _key_rejection(resp) -> Optional[str]:
     return None
 
 
+def _get_with_retry(sess, url: str, params: dict, timeout: int):
+    """GET ``url``, retrying transient HTTP statuses and transport errors.
+
+    Returns the last response. A transport error that survives every attempt
+    raises :class:`CensusError`. The caller still inspects status, key
+    redirects, and the JSON body — a final HTTP 503 is a response, not an
+    exception from this helper, so the existing error text stays the same.
+    """
+    attempts = len(_RETRY_BACKOFF_S) + 1
+    resp = None
+    for attempt in range(attempts):
+        last_attempt = attempt == attempts - 1
+        try:
+            resp = sess.get(url, params=params, timeout=timeout)
+        except requests.RequestException as exc:
+            if not last_attempt:
+                print(
+                    "  [census] request failed ({}); retrying {}/{}".format(
+                        type(exc).__name__, attempt + 1, attempts - 1
+                    ),
+                    file=sys.stderr,
+                )
+                _sleep(_RETRY_BACKOFF_S[attempt])
+                continue
+            raise CensusError(redact(
+                f"ACS request to {safe_url(url)} failed after {attempts} "
+                f"attempts: {exc}"
+            )) from exc
+        status = getattr(resp, "status_code", 200)
+        if status in _RETRY_STATUSES and not last_attempt:
+            print(
+                "  [census] HTTP {}; retrying {}/{}".format(
+                    status, attempt + 1, attempts - 1
+                ),
+                file=sys.stderr,
+            )
+            _sleep(_RETRY_BACKOFF_S[attempt])
+            continue
+        return resp
+    return resp
+
+
 def fetch_acs(
     geo_cfg: dict,
     *,
@@ -224,6 +285,8 @@ def fetch_acs(
         CensusError: on a missing ``geo``/``state``/geo-code in ``geo_cfg``, an
             unknown ``geo`` form, transport failure, non-200 response, the
             keyless ``"Missing Key"`` HTML body, or any non-two-row-array body.
+            HTTP 429/500/502/503/504 and transport errors are retried before
+            this is raised.
     """
     geo = geo_cfg.get("geo")
     state = geo_cfg.get("state")
@@ -258,10 +321,7 @@ def fetch_acs(
         params["key"] = api_key
 
     sess = session if session is not None else _SESSION
-    try:
-        resp = sess.get(url, params=params, timeout=timeout)
-    except requests.RequestException as exc:
-        raise CensusError(redact(f"ACS request to {safe_url(url)} failed: {exc}")) from exc
+    resp = _get_with_retry(sess, url, params, timeout)
 
     rejection = _key_rejection(resp)
     if rejection:

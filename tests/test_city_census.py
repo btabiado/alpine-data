@@ -46,6 +46,27 @@ class FakeSession:
         return FakeResponse(self._response)
 
 
+class SequenceSession:
+    """Returns a queued response per GET, so a 503 can be followed by a 200."""
+
+    def __init__(self, responses):
+        self._responses = list(responses)
+        self.calls = []
+
+    def get(self, url, params=None, timeout=None):
+        self.calls.append((url, dict(params or {})))
+        item = self._responses.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+
+@pytest.fixture(autouse=True)
+def _no_retry_sleep(monkeypatch):
+    """The transient-failure retry path must not make the suite wait."""
+    monkeypatch.setattr(census, "_sleep", lambda seconds: None)
+
+
 # Real geo blocks from city_registry.resolved.json context_layer.
 PLACE_CFG_CHICAGO = {
     "geo": "place", "state": "17", "place": "14000",
@@ -279,6 +300,38 @@ def test_non_200_raises():
     with pytest.raises(CensusError) as exc:
         fetch_acs(PLACE_CFG_CHICAGO, api_key="K", session=session)
     assert "404" in str(exc.value)
+    # A wrong geography or a rejected key is permanent. Do not retry it.
+    assert len(session.calls) == 1
+
+
+def test_transient_503_is_retried_then_parsed(capsys):
+    """2026-10-23 city-daily: Census answered 503 for SF only. A later try
+    that returns the two-row body must win, and the key must not be logged."""
+    payload = _acs_payload("San Francisco city, California", 140970, 2476, 1394500, 9862)
+    busy = FakeResponse(
+        status_code=503,
+        text="Sorry, the system is currently undergoing maintenance or is busy.",
+    )
+    session = SequenceSession([busy, FakeResponse(payload)])
+    result = fetch_acs(
+        {"geo": "place", "state": "06", "place": "67000"},
+        api_key="SECRETKEY",
+        session=session,
+    )
+    assert result["median_income"] == 140970
+    assert len(session.calls) == 2
+    assert session.calls[0][1]["for"] == "place:67000"
+    err = capsys.readouterr().err
+    assert "HTTP 503" in err
+    assert "SECRETKEY" not in err
+
+
+def test_persistent_503_gives_up_after_three_attempts():
+    session = FakeSession(FakeResponse(status_code=503, text="busy"))
+    with pytest.raises(CensusError) as exc:
+        fetch_acs(PLACE_CFG_CHICAGO, api_key="K", session=session)
+    assert "503" in str(exc.value)
+    assert len(session.calls) == 3
 
 
 def test_missing_key_html_body_raises():

@@ -21,8 +21,11 @@ No network. Every adapter is stubbed.
 """
 from __future__ import annotations
 
+import json
 import os
+import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -254,6 +257,168 @@ def test_census_key_rejection_is_reported_not_laundered_into_nulls(monkeypatch, 
     assert "invalid key" in capsys.readouterr().err
     assert ctx["median_income"] is None
     assert ctx["unemployment_rate"] == 5.9  # the other sources survive
+
+
+# --------------------------------------------------------------------------- #
+# empty median income keeps the last good ACS value
+# --------------------------------------------------------------------------- #
+_PRIOR_SF = {
+    "as_of": "2026-10-23T09:40:36Z",
+    "context": {
+        "median_income": 140970,
+        "median_rent": 2476,
+        "median_home_value": 1394500,
+        "median_real_estate_taxes": 9862,
+        "effective_property_tax_rate": 0.00707,
+        "unemployment_rate": 4.2,
+        "aqi": 29,
+        "context_score": 53,
+    },
+}
+
+
+def _empty_sf_context():
+    return {
+        "id": "sf",
+        "disclosures": ["Police Incident Reports: continuity breakpoint"],
+        "context": {
+            "median_income": None,
+            "median_rent": None,
+            "median_home_value": None,
+            "median_real_estate_taxes": None,
+            "effective_property_tax_rate": None,
+            "unemployment_rate": 4.2,
+            "aqi": 19,
+            "context_score": None,
+        },
+    }
+
+
+def test_empty_income_carries_forward_acs_fields_and_warns(capsys):
+    city = _empty_sf_context()
+    diags: list = []
+    assert city_context.apply_median_income_carry_forward(
+        city, _PRIOR_SF, diagnostics=diags)
+    ctx = city["context"]
+    assert ctx["median_income"] == 140970
+    assert ctx["median_rent"] == 2476
+    assert ctx["median_home_value"] == 1394500
+    assert ctx["median_real_estate_taxes"] == 9862
+    # Fresh observations from the other adapters stay. The prior AQI does not.
+    assert ctx["unemployment_rate"] == 4.2
+    assert ctx["aqi"] == 19
+    assert ctx["context_score"] is None
+    note = [d for d in city["disclosures"] if "carried forward" in d]
+    assert len(note) == 1
+    assert "2026-10-23T09:40:36Z" in note[0]
+    assert "140970" in note[0]
+    assert "median_rent" in note[0]
+    err = capsys.readouterr().err
+    assert "warning" in err
+    assert "carrying forward 140970" in err
+    assert diags[0]["kind"] == "carried-forward"
+    assert diags[0]["city"] == "sf"
+
+
+def test_present_income_is_not_replaced_and_does_not_backfill_siblings():
+    city = {
+        "id": "sf",
+        "disclosures": [],
+        "context": {
+            "median_income": 100,
+            "median_rent": None,
+            "median_home_value": None,
+            "median_real_estate_taxes": None,
+            "effective_property_tax_rate": None,
+            "unemployment_rate": None,
+            "aqi": None,
+            "context_score": None,
+        },
+    }
+    assert city_context.apply_median_income_carry_forward(city, _PRIOR_SF) is False
+    assert city["context"]["median_income"] == 100
+    assert city["context"]["median_rent"] is None
+    assert city["disclosures"] == []
+
+
+def test_fresh_rent_is_kept_when_only_income_is_empty():
+    city = _empty_sf_context()
+    city["context"]["median_rent"] = 2500
+    city_context.apply_median_income_carry_forward(city, _PRIOR_SF)
+    assert city["context"]["median_income"] == 140970
+    assert city["context"]["median_rent"] == 2500
+    assert city["context"]["median_home_value"] == 1394500
+
+
+def test_null_context_block_is_rebuilt_from_the_last_good_income():
+    city = {"id": "sf", "disclosures": []}
+    assert city_context.apply_median_income_carry_forward(city, _PRIOR_SF)
+    assert city["context"]["median_income"] == 140970
+    assert city["context"]["unemployment_rate"] is None
+    assert city["context"]["aqi"] is None
+
+
+def test_no_prior_leaves_the_empty_income_alone():
+    city = _empty_sf_context()
+    assert city_context.apply_median_income_carry_forward(city, None) is False
+    assert city["context"]["median_income"] is None
+    assert len(city["disclosures"]) == 1
+
+
+def test_last_good_income_is_read_from_the_commit_before_the_null(tmp_path):
+    """The file on disk is already null. The previous commit still has 140970.
+
+    That is the 2026-10-23 afternoon commit: carry-forward has to look past
+    the snapshot it is about to overwrite.
+    """
+    env = os.environ.copy()
+    env.update({
+        "GIT_AUTHOR_NAME": "test",
+        "GIT_AUTHOR_EMAIL": "test@example.com",
+        "GIT_COMMITTER_NAME": "test",
+        "GIT_COMMITTER_EMAIL": "test@example.com",
+    })
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    def git(*args):
+        subprocess.run(
+            ["git", "-c", "commit.gpgsign=false", *args],
+            cwd=repo, env=env, check=True, capture_output=True, text=True,
+        )
+
+    git("init")
+    path = repo / "data-city.json"
+    good = {
+        "generated_at": "2026-10-23T09:40:36Z",
+        "cities": [{"id": "sf", "context": _PRIOR_SF["context"]}],
+    }
+    path.write_text(json.dumps(good))
+    git("add", "data-city.json")
+    git("commit", "-m", "good")
+    blank = json.loads(json.dumps(good))
+    blank["generated_at"] = "2026-10-23T12:49:59Z"
+    for field in ("median_income", "median_rent", "median_home_value",
+                  "median_real_estate_taxes", "effective_property_tax_rate"):
+        blank["cities"][0]["context"][field] = None
+    path.write_text(json.dumps(blank))
+    git("add", "data-city.json")
+    git("commit", "-m", "null")
+
+    found = city_context.load_last_good_contexts(path, ["sf"], repo_root=repo)
+    assert found["sf"]["context"]["median_income"] == 140970
+    assert found["sf"]["as_of"] == "2026-10-23T09:40:36Z"
+
+
+def test_an_output_outside_the_repo_does_not_read_this_checkout(tmp_path):
+    path = tmp_path / "data-city.json"
+    path.write_text(json.dumps({
+        "generated_at": "2026-10-23T12:49:59Z",
+        "cities": [{"id": "sf", "context": {"median_income": None}}],
+    }))
+    found = city_context.load_last_good_contexts(
+        path, ["sf"], repo_root=Path(ROOT))
+    assert found == {}
 
 
 def test_fbi_crime_series_without_an_ori_is_empty_and_hits_no_network():
