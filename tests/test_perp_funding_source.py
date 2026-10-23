@@ -9,6 +9,8 @@ import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import pytest
+
 import api_status
 import fetch_market as fm
 
@@ -72,6 +74,33 @@ def test_book_summary_keeps_fresh_perps_and_drops_dated_futures(monkeypatch):
     assert st["trading_fresh"] == 2
     assert st["excluded_not_perpetual"] == 2
     assert st["excluded_stale_quote"] == 0
+
+
+@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf"), "nan", None, "nope"])
+def test_finite_rejects_non_numbers(bad):
+    """NaN and the infinities are not rates. The old ``n != n`` check was that
+    test written as a comparison of a value with itself."""
+    assert fm._finite(bad) is None
+
+
+def test_finite_keeps_a_real_rate_including_zero():
+    assert fm._finite(0) == 0.0
+    assert fm._finite("0.0002") == pytest.approx(0.0002)
+    assert fm._finite(-1.5) == -1.5
+
+
+def test_non_finite_funding_is_dropped_and_a_zero_rate_is_kept(monkeypatch):
+    body = _envelope(
+        _book("BTC", funding=float("nan")),
+        _book("ETH", funding=float("inf")),
+        _book("SOL", funding=0.0),
+    )
+    monkeypatch.setattr(fm, "_get", lambda url, params=None, **kw: body)
+    rows = fm.coinbase_intl_perpetuals(now=NOW)
+    assert [r["symbol"] for r in rows] == ["SOL"]
+    assert rows[0]["funding_rate"] == 0.0
+    assert fm._CB_INTL_LAST_STATUS["excluded_missing_funding"] == 2
+    assert fm._CB_INTL_LAST_STATUS["trading_fresh"] == 1
 
 
 def test_stale_and_unfunded_perps_are_dropped(monkeypatch):

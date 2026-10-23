@@ -267,6 +267,36 @@ def test_non_200_response_raises(fred_module) -> None:
     assert "400" in msg
 
 
+def test_unreadable_content_type_is_logged_and_the_json_error_still_raises(
+    fred_module, caplog,
+) -> None:
+    """A headers object that throws must not swallow the non-JSON error, and
+    must not be a silent pass. The content type stays empty."""
+    import logging
+
+    class BadHeaders:
+        def get(self, *args, **kwargs):
+            raise RuntimeError("headers exploded")
+
+    with patch("lthcs.sources.fred.requests.get") as mock_get:
+        resp = fake_response({}, status=200)
+        resp.json.side_effect = ValueError("Expecting value: line 1 column 1 (char 0)")
+        resp.text = ""
+        resp.headers = BadHeaders()
+        mock_get.return_value = resp
+        with caplog.at_level(logging.WARNING, logger="lthcs.sources.fred"):
+            with pytest.raises(RuntimeError, match="non-JSON") as excinfo:
+                fred_module.get_series("DGS10")
+
+    message = str(excinfo.value)
+    assert "HTTP 200" in message
+    assert "'DGS10' ()" in message
+    assert "char 0" in message
+    assert "headers exploded" not in message
+    assert "RuntimeError" in caplog.text
+    assert mock_get.call_count == 1
+
+
 def test_non_json_body_names_the_status_and_does_not_retry(fred_module) -> None:
     """A 200 with an empty body is the 2026-10-22 FRED failure mode."""
     with patch("lthcs.sources.fred.requests.get") as mock_get:
