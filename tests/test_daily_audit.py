@@ -677,6 +677,31 @@ class TestProblems:
         assert probs[0]["detail"].startswith("upstream lag")
         assert dar.alert_action(probs) == "close"
 
+    def test_city_metric_gap_is_p2_and_does_not_page(self, dar):
+        """A context field empty for one city and set for the others is a P2.
+
+        The 2026-10-23 audit's SF median-income hole was invisible because
+        data_health only watched freshness. It must show up, and it must not
+        open the P0 tracking issue."""
+        d = _data()
+        d["data_health"]["results"].append({
+            "path": "data-city.json [context: sf median_income]",
+            "status": "sparse",
+            "detail": ("sf context.median_income is empty while chicago, nyc, "
+                       "la, seattle, miami have a value"),
+            "owner": "city-daily.yml (daily 06:00Z)",
+        })
+        probs = dar.data_problems(d)
+        hit = [p for p in probs if p["id"].endswith(":sparse")]
+        assert len(hit) == 1
+        assert hit[0]["severity"] == "P2"
+        assert hit[0]["id"] == "feed:data-city.json [context: sf median_income]:sparse"
+        assert "median_income" in hit[0]["detail"]
+        assert hit[0]["group"] == "city-context-gap"
+        assert dar.alert_action(probs) == "close"
+        md = dar.render_md(dar.build_report(d, _ux(), None, "2026-10-23"))
+        assert "sf context.median_income is empty" in md
+
     def test_extra_data_health_records_are_judged_too(self, dar):
         d = _data()
         d["data_health"]["extra_failing"] = [

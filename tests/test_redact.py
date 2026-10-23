@@ -130,8 +130,9 @@ def test_fetch_city_redacts_at_both_the_sink_and_the_summary():
     fail = fail[:fail.index("\n    if adapter")]
     assert "redact(reason)" in fail
     assert fail.index("redact(reason)") < fail.index("diagnostics.append")
-    # defence in depth: the summary printer re-prints stored details
-    assert src.count('redact(d["detail"])') == 2
+    # defence in depth: every summary section that re-prints a stored
+    # detail redacts it (credentials, failures, and carried-forward values).
+    assert src.count('redact(d["detail"])') == 3
 
 
 # --------------------------------------------------------------------------

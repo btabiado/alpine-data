@@ -731,6 +731,10 @@ ARCHIVES: dict[str, History] = {
 OK, STALE, UNKNOWN, MISSING, UNWATCHED, SUPPRESSED, EXPIRED, SKIPPED = (
     "ok", "stale", "unknown", "missing", "unwatched", "suppressed", "expired",
     "skipped")
+# A context KPI present for some cities and empty for others. Not a failing
+# status: the daily audit reports it at P2. Putting it in FAILING_STATUSES
+# would page the same gap as a P0, which is louder than a one-city hole.
+SPARSE = "sparse"
 # History continuity (evaluate_history). GAP covers missing periods AND
 # required fields that are null; DISCLOSED is a gap health/known_gaps.json
 # already explains as unfillable, reported but never failed.
@@ -738,6 +742,22 @@ GAP, DUPLICATE, DISCLOSED = "gap", "duplicate", "disclosed"
 
 FAILING_STATUSES = frozenset({STALE, UNKNOWN, MISSING, UNWATCHED, EXPIRED,
                               GAP, DUPLICATE})
+
+# Layer B fields every city is expected to share. Miami's geography is a
+# county and everyone else's is a place, but the context object is the same
+# shape. A field empty on one city and populated on another is the hole the
+# 2026-10-23 audit hit: SF median_income null, the other five cities set,
+# and this check said nothing.
+CITY_CONTEXT_METRICS: tuple[str, ...] = (
+    "median_income",
+    "median_rent",
+    "median_home_value",
+    "median_real_estate_taxes",
+    "effective_property_tax_rate",
+    "unemployment_rate",
+    "aqi",
+    "context_score",
+)
 
 # TSA's checkpoint date is often a few days behind over a weekend or holiday
 # because TSA has not published, not because aviation-tsa.yml stopped. A lag
@@ -1048,6 +1068,65 @@ def upstream_lag_detail(rel: str, payload_path: Path, now_ts: float,
     )
 
 
+def city_context_gaps(payload: dict) -> list[Result]:
+    """Context KPIs that are empty for some cities and set for others.
+
+    One Result per (city, field). A field that is empty for every city is
+    not this finding — that is a source-wide outage, not a one-city hole.
+    Fewer than two cities is not a peer comparison.
+    """
+    cities = payload.get("cities") if isinstance(payload, dict) else None
+    if not isinstance(cities, list) or len(cities) < 2:
+        return []
+    rows: list[tuple[str, dict | None]] = []
+    for city in cities:
+        if not isinstance(city, dict):
+            continue
+        ctx = city.get("context")
+        rows.append((str(city.get("id") or "?"), ctx if isinstance(ctx, dict) else None))
+    if len(rows) < 2:
+        return []
+    owner = MANIFEST["data-city.json"].owner if "data-city.json" in MANIFEST else ""
+    out: list[Result] = []
+    for field in CITY_CONTEXT_METRICS:
+        present: list[str] = []
+        missing: list[str] = []
+        for city_id, ctx in rows:
+            value = None if ctx is None else ctx.get(field)
+            if value is None:
+                missing.append(city_id)
+            else:
+                present.append(city_id)
+        if not present or not missing:
+            continue
+        peers = ", ".join(present)
+        for city_id in missing:
+            out.append(Result(
+                f"data-city.json [context: {city_id} {field}]",
+                SPARSE,
+                owner=owner,
+                detail=(f"{city_id} context.{field} is empty while "
+                        f"{peers} have a value"),
+            ))
+    return out
+
+
+def evaluate_city_context_gaps() -> list[Result]:
+    """Read the on-disk ``data-city.json`` and report one-city context holes.
+
+    A missing or unreadable file is not a second failure: the freshness
+    probe already reports that. This check only adds the peer-gap rows.
+    """
+    path = REPO_ROOT / "data-city.json"
+    if not path.is_file():
+        return []
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return []
+    return city_context_gaps(payload)
+
+
 def evaluate(mode: str, today: date | None = None,
              now_ts: float | None = None, history: bool = True) -> list[Result]:
     now = now_ts if now_ts is not None else datetime.now(timezone.utc).timestamp()
@@ -1195,6 +1274,7 @@ def evaluate(mode: str, today: date | None = None,
                 results.append(Result(rel, STALE, age_h, limit, feed.owner, detail, source,
                                       cadence=feed.cadence))
 
+    results.extend(evaluate_city_context_gaps())
     return results
 
 
@@ -1361,6 +1441,10 @@ def render_text(results: list[Result], notes: list[str]) -> str:
             "DISCLOSED - reported, not failing "
             "(known history gap, or a source that has not published newer data)",
             "KNOWN  ")
+    section(SPARSE,
+            "SPARSE - a city metric is empty where other cities have it "
+            "(daily audit P2, not a failure)",
+            "SPARSE ")
     section(GAP, "HISTORY GAP - a day/month is missing or a required field is null",
             "GAP    ")
     section(DUPLICATE, "HISTORY DUPLICATE - one period recorded twice", "DUP    ")
