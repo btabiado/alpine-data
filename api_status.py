@@ -21,7 +21,10 @@ Two ways it's used:
      with a short backoff, inside the run; the source is marked ``down``
      (daily-audit P1) only after two consecutive failed runs. One failed
      run is ``degraded``. HTTP answers — blocked, auth_required, paid-only
-     402, rate_limited — and retired rows are not debounced.
+     402, rate_limited, and other 4xx/5xx — and retired rows are not
+     debounced. The daily audit reads ``consecutive_failures`` itself: a
+     ``down`` row whose streak is below ``FAILURES_BEFORE_DOWN`` is graded
+     P2, so a snapshot that skipped this debounce cannot page as P1.
 
 Stdlib (urllib + concurrent.futures) for every probe except the few that opt
 into ``requests`` with ``"client": "requests"`` (tsa.gov, whose edge 403s

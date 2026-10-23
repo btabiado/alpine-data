@@ -7,6 +7,7 @@ of its JSON output, via the committed example report.
 """
 from __future__ import annotations
 
+import base64
 import importlib.util
 import json
 import re
@@ -389,6 +390,111 @@ class TestParsing:
             {"source": "C", "from": "down", "to": None},
             {"source": "D", "from": None, "to": "up"},
         ]
+
+    def test_api_status_section_keeps_streak_and_prior_probe(self, dad, tmp_path):
+        """2026-10-23: the audit's ~24h diff said ScienceBase up → down.
+
+        The probe an hour earlier was already degraded (strike 1). The
+        section has to keep consecutive_failures and that prior probe, or
+        the report reads as a one-off.
+        """
+        path = tmp_path / "data" / "health" / "api_status.json"
+        path.parent.mkdir(parents=True)
+        current = {
+            "generated_at": "2026-10-23T12:43:53+00:00",
+            "summary": {"total": 1, "down": 1},
+            "unwired_key_envs": [],
+            "sources": [{
+                "label": "USGS ScienceBase",
+                "verdict": "down",
+                "status": None,
+                "consecutive_failures": 2,
+                "note": "TimeoutError: The read operation timed out "
+                        "(2 consecutive probe failures)",
+            }, {
+                "label": "CoinGecko",
+                "verdict": "up",
+                "consecutive_failures": 0,
+                "note": "",
+            }],
+        }
+        prior = {
+            "generated_at": "2026-10-23T10:00:09+00:00",
+            "sources": [{
+                "label": "USGS ScienceBase",
+                "verdict": "degraded",
+                "consecutive_failures": 1,
+            }, {"label": "CoinGecko", "verdict": "up", "consecutive_failures": 0}],
+        }
+        day_ago = {
+            "generated_at": "2026-10-22T09:45:39+00:00",
+            "sources": [
+                {"label": "USGS ScienceBase", "verdict": "up", "consecutive_failures": 0},
+                {"label": "CoinGecko", "verdict": "up", "consecutive_failures": 0},
+            ],
+        }
+        # A probe that landed after the audit checked out must not be
+        # treated as the previous run.
+        newer = {
+            "generated_at": "2026-10-23T14:19:18+00:00",
+            "sources": [
+                {"label": "USGS ScienceBase", "verdict": "up", "consecutive_failures": 0},
+            ],
+        }
+        path.write_text(json.dumps(current), encoding="utf-8")
+
+        def blob(snap):
+            raw = base64.b64encode(json.dumps(snap).encode()).decode()
+            wrapped = "\n".join(raw[i:i + 60] for i in range(0, len(raw), 60))
+            return {"encoding": "base64", "content": wrapped}
+
+        class GH:
+            def __init__(self):
+                self.calls = 0
+
+            def get(self, path, params=None):
+                self.calls += 1
+                params = params or {}
+                if path.endswith("/commits"):
+                    if "until" in params:
+                        return [{"sha": "40fed88056aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                                 "commit": {"committer": {"date": "2026-10-22T09:45:44Z"}}}]
+                    return [
+                        {"sha": "4af8346c2c572f1be8ca98d4964489e4cf6711f1",
+                         "commit": {"committer": {"date": "2026-10-23T14:19:23Z"}}},
+                        {"sha": "d8508f9cfd4e6d1b6df52fad56504e3f4c669fae",
+                         "commit": {"committer": {"date": "2026-10-23T12:43:58Z"}}},
+                        {"sha": "4c1ceb4c56833a491a6abc18a27b7ec9d4df1762",
+                         "commit": {"committer": {"date": "2026-10-23T10:00:13Z"}}},
+                    ]
+                ref = params.get("ref") or ""
+                if ref.startswith("40fed88056"):
+                    return blob(day_ago)
+                if ref.startswith("4af8346c2c"):
+                    return blob(newer)
+                if ref.startswith("d8508f9cfd"):
+                    return blob(current)
+                if ref.startswith("4c1ceb4c56"):
+                    return blob(prior)
+                raise AssertionError((path, params))
+
+        out = dad.section_api_status(tmp_path, GH(), T("2026-10-23T14:16"))
+        assert out["verdicts"]["USGS ScienceBase"] == "down"
+        assert out["streaks"] == {"USGS ScienceBase": 2, "CoinGecko": 0}
+        assert "2 consecutive probe failures" in out["notes"]["USGS ScienceBase"]
+        assert "CoinGecko" not in out["notes"]
+        assert out["previous"]["source"] == "git:40fed88056"
+        assert out["changes"] == [{"source": "USGS ScienceBase", "from": "up", "to": "down"}]
+        assert out["prior_probe"]["source"] == "git:4c1ceb4c56"
+        assert out["prior_probe"]["generated_at"] == "2026-10-23T10:00:09+00:00"
+        assert out["prior_probe"]["verdicts"]["USGS ScienceBase"] == "degraded"
+        assert out["prior_probe"]["streaks"]["USGS ScienceBase"] == 1
+
+        local = dad.section_api_status(tmp_path, None, T("2026-10-23T14:16"))
+        assert local["streaks"]["USGS ScienceBase"] == 2
+        assert local["prior_probe"] is None
+        assert local["previous"] is None
+        assert "previous_error" not in local
 
 
 def _pt(dad, stamp, price):
