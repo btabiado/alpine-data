@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import math
 import os
 import sys
 import time
@@ -191,11 +192,17 @@ _CB_INTL_LAST_STATUS: dict = {}
 
 
 def _finite(v: Any) -> float | None:
+    """A real float, or None when ``v`` is missing, non-numeric, NaN, or infinite.
+
+    Callers use this to drop a book-summary field that is not a rate or a
+    price. ``math.isfinite`` is that check: False for NaN and for both
+    infinities, True for a real zero.
+    """
     try:
         n = float(v)
     except (TypeError, ValueError):
         return None
-    if n != n or n in (float("inf"), float("-inf")):
+    if not math.isfinite(n):
         return None
     return n
 

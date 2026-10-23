@@ -20,6 +20,7 @@ process without the key set doesn't blow up.
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any, Dict, List, Optional
 
@@ -127,8 +128,16 @@ def _fetch_from_fred(
         ctype = ""
         try:
             ctype = resp.headers.get("content-type", "") or ""
-        except Exception:
-            pass
+        except Exception as header_exc:
+            # The JSON error above is the one we re-raise. A headers object
+            # that cannot be read must not replace it, but it also must not
+            # disappear: the content type is what tells an empty page from an
+            # error document. Bound under its own name so it does not clear
+            # the ValueError this handler is about to report.
+            logging.getLogger(__name__).warning(
+                "FRED content-type header unreadable (%s); continuing without it",
+                type(header_exc).__name__,
+            )
         raise FredAPIError(
             f"FRED API returned HTTP {resp.status_code} non-JSON for series "
             f"{series_id!r} ({ctype}): {exc}; body {_response_snippet(resp)!r}"

@@ -20236,6 +20236,18 @@ function cityFeedStatusText(feed){
   }
 }
 
+// Null z and baseline_mean mean the trailing window cannot be scored. The
+// baseline is the 12 calendar months before Recent, so a series of exactly
+// 12 months (Miami-Dade 311's frozen 2023 snapshot) has no baseline. Say
+// that, instead of leaving the cells blank. not_published and fetch_error
+// are different claims and keep cityFeedStatusText. A numeric z is left
+// alone, so every other city's scored feed renders as it does today.
+function cityMissingBaselineText(feed){
+  if (!feed || feed.z != null || feed.baseline_mean != null) return null;
+  if (feed.status === 'not_published' || feed.status === 'fetch_error') return null;
+  return 'insufficient history';
+}
+
 // Short status chip for an extended (supplementary) feed — same vocabulary as
 // cityFeedStatusText but condensed for the inline table cell. insufficient_history
 // reads "Building 12-mo baseline" (e.g. Chicago's rolling towed-vehicles snapshot).
@@ -20505,7 +20517,9 @@ function citySparkline(feed){
   svg += '<line x1="' + lx + '" y1="' + tickTop + '" x2="' + lx + '" y2="' + tickBot + '" stroke="' + color + '" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke"/>';
   svg += '</svg>';
 
-  const cap = pts.length + '-mo trend' + (hasBand ? ' · baseline ±1σ' : '');
+  let cap = pts.length + '-mo trend';
+  if (hasBand) cap += ' · baseline ±1σ';
+  else if (feed && feed.status === 'stale' && feed.baseline_mean == null) cap += ' · insufficient history';
   return '<div style="margin-top:2px">' + svg
     + '<div style="font-size:10px;color:var(--muted);margin-top:1px">' + cap + '</div></div>';
 }
@@ -20554,11 +20568,19 @@ function renderCityDetail(cities){
       // (e.g. stale/insufficient_history feeds that have history);
       // not_published feeds have series:null -> citySparkline returns '' -> no row.
       const sparkHtml = citySparkline(f);
+      const missing = cityMissingBaselineText(f);
+      const statusTxt = missing || cityFeedStatusText(f);
+      // The stale-snapshot note used to be the whole cell, which hid the
+      // reason z and the baseline are null. Keep the note, and name the gap.
+      const noteRow = (missing && f && f.note)
+        ? '<tr><td colspan="4" style="color:var(--muted);font-size:11px;padding-top:0;border-top:0">' + escapeHtml(f.note) + '</td></tr>'
+        : '';
       return ''
         + '<tr>'
         +   '<td>' + escapeHtml(f.label || '') + '</td>'
-        +   '<td colspan="3" style="color:var(--muted);font-size:12px">' + escapeHtml(cityFeedStatusText(f)) + '</td>'
+        +   '<td colspan="3" style="color:var(--muted);font-size:12px">' + escapeHtml(statusTxt) + '</td>'
         + '</tr>'
+        + noteRow
         + (sparkHtml ? '<tr><td colspan="4" style="padding-top:0;border-top:0">' + sparkHtml + '</td></tr>' : '');
     }).join('');
 

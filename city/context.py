@@ -394,8 +394,16 @@ def load_last_good_contexts(path: Path, city_ids, *, repo_root: Path) -> dict:
     if path.is_file():
         try:
             _absorb_incomes(json.loads(path.read_text()), need, found)
-        except (OSError, json.JSONDecodeError):
-            pass
+        except (OSError, json.JSONDecodeError) as exc:
+            # Same outcome as before: skip this file and keep walking git
+            # history. The read failure is why a city can lose its last good
+            # income, so it has to show up in the build log.
+            print(
+                "  [context] carry-forward: unreadable {} ({})".format(
+                    path, redact(f"{type(exc).__name__}: {exc}")[:300]
+                ),
+                file=sys.stderr,
+            )
     if len(found) < len(need):
         for payload in _git_payloads(path, repo_root, _GIT_LOOKBACK):
             _absorb_incomes(payload, need, found)

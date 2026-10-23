@@ -410,6 +410,44 @@ def test_last_good_income_is_read_from_the_commit_before_the_null(tmp_path):
     assert found["sf"]["as_of"] == "2026-10-23T09:40:36Z"
 
 
+def test_corrupt_on_disk_snapshot_is_logged_and_git_history_still_wins(tmp_path, capsys):
+    """A file that is not JSON is skipped, announced, and does not block the
+    older commit that still has an income."""
+    env = os.environ.copy()
+    env.update({
+        "GIT_AUTHOR_NAME": "test",
+        "GIT_AUTHOR_EMAIL": "test@example.com",
+        "GIT_COMMITTER_NAME": "test",
+        "GIT_COMMITTER_EMAIL": "test@example.com",
+    })
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    def git(*args):
+        subprocess.run(
+            ["git", "-c", "commit.gpgsign=false", *args],
+            cwd=repo, env=env, check=True, capture_output=True, text=True,
+        )
+
+    git("init")
+    path = repo / "data-city.json"
+    good = {
+        "generated_at": "2026-10-23T09:40:36Z",
+        "cities": [{"id": "sf", "context": _PRIOR_SF["context"]}],
+    }
+    path.write_text(json.dumps(good))
+    git("add", "data-city.json")
+    git("commit", "-m", "good")
+    path.write_text("{not json")
+
+    found = city_context.load_last_good_contexts(path, ["sf"], repo_root=repo)
+    err = capsys.readouterr().err
+    assert "unreadable" in err
+    assert "JSONDecodeError" in err
+    assert found["sf"]["context"]["median_income"] == 140970
+    assert found["sf"]["as_of"] == "2026-10-23T09:40:36Z"
+
+
 def test_an_output_outside_the_repo_does_not_read_this_checkout(tmp_path):
     path = tmp_path / "data-city.json"
     path.write_text(json.dumps({
