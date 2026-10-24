@@ -1,19 +1,19 @@
 {
   "as_of": "2026-10-24",
-  "generated_at": "2026-10-24T00:38:48Z",
+  "generated_at": "2026-10-24T05:43:38Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-24",
       "label": null,
-      "note": "40 coins; 2 buy+, 11 sell+",
-      "score": -22,
+      "note": "40 coins; 1 buy+, 13 sell+",
+      "score": -30,
       "stale": false
     },
     "defi_sentiment": {
-      "as_of": "2026-10-23",
+      "as_of": "2026-10-24",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": -5,
+      "score": -4,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -73,24 +73,24 @@
       "stale": false
     },
     "lthcs_composite": {
-      "as_of": "2026-10-23",
+      "as_of": "2026-10-24",
       "label": "LTHCS NEUTRAL",
       "note": null,
       "score": 2,
       "stale": false
     },
     "money_flow_index": {
-      "as_of": "2026-10-22",
+      "as_of": "2026-10-23",
       "label": "Neutral",
       "note": null,
-      "score": -16.86,
+      "score": -23.31,
       "stale": false
     },
     "overview_sentiment": {
       "as_of": "2026-10-24",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": -2,
+      "score": -3,
       "stale": false
     },
     "poc_signal_breadth": {
@@ -101,24 +101,24 @@
       "stale": false
     },
     "stocks_signal_breadth": {
-      "as_of": "2026-10-22",
+      "as_of": "2026-10-23",
       "label": "NEUTRAL",
-      "note": "50 stocks; 10 buy+, 19 sell+",
+      "note": "50 stocks; 11 buy+, 20 sell+",
       "score": -18,
       "stale": false
     },
     "whale_sentiment_btc": {
-      "as_of": "2026-10-22",
-      "label": "WHALE DISTRIBUTION",
+      "as_of": "2026-10-23",
+      "label": "WHALE ACCUMULATION",
       "note": null,
-      "score": -26,
+      "score": 32,
       "stale": false
     },
     "whale_sentiment_eth": {
-      "as_of": "2026-10-22",
-      "label": "NEUTRAL",
+      "as_of": "2026-10-23",
+      "label": "WHALE ACCUMULATION",
       "note": null,
-      "score": 15,
+      "score": 22,
       "stale": false
     }
   }
