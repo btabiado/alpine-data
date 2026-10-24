@@ -673,6 +673,28 @@ def main(argv=None) -> int:
             city_context.apply_median_income_carry_forward(
                 city_obj, priors.get(city_obj.get("id")), diagnostics=diagnostics)
 
+    # BLS is the same shape of outage. The 2026-10-24 audit recorded HTTP 503
+    # from api.bls.gov on both probes (up on 10-23). fetch_unemployment retries
+    # transient 5xx; if the host stays down, or answers non-JSON, the rate
+    # would otherwise publish as null and the city labor number would
+    # disappear. Carry the last good rate per city. The disclosure names the
+    # snapshot time and its age. This runs after the income pass so a city
+    # whose whole context block was null can receive both restorations, and
+    # before the cross-city score so the score sees the labor number.
+    missing_unemployment = [
+        c.get("id") for c in cities
+        if not city_context.good_unemployment_rate(
+            (c.get("context") or {}).get("unemployment_rate")
+            if isinstance(c.get("context"), dict) else None)
+    ]
+    if missing_unemployment:
+        labor_priors = city_context.load_last_good_unemployment(
+            out_path, missing_unemployment, repo_root=ROOT)
+        for city_obj in cities:
+            city_context.apply_unemployment_carry_forward(
+                city_obj, labor_priors.get(city_obj.get("id")),
+                diagnostics=diagnostics)
+
     # P2 transparent cross-city Context composite (post-pass: min-max needs all
     # cities' context at once). Optional/guarded — no-ops until the scorer lands.
     disclosures = list(METHODOLOGY_DISCLOSURES)
