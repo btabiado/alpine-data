@@ -1,19 +1,19 @@
 {
   "as_of": "2026-10-24",
-  "generated_at": "2026-10-24T14:28:44Z",
+  "generated_at": "2026-10-24T17:00:04Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-24",
       "label": null,
-      "note": "40 coins; 1 buy+, 15 sell+",
-      "score": -35,
+      "note": "40 coins; 1 buy+, 17 sell+",
+      "score": -40,
       "stale": false
     },
     "defi_sentiment": {
       "as_of": "2026-10-24",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": -5,
+      "score": -6,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -38,38 +38,38 @@
       "stale": false
     },
     "futures_sentiment": {
-      "as_of": "2026-10-23",
-      "label": "CROWDED LONGS",
+      "as_of": "2026-10-24",
+      "label": "STRONG CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 33,
+      "score": 71,
       "stale": false
     },
     "futures_sentiment_btc": {
-      "as_of": "2026-10-23",
-      "label": "CROWDED LONGS",
+      "as_of": "2026-10-24",
+      "label": "STRONG CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 33,
+      "score": 71,
       "stale": false
     },
     "futures_sentiment_eth": {
-      "as_of": "2026-10-23",
-      "label": "CROWDED LONGS",
+      "as_of": "2026-10-24",
+      "label": "STRONG CROWDED LONGS",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 28,
+      "score": 67,
       "stale": false
     },
     "futures_sentiment_link": {
-      "as_of": "2026-10-23",
-      "label": "CROWDED LONGS",
+      "as_of": "2026-10-24",
+      "label": "STRONG CROWDED LONGS",
       "note": "LINK; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 22,
+      "score": 68,
       "stale": false
     },
     "futures_sentiment_ltc": {
-      "as_of": "2026-10-23",
-      "label": "CROWDED LONGS",
+      "as_of": "2026-10-24",
+      "label": "STRONG CROWDED LONGS",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 26,
+      "score": 50,
       "stale": false
     },
     "lthcs_composite": {
@@ -90,7 +90,7 @@
       "as_of": "2026-10-24",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": -2,
+      "score": -4,
       "stale": false
     },
     "poc_signal_breadth": {
