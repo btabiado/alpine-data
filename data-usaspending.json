@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-10-24T10:51:11.391982+00:00",
+ "generated_utc": "2026-10-24T12:14:50.413111+00:00",
  "source": "USAspending.gov Search API \u2014 spending_over_time",
  "note": "Published from GitHub Actions (clean egress) because the USAspending API blocks/525s Cloudflare datacenter IPs. Consumed by ADW-441 (grants) and ADW-444 (dod_contracts).",
  "grants": {
