@@ -33,20 +33,28 @@ Severities:
         manual or watchdog run clears it), a spot check that disagrees
         with its primary source, console errors, failed same-origin
         requests, visible NaN/undefined text, an upstream API down after
-        two consecutive failed probe runs, an LTHCS pillar other than
-        the accepted thesis_integrity stub that is the 50.0 placeholder
-        for the whole universe
-    P2  layout overflow at 390px, heavy pages, degraded/blocked upstreams
-        (including a one-off probe failure), a feed whose source was
-        checked and has not published newer data
+        two consecutive failed probe runs (the previous probe was already
+        degraded or down), an LTHCS pillar other than the accepted
+        thesis_integrity stub that is the 50.0 placeholder for the whole
+        universe. A source that was up on the immediately previous probe
+        is not a P1.
+    P2  layout overflow at 390px, heavy pages, blocked upstreams, a
+        degraded upstream whose previous probe was already failed (or
+        whose previous probe was not recorded), a paid-only HTTP 402, a
+        feed whose source was checked and has not published newer data
         (disclosed upstream lag), a transient Farside 5xx/timeout soft warning
         while the ETF flows CSV is under 2 trading days old (the job exits 0;
-        this is not a workflow failure). A late cron start or a skipped
-        schedule is a P2 only when that condition has already lasted more
-        than a day AND the job's output is stale or it has no success
-        (schedule, watchdog catch-up, or manual run) inside its freshness
-        window. Late or skipped jobs whose data is fresh are one
-        informational line, not a P2 each.
+        this is not a workflow failure). A source whose current probe is
+        degraded or down and whose previous probe was up is one
+        informational watch line ("single-probe blip"), not a P1 or P2.
+        Known states keep their handling: blocked (Farside 403) stays P2,
+        paid-only (DeFiLlama 402) stays P2, auth_required and retired are
+        not findings. A late cron start or a skipped schedule is a P2 only
+        when that condition has already lasted more than a day AND the
+        job's output is stale or it has no success (schedule, watchdog
+        catch-up, or manual run) inside its freshness window. Late or
+        skipped jobs whose data is fresh are one informational line, not
+        a P2 each.
 
 Alert verdict (written to $GITHUB_OUTPUT as ``alert_action``):
     open    there is at least one NEW P0 -> open/update the tracking issue
@@ -69,9 +77,11 @@ from urllib.parse import urlparse
 P0, P1, P2 = "P0", "P1", "P2"
 SEV_ORDER = {P0: 0, P1: 1, P2: 2}
 # api_status.FAILURES_BEFORE_DOWN. A recorded streak below this is one
-# failed probe run: grade it P2 (degraded), not P1. A missing streak is a
+# failed probe run: grade it P2 (degraded), not P1, when the previous
+# probe was already failed or was not recorded. A missing streak is a
 # snapshot from before the counter and stays P1, so an outage already on
-# the board is not hidden.
+# the board is not hidden. A previous probe of "up" is neither of those:
+# that single strike is a watch line, not a grade.
 API_FAILURES_BEFORE_DOWN = 2
 
 PAGE_LABELS = {
@@ -594,6 +604,96 @@ def _api_failure_detail(label: str, api: dict, streak: Any) -> str:
     return "; ".join(parts)
 
 
+def _prior_verdict(api: dict, label: str) -> str | None:
+    """Verdict of this source on the probe immediately before the one graded."""
+    prior = api.get("prior_probe")
+    if not isinstance(prior, dict):
+        return None
+    verdicts = prior.get("verdicts")
+    if not isinstance(verdicts, dict):
+        return None
+    old = verdicts.get(label)
+    return old if isinstance(old, str) else None
+
+
+def _source_status(api: dict, label: str) -> int | None:
+    statuses = api.get("statuses")
+    if not isinstance(statuses, dict) or label not in statuses:
+        return None
+    raw = statuses.get(label)
+    return raw if type(raw) is int else None
+
+
+def _is_paid_only(api: dict, label: str) -> bool:
+    """DeFiLlama's HTTP 402 is a paid-plan wall, not a one-probe blip.
+
+    The probe stores that answer as ``degraded``. Status 402 is the
+    signal; the reason phrase covers a snapshot that did not keep the
+    status code.
+    """
+    if _source_status(api, label) == 402:
+        return True
+    notes = api.get("notes") if isinstance(api.get("notes"), dict) else {}
+    note = notes.get(label)
+    return isinstance(note, str) and "payment required" in note.lower()
+
+
+def _is_single_probe_blip(api: dict, label: str, verdict: str) -> bool:
+    """Current degraded/down whose immediately previous probe was up.
+
+    That is one strike (USGS ScienceBase 2026-10-23, IMF SDMX and BLS
+    2026-10-24). It is listed, not graded. The next failed probe is graded
+    as usual. Paid-only 402 is not a blip. No recorded previous probe is
+    not "up": grading stays as it was, so a missing history cannot hide
+    an outage.
+    """
+    if verdict not in ("degraded", "down"):
+        return False
+    if _is_paid_only(api, label):
+        return False
+    return _prior_verdict(api, label) == "up"
+
+
+def api_probe_blips(api: dict | None) -> list[dict]:
+    """Sources on a single-probe blip, in label order. Not problems."""
+    if not isinstance(api, dict) or not _section_ok(api):
+        return []
+    prior = api.get("prior_probe") if isinstance(api.get("prior_probe"), dict) else {}
+    notes = api.get("notes") if isinstance(api.get("notes"), dict) else {}
+    out: list[dict] = []
+    for label, verdict in sorted((api.get("verdicts") or {}).items()):
+        if not isinstance(verdict, str) or not _is_single_probe_blip(api, label, verdict):
+            continue
+        item: dict[str, Any] = {"source": label, "verdict": verdict, "previous": "up"}
+        if prior.get("generated_at"):
+            item["previous_at"] = prior.get("generated_at")
+        if prior.get("source"):
+            item["previous_source"] = prior.get("source")
+        note = notes.get(label)
+        if isinstance(note, str) and note.strip():
+            item["note"] = note.strip()
+        status = _source_status(api, label)
+        if status is not None:
+            item["status"] = status
+        out.append(item)
+    return out
+
+
+def format_api_watch_note(blips: list[dict]) -> str | None:
+    """One informational line. Not a P1 or P2."""
+    if not blips:
+        return None
+    bits: list[str] = []
+    for b in blips:
+        when = b.get("previous_at")
+        where = f"previous probe {when} was up" if when else "previous probe was up"
+        bit = f"{b['source']} {b['verdict']}"
+        if type(b.get("status")) is int:
+            bit += f" HTTP {b['status']}"
+        bits.append(f"{bit} ({where})")
+    return "Watch: single-probe blip (not graded P1/P2): " + "; ".join(bits)
+
+
 def data_problems(data: dict | None) -> list[dict]:
     out: list[dict] = []
     if not isinstance(data, dict):
@@ -793,13 +893,24 @@ def data_problems(data: dict | None) -> list[dict]:
             # outage and must not reappear as a new blocked-API finding.
             if verdict in ("retired",):
                 continue
+            # 2026-10-24 audit, enhancement #1. USGS ScienceBase (10-23) and
+            # IMF SDMX (10-24, 503 in the morning, up by 18:05Z) were graded
+            # and then healed within hours. One failed probe after an up
+            # probe is a watch line from api_probe_blips, not a P1 or P2.
+            # The second consecutive failure falls through and is graded
+            # below. Blocked, paid-only 402, auth_required, and retired
+            # are not blips.
+            if isinstance(verdict, str) and _is_single_probe_blip(api, label, verdict):
+                continue
             streak = streaks.get(label)
             # The probe rewrites a single connection failure to "degraded"
             # and leaves "down" only after API_FAILURES_BEFORE_DOWN runs
             # (USGS ScienceBase 2026-10-23: 10:00Z degraded, 12:43Z down).
-            # Grade from the streak anyway. A snapshot that says "down"
-            # with a streak below that bar is one failed run — P2, not P1.
-            # No streak at all is a pre-counter snapshot: keep P1.
+            # Grade from the streak anyway once the failure has repeated.
+            # A snapshot that says "down" with a streak below that bar is
+            # one failed run — P2, not P1. No streak at all is a
+            # pre-counter snapshot: keep P1. A previous probe of "up"
+            # never reaches this branch.
             if verdict == "down" and type(streak) is int and streak < API_FAILURES_BEFORE_DOWN:
                 detail = _api_failure_detail(label, api, streak)
                 word = "failure" if streak == 1 else "failures"
@@ -1216,6 +1327,9 @@ def render_md(report: dict) -> str:
     if report.get("schedule_note"):
         # Not a finding. Late or skipped crons whose data is still fresh.
         L += [str(report["schedule_note"]), ""]
+    if report.get("api_watch_note"):
+        # Not a finding. One failed probe after an up probe.
+        L += [str(report["api_watch_note"]), ""]
 
     new = [p for p in problems if p.get("state") == "new"]
     ongoing = [p for p in problems if p.get("state") == "ongoing"]
@@ -1293,6 +1407,8 @@ def render_md(report: dict) -> str:
         prior_line = _prior_probe_line(api)
         if prior_line:
             L.append(prior_line)
+        if report.get("api_watch_note"):
+            L.append(f"  - {report['api_watch_note']}")
     spot = data.get("spot_checks") or {}
     if _section_ok(spot) and spot:
         L += ["", "**Spot checks** (live site vs. primary sources)", ""]
@@ -1517,9 +1633,11 @@ def build_report(data: dict | None, ux: dict | None, previous: dict | None, toda
         "api_changes": api_changes,
         "api_baseline": api_baseline,
         "schedule_note": schedule_timing_note(data) if isinstance(data, dict) else None,
+        "api_watch": api_probe_blips(api if isinstance(api, dict) else None),
         "data": data,
         "ux": ux,
     }
+    report["api_watch_note"] = format_api_watch_note(report["api_watch"])
     return report
 
 
