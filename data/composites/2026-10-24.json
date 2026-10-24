@@ -1,11 +1,11 @@
 {
   "as_of": "2026-10-24",
-  "generated_at": "2026-10-24T10:51:07Z",
+  "generated_at": "2026-10-24T13:04:27Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-24",
       "label": null,
-      "note": "40 coins; 0 buy+, 13 sell+",
+      "note": "40 coins; 1 buy+, 14 sell+",
       "score": -32,
       "stale": false
     },
@@ -13,7 +13,7 @@
       "as_of": "2026-10-24",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": -5,
+      "score": -1,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -90,7 +90,7 @@
       "as_of": "2026-10-24",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": -3,
+      "score": -2,
       "stale": false
     },
     "poc_signal_breadth": {
