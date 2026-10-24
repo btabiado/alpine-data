@@ -18,13 +18,17 @@ Two ways it's used:
      (``health/apis.html``) has a snapshot to fall back on when there's no
      live server to probe through. That file also carries each source's
      ``consecutive_failures`` count. A connection failure is retried once,
-     with a short backoff, inside the run; the source is marked ``down``
-     (daily-audit P1) only after two consecutive failed runs. One failed
-     run is ``degraded``. HTTP answers — blocked, auth_required, paid-only
-     402, rate_limited, and other 4xx/5xx — and retired rows are not
-     debounced. The daily audit reads ``consecutive_failures`` itself: a
-     ``down`` row whose streak is below ``FAILURES_BEFORE_DOWN`` is graded
-     P2, so a snapshot that skipped this debounce cannot page as P1.
+     with a short backoff, inside the run. The row stays ``down`` only
+     after two consecutive failed runs; one failed run is ``degraded``.
+     HTTP answers — blocked, auth_required, paid-only 402, rate_limited,
+     and other 4xx/5xx — and retired rows are not debounced. The daily
+     audit does not grade a degraded or down row when the previous probe
+     was up (that strike is a watch line). A second consecutive failure
+     is P2 for ``degraded`` and P1 for ``down``. Paid-only 402, blocked,
+     auth_required, and retired keep their own handling. With no previous
+     probe on record, a ``down`` row whose streak is below
+     ``FAILURES_BEFORE_DOWN`` is graded P2, so a snapshot that skipped
+     this debounce cannot page as P1.
 
 Stdlib (urllib + concurrent.futures) for every probe except the few that opt
 into ``requests`` with ``"client": "requests"`` (tsa.gov, whose edge 403s
@@ -76,10 +80,11 @@ PROBE_ATTEMPTS = 2       # 1 retry: gov/city hosts give transient timeouts from 
 # Pause before that retry. Back-to-back attempts just spend a second 12s
 # read on the same hung connection (FRED ENPLANE 2026-10-21, BLS 2026-10-20).
 PROBE_BACKOFF_S = 0.5
-# Raw "down" (no HTTP response after the in-run retry) pages the daily audit
-# as P1. Require this many consecutive failed *runs* before keeping "down".
-# A single failed run is reported "degraded" (audit P2). The count is stored
-# on each source row of data/health/api_status.json.
+# Raw "down" (no HTTP response after the in-run retry) is a daily-audit P1
+# only after it repeats. Require this many consecutive failed *runs* before
+# keeping "down". A single failed run is reported "degraded". The audit
+# withholds P1/P2 for that strike when the previous probe was up. The count
+# is stored on each source row of data/health/api_status.json.
 FAILURES_BEFORE_DOWN = 2
 
 # Canonical list of the data sources the dashboard depends on. Each probe URL
@@ -643,10 +648,12 @@ def _apply_failure_streak(row: dict, prior_failures: int) -> dict:
 
     A raw ``down`` (no HTTP response after the in-run retry) is one failed
     run. Fewer than ``FAILURES_BEFORE_DOWN`` consecutive failed runs is
-    reported ``degraded``, which the daily audit treats as P2 rather than
-    P1. The counter is reset by every other verdict: up, auth_required,
-    rate_limited, blocked (Farside 403), the paid-only 402 that ``_verdict``
-    already calls degraded, and retired. Those states are not delayed.
+    reported ``degraded``. The daily audit lists that first strike as a
+    watch line when the previous probe was up, and grades P1 only after
+    the failure repeats. The counter is reset by every other verdict: up,
+    auth_required, rate_limited, blocked (Farside 403), the paid-only 402
+    that ``_verdict`` already calls degraded, and retired. Those states
+    are not delayed.
     """
     if row.get("verdict") != "down":
         row["consecutive_failures"] = 0

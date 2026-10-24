@@ -489,9 +489,12 @@ class TestParsing:
         assert out["prior_probe"]["generated_at"] == "2026-10-23T10:00:09+00:00"
         assert out["prior_probe"]["verdicts"]["USGS ScienceBase"] == "degraded"
         assert out["prior_probe"]["streaks"]["USGS ScienceBase"] == 1
+        # Connection failure: status is null, and it is the only failing row.
+        assert out["statuses"] == {"USGS ScienceBase": None}
 
         local = dad.section_api_status(tmp_path, None, T("2026-10-23T14:16"))
         assert local["streaks"]["USGS ScienceBase"] == 2
+        assert local["statuses"] == {"USGS ScienceBase": None}
         assert local["prior_probe"] is None
         assert local["previous"] is None
         assert "previous_error" not in local
@@ -755,6 +758,311 @@ class TestProblems:
         ids = {p["id"] for p in probs}
         assert "api:bitinfocharts" not in ids
         assert "api:Farside (ETF flows)" in ids
+
+    def test_single_probe_blip_is_a_watch_line_not_a_grade(self, dar):
+        """Alpine Data daily audit 2026-10-24, recommended enhancement #1.
+
+        USGS ScienceBase (2026-10-23) and IMF SDMX (2026-10-24: HTTP 503 in
+        the morning probe, up by 18:05 UTC) were graded and then healed
+        within hours. BLS the same morning was the same shape: previous
+        probe up, current probe degraded. The first failed probe is a
+        watch line. It is not a P1 or a P2.
+
+        Known rows stay as they are, including when the previous probe
+        was up: Farside 403 blocked is P2, DeFiLlama 402 paid-only is P2
+        (status code or the "Payment Required" note), auth_required and
+        retired are not findings. A label the previous probe does not
+        mention is not "previous was up".
+        """
+        prior_at = "2026-10-24T09:12:56+00:00"
+        api = {
+            "status": "ok",
+            "generated_at": "2026-10-24T13:04:34+00:00",
+            "verdicts": {
+                "BLS": "degraded",
+                "IMF SDMX": "down",
+                "DeFiLlama bridges": "degraded",
+                "Farside (ETF flows)": "blocked",
+                "EPA AirNow": "auth_required",
+                "bitinfocharts": "retired",
+                "CoinGecko": "up",
+            },
+            "streaks": {
+                "BLS": 0, "IMF SDMX": 1, "DeFiLlama bridges": 0,
+                "Farside (ETF flows)": 0, "CoinGecko": 0,
+            },
+            "notes": {
+                "BLS": "Service Unavailable",
+                "IMF SDMX": "TimeoutError: timed out "
+                            "(1 consecutive probe failure; not marked down until 2)",
+                "DeFiLlama bridges": "Payment Required",
+            },
+            "statuses": {
+                "BLS": 503,
+                "IMF SDMX": None,
+                "DeFiLlama bridges": 402,
+                "Farside (ETF flows)": 403,
+            },
+            "prior_probe": {
+                "source": "git:89c51adb87",
+                "generated_at": prior_at,
+                "verdicts": {
+                    "BLS": "up",
+                    "IMF SDMX": "up",
+                    "DeFiLlama bridges": "up",
+                    "Farside (ETF flows)": "up",
+                    "EPA AirNow": "up",
+                    "bitinfocharts": "up",
+                    "CoinGecko": "up",
+                },
+            },
+        }
+        probs = {p["id"]: p for p in dar.data_problems({"api_status": api})}
+        assert "api:BLS" not in probs
+        assert "api:IMF SDMX" not in probs
+        assert probs["api:DeFiLlama bridges"]["severity"] == "P2"
+        assert probs["api:Farside (ETF flows)"]["severity"] == "P2"
+        assert "api:bitinfocharts" not in probs
+        assert "api:EPA AirNow" not in probs
+        assert "api:CoinGecko" not in probs
+        blips = dar.api_probe_blips(api)
+        assert [b["source"] for b in blips] == ["BLS", "IMF SDMX"]
+        assert blips[0]["verdict"] == "degraded" and blips[0]["status"] == 503
+        assert blips[1]["verdict"] == "down" and "status" not in blips[1]
+        assert blips[0]["previous"] == "up" and blips[0]["previous_at"] == prior_at
+        note = dar.format_api_watch_note(blips)
+        assert note.startswith("Watch: single-probe blip (not graded P1/P2): ")
+        assert "BLS degraded HTTP 503" in note
+        assert "IMF SDMX down" in note
+        assert prior_at in note
+        rep = dar.build_report(_data(api_status=api), _ux(), None, "2026-10-24")
+        assert rep["summary"]["p1"] == 0
+        assert {p["id"] for p in rep["problems"]} >= {
+            "api:DeFiLlama bridges", "api:Farside (ETF flows)"}
+        assert "api:BLS" not in {p["id"] for p in rep["problems"]}
+        assert rep["api_watch"] == blips
+        assert rep["api_watch_note"] == note
+        assert rep["alert_action"] == "close"
+        md = dar.render_md(rep)
+        # Visible twice: once with the other informational lines, once under
+        # the API snapshot. Not as a graded problem.
+        assert md.count(note) == 2
+        assert "Upstream API BLS" not in md
+        assert "Upstream API IMF SDMX" not in md
+        assert "Upstream APIs blocked (1): Farside (ETF flows)" in md
+        assert "DeFiLlama bridges" in md
+
+        # 402 by status, even when the note does not say "Payment Required".
+        by_status = {
+            "status": "ok",
+            "verdicts": {"DeFiLlama bridges": "degraded"},
+            "statuses": {"DeFiLlama bridges": 402},
+            "notes": {"DeFiLlama bridges": "nope"},
+            "prior_probe": {"verdicts": {"DeFiLlama bridges": "up"},
+                            "generated_at": prior_at},
+        }
+        assert dar.api_probe_blips(by_status) == []
+        assert dar.data_problems({"api_status": by_status})[0]["severity"] == "P2"
+
+        # 402 by the reason phrase, when the snapshot has no status code.
+        by_note = {
+            "status": "ok",
+            "verdicts": {"DeFiLlama bridges": "degraded"},
+            "notes": {"DeFiLlama bridges": "Payment Required"},
+            "prior_probe": {"verdicts": {"DeFiLlama bridges": "up"}},
+        }
+        assert dar.api_probe_blips(by_note) == []
+        assert {p["id"]: p["severity"] for p in dar.data_problems({"api_status": by_note})} == {
+            "api:DeFiLlama bridges": "P2"}
+
+        # The previous probe exists but does not mention this source.
+        unnamed = {
+            "status": "ok",
+            "verdicts": {"BLS": "degraded"},
+            "statuses": {"BLS": 503},
+            "notes": {"BLS": "Service Unavailable"},
+            "prior_probe": {"verdicts": {"CoinGecko": "up"}, "generated_at": prior_at},
+        }
+        assert dar.api_probe_blips(unnamed) == []
+        assert dar.data_problems({"api_status": unnamed})[0]["severity"] == "P2"
+
+    def test_two_consecutive_probe_failures_are_graded(self, dar):
+        """A second failed probe is P2 (degraded) or P1 (down), as before.
+
+        IMF SDMX on 2026-10-24 was already degraded at 09:12 and still
+        HTTP 503 at 13:04, so the audit grades it P2. USGS ScienceBase on
+        2026-10-23 was degraded at 10:00 and down at 12:43 (streak 2), so
+        it is P1. A down row whose streak is still below 2 stays P2.
+        With no previous probe on record the audit does not invent an up
+        result: a bare down stays P1 and a one-strike down stays P2.
+        """
+        api = {
+            "status": "ok",
+            "verdicts": {
+                "IMF SDMX": "degraded",
+                "USGS ScienceBase": "down",
+                "Example": "down",
+            },
+            "streaks": {"IMF SDMX": 0, "USGS ScienceBase": 2, "Example": 1},
+            "notes": {
+                "IMF SDMX": "Service Unavailable",
+                "USGS ScienceBase": "TimeoutError: timed out (2 consecutive probe failures)",
+                "Example": "TimeoutError: timed out",
+            },
+            "statuses": {"IMF SDMX": 503},
+            "prior_probe": {
+                "source": "git:4c1ceb4c56",
+                "generated_at": "2026-10-23T10:00:09+00:00",
+                "verdicts": {
+                    "IMF SDMX": "degraded",
+                    "USGS ScienceBase": "degraded",
+                    "Example": "down",
+                },
+                "streaks": {"IMF SDMX": 0, "USGS ScienceBase": 1, "Example": 1},
+            },
+        }
+        probs = {p["id"]: p for p in dar.data_problems({"api_status": api})}
+        assert probs["api:IMF SDMX"]["severity"] == "P2"
+        assert probs["api:IMF SDMX"]["title"].endswith("is degraded")
+        assert "Service Unavailable" in probs["api:IMF SDMX"]["detail"]
+        assert probs["api:USGS ScienceBase"]["severity"] == "P1"
+        assert "DOWN" in probs["api:USGS ScienceBase"]["title"]
+        assert "2 consecutive probe failures" in probs["api:USGS ScienceBase"]["detail"]
+        assert "previous probe 2026-10-23T10:00:09+00:00 was degraded" in (
+            probs["api:USGS ScienceBase"]["detail"])
+        assert probs["api:Example"]["severity"] == "P2"
+        assert probs["api:Example"]["title"].endswith("is degraded")
+        assert "not marked down until 2" in probs["api:Example"]["detail"]
+        assert dar.api_probe_blips(api) == []
+        assert dar.format_api_watch_note([]) is None
+
+        bare = {
+            "status": "ok",
+            "verdicts": {"USGS ScienceBase": "down", "BLS": "degraded", "Example": "down"},
+            "streaks": {"USGS ScienceBase": 1, "BLS": 0},
+            "notes": {"BLS": "Service Unavailable", "USGS ScienceBase": "TimeoutError"},
+            "statuses": {"BLS": 503},
+        }
+        assert {p["id"]: p["severity"] for p in dar.data_problems({"api_status": bare})} == {
+            "api:BLS": "P2",
+            "api:USGS ScienceBase": "P2",
+            "api:Example": "P1",
+        }
+        assert dar.api_probe_blips(bare) == []
+
+    def test_probe_recovery_clears_the_grade_and_the_watch(self, dar):
+        """An up probe drops the finding. A blip that heals leaves no watch line.
+
+        USGS ScienceBase was down on 2026-10-23 after two failed probes and
+        up on 2026-10-24. IMF SDMX was a second consecutive 503 and then up
+        at 18:05 UTC. BLS was a single-probe blip and then up. None of those
+        stay graded, and the watch line is gone. Farside and DeFiLlama,
+        which did not recover, stay P2.
+        """
+        failed = {
+            "status": "ok",
+            "generated_at": "2026-10-24T13:04:34+00:00",
+            "verdicts": {
+                "USGS ScienceBase": "down",
+                "IMF SDMX": "degraded",
+                "BLS": "degraded",
+                "Farside (ETF flows)": "blocked",
+                "DeFiLlama bridges": "degraded",
+                "CoinGecko": "up",
+            },
+            "streaks": {
+                "USGS ScienceBase": 2, "IMF SDMX": 0, "BLS": 0,
+                "Farside (ETF flows)": 0, "DeFiLlama bridges": 0, "CoinGecko": 0,
+            },
+            "notes": {
+                "USGS ScienceBase": "TimeoutError: timed out (2 consecutive probe failures)",
+                "IMF SDMX": "Service Unavailable",
+                "BLS": "Service Unavailable",
+                "DeFiLlama bridges": "Payment Required",
+            },
+            "statuses": {
+                "IMF SDMX": 503, "BLS": 503, "DeFiLlama bridges": 402,
+                "Farside (ETF flows)": 403,
+            },
+            "prior_probe": {
+                "source": "git:89c51adb87",
+                "generated_at": "2026-10-24T09:12:56+00:00",
+                "verdicts": {
+                    "USGS ScienceBase": "degraded",
+                    "IMF SDMX": "degraded",
+                    "BLS": "up",
+                    "Farside (ETF flows)": "blocked",
+                    "DeFiLlama bridges": "degraded",
+                    "CoinGecko": "up",
+                },
+            },
+        }
+        day1 = dar.build_report(_data(api_status=failed), _ux(), None, "2026-10-24")
+        sev = {p["id"]: p["severity"] for p in day1["problems"]}
+        assert sev["api:USGS ScienceBase"] == "P1"
+        assert sev["api:IMF SDMX"] == "P2"
+        assert sev["api:Farside (ETF flows)"] == "P2"
+        assert sev["api:DeFiLlama bridges"] == "P2"
+        assert "api:BLS" not in sev
+        assert [b["source"] for b in day1["api_watch"]] == ["BLS"]
+        assert "single-probe blip" in day1["api_watch_note"]
+        assert "BLS" in dar.render_md(day1)
+        assert "Upstream API BLS" not in dar.render_md(day1)
+
+        healed = {
+            "status": "ok",
+            "generated_at": "2026-10-24T18:05:00+00:00",
+            "verdicts": {
+                "USGS ScienceBase": "up",
+                "IMF SDMX": "up",
+                "BLS": "up",
+                "Farside (ETF flows)": "blocked",
+                "DeFiLlama bridges": "degraded",
+                "CoinGecko": "up",
+            },
+            "streaks": {
+                "USGS ScienceBase": 0, "IMF SDMX": 0, "BLS": 0,
+                "Farside (ETF flows)": 0, "DeFiLlama bridges": 0, "CoinGecko": 0,
+            },
+            "notes": {"DeFiLlama bridges": "Payment Required"},
+            "statuses": {"DeFiLlama bridges": 402, "Farside (ETF flows)": 403},
+            "prior_probe": {
+                "source": "git:afternoon",
+                "generated_at": "2026-10-24T13:04:34+00:00",
+                "verdicts": {
+                    "USGS ScienceBase": "down",
+                    "IMF SDMX": "degraded",
+                    "BLS": "degraded",
+                    "Farside (ETF flows)": "blocked",
+                    "DeFiLlama bridges": "degraded",
+                    "CoinGecko": "up",
+                },
+            },
+        }
+        day2 = dar.build_report(_data(api_status=healed), _ux(), day1, "2026-10-24")
+        ids = {p["id"] for p in day2["problems"]}
+        assert "api:USGS ScienceBase" not in ids
+        assert "api:IMF SDMX" not in ids
+        assert "api:BLS" not in ids
+        assert ids >= {"api:Farside (ETF flows)", "api:DeFiLlama bridges"}
+        assert day2["api_watch"] == []
+        assert day2["api_watch_note"] is None
+        fixed = {p["id"] for p in day2["regressions"]["fixed"]}
+        assert {"api:USGS ScienceBase", "api:IMF SDMX"} <= fixed
+        assert "api:BLS" not in fixed
+        assert "api:Farside (ETF flows)" not in fixed
+        assert "api:DeFiLlama bridges" not in fixed
+        md = dar.render_md(day2)
+        assert "single-probe blip" not in md
+        ongoing = md.split("## Fixed since yesterday")[0]
+        assert "USGS ScienceBase is DOWN" not in ongoing
+        assert "IMF SDMX" not in ongoing
+        fixed_section = md.split("## Fixed since yesterday", 1)[1].split("## Snapshot", 1)[0]
+        assert "Upstream API USGS ScienceBase is DOWN" in fixed_section
+        assert "Upstream APIs degraded (1): IMF SDMX" in fixed_section
+        assert "IMF SDMX: degraded → up" in md
+        assert "USGS ScienceBase: down → up" in md
+        assert "BLS: degraded → up" in md
 
     def test_feed_failure_is_p0_and_suppressed_is_not_a_problem(self, dar):
         d = _data()

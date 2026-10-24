@@ -28,10 +28,13 @@ others, so a flaky upstream degrades the report instead of erasing it):
                 tick has already lasted; ``last_success_at`` is the newest
                 success of any kind (schedule, watchdog catch-up, or manual).
   api_status    ``data/health/api_status.json`` verdict counts, each source's
-                ``consecutive_failures`` streak, per-source verdict changes
-                vs. the committed copy from ~24h earlier, and the immediately
-                previous probe (so a second consecutive failure is not
-                reported as a one-day flip from "up").
+                ``consecutive_failures`` streak, the HTTP status of failing
+                rows (a paid-only 402 stays distinct from a 503 blip),
+                per-source verdict changes vs. the committed copy from ~24h
+                earlier, and the immediately previous probe. The report
+                grades degraded/down only after that previous probe was
+                already failed; a flip from up is a watch line, not a P1
+                or P2.
   spot_checks   cheap correctness checks of the LIVE site against primary
                 sources that need no secrets (CoinGecko's keyless market_chart
                 at the payload's own timestamp, alternative.me, mempool.space,
@@ -925,6 +928,29 @@ def _streaks(snapshot: dict) -> dict[str, int]:
     return out
 
 
+def _statuses(snapshot: dict) -> dict[str, int | None]:
+    """HTTP status for rows the audit might grade or hold as a blip.
+
+    Paid-only 402 is verdict ``degraded`` with this status, same as a
+    transient 503. A connection failure is null. Up rows are omitted.
+    """
+    out: dict[str, int | None] = {}
+    for s in snapshot.get("sources") or []:
+        if not isinstance(s, dict):
+            continue
+        if s.get("verdict") not in ("down", "degraded", "blocked"):
+            continue
+        label = _source_label(s)
+        if not label or "status" not in s:
+            continue
+        raw = s.get("status")
+        if type(raw) is int:
+            out[label] = raw
+        elif raw is None:
+            out[label] = None
+    return out
+
+
 def _failure_notes(snapshot: dict) -> dict[str, str]:
     """Notes for rows the audit might page. Empty notes are omitted."""
     out: dict[str, str] = {}
@@ -1009,9 +1035,11 @@ def section_api_status(repo_root: Path, gh: GitHub | None, now: datetime) -> dic
         "counts": dict(Counter(verdicts.values())),
         "verdicts": verdicts,
         # The probe's debounce. The report grades P1 from this, not from the
-        # word "down" alone: a streak below 2 is one failed run.
+        # word "down" alone: a streak below 2 is one failed run. A previous
+        # probe of "up" is held as a watch line instead of a grade.
         "streaks": _streaks(snap),
         "notes": _failure_notes(snap),
+        "statuses": _statuses(snap),
         "unwired_key_envs": snap.get("unwired_key_envs") or [],
         "previous": None,
         "prior_probe": None,
