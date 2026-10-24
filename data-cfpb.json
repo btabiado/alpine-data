@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-10-24T09:10:49.297335+00:00",
+ "generated_utc": "2026-10-24T12:01:18.240912+00:00",
  "source": "CFPB Consumer Complaint Database",
  "note": "Published from GitHub Actions (clean egress) because the CFPB API blocks Cloudflare datacenter IPs. Consumed by ADW-397.",
  "windows": {
