@@ -25,6 +25,7 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -457,6 +458,161 @@ def test_an_output_outside_the_repo_does_not_read_this_checkout(tmp_path):
     found = city_context.load_last_good_contexts(
         path, ["sf"], repo_root=Path(ROOT))
     assert found == {}
+
+
+# --------------------------------------------------------------------------- #
+# empty unemployment keeps the last good BLS rate
+# --------------------------------------------------------------------------- #
+_BLS_NOW = datetime(2026, 10, 24, 19, 9, tzinfo=timezone.utc)
+
+
+def _empty_labor_city():
+    city = _empty_sf_context()
+    city["context"]["unemployment_rate"] = None
+    city["context"]["median_income"] = 140970
+    return city
+
+
+def test_empty_unemployment_carries_forward_rate_age_and_warns(capsys):
+    """A BLS 503 leaves the rate null. The last good value comes back, with
+    the snapshot time and its age in the disclosure. ACS and AQI stay put."""
+    city = _empty_labor_city()
+    diags: list = []
+    assert city_context.apply_unemployment_carry_forward(
+        city, _PRIOR_SF, diagnostics=diags, now=_BLS_NOW)
+    ctx = city["context"]
+    assert ctx["unemployment_rate"] == 4.2
+    assert ctx["median_income"] == 140970
+    assert ctx["aqi"] == 19
+    assert ctx["context_score"] is None
+    note = [d for d in city["disclosures"] if "Unemployment rate carried forward" in d]
+    assert len(note) == 1
+    assert "2026-10-23T09:40:36Z" in note[0]
+    assert "33h old" in note[0]
+    assert "4.2" in note[0]
+    err = capsys.readouterr().err
+    assert "bls: warning" in err
+    assert "carrying forward 4.2" in err
+    assert "33h old" in err
+    assert diags[0]["kind"] == "carried-forward"
+    assert diags[0]["source"] == "bls"
+    assert diags[0]["lost"] == "unemployment_rate"
+    assert "33h old" in diags[0]["detail"]
+
+
+def test_present_unemployment_is_not_replaced():
+    city = _empty_sf_context()
+    assert city_context.apply_unemployment_carry_forward(
+        city, _PRIOR_SF, now=_BLS_NOW) is False
+    assert city["context"]["unemployment_rate"] == 4.2
+    assert city["disclosures"] == ["Police Incident Reports: continuity breakpoint"]
+
+
+def test_zero_unemployment_is_a_value_and_is_not_replaced():
+    city = _empty_labor_city()
+    city["context"]["unemployment_rate"] = 0.0
+    assert city_context.apply_unemployment_carry_forward(city, _PRIOR_SF) is False
+    assert city["context"]["unemployment_rate"] == 0.0
+
+
+def test_negative_prior_rate_is_not_carried():
+    city = _empty_labor_city()
+    prior = {"as_of": "2026-10-23T09:40:36Z", "context": {"unemployment_rate": -1}}
+    assert city_context.apply_unemployment_carry_forward(city, prior) is False
+    assert city["context"]["unemployment_rate"] is None
+
+
+def test_null_context_block_is_rebuilt_from_the_last_good_rate():
+    city = {"id": "sf", "disclosures": []}
+    assert city_context.apply_unemployment_carry_forward(
+        city, _PRIOR_SF, now=_BLS_NOW)
+    assert city["context"]["unemployment_rate"] == 4.2
+    assert city["context"]["median_income"] is None
+    assert city["context"]["aqi"] is None
+
+
+def test_no_prior_leaves_the_empty_unemployment_alone():
+    city = _empty_labor_city()
+    assert city_context.apply_unemployment_carry_forward(city, None) is False
+    assert city["context"]["unemployment_rate"] is None
+
+
+def test_income_and_unemployment_carry_forward_compose():
+    """Both outages at once: income restoration must not drop the labor rate,
+    and the labor restoration must not overwrite the income just restored."""
+    city = {"id": "sf", "disclosures": []}
+    assert city_context.apply_median_income_carry_forward(city, _PRIOR_SF)
+    assert city["context"]["unemployment_rate"] is None
+    assert city_context.apply_unemployment_carry_forward(
+        city, _PRIOR_SF, now=_BLS_NOW)
+    assert city["context"]["median_income"] == 140970
+    assert city["context"]["unemployment_rate"] == 4.2
+    assert city["context"]["aqi"] is None
+    assert sum("carried forward" in d for d in city["disclosures"]) == 2
+
+
+def test_unemployment_age_is_days_after_two_days():
+    later = datetime(2026, 10, 26, 9, 40, 36, tzinfo=timezone.utc)
+    assert city_context._unemployment_age(
+        "2026-10-23T09:40:36Z", now=later) == "3d old"
+    assert city_context._unemployment_age(None) == "age unknown"
+    assert city_context._unemployment_age("not-a-date") == "age unknown"
+
+
+def test_last_good_unemployment_is_read_past_a_null_on_disk(tmp_path):
+    """The file about to be overwritten already lost the rate (a previous 503
+    that published null). The commit before it still has 4.2."""
+    env = os.environ.copy()
+    env.update({
+        "GIT_AUTHOR_NAME": "test",
+        "GIT_AUTHOR_EMAIL": "test@example.com",
+        "GIT_COMMITTER_NAME": "test",
+        "GIT_COMMITTER_EMAIL": "test@example.com",
+    })
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    def git(*args):
+        subprocess.run(
+            ["git", "-c", "commit.gpgsign=false", *args],
+            cwd=repo, env=env, check=True, capture_output=True, text=True,
+        )
+
+    git("init")
+    path = repo / "data-city.json"
+    good = {
+        "generated_at": "2026-10-23T09:40:36Z",
+        "cities": [{"id": "sf", "context": _PRIOR_SF["context"]}],
+    }
+    path.write_text(json.dumps(good))
+    git("add", "data-city.json")
+    git("commit", "-m", "good")
+    blank = json.loads(json.dumps(good))
+    blank["generated_at"] = "2026-10-24T13:04:00Z"
+    blank["cities"][0]["context"]["unemployment_rate"] = None
+    path.write_text(json.dumps(blank))
+    git("add", "data-city.json")
+    git("commit", "-m", "null rate")
+
+    found = city_context.load_last_good_unemployment(path, ["sf"], repo_root=repo)
+    assert found["sf"]["context"]["unemployment_rate"] == 4.2
+    assert found["sf"]["as_of"] == "2026-10-23T09:40:36Z"
+
+
+def test_bls_503_in_build_context_nulls_the_rate_and_names_the_failure(
+        monkeypatch, capsys):
+    """The adapter raises; build_context must not raise, must log the 503,
+    and must leave the rate empty so the carry-forward pass can fill it."""
+    monkeypatch.setattr(bls, "fetch_unemployment", lambda *a, **k: (_ for _ in ()).throw(
+        bls.BLSError("BLS returned HTTP 503 for LAUCT066700000000003: service unavailable")))
+    diags: list = []
+    ctx = city_context.build_context(CITY, GEO, diagnostics=diags)
+    entry = [d for d in diags if d["source"] == "bls"][0]
+    assert entry["kind"] == "failed"
+    assert entry["lost"] == "unemployment_rate"
+    assert "503" in entry["detail"]
+    assert "503" in capsys.readouterr().err
+    assert ctx is None or ctx["unemployment_rate"] is None
 
 
 def test_fbi_crime_series_without_an_ori_is_empty_and_hits_no_network():

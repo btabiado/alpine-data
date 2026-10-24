@@ -62,6 +62,10 @@ Notes on the recon
     period differs per series (some 2026-03, some 2026-04). This adapter always
     returns the single most-recent period BLS reports as ``latest:true`` (with
     a defensive max-by-(year, month) fallback if that flag is absent).
+  * HTTP 429/500/502/503/504, transport errors, and a non-JSON body are retried
+    (three attempts, 3s then 10s). The 2026-10-24 audit recorded HTTP 503 on
+    both probes. A 503 that survives the retries still raises :class:`BLSError`;
+    ``city.context`` then keeps the last good rate instead of publishing null.
 
 Public surface
 --------------
@@ -75,6 +79,8 @@ it defaults to a module-level :class:`requests.Session`.
 from __future__ import annotations
 
 import os
+import sys
+import time
 from typing import Optional
 
 import requests
@@ -121,9 +127,84 @@ _SESSION = requests.Session()
 # Default per-request timeout (seconds).
 _DEFAULT_TIMEOUT = 30
 
+# Transient BLS failures worth another try. The 2026-10-24 daily audit saw
+# api.bls.gov answer HTTP 503 ("service unavailable") on both the 13:04 and
+# 18:05 UTC probes; the same host was up on 10-23. BLS_API_KEY is optional and
+# unset, and the keyless POST is what the city job sends, so a 503 is an
+# outage rather than a missing secret. 4xx (unknown series, bad request) is
+# not retried. Three attempts total, matching the Census and Socrata adapters.
+# ``_sleep`` is a hook so tests do not wait.
+_RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
+_RETRY_BACKOFF_S = (3, 10)
+_sleep = time.sleep
+
 
 def _resolve_session(session):
     return session if session is not None else _SESSION
+
+
+def _post_with_retry(sess, payload: dict, series_id: str):
+    """POST the timeseries body, retrying transient failures.
+
+    Retries HTTP 429/500/502/503/504, transport errors, and a 200 whose body
+    is not JSON (a gateway HTML page in place of the BLS envelope). Returns
+    the last response. A transport error that survives every attempt raises
+    :class:`BLSError`. A final HTTP 503 is a response, not an exception from
+    this helper, so the caller's existing error text stays the same.
+
+    The retry log names the status only. The POST body can carry
+    ``registrationkey`` and must not be printed.
+    """
+    attempts = len(_RETRY_BACKOFF_S) + 1
+    resp = None
+    for attempt in range(attempts):
+        last_attempt = attempt == attempts - 1
+        try:
+            resp = sess.post(_API_URL, json=payload, timeout=_DEFAULT_TIMEOUT)
+        except requests.RequestException as exc:
+            if not last_attempt:
+                print(
+                    "  [bls] request failed ({}); retrying {}/{}".format(
+                        type(exc).__name__, attempt + 1, attempts - 1
+                    ),
+                    file=sys.stderr,
+                )
+                _sleep(_RETRY_BACKOFF_S[attempt])
+                continue
+            raise BLSError(redact(
+                f"BLS request for {series_id} failed after {attempts} "
+                f"attempts: {exc}"
+            )) from exc
+
+        status = getattr(resp, "status_code", None)
+        if status in _RETRY_STATUSES and not last_attempt:
+            print(
+                "  [bls] HTTP {}; retrying {}/{}".format(
+                    status, attempt + 1, attempts - 1
+                ),
+                file=sys.stderr,
+            )
+            _sleep(_RETRY_BACKOFF_S[attempt])
+            continue
+
+        # A 200 (or a status-less fake) whose body is not JSON is the same
+        # outage shape as a 503 HTML page. 4xx and a final 5xx are returned
+        # as-is so the caller keeps its existing error text.
+        if status is None or status == 200:
+            try:
+                resp.json()
+            except Exception:
+                if not last_attempt:
+                    print(
+                        "  [bls] non-JSON body; retrying {}/{}".format(
+                            attempt + 1, attempts - 1
+                        ),
+                        file=sys.stderr,
+                    )
+                    _sleep(_RETRY_BACKOFF_S[attempt])
+                    continue
+        return resp
+    return resp
 
 
 def _period_to_month(period) -> Optional[int]:
@@ -208,6 +289,9 @@ def fetch_unemployment(city_id, *, api_key=None, session=None) -> Optional[float
         BLSError: on an unknown ``city_id``, transport failure, non-200 HTTP, a
             non-JSON body, the in-band ``REQUEST_NOT_PROCESSED`` error envelope,
             or a non-numeric value where a rate is expected.
+            HTTP 429/500/502/503/504, transport errors, and a non-JSON body are
+            retried before this is raised. An in-band quota error (HTTP 200 +
+            ``REQUEST_NOT_PROCESSED``) is not retried.
     """
     series_id = CITY_LAUS_SERIES.get(city_id)
     if series_id is None:
@@ -224,10 +308,7 @@ def fetch_unemployment(city_id, *, api_key=None, session=None) -> Optional[float
         payload["registrationkey"] = api_key
 
     sess = _resolve_session(session)
-    try:
-        resp = sess.post(_API_URL, json=payload, timeout=_DEFAULT_TIMEOUT)
-    except requests.RequestException as exc:
-        raise BLSError(f"BLS request for {series_id} failed: {exc}") from exc
+    resp = _post_with_retry(sess, payload, series_id)
 
     status = getattr(resp, "status_code", None)
     if status is not None and status != 200:

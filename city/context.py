@@ -46,6 +46,7 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -261,8 +262,9 @@ def apply_median_income_carry_forward(city_obj: dict, prior: Optional[dict],
     :func:`load_last_good_contexts`, or ``None`` when no earlier income
     exists. Sibling ACS fields that are also empty are copied from that same
     snapshot; a field the new run actually returned is left alone.
-    Unemployment, AQI, and ``context_score`` are never copied — they belong
-    to other adapters, and the score is recomputed after this pass.
+    Unemployment, AQI, and ``context_score`` are never copied here — AQI
+    belongs to AirNow, the score is recomputed after this pass, and a blank
+    unemployment rate is restored by :func:`apply_unemployment_carry_forward`.
 
     Logs a warning and appends a disclosure (the schema's as-of marker).
     Returns True when income was carried forward.
@@ -379,13 +381,123 @@ def _git_payloads(path: Path, repo_root: Path, limit: int):
             continue
 
 
-def load_last_good_contexts(path: Path, city_ids, *, repo_root: Path) -> dict:
-    """Last snapshot in which each city still had a median income.
+def good_unemployment_rate(value) -> bool:
+    """True for a usable LAUS unemployment rate (percent).
 
-    Prefers the file about to be overwritten. When that file already stored
-    null (the 2026-10-23 afternoon commit), walks up to ``_GIT_LOOKBACK``
-    commits of the same path. Returns ``{city_id: {"as_of", "context"}}``
-    and omits cities with no earlier income.
+    ``bool`` is an ``int`` subclass and is not a rate. Negative values and
+    non-finite numbers are not rates. ``0`` is a real rate and must be kept.
+    """
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    if value != value or value in (float("inf"), float("-inf")):
+        return False
+    return value >= 0
+
+
+def _unemployment_age(as_of, *, now=None) -> str:
+    """Age of a carried BLS snapshot: ``'34h old'``, ``'3d old'``, or
+    ``'age unknown'`` when ``as_of`` is missing or not the generated_at shape.
+    """
+    if not isinstance(as_of, str) or not as_of:
+        return "age unknown"
+    try:
+        gen = datetime.strptime(as_of, "%Y-%m-%dT%H:%M:%SZ").replace(
+            tzinfo=timezone.utc)
+    except ValueError:
+        return "age unknown"
+    clock = now if now is not None else datetime.now(timezone.utc)
+    if clock.tzinfo is None:
+        clock = clock.replace(tzinfo=timezone.utc)
+    seconds = (clock - gen).total_seconds()
+    if seconds < 0:
+        seconds = 0
+    hours = seconds / 3600.0
+    if hours < 48:
+        return "{:.0f}h old".format(hours)
+    return "{:.0f}d old".format(hours / 24.0)
+
+
+def apply_unemployment_carry_forward(city_obj: dict, prior: Optional[dict],
+                                     *, diagnostics=None, now=None) -> bool:
+    """Fill an empty ``unemployment_rate`` from the last good snapshot.
+
+    ``prior`` is ``{"as_of": <generated_at or None>, "context": {...}}`` from
+    :func:`load_last_good_unemployment`, or ``None`` when no earlier rate
+    exists. Only the labor field is copied. Census ACS fields, AQI, and
+    ``context_score`` stay with this run — the score is recomputed after
+    this pass.
+
+    The context schema has ``additionalProperties: false`` and no as-of
+    field, so the staleness marker is a disclosure (same place PR #151 puts
+    the Census income marker) that names the snapshot time and its age.
+    Logs a warning. Returns True when the rate was carried forward.
+    """
+    if not prior or not isinstance(prior.get("context"), dict):
+        return False
+    prior_ctx = prior["context"]
+    prior_rate = prior_ctx.get("unemployment_rate")
+    if not good_unemployment_rate(prior_rate):
+        return False
+
+    ctx = city_obj.get("context")
+    if isinstance(ctx, dict) and good_unemployment_rate(ctx.get("unemployment_rate")):
+        return False
+    if not isinstance(ctx, dict):
+        ctx = _blank_context()
+        city_obj["context"] = ctx
+
+    ctx["unemployment_rate"] = prior_rate
+
+    city_id = city_obj.get("id", "?")
+    as_of = prior.get("as_of") or "the previous snapshot"
+    age = _unemployment_age(prior.get("as_of"), now=now)
+    note = (
+        "Unemployment rate carried forward from {} ({}; BLS returned no value "
+        "this run; last good value {}).".format(as_of, age, prior_rate)
+    )
+    disclosures = city_obj.get("disclosures")
+    if not isinstance(disclosures, list):
+        disclosures = []
+        city_obj["disclosures"] = disclosures
+    if note not in disclosures:
+        disclosures.append(note)
+
+    print(
+        "  [context] {} bls: warning -> unemployment_rate came back empty; "
+        "carrying forward {} as of {} ({})".format(city_id, prior_rate, as_of, age),
+        file=sys.stderr,
+    )
+    if diagnostics is not None:
+        diagnostics.append({
+            "city": city_id,
+            "source": "bls",
+            "kind": "carried-forward",
+            "detail": "as of {} ({})".format(as_of, age),
+            "lost": "unemployment_rate",
+        })
+    return True
+
+
+def _absorb_unemployment(payload, need: set, found: dict) -> None:
+    if not isinstance(payload, dict):
+        return
+    as_of = payload.get("generated_at")
+    for city in payload.get("cities") or []:
+        if not isinstance(city, dict):
+            continue
+        city_id = city.get("id")
+        if city_id not in need or city_id in found:
+            continue
+        ctx = city.get("context")
+        if isinstance(ctx, dict) and good_unemployment_rate(ctx.get("unemployment_rate")):
+            found[city_id] = {"as_of": as_of, "context": ctx}
+
+
+def _load_last_good(path: Path, city_ids, *, repo_root: Path, absorb) -> dict:
+    """Last snapshot in which ``absorb`` recorded a value for each city.
+
+    Prefers the file about to be overwritten, then up to ``_GIT_LOOKBACK``
+    commits of the same path. A failure here must not fail the city build.
     """
     need = {city_id for city_id in city_ids if city_id}
     found: dict = {}
@@ -393,11 +505,11 @@ def load_last_good_contexts(path: Path, city_ids, *, repo_root: Path) -> dict:
         return found
     if path.is_file():
         try:
-            _absorb_incomes(json.loads(path.read_text()), need, found)
+            absorb(json.loads(path.read_text()), need, found)
         except (OSError, json.JSONDecodeError) as exc:
             # Same outcome as before: skip this file and keep walking git
             # history. The read failure is why a city can lose its last good
-            # income, so it has to show up in the build log.
+            # value, so it has to show up in the build log.
             print(
                 "  [context] carry-forward: unreadable {} ({})".format(
                     path, redact(f"{type(exc).__name__}: {exc}")[:300]
@@ -406,7 +518,31 @@ def load_last_good_contexts(path: Path, city_ids, *, repo_root: Path) -> dict:
             )
     if len(found) < len(need):
         for payload in _git_payloads(path, repo_root, _GIT_LOOKBACK):
-            _absorb_incomes(payload, need, found)
+            absorb(payload, need, found)
             if len(found) == len(need):
                 break
     return found
+
+
+def load_last_good_contexts(path: Path, city_ids, *, repo_root: Path) -> dict:
+    """Last snapshot in which each city still had a median income.
+
+    Prefers the file about to be overwritten. When that file already stored
+    null (the 2026-10-23 afternoon commit), walks up to ``_GIT_LOOKBACK``
+    commits of the same path. Returns ``{city_id: {"as_of", "context"}}``
+    and omits cities with no earlier income.
+    """
+    return _load_last_good(
+        path, city_ids, repo_root=repo_root, absorb=_absorb_incomes)
+
+
+def load_last_good_unemployment(path: Path, city_ids, *, repo_root: Path) -> dict:
+    """Last snapshot in which each city still had an unemployment rate.
+
+    Same walk as :func:`load_last_good_contexts`. A BLS 503 (or a non-JSON
+    body) used to publish null ``unemployment_rate`` and wipe the previous
+    good labor number. Returns ``{city_id: {"as_of", "context"}}`` and omits
+    cities with no earlier rate.
+    """
+    return _load_last_good(
+        path, city_ids, repo_root=repo_root, absorb=_absorb_unemployment)

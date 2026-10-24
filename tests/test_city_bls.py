@@ -14,6 +14,12 @@ from city import bls
 from city.bls import BLSError, CITY_LAUS_SERIES, fetch_unemployment
 
 
+@pytest.fixture(autouse=True)
+def _no_retry_sleep(monkeypatch):
+    """The transient-failure retry path must not make the suite wait."""
+    monkeypatch.setattr(bls, "_sleep", lambda seconds: None)
+
+
 # ---------------------------------------------------------------------------
 # Fake HTTP session (POST-based, mirrors the BLS v2 timeseries endpoint)
 # ---------------------------------------------------------------------------
@@ -162,7 +168,10 @@ def test_fetch_unemployment_none_on_suppressed_value():
 # Error envelope + HTTP + parse failures -> BLSError
 # ---------------------------------------------------------------------------
 def test_fetch_unemployment_raises_on_in_band_error_envelope():
-    """HTTP 200 but status REQUEST_NOT_PROCESSED (e.g. daily threshold)."""
+    """HTTP 200 but status REQUEST_NOT_PROCESSED (e.g. daily threshold).
+
+    A quota envelope is not a transient 5xx. Retrying it would burn the cap.
+    """
     payload = {
         "status": "REQUEST_NOT_PROCESSED",
         "responseTime": 0,
@@ -173,19 +182,66 @@ def test_fetch_unemployment_raises_on_in_band_error_envelope():
     with pytest.raises(BLSError) as exc:
         fetch_unemployment("chicago", session=session)
     assert "REQUEST_NOT_PROCESSED" in str(exc.value)
+    assert len(session.calls) == 1
 
 
 def test_fetch_unemployment_raises_on_non_200():
-    session = FakeSession(FakeResponse({}, status_code=500, text="Internal Error"))
+    """A 4xx is permanent. Do not retry it."""
+    session = FakeSession(FakeResponse({}, status_code=404, text="Not Found"))
     with pytest.raises(BLSError) as exc:
         fetch_unemployment("chicago", session=session)
-    assert "500" in str(exc.value)
+    assert "404" in str(exc.value)
+    assert len(session.calls) == 1
+
+
+def test_transient_503_is_retried_then_parsed(capsys):
+    """2026-10-24 audit: BLS answered HTTP 503. A later try that returns the
+    LAUS envelope must win, and the optional registration key must not be logged."""
+    busy = FakeResponse(None, status_code=503, text="service unavailable")
+    ok = FakeResponse(_bls_ok(CITY_LAUS_SERIES["chicago"], _CHICAGO_ROWS))
+    session = FakeSession([busy, ok])
+    rate = fetch_unemployment("chicago", api_key="SECRETKEY123", session=session)
+    assert rate == 5.1
+    assert len(session.calls) == 2
+    assert session.calls[0]["json"]["seriesid"] == [CITY_LAUS_SERIES["chicago"]]
+    err = capsys.readouterr().err
+    assert "HTTP 503" in err
+    assert "SECRETKEY123" not in err
+
+
+def test_persistent_503_gives_up_after_three_attempts():
+    session = FakeSession(FakeResponse(None, status_code=503, text="service unavailable"))
+    with pytest.raises(BLSError) as exc:
+        fetch_unemployment("chicago", session=session)
+    assert "503" in str(exc.value)
+    assert "service unavailable" in str(exc.value)
+    assert len(session.calls) == 3
+
+
+def test_non_json_is_retried_then_parsed(capsys):
+    """A 200 HTML body (gateway page standing in for the BLS envelope) is
+    retried. The following JSON body is the rate."""
+    html = FakeResponse(ValueError("no json"), status_code=200, text="<html>unavailable</html>")
+    ok = FakeResponse(_bls_ok(CITY_LAUS_SERIES["sf"], _CHICAGO_ROWS))
+    session = FakeSession([html, ok])
+    assert fetch_unemployment("sf", session=session) == 5.1
+    assert len(session.calls) == 2
+    assert "non-JSON" in capsys.readouterr().err
+
+
+def test_persistent_non_json_gives_up_after_three_attempts():
+    session = FakeSession(FakeResponse(ValueError("no json"), status_code=200, text="<html>"))
+    with pytest.raises(BLSError) as exc:
+        fetch_unemployment("chicago", session=session)
+    assert "malformed JSON" in str(exc.value)
+    assert len(session.calls) == 3
 
 
 def test_fetch_unemployment_raises_on_malformed_json():
     session = FakeSession(FakeResponse(ValueError("no json"), status_code=200))
     with pytest.raises(BLSError):
         fetch_unemployment("chicago", session=session)
+    assert len(session.calls) == 3
 
 
 def test_fetch_unemployment_raises_on_non_numeric_value():
@@ -202,8 +258,9 @@ def test_fetch_unemployment_raises_on_transport_error():
         def post(self, *a, **k):
             raise _requests.RequestException("connection reset")
 
-    with pytest.raises(BLSError):
+    with pytest.raises(BLSError) as exc:
         fetch_unemployment("chicago", session=BoomSession())
+    assert "after 3 attempts" in str(exc.value)
 
 
 def test_fetch_unemployment_raises_on_unknown_city():

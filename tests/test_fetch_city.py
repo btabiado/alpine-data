@@ -531,6 +531,85 @@ def test_main_carries_forward_empty_sf_income(monkeypatch, capsys, tmp_path):
     assert "CARRIED FORWARD" in err
 
 
+def test_main_carries_forward_unemployment_when_bls_returns_nothing(
+        monkeypatch, capsys, tmp_path):
+    """2026-10-24: BLS stayed HTTP 503. The city file must keep each city's
+    last labor rate, mark how old that rate is, and leave a fresh income alone."""
+    prior = {
+        "generated_at": "2026-10-23T18:05:00Z",
+        "cities": [
+            {"id": "sf", "context": {
+                "median_income": 140970,
+                "median_rent": 2476,
+                "median_home_value": 1394500,
+                "median_real_estate_taxes": 9862,
+                "effective_property_tax_rate": 0.00707,
+                "unemployment_rate": 3.7,
+                "aqi": 29,
+                "context_score": 53,
+            }},
+            {"id": "chicago", "context": {
+                "median_income": 70000,
+                "unemployment_rate": 5.1,
+                "aqi": 40,
+            }},
+        ],
+    }
+    out = tmp_path / "data-city.json"
+    out.write_text(json.dumps(prior))
+
+    def fake_build(city_cfg, **kwargs):
+        cid = city_cfg["id"]
+        # SF's whole context block is null, the way build_context returns
+        # when BLS 503s and the other sources produced nothing. Chicago has
+        # a fresh income and a null rate (BLS failed, Census did not).
+        context = None if cid == "sf" else {
+            "median_income": 80000,
+            "median_rent": 1500,
+            "median_home_value": 400000,
+            "median_real_estate_taxes": 4000,
+            "effective_property_tax_rate": 0.01,
+            "unemployment_rate": None,
+            "aqi": 19,
+            "context_score": None,
+        }
+        return {
+            "id": cid,
+            "name": city_cfg["name"],
+            "scope": city_cfg.get("scope", "city"),
+            "disclosures": [],
+            "pulse": {"score": 50},
+            "data_health": {
+                "feeds_ok": 3, "feeds_total": 3,
+                "last_updated": "2026-09-01T00:00:00+00:00",
+            },
+            "context": context,
+        }
+
+    monkeypatch.setattr(fetch_city, "build_city", fake_build)
+    monkeypatch.setattr(fetch_city, "_load_extended_feeds", lambda: {})
+    rc = fetch_city.main(["--force", "--out", str(out), "--as-of", "2026-09"])
+    assert rc == 0
+    payload = json.loads(out.read_text())
+    sf = next(c for c in payload["cities"] if c["id"] == "sf")
+    chicago = next(c for c in payload["cities"] if c["id"] == "chicago")
+    nyc = next(c for c in payload["cities"] if c["id"] == "nyc")
+    assert sf["context"]["unemployment_rate"] == 3.7
+    assert sf["context"]["median_income"] == 140970
+    assert sf["context"]["aqi"] is None
+    assert any("Unemployment rate carried forward from 2026-10-23T18:05:00Z" in d
+               and "old" in d for d in sf["disclosures"])
+    assert chicago["context"]["unemployment_rate"] == 5.1
+    assert chicago["context"]["median_income"] == 80000
+    assert chicago["context"]["aqi"] == 19
+    assert any("Unemployment rate carried forward" in d for d in chicago["disclosures"])
+    assert nyc["context"]["unemployment_rate"] is None
+    err = capsys.readouterr().err
+    assert "carrying forward 3.7" in err
+    assert "carrying forward 5.1" in err
+    assert "CARRIED FORWARD" in err
+
+
 def test_main_annotates_a_degraded_build(monkeypatch, capsys, tmp_path):
     """End to end: a dead feed in a real main() run becomes an annotation and
     the run still exits 0 (one broken source must not block the rest)."""
