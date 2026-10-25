@@ -28371,7 +28371,7 @@
       "ticker": "DOC",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.02256681696361429,
+        "momentum_pct_90d": -0.022566911625132247,
         "momentum_subscore": 42.30019493177387,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -33082,7 +33082,7 @@
       "ticker": "ERIE",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": 0.1375161396486717,
+        "momentum_pct_90d": 0.13751621752814414,
         "momentum_subscore": 75.82846003898635,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -40939,7 +40939,7 @@
       "ticker": "GFS",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.4423736120165359,
+        "momentum_pct_90d": -0.44237355857343974,
         "momentum_subscore": 0.9746588693957114,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -46649,7 +46649,7 @@
       "ticker": "HST",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": 0.04009740982789567,
+        "momentum_pct_90d": 0.040097326358047525,
         "momentum_subscore": 58.86939571150097,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -48608,7 +48608,7 @@
       "ticker": "IFF",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": 0.22152616568545436,
+        "momentum_pct_90d": 0.22152604477182747,
         "momentum_subscore": 84.40545808966861,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -49397,7 +49397,7 @@
       "ticker": "INTU",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": 0.23321082185347608,
+        "momentum_pct_90d": 0.23321095701002847,
         "momentum_subscore": 85.18518518518519,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -64093,7 +64093,7 @@
       "ticker": "MRVL",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.17961634943945648,
+        "momentum_pct_90d": -0.17961643932271554,
         "momentum_subscore": 13.450292397660817,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -68226,8 +68226,8 @@
         "has_sec_8k": false,
         "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": 0.4,
-        "events_score_raw": 70.0,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -68556,7 +68556,7 @@
       "ticker": "NUE",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": 0.0010757920280604072,
+        "momentum_pct_90d": 0.0010756735387622562,
         "momentum_subscore": 49.317738791423,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -69771,7 +69771,7 @@
       "ticker": "O",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.06844762195845244,
+        "momentum_pct_90d": -0.06844756376974181,
         "momentum_subscore": 29.629629629629626,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -72428,7 +72428,7 @@
       "ticker": "PCG",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.24020616616732848,
+        "momentum_pct_90d": -0.24020607898703894,
         "momentum_subscore": 9.35672514619883,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -92277,7 +92277,7 @@
       "ticker": "UDR",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.056998960868618664,
+        "momentum_pct_90d": -0.05699886621952466,
         "momentum_subscore": 32.553606237816766,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -96599,7 +96599,7 @@
       "ticker": "VZ",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.01292750499971329,
+        "momentum_pct_90d": -0.012927421777454762,
         "momentum_subscore": 44.834307992202724,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -98954,7 +98954,7 @@
       "ticker": "WSM",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": 0.11840456677005862,
+        "momentum_pct_90d": 0.11840464236768855,
         "momentum_subscore": 72.12475633528264,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
