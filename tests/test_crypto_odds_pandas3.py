@@ -108,7 +108,7 @@ def test_events_keep_outcome_labels_on_nanosecond_and_second_clocks():
     assert np.array_equal(ev_ns["y"].to_numpy(), ev_s["y"].to_numpy(), equal_nan=True)
     assert utc_ns(ev_ns["outcome_date"]).astype("int64").tolist() == utc_ns(ev_s["outcome_date"]).astype("int64").tolist()
     # last origin has no t+1 print, so its label is missing and unscored
-    assert ev_ns["y"].iloc[-1] != ev_ns["y"].iloc[-1]
+    assert pd.isna(ev_ns["y"].iloc[-1])
     assert nat_for(seconds.dates).dtype.name.endswith("[s]")
 
 
