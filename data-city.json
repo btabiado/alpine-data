@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-25T09:32:02Z",
+  "generated_at": "2026-10-25T12:47:11Z",
   "methodology_version": "1.1",
   "as_of": "2026-09",
   "methodology_disclosures": [
@@ -27,7 +27,7 @@
         "label": "On baseline",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": 0.04081274546196312,
+        "composite_c": 0.03980569224613258,
         "pillars": [
           {
             "key": "city_services",
@@ -200,7 +200,7 @@
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": -0.8517956295963338,
+            "score_d": -0.8548167892438254,
             "feeds": [
               {
                 "label": "Crimes 2001-present",
@@ -209,13 +209,13 @@
                 "complete_through": "2026-08",
                 "note": "excludes last ~7 days; latest complete month lags to prior month",
                 "status": "ok",
-                "recent": 20863,
+                "recent": 20869,
                 "recent_period": "2026-08",
-                "baseline_mean": 19455.333333333332,
-                "baseline_std": 1652.5873316980524,
-                "z": 0.8517956295963338,
-                "yoy_pct": -2.4500865011455555,
-                "d": -0.8517956295963338,
+                "baseline_mean": 19456.0,
+                "baseline_std": 1652.9857833629424,
+                "z": 0.8548167892438254,
+                "yoy_pct": -2.4220320755599194,
+                "d": -0.8548167892438254,
                 "series": [
                   {
                     "month": "2023-09",
@@ -303,11 +303,11 @@
                   },
                   {
                     "month": "2025-06",
-                    "n": 21195
+                    "n": 21197
                   },
                   {
                     "month": "2025-07",
-                    "n": 22715
+                    "n": 22716
                   },
                   {
                     "month": "2025-08",
@@ -319,7 +319,7 @@
                   },
                   {
                     "month": "2025-10",
-                    "n": 21064
+                    "n": 21065
                   },
                   {
                     "month": "2025-11",
@@ -339,15 +339,15 @@
                   },
                   {
                     "month": "2026-03",
-                    "n": 19197
+                    "n": 19198
                   },
                   {
                     "month": "2026-04",
-                    "n": 19169
+                    "n": 19171
                   },
                   {
                     "month": "2026-05",
-                    "n": 21167
+                    "n": 21169
                   },
                   {
                     "month": "2026-06",
@@ -355,11 +355,11 @@
                   },
                   {
                     "month": "2026-07",
-                    "n": 21304
+                    "n": 21306
                   },
                   {
                     "month": "2026-08",
-                    "n": 20863
+                    "n": 20869
                   }
                 ]
               }
@@ -542,12 +542,12 @@
         "median_real_estate_taxes": 4943,
         "effective_property_tax_rate": 0.014794971565399582,
         "unemployment_rate": 6.0,
-        "aqi": 58,
-        "context_score": 33
+        "aqi": 62,
+        "context_score": 34
       },
       "disclosures": [
         "Crimes 2001-present: excludes last ~7 days; latest complete month lags to prior month",
-        "Unemployment rate carried forward from 2026-10-24T12:12:30Z (21h old; BLS returned no value this run; last good value 6.0)."
+        "Unemployment rate carried forward from 2026-10-25T09:32:02Z (3h old; BLS returned no value this run; last good value 6.0)."
       ],
       "data_health": {
         "feeds_ok": 3,
@@ -1590,14 +1590,14 @@
         "median_real_estate_taxes": 6547,
         "effective_property_tax_rate": 0.008419495884773663,
         "unemployment_rate": 5.2,
-        "aqi": 61,
+        "aqi": 67,
         "context_score": 38
       },
       "disclosures": [
         "311 (2010-present): ~38M rows; REQUIRES app token + recent $where filter or it times out",
         "NYPD Complaints: YTD file lags ~1 month; baseline qgea-i56i same col",
         "DOB Permit Issuance: issuance_date is TEXT -> date_trunc_ym fails. Bucket via substring(issuance_date,7,4)||'-'||substring(issuance_date,1,2) and filter IS NOT NULL, OR use dobrundate (real calendar_date, ~1-day proxy).",
-        "Unemployment rate carried forward from 2026-10-24T12:12:30Z (21h old; BLS returned no value this run; last good value 5.2)."
+        "Unemployment rate carried forward from 2026-10-25T09:32:02Z (3h old; BLS returned no value this run; last good value 5.2)."
       ],
       "data_health": {
         "feeds_ok": 3,
@@ -2378,13 +2378,13 @@
         "median_real_estate_taxes": 6050,
         "effective_property_tax_rate": 0.006567520625271385,
         "unemployment_rate": 5.0,
-        "aqi": 46,
-        "context_score": 48
+        "aqi": 44,
+        "context_score": 52
       },
       "disclosures": [
         "MyLA311 Cases: RESOLVED: LA retired the 'MyLA311 Service Request Data {year}' series ~Aug 2025 (old h73f-gn57=2025 is dead for current data). Current product = 'MyLA311 Cases {year}'. 2026 = 2cy6-i7zn (date col createddate, live, ~185k/mo). Baseline = 73a2-6ar5 ('MyLA311 Cases March 2025 to December 2025'). Resolve current-year by catalog search: GET data.lacity.org/api/catalog/v1?q=MyLA311%20Cases -> item titled 'MyLA311 Cases {currentYear}'. Do NOT auto-build '...Service Request Data {year}' IDs.",
         "LAPD NIBRS Offenses: Single consolidated NIBRS file since 2026-08-18 (LA renamed k7nn-b2ep from '...2026 to Present' and folded all RMS offenses into it). The old 2024-2025 baseline y8y3-fqfu now returns HTTP 403 'You must be logged in' - never poll it. RMS went live 2024-03-07, so 2024 months are a partial ramp (continuity break in the trend line); dense from 2025-01. Upstream lags ~2 weeks, so the newest month is usually incomplete and is not scored. Legacy 2nrs-mtv8 frozen - never poll.",
-        "Unemployment rate carried forward from 2026-10-24T12:12:30Z (21h old; BLS returned no value this run; last good value 5.0)."
+        "Unemployment rate carried forward from 2026-10-25T09:32:02Z (3h old; BLS returned no value this run; last good value 5.0)."
       ],
       "data_health": {
         "feeds_ok": 3,
@@ -2917,14 +2917,14 @@
         "median_real_estate_taxes": 7337,
         "effective_property_tax_rate": 0.00781696143191988,
         "unemployment_rate": 4.5,
-        "aqi": 53,
+        "aqi": 60,
         "context_score": 50
       },
       "disclosures": [
         "Customer Service Requests: CORRECTED: column is 'createddate' (one word), not 'created_date'.",
         "SPD Crime 2008+: CORRECTED: column is 'report_date_time' (underscores), not 'report_datetime'. 2019 RMS change = continuity breakpoint.",
         "Building Permits: Confirmed via columns metadata (a $limit=1 row had it null). MUST filter issueddate IS NOT NULL - large null bucket = un-issued applications.",
-        "Unemployment rate carried forward from 2026-10-24T12:12:30Z (21h old; BLS returned no value this run; last good value 4.5)."
+        "Unemployment rate carried forward from 2026-10-25T09:32:02Z (3h old; BLS returned no value this run; last good value 4.5)."
       ],
       "data_health": {
         "feeds_ok": 3,
@@ -3620,12 +3620,12 @@
         "median_real_estate_taxes": 9862,
         "effective_property_tax_rate": 0.00707206884187881,
         "unemployment_rate": 4.2,
-        "aqi": 14,
-        "context_score": 56
+        "aqi": 34,
+        "context_score": 53
       },
       "disclosures": [
         "Police Incident Reports: 2018 portal/system migration = continuity breakpoint",
-        "Unemployment rate carried forward from 2026-10-24T12:12:30Z (21h old; BLS returned no value this run; last good value 4.2)."
+        "Unemployment rate carried forward from 2026-10-25T09:32:02Z (3h old; BLS returned no value this run; last good value 4.2)."
       ],
       "data_health": {
         "feeds_ok": 3,
@@ -3642,11 +3642,11 @@
           "status": "ok",
           "recent": 884,
           "recent_period": "2026-09",
-          "baseline_mean": 1012.5833333333334,
-          "baseline_std": 220.14557998944446,
-          "z": -0.5840831932192265,
+          "baseline_mean": 1012.75,
+          "baseline_std": 220.16551538936943,
+          "z": -0.5847873122741393,
           "yoy_pct": -2.7502750275027505,
-          "d": -0.5840831932192265,
+          "d": -0.5847873122741393,
           "series": [
             {
               "month": "2023-10",
@@ -3702,7 +3702,7 @@
             },
             {
               "month": "2024-11",
-              "n": 848
+              "n": 849
             },
             {
               "month": "2024-12",
@@ -3770,7 +3770,7 @@
             },
             {
               "month": "2026-04",
-              "n": 1153
+              "n": 1154
             },
             {
               "month": "2026-05",
@@ -3778,7 +3778,7 @@
             },
             {
               "month": "2026-06",
-              "n": 924
+              "n": 925
             },
             {
               "month": "2026-07",
@@ -4225,15 +4225,15 @@
         "median_real_estate_taxes": 3744,
         "effective_property_tax_rate": 0.008086393088552916,
         "unemployment_rate": 1.9,
-        "aqi": 36,
-        "context_score": 66
+        "aqi": 27,
+        "context_score": 74
       },
       "disclosures": [
         "Footprint = Miami-Dade County (not the City of Miami). County 311 excludes City-of-Miami-proper requests.",
         "Miami-Dade 311: STALE: this is the 2023 yearly snapshot (ticket_created_date_time range 2023-01-01 -> 2024-01-01). County 311 is published only as frozen per-year snapshots ('311 Service Requests - Miami-Dade County - {year}'); latest = 2023. NO current County 311 feed exists (alternates b74b1dd0=2018 max, a6b9c3e3=OBJECTID-only, 7cc10915=City-of-Miami footprint max 2024-08). opendata.miamidade.gov is the same ArcGIS Hub org (no Socrata BETA found). Resolve latest snapshot by catalog title pattern; use created_year_month (int yyyymm) for bucketing. Expect Miami Services = stale in P0; Miami likely ships 2-of-3 pillars.",
         "MDC Building Permit: Source moved 2026: 'Building Permits Issued By Miami-Dade County - 2 Previous Years to Present' (miamidade_permit_data). The old BuildingPermit_gdb layer now answers code=499 Token Required - never poll it. Rolling ~24-month window, so the trend line starts about two years back and the first, partial month is skipped.",
         "FBI CDE (fallback): ORI FL0130000 resolved keyless from agencies endpoint. Spec's 'MDSO' = this county PD entry (county PD->Sheriff transition not yet renamed in CDE). City-of-Miami-proper PD = FL0130600 if scope flips. Re-verified 2026-10-04: the cde.ucr.cjis.gov/LATEST summarized DATA series is served keyless (a bogus API_KEY returns the same body), so no key is needed. CDE refreshes mid-month; the month in progress at last_refresh_date is not scored.",
-        "Unemployment rate carried forward from 2026-10-24T12:12:30Z (21h old; BLS returned no value this run; last good value 1.9)."
+        "Unemployment rate carried forward from 2026-10-25T09:32:02Z (3h old; BLS returned no value this run; last good value 1.9)."
       ],
       "data_health": {
         "feeds_ok": 2,
