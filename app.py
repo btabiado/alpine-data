@@ -5018,6 +5018,11 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
   #aviation-tab .pill.avail{color:var(--ink-dim)}
   #aviation-tab .av-stale{margin:0 0 12px;padding:8px 12px;border:1px solid var(--red);border-radius:8px;background:rgba(255,93,108,.08);color:var(--red);font-family:var(--mono);font-size:12px;font-weight:600}
   #aviation-tab .av-stale[hidden]{display:none}
+  /* Short publication delay. Same chip geometry as .av-stale, amber accent
+     like the takeaway, so it reads as a note rather than a failed fetch.
+     Text wraps; no nowrap, so a 390px phone gets two lines instead of a clip. */
+  #aviation-tab .av-lag{margin:0 0 12px;padding:8px 12px;border:1px solid var(--edge);border-left:3px solid var(--amber);border-radius:8px;background:var(--panel);color:var(--ink-dim);font-size:13px;line-height:1.45}
+  #aviation-tab .av-lag[hidden]{display:none}
   #aviation-tab .takeaway{display:flex;gap:11px;background:rgba(255,181,71,.06);border:1px solid rgba(255,181,71,.25);border-radius:9px;padding:12px 14px;margin-bottom:18px;font-size:13px;color:#f1dcb4}
   #aviation-tab .takeaway b{color:var(--amber)}
   #aviation-tab .tl{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
@@ -5217,6 +5222,7 @@ a[href*="blockchair.com/"][href*="/transaction/"]{display:inline-block;padding:7
 
 <div class="av-view" id="view-tsa">
   <div class="takeaway"><span aria-hidden="true">&#128737;</span><div><b>How many people the TSA screened, day by day.</b> A daily pulse of US air-travel demand &mdash; over 900 million passengers screened in 2025, with single days topping 3 million. The daily series below comes from a cron-committed snapshot of the TSA checkpoint numbers; its newest day is shown on the first card.</div></div>
+  <div class="av-lag" id="tsa-lag-note" role="status" hidden></div>
   <div class="av-stale" id="tsa-stale-badge" role="status" hidden></div>
   <div class="kpis" id="kpi-tsa" aria-live="polite" aria-atomic="false"></div>
   <div class="panel"><h3>Daily passengers screened &mdash; recent weeks</h3><div class="ph-note" id="tsa-series-note">Passengers through all US TSA checkpoints, the most recent days on file.</div><div class="chart-wrap tall"><canvas id="c-tsa-series"></canvas></div></div>
@@ -6522,6 +6528,15 @@ function tsaDayIso(s){
 // TSA posts every weekday (Monday's post covers the weekend), so a newest day
 // more than this many days old means the feed/cron stopped — not a quiet week.
 const TSA_STALE_DAYS = 3;
+// A newest checkpoint more than TSA_LAG_NOTE_DAYS behind today, and not past
+// TSA_LAG_NOTE_MAX_DAYS, is the publication delay the daily audit calls
+// upstream lag (P2). Two days is yesterday-or-the-day-before, the 48h health
+// limit. Past a week the red stale badge is the right signal: "TSA publishes
+// with a delay" would mislabel a stopped feed, including the built-in seed
+// shown before data-tsa.json loads. 7 days is inclusive, matching
+// data_health.TSA_UPSTREAM_LAG_CEILING_H.
+const TSA_LAG_NOTE_DAYS = 2;
+const TSA_LAG_NOTE_MAX_DAYS = 7;
 // Age in days when the newest TSA day is STALE (> TSA_STALE_DAYS), 0 when it
 // is current, null when undatable. Age comes from freshness(), the page's one
 // age implementation.
@@ -6529,6 +6544,19 @@ function tsaStaleDays(latestIso){
   const f = freshness(latestIso, {});
   if (f.ageDays == null) return null;
   return f.ageDays > TSA_STALE_DAYS ? f.ageDays : 0;
+}
+// "Latest TSA data: Oct 22 (TSA publishes with a delay)", or '' when the
+// newest day is current, undatable, or older than the delay window.
+function tsaLagNote(latestIso){
+  const f = freshness(latestIso, {});
+  if (f.ageDays == null || f.ageDays <= TSA_LAG_NOTE_DAYS || f.ageDays > TSA_LAG_NOTE_MAX_DAYS) return '';
+  const dayMs = freshnessDayUTC(latestIso);
+  if (dayMs == null) return '';
+  const d = new Date(dayMs);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let label = months[d.getUTCMonth()] + ' ' + d.getUTCDate();
+  if (d.getUTCFullYear() !== new Date().getUTCFullYear()) label += ', ' + d.getUTCFullYear();
+  return 'Latest TSA data: ' + label + ' (TSA publishes with a delay)';
 }
 // The live data-tsa.json, fetched once and shared by the TSA view and the
 // Aviation tab's freshness strip (which used to read "as of —").
@@ -16117,28 +16145,35 @@ function avBootAviation(DATA){
         const latestV=(live&&live.latest)?live.latest.vol:t.seed.vol;
         const avg7=(live&&live.avg7)?live.avg7:t.seed.avg7;
         const ageNote=(live&&live.generated)?"":" · seed";
-        // Stale badge: TSA posts every weekday, so a newest day older than
-        // TSA_STALE_DAYS means the feed stopped. Said in the KPI, on the view
-        // and on the chart note; the view copy no longer promises real-time data.
+        // Two different ages. A short lag (more than 2 days, through 7) is
+        // TSA not having published — one plain note, not a red alarm. Older
+        // than that, the stale badge / KPI / chart note say the feed stopped.
         const latestIso=tsaDayIso(latestD);
         const staleDays=tsaStaleDays(latestIso);
+        const lagText=tsaLagNote(latestIso);
+        const lagEl=$("#tsa-lag-note");
+        if(lagEl){
+          if(lagText){lagEl.hidden=false;lagEl.textContent=lagText;}
+          else{lagEl.hidden=true;lagEl.textContent="";}
+        }
+        const feedStopped=!!staleDays && !lagText;
         const badge=$("#tsa-stale-badge");
         if(badge){
-          if(staleDays){badge.hidden=false;badge.textContent="Stale · newest TSA day is "+latestD+" ("+staleDays+" days old)";}
+          if(feedStopped){badge.hidden=false;badge.textContent="Stale · newest TSA day is "+latestD+" ("+staleDays+" days old)";}
           else{badge.hidden=true;badge.textContent="";}
         }
         // The 7-day KPI names its actual window instead of "trailing week".
         const wk=series.slice(-7);
         const wkTxt=wk.length?(wk.length<7?wk.length+" days · ":"")+wk[0].d+" – "+wk[wk.length-1].d:"trailing week";
         const head=[
-          {label:"Latest day",val:fmt(latestV),delta:latestD+" · TSA"+ageNote+(staleDays?" · stale ("+staleDays+"d old)":""),dir:staleDays?"down":"up",raw:true},
+          {label:"Latest day",val:fmt(latestV),delta:latestD+" · TSA"+ageNote+(feedStopped?" · stale ("+staleDays+"d old)":""),dir:feedStopped?"down":(lagText?"flat":"up"),raw:true},
           {label:"7-day average",val:fmt(avg7),delta:wkTxt,dir:"flat",raw:true}
         ].concat(t.kpis);
         kpi($("#kpi-tsa"),head);
         const note=$("#tsa-series-note");
         if(note&&series.length){
           note.textContent="Passengers through all US TSA checkpoints, "+series[0].d+" – "+series[series.length-1].d
-            +" ("+series.length+" days on file)."+(staleDays?" This feed has not updated since then.":" Weekly travel rhythm (Sunday/Thursday peaks, Tuesday/Saturday troughs) is clearly visible.");
+            +" ("+series.length+" days on file)."+(feedStopped?" This feed has not updated since then.":" Weekly travel rhythm (Sunday/Thursday peaks, Tuesday/Saturday troughs) is clearly visible.");
         }
         // Year kept on the axis (M/D/YY): with a stale series, "6/17" alone
         // read as this year's June.

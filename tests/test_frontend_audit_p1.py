@@ -235,9 +235,9 @@ def v8(v1_js):
     mr = pytest.importorskip("py_mini_racer", reason="V8 needed to execute the shipped JS")
     ctx = mr.MiniRacer()
     names = ("freshness", "freshnessDayUTC", "freshnessYmd", "fDay", "fMin",
-             "tsaDayIso", "tsaStaleDays", "realEstateSourceDates")
+             "tsaDayIso", "tsaStaleDays", "tsaLagNote", "realEstateSourceDates")
     bodies = "\n".join(_extract(v1_js, n) for n in names)
-    const = re.search(r"^const TSA_STALE_DAYS = \d+;", v1_js, re.M).group(0)
+    consts = "\n".join(re.findall(r"^const TSA_[A-Z0-9_]+ = \d+;", v1_js, re.M))
     ctx.eval("""
     function __make(RealDate, nowMs){
       class D extends RealDate {
@@ -247,11 +247,16 @@ def v8(v1_js):
       const Date = D;
       %s
       %s
-      return { tsaDayIso, tsaStaleDays, realEstateSourceDates, TSA_STALE_DAYS };
+      return { tsaDayIso, tsaStaleDays, tsaLagNote, realEstateSourceDates,
+               TSA_STALE_DAYS, TSA_LAG_NOTE_DAYS, TSA_LAG_NOTE_MAX_DAYS };
     }
     function __call(fn, now, ...args){ return __make(Date, Date.parse(now))[fn](...args); }
     function __const(){ return __make(Date, 0).TSA_STALE_DAYS; }
-    """ % (const, bodies))
+    function __lagBounds(){
+      const o = __make(Date, 0);
+      return { min: o.TSA_LAG_NOTE_DAYS, max: o.TSA_LAG_NOTE_MAX_DAYS };
+    }
+    """ % (consts, bodies))
     return ctx
 
 
@@ -278,6 +283,31 @@ def test_tsa_stale_threshold_is_three_days(v8):
     assert v8.call("__call", "tsaStaleDays", now, None) is None
 
 
+def test_tsa_lag_note_names_a_short_publication_delay(v8):
+    """2026-10-25 audit: newest checkpoint 2026-10-22 is a delay, not a failure.
+
+    The note starts once the row is more than 2 days old and stays through
+    the 7-day upstream-lag ceiling. Older than that (or undatable) is the
+    red stale badge's job, so this sentence stays blank.
+    """
+    assert v8.call("__lagBounds") == {"min": 2, "max": 7}
+    now = "2026-10-25T15:11:00Z"
+    note = "Latest TSA data: Oct 22 (TSA publishes with a delay)"
+    assert v8.call("__call", "tsaLagNote", now, "2026-10-25") == ""
+    assert v8.call("__call", "tsaLagNote", now, "2026-10-24") == ""   # 1d
+    assert v8.call("__call", "tsaLagNote", now, "2026-10-23") == ""   # 2d: inside the 48h limit
+    assert v8.call("__call", "tsaLagNote", now, "2026-10-22") == note  # 3d: the audit row
+    assert v8.call("__call", "tsaLagNote", now, "2026-10-18") == (
+        "Latest TSA data: Oct 18 (TSA publishes with a delay)")          # 7d still a delay
+    assert v8.call("__call", "tsaLagNote", now, "2026-10-17") == ""      # 8d
+    assert v8.call("__call", "tsaLagNote", now, "2026-06-07") == ""      # built-in seed
+    assert v8.call("__call", "tsaLagNote", now, None) == ""
+    # A delay that crosses the year still names the year, so it cannot
+    # read as this year's December.
+    assert v8.call("__call", "tsaLagNote", "2027-01-02T12:00:00Z", "2026-12-28") == (
+        "Latest TSA data: Dec 28, 2026 (TSA publishes with a delay)")
+
+
 def test_real_estate_stamp_is_the_oldest_vendor_publish_date(v8):
     snap = {"generated_at": "2026-10-04T12:02:40Z", "sources": {
         "zillow": {"fetched_at": "2026-10-04T12:02:40Z", "last_modified": "Wed, 16 Sep 2026 02:11:30 GMT"},
@@ -292,6 +322,26 @@ def test_tsa_copy_no_longer_claims_near_real_time(v1_js):
     assert "near-real-time" not in v1_js
     assert "most recent ~30 days" not in v1_js
     assert 'id="tsa-stale-badge"' in v1_js
+    assert 'id="tsa-lag-note"' in v1_js
+
+
+def test_tsa_lag_note_is_a_wrapping_note_not_the_red_alarm(v1_js):
+    """The delay line is its own chip. It must wrap on a phone, and a short
+    lag must not also light the red 'feed stopped' badge."""
+    view = v1_js[v1_js.index('id="view-tsa"'):v1_js.index('id="view-live"')]
+    assert 'class="av-lag" id="tsa-lag-note"' in view
+    assert view.index('id="tsa-lag-note"') < view.index('id="tsa-stale-badge"')
+    rule = v1_js[v1_js.index("#aviation-tab .av-lag{"):]
+    rule = rule[:rule.index("}") + 1]
+    assert "nowrap" not in rule
+    assert "var(--amber)" in rule
+    assert "var(--red)" not in rule
+    assert "#aviation-tab .av-lag[hidden]{display:none}" in v1_js
+    apply = v1_js[v1_js.index("const lagText=tsaLagNote(latestIso);"):]
+    apply = apply[:apply.index("chartTable(")]
+    assert "const feedStopped=!!staleDays && !lagText;" in apply
+    assert 'feedStopped?" · stale' in apply
+    assert "This feed has not updated since then." in apply
 
 
 # --------------------------------------------------------- whale fee units ---
