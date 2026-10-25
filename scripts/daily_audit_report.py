@@ -32,7 +32,9 @@ Severities:
         whose last scheduled run failed with no success since (a later
         manual or watchdog run clears it), a spot check that disagrees
         with its primary source, console errors, failed same-origin
-        requests, visible NaN/undefined text, an upstream API down after
+        requests, a visible numeric glitch (NaN / undefined / null / Infinity
+        standing alone or beside a sign, currency symbol, or unit — the same
+        word inside prose is not one), an upstream API down after
         two consecutive failed probe runs (the previous probe was already
         degraded or down), an LTHCS pillar other than the accepted
         thesis_integrity stub that is the 50.0 placeholder for the whole

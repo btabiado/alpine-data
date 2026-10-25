@@ -9,7 +9,10 @@
 //   * failed SAME-ORIGIN requests (HTTP 4xx/5xx and network failures)
 //   * horizontal overflow at 390px (documentElement.scrollWidth > viewport),
 //     with the outermost offending elements named
-//   * visible text matching NaN / undefined / [object Object] / Infinity
+//   * visible text that is a rendered-number glitch: NaN / undefined / null /
+//     Infinity standing alone or beside a digit, sign, currency symbol, or
+//     unit, plus [object Object]. The same tokens inside ordinary prose
+//     ("Infinity Ward") are not glitches.
 //   * page weight (encoded bytes) and request count for the initial load
 //   * for V1 (/): every top-level tab is opened the way a user
 //     would — on the phone by tapping the dropdown button first, then tapping
@@ -102,8 +105,128 @@ function pushCapped(list, item) {
 // In-page probes (run via page.evaluate; must be self-contained)
 // ---------------------------------------------------------------------------
 
-function probeBadText(rootSelector) {
-  const re = /\bNaN\b|\bundefined\b|\[object Object\]|\bInfinity\b/;
+// Nested on purpose: page.evaluate stringifies this function and runs it in
+// the page, where module imports do not exist. Keep the predicate in here.
+//
+// Daily audit 2026-10-25 (AMBER, three P1s) flagged the headline fragment
+// "Infinity Ward Veteran Says" in #overviewNewsHost, #newsFeed, and
+// #researchNewsHost. Infinity Ward is a studio name, not a broken number.
+// NaN, undefined, null, and Infinity are flagged only when the token stands
+// alone (a metric whose text is "Infinity" or "NaN") or sits next to a
+// digit, sign, currency symbol, or unit ("-Infinity", "$Infinity",
+// "Infinity%", "Flow NaN%"). A word on the other side ("Infinity Ward",
+// "null hypothesis", "undefined behavior") is ordinary prose. "[object
+// Object]" has no prose use and is always a glitch.
+export function probeBadText(rootSelector) {
+  const CURRENCY = '$€£¥₿¢₩₽₹';
+
+  function skipWsEnd(s) {
+    return s.replace(/[\s\u00a0\u2007\u202f]+$/u, '');
+  }
+  function skipWsStart(s) {
+    return s.replace(/^[\s\u00a0\u2007\u202f]+/u, '');
+  }
+  function isLetter(ch) {
+    return !!ch && /\p{L}/u.test(ch);
+  }
+  function isDigit(ch) {
+    return !!ch && /\p{N}/u.test(ch);
+  }
+  function isCurrency(ch) {
+    return !!ch && CURRENCY.includes(ch);
+  }
+  function isSign(ch) {
+    return ch === '+' || ch === '-' || ch === '\u2212' || ch === '\u2013' || ch === '\u2014';
+  }
+
+  // 'word'     an alphabetic word sits on this side (prose)
+  // 'value'    a digit, sign, currency symbol, or unit is glued to the token
+  // 'boundary' start/end, or punctuation that does not introduce a word
+  function leftKind(beforeRaw) {
+    let s = skipWsEnd(beforeRaw);
+    if (!s) return 'boundary';
+    const c = s.slice(-1);
+    if (isLetter(c)) return 'word';
+    if (isDigit(c) || isCurrency(c) || c === '%' || c === '\u2030') return 'value';
+    if (isSign(c)) {
+      // "well-Infinity" is a hyphenated word; "-Infinity" is a sign.
+      const prior = skipWsEnd(s.slice(0, -1));
+      if (prior && isLetter(prior.slice(-1))) return 'word';
+      return 'value';
+    }
+    // "score: Infinity" — the colon closes the label, so the token is the value.
+    if (c === ':' || c === '=' || c === '|') return 'boundary';
+    // "2007, Infinity Ward": the comma separates the year from the name.
+    // Do not treat that year as a numeric suffix. Do treat a word past the
+    // comma ("Hello, Infinity") as prose.
+    s = skipWsEnd(s.slice(0, -1));
+    while (s) {
+      const ch = s.slice(-1);
+      if (isLetter(ch)) return 'word';
+      if (ch === ':' || ch === '=' || ch === '|') return 'boundary';
+      if (isSign(ch)) {
+        const prior = skipWsEnd(s.slice(0, -1));
+        if (prior && isLetter(prior.slice(-1))) return 'word';
+        return 'value';
+      }
+      if (isDigit(ch) || isCurrency(ch) || ch === '%' || ch === '\u2030') return 'boundary';
+      s = skipWsEnd(s.slice(0, -1));
+    }
+    return 'boundary';
+  }
+
+  function rightKind(afterRaw) {
+    const after = skipWsStart(afterRaw);
+    if (!after) return 'boundary';
+    // Units that are themselves letters must be checked before the word test.
+    const unit = /^(?:%|\u2030|px|bps|ms|\u00d7)(?!\p{L})/iu.exec(after);
+    if (unit) return 'value';
+    const c = after[0];
+    if (isLetter(c)) return 'word';
+    if (isDigit(c) || isCurrency(c)) return 'value';
+    if (isSign(c)) {
+      // "Infinity-based" is a word; "Infinity-3" is a number.
+      const rest = after.slice(1);
+      if (isDigit(rest[0])) return 'value';
+      if (isLetter(rest[0])) return 'word';
+      return 'boundary';
+    }
+    if (c === ':' || c === '=' || c === '|') return 'boundary';
+    let s = skipWsStart(after.slice(1));
+    while (s) {
+      const ch = s[0];
+      if (isLetter(ch)) return 'word';
+      if (ch === ':' || ch === '=' || ch === '|') return 'boundary';
+      if (isSign(ch)) {
+        const rest = s.slice(1);
+        if (isDigit(rest[0])) return 'value';
+        if (isLetter(rest[0])) return 'word';
+        return 'boundary';
+      }
+      if (isDigit(ch) || isCurrency(ch) || ch === '%' || ch === '\u2030') return 'boundary';
+      s = skipWsStart(s.slice(1));
+    }
+    return 'boundary';
+  }
+
+  function isRenderedNumberGlitch(text, index, token) {
+    if (token === '[object Object]') return true;
+    const left = leftKind(text.slice(0, index));
+    const right = rightKind(text.slice(index + token.length));
+    if (left === 'value' || right === 'value') return true;
+    return left !== 'word' && right !== 'word';
+  }
+
+  function findBadTextMatches(text) {
+    const re = /\b(?:NaN|undefined|null|Infinity)\b|\[object Object\]/g;
+    const out = [];
+    let m;
+    while ((m = re.exec(text))) {
+      if (isRenderedNumberGlitch(text, m.index, m[0])) out.push({ match: m[0], index: m.index });
+    }
+    return out;
+  }
+
   const root = rootSelector ? document.querySelector(rootSelector) : document.body;
   if (!root) return [];
   const out = [];
@@ -111,18 +234,23 @@ function probeBadText(rootSelector) {
   let node;
   while ((node = walker.nextNode()) && out.length < 15) {
     const text = node.nodeValue;
-    if (!text || !re.test(text)) continue;
+    if (!text) continue;
+    const hits = findBadTextMatches(text);
+    if (!hits.length) continue;
     const el = node.parentElement;
     if (!el || el.closest('script,style,noscript,template,textarea,code,pre')) continue;
     const rect = el.getBoundingClientRect();
     if (!rect.width || !rect.height) continue;
     const cs = getComputedStyle(el);
     if (cs.visibility === 'hidden' || cs.display === 'none' || Number(cs.opacity) === 0) continue;
-    const m = text.match(re);
-    const start = Math.max(0, m.index - 40);
-    const snippet = text.slice(start, m.index + m[0].length + 40).replace(/\s+/g, ' ').trim();
     const anchor = el.closest('[id]');
-    out.push({ match: m[0], text: snippet, where: anchor ? '#' + anchor.id : el.tagName.toLowerCase() });
+    const where = anchor ? '#' + anchor.id : el.tagName.toLowerCase();
+    for (const hit of hits) {
+      if (out.length >= 15) break;
+      const start = Math.max(0, hit.index - 40);
+      const snippet = text.slice(start, hit.index + hit.match.length + 40).replace(/\s+/g, ' ').trim();
+      out.push({ match: hit.match, text: snippet, where });
+    }
   }
   return out;
 }
