@@ -1,14 +1,14 @@
 {
  "schema": 1,
  "date": "2026-10-25",
- "generated_at": "2026-10-25T11:18:49Z",
- "run_url": "https://github.com/btabiado/alpine-data/actions/runs/40188183589",
+ "generated_at": "2026-10-25T13:45:13Z",
+ "run_url": "https://github.com/btabiado/alpine-data/actions/runs/40198851190",
  "summary": {
   "status": "AMBER",
   "p0": 0,
-  "p1": 5,
+  "p1": 3,
   "p2": 4,
-  "new": 6,
+  "new": 4,
   "new_p0": 0,
   "ongoing": 3,
   "fixed": 1,
@@ -16,24 +16,6 @@
  },
  "alert_action": "close",
  "problems": [
-  {
-   "id": "schedule:aviation-opensky:missed",
-   "severity": "P1",
-   "category": "schedule",
-   "title": "Scheduled workflow aviation-opensky missed 1 day(s) in the last week",
-   "detail": "cron 25 * * * *; no scheduled run on: 2026-10-25",
-   "state": "new",
-   "first_seen": "2026-10-25"
-  },
-  {
-   "id": "schedule:lthcs-news-hourly:missed",
-   "severity": "P1",
-   "category": "schedule",
-   "title": "Scheduled workflow lthcs-news-hourly missed 1 day(s) in the last week",
-   "detail": "cron 19 * * * *; no scheduled run on: 2026-10-25",
-   "state": "new",
-   "first_seen": "2026-10-25"
-  },
   {
    "id": "ux:v1:bad-text:Infinity:#newsFeed",
    "severity": "P1",
@@ -78,7 +60,7 @@
    "severity": "P2",
    "category": "api",
    "title": "Upstream API Farside (ETF flows) is blocked",
-   "detail": "previous probe 2026-10-25T01:09:54+00:00 was blocked",
+   "detail": "previous probe 2026-10-25T05:21:41+00:00 was blocked",
    "group": "api:blocked",
    "group_title": "Upstream APIs blocked",
    "item": "Farside (ETF flows)",
@@ -90,7 +72,7 @@
    "severity": "P2",
    "category": "api",
    "title": "Upstream API BLS is degraded",
-   "detail": "Service Unavailable; previous probe 2026-10-25T01:09:54+00:00 was degraded",
+   "detail": "Service Unavailable; previous probe 2026-10-25T05:21:41+00:00 was degraded",
    "group": "api:degraded",
    "group_title": "Upstream APIs degraded",
    "item": "BLS",
@@ -102,7 +84,7 @@
    "severity": "P2",
    "category": "api",
    "title": "Upstream API DeFiLlama bridges is degraded",
-   "detail": "Payment Required; previous probe 2026-10-25T01:09:54+00:00 was degraded",
+   "detail": "Payment Required; previous probe 2026-10-25T05:21:41+00:00 was degraded",
    "group": "api:degraded",
    "group_title": "Upstream APIs degraded",
    "item": "DeFiLlama bridges",
@@ -114,7 +96,7 @@
    "severity": "P2",
    "category": "feed",
    "title": "Feed data-tsa.json is an upstream lag (3d old, limit 2d); the source has not published a newer row",
-   "detail": "upstream lag: source newest date 2026-10-22 equals this file's as_of, checked 17.9h ago (2026-10-24T17:22:01Z). TSA has not published a newer checkpoint. Disclosed under 7d; a missed check or an older file is still stale.",
+   "detail": "upstream lag: source newest date 2026-10-22 equals this file's as_of, checked 20.3h ago (2026-10-24T17:22:01Z). TSA has not published a newer checkpoint. Disclosed under 7d; a missed check or an older file is still stale.",
    "owner": "aviation-tsa.yml (daily 14:10Z)",
    "state": "new",
    "first_seen": "2026-10-25"
@@ -124,8 +106,6 @@
   "previous_date": "2026-10-24",
   "new": [
    "feed:data-tsa.json:upstream-lag",
-   "schedule:aviation-opensky:missed",
-   "schedule:lthcs-news-hourly:missed",
    "ux:v1:bad-text:Infinity:#overviewNewsHost",
    "ux:v1:bad-text:Infinity:#newsFeed",
    "ux:v1:bad-text:Infinity:#researchNewsHost"
@@ -153,29 +133,24 @@
  },
  "api_changes": [
   {
-   "source": "BLS",
-   "from": "up",
-   "to": "degraded"
-  },
-  {
    "source": "IMF SDMX",
    "from": "degraded",
    "to": "up"
   }
  ],
- "api_baseline": "git:89c51adb87 (2026-10-24T09:12:56+00:00)",
- "schedule_note": "5 jobs started late; 4 jobs skipped schedule ticks; watchdog caught up; data fresh",
+ "api_baseline": "git:2167498ae1 (2026-10-24T13:04:34+00:00)",
+ "schedule_note": "6 jobs started late; 4 jobs skipped schedule ticks; watchdog caught up; data fresh",
  "api_watch": [],
  "data": {
   "kind": "data",
-  "generated_at": "2026-10-25T11:16:56Z",
+  "generated_at": "2026-10-25T13:42:52Z",
   "repo": "btabiado/alpine-data",
   "base": "https://btabiado.github.io/alpine-data",
   "data_health": {
    "status": "ok",
    "exit_code": 0,
    "healthy": true,
-   "checked_at": "2026-10-25T11:16:57.038853+00:00",
+   "checked_at": "2026-10-25T13:42:53.827513+00:00",
    "failing_statuses": [
     "duplicate",
     "expired",
@@ -405,7 +380,7 @@
     {
      "path": "data-cfpb.json",
      "status": "ok",
-     "age_h": 1.8189955310689079,
+     "age_h": 1.1296977739201652,
      "limit_h": 48,
      "owner": "cfpb-daily.yml (daily)",
      "detail": "",
@@ -415,10 +390,10 @@
     {
      "path": "data-city.json",
      "status": "ok",
-     "age_h": 3515.282297784156,
+     "age_h": 3517.7146151861216,
      "limit_h": 3840,
      "owner": "city-daily.yml (daily 06:00Z)",
-     "detail": "container says 1.7h via generated_at, but contents at cities[].data_health.last_updated are 146.5d old — reporting the older of the two, because a composite is only as fresh as its oldest input",
+     "detail": "container says 55m via generated_at, but contents at cities[].data_health.last_updated are 146.6d old — reporting the older of the two, because a composite is only as fresh as its oldest input",
      "source": "cities[].data_health.last_updated",
      "cadence": ""
     },
@@ -435,7 +410,7 @@
     {
      "path": "data-opensky.json",
      "status": "ok",
-     "age_h": 1.8322977841562695,
+     "age_h": 1.947948519455062,
      "limit_h": 24,
      "owner": "aviation-opensky.yml (hourly)",
      "detail": "",
@@ -455,7 +430,7 @@
     {
      "path": "data-travel.json",
      "status": "ok",
-     "age_h": 1.8006311174896028,
+     "age_h": 0.21294851945506202,
      "limit_h": 24,
      "owner": "fetch_advisories.py, called by app.py inside pages.yml (deployed, never committed back)",
      "detail": "judged from the deployed copy at https://btabiado.github.io/alpine-data/data-travel.json",
@@ -468,7 +443,7 @@
      "age_h": 72.0,
      "limit_h": 48,
      "owner": "aviation-tsa.yml (daily 14:10Z)",
-     "detail": "upstream lag: source newest date 2026-10-22 equals this file's as_of, checked 17.9h ago (2026-10-24T17:22:01Z). TSA has not published a newer checkpoint. Disclosed under 7d; a missed check or an older file is still stale.",
+     "detail": "upstream lag: source newest date 2026-10-22 equals this file's as_of, checked 20.3h ago (2026-10-24T17:22:01Z). TSA has not published a newer checkpoint. Disclosed under 7d; a missed check or an older file is still stale.",
      "source": "as_of",
      "cadence": ""
     },
@@ -485,7 +460,7 @@
     {
      "path": "data-usaspending.json",
      "status": "ok",
-     "age_h": 1.1271945275200739,
+     "age_h": 0.9278255033493042,
      "limit_h": 48,
      "owner": "usaspending-daily.yml (daily)",
      "detail": "",
@@ -505,7 +480,7 @@
     {
      "path": "data/ai_curated.json",
      "status": "ok",
-     "age_h": 495.28229778415624,
+     "age_h": 497.7146151861217,
      "limit_h": 2160,
      "owner": "hand-curated snapshot (manual PR, re-curate quarterly); read and inlined into the built HTML by fetch_market.load_ai_curated, never rewritten",
      "detail": "",
@@ -605,7 +580,7 @@
     {
      "path": "data/real_estate_check.json",
      "status": "ok",
-     "age_h": 3.305631117489603,
+     "age_h": 2.4190596305661733,
      "limit_h": 48,
      "owner": "real-estate-daily.yml (daily)",
      "detail": "",
@@ -696,7 +671,7 @@
    "extra": {},
    "extra_failing": [],
    "remediation": [],
-   "elapsed_s": 0.9
+   "elapsed_s": 1.32
   },
   "quality_audit": {
    "status": "ok",
@@ -715,7 +690,7 @@
      "mismatch": false
     }
    ],
-   "elapsed_s": 0.04
+   "elapsed_s": 0.02
   },
   "lthcs_pillars": {
    "status": "ok",
@@ -758,24 +733,24 @@
       "success": 12
      },
      "latest_24h": {
-      "id": 40180711383,
-      "conclusion": "success",
-      "status": "completed",
-      "event": "workflow_dispatch",
-      "created_at": "2026-10-25T09:27:24Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40180711383",
-      "run_number": 1340,
-      "updated_at": "2026-10-25T09:27:47Z"
-     },
-     "previous_day": {
-      "id": 40089265027,
+      "id": 40190256858,
       "conclusion": "success",
       "status": "completed",
       "event": "schedule",
-      "created_at": "2026-10-24T11:16:52Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40089265027",
-      "run_number": 1328,
-      "updated_at": "2026-10-24T11:17:15Z"
+      "created_at": "2026-10-25T11:46:17Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40190256858",
+      "run_number": 1341,
+      "updated_at": "2026-10-25T11:46:41Z"
+     },
+     "previous_day": {
+      "id": 40097823696,
+      "conclusion": "success",
+      "status": "completed",
+      "event": "workflow_dispatch",
+      "created_at": "2026-10-24T13:22:01Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40097823696",
+      "run_number": 1329,
+      "updated_at": "2026-10-24T13:22:27Z"
      },
      "failed_24h": false,
      "failing_2_days": false
@@ -828,24 +803,24 @@
       "success": 2
      },
      "latest_24h": {
-      "id": 40180722040,
+      "id": 40193736973,
       "conclusion": "success",
       "status": "completed",
-      "event": "workflow_dispatch",
-      "created_at": "2026-10-25T09:27:33Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40180722040",
-      "run_number": 112,
-      "updated_at": "2026-10-25T09:27:59Z"
+      "event": "schedule",
+      "created_at": "2026-10-25T12:34:53Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40193736973",
+      "run_number": 113,
+      "updated_at": "2026-10-25T12:35:17Z"
      },
      "previous_day": {
-      "id": 40080912704,
+      "id": 40092199038,
       "conclusion": "success",
       "status": "completed",
-      "event": "workflow_dispatch",
-      "created_at": "2026-10-24T09:10:35Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40080912704",
-      "run_number": 110,
-      "updated_at": "2026-10-24T09:11:00Z"
+      "event": "schedule",
+      "created_at": "2026-10-24T12:01:03Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40092199038",
+      "run_number": 111,
+      "updated_at": "2026-10-24T12:01:44Z"
      },
      "failed_24h": false,
      "failing_2_days": false
@@ -858,24 +833,24 @@
       "success": 2
      },
      "latest_24h": {
-      "id": 40180725575,
+      "id": 40194225293,
       "conclusion": "success",
       "status": "completed",
-      "event": "workflow_dispatch",
-      "created_at": "2026-10-25T09:27:37Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40180725575",
-      "run_number": 150,
-      "updated_at": "2026-10-25T09:32:11Z"
+      "event": "schedule",
+      "created_at": "2026-10-25T12:41:24Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40194225293",
+      "run_number": 151,
+      "updated_at": "2026-10-25T12:47:18Z"
      },
      "previous_day": {
-      "id": 40080915700,
+      "id": 40092724002,
       "conclusion": "success",
       "status": "completed",
-      "event": "workflow_dispatch",
-      "created_at": "2026-10-24T09:10:38Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40080915700",
-      "run_number": 148,
-      "updated_at": "2026-10-24T09:15:25Z"
+      "event": "schedule",
+      "created_at": "2026-10-24T12:08:47Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40092724002",
+      "run_number": 149,
+      "updated_at": "2026-10-24T12:12:36Z"
      },
      "failed_24h": false,
      "failing_2_days": false
@@ -915,27 +890,27 @@
      "path": ".github/workflows/cron-watchdog.yml",
      "state": "active",
      "runs_24h": {
-      "success": 63
+      "success": 61
      },
      "latest_24h": {
-      "id": 40188140878,
+      "id": 40197735076,
       "conclusion": "success",
       "status": "completed",
       "event": "schedule",
-      "created_at": "2026-10-25T11:16:02Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40188140878",
-      "run_number": 367,
-      "updated_at": "2026-10-25T11:16:43Z"
+      "created_at": "2026-10-25T13:28:02Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40197735076",
+      "run_number": 377,
+      "updated_at": "2026-10-25T13:28:47Z"
      },
      "previous_day": {
-      "id": 40087874284,
+      "id": 40098232976,
       "conclusion": "success",
       "status": "completed",
       "event": "workflow_run",
-      "created_at": "2026-10-24T10:56:17Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40087874284",
-      "run_number": 304,
-      "updated_at": "2026-10-24T10:56:55Z"
+      "created_at": "2026-10-24T13:27:47Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40098232976",
+      "run_number": 316,
+      "updated_at": "2026-10-24T13:28:18Z"
      },
      "failed_24h": false,
      "failing_2_days": false
@@ -978,6 +953,16 @@
       "success": 1
      },
      "latest_24h": {
+      "id": 40188183589,
+      "conclusion": "success",
+      "status": "completed",
+      "event": "workflow_dispatch",
+      "created_at": "2026-10-25T11:16:40Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40188183589",
+      "run_number": 27,
+      "updated_at": "2026-10-25T11:19:03Z"
+     },
+     "previous_day": {
       "id": 40097646560,
       "conclusion": "success",
       "status": "completed",
@@ -986,16 +971,6 @@
       "url": "https://github.com/btabiado/alpine-data/actions/runs/40097646560",
       "run_number": 26,
       "updated_at": "2026-10-24T13:22:14Z"
-     },
-     "previous_day": {
-      "id": 40087541949,
-      "conclusion": "success",
-      "status": "completed",
-      "event": "workflow_dispatch",
-      "created_at": "2026-10-24T10:51:07Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40087541949",
-      "run_number": 25,
-      "updated_at": "2026-10-24T10:53:41Z"
      },
      "failed_24h": false,
      "failing_2_days": false
@@ -1035,7 +1010,7 @@
      "path": ".github/workflows/etf-flows-daily.yml",
      "state": "active",
      "runs_24h": {
-      "success": 2
+      "success": 1
      },
      "latest_24h": {
       "id": 40188180118,
@@ -1048,14 +1023,14 @@
       "updated_at": "2026-10-25T11:16:58Z"
      },
      "previous_day": {
-      "id": 40087538051,
+      "id": 40097763544,
       "conclusion": "success",
       "status": "completed",
-      "event": "workflow_dispatch",
-      "created_at": "2026-10-24T10:51:03Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40087538051",
-      "run_number": 90,
-      "updated_at": "2026-10-24T10:51:24Z"
+      "event": "schedule",
+      "created_at": "2026-10-24T13:21:10Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40097763544",
+      "run_number": 91,
+      "updated_at": "2026-10-24T13:21:32Z"
      },
      "failed_24h": false,
      "failing_2_days": false
@@ -1128,24 +1103,24 @@
       "success": 2
      },
      "latest_24h": {
-      "id": 40104579635,
+      "id": 40197038768,
       "conclusion": "success",
       "status": "completed",
-      "event": "schedule",
-      "created_at": "2026-10-24T14:54:29Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40104579635",
-      "run_number": 147,
-      "updated_at": "2026-10-24T14:55:26Z"
+      "event": "workflow_dispatch",
+      "created_at": "2026-10-25T13:18:54Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40197038768",
+      "run_number": 148,
+      "updated_at": "2026-10-25T13:19:53Z"
      },
      "previous_day": {
-      "id": 39982543484,
+      "id": 40097827834,
       "conclusion": "success",
       "status": "completed",
-      "event": "schedule",
-      "created_at": "2026-10-23T15:56:20Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/39982543484",
-      "run_number": 145,
-      "updated_at": "2026-10-23T15:57:11Z"
+      "event": "workflow_dispatch",
+      "created_at": "2026-10-24T13:22:04Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40097827834",
+      "run_number": 146,
+      "updated_at": "2026-10-24T13:23:04Z"
      },
      "failed_24h": false,
      "failing_2_days": false
@@ -1189,24 +1164,24 @@
       "cancelled": 1
      },
      "latest_24h": {
-      "id": 40180715000,
+      "id": 40189839952,
       "conclusion": "success",
       "status": "completed",
-      "event": "workflow_dispatch",
-      "created_at": "2026-10-25T09:27:27Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40180715000",
-      "run_number": 1389,
-      "updated_at": "2026-10-25T09:45:15Z"
+      "event": "schedule",
+      "created_at": "2026-10-25T11:40:20Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40189839952",
+      "run_number": 1390,
+      "updated_at": "2026-10-25T11:58:00Z"
      },
      "previous_day": {
-      "id": 40087528205,
+      "id": 40095152793,
       "conclusion": "success",
       "status": "completed",
-      "event": "workflow_dispatch",
-      "created_at": "2026-10-24T10:50:54Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40087528205",
-      "run_number": 1378,
-      "updated_at": "2026-10-24T11:08:29Z"
+      "event": "schedule",
+      "created_at": "2026-10-24T12:44:03Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40095152793",
+      "run_number": 1379,
+      "updated_at": "2026-10-24T13:01:41Z"
      },
      "failed_24h": false,
      "failing_2_days": false
@@ -1289,24 +1264,24 @@
       "success": 2
      },
      "latest_24h": {
-      "id": 40183579436,
+      "id": 40196964116,
       "conclusion": "success",
       "status": "completed",
-      "event": "workflow_dispatch",
-      "created_at": "2026-10-25T10:09:05Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40183579436",
-      "run_number": 146,
-      "updated_at": "2026-10-25T10:09:42Z"
+      "event": "schedule",
+      "created_at": "2026-10-25T13:17:55Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40196964116",
+      "run_number": 147,
+      "updated_at": "2026-10-25T13:18:26Z"
      },
      "previous_day": {
-      "id": 40087534599,
+      "id": 40095648273,
       "conclusion": "success",
       "status": "completed",
-      "event": "workflow_dispatch",
-      "created_at": "2026-10-24T10:51:01Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40087534599",
-      "run_number": 144,
-      "updated_at": "2026-10-24T10:51:34Z"
+      "event": "schedule",
+      "created_at": "2026-10-24T12:51:10Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40095648273",
+      "run_number": 145,
+      "updated_at": "2026-10-24T12:51:46Z"
      },
      "failed_24h": false,
      "failing_2_days": false
@@ -1320,24 +1295,24 @@
       "cancelled": 1
      },
      "latest_24h": {
-      "id": 40180718511,
+      "id": 40197783366,
       "conclusion": "success",
       "status": "completed",
       "event": "workflow_dispatch",
-      "created_at": "2026-10-25T09:27:30Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40180718511",
-      "run_number": 1499,
-      "updated_at": "2026-10-25T09:33:12Z"
+      "created_at": "2026-10-25T13:28:43Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40197783366",
+      "run_number": 1501,
+      "updated_at": "2026-10-25T13:36:49Z"
      },
      "previous_day": {
-      "id": 40087395664,
+      "id": 40097842275,
       "conclusion": "success",
       "status": "completed",
-      "event": "schedule",
-      "created_at": "2026-10-24T10:48:53Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40087395664",
-      "run_number": 1486,
-      "updated_at": "2026-10-24T10:56:15Z"
+      "event": "workflow_run",
+      "created_at": "2026-10-24T13:22:16Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40097842275",
+      "run_number": 1488,
+      "updated_at": "2026-10-24T13:27:45Z"
      },
      "failed_24h": false,
      "failing_2_days": false
@@ -1357,17 +1332,17 @@
      "path": ".github/workflows/real-estate-daily.yml",
      "state": "active",
      "runs_24h": {
-      "success": 1
+      "success": 2
      },
      "latest_24h": {
-      "id": 40174774517,
+      "id": 40188225446,
       "conclusion": "success",
       "status": "completed",
-      "event": "workflow_dispatch",
-      "created_at": "2026-10-25T07:58:01Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40174774517",
-      "run_number": 149,
-      "updated_at": "2026-10-25T07:58:46Z"
+      "event": "schedule",
+      "created_at": "2026-10-25T11:17:14Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40188225446",
+      "run_number": 150,
+      "updated_at": "2026-10-25T11:17:53Z"
      },
      "previous_day": {
       "id": 40087562831,
@@ -1461,31 +1436,31 @@
       "success": 2
      },
      "latest_24h": {
-      "id": 40183576221,
+      "id": 40194644222,
       "conclusion": "success",
       "status": "completed",
-      "event": "workflow_dispatch",
-      "created_at": "2026-10-25T10:09:02Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40183576221",
-      "run_number": 113,
-      "updated_at": "2026-10-25T10:09:29Z"
+      "event": "schedule",
+      "created_at": "2026-10-25T12:46:57Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40194644222",
+      "run_number": 114,
+      "updated_at": "2026-10-25T12:47:25Z"
      },
      "previous_day": {
-      "id": 40087531477,
+      "id": 40093121777,
       "conclusion": "success",
       "status": "completed",
-      "event": "workflow_dispatch",
-      "created_at": "2026-10-24T10:50:57Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40087531477",
-      "run_number": 111,
-      "updated_at": "2026-10-24T10:51:21Z"
+      "event": "schedule",
+      "created_at": "2026-10-24T12:14:37Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40093121777",
+      "run_number": 112,
+      "updated_at": "2026-10-24T12:14:59Z"
      },
      "failed_24h": false,
      "failing_2_days": false
     }
    ],
    "api_calls": 46,
-   "elapsed_s": 26.85
+   "elapsed_s": 41.62
   },
   "schedules": {
    "status": "ok",
@@ -1500,10 +1475,8 @@
      "state": "active",
      "due_days": 8,
      "due_runs": 158,
-     "days_with_run": 7,
-     "missed_days": [
-      "2026-10-25"
-     ],
+     "days_with_run": 8,
+     "missed_days": [],
      "scheduled_runs": 39,
      "catchup_runs": 48,
      "catchup_ticks": 46,
@@ -1517,14 +1490,14 @@
      "skip_days": 8,
      "skip_span_h": 156.0,
      "last_run": {
-      "id": 40168585083,
+      "id": 40190256858,
       "conclusion": "success",
       "status": "completed",
       "event": "schedule",
-      "created_at": "2026-10-25T06:17:43Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40168585083",
-      "run_number": 1339,
-      "updated_at": "2026-10-25T06:18:08Z"
+      "created_at": "2026-10-25T11:46:17Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40190256858",
+      "run_number": 1341,
+      "updated_at": "2026-10-25T11:46:41Z"
      },
      "last_failed": false,
      "last_catchup": {
@@ -1537,8 +1510,8 @@
       "run_number": 1340,
       "updated_at": "2026-10-25T09:27:47Z"
      },
-     "last_success_at": "2026-10-25T09:27:47Z",
-     "last_success_event": "workflow_dispatch"
+     "last_success_at": "2026-10-25T11:46:41Z",
+     "last_success_event": "schedule"
     },
     {
      "name": "aviation-tsa",
@@ -1648,14 +1621,14 @@
      "skip_days": 0,
      "skip_span_h": null,
      "last_run": {
-      "id": 40092199038,
+      "id": 40193736973,
       "conclusion": "success",
       "status": "completed",
       "event": "schedule",
-      "created_at": "2026-10-24T12:01:03Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40092199038",
-      "run_number": 111,
-      "updated_at": "2026-10-24T12:01:44Z"
+      "created_at": "2026-10-25T12:34:53Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40193736973",
+      "run_number": 113,
+      "updated_at": "2026-10-25T12:35:17Z"
      },
      "last_failed": false,
      "last_catchup": {
@@ -1668,8 +1641,8 @@
       "run_number": 112,
       "updated_at": "2026-10-25T09:27:59Z"
      },
-     "last_success_at": "2026-10-25T09:27:59Z",
-     "last_success_event": "workflow_dispatch"
+     "last_success_at": "2026-10-25T12:35:17Z",
+     "last_success_event": "schedule"
     },
     {
      "name": "city-daily",
@@ -1683,7 +1656,7 @@
      "days_with_run": 6,
      "missed_days": [],
      "scheduled_runs": 7,
-     "catchup_runs": 8,
+     "catchup_runs": 7,
      "catchup_ticks": 6,
      "missed_ticks": 0,
      "coverage_pct": 100.0,
@@ -1695,14 +1668,14 @@
      "skip_days": 0,
      "skip_span_h": null,
      "last_run": {
-      "id": 40092724002,
+      "id": 40194225293,
       "conclusion": "success",
       "status": "completed",
       "event": "schedule",
-      "created_at": "2026-10-24T12:08:47Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40092724002",
-      "run_number": 149,
-      "updated_at": "2026-10-24T12:12:36Z"
+      "created_at": "2026-10-25T12:41:24Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40194225293",
+      "run_number": 151,
+      "updated_at": "2026-10-25T12:47:18Z"
      },
      "last_failed": false,
      "last_catchup": {
@@ -1715,8 +1688,8 @@
       "run_number": 150,
       "updated_at": "2026-10-25T09:32:11Z"
      },
-     "last_success_at": "2026-10-25T09:32:11Z",
-     "last_success_event": "workflow_dispatch"
+     "last_success_at": "2026-10-25T12:47:18Z",
+     "last_success_event": "schedule"
     },
     {
      "name": "codeql",
@@ -1769,30 +1742,30 @@
      "due_runs": 632,
      "days_with_run": 8,
      "missed_days": [],
-     "scheduled_runs": 147,
+     "scheduled_runs": 148,
      "catchup_runs": 0,
      "catchup_ticks": 0,
-     "missed_ticks": 423,
-     "coverage_pct": 33.1,
-     "schedule_coverage_pct": 33.1,
+     "missed_ticks": 422,
+     "coverage_pct": 33.2,
+     "schedule_coverage_pct": 33.2,
      "median_delay_min": 0,
      "schedule_median_delay_min": 0,
      "late_days": 0,
      "late_span_h": null,
      "skip_days": 8,
-     "skip_span_h": 157.2,
+     "skip_span_h": 157.8,
      "last_run": {
-      "id": 40188140878,
+      "id": 40197735076,
       "conclusion": "success",
       "status": "completed",
       "event": "schedule",
-      "created_at": "2026-10-25T11:16:02Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40188140878",
-      "run_number": 367,
-      "updated_at": "2026-10-25T11:16:43Z"
+      "created_at": "2026-10-25T13:28:02Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40197735076",
+      "run_number": 377,
+      "updated_at": "2026-10-25T13:28:47Z"
      },
      "last_failed": false,
-     "last_success_at": "2026-10-25T11:16:43Z",
+     "last_success_at": "2026-10-25T13:28:47Z",
      "last_success_event": "schedule"
     },
     {
@@ -1877,17 +1850,17 @@
      },
      "last_failed": false,
      "last_catchup": {
-      "id": 40087541949,
+      "id": 40188183589,
       "conclusion": "success",
       "status": "completed",
       "event": "workflow_dispatch",
-      "created_at": "2026-10-24T10:51:07Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40087541949",
-      "run_number": 25,
-      "updated_at": "2026-10-24T10:53:41Z"
+      "created_at": "2026-10-25T11:16:40Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40188183589",
+      "run_number": 27,
+      "updated_at": "2026-10-25T11:19:03Z"
      },
-     "last_success_at": "2026-10-24T13:22:14Z",
-     "last_success_event": "schedule"
+     "last_success_at": "2026-10-25T11:19:03Z",
+     "last_success_event": "workflow_dispatch"
     },
     {
      "name": "data-health",
@@ -1947,7 +1920,7 @@
      "due_runs": 6,
      "days_with_run": 6,
      "missed_days": [],
-     "scheduled_runs": 7,
+     "scheduled_runs": 6,
      "catchup_runs": 7,
      "catchup_ticks": 6,
      "missed_ticks": 0,
@@ -2121,20 +2094,20 @@
       "47 11 * * *"
      ],
      "state": "active",
-     "due_days": 7,
-     "due_runs": 7,
-     "days_with_run": 7,
+     "due_days": 6,
+     "due_runs": 6,
+     "days_with_run": 6,
      "missed_days": [],
      "scheduled_runs": 7,
-     "catchup_runs": 6,
+     "catchup_runs": 7,
      "catchup_ticks": 6,
      "missed_ticks": 0,
      "coverage_pct": 100.0,
      "schedule_coverage_pct": 100.0,
      "median_delay_min": 116,
-     "schedule_median_delay_min": 249,
-     "late_days": 1,
-     "late_span_h": 0.0,
+     "schedule_median_delay_min": 257,
+     "late_days": 0,
+     "late_span_h": null,
      "skip_days": 0,
      "skip_span_h": null,
      "last_run": {
@@ -2149,17 +2122,17 @@
      },
      "last_failed": false,
      "last_catchup": {
-      "id": 40097827834,
+      "id": 40197038768,
       "conclusion": "success",
       "status": "completed",
       "event": "workflow_dispatch",
-      "created_at": "2026-10-24T13:22:04Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40097827834",
-      "run_number": 146,
-      "updated_at": "2026-10-24T13:23:04Z"
+      "created_at": "2026-10-25T13:18:54Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40197038768",
+      "run_number": 148,
+      "updated_at": "2026-10-25T13:19:53Z"
      },
-     "last_success_at": "2026-10-24T14:55:26Z",
-     "last_success_event": "schedule"
+     "last_success_at": "2026-10-25T13:19:53Z",
+     "last_success_event": "workflow_dispatch"
     },
     {
      "name": "lthcs-daily",
@@ -2217,31 +2190,29 @@
      "state": "active",
      "due_days": 8,
      "due_runs": 158,
-     "days_with_run": 7,
-     "missed_days": [
-      "2026-10-25"
-     ],
-     "scheduled_runs": 37,
+     "days_with_run": 8,
+     "missed_days": [],
+     "scheduled_runs": 38,
      "catchup_runs": 42,
-     "catchup_ticks": 39,
-     "missed_ticks": 94,
-     "coverage_pct": 40.5,
-     "schedule_coverage_pct": 22.2,
-     "median_delay_min": 14,
+     "catchup_ticks": 40,
+     "missed_ticks": 93,
+     "coverage_pct": 41.1,
+     "schedule_coverage_pct": 22.8,
+     "median_delay_min": 13,
      "schedule_median_delay_min": 6,
      "late_days": 0,
      "late_span_h": null,
      "skip_days": 8,
-     "skip_span_h": 157.0,
+     "skip_span_h": 156.0,
      "last_run": {
-      "id": 40168360096,
+      "id": 40189839952,
       "conclusion": "success",
       "status": "completed",
       "event": "schedule",
-      "created_at": "2026-10-25T06:13:52Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40168360096",
-      "run_number": 1388,
-      "updated_at": "2026-10-25T06:31:32Z"
+      "created_at": "2026-10-25T11:40:20Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40189839952",
+      "run_number": 1390,
+      "updated_at": "2026-10-25T11:58:00Z"
      },
      "last_failed": false,
      "last_catchup": {
@@ -2254,8 +2225,8 @@
       "run_number": 1389,
       "updated_at": "2026-10-25T09:45:15Z"
      },
-     "last_success_at": "2026-10-25T09:45:15Z",
-     "last_success_event": "workflow_dispatch"
+     "last_success_at": "2026-10-25T11:58:00Z",
+     "last_success_event": "schedule"
     },
     {
      "name": "lthcs-quality-audit-monthly",
@@ -2474,7 +2445,7 @@
      "days_with_run": 6,
      "missed_days": [],
      "scheduled_runs": 7,
-     "catchup_runs": 8,
+     "catchup_runs": 7,
      "catchup_ticks": 6,
      "missed_ticks": 0,
      "coverage_pct": 100.0,
@@ -2486,14 +2457,14 @@
      "skip_days": 0,
      "skip_span_h": null,
      "last_run": {
-      "id": 40095648273,
+      "id": 40196964116,
       "conclusion": "success",
       "status": "completed",
       "event": "schedule",
-      "created_at": "2026-10-24T12:51:10Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40095648273",
-      "run_number": 145,
-      "updated_at": "2026-10-24T12:51:46Z"
+      "created_at": "2026-10-25T13:17:55Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40196964116",
+      "run_number": 147,
+      "updated_at": "2026-10-25T13:18:26Z"
      },
      "last_failed": false,
      "last_catchup": {
@@ -2506,8 +2477,8 @@
       "run_number": 146,
       "updated_at": "2026-10-25T10:09:42Z"
      },
-     "last_success_at": "2026-10-25T10:09:42Z",
-     "last_success_event": "workflow_dispatch"
+     "last_success_at": "2026-10-25T13:18:26Z",
+     "last_success_event": "schedule"
     },
     {
      "name": "pages",
@@ -2521,7 +2492,7 @@
      "days_with_run": 8,
      "missed_days": [],
      "scheduled_runs": 39,
-     "catchup_runs": 31,
+     "catchup_runs": 32,
      "catchup_ticks": 29,
      "missed_ticks": 92,
      "coverage_pct": 41.8,
@@ -2533,27 +2504,27 @@
      "skip_days": 8,
      "skip_span_h": 156.0,
      "last_run": {
-      "id": 40167548752,
+      "id": 40188003551,
       "conclusion": "success",
       "status": "completed",
       "event": "schedule",
-      "created_at": "2026-10-25T06:00:25Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40167548752",
-      "run_number": 1498,
-      "updated_at": "2026-10-25T06:07:22Z"
+      "created_at": "2026-10-25T11:14:09Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40188003551",
+      "run_number": 1500,
+      "updated_at": "2026-10-25T11:21:49Z"
      },
      "last_failed": false,
      "last_catchup": {
-      "id": 40180718511,
+      "id": 40197783366,
       "conclusion": "success",
       "status": "completed",
       "event": "workflow_dispatch",
-      "created_at": "2026-10-25T09:27:30Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40180718511",
-      "run_number": 1499,
-      "updated_at": "2026-10-25T09:33:12Z"
+      "created_at": "2026-10-25T13:28:43Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40197783366",
+      "run_number": 1501,
+      "updated_at": "2026-10-25T13:36:49Z"
      },
-     "last_success_at": "2026-10-25T09:33:12Z",
+     "last_success_at": "2026-10-25T13:36:49Z",
      "last_success_event": "workflow_dispatch"
     },
     {
@@ -2580,14 +2551,14 @@
      "skip_days": 0,
      "skip_span_h": null,
      "last_run": {
-      "id": 40087562831,
+      "id": 40188225446,
       "conclusion": "success",
       "status": "completed",
       "event": "schedule",
-      "created_at": "2026-10-24T10:51:24Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40087562831",
-      "run_number": 148,
-      "updated_at": "2026-10-24T10:52:05Z"
+      "created_at": "2026-10-25T11:17:14Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40188225446",
+      "run_number": 150,
+      "updated_at": "2026-10-25T11:17:53Z"
      },
      "last_failed": false,
      "last_catchup": {
@@ -2600,8 +2571,8 @@
       "run_number": 149,
       "updated_at": "2026-10-25T07:58:46Z"
      },
-     "last_success_at": "2026-10-25T07:58:46Z",
-     "last_success_event": "workflow_dispatch"
+     "last_success_at": "2026-10-25T11:17:53Z",
+     "last_success_event": "schedule"
     },
     {
      "name": "secrets-check",
@@ -2684,20 +2655,20 @@
       "37 3 * * 0"
      ],
      "state": "active",
-     "due_days": 0,
-     "due_runs": 0,
-     "days_with_run": 0,
+     "due_days": 1,
+     "due_runs": 1,
+     "days_with_run": 1,
      "missed_days": [],
      "scheduled_runs": 1,
      "catchup_runs": 0,
      "catchup_ticks": 0,
      "missed_ticks": 0,
-     "coverage_pct": null,
-     "schedule_coverage_pct": null,
-     "median_delay_min": null,
-     "schedule_median_delay_min": null,
-     "late_days": 0,
-     "late_span_h": null,
+     "coverage_pct": 100.0,
+     "schedule_coverage_pct": 100.0,
+     "median_delay_min": 305,
+     "schedule_median_delay_min": 305,
+     "late_days": 1,
+     "late_span_h": 0.0,
      "skip_days": 0,
      "skip_span_h": null,
      "last_run": {
@@ -2726,7 +2697,7 @@
      "days_with_run": 6,
      "missed_days": [],
      "scheduled_runs": 7,
-     "catchup_runs": 8,
+     "catchup_runs": 7,
      "catchup_ticks": 6,
      "missed_ticks": 0,
      "coverage_pct": 100.0,
@@ -2738,14 +2709,14 @@
      "skip_days": 0,
      "skip_span_h": null,
      "last_run": {
-      "id": 40093121777,
+      "id": 40194644222,
       "conclusion": "success",
       "status": "completed",
       "event": "schedule",
-      "created_at": "2026-10-24T12:14:37Z",
-      "url": "https://github.com/btabiado/alpine-data/actions/runs/40093121777",
-      "run_number": 112,
-      "updated_at": "2026-10-24T12:14:59Z"
+      "created_at": "2026-10-25T12:46:57Z",
+      "url": "https://github.com/btabiado/alpine-data/actions/runs/40194644222",
+      "run_number": 114,
+      "updated_at": "2026-10-25T12:47:25Z"
      },
      "last_failed": false,
      "last_catchup": {
@@ -2758,14 +2729,14 @@
       "run_number": 113,
       "updated_at": "2026-10-25T10:09:29Z"
      },
-     "last_success_at": "2026-10-25T10:09:29Z",
-     "last_success_event": "workflow_dispatch"
+     "last_success_at": "2026-10-25T12:47:25Z",
+     "last_success_event": "schedule"
     }
    ]
   },
   "api_status": {
    "status": "ok",
-   "generated_at": "2026-10-25T05:21:41+00:00",
+   "generated_at": "2026-10-25T13:31:48+00:00",
    "summary": {
     "total": 54,
     "up": 48,
@@ -2911,11 +2882,11 @@
    },
    "unwired_key_envs": [],
    "previous": {
-    "source": "git:89c51adb87",
-    "generated_at": "2026-10-24T09:12:56+00:00",
+    "source": "git:2167498ae1",
+    "generated_at": "2026-10-24T13:04:34+00:00",
     "counts": {
-     "up": 48,
-     "degraded": 2,
+     "up": 47,
+     "degraded": 3,
      "blocked": 1,
      "auth_required": 2,
      "retired": 1
@@ -2927,7 +2898,7 @@
      "OpenSky Network": "up",
      "TSA passenger volumes": "up",
      "ArcGIS (Miami)": "up",
-     "BLS": "up",
+     "BLS": "degraded",
      "Census ACS": "up",
      "EPA AirNow": "up",
      "FBI Crime Data Explorer": "up",
@@ -2978,8 +2949,8 @@
     }
    },
    "prior_probe": {
-    "source": "git:c38ed1a1eb",
-    "generated_at": "2026-10-25T01:09:54+00:00",
+    "source": "git:e1a5310440",
+    "generated_at": "2026-10-25T05:21:41+00:00",
     "verdicts": {
      "SEC EDGAR": "up",
      "AOPA ASI (GA safety)": "up",
@@ -2989,7 +2960,7 @@
      "ArcGIS (Miami)": "up",
      "BLS": "degraded",
      "Census ACS": "up",
-     "EPA AirNow": "degraded",
+     "EPA AirNow": "up",
      "FBI Crime Data Explorer": "up",
      "Socrata · Chicago": "up",
      "Socrata · Los Angeles": "up",
@@ -3045,7 +3016,7 @@
      "ArcGIS (Miami)": 0,
      "BLS": 0,
      "Census ACS": 0,
-     "EPA AirNow": 1,
+     "EPA AirNow": 0,
      "FBI Crime Data Explorer": 0,
      "Socrata · Chicago": 0,
      "Socrata · Los Angeles": 0,
@@ -3095,57 +3066,52 @@
    },
    "changes": [
     {
-     "source": "BLS",
-     "from": "up",
-     "to": "degraded"
-    },
-    {
      "source": "IMF SDMX",
      "from": "degraded",
      "to": "up"
     }
    ],
-   "elapsed_s": 1.11
+   "elapsed_s": 1.61
   },
   "spot_checks": {
    "status": "ok",
    "checks": {
     "live_site_build_age": {
      "status": "ok",
-     "generated_at": "2026-10-25T09:28:55Z",
-     "age_h": 1.8,
+     "generated_at": "2026-10-25T13:30:07Z",
+     "age_h": 0.21,
      "max_age_h": 6.0,
-     "elapsed_s": 0.13
+     "elapsed_s": 0.41
     },
     "btc_price_vs_coingecko": {
-     "page": 80102.1,
-     "page_time": "2026-10-25T09:28:07Z",
-     "page_age_h": 1.81,
+     "page": 80152.71,
+     "page_time": "2026-10-25T13:29:18Z",
+     "page_age_h": 0.23,
      "tolerance_pct": 1.0,
      "max_age_h": 6.0,
      "source": "CoinGecko market_chart days=1 (nearest to payload time, no key)",
-     "reference": 80111.7680169087,
-     "reference_time": "2026-10-25T09:30:00Z",
-     "reference_offset_s": 113,
-     "diff_pct": 0.012,
+     "reference": 80209.23307739852,
+     "reference_time": "2026-10-25T13:30:00Z",
+     "reference_offset_s": 41,
+     "diff_pct": 0.07,
      "note": "matches CoinGecko at the payload timestamp",
      "status": "ok",
-     "elapsed_s": 0.06
+     "elapsed_s": 0.13
     },
     "eth_price_vs_coingecko": {
-     "page": 2323.32,
-     "page_time": "2026-10-25T09:28:04Z",
-     "page_age_h": 1.81,
+     "page": 2325.6,
+     "page_time": "2026-10-25T13:29:18Z",
+     "page_age_h": 0.23,
      "tolerance_pct": 1.0,
      "max_age_h": 6.0,
      "source": "CoinGecko market_chart days=1 (nearest to payload time, no key)",
-     "reference": 2322.8605290576575,
-     "reference_time": "2026-10-25T09:30:00Z",
-     "reference_offset_s": 115,
-     "diff_pct": 0.02,
+     "reference": 2326.874355149351,
+     "reference_time": "2026-10-25T13:30:00Z",
+     "reference_offset_s": 42,
+     "diff_pct": 0.055,
      "note": "matches CoinGecko at the payload timestamp",
      "status": "ok",
-     "elapsed_s": 0.03
+     "elapsed_s": 0.11
     },
     "fear_greed_vs_alternative_me": {
      "page_date": "2026-10-25",
@@ -3154,17 +3120,17 @@
      "reference_latest_date": "2026-10-25",
      "source": "api.alternative.me/fng",
      "status": "ok",
-     "elapsed_s": 0.06
+     "elapsed_s": 0.25
     },
     "btc_tip_height_vs_mempool_space": {
      "status": "ok",
-     "page": 973050,
-     "reference": 973066,
-     "lag_blocks": 16,
-     "allowed_lag_blocks": 33,
-     "page_age_h": 1.81,
+     "page": 973075,
+     "reference": 973076,
+     "lag_blocks": 1,
+     "allowed_lag_blocks": 14,
+     "page_age_h": 0.23,
      "source": "mempool.space/api/blocks/tip/height",
-     "elapsed_s": 0.53
+     "elapsed_s": 0.3
     },
     "treasury_10y_vs_treasury_gov": {
      "page_date": "2026-10-22",
@@ -3174,21 +3140,21 @@
      "lag_days": 1,
      "source": "home.treasury.gov daily par yield curve (10 Yr)",
      "status": "ok",
-     "elapsed_s": 17.19
+     "elapsed_s": 17.25
     }
    },
    "counts": {
     "ok": 6
    },
-   "elapsed_s": 18.0
+   "elapsed_s": 18.45
   },
   "live_payloads": {
    "status": "ok",
    "index": {
     "name": "index.html DATA",
-    "generated": "2026-10-25T09:28:55Z",
+    "generated": "2026-10-25T13:30:07Z",
     "generated_field": "generated_at",
-    "generated_age_h": 1.8
+    "generated_age_h": 0.21
    },
    "payloads": [
     {
@@ -3197,49 +3163,49 @@
      "bytes": 32189,
      "as_of": "2025-12-31T00:00:00Z",
      "as_of_field": "data_date",
-     "as_of_age_h": 7163.28,
+     "as_of_age_h": 7165.71,
      "status": "ok"
     },
     {
      "name": "data-city.json",
      "http_status": 200,
-     "bytes": 124203,
+     "bytes": 124965,
      "as_of": "2026-09-01T00:00:00Z",
      "as_of_field": "as_of",
-     "as_of_age_h": 1307.28,
-     "generated": "2026-10-24T12:12:30Z",
+     "as_of_age_h": 1309.71,
+     "generated": "2026-10-25T12:47:11Z",
      "generated_field": "generated_at",
-     "generated_age_h": 23.07,
+     "generated_age_h": 0.93,
      "status": "ok"
     },
     {
      "name": "data-cpi.json",
      "http_status": 200,
      "bytes": 1236104,
-     "generated": "2026-10-25T09:29:07Z",
+     "generated": "2026-10-25T13:30:47Z",
      "generated_field": "generated_at",
-     "generated_age_h": 1.8,
+     "generated_age_h": 0.2,
      "status": "ok"
     },
     {
      "name": "data-defi.json",
      "http_status": 200,
-     "bytes": 93450,
+     "bytes": 93458,
      "as_of": "2026-10-25T00:00:00Z",
      "as_of_field": "as_of",
-     "as_of_age_h": 11.28,
-     "generated": "2026-10-25T09:28:44Z",
+     "as_of_age_h": 13.71,
+     "generated": "2026-10-25T13:29:56Z",
      "generated_field": "snapshot_fetched_at",
-     "generated_age_h": 1.8,
+     "generated_age_h": 0.22,
      "status": "ok"
     },
     {
      "name": "data-metals.json",
      "http_status": 200,
      "bytes": 205997,
-     "generated": "2026-10-25T09:29:17Z",
+     "generated": "2026-10-25T13:30:55Z",
      "generated_field": "generated_at",
-     "generated_age_h": 1.79,
+     "generated_age_h": 0.2,
      "status": "ok"
     },
     {
@@ -3248,25 +3214,25 @@
      "bytes": 109637,
      "generated": "2026-10-06T12:22:31Z",
      "generated_field": "generated_at",
-     "generated_age_h": 454.91,
+     "generated_age_h": 457.34,
      "status": "ok"
     },
     {
      "name": "data-opensky-positions.json",
      "http_status": 200,
-     "bytes": 203181,
-     "generated": "2026-10-25T09:28:56Z",
+     "bytes": 209595,
+     "generated": "2026-10-25T13:30:03Z",
      "generated_field": "ts",
-     "generated_age_h": 1.8,
+     "generated_age_h": 0.21,
      "status": "ok"
     },
     {
      "name": "data-opensky.json",
      "http_status": 200,
-     "bytes": 509,
-     "generated": "2026-10-25T09:28:56Z",
+     "bytes": 514,
+     "generated": "2026-10-25T13:30:03Z",
      "generated_field": "ts",
-     "generated_age_h": 1.8,
+     "generated_age_h": 0.21,
      "status": "ok"
     },
     {
@@ -3275,25 +3241,25 @@
      "bytes": 5123,
      "as_of": "2026-10-23T00:00:00Z",
      "as_of_field": "as_of",
-     "as_of_age_h": 59.28,
+     "as_of_age_h": 61.71,
      "status": "ok"
     },
     {
      "name": "data-supplies.json",
      "http_status": 200,
      "bytes": 83866,
-     "generated": "2026-10-25T09:29:16Z",
+     "generated": "2026-10-25T13:30:55Z",
      "generated_field": "generated_at",
-     "generated_age_h": 1.79,
+     "generated_age_h": 0.2,
      "status": "ok"
     },
     {
      "name": "data-travel.json",
      "http_status": 200,
      "bytes": 59331,
-     "generated": "2026-10-25T09:28:54Z",
+     "generated": "2026-10-25T13:30:06Z",
      "generated_field": "generated_at",
-     "generated_age_h": 1.8,
+     "generated_age_h": 0.21,
      "status": "ok"
     },
     {
@@ -3302,10 +3268,10 @@
      "bytes": 1777,
      "as_of": "2026-10-22T00:00:00Z",
      "as_of_field": "as_of",
-     "as_of_age_h": 83.28,
+     "as_of_age_h": 85.71,
      "generated": "2026-10-23T15:58:09Z",
      "generated_field": "generated",
-     "generated_age_h": 43.31,
+     "generated_age_h": 45.75,
      "status": "ok"
     },
     {
@@ -3317,20 +3283,20 @@
     {
      "name": "data-whale.json",
      "http_status": 200,
-     "bytes": 826314,
-     "generated": "2026-10-25T09:28:48Z",
+     "bytes": 824922,
+     "generated": "2026-10-25T13:29:59Z",
      "generated_field": "fetched_at",
-     "generated_age_h": 1.8,
+     "generated_age_h": 0.21,
      "status": "ok"
     }
    ],
-   "elapsed_s": 0.52
+   "elapsed_s": 2.41
   }
  },
  "ux": {
   "kind": "ux",
   "base": "https://btabiado.github.io/alpine-data",
-  "started_at": "2026-10-25T11:18:12.857Z",
+  "started_at": "2026-10-25T13:44:35.058Z",
   "budget_s": 540,
   "viewports": [
    {
@@ -3374,22 +3340,22 @@
      }
     ],
     "status": 200,
-    "load_ms": 705,
+    "load_ms": 819,
     "weight": {
      "requests": 28,
-     "bytes": 1853935,
+     "bytes": 1858955,
      "largest": [
       {
        "url": "https://btabiado.github.io/alpine-data/",
-       "bytes": 1339449
+       "bytes": 1339128
       },
       {
        "url": "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js",
-       "bytes": 71577
+       "bytes": 71240
       },
       {
        "url": "https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png?1696501409",
-       "bytes": 52181
+       "bytes": 52196
       }
      ]
     },
@@ -3602,7 +3568,7 @@
     ],
     "total": {
      "requests": 66,
-     "bytes": 3648412
+     "bytes": 3644366
     }
    },
    {
@@ -3634,14 +3600,14 @@
      }
     ],
     "status": 200,
-    "load_ms": 537,
+    "load_ms": 704,
     "weight": {
      "requests": 28,
-     "bytes": 1855088,
+     "bytes": 1859337,
      "largest": [
       {
        "url": "https://btabiado.github.io/alpine-data/",
-       "bytes": 1339447
+       "bytes": 1339132
       },
       {
        "url": "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js",
@@ -3649,7 +3615,7 @@
       },
       {
        "url": "https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png?1696501409",
-       "bytes": 52193
+       "bytes": 52196
       }
      ]
     },
@@ -3862,7 +3828,7 @@
     ],
     "total": {
      "requests": 66,
-     "bytes": 3649389
+     "bytes": 3644671
     }
    },
    {
@@ -3875,14 +3841,14 @@
     "failed_requests": [],
     "bad_text": [],
     "status": 200,
-    "load_ms": 351,
+    "load_ms": 390,
     "weight": {
      "requests": 1,
-     "bytes": 440296,
+     "bytes": 440454,
      "largest": [
       {
        "url": "https://btabiado.github.io/alpine-data/summit/",
-       "bytes": 440296
+       "bytes": 440454
       }
      ]
     },
@@ -3894,7 +3860,7 @@
     },
     "total": {
      "requests": 1,
-     "bytes": 440296
+     "bytes": 440454
     }
    },
    {
@@ -3907,14 +3873,14 @@
     "failed_requests": [],
     "bad_text": [],
     "status": 200,
-    "load_ms": 233,
+    "load_ms": 1090,
     "weight": {
      "requests": 1,
-     "bytes": 440293,
+     "bytes": 440456,
      "largest": [
       {
        "url": "https://btabiado.github.io/alpine-data/summit/",
-       "bytes": 440293
+       "bytes": 440456
       }
      ]
     },
@@ -3926,7 +3892,7 @@
     },
     "total": {
      "requests": 1,
-     "bytes": 440293
+     "bytes": 440456
     }
    },
    {
@@ -3939,22 +3905,22 @@
     "failed_requests": [],
     "bad_text": [],
     "status": 200,
-    "load_ms": 521,
+    "load_ms": 340,
     "weight": {
      "requests": 4,
-     "bytes": 28387,
+     "bytes": 28537,
      "largest": [
       {
        "url": "https://btabiado.github.io/alpine-data/health/",
-       "bytes": 17114
+       "bytes": 17117
       },
       {
        "url": "https://btabiado.github.io/alpine-data/data/health/status.json",
-       "bytes": 8346
+       "bytes": 8383
       },
       {
        "url": "https://btabiado.github.io/alpine-data/data/health/api_status.json",
-       "bytes": 2457
+       "bytes": 2517
       }
      ]
     },
@@ -3966,7 +3932,7 @@
     },
     "total": {
      "requests": 4,
-     "bytes": 28387
+     "bytes": 28537
     }
    },
    {
@@ -3979,22 +3945,22 @@
     "failed_requests": [],
     "bad_text": [],
     "status": 200,
-    "load_ms": 29,
+    "load_ms": 129,
     "weight": {
      "requests": 4,
-     "bytes": 28373,
+     "bytes": 28429,
      "largest": [
       {
        "url": "https://btabiado.github.io/alpine-data/health/",
-       "bytes": 17113
+       "bytes": 17116
       },
       {
        "url": "https://btabiado.github.io/alpine-data/data/health/status.json",
-       "bytes": 8345
+       "bytes": 8406
       },
       {
        "url": "https://btabiado.github.io/alpine-data/data/health/api_status.json",
-       "bytes": 2455
+       "bytes": 2471
       }
      ]
     },
@@ -4006,7 +3972,7 @@
     },
     "total": {
      "requests": 4,
-     "bytes": 28373
+     "bytes": 28429
     }
    },
    {
@@ -4019,22 +3985,22 @@
     "failed_requests": [],
     "bad_text": [],
     "status": 200,
-    "load_ms": 160,
+    "load_ms": 402,
     "weight": {
      "requests": 6,
-     "bytes": 1153150,
+     "bytes": 1153121,
      "largest": [
       {
        "url": "https://btabiado.github.io/alpine-data/data/real_estate.json",
-       "bytes": 995904
+       "bytes": 995835
       },
       {
        "url": "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js",
-       "bytes": 71577
+       "bytes": 71580
       },
       {
        "url": "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
-       "bytes": 42698
+       "bytes": 42692
       }
      ]
     },
@@ -4046,7 +4012,7 @@
     },
     "total": {
      "requests": 6,
-     "bytes": 1153150
+     "bytes": 1153121
     }
    },
    {
@@ -4059,22 +4025,22 @@
     "failed_requests": [],
     "bad_text": [],
     "status": 200,
-    "load_ms": 96,
+    "load_ms": 181,
     "weight": {
      "requests": 24,
-     "bytes": 1200022,
+     "bytes": 1200262,
      "largest": [
       {
        "url": "https://btabiado.github.io/alpine-data/data/real_estate.json",
-       "bytes": 995869
+       "bytes": 995906
       },
       {
        "url": "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js",
-       "bytes": 71583
+       "bytes": 71579
       },
       {
        "url": "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js",
-       "bytes": 42694
+       "bytes": 43040
       }
      ]
     },
@@ -4086,7 +4052,7 @@
     },
     "total": {
      "requests": 24,
-     "bytes": 1200022
+     "bytes": 1200262
     }
    },
    {
@@ -4099,22 +4065,22 @@
     "failed_requests": [],
     "bad_text": [],
     "status": 200,
-    "load_ms": 205,
+    "load_ms": 460,
     "weight": {
      "requests": 37,
-     "bytes": 423603,
+     "bytes": 423594,
      "largest": [
       {
        "url": "https://btabiado.github.io/alpine-data/data/lthcs/insider/2026-10-25.json",
-       "bytes": 149327
+       "bytes": 149373
       },
       {
        "url": "https://btabiado.github.io/alpine-data/data/lthcs/history/trend_index.json",
-       "bytes": 50091
+       "bytes": 50229
       },
       {
        "url": "https://btabiado.github.io/alpine-data/data/lthcs/snapshots/2026-10-25.json",
-       "bytes": 31833
+       "bytes": 31962
       }
      ]
     },
@@ -4126,7 +4092,7 @@
     },
     "total": {
      "requests": 37,
-     "bytes": 423603
+     "bytes": 423594
     }
    },
    {
@@ -4139,22 +4105,22 @@
     "failed_requests": [],
     "bad_text": [],
     "status": 200,
-    "load_ms": 99,
+    "load_ms": 113,
     "weight": {
      "requests": 37,
-     "bytes": 423334,
+     "bytes": 423283,
      "largest": [
       {
        "url": "https://btabiado.github.io/alpine-data/data/lthcs/insider/2026-10-25.json",
-       "bytes": 149325
+       "bytes": 149493
       },
       {
        "url": "https://btabiado.github.io/alpine-data/data/lthcs/history/trend_index.json",
-       "bytes": 50247
+       "bytes": 50114
       },
       {
        "url": "https://btabiado.github.io/alpine-data/data/lthcs/snapshots/2026-10-25.json",
-       "bytes": 31840
+       "bytes": 31852
       }
      ]
     },
@@ -4166,7 +4132,7 @@
     },
     "total": {
      "requests": 37,
-     "bytes": 423334
+     "bytes": 423283
     }
    },
    {
@@ -4179,22 +4145,22 @@
     "failed_requests": [],
     "bad_text": [],
     "status": 200,
-    "load_ms": 112,
+    "load_ms": 295,
     "weight": {
      "requests": 6,
-     "bytes": 380921,
+     "bytes": 380901,
      "largest": [
       {
        "url": "https://btabiado.github.io/alpine-data/api-universe/data.json",
-       "bytes": 213082
+       "bytes": 213058
       },
       {
        "url": "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js",
-       "bytes": 92932
+       "bytes": 92930
       },
       {
        "url": "https://fonts.gstatic.com/s/outfit/v15/QGYvz_MVcBeNP4NJtEtqUYLknw.woff2",
-       "bytes": 32354
+       "bytes": 32770
       }
      ]
     },
@@ -4206,7 +4172,7 @@
     },
     "total": {
      "requests": 6,
-     "bytes": 380921
+     "bytes": 380901
     }
    },
    {
@@ -4222,19 +4188,19 @@
     "load_ms": 107,
     "weight": {
      "requests": 6,
-     "bytes": 381141,
+     "bytes": 381134,
      "largest": [
       {
        "url": "https://btabiado.github.io/alpine-data/api-universe/data.json",
-       "bytes": 213058
+       "bytes": 213056
       },
       {
        "url": "https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js",
-       "bytes": 92936
+       "bytes": 92928
       },
       {
        "url": "https://fonts.gstatic.com/s/outfit/v15/QGYvz_MVcBeNP4NJtEtq.woff2",
-       "bytes": 32418
+       "bytes": 32834
       }
      ]
     },
@@ -4246,12 +4212,12 @@
     },
     "total": {
      "requests": 6,
-     "bytes": 381141
+     "bytes": 381134
     }
    }
   ],
-  "finished_at": "2026-10-25T11:18:49.440Z",
-  "duration_s": 37
+  "finished_at": "2026-10-25T13:45:13.235Z",
+  "duration_s": 38
  },
  "api_watch_note": null
 }
