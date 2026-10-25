@@ -140,6 +140,26 @@ def test_trend_index_keeps_the_window_plus_one_anchor_row(builder, lthcs_root):
     assert (lthcs_root / "history" / "trend_index.json").is_file()
 
 
+def test_trend_index_drops_nan_scores_and_keeps_infinities(builder, lthcs_root):
+    """NaN is not a score. Infinities compared equal to themselves and stay."""
+    _w(lthcs_root / "history" / "by_ticker" / "QQQ.json", {
+        "ticker": "QQQ",
+        "history": [
+            {"date": "2026-10-04", "score": float("nan")},
+            {"date": "2026-10-03", "score": float("inf")},
+            {"date": "2026-10-02", "score": float("-inf")},
+            {"date": "2026-10-01", "score": 0},
+            {"date": "2026-09-30", "score": None},
+        ],
+    })
+    t = builder.build_trend_index(lthcs_root, builder.build_file_index(lthcs_root))
+    assert t["tickers"]["QQQ"] == [
+        {"date": "2026-10-01", "score": 0},
+        {"date": "2026-10-02", "score": float("-inf")},
+        {"date": "2026-10-03", "score": float("inf")},
+    ]
+
+
 def test_trend_index_reproduces_the_browser_trend_for_every_committed_ticker(builder):
     """The /lthcs/ cards must read the same 30d delta from the one-file index
     as from each ticker's full history file. Runs the shipped computeTrend()

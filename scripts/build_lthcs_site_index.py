@@ -44,6 +44,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
 from datetime import datetime, timedelta, timezone
@@ -208,6 +209,17 @@ def build_pillar_history(root: Path, index: dict) -> dict[str, list]:
 TREND_LOOKBACK_DAYS = 30   # max(TREND_FALLBACK_DAYS) in lthcs_tab/lthcs-tab.js
 
 
+def _indexed_score(score) -> bool:
+    """True when a history row's score belongs in the trend index.
+
+    ``None`` and other non-numbers are dropped. ``NaN`` is not a score.
+    Infinities stay as stored; the page's trend math is what ignores them.
+    """
+    if not isinstance(score, (int, float)):
+        return False
+    return not (isinstance(score, float) and math.isnan(score))
+
+
 def build_trend_index(root: Path, index: dict, lookback: int = TREND_LOOKBACK_DAYS) -> dict | None:
     """{ticker: [{date, score}]} trimmed so the browser's anchor pick is
     unchanged. pickAnchorForLookback() takes the newest row on or before
@@ -233,7 +245,7 @@ def build_trend_index(root: Path, index: dict, lookback: int = TREND_LOOKBACK_DA
         clean = sorted(
             ({"date": r["date"], "score": r["score"]} for r in rows
              if isinstance(r, dict) and isinstance(r.get("date"), str)
-             and isinstance(r.get("score"), (int, float)) and r["score"] == r["score"]),
+             and _indexed_score(r.get("score"))),
             key=lambda r: r["date"])
         before = [r for r in clean if r["date"] <= cutoff]
         out[ticker] = before[-1:] + [r for r in clean if r["date"] > cutoff]

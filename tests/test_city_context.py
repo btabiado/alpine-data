@@ -522,6 +522,37 @@ def test_negative_prior_rate_is_not_carried():
     assert city["context"]["unemployment_rate"] is None
 
 
+@pytest.mark.parametrize("value", [
+    None, True, False, "4.2", float("nan"), float("inf"), float("-inf"), -0.1, -1,
+])
+def test_good_unemployment_rate_rejects_missing_and_non_finite(value):
+    """None, bools, NaN, and both infinities are not rates. A negative is not either."""
+    assert city_context.good_unemployment_rate(value) is False
+
+
+@pytest.mark.parametrize("value", [0, 0.0, 4.2, 100, 10**400])
+def test_good_unemployment_rate_keeps_zero_and_positive(value):
+    """Zero is a real rate. An int above the float range is still finite."""
+    assert city_context.good_unemployment_rate(value) is True
+
+
+@pytest.mark.parametrize("missing", [float("nan"), float("inf"), float("-inf")])
+def test_non_finite_unemployment_is_replaced_from_the_last_good_rate(missing):
+    """NaN and the infinities are empty for carry-forward, the same as None."""
+    city = _empty_labor_city()
+    city["context"]["unemployment_rate"] = missing
+    assert city_context.apply_unemployment_carry_forward(city, _PRIOR_SF) is True
+    assert city["context"]["unemployment_rate"] == 4.2
+
+
+@pytest.mark.parametrize("bad", [None, float("nan"), float("inf"), float("-inf")])
+def test_non_finite_prior_rate_is_not_carried(bad):
+    city = _empty_labor_city()
+    prior = {"as_of": "2026-10-23T09:40:36Z", "context": {"unemployment_rate": bad}}
+    assert city_context.apply_unemployment_carry_forward(city, prior) is False
+    assert city["context"]["unemployment_rate"] is None
+
+
 def test_null_context_block_is_rebuilt_from_the_last_good_rate():
     city = {"id": "sf", "disclosures": []}
     assert city_context.apply_unemployment_carry_forward(

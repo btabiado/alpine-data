@@ -43,6 +43,7 @@ rather than a dead job.
 from __future__ import annotations
 
 import json
+import math
 import os
 import subprocess
 import sys
@@ -389,7 +390,9 @@ def good_unemployment_rate(value) -> bool:
     """
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return False
-    if value != value or value in (float("inf"), float("-inf")):
+    # NaN and both infinities. An int is always finite; math.isfinite on an
+    # int outside the float range would raise, so only floats take this path.
+    if isinstance(value, float) and not math.isfinite(value):
         return False
     return value >= 0
 
