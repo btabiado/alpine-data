@@ -1,5 +1,5 @@
 {
-  "calc_date": "2026-10-25",
+  "calc_date": "2026-10-26",
   "model_version": "v1.1.1",
   "weights_profile_default": "standard_compounder",
   "scores": [
@@ -57,7 +57,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AAPL",
@@ -110,7 +110,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ABBV",
@@ -163,7 +163,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ABNB",
@@ -216,7 +216,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ABT",
@@ -269,7 +269,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ACGL",
@@ -325,7 +325,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ACN",
@@ -378,7 +378,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ADBE",
@@ -431,7 +431,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ADI",
@@ -484,7 +484,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ADM",
@@ -540,7 +540,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ADP",
@@ -593,7 +593,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ADSK",
@@ -646,7 +646,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "AEE",
@@ -702,7 +702,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AEP",
@@ -755,7 +755,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "AES",
@@ -811,7 +811,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AFL",
@@ -867,7 +867,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AIG",
@@ -923,7 +923,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AIZ",
@@ -979,7 +979,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AJG",
@@ -1035,7 +1035,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AKAM",
@@ -1091,7 +1091,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ALB",
@@ -1147,7 +1147,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ALGN",
@@ -1203,7 +1203,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ALL",
@@ -1259,7 +1259,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ALLE",
@@ -1315,7 +1315,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AMAT",
@@ -1368,7 +1368,7 @@
         11.95
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "AMCR",
@@ -1424,7 +1424,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AMD",
@@ -1477,7 +1477,7 @@
         11.95
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "AME",
@@ -1533,7 +1533,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AMGN",
@@ -1586,7 +1586,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "AMP",
@@ -1642,7 +1642,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AMT",
@@ -1695,7 +1695,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "AMZN",
@@ -1748,7 +1748,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ANET",
@@ -1801,7 +1801,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "AON",
@@ -1857,7 +1857,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AOS",
@@ -1913,7 +1913,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "APA",
@@ -1970,7 +1970,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "APD",
@@ -2026,7 +2026,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "APH",
@@ -2079,7 +2079,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "APO",
@@ -2135,7 +2135,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "APP",
@@ -2191,7 +2191,7 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "APTV",
@@ -2247,7 +2247,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ARE",
@@ -2304,7 +2304,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ARES",
@@ -2360,7 +2360,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ARM",
@@ -2413,7 +2413,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ASML",
@@ -2466,7 +2466,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ATO",
@@ -2522,7 +2522,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AVGO",
@@ -2575,7 +2575,7 @@
         11.95
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "AVY",
@@ -2631,7 +2631,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AWK",
@@ -2687,7 +2687,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AXON",
@@ -2743,7 +2743,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "AXP",
@@ -2796,7 +2796,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "AZN",
@@ -2849,7 +2849,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "AZO",
@@ -2905,7 +2905,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "BA",
@@ -2958,7 +2958,7 @@
         9.35625
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "BAC",
@@ -3011,7 +3011,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "BALL",
@@ -3067,7 +3067,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "BAX",
@@ -3123,7 +3123,7 @@
         8.306249999999999
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "BBY",
@@ -3179,7 +3179,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "BDX",
@@ -3235,7 +3235,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "BE",
@@ -3291,14 +3291,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "BEN",
       "lthcs_score": 38.7,
       "band": "weakening",
       "drift_1d": 0.0,
-      "drift_7d": -4.1,
+      "drift_7d": -4.8,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -3347,7 +3347,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "BF.B",
@@ -3403,7 +3403,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "BG",
@@ -3459,7 +3459,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "BIIB",
@@ -3512,7 +3512,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "BKNG",
@@ -3565,13 +3565,13 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "BKR",
       "lthcs_score": 39.9,
       "band": "weakening",
-      "drift_1d": 0.1,
+      "drift_1d": 0.0,
       "drift_7d": 1.8,
       "drift_30d": 7.8,
       "drift_90d": 7.8,
@@ -3618,7 +3618,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "BLK",
@@ -3671,7 +3671,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "BMY",
@@ -3724,7 +3724,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "BNY",
@@ -3780,7 +3780,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "BR",
@@ -3836,7 +3836,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "BRK.B",
@@ -3889,7 +3889,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "BRO",
@@ -3945,7 +3945,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "BSX",
@@ -3998,7 +3998,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "BX",
@@ -4051,7 +4051,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 130
+      "history_points": 131
     },
     {
       "ticker": "BXP",
@@ -4107,7 +4107,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "C",
@@ -4160,7 +4160,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CAH",
@@ -4216,7 +4216,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CARR",
@@ -4272,7 +4272,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CASY",
@@ -4328,7 +4328,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CAT",
@@ -4381,7 +4381,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CB",
@@ -4434,7 +4434,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 130
+      "history_points": 131
     },
     {
       "ticker": "CBOE",
@@ -4490,7 +4490,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CBRE",
@@ -4546,7 +4546,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CCEP",
@@ -4599,7 +4599,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CCI",
@@ -4655,7 +4655,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CCL",
@@ -4711,7 +4711,7 @@
         8.925
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CDNS",
@@ -4764,7 +4764,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CDW",
@@ -4817,7 +4817,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CEG",
@@ -4870,7 +4870,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CF",
@@ -4926,7 +4926,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CFG",
@@ -4982,7 +4982,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CHD",
@@ -5038,7 +5038,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CHRW",
@@ -5094,7 +5094,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CHTR",
@@ -5147,7 +5147,7 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CI",
@@ -5200,7 +5200,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "CIEN",
@@ -5256,7 +5256,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CINF",
@@ -5312,7 +5312,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CL",
@@ -5365,13 +5365,13 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CLX",
       "lthcs_score": 32.4,
       "band": "review",
-      "drift_1d": 0.1,
+      "drift_1d": 0.0,
       "drift_7d": 1.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
@@ -5421,7 +5421,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CMCSA",
@@ -5474,7 +5474,7 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CME",
@@ -5527,7 +5527,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 130
+      "history_points": 131
     },
     {
       "ticker": "CMG",
@@ -5583,7 +5583,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CMI",
@@ -5636,7 +5636,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "CMS",
@@ -5692,7 +5692,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CNC",
@@ -5748,7 +5748,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CNP",
@@ -5804,7 +5804,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "COF",
@@ -5857,7 +5857,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "COHR",
@@ -5913,7 +5913,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "COIN",
@@ -5969,13 +5969,13 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "COO",
       "lthcs_score": 41.0,
       "band": "weakening",
-      "drift_1d": 0.1,
+      "drift_1d": 0.0,
       "drift_7d": 6.4,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
@@ -6025,7 +6025,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "COP",
@@ -6078,7 +6078,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "COR",
@@ -6134,7 +6134,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "COST",
@@ -6187,7 +6187,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CPAY",
@@ -6243,7 +6243,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CPRT",
@@ -6299,7 +6299,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CPT",
@@ -6355,7 +6355,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CRH",
@@ -6411,7 +6411,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CRL",
@@ -6467,7 +6467,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CRM",
@@ -6520,7 +6520,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CRWD",
@@ -6574,13 +6574,13 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CSCO",
       "lthcs_score": 44.5,
       "band": "monitor",
-      "drift_1d": 0.1,
+      "drift_1d": 0.0,
       "drift_7d": 0.9,
       "drift_30d": -1.6,
       "drift_90d": -1.6,
@@ -6627,7 +6627,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CSGP",
@@ -6680,7 +6680,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CSX",
@@ -6733,7 +6733,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "CTAS",
@@ -6786,7 +6786,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CTSH",
@@ -6839,7 +6839,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CTVA",
@@ -6895,7 +6895,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CVNA",
@@ -6951,7 +6951,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "CVS",
@@ -7004,7 +7004,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "CVX",
@@ -7057,7 +7057,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "D",
@@ -7113,7 +7113,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DAL",
@@ -7169,7 +7169,7 @@
         9.35625
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DASH",
@@ -7222,7 +7222,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "DD",
@@ -7278,7 +7278,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DDOG",
@@ -7331,7 +7331,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "DE",
@@ -7384,7 +7384,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "DECK",
@@ -7440,7 +7440,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DELL",
@@ -7496,7 +7496,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DG",
@@ -7552,7 +7552,7 @@
         8.53125
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DGX",
@@ -7608,7 +7608,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DHI",
@@ -7664,7 +7664,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DHR",
@@ -7717,7 +7717,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "DIS",
@@ -7770,13 +7770,13 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "DLR",
       "lthcs_score": 49.0,
       "band": "monitor",
-      "drift_1d": 0.1,
+      "drift_1d": 0.0,
       "drift_7d": -1.4,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
@@ -7826,7 +7826,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DLTR",
@@ -7882,7 +7882,7 @@
         8.53125
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DOC",
@@ -7938,7 +7938,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DOV",
@@ -7994,7 +7994,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DOW",
@@ -8047,7 +8047,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 20
+      "history_points": 21
     },
     {
       "ticker": "DPZ",
@@ -8103,7 +8103,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DRI",
@@ -8159,13 +8159,13 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DTE",
       "lthcs_score": 59.3,
       "band": "constructive",
-      "drift_1d": 0.1,
+      "drift_1d": 0.0,
       "drift_7d": 1.8,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
@@ -8215,7 +8215,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DUK",
@@ -8268,7 +8268,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "DVA",
@@ -8324,7 +8324,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DVN",
@@ -8380,7 +8380,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "DXCM",
@@ -8433,7 +8433,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "EBAY",
@@ -8489,7 +8489,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ECHO",
@@ -8545,7 +8545,7 @@
         8.7375
       ],
       "sector": "Communication Services",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ECL",
@@ -8598,7 +8598,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "ED",
@@ -8654,7 +8654,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "EFX",
@@ -8710,7 +8710,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "EG",
@@ -8766,7 +8766,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "EIX",
@@ -8822,7 +8822,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "EL",
@@ -8878,7 +8878,7 @@
         8.53125
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ELV",
@@ -8931,7 +8931,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "EME",
@@ -8987,7 +8987,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "EMR",
@@ -9040,7 +9040,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "EOG",
@@ -9093,7 +9093,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "EQIX",
@@ -9146,7 +9146,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "EQT",
@@ -9202,7 +9202,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ERIE",
@@ -9258,7 +9258,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ES",
@@ -9314,7 +9314,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ESS",
@@ -9370,13 +9370,13 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ETN",
       "lthcs_score": 56.9,
       "band": "constructive",
-      "drift_1d": 0.1,
+      "drift_1d": 0.0,
       "drift_7d": -3.6,
       "drift_30d": -6.8,
       "drift_90d": -6.8,
@@ -9423,7 +9423,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "ETR",
@@ -9479,7 +9479,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "EVRG",
@@ -9535,14 +9535,14 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "EW",
-      "lthcs_score": 57.7,
+      "lthcs_score": 58.0,
       "band": "constructive",
-      "drift_1d": 0.0,
-      "drift_7d": 2.3,
+      "drift_1d": 0.3,
+      "drift_7d": 2.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -9555,7 +9555,7 @@
       ],
       "subscores": {
         "adoption_momentum": 76.6,
-        "institutional_confidence": 46.3,
+        "institutional_confidence": 47.3,
         "financial_evolution": 59.4,
         "thesis_integrity": null,
         "des": 44.3
@@ -9585,13 +9585,13 @@
       ],
       "weighted_components": [
         23.9375,
-        11.575,
+        11.825,
         11.137499999999998,
         0.0,
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "EXC",
@@ -9644,7 +9644,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "EXE",
@@ -9700,7 +9700,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "EXPD",
@@ -9756,7 +9756,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "EXPE",
@@ -9812,7 +9812,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "EXR",
@@ -9868,7 +9868,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "F",
@@ -9921,7 +9921,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "FANG",
@@ -9974,7 +9974,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "FAST",
@@ -10027,7 +10027,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "FCX",
@@ -10080,7 +10080,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "FDS",
@@ -10136,7 +10136,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FDX",
@@ -10189,7 +10189,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "FDXF",
@@ -10245,7 +10245,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FE",
@@ -10301,14 +10301,14 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FERG",
       "lthcs_score": 47.7,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 1.4,
+      "drift_7d": 0.9,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -10357,14 +10357,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FFIV",
       "lthcs_score": 62.2,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": 4.0,
+      "drift_7d": 3.4,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -10413,14 +10413,14 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FICO",
       "lthcs_score": 29.9,
       "band": "review",
       "drift_1d": 0.0,
-      "drift_7d": -3.6,
+      "drift_7d": -3.8,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -10469,14 +10469,14 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FIS",
       "lthcs_score": 47.5,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 1.8,
+      "drift_7d": 1.4,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -10525,14 +10525,14 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FISV",
       "lthcs_score": 49.6,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 6.6,
+      "drift_7d": 6.2,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -10581,14 +10581,14 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FITB",
       "lthcs_score": 45.1,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 0.2,
+      "drift_7d": 0.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -10638,14 +10638,14 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FIX",
       "lthcs_score": 25.9,
       "band": "review",
       "drift_1d": 0.0,
-      "drift_7d": -0.1,
+      "drift_7d": -0.8,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -10694,14 +10694,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FLEX",
       "lthcs_score": 23.5,
       "band": "review",
       "drift_1d": 0.0,
-      "drift_7d": 2.5,
+      "drift_7d": 1.8,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -10750,14 +10750,14 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FOX",
       "lthcs_score": 46.8,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 12.4,
+      "drift_7d": 11.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -10806,14 +10806,14 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FOXA",
       "lthcs_score": 47.6,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 15.9,
+      "drift_7d": 15.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -10862,7 +10862,7 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FRT",
@@ -10918,14 +10918,14 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FSLR",
       "lthcs_score": 37.1,
       "band": "weakening",
       "drift_1d": 0.0,
-      "drift_7d": 5.7,
+      "drift_7d": 5.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -10974,7 +10974,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "FTNT",
@@ -11027,7 +11027,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "FTV",
@@ -11083,7 +11083,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "GD",
@@ -11136,14 +11136,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "GDDY",
       "lthcs_score": 60.5,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": -2.8,
+      "drift_7d": -3.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -11192,7 +11192,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "GE",
@@ -11245,7 +11245,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "GEHC",
@@ -11298,14 +11298,14 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "GEN",
       "lthcs_score": 63.0,
       "band": "high_confidence",
       "drift_1d": 0.0,
-      "drift_7d": 5.9,
+      "drift_7d": 5.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -11354,14 +11354,14 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "GEV",
       "lthcs_score": 34.6,
       "band": "weakening",
       "drift_1d": 0.0,
-      "drift_7d": -9.3,
+      "drift_7d": -9.9,
       "drift_30d": 0.4,
       "drift_90d": 0.4,
       "drift_unavailable": [],
@@ -11407,7 +11407,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "GFS",
@@ -11460,7 +11460,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "GILD",
@@ -11513,14 +11513,14 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "GIS",
       "lthcs_score": 36.6,
       "band": "weakening",
       "drift_1d": 0.0,
-      "drift_7d": 0.7,
+      "drift_7d": 0.2,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -11569,14 +11569,14 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "GL",
       "lthcs_score": 46.1,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": -11.1,
+      "drift_7d": -11.3,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -11625,14 +11625,14 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "GLW",
       "lthcs_score": 46.1,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 3.4,
+      "drift_7d": 2.9,
       "drift_30d": 2.9,
       "drift_90d": 2.9,
       "drift_unavailable": [],
@@ -11678,7 +11678,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "GM",
@@ -11731,14 +11731,14 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "GNRC",
       "lthcs_score": 30.6,
       "band": "review",
       "drift_1d": 0.0,
-      "drift_7d": 2.2,
+      "drift_7d": 1.9,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -11787,7 +11787,7 @@
         9.35625
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "GOOG",
@@ -11840,7 +11840,7 @@
         11.95
       ],
       "sector": "Communication Services",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "GOOGL",
@@ -11893,14 +11893,14 @@
         11.95
       ],
       "sector": "Communication Services",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "GPC",
       "lthcs_score": 51.8,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": -0.6,
+      "drift_7d": -1.2,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -11949,14 +11949,14 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "GPN",
       "lthcs_score": 51.0,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": -3.2,
+      "drift_7d": -3.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -12005,14 +12005,14 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "GRMN",
       "lthcs_score": 71.3,
       "band": "elite",
       "drift_1d": 0.0,
-      "drift_7d": 2.5,
+      "drift_7d": 2.2,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -12061,7 +12061,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "GS",
@@ -12115,7 +12115,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "GWW",
@@ -12171,14 +12171,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HAL",
       "lthcs_score": 58.2,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": 8.5,
+      "drift_7d": 8.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -12227,14 +12227,14 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HAS",
       "lthcs_score": 73.1,
       "band": "elite",
       "drift_1d": 0.0,
-      "drift_7d": 4.8,
+      "drift_7d": 4.5,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -12283,14 +12283,14 @@
         8.925
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HBAN",
       "lthcs_score": 51.7,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": -1.7,
+      "drift_7d": -2.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -12339,14 +12339,14 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HCA",
       "lthcs_score": 54.0,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": -0.9,
+      "drift_7d": -1.4,
       "drift_30d": 6.0,
       "drift_90d": 6.0,
       "drift_unavailable": [],
@@ -12392,7 +12392,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "HD",
@@ -12445,14 +12445,14 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "HIG",
       "lthcs_score": 56.3,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": -4.5,
+      "drift_7d": -4.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -12501,14 +12501,14 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HII",
       "lthcs_score": 49.9,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 0.9,
+      "drift_7d": 0.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -12557,14 +12557,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HLT",
       "lthcs_score": 57.6,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": 2.9,
+      "drift_7d": 2.5,
       "drift_30d": 2.0,
       "drift_90d": 2.0,
       "drift_unavailable": [],
@@ -12610,16 +12610,16 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "HON",
-      "lthcs_score": 42.0,
+      "lthcs_score": 43.0,
       "band": "monitor",
-      "drift_1d": 0.0,
-      "drift_7d": -5.4,
-      "drift_30d": 6.6,
-      "drift_90d": 6.6,
+      "drift_1d": 1.0,
+      "drift_7d": -4.4,
+      "drift_30d": 7.6,
+      "drift_90d": 7.6,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
@@ -12627,7 +12627,7 @@
       ],
       "subscores": {
         "adoption_momentum": 48.9,
-        "institutional_confidence": 19.9,
+        "institutional_confidence": 23.9,
         "financial_evolution": 49.4,
         "thesis_integrity": null,
         "des": 49.9
@@ -12657,20 +12657,20 @@
       ],
       "weighted_components": [
         15.28125,
-        4.975,
+        5.975,
         9.262499999999998,
         0.0,
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "HONA",
       "lthcs_score": 42.1,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": -12.7,
+      "drift_7d": -13.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -12719,14 +12719,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HOOD",
       "lthcs_score": 71.9,
       "band": "elite",
       "drift_1d": 0.0,
-      "drift_7d": -8.2,
+      "drift_7d": -8.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -12775,14 +12775,14 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HPE",
       "lthcs_score": 61.1,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": -0.8,
+      "drift_7d": -0.9,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -12831,14 +12831,14 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HPQ",
       "lthcs_score": 53.3,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": -0.4,
+      "drift_7d": -0.8,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -12887,7 +12887,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HRL",
@@ -12944,7 +12944,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HSIC",
@@ -13000,14 +13000,14 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HST",
       "lthcs_score": 53.1,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": 5.7,
+      "drift_7d": 5.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -13056,14 +13056,14 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HSY",
       "lthcs_score": 50.8,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": -3.1,
+      "drift_7d": -3.3,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -13112,14 +13112,14 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HUBB",
       "lthcs_score": 38.7,
       "band": "weakening",
-      "drift_1d": -0.8,
-      "drift_7d": 0.0,
+      "drift_1d": 0.0,
+      "drift_7d": -0.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -13168,7 +13168,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HUM",
@@ -13224,14 +13224,14 @@
         8.306249999999999
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "HWM",
       "lthcs_score": 36.4,
       "band": "weakening",
       "drift_1d": 0.0,
-      "drift_7d": -3.8,
+      "drift_7d": -4.1,
       "drift_30d": 0.8,
       "drift_90d": 0.8,
       "drift_unavailable": [],
@@ -13277,7 +13277,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "IBKR",
@@ -13333,7 +13333,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "IBM",
@@ -13386,14 +13386,14 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ICE",
       "lthcs_score": 66.8,
       "band": "high_confidence",
       "drift_1d": 0.0,
-      "drift_7d": 0.3,
+      "drift_7d": -0.2,
       "drift_30d": 5.5,
       "drift_90d": 5.5,
       "drift_unavailable": [],
@@ -13439,7 +13439,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 130
+      "history_points": 131
     },
     {
       "ticker": "IDXX",
@@ -13492,14 +13492,14 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "IEX",
       "lthcs_score": 53.7,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": 0.5,
+      "drift_7d": 0.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -13548,14 +13548,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "IFF",
       "lthcs_score": 45.2,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 0.5,
+      "drift_7d": 0.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -13604,7 +13604,7 @@
         9.693750000000001
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ILMN",
@@ -13657,14 +13657,14 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "INCY",
       "lthcs_score": 66.0,
       "band": "high_confidence",
       "drift_1d": 0.0,
-      "drift_7d": 1.5,
+      "drift_7d": 1.4,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -13713,7 +13713,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "INTC",
@@ -13766,7 +13766,7 @@
         8.381250000000001
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "INTU",
@@ -13819,7 +13819,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "INVH",
@@ -13875,14 +13875,14 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "IP",
       "lthcs_score": 56.7,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": 1.2,
+      "drift_7d": 0.4,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -13931,14 +13931,14 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "IQV",
       "lthcs_score": 57.8,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": -1.4,
+      "drift_7d": -1.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -13987,14 +13987,14 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "IR",
       "lthcs_score": 50.2,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": -7.0,
+      "drift_7d": -7.3,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -14043,14 +14043,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "IRM",
       "lthcs_score": 48.8,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 2.6,
+      "drift_7d": 2.2,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -14099,7 +14099,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ISRG",
@@ -14152,14 +14152,14 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "IT",
       "lthcs_score": 52.8,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": 0.0,
+      "drift_7d": -0.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -14208,14 +14208,14 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ITW",
       "lthcs_score": 45.6,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": -4.5,
+      "drift_7d": -4.6,
       "drift_30d": 1.6,
       "drift_90d": 1.6,
       "drift_unavailable": [],
@@ -14261,14 +14261,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "IVZ",
       "lthcs_score": 44.5,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": -5.9,
+      "drift_7d": -6.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -14317,14 +14317,14 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "J",
       "lthcs_score": 68.0,
       "band": "high_confidence",
       "drift_1d": 0.0,
-      "drift_7d": 7.6,
+      "drift_7d": 6.9,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -14373,14 +14373,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "JBHT",
       "lthcs_score": 52.8,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": 3.4,
+      "drift_7d": 3.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -14429,14 +14429,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "JBL",
       "lthcs_score": 50.3,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 23.8,
+      "drift_7d": 23.2,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -14485,7 +14485,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "JCI",
@@ -14538,14 +14538,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "JKHY",
       "lthcs_score": 66.5,
       "band": "high_confidence",
       "drift_1d": 0.0,
-      "drift_7d": -0.8,
+      "drift_7d": -1.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -14594,7 +14594,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "JNJ",
@@ -14647,7 +14647,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "JPM",
@@ -14700,7 +14700,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "KDP",
@@ -14753,14 +14753,14 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "KEY",
       "lthcs_score": 48.0,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 2.1,
+      "drift_7d": 1.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -14809,14 +14809,14 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "KEYS",
       "lthcs_score": 44.4,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": -1.6,
+      "drift_7d": -2.2,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -14865,7 +14865,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "KHC",
@@ -14918,14 +14918,14 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "KIM",
       "lthcs_score": 39.6,
       "band": "weakening",
       "drift_1d": 0.0,
-      "drift_7d": 5.5,
+      "drift_7d": 4.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -14974,14 +14974,14 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "KKR",
       "lthcs_score": 38.5,
       "band": "weakening",
       "drift_1d": 0.0,
-      "drift_7d": -2.9,
+      "drift_7d": -3.0,
       "drift_30d": -3.8,
       "drift_90d": -3.8,
       "drift_unavailable": [],
@@ -15027,7 +15027,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 130
+      "history_points": 131
     },
     {
       "ticker": "KLAC",
@@ -15080,14 +15080,14 @@
         11.95
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "KMB",
       "lthcs_score": 41.9,
       "band": "weakening",
       "drift_1d": 0.0,
-      "drift_7d": -4.3,
+      "drift_7d": -4.4,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -15136,14 +15136,14 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "KMI",
       "lthcs_score": 59.6,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": -1.3,
+      "drift_7d": -1.4,
       "drift_30d": 10.4,
       "drift_90d": 10.4,
       "drift_unavailable": [],
@@ -15189,7 +15189,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "KO",
@@ -15242,14 +15242,14 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "KR",
       "lthcs_score": 42.2,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 2.7,
+      "drift_7d": 2.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -15298,14 +15298,14 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "KVUE",
       "lthcs_score": 41.2,
       "band": "weakening",
       "drift_1d": 0.0,
-      "drift_7d": -4.1,
+      "drift_7d": -4.3,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -15354,14 +15354,14 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "L",
       "lthcs_score": 64.8,
       "band": "high_confidence",
       "drift_1d": 0.0,
-      "drift_7d": 1.4,
+      "drift_7d": 1.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -15410,7 +15410,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "LCID",
@@ -15463,14 +15463,14 @@
         8.924999999999999
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "LDOS",
       "lthcs_score": 53.3,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": 5.3,
+      "drift_7d": 5.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -15519,14 +15519,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "LEN",
       "lthcs_score": 34.8,
       "band": "weakening",
       "drift_1d": 0.0,
-      "drift_7d": 1.7,
+      "drift_7d": 1.5,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -15575,14 +15575,14 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "LH",
       "lthcs_score": 58.8,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": 1.4,
+      "drift_7d": 6.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -15631,14 +15631,14 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "LHX",
       "lthcs_score": 50.4,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 1.2,
+      "drift_7d": 6.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -15687,14 +15687,14 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "LII",
       "lthcs_score": 23.0,
       "band": "review",
       "drift_1d": 0.0,
-      "drift_7d": 1.1,
+      "drift_7d": 2.4,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -15743,7 +15743,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "LIN",
@@ -15796,14 +15796,14 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "LITE",
       "lthcs_score": 58.2,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": -7.1,
+      "drift_7d": 1.4,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -15852,7 +15852,7 @@
         8.38125
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "LLY",
@@ -15905,7 +15905,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "LMT",
@@ -15958,7 +15958,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "LNT",
@@ -16014,13 +16014,13 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "LOW",
       "lthcs_score": 42.7,
       "band": "monitor",
-      "drift_1d": 0.1,
+      "drift_1d": 0.0,
       "drift_7d": 0.7,
       "drift_30d": 5.9,
       "drift_90d": 5.9,
@@ -16067,7 +16067,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "LRCX",
@@ -16120,7 +16120,7 @@
         11.95
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "LULU",
@@ -16173,14 +16173,14 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "LUV",
       "lthcs_score": 41.5,
       "band": "weakening",
       "drift_1d": 0.0,
-      "drift_7d": -2.8,
+      "drift_7d": 0.4,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -16229,14 +16229,14 @@
         9.35625
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "LVS",
       "lthcs_score": 56.0,
       "band": "constructive",
       "drift_1d": 0.0,
-      "drift_7d": 2.9,
+      "drift_7d": 6.3,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -16285,14 +16285,14 @@
         8.925
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "LYB",
       "lthcs_score": 46.5,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 3.5,
+      "drift_7d": 7.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -16341,7 +16341,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "LYV",
@@ -16397,7 +16397,7 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "MA",
@@ -16450,14 +16450,14 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MAA",
-      "lthcs_score": 33.1,
+      "lthcs_score": 33.9,
       "band": "weakening",
-      "drift_1d": -0.4,
-      "drift_7d": 6.4,
+      "drift_1d": 0.8,
+      "drift_7d": 7.2,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -16469,7 +16469,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 28.5,
+        "adoption_momentum": 31.1,
         "institutional_confidence": 24.2,
         "financial_evolution": 44.4,
         "thesis_integrity": null,
@@ -16499,14 +16499,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        8.90625,
+        9.71875,
         6.05,
         8.325,
         0.0,
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "MAR",
@@ -16559,14 +16559,14 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MAS",
-      "lthcs_score": 37.3,
+      "lthcs_score": 38.0,
       "band": "weakening",
-      "drift_1d": -0.3,
-      "drift_7d": 1.4,
+      "drift_1d": 0.7,
+      "drift_7d": 2.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -16578,7 +16578,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 20.1,
+        "adoption_momentum": 22.3,
         "institutional_confidence": 58.6,
         "financial_evolution": 20.9,
         "thesis_integrity": null,
@@ -16608,14 +16608,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        6.28125,
+        6.96875,
         14.65,
         3.9187499999999993,
         0.0,
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "MCD",
@@ -16668,7 +16668,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MCHP",
@@ -16721,23 +16721,23 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MCK",
-      "lthcs_score": 61.4,
+      "lthcs_score": 62.1,
       "band": "constructive",
-      "drift_1d": -0.4,
-      "drift_7d": -2.3,
-      "drift_30d": 2.9,
-      "drift_90d": 2.9,
+      "drift_1d": 0.7,
+      "drift_7d": -1.6,
+      "drift_30d": 3.6,
+      "drift_90d": 3.6,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 62.4,
+        "adoption_momentum": 65.4,
         "institutional_confidence": 86.5,
         "financial_evolution": 52.3,
         "thesis_integrity": null,
@@ -16767,30 +16767,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.6,
+        16.35,
         21.625,
         13.075,
         0.0,
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "MCO",
-      "lthcs_score": 60.9,
+      "lthcs_score": 61.2,
       "band": "constructive",
-      "drift_1d": -0.1,
-      "drift_7d": -9.5,
-      "drift_30d": -4.8,
-      "drift_90d": -4.8,
+      "drift_1d": 0.3,
+      "drift_7d": -9.2,
+      "drift_30d": -4.5,
+      "drift_90d": -4.5,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 41.4,
+        "adoption_momentum": 42.8,
         "institutional_confidence": 57.3,
         "financial_evolution": 71.8,
         "thesis_integrity": null,
@@ -16820,14 +16820,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        7.762499999999998,
+        8.024999999999999,
         14.325,
         22.4375,
         0.0,
         16.375
       ],
       "sector": "Financials",
-      "history_points": 130
+      "history_points": 131
     },
     {
       "ticker": "MDB",
@@ -16880,7 +16880,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MDLZ",
@@ -16933,7 +16933,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MDT",
@@ -16986,7 +16986,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MELI",
@@ -17039,7 +17039,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MET",
@@ -17092,7 +17092,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "META",
@@ -17145,14 +17145,14 @@
         11.95
       ],
       "sector": "Communication Services",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MGM",
-      "lthcs_score": 33.9,
+      "lthcs_score": 34.2,
       "band": "weakening",
-      "drift_1d": -0.1,
-      "drift_7d": -0.2,
+      "drift_1d": 0.3,
+      "drift_7d": 0.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -17164,7 +17164,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 16.5,
+        "adoption_momentum": 17.9,
         "institutional_confidence": 1.4,
         "financial_evolution": 49.5,
         "thesis_integrity": null,
@@ -17194,20 +17194,20 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        3.09375,
+        3.3562499999999997,
         0.26249999999999996,
         21.65625,
         0.0,
         8.925
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "MKC",
       "lthcs_score": 53.0,
       "band": "constructive",
-      "drift_1d": 0.1,
+      "drift_1d": 0.0,
       "drift_7d": 9.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
@@ -17257,14 +17257,14 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "MLM",
-      "lthcs_score": 45.6,
+      "lthcs_score": 46.1,
       "band": "monitor",
-      "drift_1d": -0.1,
-      "drift_7d": -7.6,
+      "drift_1d": 0.5,
+      "drift_7d": -7.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -17276,7 +17276,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 59.9,
+        "adoption_momentum": 61.5,
         "institutional_confidence": 20.6,
         "financial_evolution": 47.0,
         "thesis_integrity": null,
@@ -17306,14 +17306,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        18.71875,
+        19.21875,
         5.15,
         8.812499999999998,
         0.0,
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "MMM",
@@ -17366,7 +17366,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MNST",
@@ -17419,7 +17419,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MO",
@@ -17472,14 +17472,14 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MOS",
-      "lthcs_score": 37.1,
+      "lthcs_score": 37.9,
       "band": "weakening",
-      "drift_1d": -0.3,
-      "drift_7d": -5.3,
+      "drift_1d": 0.8,
+      "drift_7d": -4.5,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -17491,7 +17491,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 45.9,
+        "adoption_momentum": 48.2,
         "institutional_confidence": 11.8,
         "financial_evolution": 36.9,
         "thesis_integrity": null,
@@ -17521,30 +17521,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        14.34375,
+        15.0625,
         2.95,
         6.918749999999998,
         0.0,
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "MPC",
-      "lthcs_score": 55.1,
+      "lthcs_score": 55.8,
       "band": "constructive",
-      "drift_1d": -0.3,
-      "drift_7d": -3.7,
-      "drift_30d": 3.6,
-      "drift_90d": 3.6,
+      "drift_1d": 0.7,
+      "drift_7d": -3.0,
+      "drift_30d": 4.3,
+      "drift_90d": 4.3,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 36.6,
+        "adoption_momentum": 38.9,
         "institutional_confidence": 99.0,
         "financial_evolution": 32.5,
         "thesis_integrity": null,
@@ -17574,30 +17574,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        11.4375,
+        12.15625,
         24.75,
         6.093749999999999,
         0.0,
         12.825
       ],
       "sector": "Energy",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "MPWR",
-      "lthcs_score": 39.2,
+      "lthcs_score": 39.7,
       "band": "weakening",
-      "drift_1d": -0.1,
-      "drift_7d": -6.0,
-      "drift_30d": -1.9,
-      "drift_90d": -1.9,
+      "drift_1d": 0.5,
+      "drift_7d": -5.5,
+      "drift_30d": -1.4,
+      "drift_90d": -1.4,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 52.5,
+        "adoption_momentum": 54.1,
         "institutional_confidence": 5.7,
         "financial_evolution": 70.6,
         "thesis_integrity": null,
@@ -17627,14 +17627,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        16.40625,
+        16.90625,
         1.425,
         13.237499999999997,
         0.0,
         11.175
       ],
       "sector": "Technology",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "MRK",
@@ -17687,14 +17687,14 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MRNA",
-      "lthcs_score": 39.1,
+      "lthcs_score": 39.5,
       "band": "weakening",
-      "drift_1d": -0.1,
-      "drift_7d": 0.5,
+      "drift_1d": 0.4,
+      "drift_7d": 0.9,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -17706,7 +17706,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 10.1,
+        "adoption_momentum": 12.4,
         "institutional_confidence": 100.0,
         "financial_evolution": 30.0,
         "thesis_integrity": null,
@@ -17736,21 +17736,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        1.8937499999999998,
+        2.325,
         18.75,
         13.125,
         0.0,
         8.306249999999999
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "MRSH",
-      "lthcs_score": 59.2,
+      "lthcs_score": 59.4,
       "band": "constructive",
-      "drift_1d": 0.0,
-      "drift_7d": -4.3,
+      "drift_1d": 0.2,
+      "drift_7d": -4.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -17762,7 +17762,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 44.3,
+        "adoption_momentum": 45.2,
         "institutional_confidence": 80.0,
         "financial_evolution": 46.5,
         "thesis_integrity": null,
@@ -17792,14 +17792,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        8.306249999999999,
+        8.475,
         20.0,
         14.53125,
         0.0,
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "MRVL",
@@ -17852,7 +17852,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MS",
@@ -17905,14 +17905,14 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MSCI",
-      "lthcs_score": 54.1,
+      "lthcs_score": 54.4,
       "band": "constructive",
-      "drift_1d": -0.2,
-      "drift_7d": 9.2,
+      "drift_1d": 0.3,
+      "drift_7d": 9.5,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -17924,7 +17924,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 41.7,
+        "adoption_momentum": 42.6,
         "institutional_confidence": 57.6,
         "financial_evolution": 54.9,
         "thesis_integrity": null,
@@ -17954,14 +17954,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        13.03125,
+        13.3125,
         14.4,
         10.293749999999998,
         0.0,
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "MSFT",
@@ -18014,14 +18014,14 @@
         11.95
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "MSI",
-      "lthcs_score": 56.5,
+      "lthcs_score": 57.2,
       "band": "constructive",
-      "drift_1d": -0.4,
-      "drift_7d": -2.7,
+      "drift_1d": 0.7,
+      "drift_7d": -2.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -18033,7 +18033,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 48.4,
+        "adoption_momentum": 50.4,
         "institutional_confidence": 78.8,
         "financial_evolution": 56.2,
         "thesis_integrity": null,
@@ -18063,21 +18063,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.125,
+        15.75,
         19.7,
         10.5375,
         0.0,
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "MTB",
-      "lthcs_score": 48.0,
+      "lthcs_score": 48.6,
       "band": "monitor",
-      "drift_1d": -0.3,
-      "drift_7d": -1.8,
+      "drift_1d": 0.6,
+      "drift_7d": -1.2,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -18089,7 +18089,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 54.6,
+        "adoption_momentum": 57.9,
         "institutional_confidence": 35.7,
         "financial_evolution": 39.9,
         "thesis_integrity": null,
@@ -18119,21 +18119,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        10.237499999999999,
+        10.856249999999998,
         8.925,
         12.46875,
         0.0,
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "MTD",
-      "lthcs_score": 58.5,
+      "lthcs_score": 59.2,
       "band": "constructive",
-      "drift_1d": -0.6,
-      "drift_7d": 1.7,
+      "drift_1d": 0.7,
+      "drift_7d": 2.4,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -18145,7 +18145,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 47.2,
+        "adoption_momentum": 49.3,
         "institutional_confidence": 91.7,
         "financial_evolution": 52.2,
         "thesis_integrity": null,
@@ -18175,14 +18175,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        14.75,
+        15.40625,
         22.925,
         9.7875,
         0.0,
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "MU",
@@ -18235,14 +18235,14 @@
         11.95
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "NCLH",
-      "lthcs_score": 56.3,
+      "lthcs_score": 56.8,
       "band": "constructive",
-      "drift_1d": -0.3,
-      "drift_7d": 0.1,
+      "drift_1d": 0.5,
+      "drift_7d": 0.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -18254,7 +18254,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 61.7,
+        "adoption_momentum": 64.1,
         "institutional_confidence": 8.0,
         "financial_evolution": 78.5,
         "thesis_integrity": null,
@@ -18284,21 +18284,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        11.568750000000001,
+        12.018749999999999,
         1.5,
         34.34375,
         0.0,
         8.925
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "NDAQ",
-      "lthcs_score": 67.1,
+      "lthcs_score": 67.6,
       "band": "high_confidence",
-      "drift_1d": -0.2,
-      "drift_7d": -6.2,
+      "drift_1d": 0.5,
+      "drift_7d": -5.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -18310,7 +18310,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 55.3,
+        "adoption_momentum": 58.2,
         "institutional_confidence": 74.2,
         "financial_evolution": 69.7,
         "thesis_integrity": null,
@@ -18340,14 +18340,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        10.368749999999999,
+        10.9125,
         18.55,
         21.78125,
         0.0,
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "NDSN",
@@ -18403,7 +18403,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "NEE",
@@ -18456,23 +18456,23 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "NEM",
-      "lthcs_score": 64.1,
+      "lthcs_score": 64.6,
       "band": "high_confidence",
-      "drift_1d": -0.4,
-      "drift_7d": -4.2,
-      "drift_30d": 4.8,
-      "drift_90d": 4.8,
+      "drift_1d": 0.5,
+      "drift_7d": -3.7,
+      "drift_30d": 5.3,
+      "drift_90d": 5.3,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 76.3,
+        "adoption_momentum": 78.1,
         "institutional_confidence": 46.5,
         "financial_evolution": 83.7,
         "thesis_integrity": null,
@@ -18502,14 +18502,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        23.84375,
+        24.40625,
         11.625,
         15.693749999999998,
         0.0,
         12.925
       ],
       "sector": "Materials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "NFLX",
@@ -18562,14 +18562,14 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "NI",
-      "lthcs_score": 46.5,
+      "lthcs_score": 47.2,
       "band": "monitor",
-      "drift_1d": -0.2,
-      "drift_7d": -3.2,
+      "drift_1d": 0.7,
+      "drift_7d": -2.5,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -18581,7 +18581,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 55.0,
+        "adoption_momentum": 57.1,
         "institutional_confidence": 22.7,
         "financial_evolution": 74.7,
         "thesis_integrity": null,
@@ -18611,14 +18611,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        17.1875,
+        17.84375,
         5.675,
         14.006249999999998,
         0.0,
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "NKE",
@@ -18671,23 +18671,23 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "NOC",
-      "lthcs_score": 44.1,
+      "lthcs_score": 44.6,
       "band": "monitor",
-      "drift_1d": -0.4,
-      "drift_7d": 3.9,
-      "drift_30d": 10.1,
-      "drift_90d": 10.1,
+      "drift_1d": 0.5,
+      "drift_7d": 4.4,
+      "drift_30d": 10.6,
+      "drift_90d": 10.6,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 51.2,
+        "adoption_momentum": 52.9,
         "institutional_confidence": 49.9,
         "financial_evolution": 25.6,
         "thesis_integrity": null,
@@ -18717,14 +18717,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        12.8,
+        13.225,
         12.475,
         6.4,
         0.0,
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "NOW",
@@ -18777,14 +18777,14 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "NRG",
-      "lthcs_score": 31.5,
+      "lthcs_score": 32.5,
       "band": "review",
-      "drift_1d": -0.4,
-      "drift_7d": 1.4,
+      "drift_1d": 1.0,
+      "drift_7d": 2.4,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -18796,7 +18796,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 32.6,
+        "adoption_momentum": 35.7,
         "institutional_confidence": 5.3,
         "financial_evolution": 54.9,
         "thesis_integrity": null,
@@ -18826,30 +18826,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        10.1875,
+        11.15625,
         1.325,
         10.293749999999998,
         0.0,
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "NSC",
-      "lthcs_score": 45.8,
+      "lthcs_score": 46.6,
       "band": "monitor",
-      "drift_1d": -0.3,
-      "drift_7d": -0.2,
-      "drift_30d": 4.7,
-      "drift_90d": 4.7,
+      "drift_1d": 0.8,
+      "drift_7d": 0.6,
+      "drift_30d": 5.5,
+      "drift_90d": 5.5,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 26.0,
+        "adoption_momentum": 29.5,
         "institutional_confidence": 62.6,
         "financial_evolution": 44.5,
         "thesis_integrity": null,
@@ -18879,21 +18879,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        6.5,
+        7.375,
         15.65,
         11.125,
         0.0,
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "NTAP",
-      "lthcs_score": 62.3,
+      "lthcs_score": 62.5,
       "band": "constructive",
-      "drift_1d": -0.2,
-      "drift_7d": 4.5,
+      "drift_1d": 0.2,
+      "drift_7d": 4.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -18905,7 +18905,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 56.0,
+        "adoption_momentum": 56.5,
         "institutional_confidence": 90.0,
         "financial_evolution": 59.3,
         "thesis_integrity": null,
@@ -18935,14 +18935,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        17.5,
+        17.65625,
         22.5,
         11.118749999999999,
         0.0,
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "NTRS",
@@ -18998,14 +18998,14 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "NUE",
-      "lthcs_score": 49.9,
+      "lthcs_score": 50.6,
       "band": "monitor",
-      "drift_1d": -0.5,
-      "drift_7d": -0.7,
+      "drift_1d": 0.7,
+      "drift_7d": 0.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -19017,7 +19017,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 60.9,
+        "adoption_momentum": 63.2,
         "institutional_confidence": 45.3,
         "financial_evolution": 35.3,
         "thesis_integrity": null,
@@ -19047,14 +19047,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        19.03125,
+        19.75,
         11.325,
         6.618749999999999,
         0.0,
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "NVDA",
@@ -19107,14 +19107,14 @@
         11.95
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "NVR",
-      "lthcs_score": 38.3,
+      "lthcs_score": 39.2,
       "band": "weakening",
-      "drift_1d": -0.4,
-      "drift_7d": 1.4,
+      "drift_1d": 0.9,
+      "drift_7d": 2.3,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -19126,7 +19126,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 40.2,
+        "adoption_momentum": 43.2,
         "institutional_confidence": 34.2,
         "financial_evolution": 28.0,
         "thesis_integrity": null,
@@ -19156,21 +19156,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        12.5625,
+        13.5,
         8.55,
         5.249999999999999,
         0.0,
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "NWS",
-      "lthcs_score": 48.0,
+      "lthcs_score": 48.7,
       "band": "monitor",
-      "drift_1d": -0.3,
-      "drift_7d": 0.8,
+      "drift_1d": 0.7,
+      "drift_7d": 1.5,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -19182,7 +19182,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 34.7,
+        "adoption_momentum": 36.9,
         "institutional_confidence": 72.8,
         "financial_evolution": 39.2,
         "thesis_integrity": null,
@@ -19212,14 +19212,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        10.84375,
+        11.53125,
         18.2,
         7.35,
         0.0,
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "NWSA",
@@ -19275,23 +19275,23 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "NXPI",
-      "lthcs_score": 35.4,
+      "lthcs_score": 35.6,
       "band": "weakening",
-      "drift_1d": -0.2,
-      "drift_7d": 7.8,
-      "drift_30d": 10.9,
-      "drift_90d": 10.9,
+      "drift_1d": 0.2,
+      "drift_7d": 8.0,
+      "drift_30d": 11.1,
+      "drift_90d": 11.1,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 38.1,
+        "adoption_momentum": 38.7,
         "institutional_confidence": 15.5,
         "financial_evolution": 45.2,
         "thesis_integrity": null,
@@ -19321,21 +19321,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        11.90625,
+        12.09375,
         3.875,
         8.475,
         0.0,
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "O",
-      "lthcs_score": 48.7,
+      "lthcs_score": 49.6,
       "band": "monitor",
-      "drift_1d": -0.6,
-      "drift_7d": 0.5,
+      "drift_1d": 0.9,
+      "drift_7d": 1.4,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -19347,7 +19347,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 54.7,
+        "adoption_momentum": 57.4,
         "institutional_confidence": 26.6,
         "financial_evolution": 80.8,
         "thesis_integrity": null,
@@ -19377,23 +19377,23 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        17.09375,
+        17.9375,
         6.65,
         15.149999999999997,
         0.0,
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ODFL",
-      "lthcs_score": 41.5,
+      "lthcs_score": 41.9,
       "band": "weakening",
-      "drift_1d": -0.6,
-      "drift_7d": 3.9,
-      "drift_30d": 5.9,
-      "drift_90d": 5.9,
+      "drift_1d": 0.4,
+      "drift_7d": 4.3,
+      "drift_30d": 6.3,
+      "drift_90d": 6.3,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
@@ -19401,7 +19401,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 56.7,
+        "adoption_momentum": 58.1,
         "institutional_confidence": 7.7,
         "financial_evolution": 50.0,
         "thesis_integrity": null,
@@ -19431,21 +19431,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        17.71875,
+        18.15625,
         1.925,
         9.374999999999998,
         0.0,
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "OKE",
-      "lthcs_score": 72.0,
+      "lthcs_score": 72.4,
       "band": "elite",
-      "drift_1d": -0.5,
-      "drift_7d": 0.2,
+      "drift_1d": 0.4,
+      "drift_7d": 0.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -19457,7 +19457,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 85.0,
+        "adoption_momentum": 86.5,
         "institutional_confidence": 72.9,
         "financial_evolution": 76.5,
         "thesis_integrity": null,
@@ -19487,21 +19487,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        26.5625,
+        27.03125,
         18.225,
         14.343749999999998,
         0.0,
         12.825
       ],
       "sector": "Energy",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "OMC",
-      "lthcs_score": 54.1,
+      "lthcs_score": 55.0,
       "band": "constructive",
-      "drift_1d": -0.5,
-      "drift_7d": -7.6,
+      "drift_1d": 0.9,
+      "drift_7d": -6.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -19513,7 +19513,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 58.4,
+        "adoption_momentum": 61.2,
         "institutional_confidence": 61.5,
         "financial_evolution": 47.1,
         "thesis_integrity": null,
@@ -19543,30 +19543,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        18.25,
+        19.125,
         15.375,
         8.831249999999999,
         0.0,
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ON",
-      "lthcs_score": 29.1,
+      "lthcs_score": 29.9,
       "band": "review",
-      "drift_1d": -0.4,
-      "drift_7d": 2.7,
-      "drift_30d": 5.4,
-      "drift_90d": 5.4,
+      "drift_1d": 0.8,
+      "drift_7d": 3.5,
+      "drift_30d": 6.2,
+      "drift_90d": 6.2,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 34.5,
+        "adoption_momentum": 37.0,
         "institutional_confidence": 6.9,
         "financial_evolution": 45.0,
         "thesis_integrity": null,
@@ -19596,14 +19596,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        10.78125,
+        11.5625,
         1.725,
         8.437499999999998,
         0.0,
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ORCL",
@@ -19656,23 +19656,23 @@
         11.95
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ORLY",
-      "lthcs_score": 51.8,
-      "band": "monitor",
-      "drift_1d": -0.5,
-      "drift_7d": 0.2,
-      "drift_30d": 5.4,
-      "drift_90d": 5.4,
+      "lthcs_score": 52.5,
+      "band": "constructive",
+      "drift_1d": 0.7,
+      "drift_7d": 0.9,
+      "drift_30d": 6.1,
+      "drift_90d": 6.1,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 61.3,
+        "adoption_momentum": 63.6,
         "institutional_confidence": 42.8,
         "financial_evolution": 53.6,
         "thesis_integrity": null,
@@ -19702,21 +19702,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        19.15625,
+        19.875,
         10.7,
         10.049999999999999,
         0.0,
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "OTIS",
-      "lthcs_score": 44.4,
+      "lthcs_score": 45.4,
       "band": "monitor",
-      "drift_1d": -0.4,
-      "drift_7d": 0.7,
+      "drift_1d": 1.0,
+      "drift_7d": 1.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -19728,7 +19728,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 37.1,
+        "adoption_momentum": 40.2,
         "institutional_confidence": 55.0,
         "financial_evolution": 35.1,
         "thesis_integrity": null,
@@ -19758,21 +19758,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        11.59375,
+        12.5625,
         13.75,
         6.581249999999999,
         0.0,
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "OXY",
-      "lthcs_score": 55.3,
+      "lthcs_score": 55.7,
       "band": "constructive",
-      "drift_1d": -0.5,
-      "drift_7d": 6.4,
+      "drift_1d": 0.4,
+      "drift_7d": 6.8,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -19784,7 +19784,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 46.4,
+        "adoption_momentum": 47.6,
         "institutional_confidence": 88.2,
         "financial_evolution": 31.5,
         "thesis_integrity": null,
@@ -19814,21 +19814,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        14.5,
+        14.875,
         22.05,
         5.906249999999999,
         0.0,
         12.825
       ],
       "sector": "Energy",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "P",
-      "lthcs_score": 53.8,
+      "lthcs_score": 54.8,
       "band": "constructive",
-      "drift_1d": -0.5,
-      "drift_7d": -0.4,
+      "drift_1d": 1.0,
+      "drift_7d": 0.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -19840,7 +19840,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 39.3,
+        "adoption_momentum": 42.6,
         "institutional_confidence": 95.6,
         "financial_evolution": 50.2,
         "thesis_integrity": null,
@@ -19870,30 +19870,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        12.28125,
+        13.3125,
         23.9,
         9.4125,
         0.0,
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PANW",
-      "lthcs_score": 72.3,
+      "lthcs_score": 72.7,
       "band": "elite",
-      "drift_1d": -0.5,
-      "drift_7d": -1.5,
-      "drift_30d": 0.4,
-      "drift_90d": 0.4,
+      "drift_1d": 0.4,
+      "drift_7d": -1.1,
+      "drift_30d": 0.8,
+      "drift_90d": 0.8,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 85.7,
+        "adoption_momentum": 87.3,
         "institutional_confidence": 90.8,
         "financial_evolution": 80.0,
         "thesis_integrity": null,
@@ -19923,30 +19923,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        21.425,
+        21.825,
         22.7,
         20.0,
         0.0,
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "PAYX",
-      "lthcs_score": 63.9,
+      "lthcs_score": 64.3,
       "band": "high_confidence",
-      "drift_1d": -0.2,
-      "drift_7d": -3.5,
-      "drift_30d": 2.5,
-      "drift_90d": 2.5,
+      "drift_1d": 0.4,
+      "drift_7d": -3.4,
+      "drift_30d": 2.9,
+      "drift_90d": 2.9,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 53.2,
+        "adoption_momentum": 54.5,
         "institutional_confidence": 78.9,
         "financial_evolution": 80.5,
         "thesis_integrity": null,
@@ -19976,30 +19976,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        16.625,
+        17.03125,
         19.725,
         15.093749999999998,
         0.0,
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "PCAR",
-      "lthcs_score": 32.8,
-      "band": "review",
-      "drift_1d": -0.3,
-      "drift_7d": -2.0,
-      "drift_30d": -3.8,
-      "drift_90d": -3.8,
+      "lthcs_score": 33.7,
+      "band": "weakening",
+      "drift_1d": 0.9,
+      "drift_7d": -1.1,
+      "drift_30d": -2.9,
+      "drift_90d": -2.9,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 30.9,
+        "adoption_momentum": 33.7,
         "institutional_confidence": 17.4,
         "financial_evolution": 33.6,
         "thesis_integrity": null,
@@ -20029,21 +20029,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        9.65625,
+        10.53125,
         4.35,
         6.299999999999999,
         0.0,
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "PCG",
-      "lthcs_score": 33.4,
+      "lthcs_score": 33.8,
       "band": "weakening",
-      "drift_1d": -0.6,
-      "drift_7d": 7.7,
+      "drift_1d": 0.4,
+      "drift_7d": 8.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -20055,7 +20055,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 29.7,
+        "adoption_momentum": 31.0,
         "institutional_confidence": 14.4,
         "financial_evolution": 57.6,
         "thesis_integrity": null,
@@ -20085,30 +20085,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        9.28125,
+        9.6875,
         3.6,
         10.799999999999999,
         0.0,
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PDD",
-      "lthcs_score": 64.9,
+      "lthcs_score": 65.1,
       "band": "high_confidence",
-      "drift_1d": -0.1,
-      "drift_7d": -0.8,
-      "drift_30d": 13.7,
-      "drift_90d": 13.7,
+      "drift_1d": 0.2,
+      "drift_7d": -0.6,
+      "drift_30d": 13.9,
+      "drift_90d": 13.9,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 91.5,
+        "adoption_momentum": 92.2,
         "institutional_confidence": 36.0,
         "financial_evolution": 82.3,
         "thesis_integrity": null,
@@ -20138,21 +20138,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        28.59375,
+        28.8125,
         9.0,
         15.431249999999997,
         0.0,
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "PEG",
-      "lthcs_score": 46.6,
+      "lthcs_score": 47.5,
       "band": "monitor",
-      "drift_1d": -0.3,
-      "drift_7d": -1.6,
+      "drift_1d": 0.9,
+      "drift_7d": -0.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -20164,7 +20164,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 51.9,
+        "adoption_momentum": 54.7,
         "institutional_confidence": 25.6,
         "financial_evolution": 76.3,
         "thesis_integrity": null,
@@ -20194,14 +20194,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        16.21875,
+        17.09375,
         6.4,
         14.306249999999997,
         0.0,
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PEP",
@@ -20254,7 +20254,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "PFE",
@@ -20307,14 +20307,14 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "PFG",
-      "lthcs_score": 43.1,
+      "lthcs_score": 43.4,
       "band": "monitor",
-      "drift_1d": -0.3,
-      "drift_7d": -1.4,
+      "drift_1d": 0.3,
+      "drift_7d": -1.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -20326,7 +20326,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 30.4,
+        "adoption_momentum": 32.0,
         "institutional_confidence": 44.1,
         "financial_evolution": 32.0,
         "thesis_integrity": null,
@@ -20356,14 +20356,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        5.699999999999999,
+        5.999999999999999,
         11.025,
         10.0,
         0.0,
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PG",
@@ -20416,13 +20416,13 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "PGR",
       "lthcs_score": 75.7,
       "band": "elite",
-      "drift_1d": 0.1,
+      "drift_1d": 0.0,
       "drift_7d": -0.3,
       "drift_30d": -1.1,
       "drift_90d": -1.1,
@@ -20432,7 +20432,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 87.4,
+        "adoption_momentum": 87.5,
         "institutional_confidence": 71.2,
         "financial_evolution": 80.3,
         "thesis_integrity": null,
@@ -20462,30 +20462,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        16.3875,
+        16.406249999999996,
         17.8,
         25.09375,
         0.0,
         16.375
       ],
       "sector": "Financials",
-      "history_points": 130
+      "history_points": 131
     },
     {
       "ticker": "PH",
-      "lthcs_score": 50.3,
+      "lthcs_score": 50.8,
       "band": "monitor",
-      "drift_1d": -0.3,
-      "drift_7d": -12.0,
-      "drift_30d": -12.0,
-      "drift_90d": -12.0,
+      "drift_1d": 0.5,
+      "drift_7d": -11.5,
+      "drift_30d": -11.5,
+      "drift_90d": -11.5,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 64.2,
+        "adoption_momentum": 66.3,
         "institutional_confidence": 29.0,
         "financial_evolution": 58.0,
         "thesis_integrity": null,
@@ -20515,14 +20515,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        16.05,
+        16.575,
         7.25,
         14.5,
         0.0,
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "PHM",
@@ -20578,14 +20578,14 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PKG",
-      "lthcs_score": 58.3,
+      "lthcs_score": 59.0,
       "band": "constructive",
-      "drift_1d": -0.6,
-      "drift_7d": 1.3,
+      "drift_1d": 0.7,
+      "drift_7d": 2.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -20597,7 +20597,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 64.6,
+        "adoption_momentum": 66.7,
         "institutional_confidence": 62.5,
         "financial_evolution": 51.0,
         "thesis_integrity": null,
@@ -20627,30 +20627,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        20.1875,
+        20.84375,
         15.625,
         9.562499999999998,
         0.0,
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PLD",
-      "lthcs_score": 50.4,
+      "lthcs_score": 50.5,
       "band": "monitor",
-      "drift_1d": -0.2,
-      "drift_7d": 5.9,
-      "drift_30d": 9.9,
-      "drift_90d": 9.9,
+      "drift_1d": 0.1,
+      "drift_7d": 6.0,
+      "drift_30d": 10.0,
+      "drift_90d": 10.0,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 65.9,
+        "adoption_momentum": 66.3,
         "institutional_confidence": 19.3,
         "financial_evolution": 80.8,
         "thesis_integrity": null,
@@ -20680,21 +20680,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        20.59375,
+        20.71875,
         4.825,
         15.149999999999997,
         0.0,
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "PLTR",
-      "lthcs_score": 78.6,
+      "lthcs_score": 78.7,
       "band": "elite",
-      "drift_1d": 0.3,
-      "drift_7d": 0.5,
+      "drift_1d": 0.1,
+      "drift_7d": 0.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -20706,7 +20706,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 89.7,
+        "adoption_momentum": 90.1,
         "institutional_confidence": 95.9,
         "financial_evolution": 82.1,
         "thesis_integrity": null,
@@ -20736,30 +20736,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        28.03125,
+        28.15625,
         23.975,
         15.393749999999997,
         0.0,
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PM",
-      "lthcs_score": 53.6,
+      "lthcs_score": 54.2,
       "band": "constructive",
-      "drift_1d": -4.4,
-      "drift_7d": -9.5,
-      "drift_30d": 2.8,
-      "drift_90d": 2.8,
+      "drift_1d": 0.6,
+      "drift_7d": -8.9,
+      "drift_30d": 3.4,
+      "drift_90d": 3.4,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 54.3,
+        "adoption_momentum": 56.3,
         "institutional_confidence": 69.4,
         "financial_evolution": 42.2,
         "thesis_integrity": null,
@@ -20789,30 +20789,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        16.96875,
+        17.59375,
         17.35,
         7.9125,
         0.0,
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "PNC",
-      "lthcs_score": 52.6,
+      "lthcs_score": 52.8,
       "band": "constructive",
-      "drift_1d": 0.8,
-      "drift_7d": 0.6,
-      "drift_30d": -6.3,
-      "drift_90d": -6.3,
+      "drift_1d": 0.2,
+      "drift_7d": 0.8,
+      "drift_30d": -6.1,
+      "drift_90d": -6.1,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 67.9,
+        "adoption_momentum": 69.0,
         "institutional_confidence": 37.5,
         "financial_evolution": 45.1,
         "thesis_integrity": null,
@@ -20842,21 +20842,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        12.73125,
+        12.937499999999998,
         9.375,
         14.09375,
         0.0,
         16.375
       ],
       "sector": "Financials",
-      "history_points": 130
+      "history_points": 131
     },
     {
       "ticker": "PNR",
-      "lthcs_score": 36.8,
+      "lthcs_score": 36.9,
       "band": "weakening",
-      "drift_1d": 5.2,
-      "drift_7d": 6.6,
+      "drift_1d": 0.1,
+      "drift_7d": 6.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -20868,7 +20868,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 54.5,
+        "adoption_momentum": 54.8,
         "institutional_confidence": 7.8,
         "financial_evolution": 28.7,
         "thesis_integrity": null,
@@ -20898,21 +20898,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        17.03125,
+        17.125,
         1.95,
         5.381249999999999,
         0.0,
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PNW",
-      "lthcs_score": 46.7,
+      "lthcs_score": 47.7,
       "band": "monitor",
-      "drift_1d": -0.6,
-      "drift_7d": 1.5,
+      "drift_1d": 1.0,
+      "drift_7d": 2.5,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -20924,7 +20924,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 40.0,
+        "adoption_momentum": 43.2,
         "institutional_confidence": 57.4,
         "financial_evolution": 54.1,
         "thesis_integrity": null,
@@ -20954,21 +20954,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        12.5,
+        13.5,
         14.35,
         10.143749999999999,
         0.0,
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PODD",
-      "lthcs_score": 57.0,
+      "lthcs_score": 57.6,
       "band": "constructive",
-      "drift_1d": -0.5,
-      "drift_7d": 8.3,
+      "drift_1d": 0.6,
+      "drift_7d": 8.9,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -20980,7 +20980,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 65.5,
+        "adoption_momentum": 67.4,
         "institutional_confidence": 58.5,
         "financial_evolution": 58.0,
         "thesis_integrity": null,
@@ -21010,21 +21010,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        20.46875,
+        21.0625,
         14.625,
         10.874999999999998,
         0.0,
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PPG",
-      "lthcs_score": 38.5,
+      "lthcs_score": 38.8,
       "band": "weakening",
-      "drift_1d": 5.4,
-      "drift_7d": 5.6,
+      "drift_1d": 0.3,
+      "drift_7d": 5.9,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -21036,7 +21036,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 40.2,
+        "adoption_momentum": 41.1,
         "institutional_confidence": 30.5,
         "financial_evolution": 28.9,
         "thesis_integrity": null,
@@ -21066,21 +21066,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        12.5625,
+        12.84375,
         7.625,
         5.418749999999999,
         0.0,
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PPL",
-      "lthcs_score": 51.0,
+      "lthcs_score": 51.3,
       "band": "monitor",
-      "drift_1d": 3.1,
-      "drift_7d": 2.4,
+      "drift_1d": 0.3,
+      "drift_7d": 2.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -21092,7 +21092,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 59.1,
+        "adoption_momentum": 59.9,
         "institutional_confidence": 44.2,
         "financial_evolution": 63.0,
         "thesis_integrity": null,
@@ -21122,21 +21122,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        18.46875,
+        18.71875,
         11.05,
         11.812499999999998,
         0.0,
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PRU",
-      "lthcs_score": 44.5,
+      "lthcs_score": 44.7,
       "band": "monitor",
-      "drift_1d": 2.9,
-      "drift_7d": -2.3,
+      "drift_1d": 0.2,
+      "drift_7d": -2.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -21148,7 +21148,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 38.3,
+        "adoption_momentum": 39.6,
         "institutional_confidence": 59.4,
         "financial_evolution": 19.4,
         "thesis_integrity": null,
@@ -21178,21 +21178,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        7.181249999999999,
+        7.424999999999999,
         14.85,
         6.0625,
         0.0,
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PSA",
-      "lthcs_score": 40.2,
+      "lthcs_score": 41.0,
       "band": "weakening",
-      "drift_1d": 2.0,
-      "drift_7d": 6.3,
+      "drift_1d": 0.8,
+      "drift_7d": 7.1,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -21204,7 +21204,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 33.3,
+        "adoption_momentum": 35.9,
         "institutional_confidence": 39.5,
         "financial_evolution": 53.6,
         "thesis_integrity": null,
@@ -21234,21 +21234,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        10.40625,
+        11.21875,
         9.875,
         10.049999999999999,
         0.0,
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PSKY",
-      "lthcs_score": 41.9,
+      "lthcs_score": 37.5,
       "band": "weakening",
-      "drift_1d": 0.0,
-      "drift_7d": 15.0,
+      "drift_1d": -4.4,
+      "drift_7d": 10.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -21262,7 +21262,7 @@
         "volatility_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 50.0,
+        "adoption_momentum": 35.9,
         "institutional_confidence": 21.1,
         "financial_evolution": 50.0,
         "thesis_integrity": null,
@@ -21292,30 +21292,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.625,
+        11.21875,
         5.275,
         9.374999999999998,
         0.0,
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 17
+      "history_points": 18
     },
     {
       "ticker": "PSX",
-      "lthcs_score": 52.6,
+      "lthcs_score": 52.1,
       "band": "constructive",
-      "drift_1d": 0.0,
-      "drift_7d": -0.2,
-      "drift_30d": 4.4,
-      "drift_90d": 4.4,
+      "drift_1d": -0.5,
+      "drift_7d": -0.7,
+      "drift_30d": 3.9,
+      "drift_90d": 3.9,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 37.0,
+        "adoption_momentum": 35.3,
         "institutional_confidence": 95.2,
         "financial_evolution": 23.7,
         "thesis_integrity": null,
@@ -21345,21 +21345,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        11.5625,
+        11.03125,
         23.8,
         4.44375,
         0.0,
         12.825
       ],
       "sector": "Energy",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "PTC",
-      "lthcs_score": 52.5,
+      "lthcs_score": 54.0,
       "band": "constructive",
-      "drift_1d": 0.0,
-      "drift_7d": 0.7,
+      "drift_1d": 1.5,
+      "drift_7d": 2.2,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -21371,7 +21371,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 25.2,
+        "adoption_momentum": 30.0,
         "institutional_confidence": 97.9,
         "financial_evolution": 63.6,
         "thesis_integrity": null,
@@ -21401,30 +21401,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        7.875,
+        9.375,
         24.475,
         11.924999999999999,
         0.0,
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "PWR",
-      "lthcs_score": 45.8,
-      "band": "monitor",
-      "drift_1d": 0.0,
-      "drift_7d": -3.2,
-      "drift_30d": -5.0,
-      "drift_90d": -5.0,
+      "lthcs_score": 39.2,
+      "band": "weakening",
+      "drift_1d": -6.6,
+      "drift_7d": -9.8,
+      "drift_30d": -11.6,
+      "drift_90d": -11.6,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 72.0,
+        "adoption_momentum": 50.9,
         "institutional_confidence": 9.6,
         "financial_evolution": 44.9,
         "thesis_integrity": null,
@@ -21454,30 +21454,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        22.5,
+        15.90625,
         2.4,
         8.41875,
         0.0,
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "PYPL",
-      "lthcs_score": 60.2,
+      "lthcs_score": 60.0,
       "band": "constructive",
-      "drift_1d": 0.0,
-      "drift_7d": -2.8,
-      "drift_30d": 0.4,
-      "drift_90d": 0.4,
+      "drift_1d": -0.2,
+      "drift_7d": -3.0,
+      "drift_30d": 0.2,
+      "drift_90d": 0.2,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 35.2,
+        "adoption_momentum": 34.4,
         "institutional_confidence": 92.2,
         "financial_evolution": 48.0,
         "thesis_integrity": null,
@@ -21507,21 +21507,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        8.8,
+        8.6,
         23.05,
         12.0,
         0.0,
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "Q",
-      "lthcs_score": 30.6,
+      "lthcs_score": 31.4,
       "band": "review",
-      "drift_1d": 0.0,
-      "drift_7d": 0.0,
+      "drift_1d": 0.8,
+      "drift_7d": 0.8,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -21533,7 +21533,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 32.1,
+        "adoption_momentum": 34.6,
         "institutional_confidence": 11.2,
         "financial_evolution": 35.3,
         "thesis_integrity": null,
@@ -21563,30 +21563,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        10.03125,
+        10.8125,
         2.8,
         6.618749999999999,
         0.0,
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "QCOM",
-      "lthcs_score": 44.0,
-      "band": "monitor",
-      "drift_1d": 0.0,
-      "drift_7d": 0.9,
-      "drift_30d": 6.2,
-      "drift_90d": 6.2,
+      "lthcs_score": 41.9,
+      "band": "weakening",
+      "drift_1d": -2.1,
+      "drift_7d": -1.2,
+      "drift_30d": 4.1,
+      "drift_90d": 4.1,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 43.8,
+        "adoption_momentum": 35.6,
         "institutional_confidence": 12.2,
         "financial_evolution": 75.1,
         "thesis_integrity": null,
@@ -21616,21 +21616,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        10.95,
+        8.9,
         3.05,
         18.775,
         0.0,
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "RCL",
-      "lthcs_score": 50.6,
+      "lthcs_score": 48.7,
       "band": "monitor",
-      "drift_1d": 0.0,
-      "drift_7d": -3.4,
+      "drift_1d": -1.9,
+      "drift_7d": -5.3,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -21642,7 +21642,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 46.9,
+        "adoption_momentum": 36.6,
         "institutional_confidence": 16.0,
         "financial_evolution": 68.3,
         "thesis_integrity": null,
@@ -21672,21 +21672,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        8.79375,
+        6.862500000000001,
         3.0,
         29.881249999999998,
         0.0,
         8.925
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "RDDT",
-      "lthcs_score": 50.1,
+      "lthcs_score": 45.6,
       "band": "monitor",
-      "drift_1d": 0.0,
-      "drift_7d": -0.7,
+      "drift_1d": -4.5,
+      "drift_7d": -5.2,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -21698,7 +21698,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 65.0,
+        "adoption_momentum": 50.4,
         "institutional_confidence": 10.8,
         "financial_evolution": 82.6,
         "thesis_integrity": null,
@@ -21728,21 +21728,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        20.3125,
+        15.75,
         2.7,
         15.487499999999997,
         0.0,
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "REG",
-      "lthcs_score": 46.4,
-      "band": "monitor",
-      "drift_1d": 0.0,
-      "drift_7d": 2.3,
+      "lthcs_score": 41.5,
+      "band": "weakening",
+      "drift_1d": -4.9,
+      "drift_7d": -2.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -21754,7 +21754,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 53.7,
+        "adoption_momentum": 38.2,
         "institutional_confidence": 30.5,
         "financial_evolution": 64.5,
         "thesis_integrity": null,
@@ -21784,30 +21784,30 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        16.78125,
+        11.9375,
         7.625,
         12.093749999999998,
         0.0,
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "REGN",
-      "lthcs_score": 55.6,
+      "lthcs_score": 52.1,
       "band": "constructive",
-      "drift_1d": 0.0,
-      "drift_7d": 0.3,
-      "drift_30d": 4.9,
-      "drift_90d": 4.9,
+      "drift_1d": -3.5,
+      "drift_7d": -3.2,
+      "drift_30d": 1.4,
+      "drift_90d": 1.4,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 37.0,
+        "adoption_momentum": 25.9,
         "institutional_confidence": 92.4,
         "financial_evolution": 52.6,
         "thesis_integrity": null,
@@ -21837,21 +21837,21 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        11.5625,
+        8.09375,
         23.1,
         9.862499999999999,
         0.0,
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "RF",
-      "lthcs_score": 54.2,
+      "lthcs_score": 53.0,
       "band": "constructive",
-      "drift_1d": 0.0,
-      "drift_7d": 0.3,
+      "drift_1d": -1.2,
+      "drift_7d": -0.9,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -21864,7 +21864,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 50.0,
+        "adoption_momentum": 43.8,
         "institutional_confidence": 45.0,
         "financial_evolution": 54.9,
         "thesis_integrity": null,
@@ -21894,14 +21894,14 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        9.374999999999998,
+        8.212499999999999,
         11.25,
         17.15625,
         0.0,
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "RJF",
@@ -21957,7 +21957,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "RL",
@@ -22013,7 +22013,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "RMD",
@@ -22069,7 +22069,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ROK",
@@ -22125,7 +22125,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ROL",
@@ -22181,16 +22181,16 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ROP",
-      "lthcs_score": 73.4,
+      "lthcs_score": 74.2,
       "band": "elite",
-      "drift_1d": 0.0,
-      "drift_7d": 3.4,
-      "drift_30d": 8.4,
-      "drift_90d": 8.4,
+      "drift_1d": 0.8,
+      "drift_7d": 4.2,
+      "drift_30d": 9.2,
+      "drift_90d": 9.2,
       "drift_unavailable": [],
       "confidence_level": "medium",
       "data_quality_flags": [
@@ -22198,7 +22198,7 @@
       ],
       "subscores": {
         "adoption_momentum": 80.4,
-        "institutional_confidence": 88.4,
+        "institutional_confidence": 91.4,
         "financial_evolution": 73.3,
         "thesis_integrity": null,
         "des": 49.9
@@ -22228,13 +22228,13 @@
       ],
       "weighted_components": [
         25.125,
-        22.1,
+        22.85,
         13.743749999999997,
         0.0,
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ROST",
@@ -22287,7 +22287,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "RSG",
@@ -22343,7 +22343,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "RTX",
@@ -22396,7 +22396,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "RVTY",
@@ -22452,7 +22452,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "SBAC",
@@ -22508,7 +22508,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "SBUX",
@@ -22561,7 +22561,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "SCHW",
@@ -22614,7 +22614,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "SHW",
@@ -22667,7 +22667,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "SJM",
@@ -22724,7 +22724,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "SLB",
@@ -22777,7 +22777,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "SMCI",
@@ -22830,7 +22830,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "SNA",
@@ -22886,7 +22886,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "SNDK",
@@ -22942,7 +22942,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "SNPS",
@@ -22995,7 +22995,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "SO",
@@ -23048,7 +23048,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "SOLV",
@@ -23104,7 +23104,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "SPG",
@@ -23157,7 +23157,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "SPGI",
@@ -23213,7 +23213,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "SRE",
@@ -23269,7 +23269,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "STE",
@@ -23325,7 +23325,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "STLD",
@@ -23381,7 +23381,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "STT",
@@ -23437,7 +23437,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "STX",
@@ -23490,7 +23490,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "STZ",
@@ -23546,7 +23546,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "SW",
@@ -23602,7 +23602,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "SWK",
@@ -23658,7 +23658,7 @@
         9.35625
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "SWKS",
@@ -23714,7 +23714,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "SYF",
@@ -23771,7 +23771,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "SYK",
@@ -23824,7 +23824,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "SYY",
@@ -23880,7 +23880,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "T",
@@ -23933,7 +23933,7 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "TDG",
@@ -23989,7 +23989,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TDY",
@@ -24045,7 +24045,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TEAM",
@@ -24098,7 +24098,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "TECH",
@@ -24154,7 +24154,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TEL",
@@ -24210,7 +24210,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TER",
@@ -24266,14 +24266,14 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TFC",
       "lthcs_score": 50.5,
       "band": "monitor",
       "drift_1d": 0.0,
-      "drift_7d": 3.3,
+      "drift_7d": 1.3,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "drift_unavailable": [
@@ -24323,7 +24323,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TGT",
@@ -24376,7 +24376,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "TJX",
@@ -24429,7 +24429,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "TKO",
@@ -24485,7 +24485,7 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TMO",
@@ -24538,7 +24538,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "TMUS",
@@ -24591,7 +24591,7 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "TPL",
@@ -24647,7 +24647,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TPR",
@@ -24703,7 +24703,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TRGP",
@@ -24759,7 +24759,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TRMB",
@@ -24815,7 +24815,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TROW",
@@ -24871,7 +24871,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TRV",
@@ -24924,7 +24924,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "TSCO",
@@ -24980,7 +24980,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TSLA",
@@ -25033,7 +25033,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "TSN",
@@ -25089,7 +25089,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TT",
@@ -25142,7 +25142,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "TTD",
@@ -25195,7 +25195,7 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "TTWO",
@@ -25248,7 +25248,7 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "TXN",
@@ -25301,7 +25301,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "TXT",
@@ -25357,7 +25357,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "TYL",
@@ -25413,7 +25413,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "UAL",
@@ -25469,7 +25469,7 @@
         9.35625
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "UBER",
@@ -25522,7 +25522,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "UDR",
@@ -25578,7 +25578,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "UHS",
@@ -25634,7 +25634,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ULTA",
@@ -25690,7 +25690,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "UNH",
@@ -25743,7 +25743,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "UNP",
@@ -25796,7 +25796,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "UPS",
@@ -25849,7 +25849,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "URI",
@@ -25905,7 +25905,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "USB",
@@ -25958,7 +25958,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "V",
@@ -26011,7 +26011,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "VEEV",
@@ -26067,7 +26067,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "VICI",
@@ -26123,7 +26123,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "VLO",
@@ -26177,7 +26177,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "VLTO",
@@ -26233,7 +26233,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "VMC",
@@ -26289,7 +26289,7 @@
         12.925
       ],
       "sector": "Materials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "VMRK",
@@ -26345,7 +26345,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "VRSK",
@@ -26398,7 +26398,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "VRSN",
@@ -26454,7 +26454,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "VRT",
@@ -26510,7 +26510,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "VRTX",
@@ -26563,7 +26563,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "VST",
@@ -26619,7 +26619,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "VTR",
@@ -26675,7 +26675,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "VTRS",
@@ -26731,7 +26731,7 @@
         8.306249999999999
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "VZ",
@@ -26784,7 +26784,7 @@
         11.65
       ],
       "sector": "Communication Services",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "WAB",
@@ -26840,7 +26840,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "WAT",
@@ -26896,7 +26896,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "WDAY",
@@ -26949,7 +26949,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "WDC",
@@ -27002,7 +27002,7 @@
         8.381250000000001
       ],
       "sector": "Technology",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "WEC",
@@ -27058,7 +27058,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "WELL",
@@ -27111,7 +27111,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "WFC",
@@ -27164,7 +27164,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "WM",
@@ -27217,7 +27217,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "WMB",
@@ -27270,7 +27270,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 145
+      "history_points": 146
     },
     {
       "ticker": "WMT",
@@ -27323,7 +27323,7 @@
         11.375
       ],
       "sector": "Consumer Staples",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "WRB",
@@ -27379,7 +27379,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "WSM",
@@ -27435,7 +27435,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "WST",
@@ -27491,7 +27491,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "WTW",
@@ -27547,7 +27547,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "WY",
@@ -27603,7 +27603,7 @@
         9.85
       ],
       "sector": "Real Estate",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "WYNN",
@@ -27659,7 +27659,7 @@
         8.925
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "XEL",
@@ -27712,7 +27712,7 @@
         9.675
       ],
       "sector": "Utilities",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "XOM",
@@ -27765,7 +27765,7 @@
         12.825
       ],
       "sector": "Energy",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "XYL",
@@ -27821,7 +27821,7 @@
         12.475
       ],
       "sector": "Industrials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "XYZ",
@@ -27877,7 +27877,7 @@
         16.375
       ],
       "sector": "Financials",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "YUM",
@@ -27933,7 +27933,7 @@
         11.9
       ],
       "sector": "Consumer Discretionary",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ZBH",
@@ -27989,7 +27989,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ZBRA",
@@ -28045,7 +28045,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 19
+      "history_points": 20
     },
     {
       "ticker": "ZS",
@@ -28098,7 +28098,7 @@
         11.175
       ],
       "sector": "Technology",
-      "history_points": 237
+      "history_points": 238
     },
     {
       "ticker": "ZTS",
@@ -28154,7 +28154,7 @@
         11.075
       ],
       "sector": "Health Care",
-      "history_points": 19
+      "history_points": 20
     }
   ],
   "methodology_breaks": [
