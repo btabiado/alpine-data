@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-26",
-  "generated_at": "2026-10-26T08:09:51Z",
+  "generated_at": "2026-10-26T12:35:10Z",
   "indexes": {
     "crypto_signal_sentiment": {
-      "as_of": "2026-10-25",
+      "as_of": "2026-10-26",
       "label": null,
-      "note": "40 coins; 0 buy+, 28 sell+",
-      "score": -70,
+      "note": "40 coins; 0 buy+, 27 sell+",
+      "score": -68,
       "stale": false
     },
     "defi_sentiment": {
@@ -69,7 +69,7 @@
       "as_of": "2026-10-25",
       "label": "BALANCED",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 2,
+      "score": 1,
       "stale": false
     },
     "lthcs_composite": {
@@ -87,10 +87,10 @@
       "stale": false
     },
     "overview_sentiment": {
-      "as_of": "2026-10-25",
+      "as_of": "2026-10-26",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": -6,
+      "score": -5,
       "stale": false
     },
     "poc_signal_breadth": {
