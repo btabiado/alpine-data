@@ -6,6 +6,7 @@ The workflow file is checked by parsing its YAML.
 from __future__ import annotations
 
 import importlib.util
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -355,8 +356,14 @@ class TestWiring:
         assert "default_branch" in step["env"]["CRON_WATCHDOG_REF"]
         assert "CRON_WATCHDOG_DISABLED" in step["env"]
         text = (WORKFLOWS / "cron-watchdog.yml").read_text()
-        assert "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1" in text
-        assert "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97" in text
+        # Require a 40-hex commit pin. Dependabot moves the exact SHA
+        # (audit 2026-10-26: setup-python 7.0.0 -> 7.1.0).
+        uses = [s.get("uses") or "" for s in doc["jobs"]["watch"]["steps"]]
+        for action in ("actions/checkout", "actions/setup-python"):
+            pins = [u for u in uses if u.startswith(f"{action}@")]
+            assert pins, action
+            for pin in pins:
+                assert re.fullmatch(re.escape(action) + r"@[0-9a-f]{40}", pin), pin
         # No PAT, no new secret name.
         assert "secrets." in text
         assert text.count("secrets.") == 1
