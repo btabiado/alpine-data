@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-26T12:40:04Z",
+  "generated_at": "2026-10-26T14:33:16Z",
   "methodology_version": "1.1",
   "as_of": "2026-09",
   "methodology_disclosures": [
@@ -542,8 +542,8 @@
         "median_real_estate_taxes": 4943,
         "effective_property_tax_rate": 0.014794971565399582,
         "unemployment_rate": 6.0,
-        "aqi": 38,
-        "context_score": 42
+        "aqi": 24,
+        "context_score": 48
       },
       "disclosures": [
         "Crimes 2001-present: excludes last ~7 days; latest complete month lags to prior month"
@@ -883,7 +883,7 @@
           "complete_through": "2026-09",
           "note": "ROLLING ~90-day inventory snapshot, not a historical series: it CANNOT support a 12-month baseline or YoY \u2014 render as a recent-volume tile only (status insufficient_history in scorer output); do NOT z-score. Polarity 0: tow counts reflect enforcement/relocation activity, not safety or wellbeing. pillar_hint context.",
           "status": "insufficient_history",
-          "recent": 2185,
+          "recent": 2184,
           "recent_period": "2026-09",
           "baseline_mean": null,
           "baseline_std": null,
@@ -901,7 +901,7 @@
             },
             {
               "month": "2026-09",
-              "n": 2185
+              "n": 2184
             }
           ]
         },
@@ -1589,8 +1589,8 @@
         "median_real_estate_taxes": 6547,
         "effective_property_tax_rate": 0.008419495884773663,
         "unemployment_rate": 5.2,
-        "aqi": 54,
-        "context_score": 39
+        "aqi": 58,
+        "context_score": 38
       },
       "disclosures": [
         "311 (2010-present): ~38M rows; REQUIRES app token + recent $where filter or it times out",
@@ -2914,8 +2914,8 @@
         "median_real_estate_taxes": 7337,
         "effective_property_tax_rate": 0.00781696143191988,
         "unemployment_rate": 4.5,
-        "aqi": 56,
-        "context_score": 47
+        "aqi": 51,
+        "context_score": 50
       },
       "disclosures": [
         "Customer Service Requests: CORRECTED: column is 'createddate' (one word), not 'created_date'.",
@@ -3617,7 +3617,7 @@
         "effective_property_tax_rate": 0.00707206884187881,
         "unemployment_rate": 4.2,
         "aqi": 26,
-        "context_score": 56
+        "context_score": 55
       },
       "disclosures": [
         "Police Incident Reports: 2018 portal/system migration = continuity breakpoint"
@@ -3796,12 +3796,12 @@
       "name": "Miami (Miami-Dade County)",
       "scope": "county",
       "pulse": {
-        "score": 67,
+        "score": 76,
         "glyph": "up",
         "label": "Improving",
         "pillars_present": 2,
         "pillars_total": 3,
-        "composite_c": 0.9999092212146825,
+        "composite_c": 1.5723567083675636,
         "pillars": [
           {
             "key": "city_services",
@@ -3878,31 +3878,23 @@
           {
             "key": "development_economy",
             "name": "Development & Economy",
-            "score_d": -1.000181557570635,
+            "score_d": 0.14471341673512708,
             "feeds": [
               {
                 "label": "MDC Building Permit",
                 "dataset": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/miamidade_permit_data/FeatureServer/0",
                 "polarity": 1,
-                "complete_through": "2024-09",
+                "complete_through": "2026-09",
                 "note": "Source moved 2026: 'Building Permits Issued By Miami-Dade County - 2 Previous Years to Present' (miamidade_permit_data). The old BuildingPermit_gdb layer now answers code=499 Token Required - never poll it. Rolling ~24-month window, so the trend line starts about two years back and the first, partial month is skipped.",
                 "status": "ok",
-                "recent": 5428,
-                "recent_period": "2024-09",
-                "baseline_mean": 5994.5,
-                "baseline_std": 566.3971663064708,
-                "z": -1.000181557570635,
-                "yoy_pct": -7.718463107786468,
-                "d": -1.000181557570635,
+                "recent": 5892,
+                "recent_period": "2026-09",
+                "baseline_mean": 5806.083333333333,
+                "baseline_std": 593.70215011869,
+                "z": 0.14471341673512708,
+                "yoy_pct": -3.2194480946123525,
+                "d": 0.14471341673512708,
                 "series": [
-                  {
-                    "month": "2023-08",
-                    "n": 6572
-                  },
-                  {
-                    "month": "2023-09",
-                    "n": 5882
-                  },
                   {
                     "month": "2023-10",
                     "n": 6090
@@ -3950,6 +3942,102 @@
                   {
                     "month": "2024-09",
                     "n": 5428
+                  },
+                  {
+                    "month": "2024-10",
+                    "n": 5853
+                  },
+                  {
+                    "month": "2024-11",
+                    "n": 5009
+                  },
+                  {
+                    "month": "2024-12",
+                    "n": 4705
+                  },
+                  {
+                    "month": "2025-01",
+                    "n": 5205
+                  },
+                  {
+                    "month": "2025-02",
+                    "n": 5320
+                  },
+                  {
+                    "month": "2025-03",
+                    "n": 5980
+                  },
+                  {
+                    "month": "2025-04",
+                    "n": 6667
+                  },
+                  {
+                    "month": "2025-05",
+                    "n": 6208
+                  },
+                  {
+                    "month": "2025-06",
+                    "n": 6209
+                  },
+                  {
+                    "month": "2025-07",
+                    "n": 6716
+                  },
+                  {
+                    "month": "2025-08",
+                    "n": 6252
+                  },
+                  {
+                    "month": "2025-09",
+                    "n": 6088
+                  },
+                  {
+                    "month": "2025-10",
+                    "n": 6437
+                  },
+                  {
+                    "month": "2025-11",
+                    "n": 4683
+                  },
+                  {
+                    "month": "2025-12",
+                    "n": 5157
+                  },
+                  {
+                    "month": "2026-01",
+                    "n": 5241
+                  },
+                  {
+                    "month": "2026-02",
+                    "n": 5156
+                  },
+                  {
+                    "month": "2026-03",
+                    "n": 6498
+                  },
+                  {
+                    "month": "2026-04",
+                    "n": 6428
+                  },
+                  {
+                    "month": "2026-05",
+                    "n": 5554
+                  },
+                  {
+                    "month": "2026-06",
+                    "n": 6217
+                  },
+                  {
+                    "month": "2026-07",
+                    "n": 6263
+                  },
+                  {
+                    "month": "2026-08",
+                    "n": 5951
+                  },
+                  {
+                    "month": "2026-09",
+                    "n": 5892
                   }
                 ]
               }
@@ -4132,20 +4220,19 @@
         "median_real_estate_taxes": 3744,
         "effective_property_tax_rate": 0.008086393088552916,
         "unemployment_rate": 1.9,
-        "aqi": 38,
-        "context_score": 67
+        "aqi": 48,
+        "context_score": 62
       },
       "disclosures": [
         "Footprint = Miami-Dade County (not the City of Miami). County 311 excludes City-of-Miami-proper requests.",
         "Miami-Dade 311: STALE: this is the 2023 yearly snapshot (ticket_created_date_time range 2023-01-01 -> 2024-01-01). County 311 is published only as frozen per-year snapshots ('311 Service Requests - Miami-Dade County - {year}'); latest = 2023. NO current County 311 feed exists (alternates b74b1dd0=2018 max, a6b9c3e3=OBJECTID-only, 7cc10915=City-of-Miami footprint max 2024-08). opendata.miamidade.gov is the same ArcGIS Hub org (no Socrata BETA found). Resolve latest snapshot by catalog title pattern; use created_year_month (int yyyymm) for bucketing. Expect Miami Services = stale in P0; Miami likely ships 2-of-3 pillars.",
         "MDC Building Permit: Source moved 2026: 'Building Permits Issued By Miami-Dade County - 2 Previous Years to Present' (miamidade_permit_data). The old BuildingPermit_gdb layer now answers code=499 Token Required - never poll it. Rolling ~24-month window, so the trend line starts about two years back and the first, partial month is skipped.",
-        "FBI CDE (fallback): ORI FL0130000 resolved keyless from agencies endpoint. Spec's 'MDSO' = this county PD entry (county PD->Sheriff transition not yet renamed in CDE). City-of-Miami-proper PD = FL0130600 if scope flips. Re-verified 2026-10-04: the cde.ucr.cjis.gov/LATEST summarized DATA series is served keyless (a bogus API_KEY returns the same body), so no key is needed. CDE refreshes mid-month; the month in progress at last_refresh_date is not scored.",
-        "Unemployment rate carried forward from 2026-10-25T12:47:11Z (24h old; BLS returned no value this run; last good value 1.9)."
+        "FBI CDE (fallback): ORI FL0130000 resolved keyless from agencies endpoint. Spec's 'MDSO' = this county PD entry (county PD->Sheriff transition not yet renamed in CDE). City-of-Miami-proper PD = FL0130600 if scope flips. Re-verified 2026-10-04: the cde.ucr.cjis.gov/LATEST summarized DATA series is served keyless (a bogus API_KEY returns the same body), so no key is needed. CDE refreshes mid-month; the month in progress at last_refresh_date is not scored."
       ],
       "data_health": {
         "feeds_ok": 2,
         "feeds_total": 3,
-        "last_updated": "2024-09-01T00:00:00+00:00"
+        "last_updated": "2026-09-01T00:00:00+00:00"
       }
     }
   ]
