@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-10-19T15:44:19+00:00",
+  "checked_at": "2026-10-26T15:17:50+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1905,
-    "gated": 176,
-    "dead": 29,
-    "unreachable": 82
+    "ok": 1893,
+    "gated": 181,
+    "dead": 32,
+    "unreachable": 86
   },
   "dead": [
     {
@@ -13,6 +13,20 @@
       "code": 404,
       "services": [
         "Numbers API (numbersapi.com)"
+      ]
+    },
+    {
+      "url": "https://accuristech.com/solutions/parts-api-integration/",
+      "code": 404,
+      "services": [
+        "Accuris (IHS) Parts API"
+      ]
+    },
+    {
+      "url": "https://bolls.life/api/",
+      "code": 404,
+      "services": [
+        "Bolls Bible API (bolls.life)"
       ]
     },
     {
@@ -79,6 +93,14 @@
       ]
     },
     {
+      "url": "https://openrouteservice.org/dev/#/api-docs",
+      "code": 404,
+      "services": [
+        "OpenRouteService",
+        "OpenRouteService"
+      ]
+    },
+    {
       "url": "https://pipedream.com/docs/rest-api/",
       "code": 404,
       "services": [
@@ -100,10 +122,10 @@
       ]
     },
     {
-      "url": "https://websites.psychology.uwa.edu.au/school/mrcdatabase/uwa_mrc.htm",
+      "url": "https://uscode.house.gov/download/download.shtml",
       "code": 404,
       "services": [
-        "MRC Psycholinguistic Database"
+        "U.S. Code XML/bulk (Office of the Law Revision Counsel)"
       ]
     },
     {
@@ -231,10 +253,24 @@
       ]
     },
     {
+      "url": "https://agent-network-protocol.com/",
+      "code": null,
+      "services": [
+        "Agent Network Protocol (ANP)"
+      ]
+    },
+    {
       "url": "https://api-ccte.epa.gov/docs",
       "code": null,
       "services": [
         "EPA CompTox / Computational Toxicology & Exposure APIs (CTX/CCTE)"
+      ]
+    },
+    {
+      "url": "https://api-portal.ti.com/",
+      "code": 500,
+      "services": [
+        "Texas Instruments API Portal (Store + Product Data)"
       ]
     },
     {
@@ -252,13 +288,6 @@
       ]
     },
     {
-      "url": "https://api.justyy.workers.dev/api/factor/",
-      "code": 503,
-      "services": [
-        "Integer Factorization API (justyy / HelloACM)"
-      ]
-    },
-    {
       "url": "https://api.pharmgkb.org/swagger/",
       "code": null,
       "services": [
@@ -266,10 +295,24 @@
       ]
     },
     {
+      "url": "https://api.safecast.org/",
+      "code": 502,
+      "services": [
+        "Safecast"
+      ]
+    },
+    {
       "url": "https://api.trade.gov/console/",
       "code": null,
       "services": [
         "ITA Consolidated Screening List (CSL) API (Commerce)"
+      ]
+    },
+    {
+      "url": "https://api.votesmart.org/docs/",
+      "code": 503,
+      "services": [
+        "Vote Smart API (Project Vote Smart)"
       ]
     },
     {
@@ -291,6 +334,20 @@
       "code": 502,
       "services": [
         "NHLBI BioLINCC (Biologic Specimen and Data Repository)"
+      ]
+    },
+    {
+      "url": "https://cartblanche.docking.org/",
+      "code": null,
+      "services": [
+        "ZINC (CartBlanche) API"
+      ]
+    },
+    {
+      "url": "https://ciqual.anses.fr/",
+      "code": 503,
+      "services": [
+        "ANSES CIQUAL French Food Composition Table"
       ]
     },
     {
@@ -317,24 +374,10 @@
       ]
     },
     {
-      "url": "https://data.ecb.europa.eu/help/api/overview",
-      "code": null,
-      "services": [
-        "ECB Data Portal (SDMX 2.1 web service)"
-      ]
-    },
-    {
       "url": "https://datalastic.com/api-reference/",
       "code": null,
       "services": [
         "Datalastic"
-      ]
-    },
-    {
-      "url": "https://db.humanconnectome.org/",
-      "code": null,
-      "services": [
-        "Human Connectome Project ConnectomeDB (XNAT API)"
       ]
     },
     {
@@ -474,20 +517,6 @@
       ]
     },
     {
-      "url": "https://genome.ucsc.edu/goldenPath/help/api.html",
-      "code": null,
-      "services": [
-        "UCSC Genome Browser REST API"
-      ]
-    },
-    {
-      "url": "https://genome.ucsc.edu/goldenpath/help/api.html",
-      "code": null,
-      "services": [
-        "UCSC Genome Browser REST API"
-      ]
-    },
-    {
       "url": "https://greekwordnet.chs.harvard.edu/api",
       "code": null,
       "services": [
@@ -510,10 +539,10 @@
       ]
     },
     {
-      "url": "https://gwosc.org/api/v1/docs/",
+      "url": "https://heasarc.gsfc.nasa.gov/docs/xamin-api.html",
       "code": null,
       "services": [
-        "GWOSC (Gravitational Wave Open Science Center)"
+        "NASA HEASARC Xamin API"
       ]
     },
     {
@@ -552,20 +581,6 @@
       ]
     },
     {
-      "url": "https://mrdata.usgs.gov/",
-      "code": null,
-      "services": [
-        "USGS Mineral Resources Online Spatial Data"
-      ]
-    },
-    {
-      "url": "https://mrdata.usgs.gov/mrds/",
-      "code": null,
-      "services": [
-        "USGS Mineral Resources Data System (MRDS)"
-      ]
-    },
-    {
       "url": "https://mymarketnews.ams.usda.gov/mars-api/getting-started",
       "code": null,
       "services": [
@@ -580,13 +595,6 @@
       ]
     },
     {
-      "url": "https://ned.ipac.caltech.edu/",
-      "code": null,
-      "services": [
-        "NASA/IPAC Extragalactic Database (NED)"
-      ]
-    },
-    {
       "url": "https://neuroquery.org/",
       "code": null,
       "services": [
@@ -595,10 +603,17 @@
       ]
     },
     {
-      "url": "https://optimade.openmaterialsdb.se/",
+      "url": "https://nmrshiftdb.nmr.uni-koeln.de/",
       "code": null,
       "services": [
-        "Open Materials Database (OMDB)"
+        "nmrshiftdb2"
+      ]
+    },
+    {
+      "url": "https://openeo.cloud/",
+      "code": null,
+      "services": [
+        "openEO Platform"
       ]
     },
     {
@@ -617,15 +632,6 @@
       ]
     },
     {
-      "url": "https://ourairports.com/data/",
-      "code": 500,
-      "services": [
-        "OurAirports Open Data",
-        "OurAirports (open data)",
-        "OurAirports (open data)"
-      ]
-    },
-    {
       "url": "https://platform.docs.opentargets.org/data-access/graphql-api",
       "code": null,
       "services": [
@@ -637,6 +643,20 @@
       "code": null,
       "services": [
         "PlayHT (Play.ht) TTS API"
+      ]
+    },
+    {
+      "url": "https://podaac.jpl.nasa.gov/",
+      "code": null,
+      "services": [
+        "NASA PO.DAAC Earthdata"
+      ]
+    },
+    {
+      "url": "https://portal.vamdc.eu/",
+      "code": null,
+      "services": [
+        "VAMDC (Virtual Atomic and Molecular Data Centre)"
       ]
     },
     {
@@ -658,6 +678,13 @@
       "code": null,
       "services": [
         "Universal Robots API (UR Cloud)"
+      ]
+    },
+    {
+      "url": "https://roar.eprints.org/",
+      "code": null,
+      "services": [
+        "ROAR (Registry of Open Access Repositories)"
       ]
     },
     {
@@ -686,13 +713,6 @@
       "code": null,
       "services": [
         "PatentsView PatentSearch API"
-      ]
-    },
-    {
-      "url": "https://skyserver.sdss.org/",
-      "code": null,
-      "services": [
-        "SDSS SkyServer / CasJobs"
       ]
     },
     {
@@ -731,10 +751,10 @@
       ]
     },
     {
-      "url": "https://wiki.cancerimagingarchive.net/display/Public/TCIA+Application+Programming+Interface+(API)+Guides",
-      "code": null,
+      "url": "https://websites.psychology.uwa.edu.au/school/mrcdatabase/uwa_mrc.htm",
+      "code": 520,
       "services": [
-        "The Cancer Imaging Archive (TCIA) REST API"
+        "MRC Psycholinguistic Database"
       ]
     },
     {
@@ -752,6 +772,20 @@
       ]
     },
     {
+      "url": "https://www.archivesportaleurope.net/tools/",
+      "code": 503,
+      "services": [
+        "Archives Portal Europe API"
+      ]
+    },
+    {
+      "url": "https://www.archivesportaleurope.net/tools/for-content-providers/",
+      "code": 503,
+      "services": [
+        "Archives Portal Europe API"
+      ]
+    },
+    {
       "url": "https://www.brocade.io/",
       "code": null,
       "services": [
@@ -763,6 +797,13 @@
       "code": null,
       "services": [
         "ClinicalStudyDataRequest.com (CSDR)"
+      ]
+    },
+    {
+      "url": "https://www.cognitiveatlas.org/api",
+      "code": 502,
+      "services": [
+        "Cognitive Atlas API"
       ]
     },
     {
@@ -784,6 +825,13 @@
       "code": null,
       "services": [
         "Naval Vessel Register (NVR)"
+      ]
+    },
+    {
+      "url": "https://www.scrapindex.com/historic.html",
+      "code": null,
+      "services": [
+        "ScrapIndex.com (historical scrap commodity prices)"
       ]
     },
     {
