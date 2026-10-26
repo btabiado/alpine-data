@@ -26,7 +26,7 @@ jobs:
         id: scan
         # SHA-pinned for supply-chain safety. The action wrapper embeds the
         # scanner binary version, so this freezes both. Refresh quarterly.
-        uses: trufflesecurity/trufflehog@e76dff8a7e57d6df0c60ad8cbf5d5cba505a8fc9 # v3.99.2
+        uses: trufflesecurity/trufflehog@31ce31ee1abbcc7dc8eee5764c17121c3044c8b2 # v3.99.7
         with:
           # NO --since-commit here. The action supplies its own, so passing one
           # in extra_args made trufflehog abort before scanning anything:
