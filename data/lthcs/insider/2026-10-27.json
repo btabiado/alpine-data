@@ -12976,10 +12976,110 @@
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": -0.9400082655813993,
-    "filtered_out_count": 42,
+    "filtered_out_count": 52,
     "net_dollar_value": -3802399.86334,
     "net_weighted_score": -2.25,
     "raw_transactions": [
+      {
+        "code": "A",
+        "date": "2026-10-22",
+        "insider": "MILLERCHIP GARY",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 6140.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-22",
+        "insider": "MILLERCHIP GARY",
+        "planned_10b5_1": false,
+        "price": 1018.21,
+        "role": "Officer",
+        "shares": 313.451,
+        "value": 319158.94271000003
+      },
+      {
+        "code": "F",
+        "date": "2026-10-22",
+        "insider": "MILLERCHIP GARY",
+        "planned_10b5_1": false,
+        "price": 1018.21,
+        "role": "Officer",
+        "shares": 500.323,
+        "value": 509433.88182999997
+      },
+      {
+        "code": "F",
+        "date": "2026-10-22",
+        "insider": "MILLERCHIP GARY",
+        "planned_10b5_1": false,
+        "price": 1018.21,
+        "role": "Officer",
+        "shares": 816.968,
+        "value": 831844.98728
+      },
+      {
+        "code": "A",
+        "date": "2026-10-22",
+        "insider": "Vachris Roland Michael",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "CEO",
+        "shares": 13973.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-22",
+        "insider": "Vachris Roland Michael",
+        "planned_10b5_1": false,
+        "price": 1018.21,
+        "role": "CEO",
+        "shares": 1403.592,
+        "value": 1429151.4103200003
+      },
+      {
+        "code": "F",
+        "date": "2026-10-22",
+        "insider": "Vachris Roland Michael",
+        "planned_10b5_1": false,
+        "price": 1018.21,
+        "role": "CEO",
+        "shares": 1120.544,
+        "value": 1140949.10624
+      },
+      {
+        "code": "F",
+        "date": "2026-10-22",
+        "insider": "Vachris Roland Michael",
+        "planned_10b5_1": false,
+        "price": 1018.21,
+        "role": "CEO",
+        "shares": 1131.478,
+        "value": 1152082.21438
+      },
+      {
+        "code": "A",
+        "date": "2026-10-22",
+        "insider": "Wilderotter Mary Agnes",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 266.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-10-22",
+        "insider": "STANTON JOHN W",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 266.0,
+        "value": 0.0
+      },
       {
         "code": "A",
         "date": "2026-10-22",
@@ -13079,106 +13179,6 @@
         "role": "Officer",
         "shares": 59.988,
         "value": 61080.381480000004
-      },
-      {
-        "code": "F",
-        "date": "2026-10-22",
-        "insider": "George Sarah Catherine",
-        "planned_10b5_1": false,
-        "price": 1018.21,
-        "role": "Officer",
-        "shares": 62.467,
-        "value": 63604.52407
-      },
-      {
-        "code": "F",
-        "date": "2026-10-22",
-        "insider": "George Sarah Catherine",
-        "planned_10b5_1": false,
-        "price": 1018.21,
-        "role": "Officer",
-        "shares": 55.774,
-        "value": 56789.64454
-      },
-      {
-        "code": "F",
-        "date": "2026-10-22",
-        "insider": "George Sarah Catherine",
-        "planned_10b5_1": false,
-        "price": 1018.21,
-        "role": "Officer",
-        "shares": 34.821,
-        "value": 35455.09041
-      },
-      {
-        "code": "F",
-        "date": "2026-10-22",
-        "insider": "George Sarah Catherine",
-        "planned_10b5_1": false,
-        "price": 1018.21,
-        "role": "Officer",
-        "shares": 46.711,
-        "value": 47561.60731
-      },
-      {
-        "code": "A",
-        "date": "2026-10-22",
-        "insider": "Foulkes Helena",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 266.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-10-22",
-        "insider": "DENMAN KENNETH D",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 266.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-10-22",
-        "insider": "DECKER SUSAN L",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 266.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-10-22",
-        "insider": "Barbre Tiffany Marie",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Other",
-        "shares": 1965.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-10-22",
-        "insider": "Barbre Tiffany Marie",
-        "planned_10b5_1": false,
-        "price": 1018.21,
-        "role": "Other",
-        "shares": 90.23,
-        "value": 91873.0883
-      },
-      {
-        "code": "F",
-        "date": "2026-10-22",
-        "insider": "Barbre Tiffany Marie",
-        "planned_10b5_1": false,
-        "price": 1018.21,
-        "role": "Other",
-        "shares": 93.948,
-        "value": 95658.79308
       }
     ],
     "regime": "heavy_selling",
