@@ -9136,11 +9136,11 @@
         },
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
-        "has_sec_8k": false,
+        "has_sec_8k": true,
         "has_yahoo_earnings": false,
-        "sec_8k_score": null,
+        "sec_8k_score": -0.2,
         "yahoo_earnings_score": null,
-        "events_score_raw": null,
+        "events_score_raw": 40.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -9152,6 +9152,10 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
+        "has_events_refinement": true,
+        "events_refinement_sources": [
+          "sec_8k"
+        ],
         "has_sector_rss": false
       },
       "dropped": true
@@ -18409,9 +18413,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.06,
+        "sec_8k_score": 0.05454545454545454,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 61.5,
+        "events_score_raw": 61.36,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -23923,11 +23927,11 @@
         },
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
-        "has_sec_8k": false,
+        "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": null,
+        "sec_8k_score": 0.4,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 85.0,
+        "events_score_raw": 77.5,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -23941,6 +23945,7 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
+          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -32959,9 +32964,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.16666666666666666,
+        "sec_8k_score": 0.125,
         "yahoo_earnings_score": -0.4,
-        "events_score_raw": 44.17,
+        "events_score_raw": 43.12,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -34718,9 +34723,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.07142857142857142,
+        "sec_8k_score": 0.0625,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 69.29,
+        "events_score_raw": 69.06,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -68027,8 +68032,8 @@
         "has_sec_8k": false,
         "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": 0.4,
-        "events_score_raw": 70.0,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -70002,9 +70007,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.3333333333333333,
+        "sec_8k_score": 0.25,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 68.33,
+        "events_score_raw": 66.25,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
