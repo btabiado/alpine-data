@@ -1,6 +1,6 @@
 {
  "generated": "2026-10-26",
- "gathered_at": "2026-10-26T12:39:42Z",
+ "gathered_at": "2026-10-27T13:19:18Z",
  "items": [
   {
    "vendor": "Semarchy",
@@ -3900,15 +3900,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "LlamaIndex",
-   "headline": "Grep or Embeddings? Agentic Search Over Company Documents — George He, LlamaIndex｜AI Engineer",
-   "date": "2026-10-06",
-   "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTFByV1RYY3lnOVpETFdfdXVUOHBlTl95RmpodEtVVWRQYWJobmxqZmNfLUZTODZEakg5aHN3cGlsYTRCb0tKYzVrLUZIZ0p4dEFKZlVMc1VrZjdGZXBsWmdZ?oc=5",
-   "source": "finance.biggo.com",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Matillion",
    "headline": "Matillion Appoints New CEO and Chief Development Officer to Scale AI Data Automation",
    "date": "2026-10-06",
@@ -4238,15 +4229,6 @@
    "date": "2026-10-09",
    "url": "https://news.google.com/rss/articles/CBMiywFBVV95cUxPaFM3b0lsU3RkZ2RZR2Y4ZHhZaERjSGRyd0s4Tzc1bnA2NFdGd1RCNW5xeFZGdjlEZi10eWVkTy11NWRRYTZMVTdmMm14TnBWRDl4YWZkWXZHWXZyWlF0OU9kYUI2VUdNYTN3cVA0d3BqVmxLRGYydTJteHQyUGtiQW5DTEQ0YWpWMGdUVUd0Qmptd0tYUTZiVFdSSzdaSng3OFVBUkZsSldjczFFd3JKdUN5d2lFOEVkWkdOWFBqdU8yRGxqcmNEZjVBUQ?oc=5",
    "source": "GlobeNewswire",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Google Cloud",
-   "headline": "Google Cloud Introduces Gemini Agent As Universal AI Agent For Work",
-   "date": "2026-10-09",
-   "url": "https://news.google.com/rss/articles/CBMikAFBVV95cUxObTBqb0lnazg0VkxBbHVzVFZGRzlyRkVJRGZKNFRBaGo0WHgxZ0Qyb3M0cWM1S0NxQ1JoNmRublc4WjlhdGo0Q3lBeS1kb2xiSkxpdjJ2aTdZVWl4SlhudnNqd0hlejlMUVRqeDZXSENuMWtKTWF2QXZocnhHenFVQl9QZy1VLUg5TktOcEJWU1bSAZYBQVVfeXFMT0ZXeGw5Vncyek9EVWJ4RlFCOC0xVFdqeGlYMGp0d0t6ZlgtVGxqTnV6cXlRR2k5cnBvcWhuVk9DTUVmbUtxMWk5VXZ1dG9xTGRIVDdvTWFYeENEbTJmNk1YOWU0VEZxTHdOS2txbU1NMkhPd1BMel9icmhxQ2l3Q0dBa194bF9pdEpPUzJaS2R4RjE3M0VB?oc=5",
-   "source": "Pulse 2.0",
    "summary": "",
    "relevance": "medium"
   },
@@ -4647,15 +4629,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "AVEVA",
-   "headline": "CruxOCM and Client Present Closed-Loop Pipeline Automation Results at AVEVA Pipeline Summit 2026",
-   "date": "2026-10-14",
-   "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxNUDdwQ0NZQl85bjRndFB6SXEyTHdpc1cxdkN2bTMxRGJrd3ItQ0dNaXdDS05YcWJHOVpXUHIwYzZsVHFTWk1VOXFxZU9uR0NaQ1oyLWxnSVVOa00td0FjcWhnRG9zNDE3VjNGNlpzb056SjBaZmZ5RTl5UUxOMEpmMG83MzdmSTJLWGFXZ0JmSk00d1RoYTdZWENZY04xenNMRXgwMHk2VFVPalpCckkxczdJTVA0MEU?oc=5",
-   "source": "Carroll County Mirror-Democrat",
-   "summary": "",
-   "relevance": "high"
-  },
-  {
    "vendor": "Bigeye",
    "headline": "Bigeye focuses on enforcing AI governance with Policy Engine",
    "date": "2026-10-14",
@@ -4814,15 +4787,6 @@
    "date": "2026-09-17",
    "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxNbVRzNFl1WlNIOGpxc0J3Qk5OeDVCcFNZZmxnZnpwdGFBOTJobElpZGlHQ1V4U0hFYXVZb2NCTDVGUFhaR2I3LUFFQnNNR0YzVk5BV3BVWEVjNlUwMTctdTVRVjVMdHc3NnM5cVgydXRPSmw4Z0xGaENuejM0NFIyc2V6YkJQZEVYTEhOMThieDFzZTZBV2I1QU0tUU8yYXJDOS1RTUhmS1dEeHc3X1RaTDdR?oc=5",
    "source": "Computer Weekly",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "AtScale",
-   "headline": "AtScale Launches AtScale for AI to Close the Enterprise AI Accuracy Gap",
-   "date": "2026-10-16",
-   "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxObklwLUNxZV9saEgyRW5jdXVtdnozQlZmYWY0Rjc3RU8xYWtNblgzb0NwQi14ck5TYXlpQk1LZWNuVmFQY3BrUXlfWWFzeXVzYmtwSncwM24tNVhSaFQ1SWZ1QVpvYXVLSVRwZmlBay13YVAwVHVqcGNpWHk3MVRoUDMzOU1rTzFZM1JSUlgwdlJxZUtmc2kzT3hvSkkwSm85eWwyRGUyb05KR2d5QlY3Uw?oc=5",
-   "source": "AiThority",
    "summary": "",
    "relevance": "medium"
   },
@@ -4996,15 +4960,6 @@
    "source": "Yahoo Finance",
    "summary": "",
    "relevance": "medium"
-  },
-  {
-   "vendor": "Treasure AI",
-   "headline": "Treasure AI Achieves Snowflake Ready Technology Validation",
-   "date": "2026-10-13",
-   "url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxQYkhwbGNJNVAtZjZMTW0yMm94MU82am9uNmNSYVAwSXFaQlNRc043bU1EUlNOZnNFLWhSbFQzQ1NDSjlGV0p4VGtQVHVvSkIyUi1mOThXN2dZUVFMSjBweGJXcnB5TXNROUREanlBSU5QQ3hkOGRZV3g5UVFaUVR4MEtUNHlxRm5kaE9NM252UTJIbFVvZGNDYzZwYURwMXNON1E?oc=5",
-   "source": "Yahoo Finance",
-   "summary": "",
-   "relevance": "high"
   },
   {
    "vendor": "Perficient",
@@ -5403,15 +5358,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Boomi",
-   "headline": "US software firm Boomi acquires Israeli data startup for $45m",
-   "date": "2026-10-20",
-   "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxOWlIzZG9laGc4a1lZVF9BMnR6WTJGLUp0Sk85ems5djhJWG1idHpGb19ldGNzclBvakI4TWhfN0c1TmdGcnZJbFlJZ0FMOWZBbThXUFBmdmtoOTVldFdPUDVlVlhRanRkMnZKd3FjYVZJeDg4blNFZC03c3JDYklwYmU4anNWVUJhbEVjaUtB?oc=5",
-   "source": "Tech in Asia",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Cloudera",
    "headline": "Cloudera settles lawsuit with Trump admin, agrees to pay $2 mn, faces a two-year PERM ban: All you need to know",
    "date": "2026-10-20",
@@ -5471,15 +5417,6 @@
    "date": "2026-10-20",
    "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxQVFFkaUlZWmNOVXFZTlhhc1NUYjBiSm0xTzRXZUJuWld0RE41dkJLY3RSN2lKYnRMZWtKY0k2Q3NwNmYxT3RyV2NQVnNsREE0dnhzT3B6amQ3Z3Z4bFRwYzNTZ3ZSbjRoUU1lcG8zZkY5STJuSmJMZHlCRW1BNmk4eGdaSFZwQkU0TWY0N1k5SF9EMlZhNFh1cERWbw?oc=5",
    "source": "Business Wire",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Cloudera",
-   "headline": "H-1B visa crackdown: Cloudera breaks silence as US bars tech giant from sponsoring Green Cards: ‘We don't discriminate’ | Hindustan Times",
-   "date": "2026-10-20",
-   "url": "https://news.google.com/rss/articles/CBMikgJBVV95cUxPMWhoWTVvYjVfdTlrNWFJUE5qNllDX3Y2c0JuTThfa0xBTnVWdXhmRHRuV3Awcm1qOEZtVVpKdFpfc1E4REhkR0xITjRJQ0FrdFF4UnI4ZzVndEZ1WV8xQlNxZFBmN0puM1FSUnl1MFBoRjdic0paYTJjVzl4N2NOLWZiUlZNY1Racl9IMFMzZ0xuaEZxQVUtcnNnSVFEY3hzcnpqZmNzZWNKX3RWV2ZIX0N2X2VhQ09oMENBa2tOeHgtLWxXZ0VIdHVHZjlIQUc4dF93UTZWUTRCMXhwZ3JuaEFzeHFLbHRXeW1qcjNPSHlCRDJmUXI5ZnJlRTBhdFctZG40SFg3alNIUzBsZ2FGTlFB0gGXAkFVX3lxTE9Obi1DZFJFM3VZdzE2WjBrdWtaeWZvOVMzX0hLdTlvQXFxOEc0ZHJSOTFINm11Yml4UENaTHpsSmZiSldTOXAzMDlMNHpiYTJwM045TjBfejhOcVZ2Qm5DTFZXNmFwemQwbUtHa1BxaW9KcW9fRWtDMDJ5TGFBZE1fY0hSOU1oeGhWVE1UNEN0akN0SmxvaGpvclFRaHNIWEdNWHk1eW9pWko1bkpwek5fM2UzN3pTOFdDWWVsOE9ENUplTVJtTnA1cktBOG9kQUJ3RERiTzhRZDdnMmJJNDMzVFF0VzMwUEJsbE9NMWNYR3FBNzVmR2xGQlpKVHFuOF80aEYyMjZZV2xmUG5ONUZZSEtKX1VZVQ?oc=5",
-   "source": "Hindustan Times",
    "summary": "",
    "relevance": "medium"
   },
@@ -5687,15 +5624,6 @@
    "date": "2026-10-21",
    "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxPcUFUNC1sOW9wMUpWbG5sTk02Q25KV2dYVnUwNFlGckpOaTNFTkFoU19zeFVVbEl5U3hnMTJsYmlPQjYxc19KZXZ6X2lZTjJsLWdMdVE4ZTZybjhJNWxvc19KOG0yT1ZGWnN4aTY5T3JXV2UtbU5qN2hZTk5GVDdKdnJNTXVLREM2VnNPRjJqYnlyckRUSzhsZmZPczBHZGpKYjdHUWp0RUNBT0FFM0NtQ0p3WUVwTzNpVHVCYTlOMF92T2xVX3d5R2RYV2c?oc=5",
    "source": "Realty Plus Magazine",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Replit",
-   "headline": "Replit Favors OpenAI for Agent, Keeps Claude Choice",
-   "date": "2026-10-21",
-   "url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxPUFVwSzlNX19JZHZPcW15ZmtPckY4V3djcjBNUGxJTDBqempZRnFTUWEtUng5YVFrRjVGN1NBUWFld3lJMUtxYjM0cDQ4RmhwSHo3WUhFTlhSNzdIUUs1VkdEY0Fvc0d0eEFNWHVxb0VaZ2wxRG9abC1GS1pmclp0OFo2TEN0Uk1UMXNLY0FDSUZfNnJFamoyWVhBY3I?oc=5",
-   "source": "Quasa.io",
    "summary": "",
    "relevance": "medium"
   },
@@ -6123,24 +6051,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Replit",
-   "headline": "Replit Appoints Michael Greenwald President of Corporate Affairs, Expands Global Government Business",
-   "date": "2026-10-22",
-   "url": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxQemdqVVM2VjQxMURvLVB0SVBqelNNRDUyX281WGZjUXpCY1U3U1hkUzQyNTdFNFRxeFM5T2V1bHE5TUdvX2pLWW9VMGoyNDVuT2JlelZEaVlXRGVRMXR5Q1lmZzhIcUs5bC1fQ2Y0bm9Sb0hBNkRZMWJOenlGcUhlbm9OSkFuNEFjQXRrSkkxSmJrVHVXN3ZXVkdNdGZwZUJBZDhWbWxaRlZpWTc5dFJqYjE2dUNFdXY5SVpJMk9IR2RtMW12dk5NcUtCSmFodDBlVDlIMw?oc=5",
-   "source": "citybiz",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Replit",
-   "headline": "Replit Expands Government Business Worldwide, Taps Former Amazon Executive to Lead Corporate Affairs",
-   "date": "2026-10-22",
-   "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxOVEJtYWdHZ20wWTFpQVFrX09jUEtJUnlUOGFWaUROXzViejQ3akNoaV9tN1dWT0xuZmdZNWlqRDA2S1pOZmFtTXlmUWFCLUpkRzVGMzBoa3JkSXZqeDRzTHctSUpVQ0d6X25rWmU5MGdoaGZ3Ukc5YlNVNllwUzRiS085SER3ZGhucHRPdG1hV2ZEUGtRRW5mWU43SnhCOVVkODBFa3IwZVNRS2hBMllqYXJwR19GU09IcHc?oc=5",
-   "source": "Yahoo Finance",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "ThoughtSpot",
    "headline": "AgentSpot a means for ThoughtSpot users to build and share AI",
    "date": "2026-10-22",
@@ -6501,15 +6411,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Workato",
-   "headline": "Workato Launches Self-Serve Platform in Singapore, Opening Enterprise AI to a Broader Community of Builders",
-   "date": "2026-10-21",
-   "url": "https://news.google.com/rss/articles/CBMi-wFBVV95cUxPU2hQZ0FyT2lkTXNpV05Tc3NScV95Uml1UnJuNWxxV2RXZVZodHRfbHFELVZJbmlpNnZEQUdMWGtPUGFzUnFUczdxODZGM1N0RHQ3LTZkLWJxRW8tMDdOSG4telFLRDZkdi1Zc3NQMmhEZF9xcV9oUm9oamdibHRsNHlKMDl1R0RxVXVxRUQ5ZC10dV82QTRscFlfejdJdTdKWUVwazVQYWNXeUxObnAtLTcyUkh2WnZKRlhmV08xS1ZSbEpNUFdPRUY0OTNRRVVrUk5JU0VvbGNJNm5lQk9Yc0tSdHhidHA4WUhhSTZwOGJwNWhCT2pEMGlLOA?oc=5",
-   "source": "PR Newswire",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Collibra",
    "headline": "Varonis and Collibra: Automating Data Governance for AI",
    "date": "2026-10-20",
@@ -6569,15 +6470,6 @@
    "date": "2026-10-22",
    "url": "https://news.google.com/rss/articles/CBMigwJBVV95cUxQZlZLQXdWeEFUTnlOSWo5OGtGSDVsYWgtRVYxQ2x3OG13S1hDcldscGNIVWFmSmRYQms3RDh1YUJlOFRaV2VIWjh2ZXJpazNxcTc3NV9mYXRoU3NVVVZRb2o3cUNYVTluVE5JajYwY3RjamRDRjlBbkZxZFlCcXprWTh0aTR5RHZ1TDJ1QzF2MUlpTUhSb3BiYldvLXRBY3RUZkVZSmYxMENMb1loQ0xMSlY4VUJqcXdJUWQwRlpIdkVoUUtLdFRZTkFTakRIX3l3Tl9adzQ1dWVXSWhOSzQ2dlhTeGNYTGNLdUVENW1UUXhuWURuTW1VckdxV2JSaTNSMjcw?oc=5",
    "source": "TradingView",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Replit",
-   "headline": "Replit Expands Government Business Worldwide, Taps Former Amazon Executive to Lead Corporate Affairs",
-   "date": "2026-10-22",
-   "url": "https://news.google.com/rss/articles/CBMirAFBVV95cUxONDBYdUtXdVFBT05wTlN5QlYyNk1ZaElPSDJ5SEw1UzJKZVRnMWltdmdEOWxOWXg0RHR3aERkeEI5Yzg4VUhBWlM2VW5PbTc1R1hSXzVyY2ZzNkJsdzZJNDVWOGYyVDkzYUFfOUQ1Q2lRVEpKY3EwMno1MXZad2xTU0VvTUpJNHpUanprcVQ0dHhaazVXckRLUWxfb1ZfQWRMaWw4U2luenVhTUFu?oc=5",
-   "source": "Yahoo Finance",
    "summary": "",
    "relevance": "medium"
   },
@@ -6789,20 +6681,137 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Workato",
-   "headline": "Workato launches AI Lab in Singapore to accelerate applied AI innovation and talent development",
-   "date": "2026-10-21",
-   "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxOZ3RfT1pPMlF6ODN4NXU0SDlsSjF3TGFNb3puNnBoeUR4MnZMV05ZRUR1TkUxZzA5dGNOTW5fdXVCdHpWRmFuVVF5SmJkXzZMd1EzR2dsOTRrZEtpc2R2TU02VnE3QkJTb3hwM0FKREoyNG9Fc0F4bEJTSGxRX3h4eHpHN1o1czNIWmI0V3dqZHVhTDdXNXM4cnczeU5LQQ?oc=5",
-   "source": "Singapore Economic Development Board (EDB)",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Keebo",
    "headline": "How Much Did Keebo Raise? Funding & Key Investors",
    "date": "2026-09-28",
    "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTFBEcFVsejNCNHpwTFBuUW13bjZpOHY3RWJYZHBZdU9rZFBfN0x1dTlBWUxYc3ZrSFhmMHVJSFJVRk1BM28yZFZxTE5Rc1hlakdPdmphbA?oc=5",
    "source": "Clay",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Acxiom",
+   "headline": "Acxiom Fan Graph Intelligence Report: The 2027 Women’s World Cup Audience",
+   "date": "2026-10-26",
+   "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxORzU4Wmo1MTV1SWxuM19GUGdfMFVnTF9jaGt6UFhObkZ6MWh1YWM0MmdBNHJ3YlRtZUNwN190Z3d3aHkwZlVVT1JHaERwOVdxZFNUR1VhdnJhS1AzZnFmN0I2cUU3MjB1emJtLThOWDd1UEZTU1RHLWVQNUN2R2VzRU13?oc=5",
+   "source": "Omnicom",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "AtScale",
+   "headline": "AtScale launches AI suite to boost enterprise accuracy",
+   "date": "2026-10-26",
+   "url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxOZXZqbGJBOVNfT1JTeFRNbkJ5X1g4VjZmZTREUGdBRUNrTlZZbFhuQTM0QUlfZlFBVXJmeU54M2xBcmowMy1RRmNZRkJjT1RhRHUzNGlZZ2ZjSmFIUDNUSTZ3enEzVGxaUlJ5bmtzN0VHaEJ5N3k5NjB3LUhtcHE3V213WGdjVkdIaWc?oc=5",
+   "source": "IT Brief UK",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Boomi",
+   "headline": "What Boomi’s Acquisition of Elementary Means for Data Teams",
+   "date": "2026-10-26",
+   "url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxOcUo1YV84NlpnLWlheEFCZi1YNFhXZTFINE5UdlpoS1lGX241VTZPbjVNQ0p6TlBrNWxuRENuRjk4Y0lIT3p4REhRRjNVT29QZFpFTi1GcENkekZhc1A3X2hjNW1FTHR4MXItOXlvVVNIZ3RSNGVSX3c3dTJmc2ZsamRyclRSVTJ4N1FWTFVEeGVYVTE0Um42X0VMQWtlR2hHRmdJZzkxNVlwdw?oc=5",
+   "source": "HPCwire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Cloudera report finds 89% rethink AI use cases as costs rise",
+   "date": "2026-10-26",
+   "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxOVVR3cnhxVnpyRWVKbzNPaTYtb3hjamtsM1hIN2RtNDBiUmt6UFhuQV9CbWRvaVJSOGo5b2RlSFlSYUpBNms0SGZBM1hFZVE1eE9ZaWMxOXVub3dIYUxhV1FrZDRycUVGYlN1OWRfd2xDNDFtamxvWFVXSjJuWVJjRklERmkwSHBBc3llbmtWYw?oc=5",
+   "source": "Portal ERP",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Google Cloud",
+   "headline": "Google Cloud lets BigQuery query Databricks, Snowflake",
+   "date": "2026-10-26",
+   "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQT2lKSDkwZlhNX1JrVkpnODFpU1pYWXFvczEtTjFnbThOeVNnZHdqbUplaE9fMWt3QlhBSVBRd0ZWUURMZmFtUDhZTlk1MThlZFA5emY2dS1JTy1vd1o4b0tTNlhvMDVSMWd0ZHRRUWlPaV91eE9YYXhTajhIaFE1WjRmOUpCLUZU?oc=5",
+   "source": "IT Brief New Zealand",
+   "summary": "",
+   "relevance": "high"
+  },
+  {
+   "vendor": "LlamaIndex",
+   "headline": "LangChain, LlamaIndex, or Custom Code: Choosing an LLM Development Approach",
+   "date": "2026-10-26",
+   "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxNUlJnYWVnNnh4Y1E2dnFvNFJCVHQ2U1VYejVUYTFvTWVzcU9ZYjZoLTNDS3ItUzJVX3ZZU09qMWJMYmpJNjA4blZweFNLUTdsMU5iNkhuWURIU2ZfaGRHZEpYRE5YaWxVVlhZaWZWV09DT25LZTVhcTJEdUY5cVhEYnlfZGU5UWZNSFd2aE1jeXV4VS1Lckl3VVJXV0E4ODdxV2xwbWRlN0oxV3VTVkZOcmpDUkRYSXhNNjlESUc5bVQ1ZEdBRWVJOU9BdHJ5ckhPZGduU2pMTdIB1wFBVV95cUxNUlJnYWVnNnh4Y1E2dnFvNFJCVHQ2U1VYejVUYTFvTWVzcU9ZYjZoLTNDS3ItUzJVX3ZZU09qMWJMYmpJNjA4blZweFNLUTdsMU5iNkhuWURIU2ZfaGRHZEpYRE5YaWxVVlhZaWZWV09DT25LZTVhcTJEdUY5cVhEYnlfZGU5UWZNSFd2aE1jeXV4VS1Lckl3VVJXV0E4ODdxV2xwbWRlN0oxV3VTVkZOcmpDUkRYSXhNNjlESUc5bVQ1ZEdBRWVJOU9BdHJ5ckhPZGduU2pMTQ?oc=5",
+   "source": "Artificial Intelligence News & Cryptocurrency News: Latest Trends | Analytics Insight",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Replit",
+   "headline": "I Tested Replit vs. Lovable as a Non-Developer: 9 Tests",
+   "date": "2026-10-26",
+   "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5ORnZPTHV0MUpZZEltM09QVmxDNXNxVGJLM04zbU1la1hHOWlnVVlkSERRblFiZE5zYlA3WUhsQV9vSUJkRDAtdVM2NDVLYm_SAV9BVV95cUxQQ2ZWMllXRUhnYlJKc0JSNk5DZEFveUpXdnl2blVjOWJyU3pGUE5sUGhyeUVydkI3cTd6dTB4clZoWHVxRFpDQktKajNqVldLbW1fWVpQY1VmaWl1YjhUdw?oc=5",
+   "source": "G2 Learn Hub",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Replit",
+   "headline": "What Does OpenAI's 30% Replit Discount Mean for AIQ (NASDAQ:AIQ)?",
+   "date": "2026-10-26",
+   "url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxQZFE5elJ1TmNzbUhoQUx4eFBTUDUyZWxWNFVkTHBNNUs2YkRUV3EtUEhSQTVVQXVEZU5BX3hRQUF5RHlnaGp1dGtPT19KSjZSQjJjVE84Z0NkQ3VjS1llMHdtQmdoRGNMcG5yQVNSSlVPTElZRW4xMDZHRzhFMkJRdVlyVktVR3FtVUV0RTV1RVQtSEF4cDJReFlvWDNQa3BCaWc?oc=5",
+   "source": "Kalkine",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Replit",
+   "headline": "Replit launches Replit for Business to tame chaotic AI agent deployments",
+   "date": "2026-10-26",
+   "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE5fbFlMdXNrR1dTeW1IR0pqLXhmYlR4amFZdU8tZzNRdFgxVHBaZC00ZGxLN2N4bVBsbXVhQ3hSZEJtMVVfWGx4RTNPMlJXUlJxam5HbVc2WWdBNDRxVThpLU9wblQ2UmVKTUtjLWU0TDZKYXo2Vmg5Ug?oc=5",
+   "source": "Crypto Briefing",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Replit",
+   "headline": "Replit switches from Anthropic to OpenAI, highlighting AI market flexibility",
+   "date": "2026-10-26",
+   "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxOWnBiQ0ExSXpsUEYteEUtSWhuVVFrY3hCZkhmNHczaGRPeExjQ2gzOXBnaDRsVmtUQTNoNmtfb2NPWmVxTGN3ZmhnY1REeVJ4NWhWNkVOUlQ5N0VfaUVsRXZtaVpFbzlBLTVIczlRaTJsa0ZhTl90Y3M4VTgyaDNjVTZQeVoxQW1TdlFESWtabHlyRW5pZ1hGMEVyVXU5dVY4MGVIcm1R?oc=5",
+   "source": "Crypto Briefing",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Workato",
+   "headline": "TCS and Workato Join Forces to Speed Enterprise Integration Modernization with AI",
+   "date": "2026-10-26",
+   "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxNdVhuWjFpa1lrbkgzTkNaX19SYnI3LUU4WnZpODdHWUwwMU1jM0pUX1M3UXk0a0w4N0VOam53Rko2UjlfbmZRWDluS2wzU21hV0F1ZzFJZXA1SEEyOXJ1NUtxU2dUVFBuS19LQ0RYdzVLVnRBSGp6S0M4UUs4VFZfUUlPLXBuVWhCc0NnTnhnUENMU1ZGUTBrZQ?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Workato",
+   "headline": "TCS and Workato Join Forces to Speed Up Enterprise Integration Modernisation with Agentic AI",
+   "date": "2026-10-26",
+   "url": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxPM2pfYkJBWVlrQmlmV0xNTWdJMHpwLVlDSGU3LUZWMXhLNVNQVjh1SWVwTUZycWJydGpNbG8welFBb0RpVGc0Y0phTDBkUDg1OFpoM0tEQ053Q29WWG10S1NQS3ZCUFJBUC14ekNlRUg4N2FfSVVzb2Z5d2RDTk55c1h6Tk5vYVowQWwtZmRoWjdmRkZwdzdJMmtHUXhxMWw1MjRWdTd3TGhvakNiUVRfblQ2NnRzR2lqLXVZUlFPQmlpUXQzdzMzYnZjeTdOMHdtOU85Nw?oc=5",
+   "source": "Elets CIO",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Treasure AI",
+   "headline": "Treasure AI Rebrands from Treasure Data, Introduces AI Studio Layer",
+   "date": "2026-10-23",
+   "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxPUFZiYzl6cFY4bndqcHlXSU5wb1JrU1RQbThwTEpxMHRhdGw4cFF5b3N4WE5LcWJTT2JZRHh3UFZxNkF5cXY2QUNmc210NWdNVHhqYXl4a3FMZ2FfRktBeEo5amFyMmlWQ25KX1BLVjRlQkV0M1haNzdLYVUyZ0hKRERKdjhhWXQ2OGJURHF6WlRjT0ctbnU3SzVELVhxUGhHY1FFamhtMWFwNTVsTmxSS3VYMWV6ZjQ?oc=5",
+   "source": "HPCwire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "AVEVA",
+   "headline": "IFS Unleashed: IFS And AVEVA Partner To Eliminate Unplanned Industrial Asset Failures",
+   "date": "2026-10-16",
+   "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxORjRyTVlsUVVuaDRpMkJ3bFVPOEx3RUxaYTZDakRPSkVDV2pIZkk3MHFwNEFLTjV0OUI4MEt1Wlc5UEw2RWE0UldlTFZqVnN0ZGxTSXlqTzAwMU5yRC1qWWdpLWVyR3FBVnUyQ3RteFRHYUFFaEtVWUItYjNNMnFmLWt6QjhfbGJiaVNXQXJTUy1lSnFkNUtaSkE2UEM1MV9TQ3BHU1UyM1Y0ak9LbEE?oc=5",
+   "source": "SMBtech",
    "summary": "",
    "relevance": "medium"
   }
