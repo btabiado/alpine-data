@@ -1,6 +1,6 @@
 {
- "generated": "2026-10-26",
- "gathered_at": "2026-10-27T13:19:18Z",
+ "generated": "2026-10-27",
+ "gathered_at": "2026-10-27T15:32:12Z",
  "items": [
   {
    "vendor": "Semarchy",
@@ -4089,15 +4089,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Microsoft",
-   "headline": "JPM sees software rally extending, favors Microsoft, ServiceNow, Snowflake (MSFT:NASDAQ)",
-   "date": "2026-10-08",
-   "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxONUZzUEFqc0R4V1NLUmpxdG91ZFNtR3N5OVZTSkRJVmRuN1lJUWhrQml4cEtZSUFtQUF6MXNLOWtMYWsyTFFRZTJ6c0VCMUVEeDhnenQwaXVlZkg1TXAxM1I5R2pyX3RrWnZRYl82Mk9ja1pKRXVudDVMYXlTVlNJX3M5Z3ZaQWFLM0lKYktQaFZON0tidnhqbDVmeEJudHBYNDU4bDhsUjRIZGxnZlE?oc=5",
-   "source": "Seeking Alpha",
-   "summary": "",
-   "relevance": "high"
-  },
-  {
    "vendor": "AWS",
    "headline": "Snowflake Completes NZISM Restricted Assessment on AWS in New Zealand",
    "date": "2026-10-07",
@@ -4166,15 +4157,6 @@
    "date": "2026-10-08",
    "url": "https://news.google.com/rss/articles/CBMi7wFBVV95cUxNbHFvN09iQ0dRZ2pmRlBBamNYT1JFdWhpVVduLWhBWHpoLTBWVlNtWS1yeG1iakxSLWFHYkZFaElJS3pLaXIya2RJMXRSdlU4TkQ5em5qN3YzUXpJb2lBYWQ0eW1IMHdUbExwVFlGczZ5eXJBbUVRajFrOXE4b19YTnZ1cGtQTUtyS1NvYnlUc3ItYjdCMC1RaUkyaGtoYU4wS0JBUzhxWjNmQWJEamYzZnYxZnkwYlRTZlNhYlgtck1WZVg0em5fLWQ5QXNzb3QtVkk3QkxSTmVVUVJxaFY4dFE2RmdHOHIya0ZPdmhIUQ?oc=5",
    "source": "Business Wire",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "NICE",
-   "headline": "Contact Center Analytics Market to Achieve 18% CAGR, Exceed $6 Billion by 2030, with NICE Ltd. at Forefront",
-   "date": "2026-10-08",
-   "url": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxPNGpoOW1wQmstaGNJQ29UcXVwRzkyV1A0ZU5TcERmckw4S2hETWhBek1UWU56TmVnMF83MTh1NzZGVkVHX0dQdk1LS2dVbUtGR1FLekZ6elNQWXd0eHBGWDRFUW85Wk9mdDh3bEN3cDBMZTBNUDdlVFg3c2pmUjIta3lZdHJxOTYzbW5TYVBZUldZMG85XzNFcFUwLVJOTjdJcGVJSU9TT2VybXdpZHhmVXpnZnlmT0hrbE0tVEp2bFdab1FFZEF1dnpsdkphSkRtZHIwSW42RV9LaHJ5?oc=5",
-   "source": "EIN News",
    "summary": "",
    "relevance": "medium"
   },
@@ -4791,15 +4773,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Informatica",
-   "headline": "2026 Gartner® Magic Quadrant™ for Product Information Management Solutions: Salesforce (Informatica) is Recognized as a Leader",
-   "date": "2026-10-16",
-   "url": "https://news.google.com/rss/articles/CBMi-AFBVV95cUxOcXRsYVI0MDdfOEt5bXVQOFBTWXVrcUgwd3piWW9vc0JVOVJRX1hpbU9FcG5zempQNFJJdDdpN19yNUhsYjVsbGFJSklWTnYtV3JheElCSDRNRkhDYTVGYk1hbVdwanljcERSc3RmdXdhdmZXTEpPZnJPS2hGR3ViN2pVR2VnQkRacEMzaG1vVXI2TmQ2TERONFdBdTk4UkR3OGJNTjQ4bzZiSUFkb19aRFZSbGh1S25sYXJrbWZic2FWODk4SllVd1lTendHNU9Id2xyUkowblRmMzVLSG5FM0xGNEx5OWVlZlNLeGhla0tXRGRUNFU4MA?oc=5",
-   "source": "Informatica",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "NICE",
    "headline": "NICE stock trades at EUR 106.00 as AI credentials face earnings test",
    "date": "2026-10-16",
@@ -4922,15 +4895,6 @@
    "date": "2026-10-15",
    "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPN2I1RU9zS3FLYW9kNUthLXpyNXFRRl9oNG1memNwYWtual9OQzhmcE9ONHIxN2xabURQXzNES2xLMEh2aGVvcE5YbEJKR01tYnBLdlBiN0ptUVNDQWpPSEhPMk1Rd05tTkQtNC1JSENBaEZveGZLVFlwYTUyRmtienNEcmpFZU1SZm9wTGFpQ1Nad2R3NVVoSUFiSVAtRUlwVU1hR1NwTS0zZGNlcUtmcXZEeXROdXpX?oc=5",
    "source": "Passionate In Marketing",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Pantomath",
-   "headline": "Pantomath’s IPO Business Raises Questions Over Group Funds, Share Sales and Investor Losses",
-   "date": "2026-10-15",
-   "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxQMHBkX2ljRnNoNVJHWE1nNDJxbVk0RXpueFUxaWtfRDFQby0wMVhJMDRZeXY2eWhmMFZ1MGVtWG9BRzJ1RlJpeGVRSHhvYmcwNl9Vckg2a1F5SHVWMVhodXdUMkdJclBmcVJUZXBKbDBsdU91QUczb2RkUy1yOEV2SEExOTd6Z3hoY2ZDa3o2Rm9PR0RsZUZHYmdqZkdYdWU5WHB5dNIBqgFBVV95cUxNdWkwUHFwZ2UzYXd3aE95eXZjNnN2akloMmlFTmpjZnR6d3pvMXN4MHRMdlVPbUpyWXZvWXJ5V180cFBIOHd5QmpiMEZyaEVBWm5WZms0bDd4dFUxd0xUNnNkQ2NzZ0pucURzOGxXaV9CRzFGbUZJeThIUjNva3QxX0RBdUtnR054a1Z6REZXaTRBdXBxNkxTb3Y4WkduQzlXdTZtdm5zSUVkZw?oc=5",
-   "source": "The Vocal News",
    "summary": "",
    "relevance": "medium"
   },
@@ -5358,29 +5322,11 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Cloudera",
-   "headline": "Cloudera settles lawsuit with Trump admin, agrees to pay $2 mn, faces a two-year PERM ban: All you need to know",
-   "date": "2026-10-20",
-   "url": "https://news.google.com/rss/articles/CBMi-wFBVV95cUxQdnNZdXMwMVUxUGtIUUtBUU1vdmVjXzB5ZmxJWWZPZ3lteEYzWmhaRFNac1Uxc2ItZHZ5WVB3RzkwSFc5aWZCeW1kSWduak9YQjVIRnBkT2g5SHQ2S3hWYUl3QWJBZFllRzhwZ0h0Qkt5Z0kzM0lha3Bua2JuU1I3R2hKc051MEg1eGRSX294SVAwVWd1dWVnQWhmekltTTR3a2ZrU2hiQjdzWWJ5aGhyR0xXZ3BYNVhBN0h5clh0dy0yN2JqdlAyUm1vVlFHT1lydlZSb09xZnJJTFZHUko1N09KakpHMVBGcXg4a29qVERNVU1BeFhBMHkzONIBgAJBVV95cUxOeUpRNE13eVM0NHZmNFJ1dDZwLXM3WEV5dDFLUnFfTjZiQTJjUUl6eDlxYVNyeXlZc25ra3ZwWmRMdTBqT0dDdmtHWmN3T0xPbEwtZ1RkS1VicHY3LTJiRG1mX1VSUVE3R08wVjZTNkJfOElaQjBQUkNUUjRwTEszeDlIN3hEWTdLTDhsa2VCeHc4UGlmTlMyTnpua2hGT1laRXV1dXhTR256emlDU19wMl9ubTZJMExVZ2lRSlFibGFEVXJSNWRWNVc5NnZnOUd4U1V4bE1fLVpYajFQSEVZdkFVNUM3OW1OdTVzUmhvVTFkaGY2VkhjMFVyNjBoQ2hY?oc=5",
-   "source": "Livemint",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Google Cloud",
    "headline": "Cognizant, Google Cloud expand partnership to drive agentic AI adoption",
    "date": "2026-10-20",
    "url": "https://news.google.com/rss/articles/CBMi7gFBVV95cUxNV3B2Y1FidjdKUVJrUFo2RWpxYmVRRDhMck5RcExNaWpvQ0lzeFVCZ1RzN3RXSThEQnIzRjJjWTlVN0RWQ0ZleHJ1SWt1a2F6U0sxZTZIWV9UT1N4V1R4YUtva3hldzJCajdVNGt0T2hWS3dNNWs1SjBxUS1ZYUtPVWZxUnNnR1FILURHUUxKMTJTNzhTYWFFZXVTdF9XZDlJaGo5UmFzYkdqVkFCdHlBWGRwOHVHOW1PNXlpUndvZWhldFVBaV8zMVZrUURqcWpKajB4QzI3V2JFUEYyLU0xeG1LcVZmSDZOcjFDOXpn0gHuAUFVX3lxTE1XcHZjUWJ2N0pRUmtQWjZFanFiZVFEOExyTlFwTE1pam9DSXN4VUJnVHM3dFdJOERCcjNGMmNZOVU3RFZDRmV4cnVJa3VrYXpTSzFlNkhZX1RPU3hXVHhhS29reGV3MkJqN1U0a3RPaFZLd001azVKMHFRLVlhS09VZnFSc2dHUUgtREdRTEoxMlM3OFNhYUVldVN0X1dkOUloajlSYXNiR2pWQUJ0eUFYZHA4dUc5bU81eWlSd29laGV0VUFpXzMxVmtRRGpxakpqMHhDMjdXYkVQRjItTTF4bUtxVmZINk5yMUM5emc?oc=5",
    "source": "The Economic Times",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Neo4j",
-   "headline": "Neo4j Context Engine: Rapidly build dependable enterprise agents",
-   "date": "2026-10-20",
-   "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1PNFhKUjFLMnJGYVNrYXczVVEzR3dyZTQ4VXFIWVVkd0xCTlY5RlRjNlpsbGx1dUVHU3RUOURLSTZld3JqWExJT2tkS20tcl9McjVvSHVNSW94WjFfbWc?oc=5",
-   "source": "Neo4j",
    "summary": "",
    "relevance": "medium"
   },
@@ -5534,24 +5480,6 @@
    "date": "2026-10-21",
    "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxQeEIyM1ZUYkl6a3lhOUJ3M1NwSzI1ZDJRdEFaWXBtRzhPZVdXVURieEV6NDRpbzVmU2JSOUJsLWV6M3J3U0pQUE1xVnBHR2ZNODUwTkw1NEtuaVdnUEVKMm5uSHpvVGhhMlRvU0FXUHRyVHFNRWN4TGdGTlpTOWZhU3dn?oc=5",
    "source": "MONTCO.Today",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Cloudera",
-   "headline": "Cloudera Settlement: Two-Year PERM Debarment and $2 Million in Financial Penalties and Back Pay",
-   "date": "2026-10-21",
-   "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxPUUFWZWpnZk5fX0VIVXFTLVktTFBZQnJsUTZydFRMSGU1UTA2ZmdJOFhWRl9XSWhOZHFlQjdjaTVoOGxiUmFFbmZmS1RLRm02ZUx1bUdDOGNxeG1fbDFjWkxSaXo4MTB4V3JxRWhEUS1CZUlzRk5qdUZFclZtaDlCdVByaW9KS2Q3X1FBYVoyZllsazlXUjc5aVpHVTBMLVJiWTdZTzVCaVJ3cUpCdlNINFBmUEs4XzJtZF80a0tn?oc=5",
-   "source": "Reddy Neumann Brown PC",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Cloudera",
-   "headline": "Tech firm Cloudera barred from PERM program for 2 years",
-   "date": "2026-10-21",
-   "url": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxQM29keXhYYVM3Nm16NUNQYWNwRjNCV2psSFlaUWtCQTVsR2ZfV0VzX1psb0RYR19JYzFNejBrdUk3bWpKMWZkYUVnclRhd1BjWnUyTG50ZmV5NnpGZ0JmcVZXVFBLTmpyNEZQeTFCNlI4Z3k3MkNKQldJdEdjNDRnMDc1anFoVk1yekE3MzAxaFdJWWtZRlBtcFg4b3N6SnhXZ0N2VV9Dc3dlazRZdC16YVlOMnlCenJueG1VS1BGeWJkajdBdmlXd1NfTGpZSUhrRzgw?oc=5",
-   "source": "Staffing Industry Analysts",
    "summary": "",
    "relevance": "medium"
   },
@@ -5979,15 +5907,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Cyera",
-   "headline": "Bloom Security and Cyera Extend Data Security Policy to the AI-Native Endpoint",
-   "date": "2026-10-22",
-   "url": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxPcEFwelZ1QXpLZEt6QTMtUE55bEVLdXREWE1GMG9idnJwSzUydEx2MFVZcnVGMkdLZDZZMnkwYTNzUXQ4Qkl1d1AxX2pvTW5FSUdldEFqNHhnbk5FTFExN1gtTnhWQXdxRVNyQ0ZMTEhDem1YNGhHTEdfcmtLUGdDbGVTejJ0ZjNoRl8yUFRwU1VzZ1dJQ2ZOcTFzQjlqbGoweFF5SURmNlhMRWNYaTd2emw5Wi1RRVY4TGNLVDlDMk12eTBQYnN3aUoteUxGSkFlb2cxMkNvMm8?oc=5",
-   "source": "StreetInsider",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Integrated Quantum Technologies",
    "headline": "Integrated Quantum Technologies Inc. (VEIL.CN) Stock Price, News, Quote & History",
    "date": "2026-10-22",
@@ -6186,15 +6105,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Braze",
-   "headline": "Salesforce to acquire Braze for $5.6 billion",
-   "date": "2026-10-23",
-   "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxONmY2NXQ2cVdkRmFEVEZlQjFjY0hEbU1YNDlBek4tR0J1ZlJvYkQwcmp2OURBZHNGc2Q1bS1xWXFtT2lUcG9ubkk5b1ppekt3TDdZOFF2c1lGai1ZdUtPRm14Mkk1blJVSHNrTHBzc0hyaG5EOVpSVXY3bXh1WDRnZ05zNlByaldBQ05Bb1pjZnprTFNaR3pZRA?oc=5",
-   "source": "https://marketingreport.one/",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Cyera",
    "headline": "Reco and Cyera Target AI Agent Data Risk -",
    "date": "2026-10-23",
@@ -6317,15 +6227,6 @@
    "date": "2026-10-24",
    "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQSU1pa3E4dENuRTktdEgxZjkteWtDLWZZX0dnUVJnUURxU0EwSkVqMkVzQmY3TFFlQ0hvVVJZendRMDIyWE1wblM5Y2kxWG8zR3Z2NldqUEZVajVyYUpUaTJ0TnBzdV9MeVFtYkFoUHM4VjZPVUpyZ0ZiWHhuZUhMeHJrX3R1bVpKYkpGQV9nQTdMQnpCN2FNTVBFWHgtcDdNTXBoRXFvUjlxdmU2ZHZZX2E3Z2g4U0U?oc=5",
    "source": "LinkedIn",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Braze",
-   "headline": "Why Braze Stock Soared This Week",
-   "date": "2026-10-23",
-   "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxPRHUzbHhqcnZsdmFCVkNMalJGRzB1aklqVVl0OFBPZGxhMVo2M2N0SW1IZWlObmRoNzI4dllIZ2pUOVRMQlF6dWRSQnI3Yk5lSE1BNDB6bS1pRU16LV9JeTEzVkFvdGF3aVdwR3NZNkZpYjlrdFUwQ0Y2c0Z1UXh4RGdaSWdsck9fYWtOdzFuX2Q5UQ?oc=5",
-   "source": "The Motley Fool",
    "summary": "",
    "relevance": "medium"
   },
@@ -6551,15 +6452,6 @@
    "date": "2026-10-25",
    "url": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxOYnlfQy11alhqR3NfSmlGTW13cVV5NEtaYTZ2aE9TUkRDOUlJdnRVc3dXN2REU25JVDVpUTRDOXhFa25IS05VWTczZDBaOXpzc2RZc1BkVUJrTjlLQ3Nzamk4c2U1Nmc4eHhqdUNyTHpuSmQxcFp5MXowS2xwZlcwa0tZZXRRMThJZHluLUpNcjQ5akxjU0VTZ2ZlZGtRRGNWaU1VQmV0aGtTN1ZTdTFaZ2M1TEpyLW1Nemx4TEV2dGQ?oc=5",
    "source": "ad-hoc-news.de",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Braze",
-   "headline": "Braze Buy To Transform Salesforce, Enable Instant Behavior Triggers 10/21/2026",
-   "date": "2026-10-23",
-   "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxPeVg5TWRncjh5UzR2QUpEcUZfTjVySURGUXdFSnhqY3NaMDZFcVJTUXZyMm9aNFBxUmNHeVMtd1lkOElVb2tENzdzbW9PQ1FJNFlIOWYwWVNtMEt1c25sUHBMc0FWaGhwZEhyNkhNUU5LWHJzSEhiQzI2SmJZNlUxdVBuSkRsem1qRWNHeFhYVkdFZndhR09DaFRNSjIySFVXMjVNbzQyNmczak0?oc=5",
-   "source": "MediaPost",
    "summary": "",
    "relevance": "medium"
   },
@@ -6812,6 +6704,123 @@
    "date": "2026-10-16",
    "url": "https://news.google.com/rss/articles/CBMirgFBVV95cUxORjRyTVlsUVVuaDRpMkJ3bFVPOEx3RUxaYTZDakRPSkVDV2pIZkk3MHFwNEFLTjV0OUI4MEt1Wlc5UEw2RWE0UldlTFZqVnN0ZGxTSXlqTzAwMU5yRC1qWWdpLWVyR3FBVnUyQ3RteFRHYUFFaEtVWUItYjNNMnFmLWt6QjhfbGJiaVNXQXJTUy1lSnFkNUtaSkE2UEM1MV9TQ3BHU1UyM1Y0ak9LbEE?oc=5",
    "source": "SMBtech",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Braze",
+   "headline": "Salesforce, Braze, and the Battle for Customer Signals",
+   "date": "2026-10-27",
+   "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE4xYVpaUm02cm8tTnhnR29QVGJyNmhNX2dHQk5ZWnNlSkxtOXFqWjhwNjVDc2tzWGNBb1NFaVpEaGNva241UTJMUHFrLVRsSGxyeUllS0x4MEJhWDQzTDVIUjFyRllDWUZyVGtGc191Rk1sbkpLZnRqUUQzOXY?oc=5",
+   "source": "CX Today",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Braze",
+   "headline": "Braze gives Salesforce more speed — and more overlap",
+   "date": "2026-10-27",
+   "url": "https://news.google.com/rss/articles/CBMie0FVX3lxTE1oenU2ek5jb3l2WUc3NmUxakh2dFFVeGowN093ZUwwLU51MFhRbnRyRGdtUjZuVE5IYTZIWUlPQXA4X2FsaG1zcDREUkltSEhnUGFaMGsxY1V6blF5T1ZQdDFpMnVYYnY1VUpGa282dkFVTjl0NUM5X0dJZw?oc=5",
+   "source": "MarTech",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Cloudera report finds 89% rethink AI use cases as costs rise",
+   "date": "2026-10-27",
+   "url": "https://news.google.com/rss/articles/CBMikwFBVV95cUxPemFHMERweW1ySTJDX0tBNktGZHJOLW8zaGZuTzdhNExjRnhaSUlXZVN1bFBlS1pCcDhhLUJDd2o4U3VIU0xmaFUtZFV4czhrSll0eDBkcnYyc1pSSG5JeHl0dnJ2VjRHbXR2cGtJaVZlN2dabWNvbkV4VHc1aTJBUHNkcktCWm5IRkN6Skx0cGNRU2M?oc=5",
+   "source": "Portal ERP",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Cloudera Launches Cloudera Blueprints, Bringing NVIDIA Agent Toolkit to Enterprise Data Anywhere",
+   "date": "2026-10-27",
+   "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxQUGhOSms0RjZnREdPTUhIVktWelY1X2x3eFJmcVUtalp6dmxYTEk4QTBiRTM0Qk1nd0o5MTdRUEpKcHhacWFYbnNWaFhxamY3MkZ4bXNzU1JoZ3ctSGl1VGxRUjM4b2JEZFZrU1YzSlljcnNoZEZrSS00X2lnaG8zR1dqOWFZb1l5dHZSSkhRWDQ5Y1RGSnZJN3lVZTZxa3NrZnZGVlk3R013TjJJaFVzMDJzN2pJcDFjMm5fM3ItanZzX1BJ?oc=5",
+   "source": "Koreabizwire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Cloudera Expands Enterprise AI Ecosystem to Power AI Factories Anywhere",
+   "date": "2026-10-27",
+   "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxQSDB2M09YU0ROUjN1QVB2Yy02dE1SWUlzTEhXZEJLTm1EVGhISFN3WkpNWEd4dldPLVJoWHZsRDQwUXdsTmp1YmNJMWRqOWlBREVHZmZUbEg5bGdHUnlXMDY3WjM5WWhfZ3Z5MnJHXzRxR21sSlYyRlAtUldMYjc1UUZZdHJhcUsyNzF6STZRQnZXcXVfRlluTFB0eHFaVUNFRjlpNQ?oc=5",
+   "source": "Koreabizwire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cyera",
+   "headline": "Kiteworks Integrates With Cyera To Enforce Data Classifications On Data In Motion And In Use",
+   "date": "2026-10-27",
+   "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxOSVQ5bFZZT25Oc1d4UkdtR3BLZkZxMDNHbW1xaWNNQlc5MlpBbVdidG9YaTJ6c1BLZW11cVdPTzFPTWZWQVA0V0RZNGlucUZJSFY4ZzFseVUxOGQ3QmFQTjZIbTZuNXdHeGRxWGxCaWVXRkxBb1JqRk5lb2tSdkJRVHRkejRwWDhYRlRncU1zR2p4SVpham5HTzRQZHk0YUo2MW56cUczLWdpUEtFQ0JhZmNUUElKU2VZajBLWjFuYw?oc=5",
+   "source": "Menafn",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Hex",
+   "headline": "Hex deletes its code, raises $100M to go \"agent-first",
+   "date": "2026-10-27",
+   "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxPV3VVc1lfWTZ6VTR5NzJUYllQWVdnVnRPcVZ5QWVBUnA4THN0V0wtUGtmM0YwQnRVYTUwN3R0ODBXUXM3dXhqTVBQblJBWkphUnZxMlJtU243cGlEaS1YZ2hwakdYdzd1WjYtNE9KUFhRVElSbGZSZGg0UGdxVFE3aXBNRFNEX2doYk95MQ?oc=5",
+   "source": "Dealroom",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Informatica",
+   "headline": "Data Quality Tools Market to Reach USD 12.15 Billion by 2035 at 15.60% CAGR | Informatica, IBM, SAP, Oracle",
+   "date": "2026-10-27",
+   "url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxORWg4TUVqY3RRcDI2SzB4dUhEMUthd2swT0hXWDBlcUxnOEZKSmw5UkdSanZCVFRjTWh6RU1lanFnRUhUbnhPeTBOU01zSzV2YUtSMkhCUW5xcDRHR0ViN251QVZRdkRpVUNSS1lyZkxMR096UWl3aVNWLURBbnhWYVk0MWswTHRGUFo1eUdMajhGQWhFcjJZMDkxTlY?oc=5",
+   "source": "openPR.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Microsoft",
+   "headline": "Anavsan APEX Brings Workload Governance for Snowflake to Microsoft Marketplace",
+   "date": "2026-10-27",
+   "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxPR09nVHUtNHF2UGRNZGhydmNkYXRWUHZaTngzeXlZak9qcXNPdXZZOFU2YnZYTGlLVGZIaVJER2JvS29Rd2llaU5tYmlrVmNfMUNBNktsdnI4cVZpX2l0ek9QRUdBcGdYWC1wcTRWWllPQzFmdlZwZkdBTjVOWGY4TDlKb2JObTRIcERNZmM4ZUxJbEZaSWFSN0FEN2pQVVN4R1c3SUp0ZVNXcURqQkhvbTFHMXk4MW9saEtGSw?oc=5",
+   "source": "EIN News",
+   "summary": "",
+   "relevance": "high"
+  },
+  {
+   "vendor": "NICE",
+   "headline": "AI Contact Center Analytics Market Is Going to Boom |• NICE • Genesys • Five9",
+   "date": "2026-10-27",
+   "url": "https://news.google.com/rss/articles/CBMilwFBVV95cUxNX2pLamNqSTA4MkZ1aG0wZ1ozUExUdzUtYW4ycV9sVVRnelg5WlZtbl85TzZSem85dVo4dFFGMHViYVhDbUhNUGhCWlgzQWR1WnljWWlzdWJpZjZvZTJoR1RudXA0bVF5WjRJeEFHa2Z4emVRMFZTYjJ6NHk2M3ZHSURqOXdHNVBDR2ZqdkJGSE5aU2RkTGtV?oc=5",
+   "source": "openPR.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Pantomath",
+   "headline": "India's IPO market could double to Rs 4 lakh crore in 2027: Pantomath's Mahavir Lunawat",
+   "date": "2026-10-27",
+   "url": "https://news.google.com/rss/articles/CBMi6wFBVV95cUxPWHB4SzRKM2tZa2hVaklvUWNBSXdhNElaSERPcENaNHQ4YlEwZTduRlUzdDh0Yi0yU0lyRGxSUWNpRGItaXp0ZGVVdERrZ3pJYlNDS1JZeVVhZVJXdDB5Sm9LWnZTZFEwQ09sLS1jemZTeGJuQTVNemNqeUczUURDVW9sM3lQNkFrbEhab055NXRUTkpXT050SDBMWHZrVjJMZGlqdHhYYTNzV3dLeXhCTnlITUFtVTc1eExtWURwT0N6Z1p6WkloRkVCQnBnVlRXTEVDWmJBWUZvRk1sSEoxNXV2T3VTamNNT2Fn0gHrAUFVX3lxTE9YcHhLNEoza1lraFVqSW9RY0FJd2E0SVpIRE9wQ1o0dDhiUTBlN25GVTN0OHRiLTJTSXJEbFJRY2lEYi1penRkZVV0RGtnekliU0NLUll5VWFlUld0MHlKb0tadlNkUTBDT2wtLWN6ZlN4Ym5BNU16Y2p5RzNRRENVb2wzeVA2QWtsSFpvTnk1dFROSldPTnRIMExYdmtWMkxkaWp0eFhhM3NXd0t5eEJOeUhNQW1VNzV4TG1ZRHBPQ3pnWnpaSWhGRUJCcGdWVFdMRUNaYkFZRm9GTWxISjE1dXZPdVNqY01PYWc?oc=5",
+   "source": "Moneycontrol.com",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Braze",
+   "headline": "How JD Sports and Braze Are Building The Future of Agentic Commerce",
+   "date": "2026-10-26",
+   "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQd2lFdmttUVh6V3o3UXduV1hUaHdPNVlSTk51M0FZbWpEZlVEclg3MnRtS1Q1WC04UmZIbkg5SS01dFdnR0VrcXRyZkVVU3ItN2pzam9aUWtJSkFnZUw5RTBBYTN6OUktbXZybFV3VFBMNGtSTkd3ejB4UFJMN05LQ0ZWeEF5RnhEaC1mNTdnVHRwb3VIdnh1TGktVlRUUVFMR09MenFULWZOZmFNRFF5Tk54LXl6aXF6?oc=5",
+   "source": "WWD",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Neo4j",
+   "headline": "Video: Grounding Enterprise AI: Introducing Neo4j Intelligraph with IBM",
+   "date": "2026-10-26",
+   "url": "https://news.google.com/rss/articles/CBMikwFBVV95cUxNcG9MbHlybjkwVVpFVFQ4M01QN1NGd09zbXhQSEZmZHFMdG1wcEY1cF9iODNMdDNIbzNmeHYtUjZxeFg5R0hJNVFSZHNneDRxTDFKMlpmV3FHbThDNjVUYy1ETVBTSlc1YzR6Slh3MmtPaWwwcm0zN2dJZDNtcExWVjRHbm5Ma1BSWUt1aUxkVnV2NE0?oc=5",
+   "source": "Neo4j",
    "summary": "",
    "relevance": "medium"
   }
