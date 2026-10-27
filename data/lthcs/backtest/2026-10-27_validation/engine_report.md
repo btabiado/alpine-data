@@ -62,7 +62,7 @@ Benchmark total return: **+0.1296**
     "top_k": 0
   },
   "params_hash": "49269b2e937d327d",
-  "price_hash": "dba1e0b3268c8522",
+  "price_hash": "3271429b8ee8e366",
   "profile_name": "long_only_buy",
   "short_bottom_quintile": false,
   "short_set": [],
