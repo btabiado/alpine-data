@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-27",
-  "generated_at": "2026-10-27T19:01:38Z",
+  "generated_at": "2026-10-27T19:20:52Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-27",
       "label": null,
-      "note": "40 coins; 0 buy+, 29 sell+",
-      "score": -72,
+      "note": "40 coins; 0 buy+, 27 sell+",
+      "score": -68,
       "stale": false
     },
     "defi_sentiment": {
@@ -83,7 +83,7 @@
       "as_of": "2026-10-27",
       "label": "Neutral",
       "note": null,
-      "score": -24.08,
+      "score": -23.9,
       "stale": false
     },
     "overview_sentiment": {
@@ -103,8 +103,8 @@
     "stocks_signal_breadth": {
       "as_of": "2026-10-27",
       "label": "DISTRIBUTION",
-      "note": "50 stocks; 7 buy+, 27 sell+",
-      "score": -40,
+      "note": "50 stocks; 7 buy+, 28 sell+",
+      "score": -42,
       "stale": false
     },
     "whale_sentiment_btc": {
