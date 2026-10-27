@@ -5,12 +5,12 @@
   "scores": [
     {
       "ticker": "BTC",
-      "lthcs_score": 65.8,
+      "lthcs_score": 66.1,
       "band": "high_confidence",
-      "drift_1d": 4.8,
-      "drift_7d": 1.5,
-      "drift_30d": -3.9,
-      "drift_90d": -0.1,
+      "drift_1d": 5.7,
+      "drift_7d": -1.3,
+      "drift_30d": -2.7,
+      "drift_90d": -2.3,
       "confidence_level": "medium",
       "data_quality_flags": [
         "thesis_unavailable",
@@ -18,8 +18,8 @@
       ],
       "subscores": {
         "adoption_momentum": 78.3,
-        "institutional_confidence": 66.2,
-        "financial_evolution": 60.3,
+        "institutional_confidence": 66.6,
+        "financial_evolution": 60.6,
         "thesis_integrity": null,
         "des": null
       },
@@ -49,8 +49,8 @@
       ],
       "weighted_components": [
         12.046153846153846,
-        30.553846153846152,
-        23.19230769230769,
+        30.738461538461532,
+        23.307692307692307,
         0.0,
         0.0
       ],
@@ -74,14 +74,14 @@
           }
         },
         "institutional_confidence": {
-          "sub_score": 66.2,
+          "sub_score": 66.6,
           "components": {
             "whale_cohort_pct_30d": null,
             "whale_subscore": null,
             "etf_flow_30d_usd_m": 1977.3,
             "etf_subscore": 82.955,
-            "price_change_pct_30d": -5.4015,
-            "momentum_subscore": 40.9975
+            "price_change_pct_30d": -4.811,
+            "momentum_subscore": 41.98166666666667
           },
           "data_quality": {
             "has_whale_cohort": false,
@@ -90,12 +90,12 @@
           }
         },
         "financial_evolution": {
-          "sub_score": 60.3,
+          "sub_score": 60.6,
           "components": {
             "miners_revenue_pct_30d": 1.015841638208728,
             "revenue_subscore": 51.269802047760905,
-            "market_cap_proxy_pct_30d": -5.4015,
-            "realized_subscore": 40.9975,
+            "market_cap_proxy_pct_30d": -4.811,
+            "realized_subscore": 41.98166666666667,
             "supply_inflation_pct_yr": 0.83,
             "supply_subscore": 91.7
           },
@@ -149,12 +149,12 @@
     },
     {
       "ticker": "ETH",
-      "lthcs_score": 47.5,
+      "lthcs_score": 48.3,
       "band": "monitor",
-      "drift_1d": -2.5,
-      "drift_7d": -6.8,
-      "drift_30d": -18.6,
-      "drift_90d": -12.5,
+      "drift_1d": -0.2,
+      "drift_7d": -8.9,
+      "drift_30d": -17.5,
+      "drift_90d": -11.7,
       "confidence_level": "low",
       "data_quality_flags": [
         "thesis_unavailable",
@@ -163,8 +163,8 @@
       ],
       "subscores": {
         "adoption_momentum": null,
-        "institutional_confidence": 32.0,
-        "financial_evolution": 63.0,
+        "institutional_confidence": 32.7,
+        "financial_evolution": 63.9,
         "thesis_integrity": null,
         "des": null
       },
@@ -195,8 +195,8 @@
       ],
       "weighted_components": [
         0.0,
-        16.0,
-        31.5,
+        16.35,
+        31.95,
         0.0,
         0.0
       ],
@@ -220,14 +220,14 @@
           }
         },
         "institutional_confidence": {
-          "sub_score": 32.0,
+          "sub_score": 32.7,
           "components": {
             "whale_cohort_pct_30d": null,
             "whale_subscore": null,
             "etf_flow_30d_usd_m": -881.6000000000001,
             "etf_subscore": 35.30666666666666,
-            "price_change_pct_30d": -13.8418,
-            "momentum_subscore": 26.930333333333333
+            "price_change_pct_30d": -12.7723,
+            "momentum_subscore": 28.712833333333332
           },
           "data_quality": {
             "has_whale_cohort": false,
@@ -236,12 +236,12 @@
           }
         },
         "financial_evolution": {
-          "sub_score": 63.0,
+          "sub_score": 63.9,
           "components": {
             "tx_volume_proxy_pct_30d": null,
             "revenue_subscore": null,
-            "market_cap_proxy_pct_30d": -13.8418,
-            "realized_subscore": 26.930333333333333,
+            "market_cap_proxy_pct_30d": -12.7723,
+            "realized_subscore": 28.712833333333332,
             "supply_inflation_pct_yr": 0.1,
             "supply_subscore": 99.0
           },
@@ -295,12 +295,12 @@
     },
     {
       "ticker": "SOL",
-      "lthcs_score": 26.4,
+      "lthcs_score": 28.1,
       "band": "review",
-      "drift_1d": -3.9,
-      "drift_7d": -14.4,
-      "drift_30d": -35.7,
-      "drift_90d": -24.4,
+      "drift_1d": -0.2,
+      "drift_7d": -19.9,
+      "drift_30d": -27.9,
+      "drift_90d": -23.1,
       "confidence_level": "low",
       "data_quality_flags": [
         "thesis_unavailable",
@@ -309,8 +309,8 @@
       ],
       "subscores": {
         "adoption_momentum": null,
-        "institutional_confidence": 19.0,
-        "financial_evolution": 32.0,
+        "institutional_confidence": 21.4,
+        "financial_evolution": 33.2,
         "thesis_integrity": null,
         "des": null
       },
@@ -341,8 +341,8 @@
       ],
       "weighted_components": [
         0.0,
-        8.142857142857144,
-        18.28571428571429,
+        9.17142857142857,
+        18.971428571428575,
         0.0,
         0.0
       ],
@@ -366,14 +366,14 @@
           }
         },
         "institutional_confidence": {
-          "sub_score": 19.0,
+          "sub_score": 21.4,
           "components": {
             "whale_cohort_pct_30d": null,
             "whale_subscore": null,
             "etf_flow_30d_usd_m": null,
             "etf_subscore": null,
-            "price_change_pct_30d": -18.613,
-            "momentum_subscore": 18.97833333333333
+            "price_change_pct_30d": -17.1317,
+            "momentum_subscore": 21.44716666666667
           },
           "data_quality": {
             "has_whale_cohort": false,
@@ -382,12 +382,12 @@
           }
         },
         "financial_evolution": {
-          "sub_score": 32.0,
+          "sub_score": 33.2,
           "components": {
             "tx_volume_proxy_pct_30d": null,
             "revenue_subscore": null,
-            "market_cap_proxy_pct_30d": -18.613,
-            "realized_subscore": 18.97833333333333,
+            "market_cap_proxy_pct_30d": -17.1317,
+            "realized_subscore": 21.44716666666667,
             "supply_inflation_pct_yr": 5.5,
             "supply_subscore": 44.99999999999999
           },
@@ -441,12 +441,12 @@
     },
     {
       "ticker": "ADA",
-      "lthcs_score": 36.0,
+      "lthcs_score": 37.4,
       "band": "weakening",
-      "drift_1d": -0.4,
-      "drift_7d": -19.1,
-      "drift_30d": -31.3,
-      "drift_90d": -20.5,
+      "drift_1d": 2.4,
+      "drift_7d": -24.7,
+      "drift_30d": -27.4,
+      "drift_90d": -20.3,
       "confidence_level": "low",
       "data_quality_flags": [
         "thesis_unavailable",
@@ -455,8 +455,8 @@
       ],
       "subscores": {
         "adoption_momentum": null,
-        "institutional_confidence": 16.4,
-        "financial_evolution": 50.7,
+        "institutional_confidence": 18.3,
+        "financial_evolution": 51.7,
         "thesis_integrity": null,
         "des": null
       },
@@ -487,8 +487,8 @@
       ],
       "weighted_components": [
         0.0,
-        7.0285714285714285,
-        28.97142857142858,
+        7.842857142857143,
+        29.542857142857148,
         0.0,
         0.0
       ],
@@ -512,14 +512,14 @@
           }
         },
         "institutional_confidence": {
-          "sub_score": 16.4,
+          "sub_score": 18.3,
           "components": {
             "whale_cohort_pct_30d": null,
             "whale_subscore": null,
             "etf_flow_30d_usd_m": null,
             "etf_subscore": null,
-            "price_change_pct_30d": -20.1738,
-            "momentum_subscore": 16.377
+            "price_change_pct_30d": -18.994,
+            "momentum_subscore": 18.343333333333334
           },
           "data_quality": {
             "has_whale_cohort": false,
@@ -528,12 +528,12 @@
           }
         },
         "financial_evolution": {
-          "sub_score": 50.7,
+          "sub_score": 51.7,
           "components": {
             "tx_volume_proxy_pct_30d": null,
             "revenue_subscore": null,
-            "market_cap_proxy_pct_30d": -20.1738,
-            "realized_subscore": 16.377,
+            "market_cap_proxy_pct_30d": -18.994,
+            "realized_subscore": 18.343333333333334,
             "supply_inflation_pct_yr": 1.5,
             "supply_subscore": 85.0
           },
@@ -587,12 +587,12 @@
     },
     {
       "ticker": "AVAX",
-      "lthcs_score": 28.1,
+      "lthcs_score": 28.7,
       "band": "review",
-      "drift_1d": -5.8,
-      "drift_7d": -25.4,
-      "drift_30d": -39.2,
-      "drift_90d": -23.8,
+      "drift_1d": -0.4,
+      "drift_7d": -14.9,
+      "drift_30d": -38.3,
+      "drift_90d": -23.1,
       "confidence_level": "low",
       "data_quality_flags": [
         "thesis_unavailable",
@@ -601,8 +601,8 @@
       ],
       "subscores": {
         "adoption_momentum": null,
-        "institutional_confidence": 17.3,
-        "financial_evolution": 36.2,
+        "institutional_confidence": 18.2,
+        "financial_evolution": 36.6,
         "thesis_integrity": null,
         "des": null
       },
@@ -633,8 +633,8 @@
       ],
       "weighted_components": [
         0.0,
-        7.4142857142857155,
-        20.68571428571429,
+        7.800000000000001,
+        20.914285714285718,
         0.0,
         0.0
       ],
@@ -658,14 +658,14 @@
           }
         },
         "institutional_confidence": {
-          "sub_score": 17.3,
+          "sub_score": 18.2,
           "components": {
             "whale_cohort_pct_30d": null,
             "whale_subscore": null,
             "etf_flow_30d_usd_m": null,
             "etf_subscore": null,
-            "price_change_pct_30d": -19.6129,
-            "momentum_subscore": 17.311833333333336
+            "price_change_pct_30d": -19.0886,
+            "momentum_subscore": 18.185666666666666
           },
           "data_quality": {
             "has_whale_cohort": false,
@@ -674,12 +674,12 @@
           }
         },
         "financial_evolution": {
-          "sub_score": 36.2,
+          "sub_score": 36.6,
           "components": {
             "tx_volume_proxy_pct_30d": null,
             "revenue_subscore": null,
-            "market_cap_proxy_pct_30d": -19.6129,
-            "realized_subscore": 17.311833333333336,
+            "market_cap_proxy_pct_30d": -19.0886,
+            "realized_subscore": 18.185666666666666,
             "supply_inflation_pct_yr": 4.5,
             "supply_subscore": 55.0
           },
@@ -733,12 +733,12 @@
     },
     {
       "ticker": "DOT",
-      "lthcs_score": 18.7,
+      "lthcs_score": 19.5,
       "band": "review",
-      "drift_1d": -9.0,
-      "drift_7d": -29.0,
-      "drift_30d": -44.9,
-      "drift_90d": -20.5,
+      "drift_1d": 2.1,
+      "drift_7d": -32.5,
+      "drift_30d": -43.8,
+      "drift_90d": -19.5,
       "confidence_level": "low",
       "data_quality_flags": [
         "thesis_unavailable",
@@ -747,8 +747,8 @@
       ],
       "subscores": {
         "adoption_momentum": null,
-        "institutional_confidence": 16.2,
-        "financial_evolution": 20.6,
+        "institutional_confidence": 17.3,
+        "financial_evolution": 21.2,
         "thesis_integrity": null,
         "des": null
       },
@@ -779,8 +779,8 @@
       ],
       "weighted_components": [
         0.0,
-        6.942857142857143,
-        11.771428571428574,
+        7.4142857142857155,
+        12.114285714285716,
         0.0,
         0.0
       ],
@@ -804,14 +804,14 @@
           }
         },
         "institutional_confidence": {
-          "sub_score": 16.2,
+          "sub_score": 17.3,
           "components": {
             "whale_cohort_pct_30d": null,
             "whale_subscore": null,
             "etf_flow_30d_usd_m": null,
             "etf_subscore": null,
-            "price_change_pct_30d": -20.2606,
-            "momentum_subscore": 16.232333333333333
+            "price_change_pct_30d": -19.6125,
+            "momentum_subscore": 17.3125
           },
           "data_quality": {
             "has_whale_cohort": false,
@@ -820,12 +820,12 @@
           }
         },
         "financial_evolution": {
-          "sub_score": 20.6,
+          "sub_score": 21.2,
           "components": {
             "tx_volume_proxy_pct_30d": null,
             "revenue_subscore": null,
-            "market_cap_proxy_pct_30d": -20.2606,
-            "realized_subscore": 16.232333333333333,
+            "market_cap_proxy_pct_30d": -19.6125,
+            "realized_subscore": 17.3125,
             "supply_inflation_pct_yr": 7.5,
             "supply_subscore": 25.0
           },
@@ -879,12 +879,12 @@
     },
     {
       "ticker": "LINK",
-      "lthcs_score": 39.8,
+      "lthcs_score": 41.6,
       "band": "weakening",
-      "drift_1d": -1.8,
-      "drift_7d": -18.4,
-      "drift_30d": -31.8,
-      "drift_90d": -22.0,
+      "drift_1d": 1.3,
+      "drift_7d": -25.9,
+      "drift_30d": -28.1,
+      "drift_90d": -19.9,
       "confidence_level": "low",
       "data_quality_flags": [
         "thesis_unavailable",
@@ -893,8 +893,8 @@
       ],
       "subscores": {
         "adoption_momentum": null,
-        "institutional_confidence": 16.6,
-        "financial_evolution": 58.3,
+        "institutional_confidence": 19.2,
+        "financial_evolution": 59.6,
         "thesis_integrity": null,
         "des": null
       },
@@ -925,8 +925,8 @@
       ],
       "weighted_components": [
         0.0,
-        7.377777777777779,
-        32.388888888888886,
+        8.533333333333333,
+        33.111111111111114,
         0.0,
         0.0
       ],
@@ -950,14 +950,14 @@
           }
         },
         "institutional_confidence": {
-          "sub_score": 16.6,
+          "sub_score": 19.2,
           "components": {
             "whale_cohort_pct_30d": null,
             "whale_subscore": null,
             "etf_flow_30d_usd_m": null,
             "etf_subscore": null,
-            "price_change_pct_30d": -20.0607,
-            "momentum_subscore": 16.5655
+            "price_change_pct_30d": -18.4726,
+            "momentum_subscore": 19.212333333333333
           },
           "data_quality": {
             "has_whale_cohort": false,
@@ -966,12 +966,12 @@
           }
         },
         "financial_evolution": {
-          "sub_score": 58.3,
+          "sub_score": 59.6,
           "components": {
             "tx_volume_proxy_pct_30d": null,
             "revenue_subscore": null,
-            "market_cap_proxy_pct_30d": -20.0607,
-            "realized_subscore": 16.5655,
+            "market_cap_proxy_pct_30d": -18.4726,
+            "realized_subscore": 19.212333333333333,
             "supply_inflation_pct_yr": 0.0,
             "supply_subscore": 100.0
           },
@@ -1029,8 +1029,8 @@
       "band": "review",
       "drift_1d": 0.0,
       "drift_7d": 0.0,
-      "drift_30d": -16.1,
-      "drift_90d": -32.3,
+      "drift_30d": -15.8,
+      "drift_90d": -32.2,
       "confidence_level": "low",
       "data_quality_flags": [
         "thesis_unavailable",
@@ -1171,12 +1171,12 @@
     },
     {
       "ticker": "XRP",
-      "lthcs_score": 40.6,
-      "band": "weakening",
+      "lthcs_score": 42.6,
+      "band": "monitor",
       "drift_1d": 4.7,
-      "drift_7d": -7.3,
-      "drift_30d": -25.5,
-      "drift_90d": -13.9,
+      "drift_7d": -14.1,
+      "drift_30d": -18.1,
+      "drift_90d": -12.2,
       "confidence_level": "low",
       "data_quality_flags": [
         "thesis_unavailable",
@@ -1185,8 +1185,8 @@
       ],
       "subscores": {
         "adoption_momentum": null,
-        "institutional_confidence": 25.8,
-        "financial_evolution": 62.9,
+        "institutional_confidence": 28.2,
+        "financial_evolution": 64.1,
         "thesis_integrity": null,
         "des": null
       },
@@ -1217,8 +1217,8 @@
       ],
       "weighted_components": [
         0.0,
-        15.48,
-        25.16,
+        16.919999999999998,
+        25.64,
         0.0,
         0.0
       ],
@@ -1242,14 +1242,14 @@
           }
         },
         "institutional_confidence": {
-          "sub_score": 25.8,
+          "sub_score": 28.2,
           "components": {
             "whale_cohort_pct_30d": null,
             "whale_subscore": null,
             "etf_flow_30d_usd_m": null,
             "etf_subscore": null,
-            "price_change_pct_30d": -14.5401,
-            "momentum_subscore": 25.766499999999997
+            "price_change_pct_30d": -13.0605,
+            "momentum_subscore": 28.232500000000005
           },
           "data_quality": {
             "has_whale_cohort": false,
@@ -1258,12 +1258,12 @@
           }
         },
         "financial_evolution": {
-          "sub_score": 62.9,
+          "sub_score": 64.1,
           "components": {
             "tx_volume_proxy_pct_30d": null,
             "revenue_subscore": null,
-            "market_cap_proxy_pct_30d": -14.5401,
-            "realized_subscore": 25.766499999999997,
+            "market_cap_proxy_pct_30d": -13.0605,
+            "realized_subscore": 28.232500000000005,
             "supply_inflation_pct_yr": 0.0,
             "supply_subscore": 100.0
           },
@@ -1317,12 +1317,12 @@
     },
     {
       "ticker": "DOGE",
-      "lthcs_score": 28.1,
+      "lthcs_score": 29.6,
       "band": "review",
-      "drift_1d": 1.0,
-      "drift_7d": -12.0,
-      "drift_30d": -28.8,
-      "drift_90d": -16.9,
+      "drift_1d": 2.8,
+      "drift_7d": -19.4,
+      "drift_30d": -25.1,
+      "drift_90d": -15.4,
       "confidence_level": "low",
       "data_quality_flags": [
         "thesis_unavailable",
@@ -1331,8 +1331,8 @@
       ],
       "subscores": {
         "adoption_momentum": null,
-        "institutional_confidence": 15.8,
-        "financial_evolution": 40.4,
+        "institutional_confidence": 17.9,
+        "financial_evolution": 41.4,
         "thesis_integrity": null,
         "des": null
       },
@@ -1363,8 +1363,8 @@
       ],
       "weighted_components": [
         0.0,
-        7.9,
-        20.2,
+        8.95,
+        20.7,
         0.0,
         0.0
       ],
@@ -1388,14 +1388,14 @@
           }
         },
         "institutional_confidence": {
-          "sub_score": 15.8,
+          "sub_score": 17.9,
           "components": {
             "whale_cohort_pct_30d": null,
             "whale_subscore": null,
             "etf_flow_30d_usd_m": null,
             "etf_subscore": null,
-            "price_change_pct_30d": -20.4928,
-            "momentum_subscore": 15.845333333333336
+            "price_change_pct_30d": -19.2687,
+            "momentum_subscore": 17.8855
           },
           "data_quality": {
             "has_whale_cohort": false,
@@ -1404,12 +1404,12 @@
           }
         },
         "financial_evolution": {
-          "sub_score": 40.4,
+          "sub_score": 41.4,
           "components": {
             "tx_volume_proxy_pct_30d": null,
             "revenue_subscore": null,
-            "market_cap_proxy_pct_30d": -20.4928,
-            "realized_subscore": 15.845333333333336,
+            "market_cap_proxy_pct_30d": -19.2687,
+            "realized_subscore": 17.8855,
             "supply_inflation_pct_yr": 3.5,
             "supply_subscore": 65.0
           },
