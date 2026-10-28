@@ -11,9 +11,11 @@ not a dead feed.
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 import subprocess
 import sys
+import urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -241,6 +243,226 @@ def test_check_file_is_not_gitignored():
         ["git", "check-ignore", "-q", "data/real_estate_check.json"],
         cwd=REPO_ROOT)
     assert proc.returncode != 0, "the check record is ignored; the daily job cannot commit it"
+
+
+_NOW = datetime(2026, 10, 28, 12, 0, tzinfo=timezone.utc)
+
+
+def _redfin_metro(**kpi_over):
+    dom = {"value": 41, "yoy_delta": 3, "spark": [40, 41]}
+    dom.update(kpi_over)
+    return {
+        "rank": 1,
+        "short_name": "New York",
+        "state": "NY",
+        "kpis": {
+            "days_on_market": dom,
+            "sale_to_list": {"value": 0.991, "yoy_pp": 0.1, "spark": [0.99]},
+            "pct_above_list": {"value": 0.22, "yoy_pp": -0.01, "spark": [0.2]},
+        },
+        "history_5y_monthly": {"labels": ["2026-08"]},
+    }
+
+
+def test_published_data_center_csv_parses_and_is_not_stale(fre, monkeypatch):
+    """The downloads page publishes a CSV, not the retired TSV."""
+    monkeypatch.setattr(fre, "METROS", [
+        {"rank": 1, "short": "New York", "state": "NY", "full": "New York"},
+        {"rank": 2, "short": "Austin", "state": "TX", "full": "Austin"},
+    ])
+    body = (
+        '"PERIOD END","REGION TYPE","REGION NAME",'
+        '"MEDIAN DAYS ON MARKET (DAYS)","AVERAGE SALE TO LIST RATIO (%)",'
+        '"SHARE SOLD ABOVE ORIGINAL LIST (%)"\n'
+        '2026-09-30,Metro,"New York, NY metro area",42,99.10,18.5\n'
+        '2026-08-31,Metro,"New York, NY metro area",NA,98.00,17.0\n'
+        '2026-09-30,Metro,"Austin, TX metro area",30,101.00,40\n'
+        '2026-09-30,State,"New York",1,1,1\n'
+        '2026-09-30,Metro,"Nowhere, ZZ metro area",9,9,9\n'
+    ).encode()
+    parsed = fre.parse_redfin_body(body, "Fri, 16 Oct 2026 17:47:23 GMT")
+    assert parsed["error"] is None
+    assert parsed["stale"] is False
+    assert set(parsed["by_rank"]) == {1, 2}
+    assert parsed["by_rank"][1]["2026-09-30"]["median_dom"] == 42.0
+    assert parsed["by_rank"][1]["2026-09-30"]["avg_sale_to_list"] == 99.10
+    assert parsed["by_rank"][1]["2026-08-31"]["median_dom"] is None
+    assert parsed["dates"] == ["2026-08-31", "2026-09-30"]
+    block = fre.redfin_source_block(parsed)
+    assert "stale" not in block
+    assert block["rows"] == 2
+    assert block["last_modified"] == "Fri, 16 Oct 2026 17:47:23 GMT"
+
+
+def test_legacy_tsv_still_keeps_only_all_residential(fre, monkeypatch):
+    monkeypatch.setattr(fre, "METROS", [
+        {"rank": 1, "short": "New York", "state": "NY", "full": "New York"},
+    ])
+    tsv = (
+        "PERIOD_END\tREGION_TYPE\tREGION\tPROPERTY_TYPE\t"
+        "MEDIAN_DOM\tAVG_SALE_TO_LIST\tSOLD_ABOVE_LIST\n"
+        "2026-09-30\tmetro\tNew York, NY metro area\tAll Residential\t42\t0.99\t0.18\n"
+        "2026-09-30\tmetro\tNew York, NY metro area\tCondo/Co-op\t10\t1\t1\n"
+    ).encode()
+    parsed = fre.parse_redfin_body(tsv)
+    assert parsed["by_rank"][1]["2026-09-30"]["median_dom"] == 42.0
+    import gzip
+    parsed_gz = fre.parse_redfin_body(gzip.compress(tsv))
+    assert parsed_gz["by_rank"][1]["2026-09-30"]["sold_above_list"] == 0.18
+
+
+def test_http_403_carries_forward_labeled_stale_redfin(fre, monkeypatch, tmp_path, capsys):
+    """Audit 2026-10-28: the legacy TSV 403'd and the safety check failed the job.
+
+    A blocked download must not publish an empty Redfin slice, and it must
+    not fail the run while the last good rows are still inside the carry
+    window. Zillow's row count is free to move.
+    """
+    monkeypatch.setattr(fre, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(fre, "METROS", [
+        {"rank": 1, "short": "New York", "state": "NY", "full": "New York, NY"},
+    ])
+
+    def deny(url, timeout=None, **kwargs):
+        raise urllib.error.HTTPError(
+            getattr(url, "full_url", str(url)), 403, "Forbidden", None,
+            io.BytesIO(b"AccessDenied"))
+
+    monkeypatch.setattr(fre.urllib.request, "urlopen", deny)
+    # A leftover cache must not turn the 403 into an unlabeled fresh read.
+    (tmp_path / "redfin_housing_market_monthly_metros.csv").write_bytes(
+        b"PERIOD_END,REGION_TYPE,REGION_NAME\n")
+    loaded = fre.load_redfin(no_cache=False)
+    assert loaded["by_rank"] == {}
+    assert "403" in (loaded["error"] or "")
+
+    previous = _snap()
+    previous["sources"]["redfin"]["rows"] = 1
+    previous["metros"] = [_redfin_metro()]
+    carried = fre.carry_forward_redfin(previous, reason=loaded["error"], now=_NOW)
+    assert carried is not None
+    assert carried["stale"] is True
+    assert carried["rows"] == 1
+    assert carried["as_of"] == "2026-10-06T13:03:57Z"
+    assert carried["by_rank"] == {}
+
+    fre.warn_degraded_redfin(carried)
+    assert "::warning title=Redfin source degraded::" in capsys.readouterr().out
+
+    metro = fre.build_metro(
+        {"rank": 1, "short": "New York", "state": "NY", "full": "New York, NY"},
+        {}, carried)
+    assert metro["kpis"]["days_on_market"]["value"] == 41
+    assert metro["kpis"]["days_on_market"]["stale"] is True
+    assert metro["kpis"]["sale_to_list"]["stale"] is True
+    assert metro["kpis"]["zhvi"]["value"] is None
+
+    payload = _snap(metros=[_redfin_metro(stale=True)])
+    payload["sources"]["zillow"]["rows"] = 890
+    payload["sources"]["redfin"] = fre.redfin_source_block(carried)
+    assert payload["sources"]["redfin"]["stale"] is True
+    assert payload["sources"]["redfin"]["fetched_at"] == "2026-10-06T13:03:57Z"
+    assert payload["sources"]["redfin"]["as_of"] == "2026-10-06T13:03:57Z"
+    assert fre.payload_problems(payload, previous, now=_NOW) == []
+
+    # A second blocked run must not restart the clock from "now".
+    again_prev = json.loads(json.dumps(previous))
+    again_prev["sources"]["redfin"]["stale"] = True
+    again_prev["sources"]["redfin"]["as_of"] = "2026-10-01T00:00:00Z"
+    again_prev["sources"]["redfin"]["fetched_at"] = "2026-10-28T12:00:00Z"
+    again = fre.carry_forward_redfin(again_prev, reason="fetch failed: HTTP Error 403", now=_NOW)
+    assert again["as_of"] == "2026-10-01T00:00:00Z"
+
+
+def test_expired_or_unlabeled_redfin_is_still_refused(fre):
+    previous = _snap()
+    previous["metros"] = [_redfin_metro()]
+    old = json.loads(json.dumps(previous))
+    old["sources"]["redfin"]["fetched_at"] = "2026-08-01T00:00:00Z"
+    assert fre.carry_forward_redfin(old, reason="fetch failed: HTTP Error 403", now=_NOW) is None
+
+    zero = _snap()
+    zero["sources"]["redfin"]["rows"] = 0
+    problems = fre.payload_problems(zero, old, now=_NOW)
+    assert any("redfin contributed 0 rows" in p for p in problems)
+    assert any("redfin rows collapsed from 878 to 0" in p for p in problems)
+    assert any("carry-forward expired" in p for p in problems)
+
+    unlabeled = _snap()
+    unlabeled["sources"]["redfin"]["stale"] = True
+    refused = fre.payload_problems(unlabeled, previous, now=_NOW)
+    assert any("no original as_of" in p for p in refused)
+    assert not any("contributed 0 rows" in p for p in refused)
+
+    expired = _snap()
+    expired["sources"]["redfin"]["stale"] = True
+    expired["sources"]["redfin"]["as_of"] = "2026-08-01T00:00:00Z"
+    expired["sources"]["redfin"]["rows"] = 878
+    assert any("refusing to publish" in p
+               for p in fre.payload_problems(expired, previous, now=_NOW))
+
+    # Zillow going to zero still fails the run even when Redfin was carried.
+    carried_ok = _snap()
+    carried_ok["sources"]["redfin"]["stale"] = True
+    carried_ok["sources"]["redfin"]["as_of"] = "2026-10-06T13:03:57Z"
+    carried_ok["sources"]["zillow"]["rows"] = 0
+    zillow_problems = fre.payload_problems(carried_ok, previous, now=_NOW)
+    assert any("zillow contributed 0 rows" in p for p in zillow_problems)
+    assert any("zillow rows collapsed" in p for p in zillow_problems)
+
+
+def test_check_record_reports_a_degraded_redfin_warning(fre, tmp_path, monkeypatch):
+    monkeypatch.setattr(fre, "CHECK_PATH", tmp_path / "real_estate_check.json")
+    payload = _snap()
+    payload["sources"]["redfin"]["stale"] = True
+    payload["sources"]["redfin"]["as_of"] = "2026-10-06T13:03:57Z"
+    payload["sources"]["redfin"]["stale_reason"] = "fetch failed: HTTP Error 403: Forbidden"
+    rec = fre.write_check_record(
+        payload, payload_changed=True, checked_at="2026-10-28T12:00:00Z",
+        snapshot_generated_at="2026-10-28T12:00:00Z")
+    assert rec["sources"]["redfin"]["stale"] is True
+    assert rec["sources"]["redfin"]["as_of"] == "2026-10-06T13:03:57Z"
+    assert rec["warnings"][0]["source"] == "redfin"
+    assert rec["warnings"][0]["level"] == "warning"
+    assert "403" in rec["warnings"][0]["message"]
+
+
+def test_data_health_warns_on_a_stale_redfin_source_without_failing(fre):
+    dh = _load("data_health")
+    payload = _snap()
+    assert dh.real_estate_degraded_sources(payload) == []
+    payload["sources"]["redfin"]["stale"] = True
+    payload["sources"]["redfin"]["as_of"] = "2026-10-06T13:03:57Z"
+    payload["sources"]["redfin"]["stale_reason"] = "fetch failed: HTTP Error 403: Forbidden"
+    rows = dh.real_estate_degraded_sources(payload)
+    assert len(rows) == 1
+    assert rows[0].status == dh.DEGRADED
+    assert rows[0].fails is False
+    assert dh.DEGRADED not in dh.FAILING_STATUSES
+    text = dh.render_text(rows, [])
+    assert "DEGRADED SOURCE" in text
+    assert "carried forward" in text
+    assert "FAIL:" not in text
+    assert "degraded-source warning" in text
+
+
+def test_probe_uses_the_published_redfin_csv(fre):
+    spec = importlib.util.spec_from_file_location(
+        "api_status_for_redfin", REPO_ROOT / "api_status.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    row = next(r for r in mod.TARGETS if r["label"] == "Redfin Data Center")
+    assert row["url"] == fre.REDFIN_URL
+    assert row["url"].endswith("redfin_data_center/housing_market/monthly/all_metros.csv")
+    assert "redfin_metro_market_tracker.tsv000.gz" not in row["url"]
+
+
+def test_pages_show_a_carried_redfin_as_stale():
+    page = (REPO_ROOT / "real_estate" / "index.html").read_text(encoding="utf-8")
+    app = (REPO_ROOT / "app.py").read_text(encoding="utf-8")
+    assert "stale, carried from" in page
+    assert "data.stale" in page
+    assert "stale, carried from" in app
 
 
 def test_manifest_watches_the_check_and_not_daily_snapshot_commits(fre):

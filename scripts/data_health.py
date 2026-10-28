@@ -750,6 +750,12 @@ SPARSE = "sparse"
 # limit exists so NYPD's quarterly drop does not. See
 # CITY_LAST_UPDATED_WARN_H.
 AGED = "aged"
+# One upstream inside an otherwise healthy snapshot was carried forward
+# from the last good fetch and labeled stale. The daily job exits 0 and
+# emits a warning; this row is the same fact for the data-health report.
+# It is not a failing status: the rest of the snapshot still updated, and
+# an expired carry fails the fetcher (the snapshot is then not written).
+DEGRADED = "degraded"
 # History continuity (evaluate_history). GAP covers missing periods AND
 # required fields that are null; DISCLOSED is a gap health/known_gaps.json
 # already explains as unfillable, reported but never failed.
@@ -1149,6 +1155,52 @@ def city_context_gaps(payload: dict) -> list[Result]:
     return out
 
 
+def real_estate_degraded_sources(payload: dict) -> list[Result]:
+    """Redfin (or any labeled source) carried forward inside real_estate.json.
+
+    The fetcher sets ``sources.redfin.stale`` and ``as_of`` when the Data
+    Center download contributed 0 rows and the last good rows were still
+    inside the carry window. data-health reports that as a warning. A
+    snapshot with no stale flag is not this finding.
+    """
+    sources = payload.get("sources") if isinstance(payload, dict) else None
+    if not isinstance(sources, dict):
+        return []
+    src = sources.get("redfin")
+    if not isinstance(src, dict) or not src.get("stale"):
+        return []
+    owner = ""
+    feed = MANIFEST.get("data/real_estate.json")
+    if feed is not None:
+        owner = feed.owner
+    as_of = src.get("as_of") or src.get("carried_forward_from") or "unknown date"
+    reason = src.get("stale_reason") or "upstream unavailable"
+    rows = src.get("rows")
+    return [Result(
+        "data/real_estate.json [source: redfin]",
+        DEGRADED,
+        owner=owner,
+        detail=(f"Redfin is a degraded source: {rows} rows carried forward "
+                f"from {as_of} ({reason}). The job warns and still updates "
+                f"the other sources. An unlabeled collapse, or a carry past "
+                f"its age limit, is refused by the fetcher and is not this row."),
+    )]
+
+
+def evaluate_real_estate_degraded() -> list[Result]:
+    """Read the on-disk snapshot. A missing file is the freshness probe's problem."""
+    path = REPO_ROOT / "data" / "real_estate.json"
+    if not path.is_file():
+        return []
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    if not isinstance(payload, dict):
+        return []
+    return real_estate_degraded_sources(payload)
+
+
 def evaluate_city_context_gaps() -> list[Result]:
     """Read the on-disk ``data-city.json`` and report one-city context holes.
 
@@ -1388,6 +1440,7 @@ def evaluate(mode: str, today: date | None = None,
 
     results.extend(evaluate_city_context_gaps())
     results.extend(evaluate_city_last_updated(now))
+    results.extend(evaluate_real_estate_degraded())
     return results
 
 
@@ -1544,6 +1597,9 @@ def render_text(results: list[Result], notes: list[str]) -> str:
 
     section(OK, "fresh", "OK     ")
     section(SKIPPED, "not monitored here - declared and justified", "SKIP   ")
+    section(DEGRADED,
+            "DEGRADED SOURCE - carried forward and labeled stale, not a failed run",
+            "WARN   ")
     section(SUPPRESSED, "suppressed - reported, not failing", "MUTED  ")
     section(STALE, "STALE - regressed, needs attention", "STALE  ")
     section(EXPIRED, "EXPIRED SUPPRESSION - mute ran out", "EXPIRED")
@@ -1571,9 +1627,13 @@ def render_text(results: list[Result], notes: list[str]) -> str:
         parts.extend(f"  {n}" for n in notes)
 
     failing = [r for r in results if r.fails]
+    degraded = [r for r in results if r.status == DEGRADED]
     parts.append("")
     if failing:
         parts.append(f"FAIL: {len(failing)} feed(s) unhealthy.")
+    elif degraded:
+        parts.append(
+            f"OK: all feeds healthy, with {len(degraded)} degraded-source warning(s).")
     else:
         parts.append("OK: all feeds healthy.")
     return "\n".join(parts)

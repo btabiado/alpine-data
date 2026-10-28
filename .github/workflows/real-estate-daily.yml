@@ -57,6 +57,11 @@ jobs:
         # FRED-backed series populate when the secret is configured.
         # Non-zero exit fails the workflow on purpose: a dead fetcher
         # should be visible in the Actions UI, not silently swallowed.
+        # A Redfin-only miss is not that failure. The fetcher carries the
+        # last good Redfin rows forward, labels them stale, lets Zillow and
+        # FRED update, and emits a ::warning. The run still exits 1 when the
+        # carry is past its age limit, the rows are unlabeled, or another
+        # source collapses.
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: python scripts/fetch_real_estate.py

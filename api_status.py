@@ -294,7 +294,11 @@ TARGETS: list[dict] = [
     # ---- real estate: Zillow + Redfin keyless CSVs, Census gazetteer for metro
     # coords. These are large files; the probe GET reads one byte then closes.
     {"label": "Zillow Research",      "category": "Real Estate",   "url": "https://files.zillowstatic.com/research/public_csvs/zhvi/Metro_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv", "key_env": None},
-    {"label": "Redfin Data Center",   "category": "Real Estate",   "url": "https://redfin-public-data.s3.us-west-2.amazonaws.com/redfin_market_tracker/redfin_metro_market_tracker.tsv000.gz", "key_env": None},
+    # The legacy redfin_market_tracker/*.tsv000.gz objects have answered
+    # S3 AccessDenied (HTTP 403) since 2026-10-27. The Data Center downloads
+    # page publishes this monthly metro CSV instead; it is the same URL
+    # scripts/fetch_real_estate.py fetches. Probe that, not the retired TSV.
+    {"label": "Redfin Data Center",   "category": "Real Estate",   "url": "https://redfin-public-data.s3.us-west-2.amazonaws.com/redfin_data_center/housing_market/monthly/all_metros.csv", "key_env": None},
     {"label": "Census Gazetteer",     "category": "Real Estate",   "url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_cbsa_national.zip", "key_env": None},
     # ---- metals (FRED + Yahoo are shared with crypto/macro and probed above):
     # IMF SDMX central-bank gold holdings, USGS ScienceBase mine production.

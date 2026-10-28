@@ -518,6 +518,11 @@
         }
 
         const spark = sparkSVG(data.spark, catColor(def.cat));
+        const redfinSrc = (STATE.data && STATE.data.sources && STATE.data.sources.redfin) || {};
+        const staleDay = reIsoDay(redfinSrc.as_of || redfinSrc.fetched_at);
+        const staleNote = data.stale
+          ? `<div class="kpi-secondary">stale${staleDay ? ' · carried from ' + escapeHtml(staleDay) : ''}</div>`
+          : '';
 
         target.insertAdjacentHTML('beforeend', `
           <div class="kpi-card cat-${def.cat}">
@@ -525,6 +530,7 @@
             <div class="kpi-value">${escapeHtml(fmtValue(value, def.fmt))}</div>
             <div class="kpi-delta ${dCls}">${escapeHtml(d.txt)}</div>
             ${secondary}
+            ${staleNote}
             <div class="kpi-spark">${spark}</div>
           </div>
         `);
@@ -901,6 +907,10 @@
       };
     }
     function reDay(v) { const ms = reDayUTC(v); return ms == null ? null : reYmd(ms); }
+    function reIsoDay(v) {
+      const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(v == null ? '' : v).trim());
+      return m ? m[1] : '';
+    }
 
     // Paint the composite stamp from the per-source vintages.
     function renderFreshness(data) {
@@ -908,10 +918,16 @@
       const noteEl = document.getElementById('fresh-note');
       const s = (data && data.sources) || {};
       const comps = [
-        { label: 'Zillow', date: reDay(s.zillow && s.zillow.last_modified) },
-        { label: 'Redfin', date: reDay(s.redfin && s.redfin.last_modified) },
-        { label: 'FRED', date: reDay(s.fred && s.fred.last_modified) },
-      ];
+        { label: 'Zillow', key: 'zillow', date: reDay(s.zillow && s.zillow.last_modified) },
+        { label: 'Redfin', key: 'redfin', date: reDay(s.redfin && s.redfin.last_modified) },
+        { label: 'FRED', key: 'fred', date: reDay(s.fred && s.fred.last_modified) },
+      ].map(c => {
+        const src = s[c.key] || {};
+        return Object.assign(c, {
+          stale: !!src.stale,
+          asOf: reIsoDay(src.as_of || src.carried_forward_from || src.fetched_at),
+        });
+      });
       const dated = comps.filter(c => c.date).map(c => c.date);
       // fMin, never fMax: the table is only as current as its stalest vendor.
       const oldest = dated.length ? dated.slice().sort()[0] : null;
@@ -923,24 +939,30 @@
       const spread = (oldest && newest)
         ? Math.round((reDayUTC(newest) - reDayUTC(oldest)) / 86400000) : null;
       el.title = 'Stamped with the OLDEST source vintage, not the newest.\n\n'
-        + comps.map(c => c.label + ': ' + (c.date || 'no published date')).join('\n')
+        + comps.map(c => c.label + ': ' + (c.date || 'no published date')
+            + (c.stale ? ' (stale, carried from ' + (c.asOf || 'unknown date') + ')' : '')).join('\n')
         + (data && data.generated_at
           ? '\n\nWorkflow last fetched ' + data.generated_at
             + ' — that is a fetch time, not an observation.'
           : '')
         + '\n\nThis is the age of the DATA, not of the page build.';
-      if ((spread != null && spread > 3) || undated > 0) {
+      const anyStale = comps.some(c => c.stale);
+      if ((spread != null && spread > 3) || undated > 0 || anyStale) {
         const leads = [];
         if (spread != null && spread > 3) leads.push('sources span ' + spread + 'd');
         if (undated > 0) leads.push(undated + ' undated');
+        if (anyStale) leads.push('stale source carried forward');
         noteEl.innerHTML = '<span class="re-freshnote__lead">' + leads.join(' · ') + '</span>'
           + comps
             .slice()
             .sort((a, b) => (!a.date ? -1 : !b.date ? 1 : (a.date < b.date ? -1 : 1)))
             .map(c => {
-              const tone = c.date ? reFreshness(c.date, {}).tone : 'none';
+              const tone = c.stale ? 'bad' : (c.date ? reFreshness(c.date, {}).tone : 'none');
+              const staleBit = c.stale
+                ? ' stale, carried from ' + (c.asOf || 'unknown date')
+                : '';
               return '<span class="re-freshnote__pill re-fresh--' + tone + '">'
-                + c.label + ' ' + (c.date || '—') + '</span>';
+                + c.label + ' ' + (c.date || '—') + staleBit + '</span>';
             })
             .join('');
         noteEl.hidden = false;
@@ -954,7 +976,14 @@
       const s = STATE.data.sources || {};
       const parts = [];
       if (s.zillow && s.zillow.rows != null) parts.push(`Zillow: ${s.zillow.rows} rows`);
-      if (s.redfin && s.redfin.rows != null) parts.push(`Redfin: ${s.redfin.rows} rows`);
+      if (s.redfin && s.redfin.rows != null) {
+        let bit = `Redfin: ${s.redfin.rows} rows`;
+        if (s.redfin.stale) {
+          const day = reIsoDay(s.redfin.as_of || s.redfin.carried_forward_from || s.redfin.fetched_at);
+          bit += ` (stale, carried from ${day || 'unknown date'})`;
+        }
+        parts.push(bit);
+      }
       if (s.fred && s.fred.national_permits_yoy_pct != null) {
         const v = s.fred.national_permits_yoy_pct;
         parts.push(`FRED national permits YoY: ${v > 0 ? '+' : ''}${v.toFixed(1)}%`);
