@@ -1,19 +1,19 @@
 {
   "as_of": "2026-10-28",
-  "generated_at": "2026-10-28T05:59:00Z",
+  "generated_at": "2026-10-28T08:20:52Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-28",
       "label": null,
-      "note": "40 coins; 0 buy+, 27 sell+",
-      "score": -68,
+      "note": "40 coins; 1 buy+, 24 sell+",
+      "score": -57,
       "stale": false
     },
     "defi_sentiment": {
       "as_of": "2026-10-28",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": -3,
+      "score": -5,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -55,21 +55,21 @@
       "as_of": "2026-10-27",
       "label": "CROWDED LONGS",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 26,
+      "score": 27,
       "stale": false
     },
     "futures_sentiment_link": {
       "as_of": "2026-10-27",
       "label": "CROWDED LONGS",
       "note": "LINK; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 25,
+      "score": 29,
       "stale": false
     },
     "futures_sentiment_ltc": {
       "as_of": "2026-10-27",
       "label": "BALANCED",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": -12,
+      "score": -13,
       "stale": false
     },
     "lthcs_composite": {
@@ -90,7 +90,7 @@
       "as_of": "2026-10-28",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": -6,
+      "score": -5,
       "stale": false
     },
     "poc_signal_breadth": {
@@ -103,7 +103,7 @@
     "stocks_signal_breadth": {
       "as_of": "2026-10-27",
       "label": "DISTRIBUTION",
-      "note": "50 stocks; 6 buy+, 25 sell+",
+      "note": "50 stocks; 7 buy+, 26 sell+",
       "score": -38,
       "stale": false
     },
