@@ -77,6 +77,15 @@ And one hole the old script shared with the dashboard it was guarding:
         oldest input. It lives in build_health_status, not here, so /health/
         and this watchdog resolve age through identical code.
 
+        That file-level age is still one number. data-city.json's limit is
+        160 days so NYPD's quarterly complaint file does not fail the check
+        in the weeks before a drop, and a monthly city can sit well past a
+        ~2 month publication lag without the payload leaving "ok". Each
+        city's data_health.last_updated is therefore also judged on its own.
+        Older than CITY_LAST_UPDATED_WARN_H (120 days: the ~2 month lag a
+        monthly series normally shows, plus about a month of slack) it is
+        AGED — reported here and as a daily-audit P2, never a failure.
+
 And one hole freshness cannot see at all:
 
   7. A FRESH NEWEST POINT SAID NOTHING ABOUT THE HISTORY BEHIND IT.
@@ -159,6 +168,7 @@ from build_health_status import (  # noqa: E402  (path set above)
     AgeProbe,
     _parse_date_value,
     _select,
+    _value_age_h,
     humanize_age,
     nested_age_h,
     resolve_age,
@@ -735,6 +745,11 @@ OK, STALE, UNKNOWN, MISSING, UNWATCHED, SUPPRESSED, EXPIRED, SKIPPED = (
 # status: the daily audit reports it at P2. Putting it in FAILING_STATUSES
 # would page the same gap as a P0, which is louder than a one-city hole.
 SPARSE = "sparse"
+# One city's scored month is past a normal monthly publication lag. Not a
+# failing status either: the file-level 160d limit is what pages, and that
+# limit exists so NYPD's quarterly drop does not. See
+# CITY_LAST_UPDATED_WARN_H.
+AGED = "aged"
 # History continuity (evaluate_history). GAP covers missing periods AND
 # required fields that are null; DISCLOSED is a gap health/known_gaps.json
 # already explains as unfillable, reported but never failed.
@@ -758,6 +773,29 @@ CITY_CONTEXT_METRICS: tuple[str, ...] = (
     "aqi",
     "context_score",
 )
+
+# Per-city warning for cities[].data_health.last_updated. That stamp is the
+# first instant of the oldest SCORED month (city/pulse.py), not the day the
+# portal published it and not the file's generated_at.
+#
+# Cadence. The scored feeds are monthly municipal series (311, crime,
+# permits). A healthy one lags about two months the way BLS-type monthly
+# data does: the newest complete month is already last month, and several
+# sources hold the number for another month. Measured from the month-start
+# stamp, that band is 59-92 days (build_health_status, the data-city.json
+# fresh line). Chicago and Los Angeles on 2026-10-28 sit at 2026-08-01,
+# about 88 days — the slow end of a normal lag, and not a warning.
+#
+# 120 days is that band plus about a month of slack, so a late monthly
+# release does not flicker a warning, and a month that is a further quarter
+# behind does. New York City the same day is 2026-06-01, about 150 days,
+# because NYPD Complaint Data Current (YTD) publishes whole quarters and
+# was still on 2026-06-30. That warns. It does not fail: the file-level
+# stale limit stays 160 days so the same quarterly wait does not page.
+#
+# A null last_updated is not old. It means no scored feed reported a
+# period, which the city's own Pulse already says by having no score.
+CITY_LAST_UPDATED_WARN_H = 120 * 24
 
 # TSA's checkpoint date is often a few days behind over a weekend or holiday
 # because TSA has not published, not because aviation-tsa.yml stopped. A lag
@@ -1127,6 +1165,80 @@ def evaluate_city_context_gaps() -> list[Result]:
     return city_context_gaps(payload)
 
 
+def _city_label(city: dict) -> str:
+    cid = city.get("id")
+    if isinstance(cid, str) and cid.strip():
+        return cid.strip()
+    name = city.get("name")
+    if isinstance(name, str) and name.strip():
+        return name.strip()
+    return "?"
+
+
+def city_last_updated_warnings(payload: dict, now_ts: float) -> list[Result]:
+    """Cities whose scored month is past a normal monthly publication lag.
+
+    One Result per city, status AGED. Not a failure: the file-level 160d
+    limit still decides STALE. A null or unreadable last_updated is skipped
+    — absence is not age, and a stamp this check cannot parse is already
+    the file-level probe's problem when every city lacks one.
+    """
+    cities = payload.get("cities") if isinstance(payload, dict) else None
+    if not isinstance(cities, list):
+        return []
+    owner = MANIFEST["data-city.json"].owner if "data-city.json" in MANIFEST else ""
+    limit = CITY_LAST_UPDATED_WARN_H
+    out: list[Result] = []
+    for city in cities:
+        if not isinstance(city, dict):
+            continue
+        health = city.get("data_health")
+        if not isinstance(health, dict):
+            continue
+        raw = health.get("last_updated")
+        if not isinstance(raw, str) or not raw.strip():
+            continue
+        dt = _parse_date_value(raw)
+        if dt is None:
+            continue
+        age_h = _value_age_h(raw, dt, now_ts)
+        if age_h <= limit:
+            continue
+        label = _city_label(city)
+        stamp = dt.date().isoformat()
+        out.append(Result(
+            f"data-city.json [city: {label} last_updated]",
+            AGED,
+            age_h=age_h,
+            limit_h=limit,
+            owner=owner,
+            detail=(
+                f"{label} data_health.last_updated {stamp} is "
+                f"{humanize_age(age_h)} old (warn after {humanize_age(limit)}). "
+                f"A monthly series that lags about two months stays under this; "
+                f"this is a warning, not a failure."
+            ),
+            source="cities[].data_health.last_updated",
+        ))
+    return out
+
+
+def evaluate_city_last_updated(now_ts: float) -> list[Result]:
+    """Read the on-disk ``data-city.json`` and warn on old per-city months.
+
+    A missing or unreadable file is not a second failure: the freshness
+    probe already reports that.
+    """
+    path = REPO_ROOT / "data-city.json"
+    if not path.is_file():
+        return []
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return []
+    return city_last_updated_warnings(payload, now_ts)
+
+
 def evaluate(mode: str, today: date | None = None,
              now_ts: float | None = None, history: bool = True) -> list[Result]:
     now = now_ts if now_ts is not None else datetime.now(timezone.utc).timestamp()
@@ -1275,6 +1387,7 @@ def evaluate(mode: str, today: date | None = None,
                                       cadence=feed.cadence))
 
     results.extend(evaluate_city_context_gaps())
+    results.extend(evaluate_city_last_updated(now))
     return results
 
 
@@ -1445,6 +1558,10 @@ def render_text(results: list[Result], notes: list[str]) -> str:
             "SPARSE - a city metric is empty where other cities have it "
             "(daily audit P2, not a failure)",
             "SPARSE ")
+    section(AGED,
+            "AGED - a city's scored month is past a normal monthly lag "
+            "(daily audit P2, not a failure)",
+            "AGED   ")
     section(GAP, "HISTORY GAP - a day/month is missing or a required field is null",
             "GAP    ")
     section(DUPLICATE, "HISTORY DUPLICATE - one period recorded twice", "DUP    ")

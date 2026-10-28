@@ -115,11 +115,13 @@ THRESHOLDS: dict[str, Threshold] = {
     # feeds, so this is a statement about NYPD's cadence, not about Miami's
     # frozen 311 snapshot.
     #
-    # ACCEPTED COST: the limit applies to the oldest scored feed in every city,
-    # so a MONTHLY feed that freezes now takes up to ~160d, not ~100d, to trip.
-    # Watching cities separately would need a per-feed limit in city/pulse.py.
-    # The point of this entry stays the same: when it is red, it is red for a
-    # true reason.
+    # ACCEPTED COST of this hard limit: it applies to the oldest scored feed
+    # in every city, so a MONTHLY feed that freezes takes up to ~160d, not
+    # ~100d, to fail the file. The per-city warning in data_health
+    # (CITY_LAST_UPDATED_WARN_H, 120d, status "aged") is what surfaces that
+    # earlier. It is a daily-audit P2, not a failure, so a healthy quarterly
+    # wait still does not page. The point of this entry stays the same: when
+    # it is red, it is red for a true reason.
     "data-city.json": Threshold(62 * 24, 160 * 24),
     # data-aviation.json is a COMPOSITE of three vintages dated by its OLDEST
     # component (data_date), the FAA airman roll: an ANNUAL study stamped

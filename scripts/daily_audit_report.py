@@ -44,7 +44,10 @@ Severities:
         degraded upstream whose previous probe was already failed (or
         whose previous probe was not recorded), a paid-only HTTP 402, a
         feed whose source was checked and has not published newer data
-        (disclosed upstream lag), a transient Farside 5xx/timeout soft warning
+        (disclosed upstream lag), a city's scored month older than a normal
+        ~2 month monthly lag (data-city last_updated, status aged; the
+        file staying under its 160d limit is not a failure), a transient
+        Farside 5xx/timeout soft warning
         while the ETF flows CSV is under 2 trading days old (the job exits 0;
         this is not a workflow failure). A source whose current probe is
         degraded or down and whose previous probe was up is one
@@ -740,6 +743,25 @@ def data_problems(data: dict | None) -> list[dict]:
                     group="city-context-gap",
                     group_title=("City metric missing for one city but "
                                  "present for others"),
+                    item=detail or path))
+            elif str(r.get("status") or "").lower() == "aged":
+                # One city's scored month is past a normal ~2 month lag.
+                # P2, not a page: data_health keeps "aged" out of
+                # FAILING_STATUSES so NYPD's quarterly wait (NYC at
+                # 2026-06-01 on 2026-10-28, ~150d, still under the 160d
+                # file limit) cannot open a P0. 2026-10-28 audit,
+                # enhancement #3.
+                path = r.get("path") or "data-city.json"
+                detail = r.get("detail") or ""
+                out.append(problem(
+                    f"feed:{path}:aged", P2, "feed",
+                    "City scored month is past a normal monthly lag "
+                    f"({_hours(r.get('age_h'))} old, warn after "
+                    f"{_hours(r.get('limit_h'))})",
+                    detail, owner=r.get("owner") or None,
+                    group="city-last-updated",
+                    group_title=("City scored month is older than a normal "
+                                 "monthly lag"),
                     item=detail or path))
         for r in dh.get("extra_failing") or []:
             name = r.get("path") or r.get("name") or r.get("feed") or "?"
