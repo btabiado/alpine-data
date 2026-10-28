@@ -25496,173 +25496,13 @@
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 147,
+    "filtered_out_count": 179,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
       {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 199100.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 197600.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 86550.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 86550.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 199100.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 197600.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 86550.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 86550.0,
-        "value": 0.0
-      },
-      {
-        "code": "S",
-        "date": "2026-09-30",
-        "insider": "ARNOLD FRANCES",
-        "planned_10b5_1": true,
-        "price": 340.45,
-        "role": "Director",
-        "shares": 83.0,
-        "value": 28257.35
-      },
-      {
         "code": "C",
-        "date": "2026-09-25",
-        "insider": "WALKER JOHN KENT",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 4747.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-09-25",
-        "insider": "WALKER JOHN KENT",
-        "planned_10b5_1": false,
-        "price": 339.01,
-        "role": "Officer",
-        "shares": 4791.0,
-        "value": 1624196.91
-      },
-      {
-        "code": "C",
-        "date": "2026-09-25",
-        "insider": "WALKER JOHN KENT",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 4258.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-09-25",
-        "insider": "WALKER JOHN KENT",
-        "planned_10b5_1": false,
-        "price": 339.01,
-        "role": "Officer",
-        "shares": 4297.0,
-        "value": 1456725.97
-      },
-      {
-        "code": "C",
-        "date": "2026-09-25",
-        "insider": "WALKER JOHN KENT",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 1626.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-09-25",
-        "insider": "WALKER JOHN KENT",
-        "planned_10b5_1": false,
-        "price": 339.01,
-        "role": "Officer",
-        "shares": 1641.0,
-        "value": 556315.41
-      },
-      {
-        "code": "C",
-        "date": "2026-09-25",
-        "insider": "WALKER JOHN KENT",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 10631.0,
-        "value": 0.0
-      },
-      {
-        "code": "C",
-        "date": "2026-09-25",
+        "date": "2026-10-25",
         "insider": "Saraci Marsida",
         "planned_10b5_1": false,
         "price": 0.0,
@@ -25672,17 +25512,17 @@
       },
       {
         "code": "F",
-        "date": "2026-09-25",
+        "date": "2026-10-25",
         "insider": "Saraci Marsida",
         "planned_10b5_1": false,
-        "price": 339.01,
+        "price": 317.28,
         "role": "Officer",
         "shares": 122.0,
-        "value": 41359.22
+        "value": 38708.159999999996
       },
       {
         "code": "C",
-        "date": "2026-09-25",
+        "date": "2026-10-25",
         "insider": "Saraci Marsida",
         "planned_10b5_1": false,
         "price": 0.0,
@@ -25692,13 +25532,173 @@
       },
       {
         "code": "F",
-        "date": "2026-09-25",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 317.28,
+        "role": "Officer",
+        "shares": 102.0,
+        "value": 32362.559999999998
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 69.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 317.28,
+        "role": "Officer",
+        "shares": 69.0,
+        "value": 21892.32
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 106.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 317.28,
+        "role": "Officer",
+        "shares": 107.0,
+        "value": 33948.96
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 27.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 317.28,
+        "role": "Officer",
+        "shares": 27.0,
+        "value": 8566.56
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 26.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 317.28,
+        "role": "Officer",
+        "shares": 27.0,
+        "value": 8566.56
+      },
+      {
+        "code": "F",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 317.28,
+        "role": "Officer",
+        "shares": 20.0,
+        "value": 6345.599999999999
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 19.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-25",
         "insider": "Saraci Marsida",
         "planned_10b5_1": false,
         "price": 339.01,
         "role": "Officer",
-        "shares": 102.0,
-        "value": 34579.02
+        "shares": 20.0,
+        "value": 6780.2
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 489.0,
+        "value": 0.0
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "WALKER JOHN KENT",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 1626.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-25",
+        "insider": "WALKER JOHN KENT",
+        "planned_10b5_1": false,
+        "price": 317.28,
+        "role": "Officer",
+        "shares": 1641.0,
+        "value": 520656.48
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "WALKER JOHN KENT",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 1626.0,
+        "value": 0.0
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "Schindler Philipp",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 1998.0,
+        "value": 0.0
       }
     ],
     "regime": "neutral",
@@ -25716,173 +25716,13 @@
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 147,
+    "filtered_out_count": 179,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
       {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 199100.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 197600.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 86550.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 86550.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 199100.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 197600.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 86550.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-10-13",
-        "insider": "Shriram Kavitark Ram",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 86550.0,
-        "value": 0.0
-      },
-      {
-        "code": "S",
-        "date": "2026-09-30",
-        "insider": "ARNOLD FRANCES",
-        "planned_10b5_1": true,
-        "price": 340.45,
-        "role": "Director",
-        "shares": 83.0,
-        "value": 28257.35
-      },
-      {
         "code": "C",
-        "date": "2026-09-25",
-        "insider": "WALKER JOHN KENT",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 4747.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-09-25",
-        "insider": "WALKER JOHN KENT",
-        "planned_10b5_1": false,
-        "price": 339.01,
-        "role": "Officer",
-        "shares": 4791.0,
-        "value": 1624196.91
-      },
-      {
-        "code": "C",
-        "date": "2026-09-25",
-        "insider": "WALKER JOHN KENT",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 4258.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-09-25",
-        "insider": "WALKER JOHN KENT",
-        "planned_10b5_1": false,
-        "price": 339.01,
-        "role": "Officer",
-        "shares": 4297.0,
-        "value": 1456725.97
-      },
-      {
-        "code": "C",
-        "date": "2026-09-25",
-        "insider": "WALKER JOHN KENT",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 1626.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-09-25",
-        "insider": "WALKER JOHN KENT",
-        "planned_10b5_1": false,
-        "price": 339.01,
-        "role": "Officer",
-        "shares": 1641.0,
-        "value": 556315.41
-      },
-      {
-        "code": "C",
-        "date": "2026-09-25",
-        "insider": "WALKER JOHN KENT",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 10631.0,
-        "value": 0.0
-      },
-      {
-        "code": "C",
-        "date": "2026-09-25",
+        "date": "2026-10-25",
         "insider": "Saraci Marsida",
         "planned_10b5_1": false,
         "price": 0.0,
@@ -25892,17 +25732,17 @@
       },
       {
         "code": "F",
-        "date": "2026-09-25",
+        "date": "2026-10-25",
         "insider": "Saraci Marsida",
         "planned_10b5_1": false,
-        "price": 339.01,
+        "price": 317.28,
         "role": "Officer",
         "shares": 122.0,
-        "value": 41359.22
+        "value": 38708.159999999996
       },
       {
         "code": "C",
-        "date": "2026-09-25",
+        "date": "2026-10-25",
         "insider": "Saraci Marsida",
         "planned_10b5_1": false,
         "price": 0.0,
@@ -25912,13 +25752,173 @@
       },
       {
         "code": "F",
-        "date": "2026-09-25",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 317.28,
+        "role": "Officer",
+        "shares": 102.0,
+        "value": 32362.559999999998
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 69.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 317.28,
+        "role": "Officer",
+        "shares": 69.0,
+        "value": 21892.32
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 106.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 317.28,
+        "role": "Officer",
+        "shares": 107.0,
+        "value": 33948.96
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 27.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 317.28,
+        "role": "Officer",
+        "shares": 27.0,
+        "value": 8566.56
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 26.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 317.28,
+        "role": "Officer",
+        "shares": 27.0,
+        "value": 8566.56
+      },
+      {
+        "code": "F",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 317.28,
+        "role": "Officer",
+        "shares": 20.0,
+        "value": 6345.599999999999
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 19.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-25",
         "insider": "Saraci Marsida",
         "planned_10b5_1": false,
         "price": 339.01,
         "role": "Officer",
-        "shares": 102.0,
-        "value": 34579.02
+        "shares": 20.0,
+        "value": 6780.2
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "Saraci Marsida",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 489.0,
+        "value": 0.0
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "WALKER JOHN KENT",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 1626.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-10-25",
+        "insider": "WALKER JOHN KENT",
+        "planned_10b5_1": false,
+        "price": 317.28,
+        "role": "Officer",
+        "shares": 1641.0,
+        "value": 520656.48
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "WALKER JOHN KENT",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 1626.0,
+        "value": 0.0
+      },
+      {
+        "code": "C",
+        "date": "2026-10-25",
+        "insider": "Schindler Philipp",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 1998.0,
+        "value": 0.0
       }
     ],
     "regime": "neutral",
