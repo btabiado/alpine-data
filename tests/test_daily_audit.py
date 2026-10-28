@@ -1116,6 +1116,41 @@ class TestProblems:
         md = dar.render_md(dar.build_report(d, _ux(), None, "2026-10-23"))
         assert "sf context.median_income is empty" in md
 
+    def test_old_city_month_is_p2_and_does_not_page(self, dar):
+        """A per-city last_updated past a normal monthly lag is a P2.
+
+        2026-10-28 audit enhancement #3: NYC's scored month was 2026-06-01
+        (~150d) while data-city.json stayed ok under its 160d file limit.
+        The warning is visible and does not open the P0 tracking issue.
+        A second old city folds into the same group."""
+        d = _data()
+        detail = ("nyc data_health.last_updated 2026-06-01 is 149.7d old "
+                  "(warn after 120.0d). A monthly series that lags about two "
+                  "months stays under this; this is a warning, not a failure.")
+        d["data_health"]["results"].extend([
+            {"path": "data-city.json", "status": "ok", "age_h": 149.7 * 24,
+             "limit_h": 160 * 24,
+             "detail": "contents at cities[].data_health.last_updated are 149.7d old"},
+            {"path": "data-city.json [city: nyc last_updated]", "status": "aged",
+             "age_h": 149.7 * 24, "limit_h": 120 * 24, "detail": detail,
+             "owner": "city-daily.yml (daily 06:00Z)"},
+            {"path": "data-city.json [city: other last_updated]", "status": "aged",
+             "age_h": 130 * 24, "limit_h": 120 * 24,
+             "detail": "other data_health.last_updated 2026-06-20 is 130.0d old",
+             "owner": "city-daily.yml (daily 06:00Z)"},
+        ])
+        probs = dar.data_problems(d)
+        hit = [p for p in probs if p["id"].endswith(":aged")]
+        assert len(hit) == 2
+        assert {p["severity"] for p in hit} == {"P2"}
+        assert hit[0]["group"] == "city-last-updated"
+        assert "149.7d" in hit[0]["detail"] or "149.7d" in hit[1]["detail"]
+        assert "feed:data-city.json" not in {p["id"] for p in probs}
+        assert dar.alert_action(probs) == "close"
+        md = dar.render_md(dar.build_report(d, _ux(), None, "2026-10-28"))
+        assert "City scored month is older than a normal monthly lag (2)" in md
+        assert "nyc data_health.last_updated 2026-06-01" in md
+
     def test_extra_data_health_records_are_judged_too(self, dar):
         d = _data()
         d["data_health"]["extra_failing"] = [

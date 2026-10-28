@@ -1325,6 +1325,108 @@ def test_sparse_rows_show_in_the_text_report_without_failing_it(dh):
     assert "OK: all feeds healthy." in text
 
 
+# 2026-10-28 audit, enhancement #3. The city payload was "ok" at 149.7d
+# because the file limit is 160d (NYPD's quarterly drop). Per-city months
+# past a normal ~2 month lag should warn without failing.
+_AUDIT_DAY = datetime(2026, 10, 28, 16, 4, tzinfo=timezone.utc)
+_AUDIT_CITIES = [
+    {"id": "chicago", "data_health": {"last_updated": "2026-08-01T00:00:00+00:00"}},
+    {"id": "nyc", "data_health": {"last_updated": "2026-06-01T00:00:00+00:00"}},
+    {"id": "la", "data_health": {"last_updated": "2026-08-01T00:00:00+00:00"}},
+    {"id": "seattle", "data_health": {"last_updated": "2026-09-01T00:00:00+00:00"}},
+    {"id": "sf", "data_health": {"last_updated": "2026-09-01T00:00:00+00:00"}},
+    {"id": "miami", "data_health": {"last_updated": "2026-09-01T00:00:00+00:00"}},
+]
+
+
+def test_city_age_warning_sits_between_monthly_lag_and_the_hard_limit(dh):
+    """120d is past the ~92d top of a two-month monthly lag, and under the
+    160d file failure, so the warning can fire while the payload stays ok."""
+    warn = dh.CITY_LAST_UPDATED_WARN_H
+    hard = dh.THRESHOLDS["data-city.json"].stale_h
+    assert warn == 120 * 24
+    assert 92 * 24 < warn < hard
+    assert hard == 160 * 24
+    assert dh.AGED not in dh.FAILING_STATUSES
+
+
+def test_audit_day_flags_nyc_and_not_a_normal_monthly_lag(dh):
+    """The 2026-10-28 city payload: NYC June, Chicago and LA August, the
+    rest September. Only NYC is past 120 days. August is the slow end of
+    a normal ~2 month lag and must stay quiet."""
+    rows = dh.city_last_updated_warnings(
+        {"cities": _AUDIT_CITIES}, _AUDIT_DAY.timestamp())
+    assert [r.path for r in rows] == ["data-city.json [city: nyc last_updated]"]
+    row = rows[0]
+    assert row.status == dh.AGED and not row.fails
+    assert 140 * 24 < row.age_h < 160 * 24
+    assert row.limit_h == 120 * 24
+    assert "2026-06-01" in row.detail
+    assert "nyc" in row.detail
+
+
+def test_city_age_warning_boundary_and_absent_stamps(dh):
+    """Exactly 120 days is still inside the slack. A null, missing, or
+    unreadable stamp is not old."""
+    now = datetime(2026, 10, 28, tzinfo=timezone.utc).timestamp()
+    # 2026-06-30T00:00Z is 120 days before 2026-10-28T00:00Z.
+    quiet = dh.city_last_updated_warnings({"cities": [
+        {"id": "edge", "data_health": {"last_updated": "2026-06-30T00:00:00+00:00"}},
+        {"id": "empty", "data_health": {"last_updated": None}},
+        {"id": "blank", "data_health": {}},
+        {"id": "junk", "data_health": {"last_updated": "not a date"}},
+        {"id": "nodh"},
+    ]}, now)
+    assert quiet == []
+    warned = dh.city_last_updated_warnings({"cities": [
+        {"id": "over", "data_health": {"last_updated": "2026-06-29T00:00:00+00:00"}},
+    ]}, now)
+    assert len(warned) == 1 and warned[0].status == dh.AGED
+    assert warned[0].age_h == 121 * 24
+
+
+def test_evaluate_warns_on_nyc_without_failing_the_city_payload(
+        dh, tmp_path, monkeypatch):
+    """The file-level row stays ok (149d < 160d) and the per-city row warns."""
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    _write(tmp_path, "data-city.json", {
+        "generated_at": "2026-10-28T14:21:38Z",
+        "cities": _AUDIT_CITIES,
+    })
+    rows = dh.evaluate(dh.COMMITTED, history=False, now_ts=_AUDIT_DAY.timestamp())
+    city = next(r for r in rows if r.path == "data-city.json")
+    assert city.status == dh.OK and not city.fails
+    aged = [r for r in rows if r.status == dh.AGED]
+    assert len(aged) == 1 and "nyc" in aged[0].path and not aged[0].fails
+    assert not any(r.fails and r.status == dh.AGED for r in rows)
+
+
+def test_a_city_past_the_hard_limit_still_fails_the_file(dh, tmp_path, monkeypatch):
+    """The warning does not replace the 160d failure. Both are reported."""
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    _write(tmp_path, "data-city.json", {
+        "generated_at": "2026-10-28T14:21:38Z",
+        "cities": [{"id": "nyc", "data_health": {
+            "last_updated": "2026-04-01T00:00:00+00:00"}}],
+    })
+    rows = dh.evaluate(dh.COMMITTED, history=False, now_ts=_AUDIT_DAY.timestamp())
+    city = next(r for r in rows if r.path == "data-city.json")
+    assert city.status == dh.STALE and city.fails
+    aged = [r for r in rows if r.status == dh.AGED]
+    assert len(aged) == 1 and not aged[0].fails
+
+
+def test_aged_rows_show_in_the_text_report_without_failing_it(dh):
+    text = dh.render_text([
+        dh.Result("data-city.json [city: nyc last_updated]", dh.AGED,
+                  age_h=149.7 * 24, limit_h=120 * 24,
+                  detail="nyc data_health.last_updated 2026-06-01 is 149.7d old"),
+    ], [])
+    assert "AGED" in text
+    assert "nyc last_updated" in text
+    assert "OK: all feeds healthy." in text
+
+
 def test_upstream_lag_detail_is_tsa_only(dh, tmp_path):
     path = _write(tmp_path, "data-cfpb.json", _tsa_payload())
     assert dh.upstream_lag_detail("data-cfpb.json", path, _TSA_NOW_TS, 72) is None
