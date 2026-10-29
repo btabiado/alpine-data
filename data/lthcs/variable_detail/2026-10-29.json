@@ -46347,9 +46347,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.125,
+        "sec_8k_score": 0.1,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 63.12,
+        "events_score_raw": 62.5,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -48889,9 +48889,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": -0.12,
+        "sec_8k_score": -0.09999999999999999,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 57.0,
+        "events_score_raw": 57.5,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -61503,9 +61503,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.8,
+        "sec_8k_score": 0.65,
         "yahoo_earnings_score": -0.7,
-        "events_score_raw": 52.5,
+        "events_score_raw": 48.75,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -81126,9 +81126,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": -0.6,
+        "sec_8k_score": -0.3,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 52.5,
+        "events_score_raw": 60.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -82570,9 +82570,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.16666666666666666,
+        "sec_8k_score": 0.125,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 71.67,
+        "events_score_raw": 70.62,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -93264,11 +93264,11 @@
         },
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
-        "has_sec_8k": false,
+        "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": null,
+        "sec_8k_score": -0.19999999999999998,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 85.0,
+        "events_score_raw": 62.5,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -93282,6 +93282,7 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
+          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
