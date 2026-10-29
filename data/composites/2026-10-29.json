@@ -1,19 +1,19 @@
 {
   "as_of": "2026-10-29",
-  "generated_at": "2026-10-29T20:15:00Z",
+  "generated_at": "2026-10-29T23:26:35Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-29",
       "label": null,
-      "note": "40 coins; 3 buy+, 15 sell+",
-      "score": -30,
+      "note": "39 coins; 3 buy+, 19 sell+",
+      "score": -41,
       "stale": false
     },
     "defi_sentiment": {
       "as_of": "2026-10-29",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": -11,
+      "score": -15,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -41,14 +41,14 @@
       "as_of": "2026-10-29",
       "label": "CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 29,
+      "score": 35,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-10-29",
       "label": "CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 29,
+      "score": 35,
       "stale": false
     },
     "futures_sentiment_eth": {
@@ -69,7 +69,7 @@
       "as_of": "2026-10-29",
       "label": "CROWDED LONGS",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 42,
+      "score": 44,
       "stale": false
     },
     "lthcs_composite": {
@@ -83,14 +83,14 @@
       "as_of": "2026-10-29",
       "label": "Neutral",
       "note": null,
-      "score": -25.36,
+      "score": -26.2,
       "stale": false
     },
     "overview_sentiment": {
       "as_of": "2026-10-29",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": 2,
+      "score": 0,
       "stale": false
     },
     "poc_signal_breadth": {
@@ -103,8 +103,8 @@
     "stocks_signal_breadth": {
       "as_of": "2026-10-29",
       "label": "DISTRIBUTION",
-      "note": "50 stocks; 9 buy+, 22 sell+",
-      "score": -26,
+      "note": "50 stocks; 10 buy+, 22 sell+",
+      "score": -24,
       "stale": false
     },
     "whale_sentiment_btc": {
