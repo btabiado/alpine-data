@@ -4,10 +4,10 @@
   "color": "#F0A861",
   "components": [
     {
-      "delta": 13,
+      "delta": 12,
       "name": "Band lean (bullish % minus bearish %)",
       "read": "universe constructive",
-      "value": "+42.4%"
+      "value": "+41.1%"
     },
     {
       "delta": 1,
@@ -61,5 +61,5 @@
   ],
   "label": "LTHCS NEUTRAL",
   "note": "Aggregate of 514-ticker LTHCS universe. Directional read, not a trading signal.",
-  "score": 22
+  "score": 21
 }
