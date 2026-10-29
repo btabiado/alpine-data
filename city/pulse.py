@@ -346,6 +346,12 @@ def score_city(*, id, name, scope, pillar_objs, disclosures, weights=None):
     March-fresh, not April-fresh. Taking the max reported the most flattering
     feed and hid exactly the rot this field exists to expose.
 
+    One scored feed publishes slower than a month. NYPD Complaint Data
+    Current (dataset ``5uac-w243``) holds complete quarters only, so when it
+    is the oldest scored feed New York City's stamp is that quarter's last
+    month. The freshness check labels that wait as the source's publish lag.
+    This field still reports the quarter.
+
     Feeds that do NOT count toward the score do not set the age, even when they
     carry a period: ``stale`` (Miami-Dade's frozen 2023 County 311 snapshot),
     ``insufficient_history``, and context-only (polarity 0) feeds, as well as

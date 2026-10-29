@@ -46,8 +46,14 @@ Severities:
         feed whose source was checked and has not published newer data
         (disclosed upstream lag), a city's scored month older than a normal
         ~2 month monthly lag (data-city last_updated, status aged; the
-        file staying under its 160d limit is not a failure), a transient
-        Farside 5xx/timeout soft warning
+        file staying under its 160d limit is not a failure). NYPD Complaint
+        Data Current publishes complete quarters; while that feed is the
+        city's oldest scored month and the age is inside the 160d file
+        limit, data_health marks it disclosed with cadence quarterly and
+        this report prints one informational line (source publish lag)
+        and leaves it out of the problem list. Past that window the same
+        city is aged and stays a P2. A transient Farside 5xx/timeout
+        soft warning
         while the ETF flows CSV is under 2 trading days old (the job exits 0;
         this is not a workflow failure). A source whose current probe is
         degraded or down and whose previous probe was up is one
@@ -572,6 +578,46 @@ def schedule_timing_note(data: dict | None) -> str | None:
     return format_schedule_note(late, skipped, watchdog=watchdog)
 
 
+def _is_quarterly_source_lag(row: dict) -> bool:
+    """A city scored month data_health attributed to NYPD's quarterly file.
+
+    Inside the quarterly window the status is disclosed and cadence is
+    quarterly. That is expected source publish lag. Past the window the
+    same path is status aged and is a P2 via the aged branch.
+    """
+    if str(row.get("status") or "").lower() != "disclosed":
+        return False
+    if row.get("cadence") != "quarterly":
+        return False
+    path = str(row.get("path") or "")
+    return path.startswith("data-city.json [city:") and path.endswith("last_updated]")
+
+
+def city_source_lag_note(data: dict | None) -> str | None:
+    """One informational line for a quarterly city source still inside its window.
+
+    Not a finding. The 120-day monthly warning stays in force for every
+    other city, and for New York when a scored feed other than NYPD
+    complaints is the old month.
+    """
+    if not isinstance(data, dict):
+        return None
+    dh = data.get("data_health")
+    if not isinstance(dh, dict) or not _section_ok(dh):
+        return None
+    bits: list[str] = []
+    for row in dh.get("results") or []:
+        if not isinstance(row, dict) or not _is_quarterly_source_lag(row):
+            continue
+        detail = row.get("detail")
+        if isinstance(detail, str) and detail.strip():
+            bits.append(detail.strip())
+    if not bits:
+        return None
+    return ("Source publish lag (quarterly cadence, expected): "
+            + " | ".join(bits))
+
+
 def _disclosed_upstream_lag(row: dict) -> bool:
     """A freshness row data_health marked disclosed.
 
@@ -718,6 +764,11 @@ def data_problems(data: dict | None) -> list[dict]:
                     f"Feed {r.get('path')} is {str(r.get('status')).upper()} "
                     f"({_hours(r.get('age_h'))} old, limit {_hours(r.get('limit_h'))})",
                     r.get("detail", ""), owner=r.get("owner") or None))
+            elif _is_quarterly_source_lag(r):
+                # Expected NYPD quarterly wait. city_source_lag_note prints
+                # it. It is not a P2, and it does not raise the 120d line
+                # that still warns on a monthly city.
+                continue
             elif _disclosed_upstream_lag(r):
                 # data_health's DISCLOSED freshness row: the pipeline checked
                 # and the source has not published. History disclosures stay
@@ -1354,6 +1405,9 @@ def render_md(report: dict) -> str:
     if report.get("api_watch_note"):
         # Not a finding. One failed probe after an up probe.
         L += [str(report["api_watch_note"]), ""]
+    if report.get("city_source_lag_note"):
+        # Not a finding. NYPD's quarterly complaint file inside its window.
+        L += [str(report["city_source_lag_note"]), ""]
 
     new = [p for p in problems if p.get("state") == "new"]
     ongoing = [p for p in problems if p.get("state") == "ongoing"]
@@ -1658,6 +1712,7 @@ def build_report(data: dict | None, ux: dict | None, previous: dict | None, toda
         "api_baseline": api_baseline,
         "schedule_note": schedule_timing_note(data) if isinstance(data, dict) else None,
         "api_watch": api_probe_blips(api if isinstance(api, dict) else None),
+        "city_source_lag_note": city_source_lag_note(data),
         "data": data,
         "ux": ux,
     }

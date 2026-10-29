@@ -66,6 +66,29 @@ _RECON = re.compile(r"(max \w+ \d{4}-\d{2}-\d{2}|Latest complete month \d{4}-\d{
                     r"|data_as_of \d{4}-\d{2}-\d{2})", re.I)
 
 
+def test_nypd_note_documents_the_quarterly_cadence_and_still_lags():
+    """The registry note is the city-card label. It has to keep the words
+    the lagging-feed cutoff keys on, and it must not pin a calendar date
+    the next quarter would contradict. The committed payload carries the
+    same sentence."""
+    reg = json.loads((REPO_ROOT / "docs/city/city_registry.resolved.json").read_text())
+    nyc = next(c for c in reg["cities"] if c["id"] == "nyc")
+    feed = next(f for f in nyc["feeds"] if f["dataset"] == "5uac-w243")
+    note = feed["note"]
+    assert "complete quarters" in note
+    assert "5uac-w243" in note
+    assert "source publish lag" in note.lower()
+    assert fetch_city._is_lagging(feed)
+    assert not re.search(r"20\d\d-\d\d-\d\d", note)
+
+    payload = json.loads((REPO_ROOT / "data-city.json").read_text())
+    city = next(c for c in payload["cities"] if c["id"] == "nyc")
+    live = next(f for p in city["pulse"]["pillars"] for f in p["feeds"]
+                if f.get("dataset") == "5uac-w243")
+    assert live["note"] == note
+    assert f"NYPD Complaints: {note}" in city["disclosures"]
+
+
 def test_extended_registry_notes_carry_no_recon_dates():
     d = json.loads((REPO_ROOT / "docs/city/city_registry.extended.json").read_text())
     bad = [(city, f.get("label"), _RECON.search(f.get("note") or "").group(0))

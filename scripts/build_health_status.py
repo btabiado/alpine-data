@@ -119,9 +119,11 @@ THRESHOLDS: dict[str, Threshold] = {
     # in every city, so a MONTHLY feed that freezes takes up to ~160d, not
     # ~100d, to fail the file. The per-city warning in data_health
     # (CITY_LAST_UPDATED_WARN_H, 120d, status "aged") is what surfaces that
-    # earlier. It is a daily-audit P2, not a failure, so a healthy quarterly
-    # wait still does not page. The point of this entry stays the same: when
-    # it is red, it is red for a true reason.
+    # earlier. It is a daily-audit P2, not a failure. A healthy NYPD
+    # quarterly wait is labeled source publish lag (disclosed) until this
+    # 160d line, and does not use the 120d monthly warning. When this entry
+    # is red, it is red for a true reason. Re-checked 2026-10-29: 5uac-w243
+    # still ends 2026-06-30 (rows updated 2026-07-27); Q3 was not published.
     "data-city.json": Threshold(62 * 24, 160 * 24),
     # data-aviation.json is a COMPOSITE of three vintages dated by its OLDEST
     # component (data_date), the FAA airman roll: an ANNUAL study stamped

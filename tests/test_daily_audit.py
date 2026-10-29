@@ -1151,6 +1151,43 @@ class TestProblems:
         assert "City scored month is older than a normal monthly lag (2)" in md
         assert "nyc data_health.last_updated 2026-06-01" in md
 
+    def test_nypd_quarterly_lag_is_labeled_and_not_a_problem(self, dar):
+        """2026-10-29 audit, top issue #4. NYC at 2026-06-01 is NYPD's
+        quarterly file (5uac-w243), whose newest published complaint is
+        2026-06-30. That row is an informational source-publish-lag line.
+        A monthly city past 120 days is still a P2."""
+        d = _data()
+        detail = ("source publish lag: nyc data_health.last_updated "
+                  "2026-06-01 is the scored month of NYPD Complaints "
+                  "(5uac-w243). That dataset publishes complete quarters "
+                  "only. 149.7d old, inside the quarterly window "
+                  "(overdue after 160.0d).")
+        d["data_health"]["results"].extend([
+            {"path": "data-city.json", "status": "ok", "age_h": 149.7 * 24,
+             "limit_h": 160 * 24},
+            {"path": "data-city.json [city: nyc last_updated]",
+             "status": "disclosed", "cadence": "quarterly",
+             "age_h": 149.7 * 24, "limit_h": 160 * 24, "detail": detail,
+             "owner": "city-daily.yml (daily 06:00Z)"},
+            {"path": "data-city.json [city: chicago last_updated]",
+             "status": "aged", "age_h": 130 * 24, "limit_h": 120 * 24,
+             "detail": "chicago data_health.last_updated 2026-06-20 is 130.0d old",
+             "owner": "city-daily.yml (daily 06:00Z)"},
+        ])
+        probs = dar.data_problems(d)
+        assert [p["id"] for p in probs if "last_updated" in p["id"]] == [
+            "feed:data-city.json [city: chicago last_updated]:aged"]
+        assert dar.alert_action(probs) == "close"
+        note = dar.city_source_lag_note(d)
+        assert note.startswith("Source publish lag")
+        assert "5uac-w243" in note and "149.7d" in note
+        rep = dar.build_report(d, _ux(), None, "2026-10-29")
+        assert rep["city_source_lag_note"] == note
+        md = dar.render_md(rep)
+        assert "Source publish lag (quarterly cadence, expected):" in md
+        assert "City scored month is older than a normal monthly lag (1)" in md
+        assert "nyc data_health.last_updated 2026-06-01" in md
+
     def test_extra_data_health_records_are_judged_too(self, dar):
         d = _data()
         d["data_health"]["extra_failing"] = [
