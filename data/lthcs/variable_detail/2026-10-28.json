@@ -2854,9 +2854,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.1,
+        "sec_8k_score": 0.08333333333333333,
         "yahoo_earnings_score": -0.4,
-        "events_score_raw": 42.5,
+        "events_score_raw": 42.08,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -16246,11 +16246,11 @@
         },
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
-        "has_sec_8k": false,
+        "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": null,
+        "sec_8k_score": 0.16666666666666666,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 70.0,
+        "events_score_raw": 64.17,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -16264,6 +16264,7 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
+          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -30412,9 +30413,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": -0.4,
+        "sec_8k_score": -0.26666666666666666,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 50.0,
+        "events_score_raw": 53.33,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -39441,8 +39442,8 @@
         "has_sec_8k": false,
         "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": 0.7,
-        "events_score_raw": 85.0,
+        "yahoo_earnings_score": 0.4,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -61701,9 +61702,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": false,
-        "sec_8k_score": 0.5,
+        "sec_8k_score": 0.25,
         "yahoo_earnings_score": null,
-        "events_score_raw": 75.0,
+        "events_score_raw": 62.5,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -70793,9 +70794,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": false,
-        "sec_8k_score": 0.3333333333333333,
+        "sec_8k_score": 0.25,
         "yahoo_earnings_score": null,
-        "events_score_raw": 66.67,
+        "events_score_raw": 62.5,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
@@ -93975,9 +93976,9 @@
         "confidence_blend": 0.0,
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.16666666666666666,
+        "sec_8k_score": 0.125,
         "yahoo_earnings_score": -0.7,
-        "events_score_raw": 36.67,
+        "events_score_raw": 35.62,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },

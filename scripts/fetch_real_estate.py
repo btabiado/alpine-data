@@ -18,7 +18,11 @@ is recommitted only when its substance changes (the upstreams publish
 monthly); the check file is how data-health knows the job ran anyway.
 A run that would replace a good snapshot with an empty one, a regressed
 housing month, or a source that lost more than half its metros exits 1
-and writes nothing.
+and writes nothing. Redfin is the exception that can degrade: when its
+download contributes 0 rows, the last good Redfin KPIs are carried forward
+with an explicit stale flag and their original date, other sources still
+update, and the job warns instead of failing. That carry expires; past
+the limit the run goes red again. An unlabeled collapse is still refused.
 
 Run from repo root: python scripts/fetch_real_estate.py [--no-cache]
                      python scripts/fetch_real_estate.py --verify-check
@@ -68,10 +72,29 @@ ZILLOW_URLS: dict[str, str] = {
     "inventory":    "invt_fs/Metro_invt_fs_uc_sfrcondo_sm_month.csv",
 }
 
+# Monthly all-metro housing tracker published by Redfin's Data Center
+# downloads page (https://www.redfin.com/news/data-center/downloads/), which
+# builds this URL as
+#   S3 = https://redfin-public-data.s3.us-west-2.amazonaws.com/redfin_data_center
+#   housing_market/monthly/all_metros.csv
+# and confirms the same path in redfin_data_center/index.json.
+#
+# The previous object, redfin_market_tracker/redfin_metro_market_tracker.tsv000.gz
+# on the same bucket, has returned S3 AccessDenied (HTTP 403) since 2026-10-27.
+# That is a bucket denial, not a renamed key we can guess around: every legacy
+# market-tracker key and a bucket listing answer AccessDenied. This CSV is the
+# file the downloads page actually links, and it answers 200 to the same
+# non-browser User-Agent this fetcher already sends.
 REDFIN_URL = (
     "https://redfin-public-data.s3.us-west-2.amazonaws.com/"
-    "redfin_market_tracker/redfin_metro_market_tracker.tsv000.gz"
+    "redfin_data_center/housing_market/monthly/all_metros.csv"
 )
+# Last successful Redfin fetch we will reuse after a blocked download.
+# Measured from that fetch's own timestamp (or the original as_of when the
+# rows were already carried), not from the vendor file's Last-Modified,
+# which can sit still for months between publishes.
+REDFIN_CARRY_MAX_DAYS = 45
+REDFIN_KPI_KEYS = ("days_on_market", "sale_to_list", "pct_above_list")
 
 FRED_PERMIT_URL = (
     "https://api.stlouisfed.org/fred/series/observations"
@@ -345,11 +368,15 @@ def info(msg: str) -> None:
     print(f"[info] {msg}", file=sys.stderr)
 
 
-def http_get(url: str, cache_path: Path | None, no_cache: bool) -> tuple[bytes, str | None]:
+def http_get(url: str, cache_path: Path | None, no_cache: bool, *,
+             allow_error_cache: bool = True) -> tuple[bytes, str | None]:
     """GET url with If-Modified-Since against cache_path. Returns (body, last_modified).
 
     On 304, reads bytes from cache_path. On network failure with a cache hit
-    available, falls back to cached bytes and warns.
+    available, falls back to cached bytes and warns — unless
+    ``allow_error_cache`` is false. Redfin sets that false: a 403 served from
+    an old cache would look like a fresh download, and a blocked source has
+    to be labeled stale instead.
     """
     headers = {"User-Agent": USER_AGENT, "Accept-Encoding": "gzip"}
     if cache_path and cache_path.exists() and not no_cache:
@@ -375,12 +402,12 @@ def http_get(url: str, cache_path: Path | None, no_cache: bool) -> tuple[bytes, 
         if e.code == 304 and cache_path and cache_path.exists():
             info(f"304 not-modified, using cache: {cache_path.name}")
             return cache_path.read_bytes(), formatdate(cache_path.stat().st_mtime, usegmt=True)
-        if cache_path and cache_path.exists():
+        if allow_error_cache and cache_path and cache_path.exists():
             warn(f"HTTP {e.code} on {url}; falling back to cache {cache_path.name}")
             return cache_path.read_bytes(), formatdate(cache_path.stat().st_mtime, usegmt=True)
         raise
     except (urllib.error.URLError, TimeoutError, OSError) as e:
-        if cache_path and cache_path.exists():
+        if allow_error_cache and cache_path and cache_path.exists():
             warn(f"network error on {url}: {e}; using cache {cache_path.name}")
             return cache_path.read_bytes(), formatdate(cache_path.stat().st_mtime, usegmt=True)
         raise
@@ -546,13 +573,21 @@ def load_zillow(no_cache: bool) -> dict:
 # ---- Redfin loader -----------------------------------------------------------
 
 REDFIN_PCT_RE = re.compile(r"[%,$]")
+_REDFIN_NA = frozenset({"na", "n/a", "null", "none", "-"})
+# Internal KPI name → headers the two published schemas have used.
+# The legacy TSV used the short names; the Data Center CSV uses the long ones.
+_REDFIN_COL_ALIASES = {
+    "median_dom": ("median_dom", "median days on market (days)"),
+    "avg_sale_to_list": ("avg_sale_to_list", "average sale to list ratio (%)"),
+    "sold_above_list": ("sold_above_list", "share sold above original list (%)"),
+}
 
 
 def _redfin_float(v: str) -> float | None:
     if v in ("", None):
         return None
-    v = REDFIN_PCT_RE.sub("", v).strip()
-    if not v:
+    v = REDFIN_PCT_RE.sub("", str(v)).strip()
+    if not v or v.lower() in _REDFIN_NA:
         return None
     try:
         return float(v)
@@ -560,22 +595,67 @@ def _redfin_float(v: str) -> float | None:
         return None
 
 
-def load_redfin(no_cache: bool) -> dict:
-    """Returns {by_rank: {rank: {period_end: {col: float}}}, last_modified, dates}."""
-    cache_path = CACHE_DIR / "redfin_metro_market_tracker.tsv.gz"
-    try:
-        body, last_mod = http_get(REDFIN_URL, cache_path, no_cache)
-    except Exception as e:
-        warn(f"redfin fetch failed entirely: {e}")
-        return {"by_rank": {}, "last_modified": None, "dates": []}
+def _empty_redfin(error: str | None = None, last_modified: str | None = None) -> dict:
+    return {
+        "by_rank": {},
+        "last_modified": last_modified,
+        "dates": [],
+        "stale": False,
+        "error": error,
+    }
 
-    try:
-        raw = gzip.decompress(body)
-    except OSError as e:
-        warn(f"redfin gunzip failed: {e}")
-        return {"by_rank": {}, "last_modified": last_mod, "dates": []}
 
-    # Build a quick metro-name index using the leading short name.
+def _redfin_header_key(fieldnames: list[str], *candidates: str) -> str | None:
+    have = set(fieldnames)
+    for name in candidates:
+        if name in have:
+            return name
+    return None
+
+
+def parse_redfin_body(body: bytes, last_modified: str | None = None) -> dict:
+    """Parse a Redfin metro table into ``{by_rank, dates, last_modified}``.
+
+    Accepts the current Data Center CSV and the legacy gzipped TSV. Both
+    identify a metro as ``"<city>, <ST> metro area"`` and a month as
+    ``period_end``. The legacy file also carried a property-type column;
+    only ``All Residential`` was kept. The CSV is already that series and
+    has no property-type column.
+    """
+    raw = body
+    if raw[:2] == b"\x1f\x8b":
+        try:
+            raw = gzip.decompress(raw)
+        except OSError as e:
+            return _empty_redfin(f"gunzip failed: {e}", last_modified)
+
+    text = raw.decode("utf-8-sig", errors="replace")
+    if not text.strip():
+        return _empty_redfin("redfin body was empty", last_modified)
+
+    first = text.splitlines()[0]
+    delimiter = "\t" if first.count("\t") > first.count(",") else ","
+    reader = csv.DictReader(io.StringIO(text), delimiter=delimiter)
+    if reader.fieldnames:
+        reader.fieldnames = [h.strip().lower() for h in reader.fieldnames]
+    fieldnames = list(reader.fieldnames or [])
+    columns = {}
+    for internal, aliases in _REDFIN_COL_ALIASES.items():
+        key = _redfin_header_key(fieldnames, *aliases)
+        if key:
+            columns[internal] = key
+    if len(columns) != len(_REDFIN_COL_ALIASES):
+        missing = sorted(set(_REDFIN_COL_ALIASES) - set(columns))
+        return _empty_redfin(
+            f"unrecognized redfin header, missing {', '.join(missing)}",
+            last_modified)
+
+    region_key = _redfin_header_key(fieldnames, "region", "region name")
+    period_key = _redfin_header_key(fieldnames, "period_end", "period end")
+    rtype_key = _redfin_header_key(fieldnames, "region_type", "region type")
+    if region_key is None or period_key is None:
+        return _empty_redfin("unrecognized redfin header, missing region or period", last_modified)
+
     metro_index: dict[str, int] = {}
     for m in METROS:
         key = _norm(f"{m['short']}, {m['state']}")
@@ -583,28 +663,18 @@ def load_redfin(no_cache: bool) -> dict:
 
     by_rank: dict[int, dict[str, dict[str, float | None]]] = {}
     all_dates: set[str] = set()
-
-    text = raw.decode("utf-8", errors="replace")
-    reader = csv.DictReader(io.StringIO(text), delimiter="\t")
-    # Redfin publishes headers in UPPERCASE; downcase so the rest of this
-    # function can use the schema-spec lowercase names unchanged.
-    if reader.fieldnames:
-        reader.fieldnames = [h.lower() for h in reader.fieldnames]
-
-    wanted_cols = {"median_dom", "avg_sale_to_list", "sold_above_list"}
-
     for row in reader:
-        if (row.get("region_type") or "").lower() != "metro":
+        if rtype_key is not None and (row.get(rtype_key) or "").lower() != "metro":
             continue
-        if (row.get("property_type") or "") != "All Residential":
+        ptype = row.get("property_type")
+        if ptype not in (None, "", "All Residential"):
             continue
-        region = row.get("region") or ""
-        # Redfin format: "New York, NY metro area" → strip " metro area"
+        region = row.get(region_key) or ""
+        # "New York, NY metro area" → "New York, NY"
         m = re.match(r"^(.*?)\s+metro area\s*$", region, re.IGNORECASE)
         short_state = m.group(1) if m else region
         rank = metro_index.get(_norm(short_state))
         if rank is None:
-            # try without state-code matching: leading city only against all metros
             head = _norm(short_state).split(",")[0].strip()
             for k, v in metro_index.items():
                 if k.startswith(head + ","):
@@ -612,17 +682,43 @@ def load_redfin(no_cache: bool) -> dict:
                     break
         if rank is None:
             continue
-        period_end = row.get("period_end") or ""
+        period_end = (row.get(period_key) or "").strip()
         if not period_end:
             continue
         all_dates.add(period_end)
         rec = by_rank.setdefault(rank, {}).setdefault(period_end, {})
-        for col in wanted_cols:
-            rec[col] = _redfin_float(row.get(col, ""))
+        for internal, header in columns.items():
+            rec[internal] = _redfin_float(row.get(header, ""))
 
     dates = sorted(all_dates)
     info(f"redfin: {len(by_rank)}/{len(METROS)} metros matched, {len(dates)} period_end dates")
-    return {"by_rank": by_rank, "last_modified": last_mod, "dates": dates}
+    parsed = _empty_redfin(last_modified=last_modified)
+    parsed["by_rank"] = by_rank
+    parsed["dates"] = dates
+    if not by_rank:
+        parsed["error"] = "parsed 0 metro rows"
+    return parsed
+
+
+def load_redfin(no_cache: bool) -> dict:
+    """Returns ``{by_rank, last_modified, dates}``. ``error`` is set on failure.
+
+    A failure leaves ``by_rank`` empty so the caller can carry the last good
+    rows forward. This does not invent a fresh fetch.
+    """
+    cache_path = CACHE_DIR / "redfin_housing_market_monthly_metros.csv"
+    try:
+        # A cached copy of a previous 200 must not satisfy a 403. Conditional
+        # 304 is still a real answer from the bucket; an error is not.
+        body, last_mod = http_get(
+            REDFIN_URL, cache_path, no_cache, allow_error_cache=False)
+    except Exception as e:
+        warn(f"redfin fetch failed entirely: {e}")
+        return _empty_redfin(f"fetch failed: {e}")
+    parsed = parse_redfin_body(body, last_mod)
+    if parsed.get("error"):
+        warn(f"redfin parse failed: {parsed['error']}")
+    return parsed
 
 
 def redfin_series(redfin: dict, rank: int, col: str, n: int = 12) -> tuple[list[float | None], float | None, float | None]:
@@ -814,6 +910,12 @@ def build_metro(metro_def: dict[str, object], zillow: dict, redfin: dict) -> dic
         "spark": abv_spark_n,
     }
 
+    carried = carried_redfin_kpis(redfin, metro_def)
+    if carried:
+        for key in REDFIN_KPI_KEYS:
+            if key in carried:
+                kpis[key] = carried[key]
+
     # Permits — null at metro level in v1 (national value lives in sources.fred).
     kpis["permits"] = {"value": None, "yoy_pct": None, "spark": []}
 
@@ -922,6 +1024,205 @@ def _source_rows(source: object) -> int:
         return 0
 
 
+def carried_redfin_kpis(redfin: dict, metro_def: dict) -> dict | None:
+    """Last-good Redfin KPI blocks for one metro, or None on a fresh fetch."""
+    if not redfin.get("stale"):
+        return None
+    by_name = redfin.get("carried_kpis_by_name") or {}
+    hit = by_name.get((str(metro_def.get("short")), str(metro_def.get("state"))))
+    if hit:
+        return hit
+    by_rank = redfin.get("carried_kpis_by_rank") or {}
+    try:
+        return by_rank.get(int(metro_def["rank"]))
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+def redfin_source_as_of(src: object) -> str | None:
+    """Date the Redfin rows actually belong to.
+
+    A fresh source is dated by ``fetched_at``. A source that is already a
+    carry is dated by ``as_of`` / ``carried_forward_from`` only, so a later
+    run cannot reset the clock by rewriting ``fetched_at``.
+    """
+    if not isinstance(src, dict):
+        return None
+    if src.get("stale"):
+        keys = ("as_of", "carried_forward_from")
+    else:
+        keys = ("fetched_at",)
+    for key in keys:
+        val = src.get(key)
+        if isinstance(val, str) and val.strip():
+            return val.strip()
+    return None
+
+
+def redfin_carry_age_days(as_of: str, now: datetime) -> float | None:
+    dt = _monitor()._parse_date_value(as_of)
+    if dt is None:
+        return None
+    return (now - dt).total_seconds() / 86400.0
+
+
+def carry_forward_redfin(previous: dict | None, *, reason: str,
+                         now: datetime | None = None) -> dict | None:
+    """Last good Redfin KPIs, labeled stale, or None when they cannot be reused.
+
+    The returned dict has no fresh ``by_rank`` series. ``build_metro`` copies
+    the KPI blocks instead, each marked ``stale``. ``rows`` counts metros
+    that still have a Redfin value, which is what the collapse check compares.
+    """
+    if not isinstance(previous, dict):
+        return None
+    sources = previous.get("sources") if isinstance(previous.get("sources"), dict) else {}
+    prev_src = sources.get("redfin") if isinstance(sources.get("redfin"), dict) else {}
+    if _source_rows(prev_src) <= 0:
+        return None
+    as_of = redfin_source_as_of(prev_src)
+    if not as_of:
+        return None
+    now = now or datetime.now(timezone.utc)
+    age = redfin_carry_age_days(as_of, now)
+    if age is None or age < -1 or age > REDFIN_CARRY_MAX_DAYS:
+        return None
+    metros = previous.get("metros")
+    if not isinstance(metros, list):
+        return None
+
+    by_name: dict[tuple[str, str], dict] = {}
+    by_rank: dict[int, dict] = {}
+    n = 0
+    for metro in metros:
+        if not isinstance(metro, dict):
+            continue
+        kpis = metro.get("kpis") if isinstance(metro.get("kpis"), dict) else {}
+        copied: dict[str, dict] = {}
+        any_val = False
+        for key in REDFIN_KPI_KEYS:
+            block = kpis.get(key)
+            if not isinstance(block, dict):
+                continue
+            cloned = json.loads(json.dumps(block))
+            cloned["stale"] = True
+            copied[key] = cloned
+            if block.get("value") is not None:
+                any_val = True
+        if not any_val:
+            continue
+        n += 1
+        by_name[(str(metro.get("short_name") or ""), str(metro.get("state") or ""))] = copied
+        try:
+            by_rank[int(metro["rank"])] = copied
+        except (KeyError, TypeError, ValueError):
+            pass
+    if n <= 0:
+        return None
+    return {
+        "by_rank": {},
+        "dates": [],
+        "last_modified": prev_src.get("last_modified"),
+        "fetched_at": as_of,
+        "rows": n,
+        "stale": True,
+        "as_of": as_of,
+        "carried_forward_from": as_of,
+        "stale_reason": reason,
+        "error": None,
+        "carried_kpis_by_name": by_name,
+        "carried_kpis_by_rank": by_rank,
+    }
+
+
+def carry_refusal_reason(previous: dict | None, now: datetime | None = None) -> str | None:
+    """Why a 0-row Redfin fetch was not allowed to reuse the previous snapshot.
+
+    Returned only when the previous snapshot had Redfin rows and those rows
+    are too old, undated, or undatable. A young previous snapshot returns
+    None: refusing the empty payload is still correct, and the caller is
+    expected to have carried those rows forward before it got here.
+    """
+    if not isinstance(previous, dict):
+        return None
+    sources = previous.get("sources") if isinstance(previous.get("sources"), dict) else {}
+    prev_src = sources.get("redfin") if isinstance(sources.get("redfin"), dict) else {}
+    if _source_rows(prev_src) <= 0:
+        return None
+    as_of = redfin_source_as_of(prev_src)
+    now = now or datetime.now(timezone.utc)
+    if not as_of:
+        return "redfin carry-forward refused: last good snapshot has no original date"
+    age = redfin_carry_age_days(as_of, now)
+    if age is None:
+        return f"redfin carry-forward refused: last good date {as_of!r} is not a timestamp"
+    if age < -1:
+        return f"redfin carry-forward refused: last good date {as_of} is in the future"
+    if age > REDFIN_CARRY_MAX_DAYS:
+        return (
+            f"redfin carry-forward expired: last good fetch {as_of} is {age:.0f}d old "
+            f"(limit {REDFIN_CARRY_MAX_DAYS}d)")
+    return None
+
+
+def warn_degraded_redfin(redfin: dict) -> None:
+    """Actions warning. The run still exits 0; the annotation is the signal."""
+    msg = (
+        f"Redfin contributed 0 fresh rows ({redfin.get('stale_reason') or 'fetch failed'}); "
+        f"carried forward {redfin.get('rows')} rows from {redfin.get('as_of')} "
+        f"(stale, limit {REDFIN_CARRY_MAX_DAYS}d). Other sources still update."
+    )
+    warn(msg)
+    # Workflow commands are read from stdout.
+    print(f"::warning title=Redfin source degraded::{msg}")
+
+
+def redfin_source_block(redfin: dict) -> dict:
+    """``sources.redfin`` for the payload. Stale carries keep the original date."""
+    if redfin.get("stale"):
+        return {
+            "fetched_at": redfin.get("fetched_at"),
+            "last_modified": redfin.get("last_modified"),
+            "rows": redfin.get("rows", 0),
+            "stale": True,
+            "as_of": redfin.get("as_of"),
+            "carried_forward_from": redfin.get("carried_forward_from"),
+            "stale_reason": redfin.get("stale_reason"),
+        }
+    return {
+        "fetched_at": _now_iso(),
+        "last_modified": redfin.get("last_modified"),
+        "rows": len(redfin.get("by_rank") or {}),
+    }
+
+
+def _redfin_stale_problems(sources: dict, now: datetime) -> list[str]:
+    """A stale label is only valid when it names a date inside the carry window.
+
+    Rows that are simply old are not this check. This check is the backstop
+    that refuses a carry with the flag set and the date missing or expired,
+    so a stale slice cannot be published as if the date did not matter.
+    """
+    src = sources.get("redfin") if isinstance(sources.get("redfin"), dict) else {}
+    if not src.get("stale"):
+        return []
+    problems: list[str] = []
+    as_of = src.get("as_of") or src.get("carried_forward_from")
+    if not isinstance(as_of, str) or not as_of.strip():
+        problems.append("redfin is marked stale but has no original as_of date")
+        return problems
+    age = redfin_carry_age_days(as_of.strip(), now)
+    if age is None:
+        problems.append(f"redfin stale as_of is not a timestamp ({as_of!r})")
+    elif age < -1 or age > REDFIN_CARRY_MAX_DAYS:
+        problems.append(
+            f"redfin carry-forward is {age:.0f}d from the run clock "
+            f"(limit {REDFIN_CARRY_MAX_DAYS}d from {as_of}); refusing to publish it")
+    if _source_rows(src) <= 0:
+        problems.append("redfin is marked stale but contributed 0 rows")
+    return problems
+
+
 def _load_json_object(path: Path) -> dict | None:
     if not path.is_file():
         return None
@@ -932,15 +1233,22 @@ def _load_json_object(path: Path) -> dict | None:
     return doc if isinstance(doc, dict) else None
 
 
-def payload_problems(payload: dict, previous: dict | None) -> list[str]:
+def payload_problems(payload: dict, previous: dict | None,
+                     now: datetime | None = None) -> list[str]:
     """Reasons this payload must not replace the committed snapshot.
 
     An empty or collapsed fetch used to exit 0 as long as one of the two
     primary sources returned anything, and the workflow would then commit
     the nulls over last-known-good. That is an update, but not one we want.
+
+    A Redfin slice carried forward from the last good fetch is allowed only
+    when it is labeled ``stale`` and names its original date, and that date
+    is inside ``REDFIN_CARRY_MAX_DAYS``. Zero rows are still refused, labeled
+    or not: the carry must bring the rows with it, not just the flag.
     """
     problems: list[str] = []
     bhs = _monitor()
+    now = now or datetime.now(timezone.utc)
     metros = payload.get("metros")
     if not isinstance(metros, list) or not metros:
         problems.append("payload has no metros")
@@ -951,6 +1259,11 @@ def payload_problems(payload: dict, previous: dict | None) -> list[str]:
     for name in ("zillow", "redfin"):
         if _source_rows(sources.get(name)) <= 0:
             problems.append(f"{name} contributed 0 rows")
+    if _source_rows(sources.get("redfin")) <= 0:
+        refusal = carry_refusal_reason(previous, now)
+        if refusal:
+            problems.append(refusal)
+    problems.extend(_redfin_stale_problems(sources, now))
     if not isinstance(previous, dict):
         return problems
     prev_month = bhs.newest_housing_month(previous)
@@ -1000,7 +1313,9 @@ def write_check_record(payload: dict, *, payload_changed: bool,
 
     def brief(name: str) -> dict:
         src = sources.get(name) if isinstance(sources.get(name), dict) else {}
-        return {k: src[k] for k in ("rows", "last_modified", "national_permits_yoy_pct") if k in src}
+        keep = ("rows", "last_modified", "national_permits_yoy_pct",
+                "stale", "as_of", "stale_reason")
+        return {k: src[k] for k in keep if k in src}
 
     rec = {
         "generated_at": checked_at or payload.get("generated_at") or _now_iso(),
@@ -1011,6 +1326,14 @@ def write_check_record(payload: dict, *, payload_changed: bool,
             else snapshot_generated_at),
         "sources": {name: brief(name) for name in ("zillow", "redfin", "fred")},
     }
+    redfin_src = sources.get("redfin") if isinstance(sources.get("redfin"), dict) else {}
+    if redfin_src.get("stale"):
+        rec["warnings"] = [{
+            "source": "redfin",
+            "level": "warning",
+            "as_of": redfin_src.get("as_of"),
+            "message": redfin_src.get("stale_reason") or "carried forward; upstream unavailable",
+        }]
     CHECK_PATH.parent.mkdir(parents=True, exist_ok=True)
     CHECK_PATH.write_text(json.dumps(rec, indent=2) + "\n", encoding="utf-8")
     return rec
@@ -1112,12 +1435,20 @@ def main() -> int:
     info(f"metros: loaded {len(METROS)} from Zillow"
          + (f" (capped to top {args.max_metros})" if args.max_metros else " (all US MSAs)"))
 
+    previous = _load_json_object(OUT_PATH)
     zillow = load_zillow(args.no_cache)
     redfin = load_redfin(args.no_cache)
+    if not redfin.get("by_rank"):
+        carried = carry_forward_redfin(
+            previous,
+            reason=redfin.get("error") or "redfin contributed 0 rows")
+        if carried:
+            warn_degraded_redfin(carried)
+            redfin = carried
     fred = load_fred()
 
     zillow_has_data = any(k for k in zillow.keys() if k != "_meta")
-    if not zillow_has_data and not redfin.get("by_rank"):
+    if not zillow_has_data and not redfin.get("by_rank") and not redfin.get("stale"):
         warn("all primary sources failed (zillow + redfin); aborting")
         return 1
 
@@ -1149,11 +1480,7 @@ def main() -> int:
                 "last_modified": zillow.get("_meta", {}).get("last_modified"),
                 "rows": zillow.get("_meta", {}).get("rows", 0),
             },
-            "redfin": {
-                "fetched_at": _now_iso(),
-                "last_modified": redfin.get("last_modified"),
-                "rows": len(redfin.get("by_rank", {})),
-            },
+            "redfin": redfin_source_block(redfin),
             "fred": {
                 "fetched_at": fred.get("fetched_at"),
                 "national_permits_yoy_pct": fred.get("national_permits_yoy_pct"),
@@ -1162,7 +1489,6 @@ def main() -> int:
         "metros": metros,
     }
 
-    previous = _load_json_object(OUT_PATH)
     problems = payload_problems(payload, previous)
     if problems:
         return reject_payload(problems)

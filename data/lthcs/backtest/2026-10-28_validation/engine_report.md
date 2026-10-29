@@ -28,7 +28,7 @@ Universe: **517 tickers** | long bands: ['constructive', 'elite', 'high_confiden
 | high_confidence | +0.4292 |
 | constructive | +0.1733 |
 | monitor | +0.1281 |
-| weakening | +0.0625 |
+| weakening | +0.0616 |
 | review | +0.1199 |
 
 ## Benchmark
@@ -39,7 +39,7 @@ Benchmark total return: **+0.1359**
 
 ```json
 {
-  "band_hash": "eaabdd9278337ec5",
+  "band_hash": "e0a1d68d2d38e5b4",
   "engine_version": "1.0.0",
   "long_set": [
     "constructive",
@@ -62,7 +62,7 @@ Benchmark total return: **+0.1359**
     "top_k": 0
   },
   "params_hash": "49269b2e937d327d",
-  "price_hash": "5666d04b8b43916a",
+  "price_hash": "eca7f3f74ee2d424",
   "profile_name": "long_only_buy",
   "short_bottom_quintile": false,
   "short_set": [],
