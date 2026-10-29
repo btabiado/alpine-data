@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-29",
-  "generated_at": "2026-10-29T14:10:37Z",
+  "generated_at": "2026-10-29T16:12:50Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-29",
       "label": null,
-      "note": "40 coins; 3 buy+, 19 sell+",
-      "score": -40,
+      "note": "40 coins; 3 buy+, 17 sell+",
+      "score": -35,
       "stale": false
     },
     "defi_sentiment": {
@@ -41,14 +41,14 @@
       "as_of": "2026-10-28",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 18,
+      "score": 13,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-10-28",
       "label": "BALANCED",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 18,
+      "score": 13,
       "stale": false
     },
     "futures_sentiment_eth": {
@@ -62,14 +62,14 @@
       "as_of": "2026-10-28",
       "label": "CROWDED LONGS",
       "note": "LINK; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 37,
+      "score": 38,
       "stale": false
     },
     "futures_sentiment_ltc": {
-      "as_of": "2026-10-28",
-      "label": "BALANCED",
+      "as_of": "2026-10-29",
+      "label": "CROWDED LONGS",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 3,
+      "score": 46,
       "stale": false
     },
     "lthcs_composite": {
@@ -81,16 +81,16 @@
     },
     "money_flow_index": {
       "as_of": "2026-10-29",
-      "label": "Outflow",
+      "label": "Neutral",
       "note": null,
-      "score": -31.35,
+      "score": -23.68,
       "stale": false
     },
     "overview_sentiment": {
       "as_of": "2026-10-29",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": -1,
+      "score": 1,
       "stale": false
     },
     "poc_signal_breadth": {
@@ -103,8 +103,8 @@
     "stocks_signal_breadth": {
       "as_of": "2026-10-29",
       "label": "NEUTRAL",
-      "note": "47 stocks; 13 buy+, 15 sell+",
-      "score": -4,
+      "note": "50 stocks; 13 buy+, 18 sell+",
+      "score": -10,
       "stale": false
     },
     "whale_sentiment_btc": {
