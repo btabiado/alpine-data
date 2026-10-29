@@ -6449,9 +6449,17 @@ function lthcsFreshness(){
 // vendor (fMin) — the same rule /real-estate/ applies to its header.
 function realEstateSourceDates(d){
   const s = (d && d.sources) || {};
-  const comps = [['Zillow', 'zillow'], ['Redfin', 'redfin'], ['FRED', 'fred']].map(p => ({
-    label: p[0], date: fDay(s[p[1]] && s[p[1]].last_modified) || null,
-  }));
+  const comps = [['Zillow', 'zillow'], ['Redfin', 'redfin'], ['FRED', 'fred']].map(p => {
+    const src = s[p[1]] || {};
+    const rawAsOf = src.as_of || src.carried_forward_from || src.fetched_at || '';
+    const asOf = /^(\d{4}-\d{2}-\d{2})/.exec(String(rawAsOf)) ;
+    return {
+      label: p[0],
+      date: fDay(src.last_modified) || null,
+      stale: !!src.stale,
+      asOf: asOf ? asOf[1] : '',
+    };
+  });
   const dated = comps.filter(c => c.date).map(c => c.date);
   return { oldest: dated.length ? fMin(dated) : null, comps: comps };
 }
@@ -6468,7 +6476,8 @@ function realEstateFreshness(){
   if (src.oldest){
     return { date: src.oldest, stale: 0, total: 1, label: 'data as of',
              title: 'Oldest vendor publish date ('
-                  + src.comps.map(c => c.label + ' ' + (c.date || 'undated')).join(' · ')
+                  + src.comps.map(c => c.label + ' ' + (c.date || 'undated')
+                      + (c.stale ? ' (stale, carried from ' + (c.asOf || 'unknown date') + ')' : '')).join(' · ')
                   + '). The snapshot is fetched daily, but the vendors publish '
                   + 'monthly; generated_at is fetch time and is not used here.' };
   }
@@ -9860,7 +9869,11 @@ function _drawRealEstate(host, d){
     '<div style="padding:8px 14px 0 14px;font-size:10px;color:var(--muted,#9aa3b2);font-family:ui-monospace,monospace">'
     + freshnessHtml(reSrc.oldest, { label: 'data as of',
         title: 'Oldest vendor publish date; the page is only as current as its stalest source.' }).replace('<div ', '<span ').replace(/<\/div>$/, '</span>')
-    + ' &middot; ' + reSrc.comps.map(c => escapeHtml(c.label) + ' ' + escapeHtml(c.date || 'undated')).join(' &middot; ')
+    + ' &middot; ' + reSrc.comps.map(c => {
+        let bit = escapeHtml(c.label) + ' ' + escapeHtml(c.date || 'undated');
+        if (c.stale) bit += ' (stale, carried from ' + escapeHtml(c.asOf || 'unknown date') + ')';
+        return bit;
+      }).join(' &middot; ')
     + ' &middot; sources: Zillow Research, Redfin Data Center, FRED</div>';
 
   // ---- Geographic state map (real polygons, lazy sidecar) -------------
