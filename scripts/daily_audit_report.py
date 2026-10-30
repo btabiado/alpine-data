@@ -619,6 +619,38 @@ def city_source_lag_note(data: dict | None) -> str | None:
             + " | ".join(bits))
 
 
+def git_history_skip_note(dh: dict) -> str | None:
+    """Name git-history rows this audit did not judge.
+
+    daily-audit.yml checks out depth 1. ``history_continuity`` skips a git
+    source there (status ``skipped``, detail starting ``shallow clone:``)
+    because one commit would look like every day missing. data-health.yml
+    fetches full history and is the run that files "Data health: one or more
+    feeds are stale". On 2026-10-30 the audit counted the real-estate
+    daily-check row as skipped, so its feed line had no gap and
+    ``alert_action`` was close, while that workflow still had issue #171
+    open for 2026-10-28. The counts are right for this checkout. Say so,
+    or the summary reads as "we checked history and found nothing".
+    """
+    rows = dh.get("results") if isinstance(dh, dict) else None
+    n = 0
+    if isinstance(rows, list):
+        for r in rows:
+            if not isinstance(r, dict):
+                continue
+            if str(r.get("status") or "").lower() != "skipped":
+                continue
+            if str(r.get("detail") or "").startswith("shallow clone:"):
+                n += 1
+    if not n:
+        return None
+    noun = "check" if n == 1 else "checks"
+    return (
+        f"{n} git daily-commit history {noun} not judged in this checkout "
+        f"(shallow clone); data-health.yml owns those gaps"
+    )
+
+
 def _disclosed_upstream_lag(row: dict) -> bool:
     """A freshness row data_health marked disclosed.
 
@@ -1454,6 +1486,9 @@ def render_md(report: dict) -> str:
     if _section_ok(dh) and dh:
         counts = ", ".join(f"{v} {k}" for k, v in sorted((dh.get("counts") or {}).items()))
         L.append(f"- **Feeds** (data_health, committed): {counts or 'n/a'}")
+        git_note = git_history_skip_note(dh)
+        if git_note:
+            L.append(f"  - {git_note}")
         muted = [r for r in dh.get("results") or [] if r.get("status") == "suppressed"]
         if muted:
             L.append("  - muted: " + "; ".join(f"{r['path']} ({_short(r.get('detail'), 70)})" for r in muted))

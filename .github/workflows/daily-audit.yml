@@ -63,6 +63,15 @@ jobs:
     runs-on: ubuntu-24.04  # pinned: ubuntu-latest becomes 26.04 on 2026-10-19; this job also relies on the image Node and playwright install --with-deps (apt)
     timeout-minutes: 40
     steps:
+      # Depth 1 on purpose. Git daily-commit history (cfpb, city, opensky,
+      # usaspending, real_estate_check) is judged by data-health.yml, which
+      # checks out fetch-depth: 0. A shallow clone skips those specs instead
+      # of reporting every day missing, so this audit's feed counts say
+      # "skipped" for them, not "ok" and not "gap". The 2026-10-30 audit
+      # therefore read healthy while issue #171 stayed open on the 2026-10-28
+      # real-estate check gap. Do not set fetch-depth: 0 here;
+      # tests/test_ci_runners.py allows a full checkout only for the history
+      # readers.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Python

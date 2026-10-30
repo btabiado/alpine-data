@@ -397,6 +397,12 @@ MANIFEST: dict[str, Feed] = {
         # is the time the fetch succeeded, written even when the snapshot was
         # not recommitted. A missed run ages this file; it does not age the
         # housing month.
+        #
+        # 2026-10-28 has no check commit: both real-estate-daily runs died on
+        # Redfin's HTTP 403 and the safety check kept 2026-10-27. That one
+        # day is disclosed in health/known_gaps.json (PR #170 fixed the
+        # source the next day). Do not backfill a commit for it. A later
+        # missing day is still a gap.
         COMMITTED, "real-estate-daily.yml (daily)",
         "python scripts/fetch_real_estate.py",
         history=(
