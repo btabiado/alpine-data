@@ -1091,6 +1091,52 @@ class TestProblems:
         assert probs[0]["detail"].startswith("upstream lag")
         assert dar.alert_action(probs) == "close"
 
+    def test_shallow_git_history_skip_is_named_and_is_not_a_failure(self, dar):
+        """Audit 2026-10-30 vs data-health.yml issue #171.
+
+        This checkout is depth 1, so the real-estate daily-check history
+        row is skipped, not gap. That is not a P0, and alert_action stays
+        close. The snapshot names the skip so the feed line cannot be read
+        as "history was checked and nothing was missing". A static skip
+        does not get that sentence. A real gap status still pages.
+        """
+        d = _data()
+        d["data_health"]["failing_statuses"] = [
+            "stale", "unknown", "missing", "unwatched", "expired", "gap", "duplicate"]
+        d["data_health"]["results"].append({
+            "path": "data/real_estate_check.json [history: daily check commits]",
+            "status": "skipped",
+            "detail": ("shallow clone: daily commits are judged by "
+                       "data-health.yml, which checks out full history"),
+        })
+        d["data_health"]["counts"] = {"ok": 2, "skipped": 1, "suppressed": 1}
+        assert dar.data_problems(d) == []
+        assert dar.alert_action(dar.data_problems(d)) == "close"
+        md = dar.render_md(dar.build_report(d, _ux(), None, "2026-10-30"))
+        assert "1 git daily-commit history check not judged" in md
+        assert "data-health.yml owns those gaps" in md
+
+        static = _data()
+        static["data_health"]["results"].append({
+            "path": "data-us_states.json", "status": "skipped",
+            "detail": "static: boundaries do not move",
+        })
+        md_static = dar.render_md(dar.build_report(static, _ux(), None, "2026-10-30"))
+        assert "git daily-commit history" not in md_static
+
+        gapped = _data()
+        gapped["data_health"]["failing_statuses"] = [
+            "stale", "unknown", "missing", "unwatched", "expired", "gap", "duplicate"]
+        gapped["data_health"]["results"].append({
+            "path": "data/real_estate_check.json [history: daily check commits]",
+            "status": "gap",
+            "detail": "missing 1: 2026-10-28",
+        })
+        rep = dar.build_report(gapped, _ux(), None, "2026-10-30")
+        assert any(p["severity"] == "P0" and "daily check commits" in p["id"]
+                   for p in rep["problems"])
+        assert rep["alert_action"] == "open"
+
     def test_city_metric_gap_is_p2_and_does_not_page(self, dar):
         """A context field empty for one city and set for the others is a P2.
 

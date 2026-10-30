@@ -1,6 +1,6 @@
 {
   "_doc": "Gaps in committed or archived history that no real source can fill. Read by scripts/history_continuity.py: a missing period (or null required field) listed here is reported as DISCLOSED instead of failing the daily data-health run. Published at /health/known_gaps.json so the dashboard can disclose it. Add an entry only after trying every real source (git history of the file, the upstream's historical endpoint, the R2 archive, Internet Archive copies of the site) and say which in backfill_attempted. Never add a gap that can still be filled; fill it. `fillable: true` marks a gap that a named tool can still fill (see remedy) and is listed so the dashboard can say so until it is. An entry with \"end\": null is open-ended and must name `until_env`, the env var whose presence ends it (a source that needs a key this deployment does not have): it discloses every period from start on while that var is unset, and nothing once it is set.",
-  "checked": "2026-10-16",
+  "checked": "2026-10-30",
   "gaps": [
     {
       "feed": "data/composites/",
@@ -181,6 +181,19 @@
         "actions: run 38277091475 failed before the commit step and stored no artifact to replay",
         "upstream: scripts/fetch_cfpb.py reads trailing 90/365-day counts as of the run. Re-querying date_received_max=2026-10-12 today counts complaints indexed after that day, which is not the snapshot the cron would have stored",
         "R2: the failed fetch never produced a payload. A pages deploy that day would have archived the already-committed 2026-10-11 file. health/r2-coverage.json in this checkout is empty (R2_BUCKET_NAME unset) and shows no distinct 2026-10-12 copy"
+      ],
+      "fillable": false
+    },
+    {
+      "feed": "data/real_estate_check.json",
+      "history": "daily check commits",
+      "start": "2026-10-28",
+      "end": "2026-10-28",
+      "reason": "real-estate-daily failed both 2026-10-28 runs (workflow_dispatch 40656164643 at 08:21Z and schedule 40690172315 at 12:43Z) because Redfin's legacy Data Center TSV returned S3 AccessDenied HTTP 403. The safety check refused an empty Redfin slice and kept the 2026-10-27 check, so no daily check commit landed. PR #170 (merged 2026-10-29) switched the fetcher to Redfin's published monthly CSV and a labeled stale carry-forward; runs since then committed. The file is overwritten in place. A later successful check is a new observation, and writing a 2026-10-28 commit now would invent a check that never succeeded. Issue #171 (audit 2026-10-30) stayed open on this one day.",
+      "backfill_attempted": [
+        "git: no commit of data/real_estate_check.json on 2026-10-28 (neighbors c28fe2e62 on 2026-10-27 and 7d8ef85a9 on 2026-10-29)",
+        "actions: runs 40656164643 and 40690172315 failed before the commit step and stored no successful check record",
+        "upstream: the legacy TSV stayed 403. The published monthly CSV wired by PR #170 is a later observation and cannot be back-dated onto a run that never wrote a check"
       ],
       "fillable": false
     }

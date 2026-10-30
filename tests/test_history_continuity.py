@@ -489,6 +489,83 @@ def test_cfpb_2026_10_12_timeout_is_disclosed_not_excused_as_a_holiday(dh, hc):
                              dh.MANIFEST["data-cfpb.json"].history[0], "2026-09-07")
 
 
+def test_real_estate_2026_10_28_redfin_outage_is_disclosed(dh, hc):
+    """Issue #171 / audit 2026-10-30: one missing daily check commit.
+
+    Both real-estate-daily runs on 2026-10-28 failed (Redfin HTTP 403) and
+    the safety check kept 2026-10-27, so no check commit exists. PR #170
+    fixed the source. Only that day is disclosed. The neighbors are not,
+    and a later miss is not either.
+    """
+    gaps = hc.load_known_gaps(REPO_ROOT)
+    spec = dh.MANIFEST["data/real_estate_check.json"].history[0]
+    match = [g for g in gaps if g.get("feed") == "data/real_estate_check.json"
+             and g.get("start") == "2026-10-28" and g.get("end") == "2026-10-28"]
+    assert len(match) == 1
+    assert match[0]["history"] == spec.name == "daily check commits"
+    assert match[0]["fillable"] is False
+    assert "40690172315" in match[0]["reason"]
+    assert "40656164643" in match[0]["reason"]
+    assert "#170" in match[0]["reason"]
+    assert hc._disclosed(gaps, "data/real_estate_check.json", spec, "2026-10-28")
+    assert not hc._disclosed(gaps, "data/real_estate_check.json", spec, "2026-10-27")
+    assert not hc._disclosed(gaps, "data/real_estate_check.json", spec, "2026-10-29")
+
+
+def test_a_disclosed_git_outage_day_does_not_hide_the_next_miss(hc, tmp_path):
+    """The allowance is the dated day, not 'the series resumed, so forgive holes'."""
+    _git(tmp_path, "init", "-q")
+    _git(tmp_path, "config", "user.email", "t@example.com")
+    _git(tmp_path, "config", "user.name", "t")
+    for day in ("2026-10-27", "2026-10-30"):
+        (tmp_path / "feed.json").write_text(json.dumps({"d": day}))
+        _git(tmp_path, "add", "feed.json")
+        stamp = f"{day}T12:00:00+00:00"
+        _git(tmp_path, "commit", "-q", "-m", day,
+             env={"GIT_AUTHOR_DATE": stamp, "GIT_COMMITTER_DATE": stamp})
+    spec = hc.History("feed.json", hc.DAILY, "git", label="daily check commits")
+    gaps = [{
+        "feed": "x", "history": "daily check commits",
+        "start": "2026-10-28", "end": "2026-10-28",
+        "reason": "documented outage; the next missing day must still fail",
+        "backfill_attempted": ["git: no commit"],
+    }]
+    f = hc.check("x", spec, tmp_path, date(2026, 10, 30), gaps)
+    assert f.disclosed == ["2026-10-28"]
+    assert f.missing == ["2026-10-29"]
+    assert not f.ok
+    bare = hc.check("x", spec, tmp_path, date(2026, 10, 30), [])
+    assert bare.missing == ["2026-10-28", "2026-10-29"]
+    assert bare.disclosed == []
+
+
+def test_full_clone_reports_the_redfin_day_disclosed_not_missing(dh, hc):
+    """The committed history, judged the way data-health.yml judges it.
+
+    tests.yml is a depth-1 checkout and skips this. A full clone (this
+    repo, and data-health.yml) must report 2026-10-28 disclosed and must
+    not fail the real-estate daily-check feed on it. Dropping the
+    disclosure puts that day back in ``missing``.
+    """
+    if hc._git_is_shallow(REPO_ROOT):
+        pytest.skip("shallow checkout; data-health.yml owns the git-history run")
+    spec = dh.MANIFEST["data/real_estate_check.json"].history[0]
+    gaps = hc.load_known_gaps(REPO_ROOT)
+    day = date(2026, 10, 30)
+    f = hc.check("data/real_estate_check.json", spec, REPO_ROOT, day, gaps)
+    assert f.skipped is None and f.error is None
+    assert "2026-10-28" in f.disclosed
+    assert "2026-10-28" not in f.missing
+    assert f.missing == []
+    assert f.ok
+    stripped = [g for g in gaps if not (
+        g.get("feed") == "data/real_estate_check.json"
+        and g.get("start") == "2026-10-28")]
+    bare = hc.check("data/real_estate_check.json", spec, REPO_ROOT, day, stripped)
+    assert "2026-10-28" in bare.missing
+    assert not bare.ok
+
+
 # ==========================================================================
 # wiring into data_health.py
 # ==========================================================================
