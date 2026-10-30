@@ -1,6 +1,6 @@
 {
   "as_of": "2026-10-30",
-  "generated_at": "2026-10-30T09:23:11Z",
+  "generated_at": "2026-10-30T12:46:35Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-30",
@@ -17,24 +17,24 @@
       "stale": false
     },
     "etf_flow_sentiment": {
-      "as_of": "2026-10-28",
+      "as_of": "2026-10-29",
       "label": "STRONG INFLOWS",
-      "note": "BTC ETF; 7d+30d net flow sum (60/40); 699 daily rows; same series as etf_flow_sentiment_btc",
-      "score": 64,
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 700 daily rows; same series as etf_flow_sentiment_btc",
+      "score": 63,
       "stale": false
     },
     "etf_flow_sentiment_btc": {
-      "as_of": "2026-10-28",
+      "as_of": "2026-10-29",
       "label": "STRONG INFLOWS",
-      "note": "BTC ETF; 7d+30d net flow sum (60/40); 699 daily rows",
-      "score": 64,
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 700 daily rows",
+      "score": 63,
       "stale": false
     },
     "etf_flow_sentiment_eth": {
-      "as_of": "2026-10-28",
+      "as_of": "2026-10-29",
       "label": "STRONG OUTFLOWS",
-      "note": "ETH ETF; 7d+30d net flow sum (60/40); 570 daily rows",
-      "score": -75,
+      "note": "ETH ETF; 7d+30d net flow sum (60/40); 571 daily rows",
+      "score": -84,
       "stale": false
     },
     "futures_sentiment": {
@@ -69,7 +69,7 @@
       "as_of": "2026-10-29",
       "label": "CROWDED LONGS",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 37,
+      "score": 38,
       "stale": false
     },
     "lthcs_composite": {
@@ -90,7 +90,7 @@
       "as_of": "2026-10-30",
       "label": "BEARISH",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": -22,
+      "score": -21,
       "stale": false
     },
     "poc_signal_breadth": {
