@@ -77,19 +77,19 @@ And one hole the old script shared with the dashboard it was guarding:
         oldest input. It lives in build_health_status, not here, so /health/
         and this watchdog resolve age through identical code.
 
-        That file-level age is still one number. data-city.json's limit is
-        160 days so NYPD's quarterly complaint file does not fail the check
-        in the weeks before a drop, and a monthly city can sit well past a
-        ~2 month publication lag without the payload leaving "ok". Each
-        city's data_health.last_updated is therefore also judged on its own.
-        Older than CITY_LAST_UPDATED_WARN_H (120 days: the ~2 month lag a
-        monthly series normally shows, plus about a month of slack) it is
-        AGED — reported here and as a daily-audit P2, never a failure.
-        When that month is uniquely NYPD Complaint Data Current
-        (5uac-w243), which publishes complete quarters, the same age is
-        DISCLOSED source publish lag until the 160d file limit. The 120d
-        line stays where it is for every other city and for a NYC feed
-        that is old on its own.
+        That file-level age is still one number. data-city.json's table
+        limit is 160 days: a monthly city past that fails the file. When
+        the oldest scored month is uniquely NYPD Complaint Data Current
+        (5uac-w243), the file uses NYPD_QUARTERLY_LIMIT_H (175 days)
+        instead, so that quarterly wait is not a failure. Each city's
+        data_health.last_updated is also judged on its own. Older than
+        CITY_LAST_UPDATED_WARN_H (120 days: the ~2 month lag a monthly
+        series normally shows, plus about a month of slack) it is AGED —
+        reported here and as a daily-audit P2, never a failure. When that
+        month is uniquely the NYPD file, the same age is DISCLOSED source
+        publish lag until the 175d quarterly window. The 120d line stays
+        where it is for every other city and for a NYC feed that is old
+        on its own.
 
 And one hole freshness cannot see at all:
 
@@ -751,9 +751,9 @@ OK, STALE, UNKNOWN, MISSING, UNWATCHED, SUPPRESSED, EXPIRED, SKIPPED = (
 # would page the same gap as a P0, which is louder than a one-city hole.
 SPARSE = "sparse"
 # One city's scored month is past a normal monthly publication lag. Not a
-# failing status either: the file-level 160d limit is what pages, and that
-# limit exists so NYPD's quarterly drop does not. See
-# CITY_LAST_UPDATED_WARN_H.
+# failing status either: the file-level limit is what pages. That limit is
+# 160 days for every city, and NYPD_QUARTERLY_LIMIT_H when the oldest
+# scored month is uniquely NYPD complaints. See CITY_LAST_UPDATED_WARN_H.
 AGED = "aged"
 # One upstream inside an otherwise healthy snapshot was carried forward
 # from the last good fetch and labeled stale. The daily job exits 0 and
@@ -799,27 +799,69 @@ CITY_CONTEXT_METRICS: tuple[str, ...] = (
 #
 # 120 days is that band plus about a month of slack, so a late monthly
 # release does not flicker a warning, and a month that is a further quarter
-# behind does. New York City on 2026-10-29 is 2026-06-01, about 150 days,
-# because its oldest scored feed is NYPD Complaint Data Current (YTD),
-# Socrata 5uac-w243. Checked that day against data.cityofnewyork.us (the
-# fetcher's SODA shape, no new key): the dataset id, host, and date column
-# cmplnt_fr_dt are unchanged; catalog Update Frequency is Quarterly;
-# rowsUpdatedAt is 2026-07-27T15:31:19Z; max(cmplnt_fr_dt) is 2026-06-30;
-# 2026 months are January–June and the June count (44606) matches this
-# repo's data-city.json. Historic baseline qgea-i56i ends 2025-12-31.
-# The catalog lists no newer NYPD complaint dataset. Q2 landed 27 days
-# after quarter-end, so a healthy wait peaks near 150 days. That wait is
-# source publish lag (DISCLOSED, cadence quarterly) until the 160d file
-# limit, which is the overdue line. It is not folded into the 120d
-# monthly warning, and the 120d line is not raised.
+# behind does. The 120d line is not raised for New York.
 #
 # A null last_updated is not old. It means no scored feed reported a
 # period, which the city's own Pulse already says by having no score.
 CITY_LAST_UPDATED_WARN_H = 120 * 24
 
-# See the comment above. The freshness check recognizes this dataset as
-# the quarterly source; the registry note is what the city card says.
+# NYPD Complaint Data Current (YTD), Socrata 5uac-w243. The freshness check
+# recognizes this dataset as the quarterly source; the registry note is
+# what the city card says.
 NYPD_COMPLAINTS_DATASET = "5uac-w243"
+
+# How long NYC's last_updated may sit on the last month of the newest
+# published NYPD quarter before that wait is overdue.
+#
+# last_updated is the first instant of that month, not quarter-end and not
+# the day the portal published. From that stamp to the next quarter-end is
+# 121 days (June 1 → September 30, March 1 → June 30, September 1 →
+# December 31). December 1 → March 31 is 120 days, 121 in a leap year.
+# The age at publication is that span plus the days the portal waits
+# after quarter-end.
+#
+# Checked 2026-10-30 against data.cityofnewyork.us, no app token. The
+# fetcher's dataset, host, and date column are unchanged. Catalog Update
+# Frequency is Quarterly and Automation is No (a person publishes it).
+# rowsUpdatedAt is 2026-07-27T15:31:19Z. max(cmplnt_fr_dt) is 2026-06-30
+# and max(rpt_dt) is the same day. Every row's :updated_at falls in
+# 2026-07-27T15:31:20Z..15:32:45Z, so the table was replaced that afternoon
+# and nothing has been added since. 2026 months are January–June and the
+# June count (44606) matches data-city.json. Historic qgea-i56i is
+# Update Frequency Annually, rowsUpdatedAt 2026-04-28. A catalog search
+# for "NYPD Complaint" returns no newer complaint dataset. Q3 2026
+# (through September) is not published. The fetch is not missing it.
+# On 2026-10-30 that wait is 31 days after quarter-end, inside the lags
+# below.
+#
+# Publish timestamps are rowsUpdatedAt embedded in Wayback captures of the
+# official dataset page, plus the live metadata above. Clear lags, days
+# after quarter-end, where a capture still showed the previous update:
+#   2023-11-08 Q3 2023  39d   last_updated age at publish ~160.7d
+#   2024-01-18 Q4 2023  18d
+#   2024-04-22 Q1 2024  22d
+#   2024-07-22 Q2 2024  22d
+#   2024-10-21 Q3 2024  21d
+#   2025-10-27 Q3 2025  27d
+#   2026-02-09 Q4 2025  40d   last_updated age at publish ~161.7d
+#   2026-04-28 Q1 2026  28d
+#   2026-07-27 Q2 2026  27d   confirmed by the row replace above
+# The longest clear lag since 2023 is 40 days (Q4 2025). That is the case
+# the old 160d line misses: 121 + 40 = 161, and the check treats age past
+# 160 days as overdue, so a repeat of 2026-02-09 flags about two days
+# before the file actually updates. Q3 2023 (39 days, published 16:32 UTC)
+# landed the same way, about 0.7 days past 160. Q2 2020 was published
+# 2020-09-15, 77 days after quarter-end (~198 days of last_updated age).
+# That one quarter is not the schedule this window is built on; it still
+# fails here.
+#
+# 175 days = 121 (quarter span from the month-start stamp) + 40 (longest
+# clear publish lag since 2023) + 14 (the manual release can slip a
+# weekend and a holiday week without paging). The table limit on
+# data-city.json stays 160 days. This window is NYC's only, and only while
+# 5uac-w243 is uniquely the oldest scored month. data_city_file_stale_h
+# is what /health/ and the file row both use.
+NYPD_QUARTERLY_LIMIT_H = (121 + 40 + 14) * 24
 
 # TSA's checkpoint date is often a few days behind over a weekend or holiday
 # because TSA has not published, not because aviation-tsa.yml stopped. A lag
@@ -1299,17 +1341,65 @@ def _nypd_is_the_oldest_scored_month(city: dict, month: str) -> bool:
                for f in feeds if f is not nypd[0])
 
 
+def data_city_file_stale_h(payload: dict, now_ts: float) -> float:
+    """Effective stale limit for the ``data-city.json`` file row.
+
+    The table value (160 days) is every city's hard failure. When one
+    city is strictly the oldest and that month is uniquely NYPD complaints,
+    and every other city is still inside 160 days, the file is held to
+    ``NYPD_QUARTERLY_LIMIT_H`` instead. A tie at the oldest stamp, a
+    non-NYPD oldest city, or any other city already past 160 days keeps
+    the table limit, so those cities fail where they did before.
+    """
+    base = THRESHOLDS["data-city.json"].stale_h
+    cities = payload.get("cities") if isinstance(payload, dict) else None
+    if not isinstance(cities, list):
+        return base
+    dated: list[tuple[datetime, dict]] = []
+    for city in cities:
+        if not isinstance(city, dict):
+            continue
+        health = city.get("data_health")
+        if not isinstance(health, dict):
+            continue
+        raw = health.get("last_updated")
+        if not isinstance(raw, str) or not raw.strip():
+            continue
+        dt = _parse_date_value(raw)
+        if dt is None:
+            continue
+        dated.append((dt, city))
+    if not dated:
+        return base
+    oldest_dt = min(dt for dt, _city in dated)
+    oldest = [city for dt, city in dated if dt == oldest_dt]
+    if len(oldest) != 1:
+        return base
+    city = oldest[0]
+    month = oldest_dt.date().isoformat()[:7]
+    if not _nypd_is_the_oldest_scored_month(city, month):
+        return base
+    for dt, other in dated:
+        if other is city:
+            continue
+        # A newer stamp can still be past 160 days when NYC is older still.
+        if now_ts - dt.timestamp() > base * 3600.0:
+            return base
+    return NYPD_QUARTERLY_LIMIT_H
+
+
 def city_last_updated_warnings(payload: dict, now_ts: float) -> list[Result]:
     """Cities whose scored month is past a normal monthly publication lag.
 
     One Result per city. A monthly series past ``CITY_LAST_UPDATED_WARN_H``
-    is AGED: a daily-audit P2, not a failure. The file-level 160d limit
-    still decides STALE.
+    is AGED: a daily-audit P2, not a failure. The file-level limit still
+    decides STALE (160 days, or ``NYPD_QUARTERLY_LIMIT_H`` when that
+    dataset is uniquely the oldest scored month).
 
     When the oldest scored month is uniquely NYPD Complaint Data Current
-    (``NYPD_COMPLAINTS_DATASET``) and the age is still inside that file
-    limit, the row is DISCLOSED with cadence ``quarterly``: source publish
-    lag, not a monthly stall. Past the file limit the same city is AGED,
+    (``NYPD_COMPLAINTS_DATASET``) and the age is still inside the quarterly
+    window, the row is DISCLOSED with cadence ``quarterly``: source publish
+    lag, not a monthly stall. Past that window the same city is AGED,
     because the quarterly drop is overdue. A null or unreadable
     last_updated is skipped — absence is not age, and a stamp this check
     cannot parse is already the file-level probe's problem when every city
@@ -1320,7 +1410,7 @@ def city_last_updated_warnings(payload: dict, now_ts: float) -> list[Result]:
         return []
     owner = MANIFEST["data-city.json"].owner if "data-city.json" in MANIFEST else ""
     limit = CITY_LAST_UPDATED_WARN_H
-    budget = THRESHOLDS["data-city.json"].stale_h
+    budget = NYPD_QUARTERLY_LIMIT_H
     out: list[Result] = []
     for city in cities:
         if not isinstance(city, dict):
@@ -1528,6 +1618,26 @@ def evaluate(mode: str, today: date | None = None,
         # Keyed by rel, not judged.name: a SERIES is judged on a dated member
         # file, and a DEPLOYED feed on a scratch or built_path copy.
         limit = threshold_for(rel).stale_h
+        if rel == "data-city.json" and path.is_file():
+            # Same widening /health/ applies in collect_manifest_feeds.
+            # The table stays 160 days; only a uniquely-oldest NYPD quarter
+            # moves this one row.
+            try:
+                city_payload = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError, UnicodeError):
+                city_payload = None
+            if isinstance(city_payload, dict):
+                widened = data_city_file_stale_h(city_payload, now)
+                if widened > limit:
+                    limit = widened
+                    window = (
+                        f"Oldest scored month is NYPD complaints "
+                        f"({NYPD_COMPLAINTS_DATASET}); this file's limit is "
+                        f"the {humanize_age(limit)} quarterly window. Any "
+                        f"other city still fails it at "
+                        f"{humanize_age(threshold_for(rel).stale_h)}."
+                    )
+                    detail = f"{detail} {window}".strip() if detail else window
         if age_h <= limit:
             results.append(Result(rel, OK, age_h, limit, feed.owner, detail, source,
                                   cadence=feed.cadence))

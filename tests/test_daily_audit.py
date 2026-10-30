@@ -1161,13 +1161,13 @@ class TestProblems:
                   "2026-06-01 is the scored month of NYPD Complaints "
                   "(5uac-w243). That dataset publishes complete quarters "
                   "only. 149.7d old, inside the quarterly window "
-                  "(overdue after 160.0d).")
+                  "(overdue after 175.0d).")
         d["data_health"]["results"].extend([
             {"path": "data-city.json", "status": "ok", "age_h": 149.7 * 24,
-             "limit_h": 160 * 24},
+             "limit_h": 175 * 24},
             {"path": "data-city.json [city: nyc last_updated]",
              "status": "disclosed", "cadence": "quarterly",
-             "age_h": 149.7 * 24, "limit_h": 160 * 24, "detail": detail,
+             "age_h": 149.7 * 24, "limit_h": 175 * 24, "detail": detail,
              "owner": "city-daily.yml (daily 06:00Z)"},
             {"path": "data-city.json [city: chicago last_updated]",
              "status": "aged", "age_h": 130 * 24, "limit_h": 120 * 24,

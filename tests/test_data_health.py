@@ -1431,9 +1431,9 @@ def test_a_city_past_the_hard_limit_still_fails_the_file(dh, tmp_path, monkeypat
 def test_nypd_quarter_inside_the_window_is_source_publish_lag(dh):
     """2026-10-29 audit: NYC's scored month is NYPD complaints (5uac-w243),
     and the source's newest complaint date is 2026-06-30. 311 and permits
-    are newer, so the city's age is that quarterly file. Inside the 160d
-    file limit this is disclosed source publish lag. The 120d line is
-    unchanged, and a monthly city at the same age still warns."""
+    are newer, so the city's age is that quarterly file. Inside the
+    quarterly window this is disclosed source publish lag. The 120d line
+    is unchanged, and a monthly city at the same age still warns."""
     nyc = _with_pulse(
         {"id": "nyc", "data_health": {"last_updated": "2026-06-01T00:00:00+00:00"}},
         [_scored_feed("erm2-nwe9", "2026-09"),
@@ -1447,7 +1447,7 @@ def test_nypd_quarter_inside_the_window_is_source_publish_lag(dh):
     lag = by_city["data-city.json [city: nyc last_updated]"]
     assert lag.status == dh.DISCLOSED and not lag.fails
     assert lag.cadence == "quarterly"
-    assert lag.limit_h == 160 * 24
+    assert lag.limit_h == dh.NYPD_QUARTERLY_LIMIT_H
     assert "source publish lag" in lag.detail
     assert "5uac-w243" in lag.detail
     assert "2026-06-01" in lag.detail
@@ -1496,7 +1496,8 @@ def test_nypd_tied_with_another_scored_feed_stays_a_monthly_warning(dh):
 
 
 def test_nypd_past_the_quarterly_window_warns(dh):
-    """Past the 160d file limit the quarterly source is overdue."""
+    """Past the quarterly window the source is overdue. 2026-04-01 on
+    2026-10-28 is about 210 days, past both 160 and 175."""
     nyc = _with_pulse(
         {"id": "nyc", "data_health": {"last_updated": "2026-04-01T00:00:00+00:00"}},
         [_scored_feed(dh.NYPD_COMPLAINTS_DATASET, "2026-04"),
@@ -1506,15 +1507,125 @@ def test_nypd_past_the_quarterly_window_warns(dh):
     assert len(rows) == 1
     assert rows[0].status == dh.AGED and not rows[0].fails
     assert rows[0].cadence == "quarterly"
-    assert rows[0].limit_h == 160 * 24
+    assert rows[0].limit_h == dh.NYPD_QUARTERLY_LIMIT_H
     assert "past the quarterly window" in rows[0].detail
-    assert rows[0].age_h > 160 * 24
+    assert rows[0].age_h > dh.NYPD_QUARTERLY_LIMIT_H
+
+
+def test_a_40_day_nypd_lag_stays_inside_the_quarterly_window(
+        dh, tmp_path, monkeypatch):
+    """2026-10-30 audit. Q3 2026 is not on data.cityofnewyork.us (5uac-w243
+    still ends 2026-06-30, replaced 2026-07-27). The longest clear publish
+    lag since 2023 is Q4 2025, rowsUpdatedAt 2026-02-09, 40 days after
+    quarter-end. That makes last_updated (2025-09-01) about 162 days old,
+    past the 160d line the other cities keep. 175d covers it. The file
+    stays ok, and /health/ uses the same limit.
+
+    Q2 2020, published 2020-09-15 (77 days, about 198 days of last_updated
+    age), stays overdue. One pandemic quarter does not set the window.
+    """
+    assert dh.NYPD_QUARTERLY_LIMIT_H == (121 + 40 + 14) * 24
+    assert dh.NYPD_QUARTERLY_LIMIT_H == 175 * 24
+    assert dh.THRESHOLDS["data-city.json"].stale_h == 160 * 24
+
+    published = datetime(2026, 2, 9, 16, 41, 9, tzinfo=timezone.utc)
+    nyc = _with_pulse(
+        {"id": "nyc", "data_health": {"last_updated": "2025-09-01T00:00:00+00:00"}},
+        [_scored_feed(dh.NYPD_COMPLAINTS_DATASET, "2025-09"),
+         _scored_feed("erm2-nwe9", "2025-12")])
+    rows = dh.city_last_updated_warnings(
+        {"cities": [nyc]}, published.timestamp())
+    assert len(rows) == 1 and rows[0].status == dh.DISCLOSED
+    assert 160 * 24 < rows[0].age_h < dh.NYPD_QUARTERLY_LIMIT_H
+
+    # The morning the 160d line would have flagged a repeat of that drop,
+    # while the source was still inside its observed lag. June 1 + 162d.
+    waiting = datetime(2026, 11, 10, 16, 0, tzinfo=timezone.utc)
+    nyc_now = _with_pulse(
+        {"id": "nyc", "data_health": {"last_updated": "2026-06-01T00:00:00+00:00"}},
+        [_scored_feed(dh.NYPD_COMPLAINTS_DATASET, "2026-06"),
+         _scored_feed("erm2-nwe9", "2026-09")])
+    chicago = {"id": "chicago", "data_health": {
+        "last_updated": "2026-09-01T00:00:00+00:00"}}
+    rows = dh.city_last_updated_warnings(
+        {"cities": [nyc_now, chicago]}, waiting.timestamp())
+    assert [r.status for r in rows] == [dh.DISCLOSED]
+    assert rows[0].limit_h == dh.NYPD_QUARTERLY_LIMIT_H
+
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    payload = {"generated_at": "2026-11-10T15:00:00Z",
+               "cities": [nyc_now, chicago]}
+    _write(tmp_path, "data-city.json", payload)
+    city = next(r for r in dh.evaluate(
+        dh.COMMITTED, history=False, now_ts=waiting.timestamp())
+        if r.path == "data-city.json")
+    assert city.status == dh.OK and not city.fails
+    assert city.limit_h == dh.NYPD_QUARTERLY_LIMIT_H
+    assert city.age_h > 160 * 24
+    assert "175.0d" in city.detail
+    assert "160.0d" in city.detail
+
+    bhs = sys.modules["build_health_status"]
+    page = {r["path"]: r for r in bhs.collect_manifest_feeds(tmp_path)}
+    assert page["data-city.json"]["stale_h"] == dh.NYPD_QUARTERLY_LIMIT_H
+    assert page["data-city.json"]["status"] != "critical"
+
+    overdue = datetime(2026, 11, 24, 16, 0, tzinfo=timezone.utc)
+    city = next(r for r in dh.evaluate(
+        dh.COMMITTED, history=False, now_ts=overdue.timestamp())
+        if r.path == "data-city.json")
+    assert city.status == dh.STALE and city.fails
+    assert city.limit_h == dh.NYPD_QUARTERLY_LIMIT_H
+    assert city.age_h > dh.NYPD_QUARTERLY_LIMIT_H
+    warned = dh.city_last_updated_warnings(payload, overdue.timestamp())
+    assert warned[0].status == dh.AGED and warned[0].cadence == "quarterly"
+
+    pandemic = datetime(2020, 9, 15, 17, 3, 32, tzinfo=timezone.utc)
+    nyc_2020 = _with_pulse(
+        {"id": "nyc", "data_health": {"last_updated": "2020-03-01T00:00:00+00:00"}},
+        [_scored_feed(dh.NYPD_COMPLAINTS_DATASET, "2020-03"),
+         _scored_feed("erm2-nwe9", "2020-06")])
+    rows = dh.city_last_updated_warnings(
+        {"cities": [nyc_2020]}, pandemic.timestamp())
+    assert rows[0].status == dh.AGED and rows[0].cadence == "quarterly"
+    assert rows[0].age_h > dh.NYPD_QUARTERLY_LIMIT_H
+
+
+def test_a_monthly_city_past_160d_still_fails_the_file_during_nypd_lag(
+        dh, tmp_path, monkeypatch):
+    """Chicago past 160 days fails the file even while NYC's NYPD quarter
+    is inside 175. The quarterly window does not move any other city."""
+    now = datetime(2026, 11, 10, 16, 0, tzinfo=timezone.utc)
+    nyc = _with_pulse(
+        {"id": "nyc", "data_health": {"last_updated": "2026-06-01T00:00:00+00:00"}},
+        [_scored_feed(dh.NYPD_COMPLAINTS_DATASET, "2026-06"),
+         _scored_feed("erm2-nwe9", "2026-09")])
+    chicago = {"id": "chicago", "data_health": {
+        "last_updated": "2026-06-02T00:00:00+00:00"}}
+    assert dh.data_city_file_stale_h(
+        {"cities": [nyc, chicago]}, now.timestamp()) == 160 * 24
+    monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
+    _write(tmp_path, "data-city.json", {
+        "generated_at": "2026-11-10T15:00:00Z",
+        "cities": [nyc, chicago],
+    })
+    city = next(r for r in dh.evaluate(
+        dh.COMMITTED, history=False, now_ts=now.timestamp())
+        if r.path == "data-city.json")
+    assert city.status == dh.STALE and city.fails
+    assert city.limit_h == 160 * 24
+    by_path = {r.path: r for r in dh.city_last_updated_warnings(
+        {"cities": [nyc, chicago]}, now.timestamp())}
+    assert by_path["data-city.json [city: nyc last_updated]"].status == dh.DISCLOSED
+    assert by_path["data-city.json [city: chicago last_updated]"].status == dh.AGED
+    assert by_path["data-city.json [city: chicago last_updated]"].limit_h == 120 * 24
 
 
 def test_evaluate_discloses_nypd_lag_without_failing_the_city_payload(
         dh, tmp_path, monkeypatch):
-    """The 2026-10-29 payload: file row stays ok (149d < 160d) and NYC is
-    source publish lag, not the monthly aged warning."""
+    """The 2026-10-29 payload: file row stays ok and NYC is source publish
+    lag, not the monthly aged warning. The file limit shown is the
+    quarterly window, because NYPD is the oldest scored month."""
     monkeypatch.setattr(dh, "REPO_ROOT", tmp_path)
     nyc = _with_pulse(_AUDIT_CITIES[1], [
         _scored_feed("erm2-nwe9", "2026-09"),
@@ -1529,6 +1640,7 @@ def test_evaluate_discloses_nypd_lag_without_failing_the_city_payload(
     rows = dh.evaluate(dh.COMMITTED, history=False, now_ts=_AUDIT_DAY.timestamp())
     city = next(r for r in rows if r.path == "data-city.json")
     assert city.status == dh.OK and not city.fails
+    assert city.limit_h == dh.NYPD_QUARTERLY_LIMIT_H
     lag = [r for r in rows if "nyc" in r.path]
     assert len(lag) == 1
     assert lag[0].status == dh.DISCLOSED and lag[0].cadence == "quarterly"

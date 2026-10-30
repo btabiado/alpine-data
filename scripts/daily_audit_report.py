@@ -48,8 +48,9 @@ Severities:
         ~2 month monthly lag (data-city last_updated, status aged; the
         file staying under its 160d limit is not a failure). NYPD Complaint
         Data Current publishes complete quarters; while that feed is the
-        city's oldest scored month and the age is inside the 160d file
-        limit, data_health marks it disclosed with cadence quarterly and
+        city's oldest scored month and the age is inside
+        NYPD_QUARTERLY_LIMIT_H (175d; the file's 160d line is every other
+        city), data_health marks it disclosed with cadence quarterly and
         this report prints one informational line (source publish lag)
         and leaves it out of the problem list. Past that window the same
         city is aged and stays a P2. A transient Farside 5xx/timeout
@@ -799,9 +800,9 @@ def data_problems(data: dict | None) -> list[dict]:
                 # One city's scored month is past a normal ~2 month lag.
                 # P2, not a page: data_health keeps "aged" out of
                 # FAILING_STATUSES so NYPD's quarterly wait (NYC at
-                # 2026-06-01 on 2026-10-28, ~150d, still under the 160d
-                # file limit) cannot open a P0. 2026-10-28 audit,
-                # enhancement #3.
+                # 2026-06-01 on 2026-10-28, ~150d, still under the quarterly
+                # window) cannot open a P0. 2026-10-28 audit, enhancement
+                # #3. The NYPD window itself is NYPD_QUARTERLY_LIMIT_H.
                 path = r.get("path") or "data-city.json"
                 detail = r.get("detail") or ""
                 out.append(problem(
