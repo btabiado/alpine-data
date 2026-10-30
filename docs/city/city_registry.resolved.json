@@ -37,7 +37,7 @@
     { "id": "nyc", "name": "New York City", "scope": "city", "adapter": "socrata", "host": "data.cityofnewyork.us",
       "feeds": [
         { "pillar": "city_services",       "label": "311 (2010-present)", "dataset": "erm2-nwe9", "date_col": "created_date", "date_col_status": "confirmed", "polarity": -1, "metric": "count", "note": "~38M rows; REQUIRES app token + recent $where filter or it times out" },
-        { "pillar": "public_safety",        "label": "NYPD Complaints",    "dataset": "5uac-w243", "baseline_dataset": "qgea-i56i", "date_col": "cmplnt_fr_dt", "date_col_status": "confirmed", "polarity": -1, "metric": "count", "note": "YTD file lags ~1 month; baseline qgea-i56i same col" },
+        { "pillar": "public_safety",        "label": "NYPD Complaints",    "dataset": "5uac-w243", "baseline_dataset": "qgea-i56i", "date_col": "cmplnt_fr_dt", "date_col_status": "confirmed", "polarity": -1, "metric": "count", "note": "Source publish lag: NYPD Complaint Data Current (5uac-w243) publishes complete quarters only, so this scored month lags to the last month of the newest published quarter. Baseline qgea-i56i is the prior-year file." },
         { "pillar": "development_economy",  "label": "DOB Permit Issuance","dataset": "ipu4-2q9a", "date_col": "issuance_date", "date_col_status": "text_not_date", "date_col_type": "text", "date_text_format": "MM/DD/YYYY", "date_alt_real": "dobrundate", "polarity": 1, "metric": "count", "note": "issuance_date is TEXT -> date_trunc_ym fails. Bucket via substring(issuance_date,7,4)||'-'||substring(issuance_date,1,2) and filter IS NOT NULL, OR use dobrundate (real calendar_date, ~1-day proxy)." }
       ] },
     { "id": "la", "name": "Los Angeles", "scope": "city", "adapter": "socrata", "host": "data.lacity.org",

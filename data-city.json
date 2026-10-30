@@ -1254,7 +1254,7 @@
                 "dataset": "5uac-w243",
                 "polarity": -1,
                 "complete_through": "2026-06",
-                "note": "YTD file lags ~1 month; baseline qgea-i56i same col",
+                "note": "Source publish lag: NYPD Complaint Data Current (5uac-w243) publishes complete quarters only, so this scored month lags to the last month of the newest published quarter. Baseline qgea-i56i is the prior-year file.",
                 "status": "ok",
                 "recent": 44606,
                 "recent_period": "2026-06",
@@ -1590,7 +1590,7 @@
       },
       "disclosures": [
         "311 (2010-present): ~38M rows; REQUIRES app token + recent $where filter or it times out",
-        "NYPD Complaints: YTD file lags ~1 month; baseline qgea-i56i same col",
+        "NYPD Complaints: Source publish lag: NYPD Complaint Data Current (5uac-w243) publishes complete quarters only, so this scored month lags to the last month of the newest published quarter. Baseline qgea-i56i is the prior-year file.",
         "DOB Permit Issuance: issuance_date is TEXT -> date_trunc_ym fails. Bucket via substring(issuance_date,7,4)||'-'||substring(issuance_date,1,2) and filter IS NOT NULL, OR use dobrundate (real calendar_date, ~1-day proxy)."
       ],
       "data_health": {

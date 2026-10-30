@@ -85,6 +85,11 @@ And one hole the old script shared with the dashboard it was guarding:
         Older than CITY_LAST_UPDATED_WARN_H (120 days: the ~2 month lag a
         monthly series normally shows, plus about a month of slack) it is
         AGED — reported here and as a daily-audit P2, never a failure.
+        When that month is uniquely NYPD Complaint Data Current
+        (5uac-w243), which publishes complete quarters, the same age is
+        DISCLOSED source publish lag until the 160d file limit. The 120d
+        line stays where it is for every other city and for a NYC feed
+        that is old on its own.
 
 And one hole freshness cannot see at all:
 
@@ -794,14 +799,27 @@ CITY_CONTEXT_METRICS: tuple[str, ...] = (
 #
 # 120 days is that band plus about a month of slack, so a late monthly
 # release does not flicker a warning, and a month that is a further quarter
-# behind does. New York City the same day is 2026-06-01, about 150 days,
-# because NYPD Complaint Data Current (YTD) publishes whole quarters and
-# was still on 2026-06-30. That warns. It does not fail: the file-level
-# stale limit stays 160 days so the same quarterly wait does not page.
+# behind does. New York City on 2026-10-29 is 2026-06-01, about 150 days,
+# because its oldest scored feed is NYPD Complaint Data Current (YTD),
+# Socrata 5uac-w243. Checked that day against data.cityofnewyork.us (the
+# fetcher's SODA shape, no new key): the dataset id, host, and date column
+# cmplnt_fr_dt are unchanged; catalog Update Frequency is Quarterly;
+# rowsUpdatedAt is 2026-07-27T15:31:19Z; max(cmplnt_fr_dt) is 2026-06-30;
+# 2026 months are January–June and the June count (44606) matches this
+# repo's data-city.json. Historic baseline qgea-i56i ends 2025-12-31.
+# The catalog lists no newer NYPD complaint dataset. Q2 landed 27 days
+# after quarter-end, so a healthy wait peaks near 150 days. That wait is
+# source publish lag (DISCLOSED, cadence quarterly) until the 160d file
+# limit, which is the overdue line. It is not folded into the 120d
+# monthly warning, and the 120d line is not raised.
 #
 # A null last_updated is not old. It means no scored feed reported a
 # period, which the city's own Pulse already says by having no score.
 CITY_LAST_UPDATED_WARN_H = 120 * 24
+
+# See the comment above. The freshness check recognizes this dataset as
+# the quarterly source; the registry note is what the city card says.
+NYPD_COMPLAINTS_DATASET = "5uac-w243"
 
 # TSA's checkpoint date is often a few days behind over a weekend or holiday
 # because TSA has not published, not because aviation-tsa.yml stopped. A lag
@@ -1227,19 +1245,82 @@ def _city_label(city: dict) -> str:
     return "?"
 
 
+def _scored_feeds(city: dict) -> list[dict]:
+    """Feeds that date the Pulse score.
+
+    Mirrors ``city.pulse._counts_toward_score``: status ``ok``, polarity not
+    0, ``d`` present, and a ``YYYY-MM`` ``recent_period``. A payload with no
+    pulse (a freshness fixture that only carries ``data_health``) yields
+    nothing, and the monthly warning stays in force.
+    """
+    pulse = city.get("pulse")
+    if not isinstance(pulse, dict):
+        return []
+    pillars = pulse.get("pillars")
+    if not isinstance(pillars, list):
+        return []
+    out: list[dict] = []
+    for pillar in pillars:
+        if not isinstance(pillar, dict):
+            continue
+        feeds = pillar.get("feeds")
+        if not isinstance(feeds, list):
+            continue
+        for feed in feeds:
+            if not isinstance(feed, dict):
+                continue
+            if feed.get("status") != "ok":
+                continue
+            if feed.get("polarity") in (0, None):
+                continue
+            if feed.get("d") is None:
+                continue
+            rp = feed.get("recent_period")
+            if not isinstance(rp, str) or len(rp) < 7:
+                continue
+            out.append(feed)
+    return out
+
+
+def _nypd_is_the_oldest_scored_month(city: dict, month: str) -> bool:
+    """True when ``month`` is NYPD complaints and every other scored feed is newer.
+
+    ``last_updated`` is the oldest scored month. When that month belongs
+    only to ``5uac-w243``, the age is the quarterly source. Another scored
+    feed at the same month or older is a stall the monthly warning reports.
+    """
+    feeds = _scored_feeds(city)
+    nypd = [f for f in feeds
+            if f.get("dataset") == NYPD_COMPLAINTS_DATASET
+            and str(f.get("recent_period"))[:7] == month]
+    if len(nypd) != 1:
+        return False
+    return all(str(f.get("recent_period"))[:7] > month
+               for f in feeds if f is not nypd[0])
+
+
 def city_last_updated_warnings(payload: dict, now_ts: float) -> list[Result]:
     """Cities whose scored month is past a normal monthly publication lag.
 
-    One Result per city, status AGED. Not a failure: the file-level 160d
-    limit still decides STALE. A null or unreadable last_updated is skipped
-    — absence is not age, and a stamp this check cannot parse is already
-    the file-level probe's problem when every city lacks one.
+    One Result per city. A monthly series past ``CITY_LAST_UPDATED_WARN_H``
+    is AGED: a daily-audit P2, not a failure. The file-level 160d limit
+    still decides STALE.
+
+    When the oldest scored month is uniquely NYPD Complaint Data Current
+    (``NYPD_COMPLAINTS_DATASET``) and the age is still inside that file
+    limit, the row is DISCLOSED with cadence ``quarterly``: source publish
+    lag, not a monthly stall. Past the file limit the same city is AGED,
+    because the quarterly drop is overdue. A null or unreadable
+    last_updated is skipped — absence is not age, and a stamp this check
+    cannot parse is already the file-level probe's problem when every city
+    lacks one.
     """
     cities = payload.get("cities") if isinstance(payload, dict) else None
     if not isinstance(cities, list):
         return []
     owner = MANIFEST["data-city.json"].owner if "data-city.json" in MANIFEST else ""
     limit = CITY_LAST_UPDATED_WARN_H
+    budget = THRESHOLDS["data-city.json"].stale_h
     out: list[Result] = []
     for city in cities:
         if not isinstance(city, dict):
@@ -1254,10 +1335,52 @@ def city_last_updated_warnings(payload: dict, now_ts: float) -> list[Result]:
         if dt is None:
             continue
         age_h = _value_age_h(raw, dt, now_ts)
-        if age_h <= limit:
-            continue
         label = _city_label(city)
         stamp = dt.date().isoformat()
+        month = stamp[:7]
+        if _nypd_is_the_oldest_scored_month(city, month):
+            if age_h <= limit:
+                continue
+            path = f"data-city.json [city: {label} last_updated]"
+            source = "cities[].data_health.last_updated"
+            if age_h <= budget:
+                out.append(Result(
+                    path,
+                    DISCLOSED,
+                    age_h=age_h,
+                    limit_h=budget,
+                    owner=owner,
+                    cadence="quarterly",
+                    detail=(
+                        f"source publish lag: {label} data_health.last_updated "
+                        f"{stamp} is the scored month of NYPD Complaints "
+                        f"({NYPD_COMPLAINTS_DATASET}). That dataset publishes "
+                        f"complete quarters only. {humanize_age(age_h)} old, "
+                        f"inside the quarterly window (overdue after "
+                        f"{humanize_age(budget)})."
+                    ),
+                    source=source,
+                ))
+            else:
+                out.append(Result(
+                    path,
+                    AGED,
+                    age_h=age_h,
+                    limit_h=budget,
+                    owner=owner,
+                    cadence="quarterly",
+                    detail=(
+                        f"{label} data_health.last_updated {stamp} is "
+                        f"{humanize_age(age_h)} old. NYPD Complaints "
+                        f"({NYPD_COMPLAINTS_DATASET}) publishes complete "
+                        f"quarters; this month is past the quarterly window "
+                        f"({humanize_age(budget)})."
+                    ),
+                    source=source,
+                ))
+            continue
+        if age_h <= limit:
+            continue
         out.append(Result(
             f"data-city.json [city: {label} last_updated]",
             AGED,
