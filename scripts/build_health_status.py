@@ -102,28 +102,22 @@ THRESHOLDS: dict[str, Threshold] = {
     # 62d fresh: a one-month-lagging series' month-start sits 59-92 days back,
     # plus cron slack.
     #
-    # 160d stale, NOT the earlier 100d, because one scored feed is QUARTERLY.
-    # NYPD Complaint Data Current (YTD), Socrata 5uac-w243, is tagged "Update
-    # Frequency: Quarterly" and only ever holds complete quarters: Q2 landed on
-    # 2026-07-27 (27 days after quarter end) with max(cmplnt_fr_dt) 2026-06-30.
-    # So the newest month NYC can offer is the LAST month of the previous
-    # quarter, and just before the next drop its month-start is ~30d (that
-    # month) + ~92d (the following quarter) + ~27d (publish lag) = ~150d old.
-    # Under 100d, NYC went red every quarter for ~7 weeks on a healthy feed
-    # (125.8d on 2026-10-04, waiting for the Q3 drop). 160d leaves ~10 days of
-    # slack for a late drop. Since PR #40, last_updated counts only SCORED
-    # feeds, so this is a statement about NYPD's cadence, not about Miami's
-    # frozen 311 snapshot.
-    #
-    # ACCEPTED COST of this hard limit: it applies to the oldest scored feed
-    # in every city, so a MONTHLY feed that freezes takes up to ~160d, not
-    # ~100d, to fail the file. The per-city warning in data_health
-    # (CITY_LAST_UPDATED_WARN_H, 120d, status "aged") is what surfaces that
-    # earlier. It is a daily-audit P2, not a failure. A healthy NYPD
-    # quarterly wait is labeled source publish lag (disclosed) until this
-    # 160d line, and does not use the 120d monthly warning. When this entry
-    # is red, it is red for a true reason. Re-checked 2026-10-29: 5uac-w243
-    # still ends 2026-06-30 (rows updated 2026-07-27); Q3 was not published.
+    # 160d stale for every city. One scored feed is slower than that, and
+    # its wait is NOT this number. NYPD Complaint Data Current (YTD),
+    # Socrata 5uac-w243, is tagged "Update Frequency: Quarterly" and holds
+    # complete quarters only. When that dataset is uniquely the oldest
+    # scored month, data_health.data_city_file_stale_h raises this file's
+    # effective stale_h to NYPD_QUARTERLY_LIMIT_H (175 days). /health/ and
+    # the watchdog both call that function, so they still share one limit.
+    # A different city past 160 days still fails the file here. The
+    # per-city warning (CITY_LAST_UPDATED_WARN_H, 120d, status "aged") is
+    # what surfaces a monthly stall earlier, as a daily-audit P2. A healthy
+    # NYPD wait is source publish lag (disclosed) until 175d, and does not
+    # use the 120d line. Re-checked 2026-10-30 against
+    # data.cityofnewyork.us: 5uac-w243 still ends 2026-06-30, every row's
+    # :updated_at is 2026-07-27, and the catalog has no newer complaint
+    # dataset. Q3 2026 was not published. The 175d figure is the publish
+    # history documented on NYPD_QUARTERLY_LIMIT_H, not this table.
     "data-city.json": Threshold(62 * 24, 160 * 24),
     # data-aviation.json is a COMPOSITE of three vintages dated by its OLDEST
     # component (data_date), the FAA airman roll: an ANNUAL study stamped
@@ -982,6 +976,17 @@ def collect_manifest_feeds(root: Path = REPO_ROOT) -> list[dict]:
         mtime = p.stat().st_mtime
         age_h, probe = _age_and_provenance(p, mtime, now, rel)
         t = threshold_for(rel)
+        if rel == "data-city.json":
+            # data_health.data_city_file_stale_h is the same widening the
+            # watchdog applies, so /health/ goes red on the same day.
+            try:
+                payload = json.loads(p.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError, UnicodeError):
+                payload = None
+            if isinstance(payload, dict):
+                widened = dh.data_city_file_stale_h(payload, now)
+                if widened != t.stale_h:
+                    t = Threshold(t.fresh_h, widened)
         row = {
             "name": rel,
             "path": rel,
