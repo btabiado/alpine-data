@@ -1,6 +1,6 @@
 {
- "generated": "2026-10-30",
- "gathered_at": "2026-10-31T10:02:33Z",
+ "generated": "2026-10-31",
+ "gathered_at": "2026-10-31T12:20:35Z",
  "items": [
   {
    "vendor": "Semarchy",
@@ -3171,15 +3171,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Infosys",
-   "headline": "Infosys and ABN AMRO Extend Partnership to Scale Agentic AI and Modernize Banking IT",
-   "date": "2026-09-30",
-   "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxNYlhqanBBT0VfSGpZTlFuenp5QmM2WGJFc2tOekV5SHdNZnRsdU4zdDY0eXFBalpoQ2ItaVdiSGp4cXlkNUc3SFhsZ2NUOHFlQ29yWmExclhtR182VzA1Ynd2cV92bHJaZEtKTWdfWHVVT0xrSm94dG44V2NEaXJfdkg3UURhX1pNWEN3ZDFaS0FoNjFXR0ttdVdYbEJ5ZWJYNE92QTZYcHJfb1Z3cVloM29PMA?oc=5",
-   "source": "FF News",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "LTM",
    "headline": "LTM Named Global Leader In ISG Provider Lens 2026",
    "date": "2026-09-30",
@@ -3781,15 +3772,6 @@
    "source": "TipRanks",
    "summary": "",
    "relevance": "high"
-  },
-  {
-   "vendor": "AWS",
-   "headline": "OpsGuru Named OpenAI Select Partner, Recognizing Its Work Bringing OpenAI Models to Enterprise AWS Environments",
-   "date": "2026-10-07",
-   "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxOMnZqY08yRlBNeTBBNlJqRzNlUUtINWIyTUFqZF9xRXhsc2RPemxGRER2U01sM2JJc2VjQVFoUFEzX1RERVpib0RFWWhuYWptSjdkZ2JORnU1WDIxbklITU10SzFtZTBOR3g5dmdJNUllYmRDQjJyc0FTNWNyVnVnRk1Wc0VFZw?oc=5",
-   "source": "AOL.com",
-   "summary": "",
-   "relevance": "medium"
   },
   {
    "vendor": "LlamaIndex",
@@ -5124,29 +5106,11 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Mastech Digital",
-   "headline": "Mastech Digital, Inc Estimates – AMEX:MHH",
-   "date": "2026-10-23",
-   "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE81OVlDYWtFRE9RaTBZdG5WdzcteXNwQ3dBRUZ1NDk1TnpsS0JSbmt3Q1AzS1htOVd5YWw1b3RPRHdFZXljWldyRnYza1pNWWVPLXFPRm1TUHNWcTVwVUN4bnVRVXBOTDVUNE1GNDhYbHBsSzBE?oc=5",
-   "source": "TradingView",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "MathCo",
    "headline": "10 years of MathCo. A decade of innovation. And the next decade of enterprise AI is already taking shape.As MathCo celebrates a decade of innovation, Sayandeb Banerjee and Aditya Kumbakonam decode the future of enterprise AI, the intelligence powering",
    "date": "2026-10-23",
    "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxOaVByeDBXdFVmcFhKSjhLb2ZWc2tYeUZjb1JCNUJVcUVfNXp5aUl5YkJTZ0xFS1RwMEpVd1BhbGw2ckoxNHQ1RDNWX2ZlSWpSWFdpSkNDd09rclV1bDJhYUJ0eVhLVmR3VkVVOHVjcnNGZm5qN3lSTVZLclVRMXlrWHE2SWNkS3JwS1JNTlJRN0U2WmQxckQzM3lXcUtRamJXVnVjbGlRMzhvMG9IZ2pjbFRXWVZLck0?oc=5",
    "source": "LinkedIn",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Neo4j",
-   "headline": "Neo4j Launches Context Engine to Give Enterprise AI Agents Shared Business Knowledge",
-   "date": "2026-10-23",
-   "url": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNZF9IeHYxQ3ZOS2RjWTJlclhqQW5ieXdvVFRtbXJHUVJOc21tOTQ2S3hhdmM2Z1lobDhtZVhRTEljYkNVVHRlWmRBaG9ma2RiT3BvaC15ODBVQk9TRnJfdFZXR1oxTXhjbVYtdWg1LUs5VlRpOGtjejB1OEE1V2c0V0E2THMzWVJWanFwUDFnY29MYnhkWFZ6eFdtX1hZZld2bDhLN202N0ZVNG55Z3phMHRuSE1aQ3Z3X2dF?oc=5",
-   "source": "Konsulteer",
    "summary": "",
    "relevance": "medium"
   },
@@ -5857,15 +5821,6 @@
    "headline": "CData targets development success with Connect AI update",
    "date": "2026-10-27",
    "url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxNUDZUQlpLVWRPWnZVcUJ2T040QWluclBiV2V1aG93RDlMX3VHY3dpV2dSbldLajdaWGxYczVBWUYxMFV2cEVVWkUwSXNSYXE2VDFMWjduMWMtajJwVEJQU0Y2SmlKQktNaVVyQ19xc1Y4cXVxRGpDTENSRGVaUmdISmNZdWRsMHZVdHdMcl9paGJtRXRCVE1lRjVGc3Y?oc=5",
-   "source": "TechTarget",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Collibra",
-   "headline": "Free tool from Collibra tests data maturity against peers",
-   "date": "2026-10-27",
-   "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxQTVhOOFRLZEtKV0k5NFhydkxIeTJxeFdvdDVYWDRnb0J6M2xUV2Z0ejJ2VUdENDl5ODhXSVVyeVZzbVcwOWRjQm03cGE3NHlOcmptUFRiMURCdTJwSjdPRTIxOVVldU0xTzFaaDF0NnJEOUgzb2o3TkxwYlUwb2FrUWJzQkYyREsxVzdqNWw3T205c1ptQTc4ZEpfeW9GQQ?oc=5",
    "source": "TechTarget",
    "summary": "",
    "relevance": "medium"
@@ -6915,15 +6870,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Braze",
-   "headline": "Salesforce to Buy Braze, Linking Customer Data and Messaging",
-   "date": "2026-10-28",
-   "url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxQZG1QUTFXa0ZnTk9KNkswMFNxYWNYNW0zYXo3dllKaHp4LW03RkVNQV9YaVlqcG9zbFJpRkJjVUxrOXpaaGVwVkRtcVhuT2g5TVMyakdncUtxaHhBNHNfNHE4X2ZwLWl1RnhsS1dWLWlqNkhHM3RvR2t2ZkZ0RlU0V0lvTV9zN3dJV0xZYjYzS3hzUUQ5ZU5SRms5T1hxaVVac2c?oc=5",
-   "source": "Subscription Insider",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Qlik",
    "headline": "Qlik Introduces Semantic Models for Shared Business Context Across Analytics and AI",
    "date": "2026-10-28",
@@ -7100,15 +7046,6 @@
    "date": "2026-10-29",
    "url": "https://news.google.com/rss/articles/CBMizgFBVV95cUxOck1BN1gtLXlPSFdmcTFrU2E1QThMSjItLWZSZW52MnlYcVg5M3V5bVhqeDgtYmxRamkza183bDItTGZSb1U0dHhqZDlndXd5TFkteXl6Z3ktQmlVLUpIV3ZWMjk2dzAxM3BUeG5NNTk5S2FkWkc4NkNKa3JLNndic0Fkd3plYWFTLWZ2ck41MHVpQjZrN29uenh0bzBtVTFpelhFdWlCdDQ0bFJMV2VSNTZORkU4UTlLMDRCQW9pa2ZZWlpjWW1fMXBoWGsxZw?oc=5",
    "source": "Morningstar",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Mastech Digital",
-   "headline": "Mastech Digital, Inc. (MHH) Seasonal Returns Chart - Yahoo Finance",
-   "date": "2026-10-29",
-   "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFAwcl9ESE8zZWNteGEwNm52UzBobDNOa3liak4tUU92RU1Ldm5rZUVWMDZlalRLak1iQ2tVcWo3T1FiVV9YZ0hsQkhyMjhkQWRyOE91MlVSeWlYbVNJTHV5bg?oc=5",
-   "source": "Yahoo! Finance Canada",
    "summary": "",
    "relevance": "medium"
   },
@@ -7370,6 +7307,96 @@
    "date": "2026-10-22",
    "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxPT0N3LXAyTGJmQ2pjNVpzNGxUZThYa3BkZDJDRUxfbVRnako2QmMtVUk4R081MlVYWTZad3B6ZW5fVDF6Tm4wZFlpbExiOUJzRHpnbUNyYmhIREs2Z1RiNzhRcVB3aC1aY2tmTmJNa250a1VmRHFXWk95aWNOSkgtVktkek12Tmh4RGNxVnpLS1hPX0Jpbi1td0FYczA2N05CblJV?oc=5",
    "source": "TechTarget",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Braze",
+   "headline": "Braze Turns Days of Analysis Into Hours With CoCo",
+   "date": "2026-10-31",
+   "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTE80R0U4alU0MEdDRHYxOS1qdmhPbi1FN3FjSG5rb2Z1ZVhQbjA0bDRzNERscVJHcnhXalMzUjR2dEluNno0bGw5eHB5UXhTdGNMOHg1QjdqMndoSFRQV0Y2cEY3dFlLamNXaDNhdWlfdzVGUXZMTkVV?oc=5",
+   "source": "Snowflake",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Mastek",
+   "headline": "Mastek Appoints Niraj Khemka as Vice President – Finance, Leading Investor Relations, FP&A and Pricing",
+   "date": "2026-10-31",
+   "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPTzNQVkJObVJPeGNSSTg3enFQOFFpalVWYll1OFRYN0JIeGdqT2k5R2F6ZlRXb091aHlkUWdDTk1JZzF3N0pGTmt3TnRmVVJKS1VZcllpeTRCSVRheVlweFFDWVNYUGVpSXBtUXlfWmtlcHpiTjlzZzhmajhKU3NrVDFiRU1LUzQxLW1yVDNHeEUySkgtalZ2c3VaNXFDMm5lcDRHbHc5SVM3VDlNeHJSSkNhbjlIcGNH?oc=5",
+   "source": "https://hrtoday.in/",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "AWS",
+   "headline": "Chocolate Finance Powers a 24/7 Fintech Platform with Snowflake and AWS",
+   "date": "2026-10-30",
+   "url": "https://news.google.com/rss/articles/CBMigwFBVV95cUxQdTNvTjYzUVh4cmJwelU2dHdhWHdwcFJaN3hqWjE5U2VoSUJzRlVUWDQwTWpxM2ZEVkl4dTYzSzljeTRBdmo2QWxiOG9QLVMyU0ZoOE9ZNDJac2RfWVVITTViaU5ycTF0NWhYZ1FUWWx6ZlVvWW1qRFpjdmVUV1Nmc1lVVQ?oc=5",
+   "source": "Snowflake",
+   "summary": "",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Mastech Digital",
+   "headline": "Mastech Digital Q3 Revenue Falls 13.4%; Non-GAAP EPS $0.10",
+   "date": "2026-10-30",
+   "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPZEo3ajgwWXpqQkthNHFfeFJGMmtrUkthVWVZcFRTUm9qdjQ1am9WeDI0MHNzQk1mUlpjSDZkV09wWWhxUzJYVUR6VGkxWkt6UjFGRDBFVDVlOHgwSEQ0YWQ0T21NaFZjT3lzbXRpQ3ZpZEIzN0FyQjVyMFVOLWtaY0JXWUdNQ0YwQ1VUNjFjRVh1YWJSdEFMV0MzZm9rNTJSaGdQdDRWa3JiNWhJU3F0UGJ2WUpVX2lZ?oc=5",
+   "source": "TradingView",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Mastech Digital",
+   "headline": "Mastech Digital (MHH) Shifts Focus to AI with Knowledge-First En",
+   "date": "2026-10-30",
+   "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxOSGxLX1NhTUZXcC1kSHRsWUU2X0ZCRkVSbU83Qlc2YnpTd1RYZHdwQ0l4ell6a1paaEpUUWZGR29TZ3BBLXhXU0pnUVd6MVFnd2p2SDVhVE9aaE84MXByejVGaVVyRUVRd2p1T0lYaGFCd0V4NkFqb2twNXE5OTZVeDlodU1kbndNMkU2dVBxOW5EWW1BUkNxZnRYYThQTFlZcUJfTldIcUYzRzhEemV2OVd4dFl3dw?oc=5",
+   "source": "GuruFocus",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "BlueCloud",
+   "headline": "BlueCloud Expands Global Delivery Capabilities to Accelerate Enterprise Data & AI Initiatives",
+   "date": "2026-10-28",
+   "url": "https://news.google.com/rss/articles/CBMirwFBVV95cUxNS0Z1TVVGOXhsYkFqZkkzdGlkTnBaRlFPc1hqeUlaZThVTnhBal93NU1FSlNjUUNXUjRZdHU0VWtZcWtybTFENXYyUUNLUUZNazd3U0piRjloYjA5bUZYOTU1a01pbnZGQjd3N18zUkV5blliWDRpcEJYQ204ZE9nYjNmSDBXNV9nQWdUdUFtZnl3WjN5blhDVEJzQ3ZWODZZbUpBZVdtX1BTUnEwcHV3?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Collibra",
+   "headline": "Collibra Honors Customer Achievements with 2026 Customer Excellence Awards",
+   "date": "2026-10-28",
+   "url": "https://news.google.com/rss/articles/CBMi0AFBVV95cUxPeWJzdC1UYU5CVmMtU0UwaFAwN1d2eEwxVF9mM1hjV1hrLWdVemVSRldoSzlPdDBKa3JieGwzUlpoeG5hNF9vQ1lERUxxWkpCUXlMay13WU9pbVkyMGdBU3RFQ2JWLXM5OXlxM2dfNm80cEVmNVAyX2JCejFLMFdmb2E3bnpuVWxfblZyLWE4UHlMajQySjNKSmRLbWNJX1ZMclplTkN5LXFPN0paNXduZmx0Yl9VZEVyY0JmLXRsR0ZKcnZMUVV3ZFB0OHZFa1Qw?oc=5",
+   "source": "Morningstar",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Neo4j",
+   "headline": "Cloudera expands AI ecosystem with Neo4j & Cartesia",
+   "date": "2026-10-27",
+   "url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxOUGlraEtzd2Z4akN4MDV4ckNEdHJyY3RJNTd1a0RKYTl6Nk1LZUVJbjhfUFJrNUZRX2s4MUYtSWJIeXIxQzdxaXpoMDZ1OHlGMTU0bzVDeXVPRHdKaFFKLXRkVXRvZXU3QTJYWlVjMGZVMHR0NDBQazNiZHNpd2RlMUVLa0VaZjNFTkE?oc=5",
+   "source": "ChannelLife Australia",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "NTT DATA",
+   "headline": "NTT DATA Group Appoints Kazuhiko Nakayama as New President and Chief Executive Officer",
+   "date": "2026-10-16",
+   "url": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxQd3RCVnRaWkRsVUstNXZuNjZYQUxud0xHUFo4aUhpNUFCQzdjZWtXb3h5emJITk9hdWdOQjFOMWREZHB1Z05nMmZnVDNLcjJDaDJ5S2hXdW1UNk1RcWMyWmQtZm9PN1JKZjBQdnkwSGV0QmpQTzVrZ2REajltR2JqeHA5MFY2eEU2WENveGdwLWdtdHh0TmFHZ0VhY2l2clhQa3lwUXV2ODFzUFZjd3V6YlBIVkU5V1AyV3dIRnJJZE9Rc0hLRzY4cDRMbDdadkJaNmc?oc=5",
+   "source": "HPCwire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Infosys",
+   "headline": "Infosys and ABN Amro Extend Strategic Collaboration to Simplify IT Landscape and Accelerate AI-Driven Transformation",
+   "date": "2026-10-05",
+   "url": "https://news.google.com/rss/articles/CBMi7wFBVV95cUxOY2xPbWxXUkpQQVJQMm5vYlkwTlhIM1NiUWJSRHdJRWdmb0E2a05hZ2swRXkwQUNyemlrWWg3eEJDWklBTVRuQUpUaFhWSDdqemJoamxQNGtRaHZVMmR3cHRlaktvQ2hoTkVwU1pOaUxJYkY0eHNSTTdKM09kVnN2MlFqVzF2VGcxcW1Pb1RDVTdDWVhzck5EUi1vNWVOTlpnX0tCcVJYR2pjNDMwRDhkRXNJX2d0Q2l4bTdINFV2c19ia2FVYTVrcHFKLUxlaEpqRlc5NmtwZ2NxUi0zRG9Tc3M1dXUzak1XUjN2MU1CUQ?oc=5",
+   "source": "iTWire",
    "summary": "",
    "relevance": "medium"
   }
