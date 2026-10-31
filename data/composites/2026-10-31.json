@@ -1,6 +1,6 @@
 {
   "as_of": "2026-10-31",
-  "generated_at": "2026-10-31T07:52:03Z",
+  "generated_at": "2026-10-31T10:00:08Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-31",
@@ -62,14 +62,14 @@
       "as_of": "2026-10-30",
       "label": "STRONG CROWDED LONGS",
       "note": "LINK; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 65,
+      "score": 64,
       "stale": false
     },
     "futures_sentiment_ltc": {
       "as_of": "2026-10-30",
       "label": "STRONG CROWDED LONGS",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 63,
+      "score": 66,
       "stale": false
     },
     "lthcs_composite": {
@@ -90,7 +90,7 @@
       "as_of": "2026-10-31",
       "label": "BEARISH",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": -22,
+      "score": -21,
       "stale": false
     },
     "poc_signal_breadth": {
@@ -103,8 +103,8 @@
     "stocks_signal_breadth": {
       "as_of": "2026-10-30",
       "label": "DISTRIBUTION",
-      "note": "50 stocks; 9 buy+, 22 sell+",
-      "score": -26,
+      "note": "50 stocks; 8 buy+, 23 sell+",
+      "score": -30,
       "stale": false
     },
     "whale_sentiment_btc": {
