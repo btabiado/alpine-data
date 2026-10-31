@@ -4092,7 +4092,7 @@
     },
     {
       "ticker": "ZBRA",
-      "todays_take": "ZBRA holds in High Confidence at 64.8 (not enough history yet for a 30-day trend), supported by Institutional Confidence at 93.9.",
+      "todays_take": "ZBRA holds in High Confidence at 64.9 (not enough history yet for a 30-day trend), supported by Institutional Confidence at 93.9.",
       "why_changed": "Score is up 2.1 today, driven primarily by a +0.7 move in Demand Environment.",
       "why_not_to_sell": "Recent volatility appears noise-driven; Institutional Confidence remains firmly in the upper band at 93.9, and Financial Evolution is also strong (57.2). No structural breach in the highest-conviction signals.",
       "what_would_break": "A sustained drop in Demand Environment below 36, or a Constructive composite move below 63, would force a structural review.",
