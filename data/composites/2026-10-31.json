@@ -1,19 +1,19 @@
 {
   "as_of": "2026-10-31",
-  "generated_at": "2026-10-31T02:21:27Z",
+  "generated_at": "2026-10-31T05:26:15Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-31",
       "label": null,
-      "note": "40 coins; 3 buy+, 25 sell+",
-      "score": -55,
+      "note": "40 coins; 2 buy+, 26 sell+",
+      "score": -60,
       "stale": false
     },
     "defi_sentiment": {
       "as_of": "2026-10-31",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": -14,
+      "score": -15,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -115,10 +115,10 @@
       "stale": false
     },
     "whale_sentiment_eth": {
-      "as_of": "2026-10-29",
-      "label": "WHALE DISTRIBUTION",
+      "as_of": "2026-10-30",
+      "label": "NEUTRAL",
       "note": null,
-      "score": -24,
+      "score": -13,
       "stale": false
     }
   }
