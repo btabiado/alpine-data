@@ -2083,7 +2083,7 @@
     },
     {
       "ticker": "APO",
-      "lthcs_score": 65.8,
+      "lthcs_score": 65.7,
       "band": "high_confidence",
       "drift_1d": 3.8,
       "drift_7d": 5.8,
@@ -11140,7 +11140,7 @@
     },
     {
       "ticker": "GDDY",
-      "lthcs_score": 62.8,
+      "lthcs_score": 62.9,
       "band": "constructive",
       "drift_1d": -0.4,
       "drift_7d": 2.3,
