@@ -1,12 +1,12 @@
 {
   "as_of": "2026-10-31",
-  "generated_at": "2026-10-31T14:43:26Z",
+  "generated_at": "2026-10-31T15:24:26Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-10-31",
       "label": null,
-      "note": "40 coins; 3 buy+, 25 sell+",
-      "score": -55,
+      "note": "40 coins; 3 buy+, 24 sell+",
+      "score": -52,
       "stale": false
     },
     "defi_sentiment": {
@@ -90,7 +90,7 @@
       "as_of": "2026-10-31",
       "label": "BEARISH",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": -21,
+      "score": -20,
       "stale": false
     },
     "poc_signal_breadth": {
