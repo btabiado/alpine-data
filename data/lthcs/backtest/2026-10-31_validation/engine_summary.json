@@ -1,10 +1,10 @@
 {
   "summary": {
-    "total_return": 0.22458261243038224,
-    "ann_return": 0.332193794902957,
-    "max_drawdown": -0.1057763461824297,
-    "sharpe": 1.6234143099508274,
-    "sortino": 1.123744791193325,
+    "total_return": 0.22458245104690233,
+    "ann_return": 0.3321935463500081,
+    "max_drawdown": -0.10577635145601649,
+    "sharpe": 1.623413462422083,
+    "sortino": 1.1237441070191316,
     "hit_rate": 0.31843575418994413,
     "avg_hold_days": 6.761029411764706,
     "turnover": 0.11017508685812799,
@@ -26,12 +26,12 @@
       "top_k": 0,
       "profile_name": "long_only_buy"
     },
-    "sharpe_ci_lower": -0.4913725363368058,
-    "sharpe_ci_upper": 4.015724483852133,
-    "sortino_ci_lower": -0.31534630422522114,
-    "sortino_ci_upper": 3.384660735582667,
+    "sharpe_ci_lower": -0.49137347448392343,
+    "sharpe_ci_upper": 4.015723918387552,
+    "sortino_ci_lower": -0.315347281092051,
+    "sortino_ci_upper": 3.384660005667471,
     "rolling_sharpe_latest": {
-      "5d": -0.27419132253486017,
+      "5d": -0.27419132253486383,
       "21d": 3.6648871370407776,
       "63d": 2.11186441440023
     }
@@ -55,7 +55,7 @@
     },
     "params_hash": "49269b2e937d327d",
     "band_hash": "19015da14e04e006",
-    "price_hash": "33bf17b55f8aac08",
+    "price_hash": "fa60976348194045",
     "window": {
       "start": "2026-02-17",
       "end": "2026-10-30",
