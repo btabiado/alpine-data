@@ -1,6 +1,6 @@
 {
   "as_of": "2026-11-01",
-  "generated_at": "2026-11-01T01:03:49Z",
+  "generated_at": "2026-11-01T05:55:26Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-11-01",
@@ -10,7 +10,7 @@
       "stale": false
     },
     "defi_sentiment": {
-      "as_of": "2026-10-31",
+      "as_of": "2026-11-01",
       "label": "NEUTRAL",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
       "score": -15,
@@ -62,7 +62,7 @@
       "as_of": "2026-10-31",
       "label": "CROWDED LONGS",
       "note": "LINK; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 44,
+      "score": 45,
       "stale": false
     },
     "futures_sentiment_ltc": {
@@ -73,7 +73,7 @@
       "stale": false
     },
     "lthcs_composite": {
-      "as_of": "2026-10-31",
+      "as_of": "2026-11-01",
       "label": "LTHCS NEUTRAL",
       "note": null,
       "score": 7,
@@ -115,10 +115,10 @@
       "stale": false
     },
     "whale_sentiment_eth": {
-      "as_of": "2026-10-30",
-      "label": "NEUTRAL",
+      "as_of": "2026-10-31",
+      "label": "WHALE DISTRIBUTION",
       "note": null,
-      "score": -4,
+      "score": -26,
       "stale": false
     }
   }
