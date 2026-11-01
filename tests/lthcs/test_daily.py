@@ -698,6 +698,53 @@ class TestMain:
         assert rc == 0
         assert patched_sources["av"].call_count == 0
 
+    def test_unresolvable_sec_cik_does_not_fail_the_run(
+        self, patched_configs, patched_persist_class, patched_sources,
+        monkeypatch, capsys,
+    ):
+        """A few tickers missing from the SEC ticker map are a warning.
+
+        Daily audit 2026-11-01 quoted "2 of 515 tickers failing SEC CIK
+        lookup" as why lthcs-daily went red. That lookup miss is caught
+        per ticker, flagged ``sec_unavailable``, and emitted as
+        ``::warning`` — it must not be an ``::error`` and must not make
+        ``main`` exit non-zero. The run that day actually died later, in
+        api-commit's git/trees 422.
+        """
+        from lthcs.sources.sec_edgar import SECEdgarError
+
+        good = [
+            {"end_date": "2024-09-30", "start_date": "2023-10-01",
+             "value": 100.0, "form": "10-K", "fp": "FY"},
+            {"end_date": "2023-09-30", "start_date": "2022-10-01",
+             "value": 90.0, "form": "10-K", "fp": "FY"},
+        ]
+
+        def rev(sym, **kwargs):
+            if sym == "LCID":
+                raise SECEdgarError(
+                    "Could not resolve ticker 'LCID' to a CIK via SEC tickers file."
+                )
+            return list(good)
+
+        patched_sources["sec_rev"].side_effect = rev
+        monkeypatch.setenv("GITHUB_ACTIONS", "true")
+        rc = lthcs_daily.main(
+            ["--tickers", "AAPL,LCID", "--skip-thesis", "--force", "--dry-run"]
+        )
+        assert rc == 0
+        captured = capsys.readouterr()
+        assert "::error" not in captured.out
+        warnings = [
+            line for line in captured.out.splitlines()
+            if line.startswith("::warning title=SEC EDGAR unavailable::")
+        ]
+        assert len(warnings) == 1
+        assert "1/2" in warnings[0]
+        assert "warning only; run continues" in warnings[0]
+        assert "CIK" in warnings[0]
+        assert "does not fail the run" in captured.err
+
 
 # ---------------------------------------------------------------------------
 # Institutional smart-money inputs (Form 4 + 13F) must run regardless of

@@ -100,6 +100,8 @@ def test_annotation_only_inside_actions(monkeypatch, capsys):
     out = capsys.readouterr().out
     assert out.startswith("::warning title=SEC EDGAR unavailable::")
     assert "3/215" in out
+    assert "warning only; run continues" in out
+    assert "::error" not in out
 
 
 def test_annotation_is_one_line_even_with_newlines_and_percents(monkeypatch, capsys):
