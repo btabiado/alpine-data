@@ -1793,7 +1793,7 @@ class TestProblems:
         assert "unaccepted STUB des" in md
 
     def test_latest_snapshot_flags_only_unaccepted_stubs(self, dad, dar):
-        sec = dad.section_lthcs_pillars(REPO_ROOT)
+        sec = dad.section_lthcs_pillars(REPO_ROOT, resolve_cik=False)
         assert sec["status"] == "ok"
         assert sec["accepted_pillars"] == ["thesis_integrity"]
         d = _data(lthcs_pillars=sec)
@@ -1814,6 +1814,72 @@ class TestProblems:
         d = _data(lthcs_pillars={"status": "error", "error": "no LTHCS snapshot"})
         ids = {p["id"]: p["severity"] for p in dar.data_problems(d)}
         assert ids["lthcs:pillar-check"] == "P1"
+
+    def test_small_scored_shortfall_is_p2_and_names_the_ticker(self, dar):
+        """Daily audit 2026-11-01, scored-ticker count 514 vs 515.
+
+        One missing name above the 480 floor is informational. The symbol
+        and the reason (no SEC CIK match) have to be in the report, not
+        only a count that still clears the floor.
+        """
+        d = _data(lthcs_pillars={
+            "status": "ok",
+            "snapshot_date": "2026-11-01",
+            "accepted_pillars": ["thesis_integrity"],
+            "unaccepted_stubs": [],
+            "coverage": {
+                "scored": 514,
+                "universe": 515,
+                "floor": 480,
+                "below_floor": False,
+                "missing": [{"ticker": "WBD", "reason": "no SEC CIK match"}],
+            },
+        })
+        probs = {p["id"]: p for p in dar.data_problems(d)}
+        assert probs["lthcs:scored-shortfall"]["severity"] == "P2"
+        assert "514 of 515" in probs["lthcs:scored-shortfall"]["title"]
+        assert "WBD (no SEC CIK match)" in probs["lthcs:scored-shortfall"]["title"]
+        assert "lthcs:scored-floor" not in probs
+        md = dar.render_md(dar.build_report(d, _ux(), None, "2026-11-01"))
+        assert "LTHCS scored tickers" in md
+        assert "514 of 515" in md
+        assert "WBD (no SEC CIK match)" in md
+
+    def test_scored_count_under_the_floor_is_p1_not_also_p2(self, dar):
+        d = _data(lthcs_pillars={
+            "status": "ok",
+            "snapshot_date": "2026-11-01",
+            "unaccepted_stubs": [],
+            "coverage": {
+                "scored": 400,
+                "universe": 515,
+                "floor": 480,
+                "missing": [{"ticker": "WBD", "reason": "no SEC CIK match"}],
+            },
+        })
+        probs = {p["id"]: p for p in dar.data_problems(d)}
+        assert probs["lthcs:scored-floor"]["severity"] == "P1"
+        assert "below the 480 floor" in probs["lthcs:scored-floor"]["title"]
+        assert "WBD (no SEC CIK match)" in probs["lthcs:scored-floor"]["detail"]
+        assert "lthcs:scored-shortfall" not in probs
+
+    def test_full_coverage_and_a_section_without_it_add_no_shortfall(self, dar):
+        full = _data(lthcs_pillars={
+            "status": "ok",
+            "snapshot_date": "2026-11-01",
+            "unaccepted_stubs": [],
+            "coverage": {
+                "scored": 515, "universe": 515, "floor": 480,
+                "below_floor": False, "missing": [],
+            },
+        })
+        bare = _data(lthcs_pillars={
+            "status": "ok", "snapshot_date": "2026-10-22", "unaccepted_stubs": [],
+        })
+        for doc in (full, bare):
+            ids = {p["id"] for p in dar.data_problems(doc)}
+            assert "lthcs:scored-shortfall" not in ids
+            assert "lthcs:scored-floor" not in ids
 
     def test_known_gap_verdict_is_not_a_data_health_failure(self, dad):
         failing = dad._failing_statuses(REPO_ROOT)
@@ -2230,3 +2296,95 @@ def test_pages_stage_step_survives_missing_audit_report():
         r = subprocess.run(["bash", "-c", script], cwd=d, capture_output=True, text=True)
         assert r.returncode == 0, r.stderr
         assert (Path(d) / "_site/audit/latest.md").exists()
+
+
+def test_scored_coverage_names_a_cik_miss_and_keeps_the_floor(dad, monkeypatch):
+    universe = {"tickers": [
+        {"ticker": "AAPL", "active": True},
+        {"ticker": "WBD", "active": True},
+        {"ticker": "NEW", "active": True, "added_on": "2026-11-01"},
+        {"ticker": "OLD", "active": False},
+    ]}
+    snapshot = {
+        "calc_date": "2026-11-01",
+        "scores": [{"ticker": "AAPL"}],
+    }
+    # NEW joined on the snapshot day, OLD is inactive: neither is missing.
+    cov = dad.lthcs_scored_coverage(
+        snapshot, universe, sec_symbols={"AAPL"}, snap_date="2026-11-01",
+    )
+    assert cov["scored"] == 1
+    assert cov["universe"] == 2
+    assert cov["below_floor"] is False
+    assert cov["floor"] == 480
+    assert cov["missing"] == [{"ticker": "WBD", "reason": "no SEC CIK match"}]
+
+    # A recorded snapshot reason wins, and then the SEC file is not fetched.
+    snapshot["unscored"] = [{
+        "ticker": "WBD",
+        "reason": "no SEC CIK match; no Yahoo prices",
+    }]
+    calls = []
+    monkeypatch.setattr(
+        dad, "load_sec_ticker_symbols", lambda: calls.append(1) or {"AAPL"},
+    )
+    again = dad._coverage_for_snapshot(snapshot, universe, "2026-11-01")
+    assert calls == []
+    assert again["missing"] == [{
+        "ticker": "WBD",
+        "reason": "no SEC CIK match; no Yahoo prices",
+    }]
+
+    # Under the floor only when the universe itself is at least 480.
+    small = dad.lthcs_scored_coverage(
+        {"scores": []},
+        {"tickers": [{"ticker": "A", "active": True}]},
+        sec_symbols=set(),
+    )
+    assert small["below_floor"] is False
+    wide = dad.lthcs_scored_coverage(
+        {"scores": [{"ticker": f"T{i}"} for i in range(479)]},
+        {"tickers": [{"ticker": f"T{i}", "active": True} for i in range(515)]},
+        sec_symbols={f"T{i}" for i in range(515)},
+    )
+    assert wide["scored"] == 479
+    assert wide["universe"] == 515
+    assert wide["below_floor"] is True
+
+
+def test_2026_11_01_snapshot_is_missing_wbd(dad, dar):
+    """The committed 2026-11-01 snapshot scored 514 of 515. WBD is the gap.
+
+    The SEC file has no CIK for that symbol (confirmed against
+    company_tickers.json on 2026-11-01; PSKY is the other CIK miss and
+    is still scored because Yahoo had prices). This test does not call
+    SEC: it uses the same matcher with WBD left out of the symbol set.
+    """
+    snap = json.loads(
+        (REPO_ROOT / "data/lthcs/snapshots/2026-11-01.json").read_text()
+    )
+    uni = json.loads((REPO_ROOT / "data/lthcs/universe.json").read_text())
+    expected = dad.expected_universe_tickers(uni, "2026-11-01")
+    sec = {sym.upper() for sym in expected if sym != "WBD"}
+    cov = dad.lthcs_scored_coverage(
+        snap, uni, sec_symbols=sec, snap_date="2026-11-01",
+    )
+    assert cov["scored"] == 514
+    assert cov["universe"] == 515
+    assert cov["below_floor"] is False
+    assert cov["missing"] == [{"ticker": "WBD", "reason": "no SEC CIK match"}]
+    assert dad.LTHCS_SCORED_FLOOR == dar.LTHCS_SCORED_FLOOR == 480
+
+
+def test_sec_ticker_file_parser_and_dot_class_shares(dad, monkeypatch):
+    monkeypatch.setattr(dad, "get_json", lambda *a, **k: {
+        "0": {"cik_str": 1, "ticker": "brk-b", "title": "Berkshire"},
+        "1": {"ticker": "AAPL"},
+        "skip": "nope",
+    })
+    symbols = dad.load_sec_ticker_symbols()
+    assert symbols == {"BRK-B", "AAPL"}
+    assert dad.sec_has_ticker("BRK.B", symbols)
+    assert not dad.sec_has_ticker("WBD", symbols)
+    monkeypatch.setattr(dad, "get_json", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("down")))
+    assert dad.load_sec_ticker_symbols() is None

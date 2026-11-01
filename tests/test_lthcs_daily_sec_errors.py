@@ -148,10 +148,82 @@ def test_stage_2_actually_routes_revenue_failures_through_the_reporter():
     assert rev_block, "could not locate the revenue fetch's try/except"
     handler = rev_block.group(1)
     assert "as e" in handler, "revenue except no longer binds the exception"
-    assert "_note_sec_error(sec_errors, e)" in handler, (
+    assert "_note_sec_error(sec_errors, e" in handler, (
         "revenue failures are being swallowed again -- sec_unavailable will "
         "go back to having no stated cause"
     )
-    assert src.index("_report_sec_errors(sec_errors, n)") < src.index("Stage 2: Fetched"), (
+    assert src.index("_report_sec_errors(sec_errors, n") < src.index("Stage 2: Fetched"), (
         "the SEC cause summary must print before the Stage 2 line it explains"
     )
+    assert "ticker=sym" in handler, (
+        "the collapsed '<sym>' key is deliberate, but the call must still "
+        "record which ticker failed so the warning can name it"
+    )
+
+
+def test_cik_warning_keeps_the_collapsed_key_and_names_the_tickers(monkeypatch, capsys):
+    # '<sym>' in the key is intentional: two CIK misses are one cause, and
+    # two hundred copies of one 403 must not become two hundred keys. The
+    # symbols are not a secret. The warning lists them beside the key.
+    errors: dict = {}
+    named: dict = {}
+    for sym in ("WBD", "PSKY"):
+        lthcs_daily._note_sec_error(
+            errors,
+            SECEdgarError(
+                "Could not resolve ticker %r to a CIK via SEC tickers file." % sym
+            ),
+            ticker=sym,
+            named=named,
+        )
+    assert len(errors) == 1
+    key = next(iter(errors))
+    assert "<sym>" in key
+    assert "WBD" not in key and "PSKY" not in key
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    lthcs_daily._report_sec_errors(errors, 515, named=named)
+    out = capsys.readouterr().out
+    assert out.startswith("::warning title=SEC EDGAR unavailable::")
+    assert "<sym>" in out
+    assert "Tickers: PSKY, WBD" in out
+
+
+def test_unscored_record_names_a_cik_miss_that_also_has_no_prices():
+    # WBD on 2026-11-01: no CIK and no Yahoo prices, so Stage 3 did not
+    # score it. PSKY had the same CIK miss and was still scored off Yahoo.
+    records = lthcs_daily._unscored_ticker_records(
+        ["PSKY", "WBD", "ZZ"],
+        scored={"PSKY"},
+        flags={
+            "PSKY": ["sec_unavailable", "thesis_unavailable"],
+            "WBD": ["yahoo_unavailable", "sec_unavailable", "thesis_unavailable"],
+            "ZZ": ["yahoo_unavailable", "sec_unavailable"],
+        },
+        cik_misses={"PSKY", "WBD"},
+    )
+    by_ticker = {row["ticker"]: row for row in records}
+    assert "PSKY" not in by_ticker
+    assert by_ticker["WBD"]["reason"] == "no SEC CIK match; no Yahoo prices"
+    assert by_ticker["ZZ"]["reason"] == "no Yahoo prices and no SEC revenue"
+
+
+def test_snapshot_extras_carry_unscored_only_when_someone_is_missing():
+    empty = lthcs_daily._snapshot_extras("2026-11-01", [])
+    assert "unscored" not in empty
+    present = lthcs_daily._snapshot_extras("2026-11-01", [
+        {"ticker": "WBD", "reason": "no SEC CIK match; no Yahoo prices"},
+    ])
+    assert present["unscored"][0]["ticker"] == "WBD"
+    assert "methodology_breaks" in present
+
+
+def test_news_only_rewrite_keeps_the_morning_unscored_list():
+    # The hourly path builds a new snapshot payload. Dropping `unscored`
+    # there would hide the morning's missing ticker from the afternoon audit.
+    import inspect
+
+    src = inspect.getsource(lthcs_daily.run_news_only)
+    assert "carried_unscored" in src
+    assert 'extra["unscored"] = carried_unscored' in src
+    persist = inspect.getsource(lthcs_daily.stage_8_persist)
+    assert "_unscored_records_from_state(state)" in persist
