@@ -39,7 +39,9 @@ Severities:
         degraded or down), an LTHCS pillar other than the accepted
         thesis_integrity stub that is the 50.0 placeholder for the whole
         universe. A source that was up on the immediately previous probe
-        is not a P1.
+        is not a P1. An LTHCS snapshot that scored fewer than 480 names
+        while the active universe is at least that large (the coverage
+        floor; a one-name gap such as 514 of 515 is not this).
     P2  layout overflow at 390px, heavy pages, blocked upstreams, a
         degraded upstream whose previous probe was already failed (or
         whose previous probe was not recorded), a paid-only HTTP 402, a
@@ -66,7 +68,11 @@ Severities:
         job's output is stale or it has no success (schedule, watchdog
         catch-up, or manual run) inside its freshness window. Late or
         skipped jobs whose data is fresh are one informational line, not
-        a P2 each.
+        a P2 each. An LTHCS snapshot missing one or more active-universe
+        tickers while still at or above the 480 scored-name floor: the
+        symbols, and the reason when the snapshot or the SEC ticker file
+        makes it knowable (no SEC CIK match). Below that floor the same
+        gap is a P1.
 
 Alert verdict (written to $GITHUB_OUTPUT as ``alert_action``):
     open    there is at least one NEW P0 -> open/update the tracking issue
@@ -123,6 +129,12 @@ _CRON_LOOKBACK = timedelta(days=62)
 # Live payload stamps older than this are listed in the markdown (info only;
 # freshness verdicts belong to data_health).
 STAMP_NOTE_H = 48
+# Same number as daily_audit_data.LTHCS_SCORED_FLOOR. A shortfall that
+# stays at or above it is a P2 that names the missing symbols. Under it,
+# with a universe at least this large, the snapshot is a real coverage
+# failure (P1). The two modules each keep the literal so the report can
+# grade a payload that forgot to set below_floor.
+LTHCS_SCORED_FLOOR = 480
 
 # Console errors that are real but cosmetic: browser complaints about markup,
 # not broken behaviour. Kept visible, at P2.
@@ -1095,7 +1107,103 @@ def data_problems(data: dict | None) -> list[dict]:
                 f"{n} scored names were graded. A full placeholder means the "
                 f"pillar's inputs did not score.",
             ))
+        _lthcs_coverage_problems(out, pillars, when)
     return out
+
+
+def _lthcs_coverage_line(pillars: dict) -> str | None:
+    """One snapshot-section line: scored vs universe, and who is missing."""
+    cov = pillars.get("coverage")
+    if not isinstance(cov, dict) or not isinstance(cov.get("scored"), int):
+        return None
+    when = pillars.get("snapshot_date") or "latest"
+    universe = cov.get("universe")
+    of = f" of {universe}" if universe is not None else ""
+    line = f"- **LTHCS scored tickers** ({when}): {cov['scored']}{of}"
+    missing = [
+        row for row in (cov.get("missing") or [])
+        if isinstance(row, dict) and row.get("ticker")
+    ]
+    phrase = _missing_phrase(missing)
+    if phrase:
+        line += f". Missing: {phrase}"
+    return line
+
+
+def _missing_phrase(missing: list[dict], limit: int = 30) -> str:
+    parts: list[str] = []
+    for row in missing[:limit]:
+        sym = str(row.get("ticker") or "").strip()
+        if not sym:
+            continue
+        reason = row.get("reason")
+        parts.append(f"{sym} ({reason})" if reason else sym)
+    text = ", ".join(parts)
+    extra = len(missing) - limit
+    if extra > 0 and text:
+        text += f", and {extra} more"
+    return text
+
+
+def _coverage_below_floor(cov: dict) -> bool:
+    if "below_floor" in cov:
+        return bool(cov.get("below_floor"))
+    scored = cov.get("scored")
+    universe = cov.get("universe")
+    floor = cov.get("floor", LTHCS_SCORED_FLOOR)
+    if not isinstance(scored, int) or not isinstance(floor, int):
+        return False
+    if isinstance(universe, int) and universe < floor:
+        return False
+    return scored < floor
+
+
+def _lthcs_coverage_problems(out: list[dict], pillars: dict, when: str) -> None:
+    """Name active-universe tickers the latest snapshot did not score.
+
+    At or above the 480 floor this is one P2. Under the floor, and only
+    when the universe itself is at least that large, it is one P1. The
+    two are not both emitted.
+    """
+    cov = pillars.get("coverage")
+    if not isinstance(cov, dict):
+        return
+    if cov.get("status") == "error" or (
+        cov.get("error") and not isinstance(cov.get("scored"), int)
+    ):
+        out.append(problem(
+            "lthcs:scored-coverage", P1, "lthcs",
+            "LTHCS scored-ticker check could not run",
+            str(cov.get("error") or ""),
+        ))
+        return
+    if not isinstance(cov.get("scored"), int):
+        return
+    missing = [
+        row for row in (cov.get("missing") or [])
+        if isinstance(row, dict) and row.get("ticker")
+    ]
+    phrase = _missing_phrase(missing)
+    scored = cov["scored"]
+    universe = cov.get("universe")
+    floor = cov.get("floor", LTHCS_SCORED_FLOOR)
+    if _coverage_below_floor(cov):
+        title = (
+            f"LTHCS snapshot {when} scored {scored}, below the {floor} floor"
+        )
+        if universe is not None:
+            title += f" ({universe} in the universe)"
+        detail = f"Missing: {phrase}." if phrase else "The missing symbols could not be listed."
+        out.append(problem("lthcs:scored-floor", P1, "lthcs", title, detail))
+        return
+    if not missing:
+        return
+    of = f" of {universe}" if universe is not None else ""
+    out.append(problem(
+        "lthcs:scored-shortfall", P2, "lthcs",
+        f"LTHCS snapshot {when} scored {scored}{of}; missing {phrase}",
+        phrase,
+    ))
 
 
 def spot_title(name: str, c: dict) -> str:
@@ -1482,6 +1590,10 @@ def render_md(report: dict) -> str:
             + ", ".join(bits)
             + f". Accepted stub: {accepted}."
         )
+    if isinstance(lp, dict):
+        cov_line = _lthcs_coverage_line(lp)
+        if cov_line:
+            L.append(cov_line)
     dh = data.get("data_health") or {}
     if _section_ok(dh) and dh:
         counts = ", ".join(f"{v} {k}" for k, v in sorted((dh.get("counts") or {}).items()))

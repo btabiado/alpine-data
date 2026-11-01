@@ -52,7 +52,13 @@ others, so a flaky upstream degrades the report instead of erasing it):
                 in ``data/lthcs/known_pillar_stubs.json`` (thesis_integrity)
                 are an accepted STUB. Any other pillar whose whole universe
                 is the 50.0 placeholder is recorded here so the report can
-                flag it. Local files only.
+                flag it. The same section compares scored tickers to the
+                active universe and names who is missing, with a reason when
+                the snapshot recorded one or the SEC ticker file has no CIK.
+                A count below ``LTHCS_SCORED_FLOOR`` (480) is the real
+                failure; a smaller gap that stays at or above that floor is
+                informational. Local files, plus one public SEC ticker file
+                when a missing name has no recorded reason.
 
 This script observes; it does not grade. Severity and new-vs-ongoing are the
 report builder's job.
@@ -1492,7 +1498,171 @@ def _quality_runner():
     return qrunner
 
 
-def section_lthcs_pillars(repo_root: Path) -> dict:
+# A scored snapshot this far below a full universe is a real hole. The
+# 2026-11-01 snapshot was 514 of 515 and still a healthy run; that gap
+# must be named, not graded like a collapse under this floor.
+LTHCS_SCORED_FLOOR = 480
+SEC_COMPANY_TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
+# www.sec.gov answers 403 to a UA with no contact. This matches the shape
+# fetch_market.SEC_UA already uses successfully against that host.
+SEC_COMPANY_TICKERS_UA = (
+    "alpine-data-daily-audit/1.0 "
+    "(open-source dashboard; contact@alpine-data.local)"
+)
+CIK_MISS_REASON = "no SEC CIK match"
+
+
+def _sec_ticker_candidates(symbol: str) -> set[str]:
+    """Same substitutions as ``lthcs.sources.sec_edgar.get_cik``."""
+    norm = symbol.strip().upper()
+    return {
+        norm,
+        norm.replace(".", ""),
+        norm.replace("-", ""),
+        norm.replace(".", "").replace("-", ""),
+        norm.replace(".", "-"),
+        norm.replace("-", "."),
+    }
+
+
+def sec_has_ticker(symbol: str, sec_symbols: set[str]) -> bool:
+    return bool(_sec_ticker_candidates(symbol) & sec_symbols)
+
+
+def load_sec_ticker_symbols() -> set[str] | None:
+    """Uppercase symbols from SEC company_tickers.json, or None if unread.
+
+    A failed fetch must not be reported as "no CIK". None means the
+    reason is not knowable from here.
+    """
+    try:
+        raw = get_json(
+            SEC_COMPANY_TICKERS_URL,
+            timeout=20,
+            headers={
+                "User-Agent": SEC_COMPANY_TICKERS_UA,
+                "Accept": "application/json",
+            },
+        )
+    except Exception:  # noqa: BLE001 - a dark SEC file is not a failed audit
+        return None
+    if not isinstance(raw, dict):
+        return None
+    out: set[str] = set()
+    for entry in raw.values():
+        if isinstance(entry, dict) and entry.get("ticker"):
+            out.add(str(entry["ticker"]).strip().upper())
+    return out or None
+
+
+def expected_universe_tickers(universe: dict, snap_date: str | None) -> list[str]:
+    """Active universe symbols the snapshot of ``snap_date`` should contain.
+
+    A ticker whose ``added_on`` is on or after the snapshot date is not
+    expected yet (the day's file can predate the universe edit). Same
+    rule as ``lthcs.validate.validate_snapshot_for_date``.
+    """
+    out: list[str] = []
+    for entry in universe.get("tickers") or []:
+        if not isinstance(entry, dict):
+            continue
+        sym = entry.get("ticker")
+        if not isinstance(sym, str) or not sym.strip():
+            continue
+        if entry.get("active", True) is False:
+            continue
+        added = entry.get("added_on")
+        if (
+            snap_date
+            and isinstance(added, str)
+            and len(added) >= 10
+            and added[:10] >= snap_date
+        ):
+            continue
+        out.append(sym.strip())
+    return out
+
+
+def _recorded_unscored(snapshot: dict) -> dict[str, dict]:
+    found: dict[str, dict] = {}
+    for row in snapshot.get("unscored") or []:
+        if isinstance(row, dict) and isinstance(row.get("ticker"), str):
+            found[row["ticker"].strip()] = row
+    return found
+
+
+def lthcs_scored_coverage(
+    snapshot: dict,
+    universe: dict,
+    *,
+    sec_symbols: set[str] | None = None,
+    snap_date: str | None = None,
+) -> dict:
+    """Scored tickers versus the active universe, with a reason when knowable.
+
+    A reason already written on the snapshot (``unscored``) wins. Otherwise
+    a ticker absent from ``sec_symbols`` is ``no SEC CIK match``. ``None``
+    for ``sec_symbols`` means the file was not consulted, so no CIK claim
+    is made.
+    """
+    if snap_date is None:
+        raw_date = snapshot.get("calc_date")
+        snap_date = raw_date if isinstance(raw_date, str) else None
+    expected = expected_universe_tickers(universe, snap_date)
+    scored: list[str] = []
+    for row in snapshot.get("scores") or []:
+        if isinstance(row, dict) and isinstance(row.get("ticker"), str) and row["ticker"].strip():
+            scored.append(row["ticker"].strip())
+    scored_set = set(scored)
+    recorded = _recorded_unscored(snapshot)
+    missing: list[dict] = []
+    for sym in expected:
+        if sym in scored_set:
+            continue
+        reason = None
+        rec = recorded.get(sym)
+        if isinstance(rec, dict) and rec.get("reason"):
+            reason = str(rec["reason"])
+        elif sec_symbols is not None and not sec_has_ticker(sym, sec_symbols):
+            reason = CIK_MISS_REASON
+        row: dict[str, Any] = {"ticker": sym}
+        if reason:
+            row["reason"] = reason
+        missing.append(row)
+    universe_n = len(expected)
+    scored_n = len(scored_set)
+    return {
+        "scored": scored_n,
+        "universe": universe_n,
+        "floor": LTHCS_SCORED_FLOOR,
+        "below_floor": (
+            scored_n < LTHCS_SCORED_FLOOR and universe_n >= LTHCS_SCORED_FLOOR
+        ),
+        "missing": missing,
+    }
+
+
+def _coverage_for_snapshot(
+    snapshot: dict,
+    universe: dict,
+    snap_date: str | None,
+    *,
+    resolve_cik: bool = True,
+) -> dict:
+    coverage = lthcs_scored_coverage(snapshot, universe, snap_date=snap_date)
+    if not resolve_cik:
+        return coverage
+    if not any("reason" not in row for row in coverage["missing"]):
+        return coverage
+    sec_symbols = load_sec_ticker_symbols()
+    if not sec_symbols:
+        return coverage
+    return lthcs_scored_coverage(
+        snapshot, universe, sec_symbols=sec_symbols, snap_date=snap_date,
+    )
+
+
+def section_lthcs_pillars(repo_root: Path, *, resolve_cik: bool = True) -> dict:
     """Grade the latest LTHCS snapshot for a full-universe pillar STUB.
 
     Uses the monthly runner's coverage rule (a pillar is STUB when fewer
@@ -1561,12 +1731,32 @@ def section_lthcs_pillars(repo_root: Path) -> dict:
             "n": info.get("n"),
             "mean": info.get("mean"),
         })
-    return {
+    out = {
         "status": "ok",
         "snapshot_date": snap_date,
         "accepted_pillars": accepted,
         "unaccepted_stubs": unaccepted,
     }
+    uni_path = root / "data" / "lthcs" / "universe.json"
+    if uni_path.exists():
+        try:
+            universe = json.loads(uni_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as e:
+            out["coverage"] = {
+                "status": "error",
+                "error": clip(f"universe.json: {e}", 400),
+            }
+        else:
+            if isinstance(universe, dict):
+                out["coverage"] = _coverage_for_snapshot(
+                    snapshot, universe, snap_date, resolve_cik=resolve_cik,
+                )
+            else:
+                out["coverage"] = {
+                    "status": "error",
+                    "error": "universe.json is not an object",
+                }
+    return out
 
 
 def section_live_payloads(site: LiveSite, now: datetime) -> dict:

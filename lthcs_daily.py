@@ -362,6 +362,10 @@ class PipelineState:
     rotation_scored_today: List[str] = field(default_factory=list)
     rotation_failures: List[str] = field(default_factory=list)
     rev_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
+    # Tickers whose SEC revenue fetch failed because company_tickers.json
+    # has no CIK for them. The warning still collapses that cause to one
+    # key (ticker '<sym>'); this set is what names them on the snapshot.
+    sec_cik_misses: set = field(default_factory=set)
     gp_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
     ocf_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
     # Gross-margin fallback rows -- populated for every ticker so the
@@ -873,7 +877,12 @@ def stage_1_load_config(state: PipelineState) -> bool:
     return True
 
 
-def _note_sec_error(errors: dict, exc: BaseException) -> None:
+def _note_sec_error(
+    errors: dict,
+    exc: BaseException,
+    ticker: Optional[str] = None,
+    named: Optional[Dict[str, List[str]]] = None,
+) -> None:
     """Tally an SEC EDGAR failure under a key that survives deduplication.
 
     The SEC fetch used to be wrapped in a bare ``except Exception:`` that
@@ -885,8 +894,16 @@ def _note_sec_error(errors: dict, exc: BaseException) -> None:
     Per-ticker parts are normalized away so ~215 copies of one cause collapse
     into one key: the request URL (it embeds the CIK), the ticker in the
     CIK-lookup message, long digit runs (request IDs in SEC's error page) and
-    whitespace. The missing-User-Agent message has no per-ticker part and is
-    kept verbatim. None of these messages contain the User-Agent value itself.
+    whitespace. Replacing the ticker with ``'<sym>'`` is deliberate. It is
+    not a redaction of a secret (the symbols are public). It keeps one cause
+    as one key: two CIK misses and two hundred 403s must not become two
+    hundred distinct errors. The missing-User-Agent message has no
+    per-ticker part and is kept verbatim. None of these messages contain
+    the User-Agent value itself.
+
+    When ``named`` is passed, the original ticker is stored under that
+    collapsed key so the warning can list who failed without splitting
+    the key.
     """
     msg = str(exc)
     msg = re.sub(r"https?://\S+", "<url>", msg)
@@ -895,15 +912,49 @@ def _note_sec_error(errors: dict, exc: BaseException) -> None:
     msg = re.sub(r"\s+", " ", msg).strip()
     key = "%s: %s" % (type(exc).__name__, msg[:180])
     errors[key] = errors.get(key, 0) + 1
+    if ticker and named is not None and ticker not in named.setdefault(key, []):
+        named[key].append(ticker)
 
 
-def _report_sec_errors(errors: dict, n: int) -> None:
+def _is_cik_lookup_failure(exc: BaseException) -> bool:
+    """True for the company_tickers.json miss, not for a 403 or a missing UA."""
+    return "to a CIK via SEC tickers file" in str(exc)
+
+
+def _cause_with_tickers(key: str, named: Optional[Dict[str, List[str]]]) -> str:
+    """Keep the collapsed ``'<sym>'`` key and append the real symbols.
+
+    The substitution stays in the key so identical causes still merge.
+    The symbols are listed after it, capped, so a two-name CIK miss is
+    readable and a universe-wide 403 does not paste 500 tickers into the
+    annotation.
+    """
+    if not named or "<sym>" not in key:
+        return key
+    symbols = sorted({s for s in (named.get(key) or []) if isinstance(s, str) and s})
+    if not symbols:
+        return key
+    shown = symbols[:12]
+    text = "%s Tickers: %s" % (key, ", ".join(shown))
+    extra = len(symbols) - len(shown)
+    if extra:
+        text += " (+%d more)" % extra
+    return text
+
+
+def _report_sec_errors(
+    errors: dict,
+    n: int,
+    named: Optional[Dict[str, List[str]]] = None,
+) -> None:
     """Print the distinct SEC failure causes, and annotate the Actions run.
 
     The annotation is the part that matters operationally: GitHub keeps
     annotations on the check run where they are readable through the API,
     whereas full job logs expire and are awkward to fetch. One line naming
     the top cause is enough to tell a missing secret from a rejected one.
+    When ``named`` has the tickers that collapsed into ``'<sym>'``, that
+    line also lists them.
     """
     if not errors:
         return
@@ -916,14 +967,15 @@ def _report_sec_errors(errors: dict, n: int) -> None:
         file=sys.stderr,
     )
     for key, cnt in ranked[:5]:
-        print("      %4dx  %s" % (cnt, key), file=sys.stderr)
+        print("      %4dx  %s" % (cnt, _cause_with_tickers(key, named)), file=sys.stderr)
     if os.environ.get("GITHUB_ACTIONS") == "true":
         top_key, top_cnt = ranked[0]
         # Workflow-command escaping: % CR LF must be encoded or the
         # annotation is truncated at the first newline.
         body = (
             "%d/%d SEC revenue fetches failed (warning only; run continues). "
-            "Top cause (%dx): %s" % (total, n, top_cnt, top_key)
+            "Top cause (%dx): %s"
+            % (total, n, top_cnt, _cause_with_tickers(top_key, named))
         )
         body = body.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
         print("::warning title=SEC EDGAR unavailable::" + body)
@@ -947,6 +999,8 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         "eia_ok": 0,
     }
     sec_errors: dict = {}
+    sec_named: Dict[str, List[str]] = {}
+    state.sec_cik_misses = set()
 
     # Historical-backfill mode: pass as_of=<date> to every source that
     # supports it; warn-and-skip sources that have no historical archive.
@@ -990,7 +1044,9 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             # fetches below read the same cached companyfacts payload and fail
             # for the same reason, so instrumenting them too would only repeat it.
             state.rev_by_ticker[sym] = []
-            _note_sec_error(sec_errors, e)
+            _note_sec_error(sec_errors, e, ticker=sym, named=sec_named)
+            if _is_cik_lookup_failure(e):
+                state.sec_cik_misses.add(sym)
         try:
             gp = sec_edgar.get_gross_profit_history(sym, **as_of_kw)
             state.gp_by_ticker[sym] = gp or []
@@ -1772,7 +1828,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     )
 
     _carry_forward_momentum(state, counts)
-    _report_sec_errors(sec_errors, n)
+    _report_sec_errors(sec_errors, n, named=sec_named)
     carried = int(counts.get("yahoo_momentum_carried") or 0)
     yahoo_suffix = (
         " [%d carried <=%dd]" % (carried, _MOMENTUM_STALENESS_DAYS)
@@ -2233,10 +2289,98 @@ def _vardetail_row(sym: str, pillar_name: str, components: Dict[str, Any],
     return row
 
 
-def _snapshot_extras(calc_date: Any) -> Dict[str, Any]:
+def _unscored_reason(
+    flags: List[str],
+    *,
+    cik_miss: bool,
+    scoring_failed: bool,
+) -> Optional[str]:
+    """Why an active ticker has no row in today's snapshot, when we know.
+
+    A CIK miss alone does not drop a name: Stage 3 still scores it when
+    Yahoo has prices (PSKY on 2026-11-01). The miss is still the reason
+    worth naming, and the missing prices are appended when both failed
+    (WBD).
+    """
+    if cik_miss:
+        reason = "no SEC CIK match"
+        if "yahoo_unavailable" in flags:
+            reason += "; no Yahoo prices"
+        return reason
+    if "yahoo_unavailable" in flags and "sec_unavailable" in flags:
+        return "no Yahoo prices and no SEC revenue"
+    if scoring_failed:
+        return "scoring failed"
+    if flags:
+        return ", ".join(flags)
+    return None
+
+
+def _unscored_ticker_records(
+    active: List[str],
+    scored: set,
+    flags: Dict[str, List[str]],
+    cik_misses: set,
+    quality_passed: Optional[set] = None,
+) -> List[Dict[str, Any]]:
+    """Active tickers with no snapshot row, plus a reason when one is known.
+
+    ``scored`` is who actually landed in the snapshot. ``quality_passed``
+    is who Stage 3 was willing to score; a name in that set but not in
+    ``scored`` died in Stage 6.
+    """
+    passed = quality_passed or set()
+    records: List[Dict[str, Any]] = []
+    for sym in active:
+        if sym in scored:
+            continue
+        row_flags = list(flags.get(sym) or [])
+        reason = _unscored_reason(
+            row_flags,
+            cik_miss=sym in cik_misses,
+            scoring_failed=sym in passed,
+        )
+        rec: Dict[str, Any] = {"ticker": sym}
+        if reason:
+            rec["reason"] = reason
+        if row_flags:
+            rec["flags"] = row_flags
+        records.append(rec)
+    return records
+
+
+def _unscored_records_from_state(state: PipelineState) -> List[Dict[str, Any]]:
+    # Stage 8 writes snapshot_rows, including when that list is empty
+    # because every name failed in Stage 6. Do not fall back to
+    # scored_tickers: those are who passed the quality gate, not who
+    # landed in the file.
+    scored = {
+        row.get("ticker")
+        for row in (state.snapshot_rows or [])
+        if isinstance(row, dict) and isinstance(row.get("ticker"), str)
+    }
+    return _unscored_ticker_records(
+        list(state.active_tickers or []),
+        scored,
+        dict(state.data_quality_flags or {}),
+        set(state.sec_cik_misses or set()),
+        quality_passed=set(state.scored_tickers or []),
+    )
+
+
+def _snapshot_extras(
+    calc_date: Any,
+    unscored: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
     """Top-level snapshot keys beyond the core four: the methodology breaks
-    that can still sit inside a drift window, so readers can annotate."""
-    return {"methodology_breaks": methodology.recent_breaks(str(calc_date))}
+    that can still sit inside a drift window, so readers can annotate, and
+    the active tickers this run did not score."""
+    extra: Dict[str, Any] = {
+        "methodology_breaks": methodology.recent_breaks(str(calc_date)),
+    }
+    if unscored:
+        extra["unscored"] = unscored
+    return extra
 
 
 def _catch_up_history(state: PipelineState) -> int:
@@ -2483,7 +2627,9 @@ def stage_8_persist(state: PipelineState) -> bool:
             DEFAULT_WEIGHTS_PROFILE,
             state.snapshot_rows,
             overwrite=state.args.force,
-            extra=_snapshot_extras(state.calc_date),
+            extra=_snapshot_extras(
+                state.calc_date, _unscored_records_from_state(state)
+            ),
         )
         persist.write_variable_detail(
             state.calc_date,
@@ -3127,13 +3273,23 @@ def run_news_only(args: argparse.Namespace) -> int:
     # (it's a daily/weekly aggregate; consumers of data/lthcs/index/<date>
     # expect the morning composite).
     try:
+        # The hourly rewrite builds a fresh payload. Carry the morning
+        # run's unscored list forward so a news refresh does not drop
+        # the names the daily audit reads.
+        extra = _snapshot_extras(state.calc_date)
+        carried_unscored = (
+            prior_snapshot.get("unscored")
+            if isinstance(prior_snapshot, dict) else None
+        )
+        if carried_unscored:
+            extra["unscored"] = carried_unscored
         persist.write_snapshot(
             state.calc_date,
             MODEL_VERSION,
             DEFAULT_WEIGHTS_PROFILE,
             state.snapshot_rows,
             overwrite=True,  # news-only always overwrites today's snapshot
-            extra=_snapshot_extras(state.calc_date),
+            extra=extra,
         )
         persist.write_variable_detail(
             state.calc_date,
