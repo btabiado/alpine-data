@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-10-31T13:39:34.485704+00:00",
+ "generated_utc": "2026-11-01T09:25:21.710092+00:00",
  "source": "CFPB Consumer Complaint Database",
  "note": "Published from GitHub Actions (clean egress) because the CFPB API blocks Cloudflare datacenter IPs. Consumed by ADW-397.",
  "windows": {
@@ -9,54 +9,54 @@
  "products": {
   "student_loan": {
    "product": "Student loan",
-   "complaints_recent_3mo": 4056,
-   "complaints_trailing_12mo": 19854,
+   "complaints_recent_3mo": 4037,
+   "complaints_trailing_12mo": 19803,
    "window_recent": [
-    "2026-08-02",
-    "2026-10-31"
+    "2026-08-03",
+    "2026-11-01"
    ],
    "window_baseline": [
-    "2025-10-31",
-    "2026-10-31"
+    "2025-11-01",
+    "2026-11-01"
    ]
   },
   "mortgage": {
    "product": "Mortgage",
-   "complaints_recent_3mo": 8061,
-   "complaints_trailing_12mo": 33522,
+   "complaints_recent_3mo": 8013,
+   "complaints_trailing_12mo": 33448,
    "window_recent": [
-    "2026-08-02",
-    "2026-10-31"
+    "2026-08-03",
+    "2026-11-01"
    ],
    "window_baseline": [
-    "2025-10-31",
-    "2026-10-31"
+    "2025-11-01",
+    "2026-11-01"
    ]
   },
   "credit_card": {
    "product": "Credit card",
-   "complaints_recent_3mo": 22805,
-   "complaints_trailing_12mo": 94958,
+   "complaints_recent_3mo": 22672,
+   "complaints_trailing_12mo": 94670,
    "window_recent": [
-    "2026-08-02",
-    "2026-10-31"
+    "2026-08-03",
+    "2026-11-01"
    ],
    "window_baseline": [
-    "2025-10-31",
-    "2026-10-31"
+    "2025-11-01",
+    "2026-11-01"
    ]
   },
   "prepaid_card": {
    "product": "Prepaid card",
-   "complaints_recent_3mo": 1460,
-   "complaints_trailing_12mo": 6269,
+   "complaints_recent_3mo": 1453,
+   "complaints_trailing_12mo": 6256,
    "window_recent": [
-    "2026-08-02",
-    "2026-10-31"
+    "2026-08-03",
+    "2026-11-01"
    ],
    "window_baseline": [
-    "2025-10-31",
-    "2026-10-31"
+    "2025-11-01",
+    "2026-11-01"
    ]
   }
  }
