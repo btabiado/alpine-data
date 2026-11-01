@@ -6,6 +6,10 @@
 # produces unsigned commits; this helper uses POST /repos/.../git/{blobs,
 # trees,commits} + PATCH /repos/.../git/refs/heads/<branch> instead.
 #
+# Shared by every data workflow that commits back to main (lthcs-daily,
+# pages, daily-audit, real-estate-daily, and the rest of .github/workflows).
+# A retry fix here covers all of them.
+#
 # Inputs (env / args):
 #   $1                  commit message (required, single line OK)
 #   BRANCH              target branch (default: main)
@@ -22,6 +26,14 @@
 #   * No-op (exit 0) if the staged diff is empty.
 #   * Race-safe: re-reads remote HEAD between retries, rebuilds tree
 #     against the new base, retries up to 3 times on ref-update conflicts.
+#   * Blob-visibility: POST git/trees sometimes returns HTTP 422
+#     "tree.sha <sha> is not a valid blob" for a blob this script just
+#     created (run 41259909286, 2026-11-01). That is treated as transient:
+#     the missing blob is verified and re-uploaded, then the tree is
+#     rebuilt and retried with backoff. The same class of lag on a tree
+#     or commit object ("is not a valid tree/commit") retries the POST.
+#     A genuine validation 422 (bad mode, malformed path, ...) still
+#     fails on the first response.
 #   * Sends ONLY message/tree/parents — no author/committer/signature.
 #     That is the exact condition under which GitHub auto-signs a Git Data
 #     API commit: it stamps the authenticated bot identity
@@ -30,6 +42,8 @@
 #     UNSIGNED commit — that was this script's original missing-signature
 #     bug. Bot provenance is carried in the commit message prefix instead
 #     (e.g. "lthcs: ...", "real-estate: ...").
+#   * Never force-updates the ref. A rejected fast-forward retries against
+#     the new tip; the ref patch sends force=false.
 #
 # Exit codes:
 #   0   success (committed, or nothing to commit)
@@ -40,6 +54,25 @@ set -euo pipefail
 MSG="${1:?commit message required as first arg}"
 BRANCH="${BRANCH:-main}"
 REPO="${GH_REPO:-${GITHUB_REPOSITORY:-}}"
+
+_err_tail() {
+  if [ -f "${API_LAST_ERR:-}" ] && [ -s "$API_LAST_ERR" ]; then
+    tail -1 "$API_LAST_ERR" | cut -c1-200
+  fi
+  return 0
+}
+
+# _fail <message>: stderr line plus, on Actions, a ::error annotation so
+# the daily audit quotes this failure instead of an earlier ::warning.
+_fail() {
+  local msg="$1" esc
+  echo "api-commit: $msg" >&2
+  if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+    esc="$(printf '%s' "$msg" | python3 -c 'import sys; s=sys.stdin.read(); print(s.replace("%","%25").replace("\r","%0D").replace("\n","%0A"), end="")')"
+    printf '::error title=api-commit::%s\n' "$esc"
+  fi
+  exit 1
+}
 
 if [ -z "$REPO" ]; then
   echo "api-commit: GITHUB_REPOSITORY / GH_REPO unset; aborting." >&2
@@ -105,9 +138,18 @@ echo "api-commit: ${#UPSERT_PATHS[@]} upsert, ${#DELETE_PATHS[@]} delete on $REP
 #   * BLOB_THROTTLE   inter-blob sleep (default 0.8s ≈ 75/min, under the cap)
 #   * API_RETRY_DELAYS backoff schedule for every content-creating POST;
 #     secondary limits typically clear in <=60s, so 30/90/180 covers it.
-# Both env-overridable (handy for local harnesses / CI debugging).
+#   * TREE_OBJECT_RETRY_DELAYS backoff for a tree 422 "not a valid blob"
+#     after the missing blob has been re-uploaded (default 5/15/30/60).
+#     Short on purpose: this is replication lag, not a rate-limit lockout.
+# All three are env-overridable (local harnesses / CI debugging).
 BLOB_THROTTLE="${BLOB_THROTTLE:-0.8}"
 API_RETRY_DELAYS="${API_RETRY_DELAYS:-30 90 180}"
+TREE_OBJECT_RETRY_DELAYS="${TREE_OBJECT_RETRY_DELAYS:-5 15 30 60}"
+REF_REJECT_SLEEP="${REF_REJECT_SLEEP:-2}"
+REF_RATELIMIT_SLEEP="${REF_RATELIMIT_SLEEP:-60}"
+API_LAST_ERR="$(mktemp)"
+BLOB_SWEEP_DONE=0
+BLOB_NAMED_REPAIRED=0
 
 # _retryable <err-file>: true when the failure is worth waiting out —
 # rate limits (403/429), transient server/network errors, AND 401s.
@@ -118,39 +160,245 @@ API_RETRY_DELAYS="${API_RETRY_DELAYS:-30 90 180}"
 # an interactive keyring token locally, recovering within minutes, with
 # githubstatus.com all-green throughout). A genuinely dead token just
 # burns the bounded schedule (~5 min) before the same abort; a blip no
-# longer kills a daily data commit. Truly permanent errors (404, 422
-# validation) still fail fast.
+# longer kills a daily data commit.
+#
+# "not a valid tree/commit" is the same class of lag as the blob 422
+# below, but for an object this process just created (the new tree, when
+# posting the commit). Retrying the same body is the right fix there.
+# A tree 422 "not a valid blob" is NOT handled here: the caller re-uploads
+# the blob and rebuilds the tree. Other 422s (bad mode, bad path) fail fast.
 _retryable() {
-  grep -qiE 'HTTP (401|403|429|5[0-9][0-9])|rate limit|timed? ?out|connection' "$1"
+  grep -qiE 'HTTP (401|403|429|5[0-9][0-9])|rate limit|timed? ?out|connection|not a valid (tree|commit)|tree does not exist|commit does not exist' "$1"
+}
+
+_blob_miss_err() {
+  grep -qiE 'not a valid blob|no such blob|blob does not exist' "$1"
+}
+
+_save_err() {
+  if [ -f "$1" ]; then
+    cat "$1" > "$API_LAST_ERR" || true
+  fi
+}
+
+# SHAs named on a blob-miss line only, so a dumped tree body cannot mark
+# every entry missing.
+_missing_blob_shas() {
+  grep -iE 'not a valid blob|no such blob|blob does not exist' "$1" \
+    | grep -oiE '[0-9a-f]{40}' \
+    | tr '[:upper:]' '[:lower:]' \
+    | sort -u || true
 }
 
 # _api_post <git-data-endpoint>: POST stdin payload, echo .sha.
 # Buffers the payload to a temp file so it can be replayed across retries
-# (stdin is consumed on the first attempt). Returns 1 on a non-retryable
-# error or once the schedule is exhausted; callers run under set -e so
-# that still aborts the script, but only after backoff instead of on the
-# first 403.
+# (stdin is consumed on the first attempt).
+#   0  success (.sha on stdout)
+#   2  git/trees rejected a blob that may just be invisible; caller repairs
+#   1  non-retryable, or the retry schedule is exhausted
+# Runs in a pipeline, so it must not exit the parent shell.
 _api_post() {
   local endpoint="$1" tmp sha delay
   tmp="$(mktemp)"
   cat > "$tmp"
   : > "$tmp.err"
   for delay in 0 $API_RETRY_DELAYS; do
-    if [ "$delay" -gt 0 ]; then
-      echo "api-commit:   POST $endpoint failed ($(tail -1 "$tmp.err" 2>/dev/null | cut -c1-120)); retrying in ${delay}s..." >&2
-      sleep "$delay"
+    # A zero delay is still a retry when a previous attempt already failed.
+    # Log it so a transient 422 is visible even when the backoff is 0.
+    if [ -s "$tmp.err" ]; then
+      if [ "$delay" -gt 0 ]; then
+        echo "api-commit:   POST $endpoint failed ($(tail -1 "$tmp.err" 2>/dev/null | cut -c1-120)); retrying in ${delay}s..." >&2
+        sleep "$delay"
+      else
+        echo "api-commit:   POST $endpoint failed ($(tail -1 "$tmp.err" 2>/dev/null | cut -c1-120)); retrying..." >&2
+      fi
     fi
     if sha="$(gh api -X POST "repos/$REPO/$endpoint" --input "$tmp" --jq '.sha' 2>"$tmp.err")"; then
       rm -f "$tmp" "$tmp.err"
       printf '%s' "$sha"
       return 0
     fi
+    _save_err "$tmp.err"
+    if [ "$endpoint" = "git/trees" ] && _blob_miss_err "$tmp.err"; then
+      rm -f "$tmp" "$tmp.err"
+      return 2
+    fi
     _retryable "$tmp.err" || break
   done
   echo "api-commit: POST $endpoint failed (non-retryable or retries exhausted):" >&2
   tail -3 "$tmp.err" >&2 || true
+  _save_err "$tmp.err"
   rm -f "$tmp" "$tmp.err"
   return 1
+}
+
+_blob_payload() {
+  python3 -c '
+import base64, json, sys
+with open(sys.argv[1], "rb") as fh:
+    sys.stdout.write(json.dumps({"content": base64.b64encode(fh.read()).decode("ascii"), "encoding": "base64"}))
+' "$1"
+}
+
+# Print the blob sha. Non-zero means the upload failed; the caller _fails.
+# Does not exit the shell: command substitution would swallow `exit`.
+_upload_one_blob() {
+  local path="$1" sha rc
+  set +e
+  sha="$(_blob_payload "$path" | _api_post git/blobs)"
+  rc=$?
+  set -e
+  if [ "$rc" -ne 0 ]; then
+    return "$rc"
+  fi
+  if ! printf '%s' "$sha" | grep -qE '^[0-9a-f]{40}$'; then
+    echo "api-commit: blob upload for $path returned unexpected sha '${sha}'" >&2
+    return 1
+  fi
+  printf '%s' "$sha"
+}
+
+# Best-effort existence check. Prints visible / missing / inconclusive.
+# A 403/429 during the check is not evidence the blob is gone.
+_blob_verify() {
+  local sha="$1" err
+  err="$(mktemp)"
+  if gh api "repos/$REPO/git/blobs/$sha" --jq '.sha' >/dev/null 2>"$err"; then
+    rm -f "$err"
+    printf 'visible'
+    return 0
+  fi
+  if grep -qiE 'HTTP (403|429)|rate limit' "$err"; then
+    rm -f "$err"
+    printf 'inconclusive'
+    return 0
+  fi
+  rm -f "$err"
+  printf 'missing'
+  return 0
+}
+
+_reupload_all_blobs() {
+  local idx path newsha
+  for idx in "${!UPSERT_PATHS[@]}"; do
+    path="${UPSERT_PATHS[$idx]}"
+    echo "api-commit:   re-uploading $path" >&2
+    newsha="$(_upload_one_blob "$path")" || _fail "re-upload of $path failed: $(_err_tail)"
+    if [ "$newsha" != "${UPSERT_SHAS[$idx]}" ]; then
+      echo "api-commit:   blob SHA for $path changed ${UPSERT_SHAS[$idx]} -> $newsha" >&2
+    fi
+    UPSERT_SHAS[$idx]="$newsha"
+    echo "  blob $newsha  $path (re-upload)"
+    sleep "$BLOB_THROTTLE"
+  done
+}
+
+# Re-create the blob(s) named by the last tree 422. Unknown SHAs are logged
+# and left for the tree retry (replication lag on an object we do not own).
+# An error that names no SHA re-uploads every staged blob once.
+_repair_blob_miss() {
+  local -a missing=()
+  local sha idx found any_known path newsha visible
+  any_known=0
+  mapfile -t missing < <(_missing_blob_shas "$API_LAST_ERR")
+  if [ "${#missing[@]}" -eq 0 ]; then
+    echo "api-commit:   tree 422 named no blob SHA; re-uploading every staged blob" >&2
+    BLOB_SWEEP_DONE=1
+    _reupload_all_blobs
+    return 0
+  fi
+  for sha in "${missing[@]}"; do
+    found=0
+    for idx in "${!UPSERT_SHAS[@]}"; do
+      if [ "${UPSERT_SHAS[$idx]}" = "$sha" ]; then
+        found=1
+        any_known=1
+        path="${UPSERT_PATHS[$idx]}"
+        visible="$(_blob_verify "$sha")"
+        echo "api-commit:   blob $sha ($path) verify=$visible; re-uploading" >&2
+        newsha="$(_upload_one_blob "$path")" || _fail "re-upload of $path failed: $(_err_tail)"
+        if [ "$newsha" != "$sha" ]; then
+          echo "api-commit:   blob SHA for $path changed $sha -> $newsha" >&2
+        fi
+        UPSERT_SHAS[$idx]="$newsha"
+        echo "  blob $newsha  $path (re-upload)"
+        sleep "$BLOB_THROTTLE"
+      fi
+    done
+    if [ "$found" -eq 0 ]; then
+      echo "api-commit:   missing blob $sha is not a staged upload; retrying tree after backoff" >&2
+    fi
+  done
+  if [ "$any_known" -eq 1 ]; then
+    BLOB_NAMED_REPAIRED=1
+  fi
+}
+
+_build_tree_json() {
+  local base_tree="$1" tree_json first path path_json idx
+  tree_json='{"base_tree":"'"$base_tree"'","tree":['
+  first=1
+  for idx in "${!UPSERT_PATHS[@]}"; do
+    [ "$first" -eq 1 ] || tree_json+=','
+    first=0
+    path_json=$(printf '%s' "${UPSERT_PATHS[$idx]}" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')
+    tree_json+='{"path":'"$path_json"',"mode":"100644","type":"blob","sha":"'"${UPSERT_SHAS[$idx]}"'"}'
+  done
+  for path in "${DELETE_PATHS[@]}"; do
+    [ "$first" -eq 1 ] || tree_json+=','
+    first=0
+    path_json=$(printf '%s' "$path" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')
+    tree_json+='{"path":'"$path_json"',"mode":"100644","type":"blob","sha":null}'
+  done
+  tree_json+=']}'
+  printf '%s' "$tree_json"
+}
+
+# Create the tree, repairing invisible blobs between attempts.
+# Sets NEW_TREE. Exits the script on a persistent or permanent failure.
+_create_tree() {
+  local base_tree="$1" delay rc tree_json blob_misses i last
+  local -a delays=()
+  blob_misses=0
+  # shellcheck disable=SC2206
+  delays=(0 $TREE_OBJECT_RETRY_DELAYS)
+  last=$(( ${#delays[@]} - 1 ))
+  for i in "${!delays[@]}"; do
+    delay="${delays[$i]}"
+    if [ "$i" -gt 0 ]; then
+      if [ "$delay" -gt 0 ]; then
+        echo "api-commit:   retrying tree creation in ${delay}s (blob visibility)..." >&2
+        sleep "$delay"
+      else
+        echo "api-commit:   retrying tree creation (blob visibility)..." >&2
+      fi
+    fi
+    tree_json="$(_build_tree_json "$base_tree")"
+    set +e
+    NEW_TREE="$(printf '%s' "$tree_json" | _api_post git/trees)"
+    rc=$?
+    set -e
+    if [ "$rc" -eq 0 ]; then
+      return 0
+    fi
+    if [ "$rc" -ne 2 ]; then
+      _fail "POST git/trees failed (non-retryable or retries exhausted): $(_err_tail)"
+    fi
+    blob_misses=$((blob_misses + 1))
+    echo "api-commit:   POST git/trees rejected a blob ($(_err_tail))" >&2
+    if [ "$i" -eq "$last" ]; then
+      _fail "POST git/trees failed after ${#delays[@]} attempts; blob still not visible: $(_err_tail)"
+    fi
+    _repair_blob_miss
+    if [ "$blob_misses" -ge 2 ] && [ "$BLOB_SWEEP_DONE" -eq 0 ] && [ "$BLOB_NAMED_REPAIRED" -eq 1 ]; then
+      if [ -n "$(_missing_blob_shas "$API_LAST_ERR" | head -1)" ]; then
+        echo "api-commit:   blob 422 persisted after re-upload; re-uploading every staged blob once" >&2
+        BLOB_SWEEP_DONE=1
+        _reupload_all_blobs
+      fi
+    fi
+  done
+  _fail "POST git/trees failed: blob visibility retries exhausted: $(_err_tail)"
 }
 
 # Upload blobs once (content-addressed — re-uploading the same blob across
@@ -163,11 +411,7 @@ for path in "${UPSERT_PATHS[@]}"; do
   # (the ~3.4MB data/real_estate.json -> ~4.6MB arg -> "Argument list too long",
   # exit 126, gh never runs). Piping via --input - has no size limit and matches
   # the tree/commit POSTs below. python3 is already required by this script.
-  sha="$(python3 -c '
-import base64, json, sys
-with open(sys.argv[1], "rb") as fh:
-    sys.stdout.write(json.dumps({"content": base64.b64encode(fh.read()).decode("ascii"), "encoding": "base64"}))
-' "$path" | _api_post git/blobs)"
+  sha="$(_upload_one_blob "$path")" || _fail "blob upload failed for $path: $(_err_tail)"
   UPSERT_SHAS+=("$sha")
   echo "  blob $sha  $path"
   sleep "$BLOB_THROTTLE"
@@ -177,8 +421,7 @@ attempt=0
 while : ; do
   attempt=$((attempt+1))
   if (( attempt > 3 )); then
-    echo "api-commit: 3 attempts failed against moving ref; giving up." >&2
-    exit 1
+    _fail "3 attempts failed against moving ref; giving up."
   fi
 
   # Fresh remote tip every retry.
@@ -186,28 +429,10 @@ while : ; do
   base_tree="$(gh api "repos/$REPO/git/commits/$base_sha" --jq '.tree.sha')"
   echo "api-commit: attempt $attempt — base $base_sha (tree $base_tree)"
 
-  # Build the tree-edit payload: one entry per changed path, all relative
-  # to the repo root, mode 100644 (regular file). For deletes we send
-  # "sha": null which tells GitHub to drop the path from the new tree.
-  # The remaining files in $base_tree are inherited unchanged.
-  tree_json='{"base_tree":"'"$base_tree"'","tree":['
-  first=1
-  for idx in "${!UPSERT_PATHS[@]}"; do
-    [ $first -eq 1 ] || tree_json+=','
-    first=0
-    path_json=$(printf '%s' "${UPSERT_PATHS[$idx]}" | python3 -c 'import json,sys;print(json.dumps(sys.stdin.read()))')
-    tree_json+='{"path":'"$path_json"',"mode":"100644","type":"blob","sha":"'"${UPSERT_SHAS[$idx]}"'"}'
-  done
-  for path in "${DELETE_PATHS[@]}"; do
-    [ $first -eq 1 ] || tree_json+=','
-    first=0
-    path_json=$(printf '%s' "$path" | python3 -c 'import json,sys;print(json.dumps(sys.stdin.read()))')
-    tree_json+='{"path":'"$path_json"',"mode":"100644","type":"blob","sha":null}'
-  done
-  tree_json+=']}'
-
-  new_tree="$(printf '%s' "$tree_json" | _api_post git/trees)"
-  echo "api-commit:   new tree $new_tree"
+  # One entry per changed path, mode 100644. Deletes send "sha": null so
+  # GitHub drops the path. Everything else in $base_tree is inherited.
+  _create_tree "$base_tree"
+  echo "api-commit:   new tree $NEW_TREE"
 
   # Create the commit with ONLY message/tree/parents — deliberately no
   # author, committer, or signature. That is the exact condition under which
@@ -218,7 +443,7 @@ while : ; do
   # The dynamic fields must be a *prefix* env assignment so they land in
   # os.environ. Placed AFTER `python3 -c '...'` the shell would treat them as
   # script argv (sys.argv), not env vars — so os.environ["MSG"] would KeyError.
-  commit_payload=$(MSG="$MSG" NEW_TREE="$new_tree" BASE_SHA="$base_sha" \
+  commit_payload=$(MSG="$MSG" NEW_TREE="$NEW_TREE" BASE_SHA="$base_sha" \
     python3 -c '
 import json, os
 print(json.dumps({
@@ -228,13 +453,18 @@ print(json.dumps({
 }))
 ')
 
+  set +e
   new_commit="$(printf '%s' "$commit_payload" | _api_post git/commits)"
+  rc=$?
+  set -e
+  if [ "$rc" -ne 0 ]; then
+    _fail "POST git/commits failed: $(_err_tail)"
+  fi
   echo "api-commit:   new commit $new_commit"
 
   # Fast-forward update only — if main moved under us between
-  # base-sha read and ref update, this returns 422 and we retry. We
-  # intentionally DO NOT use force=true; that would clobber concurrent
-  # pushes from other bots / devs.
+  # base-sha read and ref update, this returns 422 and we retry. The
+  # ref update is never forced; that would clobber concurrent pushes.
   # The PATCH is also a content-modifying call, fired exactly when the
   # secondary-rate-limit budget is most depleted (right after the blob
   # loop) — so distinguish a rate-limit 403 (back off 60s; the lockout
@@ -243,18 +473,19 @@ print(json.dumps({
   patch_err="$(mktemp)"
   if gh api -X PATCH "repos/$REPO/git/refs/heads/$BRANCH" \
       -f sha="$new_commit" -F force=false >/dev/null 2>"$patch_err"; then
-    rm -f "$patch_err"
+    rm -f "$patch_err" "$API_LAST_ERR"
     echo "api-commit: ref updated to $new_commit (signed by GitHub)"
     echo "api-commit: verify with: gh api repos/$REPO/commits/$new_commit --jq '.commit.verification'"
     exit 0
   fi
+  _save_err "$patch_err"
   if _retryable "$patch_err"; then
-    echo "api-commit: ref update rate-limited ($(tail -1 "$patch_err" | cut -c1-120)); backing off 60s..." >&2
+    echo "api-commit: ref update rate-limited ($(tail -1 "$patch_err" | cut -c1-120)); backing off ${REF_RATELIMIT_SLEEP}s..." >&2
     rm -f "$patch_err"
-    sleep 60
+    sleep "$REF_RATELIMIT_SLEEP"
   else
     echo "api-commit: ref update rejected ($(tail -1 "$patch_err" | cut -c1-120)); retrying against fresh tip..." >&2
     rm -f "$patch_err"
-    sleep 2
+    sleep "$REF_REJECT_SLEEP"
   fi
 done

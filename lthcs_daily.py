@@ -910,7 +910,8 @@ def _report_sec_errors(errors: dict, n: int) -> None:
     ranked = sorted(errors.items(), key=lambda kv: -kv[1])
     total = sum(errors.values())
     print(
-        "  [lthcs_daily] SEC EDGAR: %d of %d revenue fetches raised. Distinct causes:"
+        "  [lthcs_daily] SEC EDGAR: %d of %d revenue fetches raised "
+        "(warning only; a CIK miss does not fail the run). Distinct causes:"
         % (total, n),
         file=sys.stderr,
     )
@@ -920,8 +921,10 @@ def _report_sec_errors(errors: dict, n: int) -> None:
         top_key, top_cnt = ranked[0]
         # Workflow-command escaping: % CR LF must be encoded or the
         # annotation is truncated at the first newline.
-        body = ("%d/%d SEC revenue fetches failed. Top cause (%dx): %s"
-                % (total, n, top_cnt, top_key))
+        body = (
+            "%d/%d SEC revenue fetches failed (warning only; run continues). "
+            "Top cause (%dx): %s" % (total, n, top_cnt, top_key)
+        )
         body = body.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
         print("::warning title=SEC EDGAR unavailable::" + body)
 
