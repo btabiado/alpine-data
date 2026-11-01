@@ -1,6 +1,6 @@
 {
- "generated": "2026-10-31",
- "gathered_at": "2026-11-01T14:24:51Z",
+ "generated": "2026-11-01",
+ "gathered_at": "2026-11-01T18:59:23Z",
  "items": [
   {
    "vendor": "Semarchy",
@@ -3783,15 +3783,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "SAP",
-   "headline": "SAP to acquire workforce data firm TechWolf",
-   "date": "2026-10-06",
-   "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNUE9kVVVQR3dkcUJsR01oa0w2VWtEU2JkZXNWeVJFLXVnVjlNMHlrcWJ6dUowQmVpRFpJQmJYMkg4VHcwOHEweENTVm03b2pNdnduX2UxV2Z2N05fc2R6ZTNFSVd1d1p2b01hR0FSN1ZwbmxNcURqbWZvUHo3X1dGVQ?oc=5",
-   "source": "AOL.com",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "7Rivers",
    "headline": "AI-Driven Customer Feedback Analytics Highlight 7Rivers’ Data Strategy",
    "date": "2026-10-02",
@@ -4917,15 +4908,6 @@
    "relevance": "medium"
   },
   {
-   "vendor": "Integrated Quantum Technologies",
-   "headline": "Integrated Quantum Technologies Expands U.S. Government Market Strategy Through Partnership with ARMI Sol",
-   "date": "2026-10-22",
-   "url": "https://news.google.com/rss/articles/CBMi2gFBVV95cUxQS25IZ3IyNDhOZWdVMGwteHVZUEViWnpnV253UXoxOHhFdXEyTFd1Yk9HQ0JOSGtmeXJyeGFBVWhvVXZFZk5ILW9ZbjVPal9LRmtRaTloSmhPX3pkR1FVMWJZZUN4YTNOUmZrT1dzYUJCdzRUdHdGM3prejBTcENIRTBzanUxblpGV28xRFlKUG5hbFEwWHZQS000aENWNjBqYjBGY0dPdTJaVjh6eEt5WGw2ODFuSjZxVl9wMEJGaFAyckhzdVBQNWlVYzVqSjlsdUY2MFNqc0hzUQ?oc=5",
-   "source": "Benzinga",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
    "vendor": "Kumo",
    "headline": "NVIDIA Kumo Relational Beats XGBoost on Enterprise Databases Without Feature Engineering",
    "date": "2026-10-22",
@@ -5623,15 +5605,6 @@
    "headline": "Informatica brings data governance and data catalog to cloud",
    "date": "2026-10-28",
    "url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxNX3FmeGNORUVGMmUzZjMyMjJDXzlOc0twR1BuREtSMXFRR3RZbXZGY3I5TTlIMGR4WWUwVnZpSmJ1OUZaSUVtQ2RpdGM1UGJORGlidDAtdUNOcUliZnRNQ01hYk9CMVBhcUEtVWYxakNESkdPc0pyVG50M3poLWJPa0ZiREd1TERDVTlTZ0pJbzduLXlOS0lneVBGdThXelFKM1E?oc=5",
-   "source": "TechTarget",
-   "summary": "",
-   "relevance": "medium"
-  },
-  {
-   "vendor": "Informatica",
-   "headline": "Informatica pulls together cloud data management in the cloud",
-   "date": "2026-10-28",
-   "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxPYkN6R21DcFdwUHFSRE9KMFBVblJUYzdyQ3JMMi1EZUZfLXZLZkN2NWllU0VnQmZmY0VMQlgzN1djSzBGbU9iMnIxTURVdDRPb1NmNjBKTVVGeXR3RmFaVmRuVWxjczNWZHBRZFNRZERZY2tTTzItXzBZVVBOQlZxVWZxcDgwUEY1OG54M0kwQUtXbkNBZDNHaFRIem04M0FnQmhB?oc=5",
    "source": "TechTarget",
    "summary": "",
    "relevance": "medium"
@@ -7424,6 +7397,42 @@
    "date": "2026-10-14",
    "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOUE50WVNRMUQtNktQa21fTmZfNXJNamtUY2JYOUVtbW9uLVNJR2plU0J0bHhRamhFWTNKNFI4aUVZeExLYWJibDdSQW5sTkJGWmtUZHpvV21aRWhUcmNHX3RtZUFpUkVrTDJTNzVwZFROckRRNWdjRjlkYVdsOTFmSlhabHNGdHVkQ2IyYmdURDJlbUFMZ3gwOUJZRUNBbVY3cGNsZldwZXRzV0lDZnFZWjVIVElkX0lSNTNjUkRxN2xMdXdNSEE?oc=5",
    "source": "HPCwire",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "S&P Global",
+   "headline": "Earnings Beat Could Be A Big Moment For S&P Global Stock (SPGI)",
+   "date": "2026-11-01",
+   "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxOYi1NczJPOXhHR2JkczFhd3lzLVdsNnJGbzdwZTFhaUxLMXRGV2otOWI3YS1wVHpmRnh6SUhGMDZyaThBWVk3QnlRb05QeDhjenRMeDAxRWtsbjRDbWRWQTVhZ1hVTUNNTEdXN1l3OUF3RUUybjZrS3RSMDJ1SXI3QU9SMDl1aHFyMEtUQXAxNHg0MXdxdXN6V2owTQ?oc=5",
+   "source": "Yahoo Finance",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Integrated Quantum Technologies",
+   "headline": "Integrated Quantum Technologies Inc. (VEIL.CN) Stock Price, News, Quote & History",
+   "date": "2026-10-30",
+   "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1UQUhkNkR4LVFlQkc4NjdVNWViWGV2SlBYZVo4QThFR0JmUE9GNlc2bUNvSEpHVmdleTc5ZVNmTmhqQXdlcTI1UjNmcUEtMTBmbVM4RnhR?oc=5",
+   "source": "Yahoo! Finance Canada",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Informatica",
+   "headline": "Informatica advances Intelligent Data Management Cloud",
+   "date": "2026-10-29",
+   "url": "https://news.google.com/rss/articles/CBMimgFBVV95cUxNSW9vaHlaMDA4S283aXQ5elhkRE5IbXJ2bmI2SUZYRnI2OUZVOUcxVklhZUxHS0ZlNE9ObEQyZkxQU25zNlg5UjQ2ZU5OZXZINnN1QUE2TTlEV010VEZjNGQzR05oSzFnTUpwa2hYNkJIbGd1ZVpRX3JSdmVDUXVYR1FDSjk2c2U4dHl3ZkUzT2ctd19ETDU3dHpR?oc=5",
+   "source": "TechTarget",
+   "summary": "",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "SAP",
+   "headline": "SAP SE (SAP) Seasonal returns chart - Yahoo Finance",
+   "date": "2026-10-29",
+   "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1hRVBHQXl3VE9MWGNzV3pBT2RBQ0tNV3FFcENnaXZLdHRJS0pVdjVzSXhjcTNBdEVZNldWMnotNktvZzEtdjExT1FBNHhqSTkycExzR1ZYWGRqUVRmRlVTRg?oc=5",
+   "source": "Yahoo Finance Singapore",
    "summary": "",
    "relevance": "medium"
   }
