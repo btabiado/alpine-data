@@ -1,12 +1,12 @@
 {
   "as_of": "2026-11-01",
-  "generated_at": "2026-11-01T19:34:08Z",
+  "generated_at": "2026-11-01T21:12:28Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-11-01",
       "label": null,
-      "note": "40 coins; 2 buy+, 29 sell+",
-      "score": -68,
+      "note": "40 coins; 2 buy+, 26 sell+",
+      "score": -60,
       "stale": false
     },
     "defi_sentiment": {
@@ -90,7 +90,7 @@
       "as_of": "2026-11-01",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": -16,
+      "score": -15,
       "stale": false
     },
     "poc_signal_breadth": {
