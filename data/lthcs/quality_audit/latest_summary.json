@@ -1,8 +1,8 @@
 {
-  "asof": "2026-10-17",
-  "snapshot_date": "2026-10-17",
-  "generated_at_utc": "2026-10-17T12:56:39+00:00",
-  "overall_verdict": "DEGRADED",
+  "asof": "2026-11-01",
+  "snapshot_date": "2026-11-01",
+  "generated_at_utc": "2026-11-01T16:21:44+00:00",
+  "overall_verdict": "HEALTHY",
   "known_stubs_error": null,
   "known_gaps": [
     {
@@ -21,24 +21,24 @@
   "pillars": {
     "adoption_momentum": {
       "coverage_pct": 97.9,
-      "mean": 54.77,
-      "stdev": 21.69,
+      "mean": 54.13,
+      "stdev": 21.31,
       "verdict": "HEALTHY",
-      "n": 515
+      "n": 514
     },
     "institutional_confidence": {
-      "coverage_pct": 62.7,
-      "mean": 49.31,
-      "stdev": 3.14,
-      "verdict": "DEGRADED",
-      "n": 515
+      "coverage_pct": 99.8,
+      "mean": 48.91,
+      "stdev": 28.49,
+      "verdict": "HEALTHY",
+      "n": 514
     },
     "financial_evolution": {
-      "coverage_pct": 98.3,
-      "mean": 54.62,
-      "stdev": 17.32,
+      "coverage_pct": 97.9,
+      "mean": 54.95,
+      "stdev": 17.14,
       "verdict": "HEALTHY",
-      "n": 515
+      "n": 514
     },
     "thesis_integrity": {
       "coverage_pct": 0.0,
@@ -57,25 +57,25 @@
     },
     "des": {
       "coverage_pct": 100.0,
-      "mean": 47.86,
-      "stdev": 11.15,
+      "mean": 49.47,
+      "stdev": 6.95,
       "verdict": "HEALTHY",
-      "n": 515
+      "n": 514
     }
   },
   "distribution": {
-    "n": 515,
+    "n": 514,
     "band_cutoffs": {
       "elite_min": 70,
       "high_confidence_min": 63,
       "review_max": 32
     },
-    "mean": 51.71,
-    "stdev": 9.38,
-    "elite_count": 11,
-    "high_conf_count": 57,
-    "review_count": 3,
-    "review_pct": 0.6,
+    "mean": 53.62,
+    "stdev": 11.12,
+    "elite_count": 46,
+    "high_conf_count": 54,
+    "review_count": 18,
+    "review_pct": 3.5,
     "critical": false
   },
   "weights": {
@@ -86,35 +86,35 @@
   "bands": {
     "verdict": "BALANCED",
     "counts": {
-      "elite": 11,
-      "high_confidence": 57,
-      "constructive": 188,
-      "monitor": 171,
-      "weakening": 85,
-      "review": 3
+      "elite": 46,
+      "high_confidence": 54,
+      "constructive": 183,
+      "monitor": 155,
+      "weakening": 58,
+      "review": 18
     },
     "starved": [],
-    "review_pct": 0.6
+    "review_pct": 3.5
   },
   "alerts": [],
   "sub_audits": {
     "pillar_quality": {
       "ok": true,
-      "path": "data/lthcs/quality_audit/2026-10-17_pillar_quality.md",
-      "snapshot_date": "2026-10-17"
+      "path": "data/lthcs/quality_audit/2026-11-01_pillar_quality.md",
+      "snapshot_date": "2026-11-01"
     },
     "score_distribution": {
       "ok": true,
       "paths": [
-        "data/lthcs/quality_audit/2026-10-17_composite_distribution.md",
-        "data/lthcs/quality_audit/2026-10-17_pillar_correlation.md"
+        "data/lthcs/quality_audit/2026-11-01_composite_distribution.md",
+        "data/lthcs/quality_audit/2026-11-01_pillar_correlation.md"
       ]
     },
     "weights_thresholds": {
       "ok": true,
       "paths": [
-        "data/lthcs/quality_audit/2026-10-17_weights_vs_ic.md",
-        "data/lthcs/quality_audit/2026-10-17_band_distribution.md"
+        "data/lthcs/quality_audit/2026-11-01_weights_vs_ic.md",
+        "data/lthcs/quality_audit/2026-11-01_band_distribution.md"
       ]
     }
   }
