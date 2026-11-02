@@ -1,10 +1,10 @@
 {
-  "checked_at": "2026-10-26T15:17:50+00:00",
+  "checked_at": "2026-11-02T18:31:40+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1893,
-    "gated": 181,
-    "dead": 32,
+    "ok": 1892,
+    "gated": 180,
+    "dead": 34,
     "unreachable": 86
   },
   "dead": [
@@ -13,13 +13,6 @@
       "code": 404,
       "services": [
         "Numbers API (numbersapi.com)"
-      ]
-    },
-    {
-      "url": "https://accuristech.com/solutions/parts-api-integration/",
-      "code": 404,
-      "services": [
-        "Accuris (IHS) Parts API"
       ]
     },
     {
@@ -86,6 +79,13 @@
       ]
     },
     {
+      "url": "https://globalfishingwatch.github.io/gfwr/",
+      "code": 404,
+      "services": [
+        "GFW R package (gfwr)"
+      ]
+    },
+    {
       "url": "https://help.overton.io/faq/",
       "code": 404,
       "services": [
@@ -129,10 +129,25 @@
       ]
     },
     {
+      "url": "https://websites.psychology.uwa.edu.au/school/mrcdatabase/uwa_mrc.htm",
+      "code": 404,
+      "services": [
+        "MRC Psycholinguistic Database"
+      ]
+    },
+    {
       "url": "https://www.anaconda.com/docs/reference/api/main",
       "code": 404,
       "services": [
         "Anaconda.org (conda) API"
+      ]
+    },
+    {
+      "url": "https://www.doabooks.org/en/article/api-search-doab",
+      "code": 404,
+      "services": [
+        "DOAB (Directory of Open Access Books) REST API",
+        "DOAB (Directory of Open Access Books) REST/OAI API"
       ]
     },
     {
@@ -253,13 +268,6 @@
       ]
     },
     {
-      "url": "https://agent-network-protocol.com/",
-      "code": null,
-      "services": [
-        "Agent Network Protocol (ANP)"
-      ]
-    },
-    {
       "url": "https://api-ccte.epa.gov/docs",
       "code": null,
       "services": [
@@ -295,13 +303,6 @@
       ]
     },
     {
-      "url": "https://api.safecast.org/",
-      "code": 502,
-      "services": [
-        "Safecast"
-      ]
-    },
-    {
       "url": "https://api.trade.gov/console/",
       "code": null,
       "services": [
@@ -310,7 +311,7 @@
     },
     {
       "url": "https://api.votesmart.org/docs/",
-      "code": 503,
+      "code": null,
       "services": [
         "Vote Smart API (Project Vote Smart)"
       ]
@@ -381,13 +382,6 @@
       ]
     },
     {
-      "url": "https://developer.boeing.com/apis/notams-3/",
-      "code": null,
-      "services": [
-        "DTN NOTAMs API / Boeing (Jeppesen) NOTAMs API"
-      ]
-    },
-    {
       "url": "https://developer.freightos.com/apis",
       "code": null,
       "services": [
@@ -442,6 +436,13 @@
       "code": null,
       "services": [
         "AviationAPI"
+      ]
+    },
+    {
+      "url": "https://docs.octopus.energy/rest/guides/endpoints/",
+      "code": 502,
+      "services": [
+        "Octopus Energy API (UK)"
       ]
     },
     {
@@ -517,6 +518,14 @@
       ]
     },
     {
+      "url": "https://geonames.nga.mil/gns/html/gns_services.html",
+      "code": null,
+      "services": [
+        "NGA Geographic Names Server (GNS) - foreign GEOINT toponyms",
+        "NGA Geographic Names Server (GNS) - GEOINT toponyms"
+      ]
+    },
+    {
       "url": "https://greekwordnet.chs.harvard.edu/api",
       "code": null,
       "services": [
@@ -539,17 +548,17 @@
       ]
     },
     {
-      "url": "https://heasarc.gsfc.nasa.gov/docs/xamin-api.html",
-      "code": null,
-      "services": [
-        "NASA HEASARC Xamin API"
-      ]
-    },
-    {
       "url": "https://hemp.ams.usda.gov/s/PublicSearchTool",
       "code": null,
       "services": [
         "USDA Hemp eManagement Platform (HeMP) Public/LE Search Tool"
+      ]
+    },
+    {
+      "url": "https://iiif.bodleian.ox.ac.uk/iiif/",
+      "code": null,
+      "services": [
+        "Digital Bodleian / Oxford IIIF (added in verify)"
       ]
     },
     {
@@ -581,6 +590,13 @@
       ]
     },
     {
+      "url": "https://minorplanetcenter.net/web_service/",
+      "code": null,
+      "services": [
+        "IAU Minor Planet Center Web Service"
+      ]
+    },
+    {
       "url": "https://mymarketnews.ams.usda.gov/mars-api/getting-started",
       "code": null,
       "services": [
@@ -603,17 +619,24 @@
       ]
     },
     {
-      "url": "https://nmrshiftdb.nmr.uni-koeln.de/",
-      "code": null,
-      "services": [
-        "nmrshiftdb2"
-      ]
-    },
-    {
       "url": "https://openeo.cloud/",
       "code": null,
       "services": [
         "openEO Platform"
+      ]
+    },
+    {
+      "url": "https://openkim.org/",
+      "code": null,
+      "services": [
+        "OpenKIM (Knowledgebase of Interatomic Models)"
+      ]
+    },
+    {
+      "url": "https://optimade.openmaterialsdb.se/",
+      "code": null,
+      "services": [
+        "Open Materials Database (OMDB)"
       ]
     },
     {
@@ -646,17 +669,17 @@
       ]
     },
     {
+      "url": "https://pncp.gov.br/api/pncp/swagger-ui/index.html",
+      "code": null,
+      "services": [
+        "Brazil PNCP (Portal Nacional de Contratacoes Publicas) API"
+      ]
+    },
+    {
       "url": "https://podaac.jpl.nasa.gov/",
       "code": null,
       "services": [
         "NASA PO.DAAC Earthdata"
-      ]
-    },
-    {
-      "url": "https://portal.vamdc.eu/",
-      "code": null,
-      "services": [
-        "VAMDC (Virtual Atomic and Molecular Data Centre)"
       ]
     },
     {
@@ -667,10 +690,32 @@
       ]
     },
     {
+      "url": "https://rawg.io/apidocs",
+      "code": null,
+      "services": [
+        "RAWG Video Games Database"
+      ]
+    },
+    {
       "url": "https://rctportal.niph.go.jp/en",
       "code": null,
       "services": [
         "JPRN / NIPH Clinical Trials Search Portal (Japan)"
+      ]
+    },
+    {
+      "url": "https://reactome.org/ContentService/",
+      "code": 521,
+      "services": [
+        "Reactome Content Service API",
+        "Reactome ContentService API"
+      ]
+    },
+    {
+      "url": "https://reactome.org/dev/content-service",
+      "code": 521,
+      "services": [
+        "Reactome Content & Analysis Service"
       ]
     },
     {
@@ -681,10 +726,10 @@
       ]
     },
     {
-      "url": "https://roar.eprints.org/",
+      "url": "https://rest.ensembl.org/documentation/info/vep_hgvs_get",
       "code": null,
       "services": [
-        "ROAR (Registry of Open Access Repositories)"
+        "Ensembl VEP (via REST)"
       ]
     },
     {
@@ -702,17 +747,17 @@
       ]
     },
     {
-      "url": "https://scholia.toolforge.org/",
-      "code": 503,
-      "services": [
-        "Scholia"
-      ]
-    },
-    {
       "url": "https://search.patentsview.org/docs/",
       "code": null,
       "services": [
         "PatentsView PatentSearch API"
+      ]
+    },
+    {
+      "url": "https://simbad.u-strasbg.fr/simbad/",
+      "code": null,
+      "services": [
+        "SIMBAD (CDS Strasbourg)"
       ]
     },
     {
@@ -737,6 +782,13 @@
       ]
     },
     {
+      "url": "https://vizier.cds.unistra.fr/",
+      "code": null,
+      "services": [
+        "VizieR (CDS Strasbourg)"
+      ]
+    },
+    {
       "url": "https://water.weather.gov/ahps/",
       "code": null,
       "services": [
@@ -748,13 +800,6 @@
       "code": null,
       "services": [
         "Plant.id (Kindwise)"
-      ]
-    },
-    {
-      "url": "https://websites.psychology.uwa.edu.au/school/mrcdatabase/uwa_mrc.htm",
-      "code": 520,
-      "services": [
-        "MRC Psycholinguistic Database"
       ]
     },
     {
@@ -772,20 +817,6 @@
       ]
     },
     {
-      "url": "https://www.archivesportaleurope.net/tools/",
-      "code": 503,
-      "services": [
-        "Archives Portal Europe API"
-      ]
-    },
-    {
-      "url": "https://www.archivesportaleurope.net/tools/for-content-providers/",
-      "code": 503,
-      "services": [
-        "Archives Portal Europe API"
-      ]
-    },
-    {
       "url": "https://www.brocade.io/",
       "code": null,
       "services": [
@@ -797,13 +828,6 @@
       "code": null,
       "services": [
         "ClinicalStudyDataRequest.com (CSDR)"
-      ]
-    },
-    {
-      "url": "https://www.cognitiveatlas.org/api",
-      "code": 502,
-      "services": [
-        "Cognitive Atlas API"
       ]
     },
     {
@@ -825,13 +849,6 @@
       "code": null,
       "services": [
         "Naval Vessel Register (NVR)"
-      ]
-    },
-    {
-      "url": "https://www.scrapindex.com/historic.html",
-      "code": null,
-      "services": [
-        "ScrapIndex.com (historical scrap commodity prices)"
       ]
     },
     {
