@@ -6715,7 +6715,7 @@
       "ticker": "AOS",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": 0.06071751894541455,
+        "momentum_pct_90d": 0.06071745089407088,
         "momentum_subscore": 58.86939571150097,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -15386,7 +15386,7 @@
       "ticker": "CASY",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.1497428414978771,
+        "momentum_pct_90d": -0.1497429063688449,
         "momentum_subscore": 14.619883040935672,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -15583,7 +15583,7 @@
       "ticker": "CAT",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.3711206138589659,
+        "momentum_pct_90d": -0.3711206526205052,
         "momentum_subscore": 3.1189083820662766,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -17738,7 +17738,7 @@
       "ticker": "CFG",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.06800749141631757,
+        "momentum_pct_90d": -0.0680073875616043,
         "momentum_subscore": 25.53606237816764,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -19315,7 +19315,7 @@
       "ticker": "CLX",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.053046721514030226,
+        "momentum_pct_90d": -0.053046799257598476,
         "momentum_subscore": 28.654970760233915,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -41349,7 +41349,7 @@
       "ticker": "GIS",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": 0.021455766720965164,
+        "momentum_pct_90d": 0.021455650647844493,
         "momentum_subscore": 49.122807017543856,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -46278,7 +46278,7 @@
       "ticker": "HRL",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.14414393059655128,
+        "momentum_pct_90d": -0.14414399625035335,
         "momentum_subscore": 15.594541910331383,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -46669,7 +46669,7 @@
       "ticker": "HST",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": 0.07835931495474457,
+        "momentum_pct_90d": 0.07835940262183594,
         "momentum_subscore": 61.98830409356725,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -49609,7 +49609,7 @@
       "ticker": "INVH",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.08455309416775625,
+        "momentum_pct_90d": -0.08455315434999155,
         "momentum_subscore": 23.391812865497073,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -56312,7 +56312,7 @@
       "ticker": "LII",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.37252027307925406,
+        "momentum_pct_90d": -0.3725203429217896,
         "momentum_subscore": 2.923976608187134,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -57499,7 +57499,7 @@
       "ticker": "LOW",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.04405068307450155,
+        "momentum_pct_90d": -0.044050616378760954,
         "momentum_subscore": 30.79922027290448,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -64005,7 +64005,7 @@
       "ticker": "MRVL",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.2898758536372754,
+        "momentum_pct_90d": -0.2898757752803831,
         "momentum_subscore": 6.042884990253411,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -65397,7 +65397,7 @@
       "ticker": "MU",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.15593051690738324,
+        "momentum_pct_90d": -0.15593041860798784,
         "momentum_subscore": 13.840155945419102,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -66779,7 +66779,7 @@
       "ticker": "NI",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": -0.05161700053134577,
+        "momentum_pct_90d": -0.051616923550087956,
         "momentum_subscore": 29.239766081871345,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -68361,7 +68361,7 @@
       "ticker": "NUE",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": 0.14416655808299805,
+        "momentum_pct_90d": 0.1441666310210472,
         "momentum_subscore": 73.87914230019493,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
@@ -71712,7 +71712,7 @@
       "ticker": "PAYX",
       "pillar": "institutional_confidence",
       "components": {
-        "momentum_pct_90d": 0.18838130660224817,
+        "momentum_pct_90d": 0.18838140270119608,
         "momentum_subscore": 79.72709551656921,
         "inst_holdings_change_qoq": null,
         "inst_holdings_subscore": 50.0,
