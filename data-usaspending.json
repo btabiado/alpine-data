@@ -1,11 +1,11 @@
 {
- "generated_utc": "2026-11-02T17:27:56.094974+00:00",
+ "generated_utc": "2026-11-03T09:45:18.308776+00:00",
  "source": "USAspending.gov Search API \u2014 spending_over_time",
  "note": "Published from GitHub Actions (clean egress) because the USAspending API blocks/525s Cloudflare datacenter IPs. Consumed by ADW-441 (grants) and ADW-444 (dod_contracts).",
  "grants": {
   "window": [
-   "2024-11-02",
-   "2026-11-02"
+   "2024-11-03",
+   "2026-11-03"
   ],
   "award_type_codes": [
    "02",
@@ -17,7 +17,7 @@
   "series": [
    {
     "period": "2024-11",
-    "obligated": 28435773665.87,
+    "obligated": 28423073012.84,
     "incomplete": false
    },
    {
@@ -151,7 +151,7 @@
  "dod_contracts": {
   "window": [
    "2025-10-01",
-   "2026-11-02"
+   "2026-11-03"
   ],
   "award_type_codes": [
    "A",
@@ -164,8 +164,8 @@
   "series": [
    {
     "month": "2025-10",
-    "awards": 13069999724,
-    "totalAmount": 13069999724.45,
+    "awards": 13070015748,
+    "totalAmount": 13070015748.45,
     "incomplete": false
    },
    {
@@ -188,8 +188,8 @@
    },
    {
     "month": "2026-02",
-    "awards": 27132446217,
-    "totalAmount": 27132446217.1,
+    "awards": 27134826415,
+    "totalAmount": 27134826415.37,
     "incomplete": false
    },
    {
@@ -212,20 +212,20 @@
    },
    {
     "month": "2026-06",
-    "awards": 44370152825,
-    "totalAmount": 44370152825.06,
+    "awards": 44370557671,
+    "totalAmount": 44370557670.86,
     "incomplete": false
    },
    {
     "month": "2026-07",
-    "awards": 33002620199,
-    "totalAmount": 33002620199.33,
+    "awards": 33000718831,
+    "totalAmount": 33000718831.12,
     "incomplete": false
    },
    {
     "month": "2026-08",
-    "awards": 22410623,
-    "totalAmount": 22410623.45,
+    "awards": 22769210,
+    "totalAmount": 22769210.44,
     "incomplete": true,
     "incomplete_reason": "inside 90-day reporting lag"
    },
