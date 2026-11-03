@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-02T17:27:46Z",
+  "generated_at": "2026-11-03T09:51:07Z",
   "methodology_version": "1.1",
   "as_of": "2026-10",
   "methodology_disclosures": [
@@ -542,8 +542,8 @@
         "median_real_estate_taxes": 4943,
         "effective_property_tax_rate": 0.014794971565399582,
         "unemployment_rate": 4.9,
-        "aqi": 18,
-        "context_score": 50
+        "aqi": 34,
+        "context_score": 48
       },
       "disclosures": [
         "Crimes 2001-present: excludes last ~7 days; latest complete month lags to prior month"
@@ -561,12 +561,12 @@
           "complete_through": "2026-10",
           "note": "Polarity 0: inspection VOLUME is workload, not an outcome \u2014 more or fewer inspections is neither good nor bad on its own (the editorial signal is the Fail/Pass rate via the `results` column, not count). pillar_hint context.",
           "status": "ok",
-          "recent": 948,
+          "recent": 1017,
           "recent_period": "2026-10",
           "baseline_mean": 1430.9166666666667,
           "baseline_std": 171.5407912292454,
-          "z": -2.8151710342836282,
-          "yoy_pct": -45.51724137931035,
+          "z": -2.4129343446569083,
+          "yoy_pct": -41.55172413793103,
           "d": null,
           "series": [
             {
@@ -711,7 +711,7 @@
             },
             {
               "month": "2026-10",
-              "n": 948
+              "n": 1017
             }
           ]
         },
@@ -883,7 +883,7 @@
           "complete_through": "2026-10",
           "note": "ROLLING ~90-day inventory snapshot, not a historical series: it CANNOT support a 12-month baseline or YoY \u2014 render as a recent-volume tile only (status insufficient_history in scorer output); do NOT z-score. Polarity 0: tow counts reflect enforcement/relocation activity, not safety or wellbeing. pillar_hint context.",
           "status": "insufficient_history",
-          "recent": 2146,
+          "recent": 2143,
           "recent_period": "2026-10",
           "baseline_mean": null,
           "baseline_std": null,
@@ -893,15 +893,15 @@
           "series": [
             {
               "month": "2026-08",
-              "n": 2516
+              "n": 2442
             },
             {
               "month": "2026-09",
-              "n": 2052
+              "n": 1965
             },
             {
               "month": "2026-10",
-              "n": 2146
+              "n": 2143
             }
           ]
         },
@@ -1585,8 +1585,8 @@
         "median_real_estate_taxes": 6547,
         "effective_property_tax_rate": 0.008419495884773663,
         "unemployment_rate": 5.2,
-        "aqi": 48,
-        "context_score": 37
+        "aqi": 47,
+        "context_score": 42
       },
       "disclosures": [
         "311 (2010-present): ~38M rows; REQUIRES app token + recent $where filter or it times out",
@@ -1764,21 +1764,17 @@
           "label": "Motor Vehicle Collisions - Crashes",
           "dataset": "h9gi-nx95",
           "polarity": -1,
-          "complete_through": "2026-09",
+          "complete_through": "2026-10",
           "note": "NYC Vision Zero crash file. Polarity -1: fewer collisions is favorable. pillar_hint public_safety, SUPPLEMENTARY (display alongside the NYPD-complaints pillar, not summed in).",
           "status": "ok",
-          "recent": 6974,
-          "recent_period": "2026-09",
-          "baseline_mean": 7086.666666666667,
-          "baseline_std": 361.0037703712002,
-          "z": -0.31209276997527774,
-          "yoy_pct": -7.482090740249403,
-          "d": 0.31209276997527774,
+          "recent": 7370,
+          "recent_period": "2026-10",
+          "baseline_mean": 7039.916666666667,
+          "baseline_std": 334.91079865473966,
+          "z": 0.9855858176541411,
+          "yoy_pct": -2.22870788007429,
+          "d": -0.9855858176541411,
           "series": [
-            {
-              "month": "2023-10",
-              "n": 8717
-            },
             {
               "month": "2023-11",
               "n": 7860
@@ -1917,7 +1913,11 @@
             },
             {
               "month": "2026-09",
-              "n": 6974
+              "n": 6977
+            },
+            {
+              "month": "2026-10",
+              "n": 7370
             }
           ]
         }
@@ -2384,8 +2384,8 @@
         "median_real_estate_taxes": 6050,
         "effective_property_tax_rate": 0.006567520625271385,
         "unemployment_rate": 4.5,
-        "aqi": 30,
-        "context_score": 53
+        "aqi": 36,
+        "context_score": 56
       },
       "disclosures": [
         "MyLA311 Cases: RESOLVED: LA retired the 'MyLA311 Service Request Data {year}' series ~Aug 2025 (old h73f-gn57=2025 is dead for current data). Current product = 'MyLA311 Cases {year}'. 2026 = 2cy6-i7zn (date col createddate, live, ~185k/mo). Baseline = 73a2-6ar5 ('MyLA311 Cases March 2025 to December 2025'). Resolve current-year by catalog search: GET data.lacity.org/api/catalog/v1?q=MyLA311%20Cases -> item titled 'MyLA311 Cases {currentYear}'. Do NOT auto-build '...Service Request Data {year}' IDs.",
@@ -2922,7 +2922,7 @@
         "median_real_estate_taxes": 7337,
         "effective_property_tax_rate": 0.00781696143191988,
         "unemployment_rate": 4.5,
-        "aqi": 52,
+        "aqi": 61,
         "context_score": 44
       },
       "disclosures": [
@@ -3104,12 +3104,12 @@
       "name": "San Francisco",
       "scope": "city",
       "pulse": {
-        "score": 39,
+        "score": 38,
         "glyph": "down",
         "label": "Worsening",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": -0.6879014294521236,
+        "composite_c": -0.7320085996426652,
         "pillars": [
           {
             "key": "city_services",
@@ -3282,7 +3282,7 @@
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": 0.6599841288139231,
+            "score_d": 0.5276626182422981,
             "feeds": [
               {
                 "label": "Police Incident Reports",
@@ -3291,13 +3291,13 @@
                 "complete_through": "2026-10",
                 "note": "2018 portal/system migration = continuity breakpoint",
                 "status": "ok",
-                "recent": 7596,
+                "recent": 7656,
                 "recent_period": "2026-10",
-                "baseline_mean": 7892.0,
-                "baseline_std": 448.4956335722047,
-                "z": -0.6599841288139231,
-                "yoy_pct": -8.161044613710555,
-                "d": 0.6599841288139231,
+                "baseline_mean": 7892.583333333333,
+                "baseline_std": 448.3609889239795,
+                "z": -0.5276626182422981,
+                "yoy_pct": -7.435618425825171,
+                "d": 0.5276626182422981,
                 "series": [
                   {
                     "month": "2023-11",
@@ -3397,7 +3397,7 @@
                   },
                   {
                     "month": "2025-11",
-                    "n": 7867
+                    "n": 7869
                   },
                   {
                     "month": "2025-12",
@@ -3413,7 +3413,7 @@
                   },
                   {
                     "month": "2026-03",
-                    "n": 7804
+                    "n": 7805
                   },
                   {
                     "month": "2026-04",
@@ -3425,7 +3425,7 @@
                   },
                   {
                     "month": "2026-06",
-                    "n": 7503
+                    "n": 7506
                   },
                   {
                     "month": "2026-07",
@@ -3433,7 +3433,7 @@
                   },
                   {
                     "month": "2026-08",
-                    "n": 8467
+                    "n": 8468
                   },
                   {
                     "month": "2026-09",
@@ -3441,7 +3441,7 @@
                   },
                   {
                     "month": "2026-10",
-                    "n": 7596
+                    "n": 7656
                   }
                 ]
               }
@@ -3624,8 +3624,8 @@
         "median_real_estate_taxes": 9862,
         "effective_property_tax_rate": 0.00707206884187881,
         "unemployment_rate": 4.0,
-        "aqi": 26,
-        "context_score": 51
+        "aqi": 43,
+        "context_score": 48
       },
       "disclosures": [
         "Police Incident Reports: 2018 portal/system migration = continuity breakpoint"
@@ -3804,12 +3804,12 @@
       "name": "Miami (Miami-Dade County)",
       "scope": "county",
       "pulse": {
-        "score": 76,
+        "score": 80,
         "glyph": "up",
         "label": "Improving",
         "pillars_present": 2,
         "pillars_total": 3,
-        "composite_c": 1.5723567083675636,
+        "composite_c": 1.8044303551920247,
         "pillars": [
           {
             "key": "city_services",
@@ -3886,27 +3886,23 @@
           {
             "key": "development_economy",
             "name": "Development & Economy",
-            "score_d": 0.14471341673512708,
+            "score_d": 0.6088607103840495,
             "feeds": [
               {
                 "label": "MDC Building Permit",
                 "dataset": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/miamidade_permit_data/FeatureServer/0",
                 "polarity": 1,
-                "complete_through": "2026-09",
+                "complete_through": "2026-10",
                 "note": "Source moved 2026: 'Building Permits Issued By Miami-Dade County - 2 Previous Years to Present' (miamidade_permit_data). The old BuildingPermit_gdb layer now answers code=499 Token Required - never poll it. Rolling ~24-month window, so the trend line starts about two years back and the first, partial month is skipped.",
                 "status": "ok",
-                "recent": 5892,
-                "recent_period": "2026-09",
-                "baseline_mean": 5806.083333333333,
-                "baseline_std": 593.70215011869,
-                "z": 0.14471341673512708,
-                "yoy_pct": -3.2194480946123525,
-                "d": 0.14471341673512708,
+                "recent": 6148,
+                "recent_period": "2026-10",
+                "baseline_mean": 5789.75,
+                "baseline_std": 588.3940183527815,
+                "z": 0.6088607103840495,
+                "yoy_pct": -4.4896691005126605,
+                "d": 0.6088607103840495,
                 "series": [
-                  {
-                    "month": "2023-10",
-                    "n": 6090
-                  },
                   {
                     "month": "2023-11",
                     "n": 5461
@@ -4046,6 +4042,10 @@
                   {
                     "month": "2026-09",
                     "n": 5892
+                  },
+                  {
+                    "month": "2026-10",
+                    "n": 6148
                   }
                 ]
               }
@@ -4228,8 +4228,8 @@
         "median_real_estate_taxes": 3744,
         "effective_property_tax_rate": 0.008086393088552916,
         "unemployment_rate": 1.9,
-        "aqi": 34,
-        "context_score": 66
+        "aqi": 31,
+        "context_score": 74
       },
       "disclosures": [
         "Footprint = Miami-Dade County (not the City of Miami). County 311 excludes City-of-Miami-proper requests.",
