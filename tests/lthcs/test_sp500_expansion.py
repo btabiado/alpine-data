@@ -35,20 +35,27 @@ def test_universe_validates_against_schema() -> None:
     Universe.model_validate(_universe())
 
 
+# In the 2026-10-05 constituent freeze, and delisted after it. WBD was
+# acquired for cash on 2026-10-06 (universe.json inactive_reason). The
+# freeze file is not rewritten.
+DELISTED_SINCE_FREEZE = {"WBD"}
+
+
 def test_universe_covers_current_sp500_and_djia() -> None:
     u = _universe()
     active = {t["ticker"] for t in u["tickers"] if t.get("active", True)}
     sp = _sp500_symbols()
     djia = set(json.loads((CANDIDATE / "_source.json").read_text())["djia"]["components"])
     assert len(sp) == 503 and len(djia) == 30
-    assert sp <= active
+    assert not (DELISTED_SINCE_FREEZE - sp)
+    assert sp - DELISTED_SINCE_FREEZE <= active
     assert djia <= active
     tagged_djia = {t["ticker"] for t in u["tickers"]
                    if t.get("active", True) and "DJIA" in t["index_membership"]}
     assert tagged_djia == djia
     tagged_sp = {t["ticker"] for t in u["tickers"]
                  if t.get("active", True) and "S&P 500" in t["index_membership"]}
-    assert tagged_sp == sp
+    assert tagged_sp == sp - DELISTED_SINCE_FREEZE
 
 
 def test_no_previously_active_ticker_was_dropped() -> None:
@@ -64,6 +71,28 @@ def test_bny_restored_and_bk_stays_inactive() -> None:
     assert by["BK"]["active"] is False
     assert by["BNY"]["maturity_stage"] == by["BK"]["maturity_stage"]
     assert by["EA"]["active"] is False  # taken private; not in the S&P 500
+
+
+def test_wbd_cash_acquisition_is_inactive_and_not_replaced() -> None:
+    """Audit 2026-11-03 P2. WBD stopped trading; it is not renamed to SKYD.
+
+    The acquirer is the existing PSKY entry (CIK 0002041610, now listed
+    by SEC as SKYD). History stays under the symbol that earned it.
+    """
+    tickers = _universe()["tickers"]
+    by = {t["ticker"]: t for t in tickers}
+    wbd = by["WBD"]
+    assert wbd["active"] is False
+    reason = wbd["inactive_reason"]
+    assert "2026-10-06" in reason
+    assert "0001437107" in reason
+    assert "0002041610" in reason
+    assert "$31.01666668" in reason
+    assert "PSKY" in reason
+    assert "not a CIK-lookup miss" in reason
+    assert "SKYD" not in by
+    assert by["PSKY"]["active"] is True
+    assert by["PSKY"]["cik"] == "0002041610"
 
 
 def test_every_active_ticker_is_wired_into_side_tables() -> None:

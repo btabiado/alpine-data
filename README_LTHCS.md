@@ -6,7 +6,7 @@
 
 ## Current state (2026-10)
 
-- **Universe:** the S&P 500 and Dow 30, plus NASDAQ-100 names and Index Exiles (names that left every tracked index but are still scored): 519 tickers, 515 active. The file is the source of truth; pages read the count from it.
+- **Universe:** the S&P 500 and Dow 30, plus NASDAQ-100 names and Index Exiles (names that left every tracked index but are still scored): 519 tickers, 514 active. WBD was deactivated 2026-11-03 (cash acquisition; see its `inactive_reason`). The file is the source of truth; pages read the count from it.
 - **Bands:** `data/lthcs/weights.json` → `score_bands`, recalibrated 2026-10-06: elite 70–100, high_confidence 63–69, constructive 52–62, monitor 42–51, weakening 33–41, review 0–32. Crypto scores use the same bands.
 - **Runs:** in GitHub Actions; see [Automation schedule](#automation-schedule-github-actions). Nobody runs the pipeline by hand for production.
 - **Thesis pillar:** dropped for every name today. The daily job passes `--skip-thesis` and no `FINNHUB_API_KEY` secret is set, so its weight is spread over the other four pillars. On 2026-10-17 this was accepted as a disclosed gap in [`data/lthcs/known_pillar_stubs.json`](data/lthcs/known_pillar_stubs.json) (review by 2027-04-17). The monthly quality audit reports `thesis_integrity` as **KNOWN GAP (accepted)** and does not count that stub toward CRITICAL. The gap stays in the summary and on `/lthcs/health/quality.html`. Any other pillar that goes STUB, or thesis gaining coverage past the stub threshold (30%), still fails the audit. The daily audit email, the repo audit, and data-health follow that same verdict, so the accepted gap is not an error there either. The About modal on `/lthcs/` shows live per-pillar coverage.
@@ -142,7 +142,7 @@ For tests and local tools, also `pip install -r requirements-dev.txt`.
 python -m lthcs.validate
 ```
 
-It checks `universe.json` and `weights.json` against their schemas and prints one ✓ line per check, for example `✓ universe.json valid (519 tickers, 515 active, ...)`.
+It checks `universe.json` and `weights.json` against their schemas and prints one ✓ line per check, for example `✓ universe.json valid (519 tickers, 514 active, ...)`.
 
 ### 6. Smoke-test the pipeline on 3 tickers
 
@@ -169,7 +169,7 @@ There is no manual push step. `main` is protected, and the scheduled workflows c
 
 ## Running the pipeline locally
 
-Production runs in GitHub Actions (below). A local full run is for development only, and takes over an hour at 515 tickers because SEC EDGAR is rate-limited:
+Production runs in GitHub Actions (below). A local full run is for development only, and takes over an hour at 514 tickers because SEC EDGAR is rate-limited:
 
 ```bash
 python lthcs_daily.py --dry-run             # all active tickers, nothing written

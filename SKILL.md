@@ -40,9 +40,10 @@ description: Conventions for working in the alpine-data repo, which holds a stat
 
 Facts that are easy to get wrong:
 
-- **LTHCS universe:** `data/lthcs/universe.json`. As of 2026-10 that is the S&P 500
-  and Dow 30, plus NASDAQ-100 names and Index Exiles: 519 tickers, 515 active.
-  Read the count from the file; don't hard-code it in pages or docs.
+- **LTHCS universe:** `data/lthcs/universe.json`. S&P 500 and Dow 30, plus
+  NASDAQ-100 names and Index Exiles. WBD was deactivated 2026-11-03 after its
+  cash acquisition (see that entry's `inactive_reason`). Read the active count
+  from the file; don't hard-code it in pages or docs.
 - **Score bands:** `data/lthcs/weights.json` → `score_bands`, read through
   `lthcs/bands.py` (Python) and `lthcs_tab/lthcs-bands.js` (pages). The fallback
   copies must equal `weights.json`, and `tests/lthcs/test_calibrate_bands.py`
