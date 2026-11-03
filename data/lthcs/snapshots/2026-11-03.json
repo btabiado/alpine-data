@@ -12723,7 +12723,7 @@
     },
     {
       "ticker": "HOOD",
-      "lthcs_score": 65.7,
+      "lthcs_score": 65.6,
       "band": "high_confidence",
       "drift_1d": -0.2,
       "drift_7d": 0.5,
@@ -16725,7 +16725,7 @@
     },
     {
       "ticker": "MCK",
-      "lthcs_score": 65.7,
+      "lthcs_score": 65.6,
       "band": "high_confidence",
       "drift_1d": 0.2,
       "drift_7d": 2.9,
@@ -27168,7 +27168,7 @@
     },
     {
       "ticker": "WM",
-      "lthcs_score": 65.8,
+      "lthcs_score": 65.9,
       "band": "high_confidence",
       "drift_1d": -0.1,
       "drift_7d": -2.4,
