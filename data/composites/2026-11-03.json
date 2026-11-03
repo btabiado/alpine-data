@@ -1,19 +1,19 @@
 {
   "as_of": "2026-11-03",
-  "generated_at": "2026-11-03T06:35:54Z",
+  "generated_at": "2026-11-03T09:47:39Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-11-03",
       "label": null,
-      "note": "40 coins; 2 buy+, 29 sell+",
-      "score": -68,
+      "note": "40 coins; 1 buy+, 29 sell+",
+      "score": -70,
       "stale": false
     },
     "defi_sentiment": {
       "as_of": "2026-11-03",
-      "label": "NEUTRAL",
+      "label": "CONTRACTION",
       "note": "2 of 2 inputs: chain TVL momentum, stablecoin mcap; date from defi.as_of",
-      "score": -17,
+      "score": -20,
       "stale": false
     },
     "etf_flow_sentiment": {
@@ -62,7 +62,7 @@
       "as_of": "2026-11-02",
       "label": "STRONG CROWDED LONGS",
       "note": "LINK; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 73,
+      "score": 72,
       "stale": false
     },
     "futures_sentiment_ltc": {
@@ -88,9 +88,9 @@
     },
     "overview_sentiment": {
       "as_of": "2026-11-03",
-      "label": "NEUTRAL",
+      "label": "BEARISH",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": -19,
+      "score": -20,
       "stale": false
     },
     "poc_signal_breadth": {
