@@ -34,6 +34,16 @@
 #     or commit object ("is not a valid tree/commit") retries the POST.
 #     A genuine validation 422 (bad mode, malformed path, ...) still
 #     fails on the first response.
+#   * Blob upload: POST git/blobs retries transient transport failures.
+#     HTTP 5xx, rate limits, and timeouts use API_RETRY_DELAYS (the same
+#     schedule as the other content-creating POSTs). An empty or truncated
+#     body does not: `gh` then prints "unexpected end of JSON input" (or
+#     another JSON-parse error) with no HTTP status, and that used to
+#     abort on the first try. usaspending-daily run 41809419544
+#     (2026-11-04 09:42 UTC) died that way on data-usaspending.json; the
+#     15:47 UTC rerun succeeded. Those responses use the shorter
+#     BLOB_UPLOAD_RETRY_DELAYS (default 5/15/30). A real client error
+#     (HTTP 400/422, malformed path, ...) still fails on the first response.
 #   * Sends ONLY message/tree/parents — no author/committer/signature.
 #     That is the exact condition under which GitHub auto-signs a Git Data
 #     API commit: it stamps the authenticated bot identity
@@ -134,16 +144,21 @@ echo "api-commit: ${#UPSERT_PATHS[@]} upsert, ${#DELETE_PATHS[@]} delete on $REP
 # POSTs (~80/min per its abuse guidance); the old back-to-back blob loop ran
 # ~240/min on the ~170-file lthcs history commit and tripped HTTP 403
 # "secondary rate limit" daily (run 27243888112) — and with set -e, ONE failed
-# POST killed the whole script. Two defenses:
+# POST killed the whole script. Waits below, all env-overridable:
 #   * BLOB_THROTTLE   inter-blob sleep (default 0.8s ≈ 75/min, under the cap)
-#   * API_RETRY_DELAYS backoff schedule for every content-creating POST;
-#     secondary limits typically clear in <=60s, so 30/90/180 covers it.
+#   * API_RETRY_DELAYS backoff schedule for every content-creating POST
+#     on rate limits, HTTP 5xx, timeouts, and tree/commit lag. Secondary
+#     limits typically clear in <=60s, so 30/90/180 covers it.
+#   * BLOB_UPLOAD_RETRY_DELAYS backoff for a git/blobs POST whose body
+#     was empty or truncated (no HTTP status to classify). Shorter than
+#     the rate-limit schedule: this is a cut-off response, not a lockout.
+#     Default 5/15/30 is four attempts (immediate, then those three sleeps).
 #   * TREE_OBJECT_RETRY_DELAYS backoff for a tree 422 "not a valid blob"
 #     after the missing blob has been re-uploaded (default 5/15/30/60).
 #     Short on purpose: this is replication lag, not a rate-limit lockout.
-# All three are env-overridable (local harnesses / CI debugging).
 BLOB_THROTTLE="${BLOB_THROTTLE:-0.8}"
 API_RETRY_DELAYS="${API_RETRY_DELAYS:-30 90 180}"
+BLOB_UPLOAD_RETRY_DELAYS="${BLOB_UPLOAD_RETRY_DELAYS:-5 15 30}"
 TREE_OBJECT_RETRY_DELAYS="${TREE_OBJECT_RETRY_DELAYS:-5 15 30 60}"
 REF_REJECT_SLEEP="${REF_REJECT_SLEEP:-2}"
 REF_RATELIMIT_SLEEP="${REF_RATELIMIT_SLEEP:-60}"
@@ -167,8 +182,31 @@ BLOB_NAMED_REPAIRED=0
 # posting the commit). Retrying the same body is the right fix there.
 # A tree 422 "not a valid blob" is NOT handled here: the caller re-uploads
 # the blob and rebuilds the tree. Other 422s (bad mode, bad path) fail fast.
+# An empty or truncated blob body is also not handled here — there is no
+# HTTP status on that stderr. _blob_response_glitch covers it, and only
+# for POST git/blobs, on BLOB_UPLOAD_RETRY_DELAYS.
 _retryable() {
   grep -qiE 'HTTP (401|403|429|5[0-9][0-9])|rate limit|timed? ?out|connection|not a valid (tree|commit)|tree does not exist|commit does not exist' "$1"
+}
+
+# GitHub blob ids are 40 lowercase hex characters. Anything else from a
+# blob POST (empty stdout, "null", a fragment of JSON) is not a sha.
+_valid_blob_sha() {
+  printf '%s' "$1" | grep -qE '^[0-9a-f]{40}$'
+}
+
+# _blob_response_glitch <err-file>: git/blobs got no parseable body.
+# True for an empty stderr (gh exited without a message) and for the
+# JSON decoder errors gh prints when a 2xx body is empty or cut off:
+# "unexpected end of JSON input", "unexpected EOF", or
+# "invalid character '<' looking for beginning of value" (an HTML
+# gateway page). A real API error is well-formed and names an HTTP
+# status or a validation message; those must not match.
+_blob_response_glitch() {
+  if ! grep -q '[^[:space:]]' "$1" 2>/dev/null; then
+    return 0
+  fi
+  grep -qiE 'unexpected end of JSON input|unexpected EOF|unexpected end of file|invalid character .+ looking for beginning of value|unparseable blob response|empty blob response|failed to parse JSON|error decoding response body' "$1"
 }
 
 _blob_miss_err() {
@@ -197,33 +235,89 @@ _missing_blob_shas() {
 #   2  git/trees rejected a blob that may just be invisible; caller repairs
 #   1  non-retryable, or the retry schedule is exhausted
 # Runs in a pipeline, so it must not exit the parent shell.
+#
+# Two backoff schedules, picked from the error just seen:
+#   * API_RETRY_DELAYS — rate limits, HTTP 5xx, timeouts, tree/commit lag.
+#   * BLOB_UPLOAD_RETRY_DELAYS — POST git/blobs whose body was empty or
+#     unparseable. A later validation error still stops immediately; it
+#     does not keep spending the remaining blob attempts.
 _api_post() {
-  local endpoint="$1" tmp sha delay
+  local endpoint="$1" tmp sha delay i schedule detail failed_once
+  local -a api_delays blob_delays
   tmp="$(mktemp)"
   cat > "$tmp"
   : > "$tmp.err"
-  for delay in 0 $API_RETRY_DELAYS; do
+  # shellcheck disable=SC2206
+  api_delays=(0 $API_RETRY_DELAYS)
+  # shellcheck disable=SC2206
+  blob_delays=(0 $BLOB_UPLOAD_RETRY_DELAYS)
+  # Index 0 is the first attempt (no sleep). Both lists start with that
+  # synthetic 0 so a switch onto the blob schedule after attempt 1 uses
+  # the first configured backoff, not another immediate try. The attempt
+  # already spent lines up with index 0 on either list.
+  schedule="api"
+  i=0
+  failed_once=0
+  while : ; do
+    if [ "$schedule" = "blob" ]; then
+      if [ "$i" -ge "${#blob_delays[@]}" ]; then
+        break
+      fi
+      delay="${blob_delays[$i]}"
+    else
+      if [ "$i" -ge "${#api_delays[@]}" ]; then
+        break
+      fi
+      delay="${api_delays[$i]}"
+    fi
     # A zero delay is still a retry when a previous attempt already failed.
-    # Log it so a transient 422 is visible even when the backoff is 0.
-    if [ -s "$tmp.err" ]; then
+    # Log it so a transient failure is visible even when the backoff is 0.
+    # failed_once covers an empty stderr, which [ -s ] would miss.
+    if [ "$failed_once" -eq 1 ]; then
+      detail="$(tail -1 "$tmp.err" 2>/dev/null | cut -c1-120)"
+      if [ -z "$detail" ]; then
+        detail="empty response"
+      fi
       if [ "$delay" -gt 0 ]; then
-        echo "api-commit:   POST $endpoint failed ($(tail -1 "$tmp.err" 2>/dev/null | cut -c1-120)); retrying in ${delay}s..." >&2
+        echo "api-commit:   POST $endpoint failed (${detail}); retrying in ${delay}s..." >&2
         sleep "$delay"
       else
-        echo "api-commit:   POST $endpoint failed ($(tail -1 "$tmp.err" 2>/dev/null | cut -c1-120)); retrying..." >&2
+        echo "api-commit:   POST $endpoint failed (${detail}); retrying..." >&2
       fi
     fi
     if sha="$(gh api -X POST "repos/$REPO/$endpoint" --input "$tmp" --jq '.sha' 2>"$tmp.err")"; then
-      rm -f "$tmp" "$tmp.err"
-      printf '%s' "$sha"
-      return 0
+      # Exit 0 with an empty or non-sha body is the same failure as a
+      # JSON parse error: gh had nothing usable to print. Trees and
+      # commits keep the previous "any stdout is the sha" behaviour.
+      if [ "$endpoint" != "git/blobs" ] || _valid_blob_sha "$sha"; then
+        rm -f "$tmp" "$tmp.err"
+        printf '%s' "$sha"
+        return 0
+      fi
+      printf 'unparseable blob response: unexpected end of JSON input (sha=%s)\n' \
+        "$(printf '%s' "$sha" | cut -c1-80)" > "$tmp.err"
+    fi
+    failed_once=1
+    if [ "$endpoint" = "git/blobs" ] && _blob_response_glitch "$tmp.err"; then
+      if ! grep -q '[^[:space:]]' "$tmp.err" 2>/dev/null; then
+        printf 'empty blob response\n' > "$tmp.err"
+      fi
+      _save_err "$tmp.err"
+      schedule="blob"
+      i=$((i + 1))
+      continue
     fi
     _save_err "$tmp.err"
     if [ "$endpoint" = "git/trees" ] && _blob_miss_err "$tmp.err"; then
       rm -f "$tmp" "$tmp.err"
       return 2
     fi
-    _retryable "$tmp.err" || break
+    if _retryable "$tmp.err"; then
+      schedule="api"
+      i=$((i + 1))
+      continue
+    fi
+    break
   done
   echo "api-commit: POST $endpoint failed (non-retryable or retries exhausted):" >&2
   tail -3 "$tmp.err" >&2 || true

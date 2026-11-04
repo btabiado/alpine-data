@@ -10,6 +10,17 @@ succeeded. These tests drive the script against a fake ``gh`` so a
 transient missing blob is re-created and the tree is retried, while a
 real validation error still fails on the first response.
 
+Daily audit 2026-11-04: usaspending-daily run 41809419544 (09:42 UTC)
+died on the blob upload itself:
+
+    unexpected end of JSON input
+    blob upload failed for data-usaspending.json: unexpected end of JSON input
+
+`gh` prints that when the response body is empty or truncated and there
+is no HTTP status. The 15:47 UTC rerun (41861292970) succeeded. Blob
+uploads now retry that class, and HTTP 5xx, a few times with backoff.
+A 400/422 from the blob endpoint still fails on the first response.
+
 Every data workflow calls this one script, so the retry covers them all.
 """
 
@@ -132,6 +143,29 @@ FAKE_GH = textwrap.dedent(
         if n < intval("GH_FAKE_BLOB_403"):
             state["blob_posts"].append({"text": text, "sha": None, "status": 403})
             note_and_die("blob", "gh: You have exceeded a secondary rate limit (HTTP 403)")
+        if n < intval("GH_FAKE_BLOB_GLITCH"):
+            msg = os.environ.get("GH_FAKE_BLOB_GLITCH_MSG") or "unexpected end of JSON input"
+            state["blob_posts"].append({"text": text, "sha": None, "status": 0})
+            note_and_die("blob", msg)
+        if n < intval("GH_FAKE_BLOB_SILENT"):
+            state["blob_posts"].append({"text": text, "sha": None, "status": 0})
+            log({"kind": "blob", "endpoint": endpoint, "text": text, "sha": None, "status": 0})
+            save(state)
+            sys.exit(1)
+        if n < intval("GH_FAKE_BLOB_EMPTY"):
+            state["blob_posts"].append({"text": text, "sha": "", "status": 200})
+            log({"kind": "blob", "endpoint": endpoint, "text": text, "sha": "", "status": 200})
+            save(state)
+            sys.exit(0)
+        if n < intval("GH_FAKE_BLOB_500"):
+            state["blob_posts"].append({"text": text, "sha": None, "status": 500})
+            note_and_die("blob", "gh: Server Error (HTTP 500)")
+        if n < intval("GH_FAKE_BLOB_422"):
+            state["blob_posts"].append({"text": text, "sha": None, "status": 422})
+            note_and_die("blob", "gh: Invalid request. content was not supplied. (HTTP 422)")
+        if n < intval("GH_FAKE_BLOB_400"):
+            state["blob_posts"].append({"text": text, "sha": None, "status": 400})
+            note_and_die("blob", "gh: Bad Request (HTTP 400)")
         if intval("GH_FAKE_BAD_FIRST_BLOB") and n == 0:
             sha = "0" * 40
         else:
@@ -265,6 +299,7 @@ def _env(tmp: Path, **extra: str) -> dict[str, str]:
         "BRANCH": "main",
         "BLOB_THROTTLE": "0",
         "API_RETRY_DELAYS": "0",
+        "BLOB_UPLOAD_RETRY_DELAYS": "0",
         "TREE_OBJECT_RETRY_DELAYS": "0",
         "REF_REJECT_SLEEP": "0",
         "REF_RATELIMIT_SLEEP": "0",
@@ -486,6 +521,174 @@ def test_commit_tree_lag_retries_same_payload(tmp_path: Path):
     assert "git/commits" in result.stderr
     assert "not a valid tree" in result.stderr
     assert "retrying..." in result.stderr
+
+
+def test_truncated_blob_json_retries_then_commits(tmp_path: Path):
+    # Audit 2026-11-04: gh's entire stderr was "unexpected end of JSON input"
+    # and the helper aborted. One retry of the same payload must succeed.
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo, {"data-usaspending.json": "{}\n"})
+    _stage(repo, {"data-usaspending.json": '{"ok": true}\n'})
+    env = _env(tmp_path, GH_FAKE_BLOB_GLITCH="1")
+    result = _run(repo, env, "usaspending: daily refresh 2026-11-04 [skip ci]")
+    assert result.returncode == 0, result.stderr
+    posts = _state(tmp_path)["blob_posts"]
+    assert [p["status"] for p in posts] == [0, 200]
+    assert posts[1]["sha"]
+    assert len(posts[1]["sha"]) == 40
+    assert "unexpected end of JSON input" in result.stderr
+    assert "retrying..." in result.stderr
+    assert "non-retryable" not in result.stderr
+    assert "ref updated" in result.stdout
+    assert _state(tmp_path)["commit_posts"] == 1
+
+
+def test_truncated_blob_json_stops_after_blob_schedule(tmp_path: Path):
+    # BLOB_UPLOAD_RETRY_DELAYS="0 0" → 3 attempts. The longer API schedule
+    # must not be used, or this would POST five times.
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo, {"data-usaspending.json": "{}\n"})
+    _stage(repo, {"data-usaspending.json": '{"ok": true}\n'})
+    env = _env(
+        tmp_path,
+        GH_FAKE_BLOB_GLITCH="99",
+        BLOB_UPLOAD_RETRY_DELAYS="0 0",
+        API_RETRY_DELAYS="0 0 0 0",
+        GITHUB_ACTIONS="true",
+    )
+    result = _run(repo, env)
+    assert result.returncode == 1
+    state = _state(tmp_path)
+    assert len(state["blob_posts"]) == 3
+    assert state["tree_posts"] == []
+    assert state["commit_posts"] == 0
+    assert "retries exhausted" in result.stderr
+    assert "unexpected end of JSON input" in result.stderr
+    err_lines = [ln for ln in result.stdout.splitlines() if ln.startswith("::error")]
+    assert len(err_lines) == 1
+    assert "unexpected end of JSON input" in err_lines[0]
+    assert "data-usaspending.json" in err_lines[0]
+
+
+def test_other_unparseable_blob_bodies_retry(tmp_path: Path):
+    messages = [
+        "unexpected EOF",
+        "invalid character '<' looking for beginning of value",
+    ]
+    for i, msg in enumerate(messages):
+        case = tmp_path / f"case{i}"
+        case.mkdir()
+        repo = case / "repo"
+        repo.mkdir()
+        _init_repo(repo, {"data.txt": "v1\n"})
+        _stage(repo, {"data.txt": "v2\n"})
+        env = _env(case, GH_FAKE_BLOB_GLITCH="1", GH_FAKE_BLOB_GLITCH_MSG=msg)
+        result = _run(repo, env)
+        assert result.returncode == 0, result.stderr
+        assert len(_state(case)["blob_posts"]) == 2
+        assert msg in result.stderr
+        assert "retrying..." in result.stderr
+
+
+def test_empty_stdout_blob_response_retries(tmp_path: Path):
+    # gh exits 0 and prints nothing when the body decoded but had no sha.
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo, {"data.txt": "v1\n"})
+    _stage(repo, {"data.txt": "v2\n"})
+    env = _env(tmp_path, GH_FAKE_BLOB_EMPTY="1")
+    result = _run(repo, env)
+    assert result.returncode == 0, result.stderr
+    posts = _state(tmp_path)["blob_posts"]
+    assert len(posts) == 2
+    assert posts[0]["sha"] == ""
+    assert len(posts[1]["sha"]) == 40
+    assert "unparseable blob response" in result.stderr
+    assert "unexpected end of JSON input" in result.stderr
+
+
+def test_silent_blob_failure_retries(tmp_path: Path):
+    # Non-zero gh with an empty stderr is an empty response, not a
+    # validation error. It must back off and try again.
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo, {"data.txt": "v1\n"})
+    _stage(repo, {"data.txt": "v2\n"})
+    env = _env(tmp_path, GH_FAKE_BLOB_SILENT="1")
+    result = _run(repo, env)
+    assert result.returncode == 0, result.stderr
+    assert len(_state(tmp_path)["blob_posts"]) == 2
+    assert "empty blob response" in result.stderr
+    assert "retrying..." in result.stderr
+
+
+def test_blob_http_500_retries_then_commits(tmp_path: Path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo, {"data.txt": "v1\n"})
+    _stage(repo, {"data.txt": "v2\n"})
+    env = _env(tmp_path, GH_FAKE_BLOB_500="1")
+    result = _run(repo, env)
+    assert result.returncode == 0, result.stderr
+    posts = _state(tmp_path)["blob_posts"]
+    assert [p["status"] for p in posts] == [500, 200]
+    assert "HTTP 500" in result.stderr
+    assert "retrying..." in result.stderr
+    assert "ref updated" in result.stdout
+
+
+def test_blob_http_500_follows_api_schedule_not_blob_schedule(tmp_path: Path):
+    # 5xx stays on API_RETRY_DELAYS. A nested or swapped schedule would
+    # POST 5 times here (blob schedule) or 15 times (the product).
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo, {"data.txt": "v1\n"})
+    _stage(repo, {"data.txt": "v2\n"})
+    env = _env(
+        tmp_path,
+        GH_FAKE_BLOB_500="99",
+        API_RETRY_DELAYS="0 0",
+        BLOB_UPLOAD_RETRY_DELAYS="0 0 0 0",
+        GITHUB_ACTIONS="true",
+    )
+    result = _run(repo, env)
+    assert result.returncode == 1
+    assert len(_state(tmp_path)["blob_posts"]) == 3
+    assert _state(tmp_path)["tree_posts"] == []
+    assert "HTTP 500" in result.stderr
+    assert "retries exhausted" in result.stderr
+    assert "::error title=api-commit::" in result.stdout
+
+
+def test_blob_validation_errors_are_not_retried(tmp_path: Path):
+    # Real client errors must fail on the first response even when both
+    # retry schedules still have attempts left.
+    for i, (var, needle) in enumerate((
+        ("GH_FAKE_BLOB_422", "HTTP 422"),
+        ("GH_FAKE_BLOB_400", "HTTP 400"),
+    )):
+        case = tmp_path / f"case{i}"
+        case.mkdir()
+        repo = case / "repo"
+        repo.mkdir()
+        _init_repo(repo, {"data.txt": "v1\n"})
+        _stage(repo, {"data.txt": "v2\n"})
+        env = _env(
+            case,
+            **{
+                var: "5",
+                "BLOB_UPLOAD_RETRY_DELAYS": "0 0 0",
+                "API_RETRY_DELAYS": "0 0 0",
+            },
+        )
+        result = _run(repo, env)
+        assert result.returncode == 1
+        assert len(_state(case)["blob_posts"]) == 1, result.stderr
+        assert needle in result.stderr
+        assert "retrying" not in result.stderr
+        assert _state(case)["tree_posts"] == []
 
 
 def test_blob_rate_limit_still_retries(tmp_path: Path):
