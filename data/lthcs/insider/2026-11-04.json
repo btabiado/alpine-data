@@ -8101,15 +8101,45 @@
   },
   "BRK.B": {
     "as_of": "2026-11-04",
-    "buy_count": 48,
-    "buy_dollar_value": 595545033.6400001,
+    "buy_count": 51,
+    "buy_dollar_value": 622439278.8165,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 1.0,
     "filtered_out_count": 2,
-    "net_dollar_value": 506546224.0485001,
-    "net_weighted_score": 39.35,
+    "net_dollar_value": 533440469.22499996,
+    "net_weighted_score": 41.74999999999999,
     "raw_transactions": [
+      {
+        "code": "P",
+        "date": "2026-11-03",
+        "insider": "BERKSHIRE HATHAWAY INC",
+        "planned_10b5_1": false,
+        "price": 30.233,
+        "role": "TenPercent",
+        "shares": 113348.0,
+        "value": 3426850.0840000003
+      },
+      {
+        "code": "P",
+        "date": "2026-11-02",
+        "insider": "BERKSHIRE HATHAWAY INC",
+        "planned_10b5_1": false,
+        "price": 29.466,
+        "role": "TenPercent",
+        "shares": 66968.0,
+        "value": 1973279.088
+      },
+      {
+        "code": "P",
+        "date": "2026-10-30",
+        "insider": "BERKSHIRE HATHAWAY INC",
+        "planned_10b5_1": false,
+        "price": 28.8913,
+        "role": "TenPercent",
+        "shares": 743965.0,
+        "value": 21494116.0045
+      },
       {
         "code": "S",
         "date": "2026-10-27",
@@ -8279,43 +8309,13 @@
         "role": "TenPercent",
         "shares": 100.0,
         "value": 8000.0
-      },
-      {
-        "code": "P",
-        "date": "2026-09-30",
-        "insider": "BERKSHIRE HATHAWAY INC",
-        "planned_10b5_1": false,
-        "price": 81.59,
-        "role": "TenPercent",
-        "shares": 638813.0,
-        "value": 52120752.67
-      },
-      {
-        "code": "P",
-        "date": "2026-09-30",
-        "insider": "BERKSHIRE HATHAWAY INC",
-        "planned_10b5_1": false,
-        "price": 79.98,
-        "role": "TenPercent",
-        "shares": 4008.0,
-        "value": 320559.84
-      },
-      {
-        "code": "P",
-        "date": "2026-09-29",
-        "insider": "BERKSHIRE HATHAWAY INC",
-        "planned_10b5_1": false,
-        "price": 81.95,
-        "role": "TenPercent",
-        "shares": 12289.0,
-        "value": 1007083.55
       }
     ],
     "regime": "strong_buying",
     "sell_count": 2,
     "sell_dollar_value": 88998809.5915,
     "ticker": "BRK.B",
-    "weighted_buy_score": 40.5,
+    "weighted_buy_score": 42.89999999999999,
     "weighted_sell_score": -1.15,
     "window_days": 90
   },
@@ -26236,10 +26236,20 @@
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": -0.9248043506315285,
-    "filtered_out_count": 13,
+    "filtered_out_count": 14,
     "net_dollar_value": -2975982.3328,
     "net_weighted_score": -5.25,
     "raw_transactions": [
+      {
+        "code": "G",
+        "date": "2026-11-03",
+        "insider": "TRENKLE BRADLEY C",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 497.0,
+        "value": 0.0
+      },
       {
         "code": "S",
         "date": "2026-08-18",
@@ -26428,16 +26438,6 @@
         "price": 0.0,
         "role": "Director",
         "shares": 298000.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-08-10",
-        "insider": "BURRELL JONATHAN",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 90000.0,
         "value": 0.0
       }
     ],
@@ -43856,209 +43856,209 @@
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": -0.9951035439839389,
-    "filtered_out_count": 17,
+    "filtered_out_count": 41,
     "net_dollar_value": -9241124.1349,
     "net_weighted_score": -8.5,
     "raw_transactions": [
       {
         "code": "S",
-        "date": "2026-10-09",
-        "insider": "Bawa Aparna",
-        "planned_10b5_1": false,
-        "price": 410.0,
-        "role": "Director",
-        "shares": 170.0,
-        "value": 69700.0
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 351.4572,
+        "role": "Officer",
+        "shares": 2301.0,
+        "value": 808703.0172
       },
       {
         "code": "S",
-        "date": "2026-10-09",
-        "insider": "Bawa Aparna",
-        "planned_10b5_1": false,
-        "price": 417.125,
-        "role": "Director",
-        "shares": 80.0,
-        "value": 33370.0
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 352.0903,
+        "role": "Officer",
+        "shares": 640.0,
+        "value": 225337.79200000002
       },
       {
-        "code": "G",
-        "date": "2026-10-08",
-        "insider": "Klarich Lee",
+        "code": "S",
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 353.553,
+        "role": "Officer",
+        "shares": 840.0,
+        "value": 296984.52
+      },
+      {
+        "code": "S",
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 354.4693,
+        "role": "Officer",
+        "shares": 1149.0,
+        "value": 407285.22569999995
+      },
+      {
+        "code": "S",
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 355.3734,
+        "role": "Officer",
+        "shares": 531.0,
+        "value": 188703.2754
+      },
+      {
+        "code": "S",
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 356.7524,
+        "role": "Officer",
+        "shares": 680.0,
+        "value": 242591.632
+      },
+      {
+        "code": "S",
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 357.704,
+        "role": "Officer",
+        "shares": 1040.0,
+        "value": 372012.16000000003
+      },
+      {
+        "code": "S",
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 358.7586,
+        "role": "Officer",
+        "shares": 760.0,
+        "value": 272656.536
+      },
+      {
+        "code": "S",
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 359.8068,
+        "role": "Officer",
+        "shares": 1149.0,
+        "value": 413418.0132
+      },
+      {
+        "code": "S",
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 360.8546,
+        "role": "Officer",
+        "shares": 771.0,
+        "value": 278218.8966
+      },
+      {
+        "code": "S",
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 361.9385,
+        "role": "Officer",
+        "shares": 1822.0,
+        "value": 659451.9469999999
+      },
+      {
+        "code": "S",
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 362.9289,
+        "role": "Officer",
+        "shares": 2858.0,
+        "value": 1037250.7962
+      },
+      {
+        "code": "S",
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 363.8469,
+        "role": "Officer",
+        "shares": 2951.0,
+        "value": 1073712.2019
+      },
+      {
+        "code": "S",
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 364.8682,
+        "role": "Officer",
+        "shares": 450.0,
+        "value": 164190.69
+      },
+      {
+        "code": "S",
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 365.9517,
+        "role": "Officer",
+        "shares": 240.0,
+        "value": 87828.40800000001
+      },
+      {
+        "code": "S",
+        "date": "2026-11-02",
+        "insider": "Jenkins William D Jr",
+        "planned_10b5_1": true,
+        "price": 366.86,
+        "role": "Officer",
+        "shares": 40.0,
+        "value": 14674.400000000001
+      },
+      {
+        "code": "A",
+        "date": "2026-11-01",
+        "insider": "Paul Josh D.",
         "planned_10b5_1": false,
         "price": 0.0,
         "role": "Officer",
-        "shares": 60000.0,
+        "shares": 26421.0,
         "value": 0.0
       },
       {
         "code": "F",
-        "date": "2026-10-01",
+        "date": "2026-11-01",
         "insider": "Paul Josh D.",
-        "planned_10b5_1": true,
-        "price": 397.31,
+        "planned_10b5_1": false,
+        "price": 365.87,
         "role": "Officer",
-        "shares": 1308.0,
-        "value": 519681.48
+        "shares": 13100.0,
+        "value": 4792897.0
       },
       {
-        "code": "S",
-        "date": "2026-10-01",
-        "insider": "Paul Josh D.",
-        "planned_10b5_1": true,
-        "price": 395.7,
-        "role": "Officer",
-        "shares": 400.0,
-        "value": 158280.0
-      },
-      {
-        "code": "G",
-        "date": "2026-09-30",
+        "code": "A",
+        "date": "2026-11-01",
         "insider": "Klarich Lee",
         "planned_10b5_1": false,
         "price": 0.0,
         "role": "Officer",
-        "shares": 25000.0,
+        "shares": 198152.0,
         "value": 0.0
       },
       {
-        "code": "S",
-        "date": "2026-09-24",
-        "insider": "Golechha Dipak",
-        "planned_10b5_1": true,
-        "price": 388.688,
-        "role": "CFO",
-        "shares": 900.0,
-        "value": 349819.2
-      },
-      {
-        "code": "S",
-        "date": "2026-09-24",
-        "insider": "Golechha Dipak",
-        "planned_10b5_1": true,
-        "price": 389.849,
-        "role": "CFO",
-        "shares": 2160.0,
-        "value": 842073.84
-      },
-      {
-        "code": "S",
-        "date": "2026-09-24",
-        "insider": "Golechha Dipak",
-        "planned_10b5_1": true,
-        "price": 390.655,
-        "role": "CFO",
-        "shares": 9539.0,
-        "value": 3726458.045
-      },
-      {
-        "code": "S",
-        "date": "2026-09-24",
-        "insider": "Golechha Dipak",
-        "planned_10b5_1": true,
-        "price": 391.71,
-        "role": "CFO",
-        "shares": 5301.0,
-        "value": 2076454.71
-      },
-      {
-        "code": "S",
-        "date": "2026-09-24",
-        "insider": "Golechha Dipak",
-        "planned_10b5_1": true,
-        "price": 392.711,
-        "role": "CFO",
-        "shares": 6400.0,
-        "value": 2513350.4
-      },
-      {
-        "code": "S",
-        "date": "2026-09-24",
-        "insider": "Golechha Dipak",
-        "planned_10b5_1": true,
-        "price": 393.582,
-        "role": "CFO",
-        "shares": 2200.0,
-        "value": 865880.4
-      },
-      {
-        "code": "S",
-        "date": "2026-09-24",
-        "insider": "Golechha Dipak",
-        "planned_10b5_1": true,
-        "price": 394.977,
-        "role": "CFO",
-        "shares": 900.0,
-        "value": 355479.3
-      },
-      {
-        "code": "S",
-        "date": "2026-09-24",
-        "insider": "Golechha Dipak",
-        "planned_10b5_1": true,
-        "price": 396.21,
-        "role": "CFO",
-        "shares": 100.0,
-        "value": 39621.0
-      },
-      {
-        "code": "S",
-        "date": "2026-09-24",
-        "insider": "Bawa Aparna",
+        "code": "F",
+        "date": "2026-11-01",
+        "insider": "Klarich Lee",
         "planned_10b5_1": false,
-        "price": 392.685,
-        "role": "Director",
-        "shares": 260.0,
-        "value": 102098.1
-      },
-      {
-        "code": "A",
-        "date": "2026-09-18",
-        "insider": "Paul Josh D.",
-        "planned_10b5_1": false,
-        "price": 0.0,
+        "price": 365.87,
         "role": "Officer",
-        "shares": 7211.0,
-        "value": 0.0
-      },
-      {
-        "code": "S",
-        "date": "2026-09-17",
-        "insider": "GOETZ JAMES J",
-        "planned_10b5_1": false,
-        "price": 372.5144,
-        "role": "Director",
-        "shares": 900.0,
-        "value": 335262.96
-      },
-      {
-        "code": "S",
-        "date": "2026-09-17",
-        "insider": "GOETZ JAMES J",
-        "planned_10b5_1": false,
-        "price": 373.5301,
-        "role": "Director",
-        "shares": 910.0,
-        "value": 339912.391
-      },
-      {
-        "code": "S",
-        "date": "2026-09-17",
-        "insider": "GOETZ JAMES J",
-        "planned_10b5_1": false,
-        "price": 374.7196,
-        "role": "Director",
-        "shares": 3348.0,
-        "value": 1254561.2208
-      },
-      {
-        "code": "S",
-        "date": "2026-09-17",
-        "insider": "GOETZ JAMES J",
-        "planned_10b5_1": false,
-        "price": 375.7261,
-        "role": "Director",
-        "shares": 4313.0,
-        "value": 1620506.6693
+        "shares": 98245.0,
+        "value": 35944898.15
       }
     ],
     "regime": "heavy_selling",
