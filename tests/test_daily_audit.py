@@ -2364,6 +2364,7 @@ def test_wbd_delisting_clears_the_scored_shortfall(dad, dar):
     assert by["WBD"]["active"] is False
     assert dad.expected_universe_tickers(uni, "2026-11-03").count("WBD") == 0
 
+    coverages = {}
     for day in ("2026-11-01", "2026-11-02", "2026-11-03"):
         snap = json.loads(
             (REPO_ROOT / "data" / "lthcs" / "snapshots" / f"{day}.json").read_text()
@@ -2374,6 +2375,7 @@ def test_wbd_delisting_clears_the_scored_shortfall(dad, dar):
         assert cov["missing"] == [], day
         assert cov["scored"] == cov["universe"] == 514
         assert cov["below_floor"] is False
+        coverages[day] = cov
 
     nov3 = json.loads(
         (REPO_ROOT / "data/lthcs/snapshots/2026-11-03.json").read_text()
@@ -2394,6 +2396,23 @@ def test_wbd_delisting_clears_the_scored_shortfall(dad, dar):
     row = next(r for r in last["scores"] if r.get("ticker") == "WBD")
     assert isinstance(row["lthcs_score"], (int, float))
     assert dad.LTHCS_SCORED_FLOOR == dar.LTHCS_SCORED_FLOOR == 480
+
+    # The daily P2 is the report. The 2026-11-03 snapshot still records
+    # WBD as unscored (no CIK, no prices). Deactivating it removes the
+    # name from the active universe, so that record is not a shortfall.
+    d = _data(lthcs_pillars={
+        "status": "ok",
+        "snapshot_date": "2026-11-03",
+        "accepted_pillars": ["thesis_integrity"],
+        "unaccepted_stubs": [],
+        "coverage": coverages["2026-11-03"],
+    })
+    ids = {p["id"] for p in dar.data_problems(d)}
+    assert "lthcs:scored-shortfall" not in ids
+    assert "lthcs:scored-floor" not in ids
+    md = dar.render_md(dar.build_report(d, _ux(), None, "2026-11-03"))
+    assert "514 of 514" in md
+    assert "WBD (no SEC CIK match; no Yahoo prices)" not in md
 
 
 def test_sec_ticker_file_parser_and_dot_class_shares(dad, monkeypatch):
