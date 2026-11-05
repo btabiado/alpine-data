@@ -1,12 +1,12 @@
 {
   "as_of": "2026-11-05",
-  "generated_at": "2026-11-05T10:47:25Z",
+  "generated_at": "2026-11-05T12:13:13Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-11-05",
       "label": null,
-      "note": "40 coins; 1 buy+, 20 sell+",
-      "score": -48,
+      "note": "40 coins; 2 buy+, 24 sell+",
+      "score": -55,
       "stale": false
     },
     "defi_sentiment": {
@@ -17,23 +17,23 @@
       "stale": false
     },
     "etf_flow_sentiment": {
-      "as_of": "2026-11-03",
+      "as_of": "2026-11-04",
       "label": "STRONG OUTFLOWS",
-      "note": "BTC ETF; 7d+30d net flow sum (60/40); 703 daily rows; same series as etf_flow_sentiment_btc",
-      "score": -93,
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 704 daily rows; same series as etf_flow_sentiment_btc",
+      "score": -100,
       "stale": false
     },
     "etf_flow_sentiment_btc": {
-      "as_of": "2026-11-03",
+      "as_of": "2026-11-04",
       "label": "STRONG OUTFLOWS",
-      "note": "BTC ETF; 7d+30d net flow sum (60/40); 703 daily rows",
-      "score": -93,
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 704 daily rows",
+      "score": -100,
       "stale": false
     },
     "etf_flow_sentiment_eth": {
-      "as_of": "2026-11-03",
+      "as_of": "2026-11-04",
       "label": "STRONG OUTFLOWS",
-      "note": "ETH ETF; 7d+30d net flow sum (60/40); 574 daily rows",
+      "note": "ETH ETF; 7d+30d net flow sum (60/40); 575 daily rows",
       "score": -100,
       "stale": false
     },
@@ -55,14 +55,14 @@
       "as_of": "2026-11-04",
       "label": "STRONG CROWDED LONGS",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 60,
+      "score": 59,
       "stale": false
     },
     "futures_sentiment_link": {
       "as_of": "2026-11-04",
       "label": "STRONG CROWDED LONGS",
       "note": "LINK; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 73,
+      "score": 72,
       "stale": false
     },
     "futures_sentiment_ltc": {
@@ -90,7 +90,7 @@
       "as_of": "2026-11-05",
       "label": "NEUTRAL",
       "note": "3 of 3 inputs: F&G, signal avg, perp funding",
-      "score": -1,
+      "score": -2,
       "stale": false
     },
     "poc_signal_breadth": {
