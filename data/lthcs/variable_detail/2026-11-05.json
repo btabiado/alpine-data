@@ -61130,8 +61130,8 @@
         "has_sec_8k": true,
         "has_yahoo_earnings": true,
         "sec_8k_score": 0.16666666666666666,
-        "yahoo_earnings_score": 0.4,
-        "events_score_raw": 64.17,
+        "yahoo_earnings_score": -0.4,
+        "events_score_raw": 44.17,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
