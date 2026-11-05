@@ -719,16 +719,32 @@ def _annotation_is_etf_soft_warning(title: str | None, message: str | None) -> b
     return message.lower().startswith("soft warning:")
 
 
+def _annotation_is_tsa_soft_warning(title: str | None, _message: str | None = None) -> bool:
+    """Match ``daily_audit_report.is_tsa_soft_warning``.
+
+    ``TSA blocked, data still fresh`` is the exit-0 notice. ``TSA not
+    refreshed`` is the exit-1 refusal and is collected with the failed run.
+    The message is unused; the title is the signal.
+    """
+    title = (title or "").strip().lower()
+    if title.startswith("tsa not refreshed"):
+        return False
+    return title.startswith("tsa blocked, data still fresh")
+
+
 def _is_etf_flows_workflow(name: str | None, path: str | None) -> bool:
     return name == "etf-flows-daily" or str(path or "").endswith("etf-flows-daily.yml")
 
 
-def _etf_soft_warnings(gh: GitHub, run_id: int) -> list[dict]:
-    """Warning annotations on a successful etf-flows-daily run.
+def _is_aviation_tsa_workflow(name: str | None, path: str | None) -> bool:
+    return name == "aviation-tsa" or str(path or "").endswith("aviation-tsa.yml")
 
-    The fetcher exits 0 for a transient Farside miss while the CSV is under
-    two trading days old, so the run is not a failure and ``_annotations``
-    never sees it. Node deprecation warnings on the same job are dropped.
+
+def _soft_warnings(gh: GitHub, run_id: int, match) -> list[dict]:
+    """Warning annotations on a successful run that ``match`` accepts.
+
+    The fetcher exited 0, so ``_annotations`` (failed jobs only) never sees
+    the notice. Node deprecation warnings on the same job are dropped.
     """
     jobs = gh.get(f"/repos/{{repo}}/actions/runs/{run_id}/jobs",
                   {"filter": "latest", "per_page": 20})
@@ -742,7 +758,7 @@ def _etf_soft_warnings(gh: GitHub, run_id: int) -> list[dict]:
                 continue
             title = clip(a.get("title"), 120)
             message = clip(a.get("message"), 300)
-            if not _annotation_is_etf_soft_warning(title, message):
+            if not match(title, message):
                 continue
             out.append({"level": "warning", "title": title, "message": message})
             if len(out) >= 5:
@@ -813,18 +829,24 @@ def section_workflows_and_schedules(gh: GitHub, repo_root: Path, now: datetime,
             except Exception as e:  # noqa: BLE001
                 entry["failed_jobs"] = [{"job": "?", "annotations": [
                     {"level": "error", "title": "jobs unavailable", "message": clip(e, 200)}]}]
-        elif (d1 and d1[0].get("conclusion") == "success"
-              and _is_etf_flows_workflow(name, path)):
+        elif d1 and d1[0].get("conclusion") == "success":
             # A green run can still carry the soft warning. A lookup failure
             # must not turn that success into an audit error.
-            try:
-                notes = _etf_soft_warnings(gh, d1[0]["id"])
-            except Exception as e:  # noqa: BLE001
-                print(f"[audit-data] etf-flows soft warnings unreadable: {clip(e, 200)}",
-                      file=sys.stderr)
-                notes = []
-            if notes:
-                entry["soft_warnings"] = notes
+            matcher = None
+            label = None
+            if _is_etf_flows_workflow(name, path):
+                matcher, label = _annotation_is_etf_soft_warning, "etf-flows"
+            elif _is_aviation_tsa_workflow(name, path):
+                matcher, label = _annotation_is_tsa_soft_warning, "aviation-tsa"
+            if matcher is not None:
+                try:
+                    notes = _soft_warnings(gh, d1[0]["id"], matcher)
+                except Exception as e:  # noqa: BLE001
+                    print(f"[audit-data] {label} soft warnings unreadable: {clip(e, 200)}",
+                          file=sys.stderr)
+                    notes = []
+                if notes:
+                    entry["soft_warnings"] = notes
         workflows.append(entry)
 
         crons = crons_by_path.get(path)

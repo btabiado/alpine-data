@@ -1298,6 +1298,118 @@ class TestProblems:
         assert "ended failed (etf-flows-daily)" not in md
         assert "soft warning (not a failure): etf-flows-daily" in md
 
+    def test_tsa_403_is_disclosed_beside_the_feed(self, dar):
+        """Audit 2026-11-05. A tsa.gov 403 is not grouped as "TSA is down".
+
+        Farside stays in the blocked group. TSA is its own line, and the
+        line says whether data-tsa.json is still inside its freshness rules.
+        """
+        d = _data(
+            data_health={
+                "status": "ok",
+                "failing_statuses": ["stale", "unknown", "missing", "unwatched", "expired"],
+                "results": [{
+                    "path": "data-tsa.json", "status": "ok", "age_h": 48, "limit_h": 48,
+                }],
+            },
+            api_status={
+                "status": "ok",
+                "verdicts": {
+                    "TSA passenger volumes": "blocked",
+                    "Farside (ETF flows)": "blocked",
+                },
+                "streaks": {"TSA passenger volumes": 0, "Farside (ETF flows)": 0},
+                "statuses": {"TSA passenger volumes": 403, "Farside (ETF flows)": 403},
+                "prior_probe": {
+                    "generated_at": "2026-11-04T15:32:23+00:00",
+                    "verdicts": {
+                        "TSA passenger volumes": "up",
+                        "Farside (ETF flows)": "blocked",
+                    },
+                },
+            },
+        )
+        probs = {p["id"]: p for p in dar.data_problems(d)}
+        tsa = probs["api:TSA passenger volumes"]
+        assert tsa["severity"] == "P2"
+        assert "group" not in tsa
+        assert "HTTP 403" in tsa["title"]
+        assert "within its freshness rules" in tsa["title"]
+        assert "committed data-tsa.json is ok (2d old, limit 2d)" in tsa["detail"]
+        assert "not changed to get around it" in tsa["detail"]
+        assert "FOIA" in tsa["detail"]
+        assert "previous probe 2026-11-04T15:32:23+00:00 was up" in tsa["detail"]
+        assert probs["api:Farside (ETF flows)"]["group"] == "api:blocked"
+        md = dar.render_md(dar.build_report(d, _ux(), None, "2026-11-05"))
+        assert "Upstream APIs blocked (1): Farside (ETF flows)" in md
+        assert "TSA passenger volumes probe is blocked (HTTP 403)" in md
+        assert "Upstream APIs blocked (2)" not in md
+        assert "Upstream APIs blocked (1): TSA" not in md
+
+    def test_tsa_403_names_a_stale_checkpoint_file(self, dar):
+        """When the file is actually stale, the probe line says so and the feed pages."""
+        d = _data(
+            data_health={
+                "status": "ok",
+                "failing_statuses": ["stale", "unknown", "missing", "unwatched", "expired"],
+                "results": [{
+                    "path": "data-tsa.json", "status": "stale", "age_h": 72, "limit_h": 48,
+                    "detail": "no recent source check",
+                }],
+            },
+            api_status={
+                "status": "ok",
+                "verdicts": {"TSA passenger volumes": "blocked"},
+                "streaks": {"TSA passenger volumes": 0},
+                "statuses": {"TSA passenger volumes": 403},
+            },
+        )
+        probs = {p["id"]: p for p in dar.data_problems(d)}
+        tsa = probs["api:TSA passenger volumes"]
+        assert "staleness is the alarm" in tsa["title"]
+        assert "committed data-tsa.json is stale" in tsa["detail"]
+        assert "no recent source check" in tsa["detail"]
+        assert probs["feed:data-tsa.json"]["severity"] == "P0"
+
+    def test_tsa_soft_warning_is_p2_and_not_a_failure(self, dar, dad):
+        """A green aviation-tsa run that could not confirm tsa.gov is a notice.
+
+        `TSA not refreshed` is the exit-1 annotation and stays a failure.
+        The two classifiers agree.
+        """
+        notice = {
+            "level": "warning",
+            "title": "TSA blocked, data still fresh",
+            "message": ("tsa.gov returned HTTP 403. Not retried. "
+                        "data-tsa.json as_of 2026-11-03 is 48h old, within the 48h limit"),
+        }
+        assert dar.is_tsa_soft_warning(notice["title"], notice["message"])
+        assert dad._annotation_is_tsa_soft_warning(notice["title"], notice["message"])
+        assert not dar.is_tsa_soft_warning("TSA not refreshed", "tsa.gov: HTTP Error 403")
+        assert not dad._annotation_is_tsa_soft_warning("TSA not refreshed", "403")
+        assert not dar.is_etf_flows_soft_warning(notice["title"], notice["message"])
+        assert not dad._annotation_is_etf_soft_warning(notice["title"], notice["message"])
+
+        d = _data(workflows={"status": "ok", "workflows": [{
+            "name": "aviation-tsa",
+            "latest_24h": {"url": "https://example.test/tsa", "conclusion": "success"},
+            "failed_24h": False,
+            "failing_2_days": False,
+            "soft_warnings": [notice],
+        }]})
+        probs = {p["id"]: p for p in dar.data_problems(d)}
+        assert "workflow:aviation-tsa:failed" not in probs
+        assert "workflow:aviation-tsa:failing-2d" not in probs
+        soft = probs["workflow:aviation-tsa:soft-warning"]
+        assert soft["severity"] == "P2"
+        assert "HTTP 403" in soft["title"]
+        assert "48h" in soft["title"]
+        assert "2026-11-03" in soft["detail"]
+        assert dar.alert_action(list(probs.values())) == "close"
+        md = dar.render_md(dar.build_report(d, _ux(), None, "2026-11-05"))
+        assert "ended failed (aviation-tsa)" not in md
+        assert "soft warning (not a failure): aviation-tsa" in md
+
     def test_etf_hard_521_failure_stays_a_failure(self, dar):
         """Once the CSV is past the soft window the job exits 1. That stays P1."""
         jobs = [{"job": "run", "failed_steps": ["Fetch BTC + ETH spot-ETF flows"],

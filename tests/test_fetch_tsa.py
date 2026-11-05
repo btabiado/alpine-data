@@ -326,14 +326,18 @@ def test_gh_escape_encodes_percent_first():
 
 # --- never step backwards / no churn ----------------------------------------
 
-def test_older_snapshot_never_replaces_newer_data(env):
+def test_older_snapshot_never_replaces_newer_data(env, monkeypatch):
     out, _, install = env
+    # Frozen past the 48h limit, so keeping the file is a failure, not a
+    # quiet success. The bytes still do not move.
+    monkeypatch.setattr(fetch_tsa, "_utc_now", lambda: datetime.datetime(
+        2026, 11, 5, 17, 26, tzinfo=datetime.timezone.utc))
     newer = dict(PRIOR, latest={"date": "10/3/2026", "vol": 2600000})
     out.write_text(json.dumps(newer, indent=1))
     before = out.read_bytes()
     install(FakeNet(tsa=[FORBIDDEN], avail=[_availability()], snap=[HTML]))
 
-    assert fetch_tsa.main() == 0
+    assert fetch_tsa.main() == 1
     assert out.read_bytes() == before
 
 
@@ -383,10 +387,16 @@ def test_unchanged_table_still_records_the_source_check(env, monkeypatch):
     assert second["last_checked"] == "2026-10-19T14:12:00Z"
 
 
-def test_older_snapshot_does_not_refresh_the_source_check(env):
+def test_older_snapshot_does_not_refresh_the_source_check(env, monkeypatch):
     """A mirror/archive that lags the file on disk did not confirm the
-    source's current newest date, so the previous check stands."""
+    source's current newest date, so the previous check stands.
+
+    The file is also past the 48h limit, so the run fails instead of
+    exiting 0 with last_checked left where it was.
+    """
     out, _, install = env
+    monkeypatch.setattr(fetch_tsa, "_utc_now", lambda: datetime.datetime(
+        2026, 11, 5, 17, 26, tzinfo=datetime.timezone.utc))
     prior = dict(PRIOR, as_of="2026-10-03",
                  latest={"date": "10/3/2026", "vol": 2600000},
                  last_checked="2026-10-16T14:10:00Z",
@@ -394,7 +404,7 @@ def test_older_snapshot_does_not_refresh_the_source_check(env):
     out.write_text(json.dumps(prior, indent=1))
     before = out.read_bytes()
     install(FakeNet(tsa=[FORBIDDEN], avail=[_availability()], snap=[HTML]))
-    assert fetch_tsa.main() == 0
+    assert fetch_tsa.main() == 1
     assert out.read_bytes() == before
 
 
@@ -523,14 +533,27 @@ def test_bad_mirror_falls_through_to_wayback(env, bad):
     assert json.loads(out.read_text())["source"] == "web.archive.org"
 
 
-def test_stale_mirror_never_replaces_newer_data(env):
+def test_stale_mirror_never_replaces_newer_data(env, monkeypatch):
+    """An older mirror is not a refresh. The Archive is still asked.
+
+    2026-11-05 (Actions run 42058574693): tsa.gov returned 403, the mirror
+    ended the day before the file, and the job exited 0 without a warning
+    and without reading the Archive. The file stays put, and because it is
+    past 48h the run fails.
+    """
     out, _, install = env
-    newer = dict(PRIOR, latest={"date": "10/3/2026", "vol": 2600000})
+    monkeypatch.setattr(fetch_tsa, "_utc_now", lambda: datetime.datetime(
+        2026, 11, 5, 17, 26, tzinfo=datetime.timezone.utc))
+    newer = dict(PRIOR, latest={"date": "10/3/2026", "vol": 2600000},
+                 as_of="2026-10-03")
     out.write_text(json.dumps(newer, indent=1))
     before = out.read_bytes()
-    install(FakeNet(tsa=[FORBIDDEN], mirror=[MIRROR_CSV]))
-    assert fetch_tsa.main() == 0
+    net = install(FakeNet(tsa=[FORBIDDEN], mirror=[MIRROR_CSV],
+                          avail=[_availability()], snap=[HTML]))
+    assert fetch_tsa.main() == 1
     assert out.read_bytes() == before
+    assert fetch_tsa.MIRROR_URL in net.urls()
+    assert fetch_tsa.AVAILABILITY_URL in net.urls()
 
 
 def test_empty_archive_page_is_named_in_the_warning(env, monkeypatch, capsys):
@@ -547,3 +570,134 @@ def test_empty_archive_page_is_named_in_the_warning(env, monkeypatch, capsys):
     assert "mirror: HTTPError: HTTP Error 404" in w
     assert f"no rows parsed from snapshot {AVAIL_TS}" in w
     assert "Access Denied" in w
+
+
+# --- 403 while the file is fresh / stale (audit 2026-11-05) ----------------
+
+_AUDIT_NOW = datetime.datetime(2026, 11, 5, 17, 26, tzinfo=datetime.timezone.utc)
+
+
+def _freeze(monkeypatch):
+    monkeypatch.setattr(fetch_tsa, "_utc_now", lambda: _AUDIT_NOW)
+
+
+def _on_disk(as_of, latest=None):
+    day = datetime.date.fromisoformat(as_of)
+    latest = latest or f"{day.month}/{day.day}/{day.year}"
+    return dict(PRIOR, as_of=as_of, latest={"date": latest, "vol": 1966283},
+                last_checked="2026-11-04T15:46:54Z", source_latest=as_of)
+
+
+def test_fresh_limit_matches_the_health_table():
+    from scripts.build_health_status import threshold_for
+    assert fetch_tsa.FRESH_LIMIT_H == threshold_for("data-tsa.json").stale_h
+
+
+def test_older_mirror_still_reads_a_newer_archive(env, monkeypatch):
+    """The mirror ending 11/2 must not hide an Archive capture of 11/4."""
+    out, _, install = env
+    _freeze(monkeypatch)
+    out.write_text(json.dumps(_on_disk("2026-11-03")))
+    mirror = _mirror_csv([("11/2/2026", 2444382)])
+    newer = ("<table><tr><td>11/4/2026</td><td>2,100,000</td></tr>"
+             "<tr><td>11/3/2026</td><td>1,966,283</td></tr></table>")
+    net = install(FakeNet(tsa=[FORBIDDEN], mirror=[mirror],
+                          avail=[_availability(ts="20261104120000")],
+                          snap=[(newer, SNAPSHOT.replace(AVAIL_TS, "20261104120000"))]))
+    assert fetch_tsa.main() == 0
+    data = json.loads(out.read_text())
+    assert data["source"] == "web.archive.org"
+    assert data["as_of"] == "2026-11-04"
+    assert data["latest"] == {"date": "11/4/2026", "vol": 2100000}
+    assert fetch_tsa.MIRROR_URL in net.urls()
+    assert any("20261104120000" in u for u in net.urls())
+
+
+def test_blocked_403_with_fresh_file_warns_and_keeps_it(env, monkeypatch, capsys):
+    """Audit morning: as_of 2026-11-03 on 2026-11-05 is 48h, still inside.
+
+    The job must not look like a refresh. last_checked stays put, and the
+    annotation is the soft warning, not `TSA not refreshed`.
+    """
+    out, _, install = env
+    _freeze(monkeypatch)
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    prior = _on_disk("2026-11-03")
+    out.write_text(json.dumps(prior, indent=1))
+    before = out.read_bytes()
+    install(FakeNet(tsa=[FORBIDDEN], mirror=[_mirror_csv([("11/2/2026", 1)])],
+                    avail=[_availability()], snap=[HTML]))
+    assert fetch_tsa.main() == 0
+    assert out.read_bytes() == before
+    warnings = [ln for ln in capsys.readouterr().out.splitlines()
+                if ln.startswith("::warning")]
+    assert len(warnings) == 1
+    w = warnings[0]
+    assert w.startswith("::warning title=TSA blocked, data still fresh::")
+    assert "HTTP 403" in w
+    assert "Not retried" in w
+    assert "2026-11-03" in w
+    assert "within the 48h limit" in w
+    assert "FOIA" in w
+    assert "TSA not refreshed" not in w
+
+
+def test_blocked_403_with_stale_file_fails(env, monkeypatch, capsys):
+    """One day past the limit the same 403 fails the job. The file stays."""
+    out, _, install = env
+    _freeze(monkeypatch)
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    prior = _on_disk("2026-11-02")
+    out.write_text(json.dumps(prior, indent=1))
+    before = out.read_bytes()
+    install(FakeNet(tsa=[FORBIDDEN], mirror=[_mirror_csv([("11/1/2026", 1)])],
+                    avail=[_availability()], snap=[HTML]))
+    assert fetch_tsa.main() == 1
+    assert out.read_bytes() == before
+    w = [ln for ln in capsys.readouterr().out.splitlines()
+         if ln.startswith("::warning")][0]
+    assert w.startswith("::warning title=TSA not refreshed::")
+    assert "HTTP Error 403" in w
+    assert "2026-11-02" in w
+    assert "72h" in w
+
+
+def test_non_403_failure_fails_even_when_the_file_is_fresh(env, monkeypatch):
+    """A reset is not the known refusal. Fresh data does not make it exit 0."""
+    out, _, install = env
+    _freeze(monkeypatch)
+    prior = _on_disk("2026-11-04")
+    out.write_text(json.dumps(prior, indent=1))
+    before = out.read_bytes()
+    reset = urllib.error.URLError(ConnectionResetError(104, "Connection reset by peer"))
+    install(FakeNet(tsa=[reset], avail=[reset], snap=[reset]))
+    assert fetch_tsa.main() == 1
+    assert out.read_bytes() == before
+
+
+def test_requests_403_is_the_same_refusal(env, monkeypatch, capsys):
+    """The requests client raises HTTPError with response.status_code, not urllib."""
+    out, _, install = env
+    _freeze(monkeypatch)
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+
+    class _Blocked(Exception):
+        def __init__(self):
+            super().__init__("403 Client Error: Forbidden for url: "
+                             "https://www.tsa.gov/travel/passenger-volumes")
+            self.response = type("R", (), {"status_code": 403})()
+
+    monkeypatch.setattr(fetch_tsa, "requests", FakeRequests(_Blocked()))
+    prior = _on_disk("2026-11-03")
+    out.write_text(json.dumps(prior, indent=1))
+    before = out.read_bytes()
+    install(FakeNet(
+        tsa=[AssertionError("urllib must not be used for tsa.gov")],
+        mirror=[_mirror_csv([("11/2/2026", 1)])],
+        avail=[_availability()], snap=[HTML]))
+    assert fetch_tsa.main() == 0
+    assert out.read_bytes() == before
+    w = [ln for ln in capsys.readouterr().out.splitlines()
+         if ln.startswith("::warning")][0]
+    assert w.startswith("::warning title=TSA blocked, data still fresh::")
+    assert fetch_tsa._http_status(_Blocked()) == 403

@@ -51,8 +51,13 @@ jobs:
 
       - name: Fetch TSA throughput snapshot
         # Sources in order: tsa.gov, the bcantoni/tsa-data GitHub mirror, the
-        # Internet Archive copy. On a fetch/parse failure of all three it exits
-        # non-zero WITHOUT writing, so the prior good data-tsa.json is preserved.
+        # Internet Archive copy. A table older than the file already on disk
+        # is not a successful read — the next source is still tried, and
+        # last_checked is not moved. HTTP 403 is not retried and the request
+        # is not changed. While data-tsa.json is still within 48h the step
+        # warns (`TSA blocked, data still fresh`) and exits 0. Past that limit,
+        # or on any other failure to confirm the table, it exits non-zero
+        # WITHOUT writing, so the prior good file is preserved.
         run: python fetch_tsa.py
 
       - name: Commit data changes via signed API commit

@@ -63,7 +63,14 @@ Severities:
         informational watch line ("single-probe blip"), not a P1 or P2.
         Known states keep their handling: blocked (Farside 403) stays P2,
         paid-only (DeFiLlama 402) stays P2, auth_required and retired are
-        not findings. A late cron start or a skipped schedule is a P2 only
+        not findings. A tsa.gov HTTP 403 on the TSA passenger volumes probe
+        is the same kind of refusal, disclosed on its own line with the
+        data-tsa.json freshness row rather than grouped as an unexplained
+        "upstream blocked". While that checkpoint is still within 48h, a
+        green aviation-tsa run that could not confirm a newer table emits
+        ``TSA blocked, data still fresh`` (P2, not a workflow failure).
+        Past that limit the job exits non-zero and the failure stands.
+        The request is not changed to get around the 403. A late cron start or a skipped schedule is a P2 only
         when that condition has already lasted more than a day AND the
         job's output is stale or it has no success (schedule, watchdog
         catch-up, or manual run) inside its freshness window. Late or
@@ -241,6 +248,27 @@ def is_etf_flows_soft_warning(title: str | None, message: str | None) -> bool:
     return message.lower().startswith("soft warning:")
 
 
+def is_tsa_soft_warning(title: str | None, _message: str | None = None) -> bool:
+    """True for fetch_tsa.py's warn-while-fresh notice, not the exit-1 refusal.
+
+    A tsa.gov HTTP 403 while data-tsa.json is still within 48h exits 0 and
+    emits ``::warning title=TSA blocked, data still fresh``. ``TSA not
+    refreshed`` is the failure annotation and stays a workflow failure.
+    ``_message`` is accepted so this matches ``is_etf_flows_soft_warning``;
+    the title is the signal.
+    """
+    title = (title or "").strip().lower()
+    if title.startswith("tsa not refreshed"):
+        return False
+    return title.startswith("tsa blocked, data still fresh")
+
+
+def is_fetch_soft_warning(title: str | None, message: str | None) -> bool:
+    """Either fetcher's exit-0 notice. A hard refusal title is neither."""
+    return (is_etf_flows_soft_warning(title, message)
+            or is_tsa_soft_warning(title, message))
+
+
 def _annotation_noise(ann: dict) -> bool:
     text = f"{ann.get('title') or ''} {ann.get('message') or ''}"
     return bool(_ANNOTATION_NOISE.search(text))
@@ -250,10 +278,10 @@ def _soft_warning_annotations(w: dict) -> list[dict]:
     found: list[dict] = []
     for job in w.get("failed_jobs") or []:
         for ann in job.get("annotations") or []:
-            if is_etf_flows_soft_warning(ann.get("title"), ann.get("message")):
+            if is_fetch_soft_warning(ann.get("title"), ann.get("message")):
                 found.append(ann)
     for ann in w.get("soft_warnings") or []:
-        if is_etf_flows_soft_warning(ann.get("title"), ann.get("message")):
+        if is_fetch_soft_warning(ann.get("title"), ann.get("message")):
             found.append(ann)
     return found
 
@@ -293,7 +321,7 @@ def _best_annotation(jobs: list[dict]) -> str:
         anns = [a for a in (j.get("annotations") or []) if not _annotation_noise(a)]
         specific = [a for a in anns
                     if not _GENERIC_EXIT.match((a.get("message") or "").strip())
-                    and not is_etf_flows_soft_warning(a.get("title"), a.get("message"))]
+                    and not is_fetch_soft_warning(a.get("title"), a.get("message"))]
         if not specific:
             specific = [a for a in anns if not _GENERIC_EXIT.match((a.get("message") or "").strip())]
         pick = specific[0] if specific else (anns[0] if anns else None)
@@ -677,6 +705,67 @@ def _disclosed_upstream_lag(row: dict) -> bool:
     return bool(path) and "[history:" not in path
 
 
+# The health-probe row for https://www.tsa.gov/travel/passenger-volumes.
+# Kept in step with api_status.TARGETS. A 403 here is disclosed beside
+# data-tsa.json rather than grouped as a bare "upstream blocked".
+TSA_PROBE_LABEL = "TSA passenger volumes"
+TSA_FEED_PATH = "data-tsa.json"
+
+
+def _tsa_feed_row(data: dict) -> dict | None:
+    dh = data.get("data_health") if isinstance(data.get("data_health"), dict) else {}
+    for row in dh.get("results") or []:
+        if isinstance(row, dict) and row.get("path") == TSA_FEED_PATH:
+            return row
+    return None
+
+
+def _tsa_probe_blocked_problem(data: dict, api: dict, streak: Any) -> dict:
+    """P2 for a tsa.gov 403, worded from the checkpoint file's own status.
+
+    The id stays ``api:TSA passenger volumes`` so a day that was already
+    "blocked" stays the same finding. It is not grouped under "Upstream APIs
+    blocked": that line is the unexplained surprise the 2026-11-05 audit
+    opened. ok and disclosed are the freshness rules (within 48h, or a
+    confirmed upstream lag inside 7 days). Any other status means the file
+    itself is the alarm; this line says so and does not hide it.
+    """
+    row = _tsa_feed_row(data)
+    status = str((row or {}).get("status") or "").lower()
+    fresh = status in ("ok", "disclosed")
+    if fresh:
+        title = ("TSA passenger volumes probe is blocked (HTTP 403); "
+                 "data-tsa.json is still within its freshness rules")
+    elif row:
+        title = ("TSA passenger volumes probe is blocked (HTTP 403); "
+                 "data-tsa.json is not fresh — that staleness is the alarm")
+    else:
+        title = ("TSA passenger volumes probe is blocked (HTTP 403); "
+                 "data-tsa.json freshness is the staleness signal")
+    parts: list[str] = []
+    if row:
+        parts.append(
+            f"committed data-tsa.json is {row.get('status')} "
+            f"({_hours(row.get('age_h'))} old, limit {_hours(row.get('limit_h'))})"
+        )
+        detail = (row.get("detail") or "").strip()
+        if detail:
+            parts.append(detail)
+    else:
+        parts.append("data-tsa.json was not in this data_health run")
+    parts.append(
+        "A 403 is a refusal of this probe. The request is not retried and "
+        "not changed to get around it. The checkpoint file is the staleness "
+        "signal. If the refusal lasts past the file's 48h limit, aviation-tsa "
+        "fails; a further source would be the TSA FOIA reading room or a "
+        "hand-entered row."
+    )
+    prior = _api_failure_detail(TSA_PROBE_LABEL, api, streak)
+    if prior:
+        parts.append(prior)
+    return problem(f"api:{TSA_PROBE_LABEL}", P2, "api", title, "; ".join(parts))
+
+
 def _api_failure_detail(label: str, api: dict, streak: Any) -> str:
     """Why an upstream row is down or degraded, when the probe said so.
 
@@ -914,11 +1003,25 @@ def data_problems(data: dict | None) -> list[dict]:
                      if a.get("title") else (a.get("message") or ""))
                     for a in notes[:3]
                 )
+                tsa_note = any(is_tsa_soft_warning(a.get("title"), a.get("message"))
+                               for a in notes)
+                etf_note = any(is_etf_flows_soft_warning(a.get("title"), a.get("message"))
+                               for a in notes)
+                if tsa_note and not etf_note:
+                    soft_title = (
+                        f"Workflow {name} soft-warned: tsa.gov returned HTTP 403 "
+                        f"and data-tsa.json is still within 48h"
+                    )
+                elif etf_note and not tsa_note:
+                    soft_title = (
+                        f"Workflow {name} soft-warned: Farside was unreachable and "
+                        f"the ETF flows CSV is under 2 trading days old"
+                    )
+                else:
+                    soft_title = f"Workflow {name} soft-warned"
                 out.append(problem(
                     f"workflow:{name}:soft-warning", P2, "workflow",
-                    f"Workflow {name} soft-warned: Farside was unreachable and "
-                    f"the ETF flows CSV is under 2 trading days old",
-                    detail, url=latest.get("url")))
+                    soft_title, detail, url=latest.get("url")))
 
     # -- schedules -------------------------------------------------------------
     sc = data.get("schedules")
@@ -1045,6 +1148,14 @@ def data_problems(data: dict | None) -> list[dict]:
                 out.append(problem(
                     f"api:{label}", P1, "api", f"Upstream API {label} is DOWN",
                     _api_failure_detail(label, api, streak)))
+            elif verdict == "blocked" and label == TSA_PROBE_LABEL:
+                # 2026-11-05 audit. tsa.gov answered this probe 403. Grouping
+                # it with the other blocked rows reads as "TSA is down" and
+                # comes back as a new surprise every time the verdict flips,
+                # with no word on whether data-tsa.json is actually stale.
+                # Disclose it on its own line, next to that file. The file
+                # going stale (or the job exiting 1 past 48h) is the alarm.
+                out.append(_tsa_probe_blocked_problem(data, api, streak))
             elif verdict in ("blocked", "degraded"):
                 out.append(problem(f"api:{label}", P2, "api", f"Upstream API {label} is {verdict}",
                                    _api_failure_detail(label, api, streak),
