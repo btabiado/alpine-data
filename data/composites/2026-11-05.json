@@ -1,6 +1,6 @@
 {
   "as_of": "2026-11-05",
-  "generated_at": "2026-11-05T12:13:13Z",
+  "generated_at": "2026-11-05T14:36:20Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-11-05",
@@ -41,21 +41,21 @@
       "as_of": "2026-11-04",
       "label": "STRONG CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 60,
+      "score": 63,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-11-04",
       "label": "STRONG CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 60,
+      "score": 63,
       "stale": false
     },
     "futures_sentiment_eth": {
       "as_of": "2026-11-04",
       "label": "STRONG CROWDED LONGS",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 59,
+      "score": 60,
       "stale": false
     },
     "futures_sentiment_link": {
@@ -80,10 +80,10 @@
       "stale": false
     },
     "money_flow_index": {
-      "as_of": "2026-11-04",
+      "as_of": "2026-11-05",
       "label": "Neutral",
       "note": null,
-      "score": 4.1,
+      "score": 14.93,
       "stale": false
     },
     "overview_sentiment": {
@@ -96,15 +96,15 @@
     "poc_signal_breadth": {
       "as_of": "2026-11-04",
       "label": null,
-      "note": "49 coins; mean of latest per-coin signal",
-      "score": 1,
+      "note": "48 coins; mean of latest per-coin signal",
+      "score": 2,
       "stale": false
     },
     "stocks_signal_breadth": {
       "as_of": "2026-10-30",
-      "label": "NEUTRAL",
-      "note": "50 stocks; 13 buy+, 16 sell+",
-      "score": -6,
+      "label": "DISTRIBUTION",
+      "note": "11 stocks; 2 buy+, 6 sell+",
+      "score": -36,
       "stale": false
     },
     "whale_sentiment_btc": {
