@@ -1,12 +1,12 @@
 {
   "as_of": "2026-11-05",
-  "generated_at": "2026-11-05T07:16:54Z",
+  "generated_at": "2026-11-05T10:47:25Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-11-05",
       "label": null,
-      "note": "40 coins; 2 buy+, 20 sell+",
-      "score": -45,
+      "note": "40 coins; 1 buy+, 20 sell+",
+      "score": -48,
       "stale": false
     },
     "defi_sentiment": {
@@ -41,21 +41,21 @@
       "as_of": "2026-11-04",
       "label": "STRONG CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI; same series as futures_sentiment_btc",
-      "score": 58,
+      "score": 60,
       "stale": false
     },
     "futures_sentiment_btc": {
       "as_of": "2026-11-04",
       "label": "STRONG CROWDED LONGS",
       "note": "BTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 58,
+      "score": 60,
       "stale": false
     },
     "futures_sentiment_eth": {
       "as_of": "2026-11-04",
       "label": "STRONG CROWDED LONGS",
       "note": "ETH; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 54,
+      "score": 60,
       "stale": false
     },
     "futures_sentiment_link": {
@@ -69,7 +69,7 @@
       "as_of": "2026-11-04",
       "label": "STRONG CROWDED LONGS",
       "note": "LTC; 3 of 3 inputs: funding, long/short, 7d OI",
-      "score": 72,
+      "score": 73,
       "stale": false
     },
     "lthcs_composite": {
