@@ -1,7 +1,7 @@
 {
   "version": "3.0.0",
-  "last_updated": "2026-10-05",
-  "description": "LTHCS universe = current S&P 500 (all 503 share lines) + current DJIA 30 + the earlier NASDAQ-100 / S&P 100 / Wave A names (none dropped). 519 tickers, 515 active. Constituents: https://en.wikipedia.org/wiki/List_of_S%26P_500_companies (revision 1376729338, fetched 2026-10-05); DJIA: https://en.wikipedia.org/wiki/Historical_components_of_the_Dow_Jones_Industrial_Average (revision 1369743926; GOOGL replaced VZ on 2026-06-29). S&P 100 / NASDAQ-100 tags refreshed 2026-10-05: S&P 100 from https://en.wikipedia.org/wiki/S%26P_100 (revision 1378292206), NASDAQ-100 from https://api.nasdaq.com/api/quote/list-type/nasdaq100 (Nasdaq list as of 2026-10-01); inputs in data/lthcs/universe_candidate/mapping_2026-10-05/. New tickers start with no history. Provenance and inputs: data/lthcs/universe_candidate/sp500_2026-10-05/. Index Exiles (left every tracked index; still active and scored daily, counted in no index): AZN, GFS, LCID, MDB, TEAM, TTD, ZS (7).",
+  "last_updated": "2026-11-03",
+  "description": "LTHCS universe = current S&P 500 (all 503 share lines) + current DJIA 30 + the earlier NASDAQ-100 / S&P 100 / Wave A names (none dropped). 519 tickers, 514 active. WBD deactivated 2026-11-03 (cash acquisition, no longer trades; see its inactive_reason). Constituents: https://en.wikipedia.org/wiki/List_of_S%26P_500_companies (revision 1376729338, fetched 2026-10-05); DJIA: https://en.wikipedia.org/wiki/Historical_components_of_the_Dow_Jones_Industrial_Average (revision 1369743926; GOOGL replaced VZ on 2026-06-29). S&P 100 / NASDAQ-100 tags refreshed 2026-10-05: S&P 100 from https://en.wikipedia.org/wiki/S%26P_100 (revision 1378292206), NASDAQ-100 from https://api.nasdaq.com/api/quote/list-type/nasdaq100 (Nasdaq list as of 2026-10-01); inputs in data/lthcs/universe_candidate/mapping_2026-10-05/. New tickers start with no history. Provenance and inputs: data/lthcs/universe_candidate/sp500_2026-10-05/. Index Exiles (left every tracked index; still active and scored daily, counted in no index): AZN, GFS, LCID, MDB, TEAM, TTD, ZS (7).",
   "tickers": [
     {
       "ticker": "A",
@@ -8029,7 +8029,8 @@
       "sector": "Communication Services",
       "industry": "Media",
       "maturity_stage": "standard_compounder",
-      "active": true
+      "active": false,
+      "inactive_reason": "Cash acquisition by Skydance Corporation (f/k/a Paramount Skydance Corporation, CIK 0002041610), closed 2026-10-06. Each share of Warner Bros. Discovery Series A common stock (CIK 0001437107, Nasdaq: WBD) was converted into the right to receive $31.01666668 cash. Last Nasdaq trade 2026-10-05; trading ceased 2026-10-06 and the symbol was suspended effective 2026-10-07 (Nasdaq Equity Corporate Actions Alert #2026-710). Confirmed 2026-11-03: SEC company_tickers.json has no WBD row (CIK 0002041610 is listed as SKYD), and Yahoo's daily chart has a single bar on 2026-10-05, so 90-day momentum cannot be computed. This is a delisting, not a CIK-lookup miss to patch: mapping the old CIK would keep scoring a stock that no longer trades. Last LTHCS score is 2026-10-22 and is left in place. The acquirer is already in this universe as PSKY; that history is not relabelled and no SKYD row is added. Sources: WBD 8-K https://www.sec.gov/Archives/edgar/data/1437107/000119312526415055/d200872d8k.htm and Skydance 8-K https://www.sec.gov/Archives/edgar/data/2041610/000110465926113913/tm2626659d7_8k.htm."
     },
     {
       "ticker": "WDAY",

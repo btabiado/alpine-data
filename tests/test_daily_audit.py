@@ -2352,28 +2352,67 @@ def test_scored_coverage_names_a_cik_miss_and_keeps_the_floor(dad, monkeypatch):
     assert wide["below_floor"] is True
 
 
-def test_2026_11_01_snapshot_is_missing_wbd(dad, dar):
-    """The committed 2026-11-01 snapshot scored 514 of 515. WBD is the gap.
+def test_wbd_delisting_clears_the_scored_shortfall(dad, dar):
+    """Audit 2026-11-03 P2: WBD was the 514-of-515 gap. It no longer trades.
 
-    The SEC file has no CIK for that symbol (confirmed against
-    company_tickers.json on 2026-11-01; PSKY is the other CIK miss and
-    is still scored because Yahoo had prices). This test does not call
-    SEC: it uses the same matcher with WBD left out of the symbol set.
+    Deactivating it makes every committed snapshot from the gap
+    (2026-11-01 through 2026-11-03) a full universe. Those files still
+    record the miss, and the 2026-10-22 score is left where it was.
     """
-    snap = json.loads(
-        (REPO_ROOT / "data/lthcs/snapshots/2026-11-01.json").read_text()
-    )
     uni = json.loads((REPO_ROOT / "data/lthcs/universe.json").read_text())
-    expected = dad.expected_universe_tickers(uni, "2026-11-01")
-    sec = {sym.upper() for sym in expected if sym != "WBD"}
-    cov = dad.lthcs_scored_coverage(
-        snap, uni, sec_symbols=sec, snap_date="2026-11-01",
+    by = {t["ticker"]: t for t in uni["tickers"]}
+    assert by["WBD"]["active"] is False
+    assert dad.expected_universe_tickers(uni, "2026-11-03").count("WBD") == 0
+
+    coverages = {}
+    for day in ("2026-11-01", "2026-11-02", "2026-11-03"):
+        snap = json.loads(
+            (REPO_ROOT / "data" / "lthcs" / "snapshots" / f"{day}.json").read_text()
+        )
+        scored = {r["ticker"] for r in snap["scores"]}
+        assert "WBD" not in scored
+        cov = dad.lthcs_scored_coverage(snap, uni, snap_date=day)
+        assert cov["missing"] == [], day
+        assert cov["scored"] == cov["universe"] == 514
+        assert cov["below_floor"] is False
+        coverages[day] = cov
+
+    nov3 = json.loads(
+        (REPO_ROOT / "data/lthcs/snapshots/2026-11-03.json").read_text()
     )
-    assert cov["scored"] == 514
-    assert cov["universe"] == 515
-    assert cov["below_floor"] is False
-    assert cov["missing"] == [{"ticker": "WBD", "reason": "no SEC CIK match"}]
+    assert nov3["unscored"] == [{
+        "ticker": "WBD",
+        "reason": "no SEC CIK match; no Yahoo prices",
+        "flags": [
+            "yahoo_unavailable",
+            "sec_unavailable",
+            "thesis_unavailable",
+            "volatility_unavailable",
+        ],
+    }]
+    last = json.loads(
+        (REPO_ROOT / "data/lthcs/snapshots/2026-10-22.json").read_text()
+    )
+    row = next(r for r in last["scores"] if r.get("ticker") == "WBD")
+    assert isinstance(row["lthcs_score"], (int, float))
     assert dad.LTHCS_SCORED_FLOOR == dar.LTHCS_SCORED_FLOOR == 480
+
+    # The daily P2 is the report. The 2026-11-03 snapshot still records
+    # WBD as unscored (no CIK, no prices). Deactivating it removes the
+    # name from the active universe, so that record is not a shortfall.
+    d = _data(lthcs_pillars={
+        "status": "ok",
+        "snapshot_date": "2026-11-03",
+        "accepted_pillars": ["thesis_integrity"],
+        "unaccepted_stubs": [],
+        "coverage": coverages["2026-11-03"],
+    })
+    ids = {p["id"] for p in dar.data_problems(d)}
+    assert "lthcs:scored-shortfall" not in ids
+    assert "lthcs:scored-floor" not in ids
+    md = dar.render_md(dar.build_report(d, _ux(), None, "2026-11-03"))
+    assert "514 of 514" in md
+    assert "WBD (no SEC CIK match; no Yahoo prices)" not in md
 
 
 def test_sec_ticker_file_parser_and_dot_class_shares(dad, monkeypatch):
