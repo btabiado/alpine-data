@@ -39,7 +39,7 @@ Benchmark total return: **+0.1317**
 
 ```json
 {
-  "band_hash": "ae1a61a858c3ab48",
+  "band_hash": "dde496703efb36b5",
   "engine_version": "1.0.0",
   "long_set": [
     "constructive",
@@ -62,7 +62,7 @@ Benchmark total return: **+0.1317**
     "top_k": 0
   },
   "params_hash": "49269b2e937d327d",
-  "price_hash": "308bb96633d19b39",
+  "price_hash": "591d58ab2ef3e3eb",
   "profile_name": "long_only_buy",
   "short_bottom_quintile": false,
   "short_set": [],
