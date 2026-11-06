@@ -218,8 +218,9 @@ def test_committed_check_file_matches_the_snapshot(bhs, fre):
     """The check record describes the snapshot already in git, not a new fetch.
 
     real-estate-daily commits a check even when the vendors did not publish.
-    The snapshot stamp is the 2026-10-29 refresh (7d8ef85a9): FRED permits
-    YoY moved to -3.19, Redfin's published metro file moved to 892 rows,
+    The snapshot stamp is the 2026-11-03 refresh (c4d191a9b): Redfin's
+    published metro file moved to last-modified Mon, 02 Nov 2026 (still
+    892 rows). FRED permits YoY stayed -3.19, Zillow stayed at 894 rows,
     and the housing month stayed 2026-09. Later checks keep that stamp
     and set outcome to ``unchanged``, with ``generated_at`` as the later
     check time. An ``updated`` record is the fetch itself.
@@ -228,8 +229,8 @@ def test_committed_check_file_matches_the_snapshot(bhs, fre):
     check = json.loads((REPO_ROOT / "data" / "real_estate_check.json").read_text())
     assert check["housing_month"] == bhs.newest_housing_month(payload)
     assert check["snapshot_generated_at"] == payload["generated_at"]
-    # The snapshot stamp is the October 29 refresh, not "now".
-    assert payload["generated_at"] == "2026-10-29T08:55:20Z"
+    # The snapshot stamp is the November 3 refresh, not "now".
+    assert payload["generated_at"] == "2026-11-03T09:44:45Z"
     assert check["outcome"] in ("updated", "unchanged")
     if check["outcome"] == "updated":
         assert check["generated_at"] == payload["generated_at"]
