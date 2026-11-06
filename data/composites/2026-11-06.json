@@ -1,12 +1,12 @@
 {
   "as_of": "2026-11-06",
-  "generated_at": "2026-11-06T09:19:24Z",
+  "generated_at": "2026-11-06T12:24:06Z",
   "indexes": {
     "crypto_signal_sentiment": {
       "as_of": "2026-11-06",
       "label": null,
-      "note": "40 coins; 2 buy+, 23 sell+",
-      "score": -52,
+      "note": "40 coins; 1 buy+, 23 sell+",
+      "score": -55,
       "stale": false
     },
     "defi_sentiment": {
@@ -17,23 +17,23 @@
       "stale": false
     },
     "etf_flow_sentiment": {
-      "as_of": "2026-11-04",
+      "as_of": "2026-11-05",
       "label": "STRONG OUTFLOWS",
-      "note": "BTC ETF; 7d+30d net flow sum (60/40); 704 daily rows; same series as etf_flow_sentiment_btc",
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 705 daily rows; same series as etf_flow_sentiment_btc",
       "score": -100,
       "stale": false
     },
     "etf_flow_sentiment_btc": {
-      "as_of": "2026-11-04",
+      "as_of": "2026-11-05",
       "label": "STRONG OUTFLOWS",
-      "note": "BTC ETF; 7d+30d net flow sum (60/40); 704 daily rows",
+      "note": "BTC ETF; 7d+30d net flow sum (60/40); 705 daily rows",
       "score": -100,
       "stale": false
     },
     "etf_flow_sentiment_eth": {
-      "as_of": "2026-11-04",
+      "as_of": "2026-11-05",
       "label": "STRONG OUTFLOWS",
-      "note": "ETH ETF; 7d+30d net flow sum (60/40); 575 daily rows",
+      "note": "ETH ETF; 7d+30d net flow sum (60/40); 576 daily rows",
       "score": -100,
       "stale": false
     },
