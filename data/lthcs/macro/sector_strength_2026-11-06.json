@@ -1,0 +1,106 @@
+{
+  "as_of": "2026-11-06",
+  "benchmark_return_1m": -0.015762015779407612,
+  "benchmark_return_3m": 0.00020054301858718482,
+  "sectors": {
+    "XLB": {
+      "rank_1m": 6,
+      "rank_3m": 5,
+      "relative_1m": 0.09961486158731758,
+      "relative_3m": 0.03771495834429772,
+      "return_1m": 0.08385284580790997,
+      "return_3m": 0.03791550136288491,
+      "sector_name": "Basic Materials"
+    },
+    "XLC": {
+      "rank_1m": 10,
+      "rank_3m": 10,
+      "relative_1m": -0.04415739622217307,
+      "relative_3m": -0.05303448846949621,
+      "return_1m": -0.059919412001580685,
+      "return_3m": -0.052833945450909026,
+      "sector_name": "Communication Services"
+    },
+    "XLE": {
+      "rank_1m": 8,
+      "rank_3m": 2,
+      "relative_1m": 0.012154179822759348,
+      "relative_3m": 0.09845086090136479,
+      "return_1m": -0.0036078359566482643,
+      "return_3m": 0.09865140391995197,
+      "sector_name": "Energy"
+    },
+    "XLF": {
+      "rank_1m": 4,
+      "rank_3m": 6,
+      "relative_1m": 0.11185538002113637,
+      "relative_3m": 0.027467971195609175,
+      "return_1m": 0.09609336424172876,
+      "return_3m": 0.02766851421419636,
+      "sector_name": "Financials"
+    },
+    "XLI": {
+      "rank_1m": 9,
+      "rank_3m": 11,
+      "relative_1m": 0.0034062919505027933,
+      "relative_3m": -0.08054552551482452,
+      "return_1m": -0.012355723828904819,
+      "return_3m": -0.08034498249623734,
+      "sector_name": "Industrials"
+    },
+    "XLK": {
+      "rank_1m": 11,
+      "rank_3m": 9,
+      "relative_1m": -0.11047560798296863,
+      "relative_3m": -0.04673394372401585,
+      "return_1m": -0.12623762376237624,
+      "return_3m": -0.04653340070542866,
+      "sector_name": "Technology"
+    },
+    "XLP": {
+      "rank_1m": 2,
+      "rank_3m": 3,
+      "relative_1m": 0.13972288388881937,
+      "relative_3m": 0.08715311337225806,
+      "return_1m": 0.12396086810941176,
+      "return_3m": 0.08735365639084525,
+      "sector_name": "Consumer Defensive"
+    },
+    "XLRE": {
+      "rank_1m": 3,
+      "rank_3m": 7,
+      "relative_1m": 0.1135722495266156,
+      "relative_3m": 0.015193036119479197,
+      "return_1m": 0.09781023374720799,
+      "return_3m": 0.015393579138066382,
+      "sector_name": "Real Estate"
+    },
+    "XLU": {
+      "rank_1m": 7,
+      "rank_3m": 8,
+      "relative_1m": 0.07528584405982719,
+      "relative_3m": 0.012493364864101242,
+      "return_1m": 0.05952382828041958,
+      "return_3m": 0.012693907882688427,
+      "sector_name": "Utilities"
+    },
+    "XLV": {
+      "rank_1m": 1,
+      "rank_3m": 1,
+      "relative_1m": 0.15083896723601975,
+      "relative_3m": 0.15751217493114344,
+      "return_1m": 0.13507695145661214,
+      "return_3m": 0.15771271794973063,
+      "sector_name": "Healthcare"
+    },
+    "XLY": {
+      "rank_1m": 5,
+      "rank_3m": 4,
+      "relative_1m": 0.11073158697903085,
+      "relative_3m": 0.037897916832561274,
+      "return_1m": 0.09496957119962324,
+      "return_3m": 0.03809845985114846,
+      "sector_name": "Consumer Cyclical"
+    }
+  }
+}
