@@ -6236,7 +6236,7 @@
     },
     {
       "ticker": "CPT",
-      "lthcs_score": 65.7,
+      "lthcs_score": 65.6,
       "band": "high_confidence",
       "drift_1d": 0.6,
       "drift_7d": 2.4,
