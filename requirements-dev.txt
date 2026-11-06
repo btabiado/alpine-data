@@ -4,7 +4,7 @@
 
 # pytest 9.0.3 patches GHSA-6w46-j5rx-g56g (local-privesc via predictable
 # /tmp/pytest-of-{user} tmpdir on UNIX). All earlier 8.x/9.x affected.
-pytest==9.1.1
+pytest==9.2.0
 # tests/test_city_pulse.py validates the City payload against its JSON
 # schema. It used to be installed only as a dependency of mcp.
 jsonschema==4.26.0
