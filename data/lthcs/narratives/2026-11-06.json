@@ -716,7 +716,7 @@
     },
     {
       "ticker": "CF",
-      "todays_take": "CF holds in High Confidence at 65.8 (+6.0 over 30 days), supported by Financial Evolution at 85.9.",
+      "todays_take": "CF holds in High Confidence at 65.9 (+6.0 over 30 days), supported by Financial Evolution at 85.9.",
       "why_changed": "Score is down 6.3 today, driven primarily by a -26.9 move in Adoption Momentum.",
       "why_not_to_sell": "Recent volatility appears noise-driven; Financial Evolution remains firmly in the upper band at 85.9, and Institutional Confidence is also strong (65.5). No structural breach in the highest-conviction signals.",
       "what_would_break": "A sustained drop in Demand Environment below 43, or a Constructive composite move below 63, would force a structural review.",
