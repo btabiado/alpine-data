@@ -32,6 +32,12 @@ SOURCES (tried in order):
      from shared IPs; then we ask Wayback for the capture nearest to now, which
      it redirects to the newest one. Some captures are Akamai's own "Access
      Denied" page, which parses to no rows; the error then names the page title.
+     A mirror (or an Archive capture) whose table ends BEFORE the file already
+     on disk is not a successful read: it did not confirm the current
+     checkpoint, so the next source is still tried. Stopping at that older
+     mirror is how the 2026-11-05 run (Actions 42058574693) exited 0 after
+     tsa.gov returned 403 and the mirror ended 11/2, while data-tsa.json
+     already held 11/3, and never asked the Archive.
 
 OUTPUT:
   data-tsa.json  — { generated, latest:{date,vol}, avg7, series:[{d,v}...], src,
@@ -58,10 +64,27 @@ OUTPUT:
 
 FAILURE CONTRACT:
   On any fetch/parse failure of ALL sources we DO NOT overwrite an existing good
-  data-tsa.json — we exit non-zero, leave the previous snapshot (or the seed) in
-  place, and (in GitHub Actions) raise a `TSA not refreshed` warning annotation that
-  names the cause. A snapshot whose table ends before the data already on disk never
-  replaces it. Stdlib only, plus `requests` for the tsa.gov request when present.
+  data-tsa.json. A snapshot whose table ends before the data already on disk never
+  replaces it, and it does not refresh last_checked: that read did not confirm
+  the source's newest date.
+
+  HTTP 403 from tsa.gov is a refusal. It is not retried, and the request
+  (User-Agent, client, headers) is not changed to get around it. While the
+  checkpoint already on disk is still within FRESH_LIMIT_H (the same 48h
+  data_health uses), the process exits 0 and emits
+  `TSA blocked, data still fresh`. Past that limit it exits non-zero and emits
+  `TSA not refreshed`, the same as any other failure to confirm the table.
+  A connection error or a page with no table is not this soft case: those
+  still exit non-zero even when the file is fresh.
+
+  WATCH (daily audit 2026-11-05): if the 403 continues and both the mirror
+  and the Archive stay behind the on-disk table past that 48h limit, the job
+  goes red on purpose. The next source would be the TSA FOIA reading room or
+  a hand-entered checkpoint row. That fallback is not built here — the block
+  is one day old, and the Archive path above is the legitimate backup this
+  run was skipping. Do not add a header or a client change to defeat the 403.
+
+  Stdlib only, plus `requests` for the tsa.gov request when present.
 """
 import os, sys, re, csv, io, json, time, datetime, urllib.request, urllib.error
 
@@ -93,6 +116,14 @@ MIRROR_TIMEOUT = 30
 SRC_DIRECT = "TSA checkpoint travel numbers — tsa.gov/travel/passenger-volumes"
 SRC_MIRROR = SRC_DIRECT + " (read from the bcantoni/tsa-data daily mirror on GitHub)"
 SRC_ARCHIVE = SRC_DIRECT + " (read from the Internet Archive's copy of that page)"
+
+# Same number as THRESHOLDS["data-tsa.json"].stale_h in
+# scripts/build_health_status.py. A checkpoint this old is still "ok" there
+# (the comparison is <=). One day older is STALE unless a recent source check
+# disclosed it as upstream lag. tests/test_fetch_tsa.py pins the two together.
+# Date-granular, matching _value_age_h: the as_of day itself is 0h, the next
+# UTC date is 24h. 2026-11-03 read on 2026-11-05 is 48h, still inside.
+FRESH_LIMIT_H = 48
 
 
 def fetch_html(url):
@@ -278,27 +309,131 @@ def warn_not_refreshed(cause):
         print("::warning title=TSA not refreshed::" + _gh_escape(cause))
 
 
-def collect():
+def warn_blocked_fresh(message):
+    """403, and the file already on disk is still inside the health limit.
+
+    Exit 0. The annotation is what the daily audit grades while the chart is
+    still current. It is not `TSA not refreshed`: that title is the exit-1
+    refusal, and the audit treats it as a workflow failure.
+    """
+    print(f"fetch_tsa: tsa.gov blocked — {message} — leaving existing {OUT} untouched",
+          file=sys.stderr)
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        print("::warning title=TSA blocked, data still fresh::" + _gh_escape(message))
+
+
+def _http_status(exc):
+    """HTTP status from urllib (``.code``) or requests (``.response.status_code``).
+
+    Anything else — a timeout, a reset, a page that parsed to no rows — is
+    not a 403. Only a 403 takes the warn-while-fresh path.
+    """
+    code = getattr(exc, "code", None)
+    if type(code) is int:
+        return code
+    resp = getattr(exc, "response", None)
+    status = getattr(resp, "status_code", None)
+    return status if type(status) is int else None
+
+
+def _prior_as_of(prev):
+    """YYYY-MM-DD of the checkpoint already on disk, or None."""
+    if not isinstance(prev, dict):
+        return None
+    raw = prev.get("as_of")
+    if isinstance(raw, str) and len(raw.strip()) == 10:
+        try:
+            datetime.date.fromisoformat(raw.strip())
+        except ValueError:
+            pass
+        else:
+            return raw.strip()
+    latest = (prev.get("latest") or {}).get("date") if isinstance(prev.get("latest"), dict) else None
+    if isinstance(latest, str):
+        day = date_key(latest)
+        if day.year > 1900:
+            return day.isoformat()
+    return None
+
+
+def _checkpoint_age_h(as_of, now=None):
+    """Date-granular age in hours. The as_of day is 0h; the next UTC date is 24h.
+
+    Same rule as scripts/build_health_status._value_age_h for a YYYY-MM-DD
+    stamp, so this script and data_health agree on "within 48h".
+    """
+    now = now or _utc_now()
+    try:
+        day = datetime.date.fromisoformat(as_of)
+    except (TypeError, ValueError):
+        return None
+    return max(0.0, (now.date() - day).days * 24.0)
+
+
+def _too_old(rows, floor):
+    """True when the newest parsed row is strictly before the on-disk day."""
+    if floor is None or not rows:
+        return False
+    return date_key(rows[0][0]) < floor
+
+
+def _load_prev():
+    try:
+        with open(OUT) as f:
+            prev = json.load(f)
+    except (FileNotFoundError, ValueError):
+        return None
+    return prev if isinstance(prev, dict) else None
+
+
+def collect(floor=None):
     """Try tsa.gov, then the GitHub mirror, then the Internet Archive copy.
 
-    Returns (rows, provenance) on success, or ([], causes) when all fail.
+    ``floor`` is the newest ``datetime.date`` already on disk, or None when
+    there is nothing to protect. A source whose table ends before ``floor``
+    is recorded and the next source is tried. That source is not returned:
+    handing it back is what made an older mirror skip the Archive.
+
+    Returns ``(rows, provenance, direct_blocked)`` on a table at least as new
+    as ``floor``, or ``([], causes, direct_blocked)`` when nothing confirmed
+    one. ``direct_blocked`` is True only when the tsa.gov request itself
+    returned HTTP 403.
     """
     causes = []
+    direct_blocked = False
     try:
         rows = parse_rows(fetch_html(URL))
         if not rows:
             raise ValueError("no rows parsed from the page")
-        return rows, {"source": "tsa.gov", "src": SRC_DIRECT,
-                      "snapshot_url": None, "snapshot_timestamp": None}
+        if _too_old(rows, floor):
+            causes.append(
+                f"tsa.gov: table ends {rows[0][0]}, older than "
+                f"{floor.isoformat()} already on disk")
+            print(f"fetch_tsa: direct table ends {rows[0][0]}, older than "
+                  f"{floor.isoformat()} already on disk — trying the GitHub mirror",
+                  file=sys.stderr)
+        else:
+            return rows, {"source": "tsa.gov", "src": SRC_DIRECT,
+                          "snapshot_url": None, "snapshot_timestamp": None}, False
     except Exception as e:
+        direct_blocked = _http_status(e) == 403
         causes.append(f"tsa.gov: {_describe(e)}")
         print(f"fetch_tsa: direct fetch failed ({_describe(e)}) — "
               f"trying the GitHub mirror", file=sys.stderr)
     try:
         rows = fetch_mirror()
-        print(f"fetch_tsa: using the bcantoni/tsa-data mirror (table ends {rows[0][0]})")
-        return rows, {"source": "github.com/bcantoni/tsa-data", "src": SRC_MIRROR,
-                      "snapshot_url": MIRROR_URL, "snapshot_timestamp": None}
+        if _too_old(rows, floor):
+            causes.append(
+                f"mirror: table ends {rows[0][0]}, older than "
+                f"{floor.isoformat()} already on disk")
+            print(f"fetch_tsa: mirror table ends {rows[0][0]}, older than "
+                  f"{floor.isoformat()} already on disk — "
+                  f"trying the Internet Archive copy", file=sys.stderr)
+        else:
+            print(f"fetch_tsa: using the bcantoni/tsa-data mirror "
+                  f"(table ends {rows[0][0]})")
+            return rows, {"source": "github.com/bcantoni/tsa-data", "src": SRC_MIRROR,
+                          "snapshot_url": MIRROR_URL, "snapshot_timestamp": None}, direct_blocked
     except Exception as e:
         causes.append(f"mirror: {_describe(e)}")
         print(f"fetch_tsa: mirror failed ({_describe(e)}) — "
@@ -309,21 +444,63 @@ def collect():
         if not rows:
             raise ValueError(f"no rows parsed from snapshot {ts} "
                              f"(page title {_page_title(html)!r}, {len(html)} chars)")
-        captured = (datetime.datetime.strptime(ts, "%Y%m%d%H%M%S")
-                    .strftime("%Y-%m-%dT%H:%M:%SZ"))
-        print(f"fetch_tsa: using Internet Archive snapshot captured {captured}")
-        return rows, {"source": "web.archive.org", "src": SRC_ARCHIVE,
-                      "snapshot_url": snap_url, "snapshot_timestamp": captured}
+        if _too_old(rows, floor):
+            causes.append(
+                f"web.archive.org: table ends {rows[0][0]}, older than "
+                f"{floor.isoformat()} already on disk")
+            print(f"fetch_tsa: Internet Archive table ends {rows[0][0]}, older than "
+                  f"{floor.isoformat()} already on disk — not using it",
+                  file=sys.stderr)
+        else:
+            captured = (datetime.datetime.strptime(ts, "%Y%m%d%H%M%S")
+                        .strftime("%Y-%m-%dT%H:%M:%SZ"))
+            print(f"fetch_tsa: using Internet Archive snapshot captured {captured}")
+            return rows, {"source": "web.archive.org", "src": SRC_ARCHIVE,
+                          "snapshot_url": snap_url, "snapshot_timestamp": captured}, direct_blocked
     except Exception as e:
         causes.append(f"web.archive.org: {_describe(e)}")
-    return [], causes
+    return [], causes, direct_blocked
+
+
+def _unconfirmed(prev, causes, direct_blocked):
+    """Nothing confirmed a table at least as new as the file on disk.
+
+    The file is not rewritten and last_checked is not moved. A tsa.gov 403
+    while that file is still within FRESH_LIMIT_H exits 0 with the soft
+    warning. Anything else — a stale file, no file, a non-403 failure —
+    exits 1 with `TSA not refreshed`.
+    """
+    cause = "; ".join(causes) if causes else "no source returned a table"
+    as_of = _prior_as_of(prev)
+    age_h = _checkpoint_age_h(as_of) if as_of else None
+    if (direct_blocked and as_of is not None and age_h is not None
+            and age_h <= FRESH_LIMIT_H):
+        warn_blocked_fresh(
+            f"tsa.gov returned HTTP 403. Not retried. {cause}. "
+            f"data-tsa.json as_of {as_of} is {age_h:.0f}h old, within the "
+            f"{FRESH_LIMIT_H:.0f}h limit, so this is not a failure. "
+            f"File unchanged; last_checked was not moved. "
+            f"Past that limit the job fails. A further source would be the TSA "
+            f"FOIA reading room or a hand-entered row, not a header change."
+        )
+        return 0
+    extra = ""
+    if as_of is not None and age_h is not None:
+        extra = (f"; data-tsa.json as_of {as_of} is {age_h:.0f}h old "
+                 f"(limit {FRESH_LIMIT_H:.0f}h)")
+    elif not prev:
+        extra = f"; no existing {OUT} to keep"
+    warn_not_refreshed(cause + extra)
+    return 1
 
 
 def main():
-    rows, info = collect()
+    prev = _load_prev()
+    floor_iso = _prior_as_of(prev)
+    floor = datetime.date.fromisoformat(floor_iso) if floor_iso else None
+    rows, info, direct_blocked = collect(floor)
     if not rows:
-        warn_not_refreshed("; ".join(info))
-        return 1
+        return _unconfirmed(prev, info, direct_blocked)
 
     # Sort chronologically (oldest first) and de-dupe by date (keep first seen).
     seen, ordered = set(), []
@@ -352,23 +529,17 @@ def main():
     }
     _apply_source_check(payload)
 
-    try:
-        with open(OUT) as f:
-            prev = json.load(f)
-        if not isinstance(prev, dict):
-            prev = None
-    except (FileNotFoundError, ValueError):
-        prev = None  # no prior file / corrupt — fall through and write fresh
-
-    # Never step backwards: an archive capture can lag the data already on disk.
-    # That read did not confirm the source's current newest date, so it must
-    # not refresh last_checked / source_latest either. A lagging mirror is not
-    # evidence that TSA has stopped publishing.
+    # collect() does not return a table older than the file. This is the
+    # same refusal if a future edit hands one through: do not overwrite, and
+    # do not treat the run as a quiet success.
     prev_latest = ((prev or {}).get("latest") or {}).get("date")
     if prev_latest and date_key(prev_latest) > date_key(latest_d):
-        print(f"fetch_tsa: {info['source']} table ends {latest_d}, older than "
-              f"{prev_latest} already in {OUT} — not overwriting")
-        return 0
+        return _unconfirmed(
+            prev,
+            [f"{info['source']}: table ends {latest_d}, older than "
+             f"{prev_latest} already in {OUT}"],
+            direct_blocked,
+        )
 
     # TSA posts on weekdays and often skips weekends and holidays. On a
     # no-new-day run the table is identical. The series, as_of and `generated`

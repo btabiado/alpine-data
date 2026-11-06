@@ -275,6 +275,13 @@ TARGETS: list[dict] = [
     # Its Akamai edge also 403s urllib requests from GitHub Actions while serving
     # `requests` (the client fetch_tsa.py switched to in PR #43), so probe with
     # the same client. Otherwise this row reads "blocked" while the feed works.
+    #
+    # A 403 from that same request is reported as blocked on purpose (daily
+    # audit 2026-11-05: the probe flipped up → blocked, and the morning
+    # aviation-tsa run got the same 403). It is a refusal, not a cue to change
+    # the User-Agent or the client. The audit discloses the verdict next to
+    # data-tsa.json's freshness; fetch_tsa.py warns while that file is inside
+    # 48h and fails once it is older. Do not add headers here to defeat the 403.
     {"label": "TSA passenger volumes","category": "Aviation",      "url": "https://www.tsa.gov/travel/passenger-volumes",                                                   "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}, "client": "requests"},
     # FRED ENPLANE — the air-travel enplanements series behind the Air Travel
     # sub-view. Use the FRED *API* host (api.stlouisfed.org, same reliable host
