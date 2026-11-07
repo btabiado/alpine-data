@@ -22981,15 +22981,25 @@
   },
   "FICO": {
     "as_of": "2026-11-07",
-    "buy_count": 0,
-    "buy_dollar_value": 0.0,
+    "buy_count": 1,
+    "buy_dollar_value": 7367.44,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
-    "conviction_score": 0.0,
+    "conviction_score": 0.5524822182124594,
     "filtered_out_count": 4,
-    "net_dollar_value": 0.0,
-    "net_weighted_score": 0.0,
+    "net_dollar_value": 7367.44,
+    "net_weighted_score": 1.0,
     "raw_transactions": [
+      {
+        "code": "P",
+        "date": "2026-09-22",
+        "insider": "Rey David A",
+        "planned_10b5_1": false,
+        "price": 920.93,
+        "role": "Director",
+        "shares": 8.0,
+        "value": 7367.44
+      },
       {
         "code": "M",
         "date": "2026-08-24",
@@ -23031,11 +23041,11 @@
         "value": 658620.74
       }
     ],
-    "regime": "neutral",
+    "regime": "strong_buying",
     "sell_count": 0,
     "sell_dollar_value": 0.0,
     "ticker": "FICO",
-    "weighted_buy_score": 0.0,
+    "weighted_buy_score": 1.0,
     "weighted_sell_score": -0.0,
     "window_days": 90
   },
@@ -25536,7 +25546,7 @@
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.7102408935552995,
-    "filtered_out_count": 18,
+    "filtered_out_count": 19,
     "net_dollar_value": 93687.5,
     "net_weighted_score": 1.0,
     "raw_transactions": [
@@ -25559,6 +25569,16 @@
         "role": "Officer",
         "shares": 335.0,
         "value": 13004.7
+      },
+      {
+        "code": "F",
+        "date": "2026-11-04",
+        "insider": "Franklin Sam",
+        "planned_10b5_1": false,
+        "price": 42.89,
+        "role": "CFO",
+        "shares": 11213.0,
+        "value": 480925.57
       },
       {
         "code": "S",
@@ -26996,10 +27016,20 @@
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": -0.9248043506315285,
-    "filtered_out_count": 14,
+    "filtered_out_count": 15,
     "net_dollar_value": -2975982.3328,
     "net_weighted_score": -5.25,
     "raw_transactions": [
+      {
+        "code": "G",
+        "date": "2026-11-05",
+        "insider": "MAXFIELD JOSHUA H",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 5.0,
+        "value": 0.0
+      },
       {
         "code": "G",
         "date": "2026-11-03",
@@ -27178,16 +27208,6 @@
         "price": 0.0,
         "role": "Director",
         "shares": 90000.0,
-        "value": 0.0
-      },
-      {
-        "code": "G",
-        "date": "2026-08-10",
-        "insider": "BURRELL JONATHAN",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 298000.0,
         "value": 0.0
       },
       {

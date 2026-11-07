@@ -7,7 +7,7 @@
       "delta": 12,
       "name": "Band lean (bullish % minus bearish %)",
       "read": "universe constructive",
-      "value": "+38.5%"
+      "value": "+38.9%"
     },
     {
       "delta": 1,
@@ -50,7 +50,7 @@
       "delta": -7,
       "name": "Insider conviction breadth",
       "read": "insiders distributing",
-      "value": "293 active signals"
+      "value": "294 active signals"
     },
     {
       "delta": -10,
