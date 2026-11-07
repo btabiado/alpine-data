@@ -140,7 +140,7 @@
     },
     {
       "ticker": "AIZ",
-      "todays_take": "AIZ holds in High Confidence at 64.3 (+1.6 over 30 days), supported by Institutional Confidence at 72.5.",
+      "todays_take": "AIZ holds in High Confidence at 64.4 (+1.6 over 30 days), supported by Institutional Confidence at 72.5.",
       "why_changed": "Score is down 0.9 today, driven primarily by a -2.8 move in Demand Environment.",
       "why_not_to_sell": "Recent volatility appears noise-driven; Institutional Confidence remains firmly in the upper band at 72.5, and Adoption Momentum is also strong (62.5). No structural breach in the highest-conviction signals.",
       "what_would_break": "A sustained drop in Financial Evolution below 45, or a Constructive composite move below 63, would force a structural review.",

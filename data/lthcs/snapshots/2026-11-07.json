@@ -920,7 +920,7 @@
     },
     {
       "ticker": "AIZ",
-      "lthcs_score": 64.3,
+      "lthcs_score": 64.4,
       "band": "high_confidence",
       "drift_1d": -0.9,
       "drift_7d": 1.0,
